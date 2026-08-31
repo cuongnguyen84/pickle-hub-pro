@@ -224,10 +224,13 @@ describe("renderLivestreamList — one query window per status", () => {
   it("gives live, scheduled and ended their own limit", async () => {
     const log = await shape([LIVE, SCHEDULED, ENDED]);
 
-    expect(log.map((q) => q.status).sort()).toEqual(["ended", "live", "scheduled"]);
+    // Only the three livestream windows are under test here; the World Cup
+    // livescore block adds its own wc_pro_matches query, which is not one of them.
+    const streamStatuses = log.map((q) => q.status).filter((s) => ["live", "scheduled", "ended"].includes(s ?? ""));
+    expect(streamStatuses.sort()).toEqual(["ended", "live", "scheduled"]);
     // No status may share a budget with another — that is the whole bug.
     for (const q of log) expect(q.limit).toBeGreaterThan(0);
-    expect(new Set(log.map((q) => q.status)).size).toBe(3);
+    expect(new Set(streamStatuses).size).toBe(3);
   });
 
   it("orders upcoming by air time, not by when the row was created", async () => {

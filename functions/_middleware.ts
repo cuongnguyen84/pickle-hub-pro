@@ -1073,7 +1073,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v80 (2026-08-31): follow-up — /blog (EN) was still emitting the old
   // insertion order to bots while readers got the new sort. Its cached
   // copies and ItemList JSON-LD must be retired with it.
-  const cacheKey = `pr:v80:${url.pathname}`;
+  // v81 (2026-08-31): /live SSR now carries a World Cup livescore block —
+  // matches in progress + recent results with players and scores — so bots
+  // index real World Cup content on the hub during the tournament.
+  const cacheKey = `pr:v81:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

@@ -21,6 +21,120 @@ import { render404 } from "./static-pages";
 
 // ─── Livestream ────────────────────────────��──────────────
 
+// ─── World Cup 2026 livescore (SSR block on the /live hub) ───────────────────
+//
+// The React card and /live board are client-only, so Googlebot saw nothing of
+// the World Cup on /live. This renders the same data server-side — matches in
+// progress and recent results, players and scores — so the hub carries real,
+// indexable World Cup content during the tournament ("kết quả / tỉ số
+// pickleball world cup"). It is a snapshot at cache time (live scores drift),
+// so the value is the names, results and event context, not a live score.
+// Empty (and cheap) outside the event window.
+
+const WC_LIVESCORE_UNTIL = Date.UTC(2026, 8, 7, 17, 0, 0); // 2026-09-08 00:00 VN
+
+const WC_EVENT_LABEL: Record<string, { vi: string; en: string }> = {
+  pro_singles_mens: { vi: "Đơn nam", en: "Men's Singles" },
+  pro_singles_womens: { vi: "Đơn nữ", en: "Women's Singles" },
+  pro_doubles_mens: { vi: "Đôi nam", en: "Men's Doubles" },
+  pro_doubles_womens: { vi: "Đôi nữ", en: "Women's Doubles" },
+  pro_mixed: { vi: "Đôi nam nữ", en: "Mixed Doubles" },
+};
+
+interface WcProRow {
+  match_id: string;
+  category_id: string;
+  round_name: string | null;
+  entry_a_name: string | null;
+  entry_b_name: string | null;
+  current_a: number | null;
+  current_b: number | null;
+  games_json: { a: number; b: number }[] | null;
+  leader_side: string | null;
+  status: string;
+  is_vietnam: boolean;
+}
+
+function wcScore(m: WcProRow): string {
+  if (m.current_a != null && m.current_b != null) return `${m.current_a}-${m.current_b}`;
+  const g = m.games_json ?? [];
+  const last = g[g.length - 1];
+  return last ? `${last.a}-${last.b}` : "";
+}
+
+/**
+ * The World Cup livescore section for the /live hub. Empty string outside the
+ * event window or when there is nothing to show.
+ */
+async function buildWorldCupLivescore(
+  supabase: SupabaseClient,
+  lang: Lang,
+): Promise<{ html: string; live: number }> {
+  if (Date.now() > WC_LIVESCORE_UNTIL) return { html: "", live: 0 };
+
+  const { data } = await supabase
+    .from("wc_pro_matches")
+    .select(
+      "match_id, category_id, round_name, entry_a_name, entry_b_name, current_a, current_b, games_json, leader_side, status, is_vietnam",
+    )
+    .in("status", ["in_progress", "completed"])
+    .order("updated_at", { ascending: false })
+    .limit(60);
+
+  const rows = (data ?? []) as WcProRow[];
+  if (rows.length === 0) return { html: "", live: 0 };
+
+  const live = rows.filter((m) => m.status === "in_progress");
+  // Most-recent results, Vietnamese first so the section leads with what the
+  // audience wants; capped so the block stays a summary, not the whole draw.
+  const results = rows
+    .filter((m) => m.status === "completed" && wcScore(m))
+    .sort((a, b) => (a.is_vietnam === b.is_vietnam ? 0 : a.is_vietnam ? -1 : 1))
+    .slice(0, 12);
+
+  const evLabel = (id: string) => WC_EVENT_LABEL[id]?.[lang] ?? id;
+  const nameA = (m: WcProRow) => escapeHtml(m.entry_a_name ?? "—");
+  const nameB = (m: WcProRow) => escapeHtml(m.entry_b_name ?? "—");
+
+  const heading = lang === "en" ? "World Cup 2026 livescore" : "Livescore World Cup 2026";
+  const updated =
+    (lang === "en" ? "Updated " : "Cập nhật ") +
+    new Date().toLocaleDateString(lang === "vi" ? "vi-VN" : "en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+  const vnLive = live.find((m) => m.is_vietnam);
+  const lead =
+    lang === "en"
+      ? `${updated}. Live scores from the OPEN/Pro individual events at the Heineken Pickleball World Cup 2026 in Da Nang, tracked by ThePickleHub. ${
+          live.length > 0
+            ? `${live.length} match${live.length > 1 ? "es are" : " is"} in progress${vnLive ? `, including ${nameA(vnLive)} vs ${nameB(vnLive)}` : ""}.`
+            : "No match is in progress right now; recent results are below."
+        }`
+      : `${updated}. Tỉ số trực tiếp các nội dung Cá nhân OPEN/Pro tại Heineken Pickleball World Cup 2026 ở Đà Nẵng, do ThePickleHub cập nhật. ${
+          live.length > 0
+            ? `Có ${live.length} trận đang đấu${vnLive ? `, trong đó ${nameA(vnLive)} gặp ${nameB(vnLive)}` : ""}.`
+            : "Hiện chưa có trận nào đang đấu; kết quả gần nhất ở bên dưới."
+        }`;
+
+  const liveRow = (m: WcProRow) =>
+    `<li>${escapeHtml(evLabel(m.category_id))}${m.round_name ? ` · ${escapeHtml(m.round_name)}` : ""}: ${nameA(m)} vs ${nameB(m)} — ${escapeHtml(wcScore(m))} (${lang === "en" ? "live" : "đang đấu"})</li>`;
+  const resultRow = (m: WcProRow) => {
+    const winner = m.leader_side === "B" ? nameB(m) : nameA(m);
+    const loser = m.leader_side === "B" ? nameA(m) : nameB(m);
+    const verb = lang === "en" ? "beat" : "thắng";
+    return `<li>${escapeHtml(evLabel(m.category_id))}: ${winner} ${verb} ${loser} ${escapeHtml(wcScore(m))}</li>`;
+  };
+
+  const liveBlock = live.length
+    ? `<h3>${lang === "en" ? "In progress" : "Đang đấu"}</h3><ul>${live.slice(0, 12).map(liveRow).join("")}</ul>`
+    : "";
+  const resultsBlock = results.length
+    ? `<h3>${lang === "en" ? "Recent results" : "Kết quả gần nhất"}</h3><ul>${results.map(resultRow).join("")}</ul>`
+    : "";
+
+  const html = `<section><h2>${escapeHtml(heading)}</h2><p>${escapeHtml(lead)}</p>${liveBlock}${resultsBlock}</section>`;
+  return { html, live: live.length };
+}
+
 export async function renderLive(supabase: SupabaseClient, id: string, siteUrl: string): Promise<Response> {
   const { data: ls } = await supabase
     .from("public_livestreams")
@@ -409,8 +523,13 @@ export async function renderLivestreamList(
         `<li><a href="${siteUrl}/vi/videos">Video trận đấu & highlight</a></li>` +
         `</ul></nav>`;
 
+  // World Cup livescore leads the hub during the tournament — it is the reason
+  // most visitors are on /live that week — then the block empties itself.
+  const wc = await buildWorldCupLivescore(supabase, lang);
+
   const body =
     `<header><h1>${escapeHtml(h1)}</h1><p>${escapeHtml(lead)}</p></header>` +
+    wc.html +
     section(lang === "en" ? "Live now" : "Đang phát trực tiếp", liveNow, () => "") +
     section(lang === "en" ? "Scheduled" : "Sắp diễn ra", upcoming, (s) =>
       dateLabel(s.scheduled_start_at),
