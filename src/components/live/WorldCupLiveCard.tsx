@@ -129,7 +129,7 @@ export function WorldCupLiveCard({ language }: { language: Lang }) {
                 </>
               ) : (
                 <>
-                  <span className="wclc-title">{language === "vi" ? "Kết quả hôm nay" : "Today's results"}</span>
+                  <span className="wclc-title">{language === "vi" ? "Pickleball World Cup 2026 · Kết quả hôm nay" : "Pickleball World Cup 2026 · Today's results"}</span>
                   <span className="wclc-sub">{language === "vi" ? `${todayResults.length} trận Việt Nam` : `${todayResults.length} Vietnam ${todayResults.length === 1 ? "match" : "matches"}`}</span>
                 </>
               )}

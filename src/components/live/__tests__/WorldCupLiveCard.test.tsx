@@ -96,7 +96,7 @@ describe("WorldCupLiveCard", () => {
     });
     const { container } = wrap("vi");
     expect(container.querySelector(".wclc")).not.toBeNull();
-    expect(screen.getByText("Kết quả hôm nay")).toBeTruthy();
+    expect(screen.getByText(/Kết quả hôm nay/)).toBeTruthy();
     // full per-game scoreline, not a single game
     expect(screen.getByText("15-17, 15-10, 15-9")).toBeTruthy();
     expect(container.querySelector(".wclc-dot")).toBeNull(); // no live pulse in results mode
@@ -132,6 +132,6 @@ describe("WorldCupLiveCard", () => {
     });
     wrap("vi");
     expect(screen.getByText("Livescore")).toBeTruthy();
-    expect(screen.queryByText("Kết quả hôm nay")).toBeNull();
+    expect(screen.queryByText(/Kết quả hôm nay/)).toBeNull();
   });
 });
