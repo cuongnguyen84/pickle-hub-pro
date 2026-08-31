@@ -7,11 +7,11 @@ không bật OTP và không đổi production setting nếu chưa có phê duy�
 
 | Configuration | Bundle ID | Version | Environment | Native registration | FCM push |
 |---|---|---|---|---|---|
-| Debug | `net.thepicklehub.app` | `2.1.4 (9)` | development | ON | OFF |
-| Release | `net.thepicklehub.app` | `2.1.4 (9)` | production | ON | ON |
+| Debug | `net.thepicklehub.app` | `2.1.5 (10)` | production | ON | OFF |
+| Release | `net.thepicklehub.app` | `2.1.5 (10)` | production | ON | ON |
 
-`2.1.4 (9)` nối tiếp bản đã upload `2.0.3 (8)` và đánh dấu bản nâng cấp lớn
-với Shop native. Nếu App Store Connect
+`2.1.5 (10)` nối tiếp bản đã upload `2.1.4 (9)` và bổ sung World Cup livescore
+cho bản Shop native. Nếu App Store Connect
 đã có build/version mới hơn bảng này, tăng cả `MARKETING_VERSION` và
 `CURRENT_PROJECT_VERSION` trong `Config/Debug.xcconfig` + `Config/Release.xcconfig`
 trước khi archive.
@@ -61,7 +61,7 @@ tên người dùng đã sửa.
 ### Hành vi khi update từ Capacitor
 
 Capacitor/supabase-js lưu session trong WebKit localStorage; supabase-swift lưu
-session native trong Keychain. Bản `2.1.4` hiện **yêu cầu người dùng đăng nhập lại
+session native trong Keychain. Bản `2.1.5` hiện **yêu cầu người dùng đăng nhập lại
 một lần** sau update. Product đã chấp thuận hành vi này ngày 2026-07-22 và
 `CAPACITOR_AUTH_RESET_APPROVED = YES`; không cần session bridge cho release này.
 

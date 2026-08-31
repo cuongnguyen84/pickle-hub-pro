@@ -155,7 +155,7 @@ pass "Release target uses Swift $swift_version language mode"
 pass "Release target preserves iPhone and iPad device families"
 
 [[ "$debug_bundle_id" == "$bundle_id" ]] || fail "Debug bundle must match Release for Sign in with Apple audience parity"
-[[ "$debug_environment" == "development" ]] || fail "Debug APP_ENVIRONMENT must be development"
+[[ "$debug_environment" == "production" ]] || fail "Debug APP_ENVIRONMENT must be production for production QA parity"
 [[ "$debug_aps_environment" == "development" ]] || fail "Debug APS_ENVIRONMENT must be development"
 [[ "$debug_version" == "$marketing_version" && "$debug_build" == "$build_number" ]] || fail "Debug and Release version/build values have drifted"
 pass "Debug identity matches Release for Sign in with Apple at $debug_bundle_id"
