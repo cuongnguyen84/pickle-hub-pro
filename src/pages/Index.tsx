@@ -23,6 +23,7 @@ import { VideoThumbnail } from "@/components/video/VideoThumbnail";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
+import { WorldCupLiveCard } from "@/components/live/WorldCupLiveCard";
 import { HomeLogMatchCTA } from "@/components/home/HomeLogMatchCTA";
 import { useTickerData } from "@/hooks/useTickerData";
 import { useNewsItems } from "@/hooks/useNewsItems";
@@ -364,6 +365,9 @@ const Index = () => {
     >
       <PullToRefreshIndicator state={ptrState} />
       <HreflangTags enPath="/" viPath="/vi" />
+      {/* World Cup live strip — top of the home page during the tournament.
+          Self-hides when nothing is live/scheduled and after Sep 7. */}
+      <WorldCupLiveCard language={language} />
       {/*
         Note (2026-04-29): client-side <OrganizationSchema /> removed.
         Bot prerender already emits a richer Organization + WebSite JSON-LD
