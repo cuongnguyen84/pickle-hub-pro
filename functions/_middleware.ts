@@ -1079,7 +1079,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v82 (2026-08-31): "World Cup" everywhere on the /live World Cup surface
   // now reads "Pickleball World Cup" (disambiguation from football + the
   // keyword), and /live title/description lead with it during the event.
-  const cacheKey = `pr:v82:${url.pathname}`;
+  // v83 (2026-08-31): World Cup livescore results now show the full scoreline
+  // (all finished games + the last-observed game) instead of a single game, so
+  // completed and bo3 matches read as "14-16, 16-14, 13-5" not "16-14".
+  const cacheKey = `pr:v83:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

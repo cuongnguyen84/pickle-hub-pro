@@ -55,11 +55,18 @@ interface WcProRow {
   is_vietnam: boolean;
 }
 
+// Full scoreline: every finished game plus the last game still in view (the
+// game being played when live, or the last one observed before the source
+// dropped a completed match — the source never publishes a completed final).
 function wcScore(m: WcProRow): string {
-  if (m.current_a != null && m.current_b != null) return `${m.current_a}-${m.current_b}`;
-  const g = m.games_json ?? [];
-  const last = g[g.length - 1];
-  return last ? `${last.a}-${last.b}` : "";
+  const games = m.games_json ?? [];
+  const parts = games.map((g) => `${g.a}-${g.b}`);
+  const hasCurrent =
+    m.current_a != null && m.current_b != null && (m.current_a > 0 || m.current_b > 0);
+  const last = games[games.length - 1];
+  const dupOfLast = last != null && last.a === m.current_a && last.b === m.current_b;
+  if (hasCurrent && !dupOfLast) parts.push(`${m.current_a}-${m.current_b}`);
+  return parts.join(", ");
 }
 
 /**

@@ -27,10 +27,21 @@ const EVENT_LABEL: Record<ProEvent, { vi: string; en: string }> = {
 // VN-vs-VN match lights both). Uses the parser's detection — one source of truth.
 const sideIsVietnam = (name: string | null): boolean => isVietnameseName(name);
 
+// The full scoreline: every finished game, plus the last game still in view.
+// For a live match that trailing game is the one being played. For a completed
+// match it's the last game we observed before the source dropped it — the
+// source never server-renders a completed match's final, so a finished bo3 is
+// shown as "game1, game2, <last-seen decider>" rather than losing the decider,
+// and a single-game knockout that only ever had a current game (empty games_json)
+// still shows its last-recorded score instead of rendering blank.
 function scoreLine(m: WcProMatchRow): string {
   const games = m.games_json ?? [];
   const parts = games.map((g) => `${g.a}-${g.b}`);
-  if (m.status === "in_progress" && m.current_a != null && m.current_b != null) {
+  const hasCurrent =
+    m.current_a != null && m.current_b != null && (m.current_a > 0 || m.current_b > 0);
+  const last = games[games.length - 1];
+  const dupOfLast = last != null && last.a === m.current_a && last.b === m.current_b;
+  if ((m.status === "in_progress" || m.status === "completed") && hasCurrent && !dupOfLast) {
     parts.push(`${m.current_a}-${m.current_b}`);
   }
   return parts.join(", ");

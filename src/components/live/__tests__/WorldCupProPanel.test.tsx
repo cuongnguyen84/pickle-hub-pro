@@ -69,4 +69,21 @@ describe("WorldCupProContent", () => {
     expect(screen.getByText("Kết thúc")).toBeTruthy();
     expect(screen.getByText("21-15")).toBeTruthy();
   });
+
+  it("shows the last-observed score of a completed match that has no finished games", () => {
+    // The source drops a match the moment it ends, so a single-game knockout may
+    // freeze with only a current game (empty games_json). It must not render blank.
+    render(<WorldCupProContent feed={feed([evt({ event: "pro_singles_mens", vietnam: [match({ status: "completed", games_json: [], current_a: 7, current_b: 10, leader_side: "B" })] })])} language="vi" />);
+    expect(screen.getByText("7-10")).toBeTruthy();
+  });
+
+  it("keeps the last-observed decider on a completed bo3", () => {
+    render(<WorldCupProContent feed={feed([evt({ event: "pro_singles_mens", vietnam: [match({ status: "completed", games_json: [{ a: 14, b: 16 }, { a: 16, b: 14 }], current_a: 13, current_b: 5, leader_side: "A" })] })])} language="vi" />);
+    expect(screen.getByText("14-16, 16-14, 13-5")).toBeTruthy();
+  });
+
+  it("does not double-print the last game when the current game duplicates it", () => {
+    render(<WorldCupProContent feed={feed([evt({ event: "pro_singles_mens", vietnam: [match({ status: "completed", games_json: [{ a: 15, b: 8 }], current_a: 15, current_b: 8, leader_side: "A" })] })])} language="vi" />);
+    expect(screen.getByText("15-8")).toBeTruthy();
+  });
 });
