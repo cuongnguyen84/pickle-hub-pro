@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import {
   parseWcProLive,
+  parseWcProBrackets,
   matchesToStore,
   isVietnameseName,
   PRO_CATEGORIES,
@@ -101,5 +102,54 @@ describe("parseWcProLive guard", () => {
     const payload = "2:" + JSON.stringify({ matches: [{ id: "amateur_x__m1", status: "in_progress", categoryId: "amateur_singles_mens" }] }) + "\n";
     const html = `<body><script>self.__next_f.push([1,${JSON.stringify(payload)}])</script></body>`;
     expect(() => parseWcProLive(html)).toThrow(/no Pro individual matches/);
+  });
+});
+
+const bracketsFixture = readFileSync(
+  resolve(here, "../../../../workers/wc-open-scraper/__fixtures__/brackets-pro-mens-singles.html"),
+  "utf8",
+);
+
+describe("parseWcProBrackets", () => {
+  const rows = parseWcProBrackets(bracketsFixture, "pro_singles_mens");
+
+  it("returns only completed matches of the requested category", () => {
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((r) => r.status === "completed")).toBe(true);
+    expect(rows.every((r) => r.categoryId === "pro_singles_mens")).toBe(true);
+    // the synthetic amateur completed match must be dropped
+    expect(rows.some((r) => r.matchId.startsWith("amateur"))).toBe(false);
+  });
+
+  it("carries the full per-game finals, not a single game", () => {
+    const bo3 = rows.find((r) => r.games.length >= 3);
+    expect(bo3).toBeTruthy();
+    expect(bo3!.games).toEqual([
+      { a: 15, b: 17 },
+      { a: 15, b: 10 },
+      { a: 15, b: 9 },
+    ]);
+    expect(bo3!.currentA).toBeNull();
+    expect(bo3!.currentB).toBeNull();
+  });
+
+  it("derives the winner from winnerId, not from counting games", () => {
+    // Andrew Angulo vs Dev Shah, one game 16-21, winner is Dev Shah (side B)
+    const nonVn = rows.find((r) => (r.entryAName ?? "").includes("Andrew Angulo"));
+    expect(nonVn?.leaderSide).toBe("B");
+  });
+
+  it("flags Vietnamese entrants", () => {
+    const vn = rows.filter((r) => r.isVietnam);
+    expect(vn.length).toBeGreaterThan(0);
+    expect(vn.some((r) => (r.entryBName ?? r.entryAName ?? "").length > 0)).toBe(true);
+  });
+
+  it("throws when the requested category is absent", () => {
+    expect(() => parseWcProBrackets(bracketsFixture, "pro_doubles_womens")).toThrow(ParseGuardError);
+  });
+
+  it("throws when there are no flight chunks", () => {
+    expect(() => parseWcProBrackets("<html><body>shell</body></html>", "pro_singles_mens")).toThrow(ParseGuardError);
   });
 });

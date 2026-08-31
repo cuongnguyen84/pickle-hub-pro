@@ -29,7 +29,13 @@
 // ============================================================================
 
 import { parseWcOpenDelegations, ParseGuardError, type WcOpenTeam } from "../../../src/lib/wc-open/parse";
-import { parseWcProLive, matchesToStore, type WcProMatch } from "../../../src/lib/wc-open/parse-pro";
+import {
+  parseWcProLive,
+  parseWcProBrackets,
+  matchesToStore,
+  type WcProMatch,
+  type ProCategory,
+} from "../../../src/lib/wc-open/parse-pro";
 
 interface Env {
   SUPABASE_URL: string;
@@ -43,6 +49,24 @@ const DELEGATIONS_URL = "https://www.sporttora.com/pwc2026/delegations";
 const LIVE_URL = "https://www.sporttora.com/pwc2026/live";
 const UA =
   "ThePickleHubBot/1.0 (+https://www.thepicklehub.net; World Cup live feed; contact thecuong@gmail.com)";
+
+/**
+ * The five Pro brackets. Each page server-renders full data only for the one
+ * bracket named in its URL, so we fetch one per event. `cat` is <gender>____<type>
+ * (mixed is gender "mixed_gender", type "mixed"); `bracket` is the draw id
+ * repeated (`<id>____<id>`). This is the authoritative source of completed
+ * matches WITH their real per-game finals — /live never carries a final.
+ */
+function bracketUrl(cat: string, bracket: string): string {
+  return `https://www.sporttora.com/pwc2026/brackets?tier=pro&cat=${cat}&bracket=${bracket}`;
+}
+const BRACKET_URLS: { category: ProCategory; url: string }[] = [
+  { category: "pro_singles_mens", url: bracketUrl("mens____singles", "pro_singles_mens____pro_singles_mens") },
+  { category: "pro_singles_womens", url: bracketUrl("womens____singles", "pro_singles_womens____pro_singles_womens") },
+  { category: "pro_doubles_mens", url: bracketUrl("mens____doubles", "pro_doubles_mens____pro_doubles_mens") },
+  { category: "pro_doubles_womens", url: bracketUrl("womens____doubles", "pro_doubles_womens____pro_doubles_womens") },
+  { category: "pro_mixed", url: bracketUrl("mixed_gender____mixed", "pro_mixed____pro_mixed") },
+];
 
 /**
  * Play window across BOTH competitions: the individual (Pro) events run from
@@ -185,11 +209,12 @@ interface ExistingProRow {
   current_b: number | null;
   games_json: unknown;
   leader_side: string | null;
+  is_vietnam: boolean;
 }
 
 async function sbSelectProMatches(env: Env): Promise<Map<string, ExistingProRow>> {
   const res = await fetch(
-    `${env.SUPABASE_URL}/rest/v1/wc_pro_matches?select=match_id,status,current_a,current_b,games_json,leader_side`,
+    `${env.SUPABASE_URL}/rest/v1/wc_pro_matches?select=match_id,status,current_a,current_b,games_json,leader_side,is_vietnam`,
     {
       headers: {
         apikey: env.SUPABASE_SERVICE_ROLE_KEY,
@@ -296,6 +321,30 @@ async function sbDeleteProMatches(env: Env, matchIds: string[]): Promise<void> {
   if (!res.ok) throw new Error(`delete pro ${res.status}: ${await res.text()}`);
 }
 
+/**
+ * Fetch every Pro bracket and collect its completed matches with real finals.
+ * One page per event, sequentially, so peak memory stays at one ~4 MB page.
+ * A per-page failure (fetch error or guard) is recorded and skipped, never
+ * fatal — the caller uses `errors.length` to decide whether it may prune.
+ */
+async function fetchProBracketsCompleted(): Promise<{ completed: WcProMatch[]; errors: string[] }> {
+  const completed: WcProMatch[] = [];
+  const errors: string[] = [];
+  for (const { category, url } of BRACKET_URLS) {
+    try {
+      const res = await fetch(url, { headers: { "User-Agent": UA, Accept: "text/html" }, cf: { cacheTtl: 0 } });
+      if (!res.ok) {
+        errors.push(`${category} fetch ${res.status}`);
+        continue;
+      }
+      completed.push(...parseWcProBrackets(await res.text(), category));
+    } catch (e) {
+      errors.push(`${category}: ${(e as Error).message}`);
+    }
+  }
+  return { completed, errors };
+}
+
 export interface ProScrapeResult {
   ok: boolean;
   matchesSeen: number;
@@ -305,11 +354,19 @@ export interface ProScrapeResult {
 }
 
 /**
- * One Pro cycle: fetch /live → parse the five Pro events (guarded) → store the
- * live + Vietnamese subset, diffing so only changed rows upsert. Then the
- * history step: any row we still hold as scheduled/in_progress that is no
- * longer in the source has finished, so mark it completed and keep its last
- * score (the source never carries a completed match's final score).
+ * One Pro cycle. Two sources, each authoritative for what it carries:
+ *   * /live — the live current score of in_progress matches + the scheduled
+ *     upcoming ones. It drops a match the instant it ends and never carries a
+ *     final, so it is the source of live/scheduled rows only.
+ *   * /brackets (one page per event) — every COMPLETED match with its real
+ *     per-game finals and winner. This is the source of results.
+ *
+ * We store the live + Vietnamese subset from /live and the Vietnamese completed
+ * matches from /brackets (the board shows live + Vietnamese; keeping only VN
+ * completed also bounds the table well under PostgREST's 1000-row cap). A row
+ * the sources no longer justify is pruned: a finished VN match is replaced by
+ * its real bracket result; everything else that vanished is deleted so scoreless
+ * snapshots and foreign completed rows never accumulate.
  */
 export async function runScrapePro(env: Env): Promise<ProScrapeResult> {
   let parsed;
@@ -325,33 +382,52 @@ export async function runScrapePro(env: Env): Promise<ProScrapeResult> {
     return { ok: false, matchesSeen: 0, matchesWritten: 0, completed: 0, error: err.message };
   }
 
-  const toStore = matchesToStore(parsed.matches);
+  // The authoritative finals. A page failure is non-fatal but blocks pruning.
+  const { completed: bracketDone, errors: bracketErrors } = await fetchProBracketsCompleted();
+  if (bracketErrors.length) await alert(env, `brackets: ${bracketErrors.join("; ")}`);
+  const canPrune = bracketErrors.length === 0;
+  const bracketDoneIds = new Set(bracketDone.map((m) => m.matchId));
+  const bracketVN = bracketDone.filter((m) => m.isVietnam);
+  const bracketVNIds = new Set(bracketVN.map((m) => m.matchId));
+
   const nowIso = new Date().toISOString();
   const existing = await sbSelectProMatches(env);
 
-  // Upsert the live + Vietnamese subset, only where something changed.
-  const changed = toStore.filter((m) => proRowChanged(m, existing.get(m.matchId)));
-  await sbUpsertProMatches(env, changed.map((m) => proRowBody(m, nowIso)));
+  // Live rows: the in_progress/Vietnamese subset, minus any the brackets already
+  // report finished (brackets wins — no flip back to in_progress for a cycle).
+  const liveStore = matchesToStore(parsed.matches).filter((m) => !bracketDoneIds.has(m.matchId));
+  const liveChanged = liveStore.filter((m) => proRowChanged(m, existing.get(m.matchId)));
+  // Completed rows: the Vietnamese finals from the brackets, with real scores.
+  const bracketChanged = bracketVN.filter((m) => proRowChanged(m, existing.get(m.matchId)));
+  await sbUpsertProMatches(
+    env,
+    [...liveChanged, ...bracketChanged].map((m) => proRowBody(m, nowIso)),
+  );
 
-  // A stored row the source no longer lists needs one of two fates, and getting
-  // it wrong is what filled the table with scoreless "completed" rows:
-  //   * it was in_progress → it finished. Mark completed, keep the last score
-  //     we saw (the source never carries a finished match's final score).
-  //   * it was scheduled → it never started under this id (rescheduled, or the
-  //     draw moved). Delete it. Marking it completed would publish a match that
-  //     was never played, with a null score.
-  const sourceIds = new Set(toStore.map((m) => m.matchId));
-  const gone = [...existing.values()].filter((r) => !sourceIds.has(r.match_id));
-  const nowCompleted = gone.filter((r) => r.status === "in_progress").map((r) => r.match_id);
-  const toDelete = gone.filter((r) => r.status === "scheduled").map((r) => r.match_id);
-  await sbMarkProCompleted(env, nowCompleted, nowIso);
+  // Prune rows the sources no longer justify. `gone` = rows /live no longer
+  // lists and the brackets did not keep as a VN result.
+  const liveIds = new Set(parsed.matches.map((m) => m.matchId));
+  const gone = [...existing.values()].filter((r) => !liveIds.has(r.match_id) && !bracketVNIds.has(r.match_id));
+  // A vanished VN in_progress row whose bracket hasn't synced its final yet:
+  // freeze the last score as a stopgap; the next cycle replaces it with the
+  // real bracket result. Everything else gone is deleted — foreign in_progress
+  // and completed rows (never shown), and scheduled rows that never played.
+  // But never delete a completed row when a bracket page failed: it may be a VN
+  // result we simply couldn't re-fetch this cycle.
+  const isFreeze = (r: ExistingProRow) =>
+    r.status === "in_progress" && r.is_vietnam && !bracketDoneIds.has(r.match_id);
+  const freeze = gone.filter(isFreeze).map((r) => r.match_id);
+  const toDelete = gone
+    .filter((r) => !isFreeze(r) && !(r.status === "completed" && !canPrune))
+    .map((r) => r.match_id);
+  await sbMarkProCompleted(env, freeze, nowIso);
   await sbDeleteProMatches(env, toDelete);
 
   return {
     ok: true,
     matchesSeen: parsed.matches.length,
-    matchesWritten: changed.length,
-    completed: nowCompleted.length,
+    matchesWritten: liveChanged.length + bracketChanged.length,
+    completed: bracketVN.length,
   };
 }
 

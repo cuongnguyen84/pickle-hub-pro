@@ -48,7 +48,7 @@ export interface WcProMatch {
   games: ProGame[];
   servingSide: "A" | "B" | null;
   leaderSide: "A" | "B" | null;
-  status: "scheduled" | "in_progress";
+  status: "scheduled" | "in_progress" | "completed";
   isVietnam: boolean;
   venueName: string | null;
   courtLabel: string | null;
@@ -125,10 +125,16 @@ function matchObject(s: string, start: number): string | null {
 }
 
 interface RawEntry {
+  entryId?: string;
   teamName?: string;
   seed?: number;
 }
 interface RawGame {
+  scoreA?: number;
+  scoreB?: number;
+}
+interface RawScore {
+  game?: number;
   scoreA?: number;
   scoreB?: number;
 }
@@ -150,6 +156,18 @@ interface RawMatch {
     currentGame?: { scoreA?: number; scoreB?: number; servingTeam?: string };
     games?: RawGame[];
   };
+  // Present on completed matches in the /brackets flight: the final per-game
+  // scores and the winning entry's id (see parseWcProBrackets).
+  scores?: RawScore[];
+  winnerId?: string;
+}
+
+/** Which side won, by matching the winning entry id to entry A or B. */
+function winnerSide(winnerId: string | undefined, a: RawEntry | undefined, b: RawEntry | undefined): "A" | "B" | null {
+  if (!winnerId) return null;
+  if (a?.entryId && a.entryId === winnerId) return "A";
+  if (b?.entryId && b.entryId === winnerId) return "B";
+  return null;
 }
 
 function leaderOf(currentA: number | null, currentB: number | null, games: ProGame[]): "A" | "B" | null {
@@ -245,6 +263,83 @@ export function parseWcProLive(html: string): ProParseResult {
   }
 
   return { matches, perCategory };
+}
+
+/**
+ * Parse a /pwc2026/brackets page into the COMPLETED matches of one Pro event,
+ * with their real per-game finals. This is the authoritative result source: the
+ * /live page drops a match the instant it ends and never carries a final, but
+ * the bracket keeps every finished match with a `scores` array (one entry per
+ * game — "15-17, 15-10, 15-9" for a bo3) and a `winnerId`.
+ *
+ * A brackets page server-renders full data only for the ONE bracket named in
+ * its URL, so the caller fetches one page per event and passes the category it
+ * asked for; matches of any other category are ignored. Throws ParseGuardError
+ * when the requested category is absent — the URL params or layout changed, and
+ * the worker must alert rather than treat "no results" as "all matches gone".
+ */
+export function parseWcProBrackets(html: string, category: ProCategory): WcProMatch[] {
+  const flight = decodeFlight(html);
+  if (!flight) throw new ParseGuardError("no RSC flight chunks found — not the expected page");
+
+  const out: WcProMatch[] = [];
+  const seen = new Set<string>();
+  let sawCategory = 0;
+
+  const re = /\{"id":"pro_/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(flight)) !== null) {
+    const raw = matchObject(flight, m.index);
+    if (!raw) continue;
+    let obj: RawMatch;
+    try {
+      obj = JSON.parse(raw) as RawMatch;
+    } catch {
+      continue;
+    }
+    if (!obj.id || obj.categoryId !== category) continue;
+    sawCategory++;
+    if (obj.status !== "completed") continue; // brackets is our source of finals only
+    if (seen.has(obj.id)) continue;
+
+    const games: ProGame[] = (obj.scores ?? [])
+      .filter((g) => typeof g.scoreA === "number" && typeof g.scoreB === "number")
+      .map((g) => ({ a: g.scoreA as number, b: g.scoreB as number }));
+    if (games.length === 0) continue; // completed but no confirmed score yet — skip
+
+    seen.add(obj.id);
+    const aName = obj.entryA?.teamName ?? null;
+    const bName = obj.entryB?.teamName ?? null;
+    out.push({
+      matchId: obj.id,
+      categoryId: category,
+      divisionName: obj.divisionName ?? null,
+      roundName: obj.roundName ?? null,
+      roundNum: typeof obj.roundNum === "number" ? obj.roundNum : null,
+      matchIndex: typeof obj.matchIndex === "number" ? obj.matchIndex : null,
+      entryAName: aName,
+      entryASeed: typeof obj.entryA?.seed === "number" ? obj.entryA.seed : null,
+      entryBName: bName,
+      entryBSeed: typeof obj.entryB?.seed === "number" ? obj.entryB.seed : null,
+      // A completed match has no live game; its full result is in games[].
+      currentA: null,
+      currentB: null,
+      games,
+      servingSide: null,
+      leaderSide: winnerSide(obj.winnerId, obj.entryA, obj.entryB) ?? leaderOf(null, null, games),
+      status: "completed",
+      isVietnam: isVietnameseName(aName) || isVietnameseName(bName),
+      venueName: obj.venueName ?? null,
+      courtLabel: obj.courtLabel ?? null,
+      refereeName: obj.refereeName ?? null,
+      scheduledAt: obj.scheduledAt ?? null,
+    });
+  }
+
+  if (sawCategory === 0) {
+    throw new ParseGuardError(`brackets: category ${category} not found — layout or URL params changed`);
+  }
+  return out;
 }
 
 /** The subset worth storing: live matches, plus every Vietnamese match. */
