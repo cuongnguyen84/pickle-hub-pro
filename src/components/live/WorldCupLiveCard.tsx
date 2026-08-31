@@ -113,7 +113,7 @@ export function WorldCupLiveCard({ language }: { language: Lang }) {
   const href = language === "vi" ? "/vi/live" : "/live";
 
   return (
-    <div className="tl-shell" style={{ marginTop: 12, marginBottom: 8 }}>
+    <div className="tl-shell" style={{ marginTop: 44, marginBottom: 8 }}>
       <div className="wclc">
         <style>{WCLC_CSS}</style>
         <div className="wclc-content">
