@@ -12,6 +12,6 @@
     "resolveJsonModule": true,
     "isolatedModules": true
   },
-  "include": ["./src/**/*.ts", "../../src/lib/wc-open/parse.ts"],
+  "include": ["./src/**/*.ts", "../../src/lib/wc-open/parse.ts", "../../src/lib/wc-open/parse-pro.ts"],
   "exclude": ["node_modules", "../../src/lib/wc-open/__tests__/**/*"]
 }

@@ -29,6 +29,7 @@
 // ============================================================================
 
 import { parseWcOpenDelegations, ParseGuardError, type WcOpenTeam } from "../../../src/lib/wc-open/parse";
+import { parseWcProLive, matchesToStore, type WcProMatch } from "../../../src/lib/wc-open/parse-pro";
 
 interface Env {
   SUPABASE_URL: string;
@@ -39,23 +40,25 @@ interface Env {
 }
 
 const DELEGATIONS_URL = "https://www.sporttora.com/pwc2026/delegations";
+const LIVE_URL = "https://www.sporttora.com/pwc2026/live";
 const UA =
   "ThePickleHubBot/1.0 (+https://www.thepicklehub.net; World Cup live feed; contact thecuong@gmail.com)";
 
 /**
- * The OPEN team competition runs Sep 3–6, 2026, roughly 08:00–20:00 Vietnam
- * time (UTC+7 → 01:00–13:00 UTC). Outside that window there is nothing new to
- * scrape, so the cron returns early. Widened by an hour each side for warm-up
- * and overrun. Before Sep 3 the draw is already seeded once, so a daily poll
- * is enough — handled by keeping the cron sparse in wrangler.toml.
+ * Play window across BOTH competitions: the individual (Pro) events run from
+ * Aug 30, the team competition Sep 3–6. So the window is Aug 30 – Sep 6, 2026,
+ * roughly 07:00–21:00 Vietnam time (UTC+7 → 00:00–14:00 UTC). Outside it there
+ * is nothing live to scrape and the cron returns early.
  */
 function withinMatchWindow(now: Date): boolean {
   const y = now.getUTCFullYear();
-  const mo = now.getUTCMonth(); // 0-based; September = 8
+  const mo = now.getUTCMonth(); // 0-based; August = 7, September = 8
   const d = now.getUTCDate();
   const h = now.getUTCHours();
-  const isCompDay = y === 2026 && mo === 8 && d >= 3 && d <= 6;
-  return isCompDay && h >= 0 && h <= 14;
+  if (y !== 2026 || h < 0 || h > 14) return false;
+  const isAug = mo === 7 && d >= 30; // Aug 30–31
+  const isSep = mo === 8 && d <= 6; // Sep 1–6
+  return isAug || isSep;
 }
 
 async function fetchDelegations(): Promise<string> {
@@ -173,6 +176,159 @@ export async function runScrape(env: Env): Promise<ScrapeResult> {
   return { ok: true, teamsSeen: parsed.teams.length, teamsWritten: changed.length };
 }
 
+// ── Pro individual events ──────────────────────────────────────────────────
+
+interface ExistingProRow {
+  match_id: string;
+  status: string;
+  current_a: number | null;
+  current_b: number | null;
+  games_json: unknown;
+  leader_side: string | null;
+}
+
+async function sbSelectProMatches(env: Env): Promise<Map<string, ExistingProRow>> {
+  const res = await fetch(
+    `${env.SUPABASE_URL}/rest/v1/wc_pro_matches?select=match_id,status,current_a,current_b,games_json,leader_side`,
+    {
+      headers: {
+        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+      },
+    },
+  );
+  if (!res.ok) throw new Error(`select pro ${res.status}`);
+  const rows = (await res.json()) as ExistingProRow[];
+  return new Map(rows.map((r) => [r.match_id, r]));
+}
+
+function proRowChanged(next: WcProMatch, prev: ExistingProRow | undefined): boolean {
+  if (!prev) return true;
+  return (
+    prev.status !== next.status ||
+    prev.current_a !== next.currentA ||
+    prev.current_b !== next.currentB ||
+    prev.leader_side !== next.leaderSide ||
+    JSON.stringify(prev.games_json ?? []) !== JSON.stringify(next.games)
+  );
+}
+
+function proRowBody(m: WcProMatch, nowIso: string) {
+  return {
+    match_id: m.matchId,
+    category_id: m.categoryId,
+    division_name: m.divisionName,
+    round_name: m.roundName,
+    round_num: m.roundNum,
+    match_index: m.matchIndex,
+    entry_a_name: m.entryAName,
+    entry_a_seed: m.entryASeed,
+    entry_b_name: m.entryBName,
+    entry_b_seed: m.entryBSeed,
+    current_a: m.currentA,
+    current_b: m.currentB,
+    games_json: m.games,
+    serving_side: m.servingSide,
+    leader_side: m.leaderSide,
+    status: m.status,
+    is_vietnam: m.isVietnam,
+    venue_name: m.venueName,
+    court_label: m.courtLabel,
+    referee_name: m.refereeName,
+    scheduled_at: m.scheduledAt,
+    last_seen_at: nowIso,
+    updated_at: nowIso,
+  };
+}
+
+async function sbUpsertProMatches(env: Env, rows: ReturnType<typeof proRowBody>[]): Promise<void> {
+  if (rows.length === 0) return;
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/wc_pro_matches?on_conflict=match_id`, {
+    method: "POST",
+    headers: {
+      apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+      Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+      "Content-Type": "application/json",
+      Prefer: "resolution=merge-duplicates,return=minimal",
+    },
+    body: JSON.stringify(rows),
+  });
+  if (!res.ok) throw new Error(`upsert pro ${res.status}: ${await res.text()}`);
+}
+
+/** Mark a stored match `completed`, keeping its last-observed score. */
+async function sbMarkProCompleted(env: Env, matchIds: string[], nowIso: string): Promise<void> {
+  if (matchIds.length === 0) return;
+  const inList = matchIds.map((id) => `"${id}"`).join(",");
+  const res = await fetch(
+    `${env.SUPABASE_URL}/rest/v1/wc_pro_matches?match_id=in.(${inList})`,
+    {
+      method: "PATCH",
+      headers: {
+        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify({ status: "completed", updated_at: nowIso }),
+    },
+  );
+  if (!res.ok) throw new Error(`mark completed ${res.status}: ${await res.text()}`);
+}
+
+export interface ProScrapeResult {
+  ok: boolean;
+  matchesSeen: number;
+  matchesWritten: number;
+  completed: number;
+  error?: string;
+}
+
+/**
+ * One Pro cycle: fetch /live → parse the five Pro events (guarded) → store the
+ * live + Vietnamese subset, diffing so only changed rows upsert. Then the
+ * history step: any row we still hold as scheduled/in_progress that is no
+ * longer in the source has finished, so mark it completed and keep its last
+ * score (the source never carries a completed match's final score).
+ */
+export async function runScrapePro(env: Env): Promise<ProScrapeResult> {
+  let parsed;
+  try {
+    const res = await fetch(LIVE_URL, { headers: { "User-Agent": UA, Accept: "text/html" }, cf: { cacheTtl: 0 } });
+    if (!res.ok) throw new Error(`live fetch ${res.status}`);
+    parsed = parseWcProLive(await res.text());
+  } catch (e) {
+    const err = e as Error;
+    if (err instanceof ParseGuardError) {
+      await alert(env, `pro parse guard: ${err.message}. Kept existing rows.`);
+    }
+    return { ok: false, matchesSeen: 0, matchesWritten: 0, completed: 0, error: err.message };
+  }
+
+  const toStore = matchesToStore(parsed.matches);
+  const nowIso = new Date().toISOString();
+  const existing = await sbSelectProMatches(env);
+
+  // Upsert the live + Vietnamese subset, only where something changed.
+  const changed = toStore.filter((m) => proRowChanged(m, existing.get(m.matchId)));
+  await sbUpsertProMatches(env, changed.map((m) => proRowBody(m, nowIso)));
+
+  // History: rows we hold as not-yet-completed that the source no longer lists
+  // have finished — freeze them as completed with their last-seen score.
+  const sourceIds = new Set(toStore.map((m) => m.matchId));
+  const nowCompleted = [...existing.values()]
+    .filter((r) => r.status !== "completed" && !sourceIds.has(r.match_id))
+    .map((r) => r.match_id);
+  await sbMarkProCompleted(env, nowCompleted, nowIso);
+
+  return {
+    ok: true,
+    matchesSeen: parsed.matches.length,
+    matchesWritten: changed.length,
+    completed: nowCompleted.length,
+  };
+}
+
 async function verifyHmac(secret: string, body: string, signature: string | null): Promise<boolean> {
   if (!signature) return false;
   const key = await crypto.subtle.importKey(
@@ -196,8 +352,11 @@ export default {
     // Outside the match window there is nothing new — skip the fetch entirely.
     if (!withinMatchWindow(new Date())) return;
     ctx.waitUntil(
-      runScrape(env).then((r) => {
-        if (!r.ok) console.error("wc-open-scraper cron:", r.error);
+      Promise.allSettled([runScrape(env), runScrapePro(env)]).then((results) => {
+        for (const r of results) {
+          if (r.status === "fulfilled" && !r.value.ok) console.error("wc-open-scraper cron:", r.value.error);
+          if (r.status === "rejected") console.error("wc-open-scraper cron threw:", r.reason);
+        }
       }),
     );
   },
@@ -211,9 +370,9 @@ export default {
     const ok = await verifyHmac(env.SCRAPER_AUTH_SECRET, body, request.headers.get("x-signature"));
     if (!ok) return new Response("Unauthorized", { status: 401 });
 
-    const result = await runScrape(env);
-    return new Response(JSON.stringify(result), {
-      status: result.ok ? 200 : 502,
+    const [teams, pro] = await Promise.all([runScrape(env), runScrapePro(env)]);
+    return new Response(JSON.stringify({ teams, pro }), {
+      status: teams.ok && pro.ok ? 200 : 502,
       headers: { "Content-Type": "application/json" },
     });
   },

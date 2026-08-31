@@ -84,6 +84,10 @@ vi.mock("@/components/content", () => ({
   EmptyState: () => null,
 }));
 
+vi.mock("@/hooks/useWcProLive", () => ({
+  useWcProLive: () => ({ data: { events: [], liveCount: 0 }, isLoading: false, isError: false }),
+}));
+
 vi.mock("@/hooks/useWcOpenLive", () => ({
   // The World Cup panel is orthogonal to the Live error state under test; an
   // empty feed makes it self-hide so it never reaches the real useQuery.

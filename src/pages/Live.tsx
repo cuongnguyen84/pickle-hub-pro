@@ -9,6 +9,7 @@ import { formatTime, formatRelative } from "@/lib/format-datetime";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
+import { WorldCupProPanel } from "@/components/live/WorldCupProPanel";
 import { WorldCupOpenPanel } from "@/components/live/WorldCupOpenPanel";
 
 type Filter = "all" | "live" | "scheduled" | "ended";
@@ -182,6 +183,12 @@ const Live = () => {
               : "Matches streaming right now, upcoming within the next 24 hours, and replays from the past week. Pulled live from the database — no cache."}
           </p>
         </header>
+
+        {/* World Cup 2026 Pro individual events — live now with scores, so it
+            leads the page during the tournament. Above the team board because
+            the individual draws are being played while the team competition
+            has not started. Self-hides when empty, self-retires after Sep 7. */}
+        <WorldCupProPanel language={language} />
 
         {/* World Cup 2026 OPEN national-team board — tournament-week panel,
             self-retiring after Sep 7 and self-hiding when the feed is empty.
