@@ -63,21 +63,26 @@ function LiveMatch({ m }: { m: WcProMatchRow }) {
   );
 }
 
-// A finished match: winner in bold, the full per-game scoreline beneath.
+// A finished match. Colour carries one meaning only: who won. The winner is
+// bold in the foreground with a check; the loser is dimmed. (No Vietnam-red
+// here — every match on this card has a Vietnamese player, so red would mark
+// nearly every name and tell the reader nothing about the result.)
 function ResultMatch({ m }: { m: WcProMatchRow }) {
-  const aVN = sideIsVietnam(m.entry_a_name);
-  const bVN = sideIsVietnam(m.entry_b_name);
   const line = scoreLine(m);
+  const aWon = m.leader_side === "A";
+  const bWon = m.leader_side === "B";
   return (
-    <div className="wclc-m wclc-m--done">
-      <div className="wclc-m-round">{m.round_name ?? ""}</div>
-      <div className={`wclc-m-row${m.leader_side === "A" ? " wclc-m-row--win" : ""}`}>
-        <span className={`wclc-m-name${aVN ? " wclc-m-name--vn" : ""}`}>{m.entry_a_name ?? "—"}</span>
+    <div className="wclc-r">
+      <div className="wclc-r-round">{m.round_name ?? ""}</div>
+      <div className={`wclc-r-row${aWon ? " wclc-r-row--win" : ""}`}>
+        {aWon && <span className="wclc-r-tick" aria-hidden="true">✓</span>}
+        <span className="wclc-r-name">{m.entry_a_name ?? "—"}</span>
       </div>
-      <div className={`wclc-m-row${m.leader_side === "B" ? " wclc-m-row--win" : ""}`}>
-        <span className={`wclc-m-name${bVN ? " wclc-m-name--vn" : ""}`}>{m.entry_b_name ?? "—"}</span>
+      <div className={`wclc-r-row${bWon ? " wclc-r-row--win" : ""}`}>
+        {bWon && <span className="wclc-r-tick" aria-hidden="true">✓</span>}
+        <span className="wclc-r-name">{m.entry_b_name ?? "—"}</span>
       </div>
-      {line && <div className="wclc-m-line">{line}</div>}
+      {line && <div className="wclc-r-line">{line}</div>}
     </div>
   );
 }
@@ -103,7 +108,7 @@ export function WorldCupLiveCard({ language }: { language: Lang }) {
 
   const featured = live
     ? [...allLive].sort((x, y) => (isVn(x) ? 0 : 1) - (isVn(y) ? 0 : 1)).slice(0, 2)
-    : todayResults.slice(0, 3);
+    : todayResults.slice(0, 2);
 
   const href = language === "vi" ? "/vi/live" : "/live";
 
@@ -148,27 +153,33 @@ export function WorldCupLiveCard({ language }: { language: Lang }) {
 
 const WCLC_CSS = `
 .wclc { border: 1px solid var(--tl-border); border-radius: var(--tl-radius-lg, 14px); background: var(--tl-surface); overflow: hidden; }
-.wclc-content { padding: 15px 16px 16px; }
-.wclc-header { display: flex; align-items: center; gap: 13px; margin-bottom: 14px; }
-.wclc-logo { flex: none; display: block; width: 60px; height: 60px; border-radius: 12px; overflow: hidden; line-height: 0; border: 1px solid var(--tl-border); }
+.wclc-content { padding: 12px 14px 13px; }
+.wclc-header { display: flex; align-items: center; gap: 11px; margin-bottom: 11px; }
+.wclc-logo { flex: none; display: block; width: 46px; height: 46px; border-radius: 10px; overflow: hidden; line-height: 0; border: 1px solid var(--tl-border); }
 .wclc-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .wclc-head-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.wclc-title { font-family: inherit; font-size: 17px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--tl-fg); line-height: 1.1; }
+.wclc-title { font-family: inherit; font-size: 15.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--tl-fg); line-height: 1.1; }
 .wclc-live { font-size: 12px; font-weight: 700; color: var(--tl-live); display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
 .wclc-sub { font-size: 12px; font-weight: 700; color: var(--tl-dim); white-space: nowrap; }
 .wclc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tl-live); animation: wclc-pulse 1.4s ease-in-out infinite; }
 @keyframes wclc-pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
 @media (prefers-reduced-motion: reduce) { .wclc-dot { animation: none; } }
-.wclc-matches { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.wclc-matches { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; }
 .wclc-m { border: 1px solid var(--tl-border); border-left: 3px solid var(--tl-live); border-radius: var(--tl-radius, 10px); background: var(--tl-bg-elev); padding: 10px 13px; }
-.wclc-m--done { border-left-color: var(--tl-border); }
-.wclc-m-line { margin-top: 6px; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--tl-fg); letter-spacing: .02em; }
+/* Result card (compact): win/loss is the only signal. */
+.wclc-r { border: 1px solid var(--tl-border); border-radius: var(--tl-radius, 10px); background: var(--tl-bg-elev); padding: 8px 11px; }
+.wclc-r-round { font-size: 10px; letter-spacing: .04em; text-transform: uppercase; color: var(--tl-dim); margin-bottom: 4px; }
+.wclc-r-row { display: flex; align-items: baseline; gap: 6px; padding: 1px 0; color: var(--tl-dim); font-size: 14px; min-width: 0; }
+.wclc-r-row--win { color: var(--tl-fg); font-weight: 700; }
+.wclc-r-tick { flex: none; color: var(--tl-gold); font-size: 11px; font-weight: 700; }
+.wclc-r-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.wclc-r-line { margin-top: 5px; font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--tl-dim); letter-spacing: .02em; }
 .wclc-m-round { font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--tl-dim); margin-bottom: 6px; }
 .wclc-m-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 2px 0; color: var(--tl-dim); font-size: 14.5px; }
 .wclc-m-row--win { color: var(--tl-fg); font-weight: 700; }
 .wclc-m-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .wclc-m-name--vn { color: var(--tl-live); }
 .wclc-m-score { flex: none; font-variant-numeric: tabular-nums; font-weight: 800; font-size: 16px; color: var(--tl-fg); }
-.wclc-cta { display: inline-block; margin-top: 14px; font-size: 13.5px; font-weight: 700; color: var(--tl-gold); text-decoration: none; }
+.wclc-cta { display: inline-block; margin-top: 11px; font-size: 13px; font-weight: 700; color: var(--tl-gold); text-decoration: none; }
 .wclc-cta:hover { text-decoration: underline; }
 `;

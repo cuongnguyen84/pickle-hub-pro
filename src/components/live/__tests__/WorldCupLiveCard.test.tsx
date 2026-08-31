@@ -100,6 +100,11 @@ describe("WorldCupLiveCard", () => {
     // full per-game scoreline, not a single game
     expect(screen.getByText("15-17, 15-10, 15-9")).toBeTruthy();
     expect(container.querySelector(".wclc-dot")).toBeNull(); // no live pulse in results mode
+    // the winner (side A) is marked; colour never signals nationality here
+    const winRow = container.querySelector(".wclc-r-row--win");
+    expect(winRow?.textContent).toContain("Nguyễn Văn Linh");
+    expect(container.querySelector(".wclc-r-tick")).not.toBeNull();
+    expect(container.querySelector(".wclc-m-name--vn")).toBeNull();
   });
 
   it("does not count a result from another day as today", () => {

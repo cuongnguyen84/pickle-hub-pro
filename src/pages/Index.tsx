@@ -365,9 +365,6 @@ const Index = () => {
     >
       <PullToRefreshIndicator state={ptrState} />
       <HreflangTags enPath="/" viPath="/vi" />
-      {/* World Cup live strip — top of the home page during the tournament.
-          Self-hides when nothing is live/scheduled and after Sep 7. */}
-      <WorldCupLiveCard language={language} />
       {/*
         Note (2026-04-29): client-side <OrganizationSchema /> removed.
         Bot prerender already emits a richer Organization + WebSite JSON-LD
@@ -518,6 +515,11 @@ const Index = () => {
           </div>
         );
       })()}
+
+      {/* World Cup strip — below the ticker and the DUPR partnership band.
+          Live scores when a match is on, else today's results. Self-hides
+          when there is nothing live and no result today, and after Sep 7. */}
+      <WorldCupLiveCard language={language} />
 
       {/* ── Priority feed — Live (on air / upcoming) → Editorial → News ──
           Product priority wins while a broadcast is live or scheduled.
