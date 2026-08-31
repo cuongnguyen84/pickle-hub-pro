@@ -9,8 +9,7 @@ import { formatTime, formatRelative } from "@/lib/format-datetime";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
-import { WorldCupProPanel } from "@/components/live/WorldCupProPanel";
-import { WorldCupOpenPanel } from "@/components/live/WorldCupOpenPanel";
+import { WorldCupLiveBoard } from "@/components/live/WorldCupLiveBoard";
 
 type Filter = "all" | "live" | "scheduled" | "ended";
 
@@ -184,17 +183,11 @@ const Live = () => {
           </p>
         </header>
 
-        {/* World Cup 2026 Pro individual events — live now with scores, so it
-            leads the page during the tournament. Above the team board because
-            the individual draws are being played while the team competition
-            has not started. Self-hides when empty, self-retires after Sep 7. */}
-        <WorldCupProPanel language={language} />
-
-        {/* World Cup 2026 OPEN national-team board — tournament-week panel,
-            self-retiring after Sep 7 and self-hiding when the feed is empty.
-            Above the filters because during the World Cup it is the reason most
-            visitors are on /live. */}
-        <WorldCupOpenPanel language={language} />
+        {/* World Cup 2026 board — two-level tabs: Cá nhân Pro / Đội tuyển,
+            the Pro tab split by event. Self-hides when both feeds are empty,
+            self-retires after Sep 7. Above the filters because during the World
+            Cup it is why most visitors are on /live. */}
+        <WorldCupLiveBoard language={language} />
 
         {/* Counts come from the same `= []` defaults the body no longer trusts:
             rendering "Live 0 · Replays 0" directly above a network error is the

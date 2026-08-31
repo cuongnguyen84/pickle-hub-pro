@@ -1,20 +1,18 @@
 // ============================================================================
-// WorldCupProPanel — the OPEN/Pro individual events board on /live
+// WorldCupProContent — the OPEN/Pro individual events, as one tab of the World
+// Cup live board (see WorldCupLiveBoard). Presentational: it takes an already
+// fetched WcProFeed and renders a sub-tab per event (men's/women's singles,
+// men's/women's doubles, mixed); the selected event shows its in-progress
+// matches with live scores plus every Vietnamese match, VN highlighted, the
+// leading side bold. The container owns the hook, header and level-1 tabs.
 //
-// The five Pro draws (men's & women's singles, men's & women's doubles, mixed)
-// are being played now. This board shows, per event, the matches in progress
-// with their live score, and Vietnamese players' matches (upcoming, and results
-// kept after they finished). Vietnamese entrant highlighted; the leading side
-// in bold. Repaints over Supabase Realtime as scores change.
-//
-// Self-contained (scoped `wcpro-` styles on TheLine's --tl-* tokens) and
-// self-retiring after the event, like the team panel it sits above.
+// Scoped `wcpro-` styles on TheLine's --tl-* tokens.
 // ============================================================================
 
-import { useWcProLive, PRO_EVENT_ORDER, type ProEvent, type WcProMatchRow } from "@/hooks/useWcProLive";
+import { useMemo, useState } from "react";
+import { PRO_EVENT_ORDER, type ProEvent, type WcProFeed, type WcProMatchRow } from "@/hooks/useWcProLive";
 import { isVietnameseName } from "@/lib/wc-open/parse-pro";
 
-const HIDE_AFTER = Date.UTC(2026, 8, 7, 17, 0, 0); // 2026-09-08 00:00 Vietnam time
 type Lang = "en" | "vi";
 
 const EVENT_LABEL: Record<ProEvent, { vi: string; en: string }> = {
@@ -74,75 +72,66 @@ function MatchRow({ m, lang }: { m: WcProMatchRow; lang: Lang }) {
   );
 }
 
-export function WorldCupProPanel({ language }: { language: Lang }) {
-  const { data, isLoading, isError } = useWcProLive();
+export function WorldCupProContent({ feed, language }: { feed: WcProFeed; language: Lang }) {
+  // Events that actually have matches, in the canonical singles→doubles→mixed
+  // order. Only these get a sub-tab.
+  const events = useMemo(
+    () => [...feed.events].sort((a, b) => PRO_EVENT_ORDER.indexOf(a.event) - PRO_EVENT_ORDER.indexOf(b.event)),
+    [feed.events],
+  );
 
-  if (Date.now() > HIDE_AFTER) return null;
-  if (isError) return null;
-  if (!isLoading && (!data || data.events.length === 0)) return null;
+  // Default to the first event that has a live match, else the first event.
+  const defaultEvent = (events.find((e) => e.live.length > 0) ?? events[0])?.event;
+  const [active, setActive] = useState<ProEvent | undefined>(defaultEvent);
+  // Keep the selection valid as the feed changes (an event can empty out).
+  const activeEvent = events.find((e) => e.event === active) ?? events[0];
+
+  if (!activeEvent) return null;
+  const shown = [...activeEvent.live, ...activeEvent.vietnam];
 
   return (
-    <section className="wcpro" aria-label={language === "vi" ? "World Cup — Cá nhân Pro" : "World Cup — Pro individual events"}>
+    <div className="wcpro">
       <style>{WCPRO_CSS}</style>
-      <div className="wcpro-head">
-        <div>
-          <span className="wcpro-kicker">🏓 Pickleball World Cup 2026 · Đà Nẵng</span>
-          <h2 className="wcpro-title">{language === "vi" ? "Cá nhân Pro — trực tiếp" : "Pro Individual — live"}</h2>
-        </div>
-        {!!data?.liveCount && (
-          <span className="wcpro-status wcpro-status--live">
-            <span className="wcpro-dot" aria-hidden="true" />
-            {data.liveCount} {language === "vi" ? "trận đang đấu" : "live"}
-          </span>
-        )}
+      <div className="wcpro-subtabs" role="tablist" aria-label={language === "vi" ? "Nội dung" : "Events"}>
+        {events.map((ev) => (
+          <button
+            key={ev.event}
+            type="button"
+            role="tab"
+            aria-selected={ev.event === activeEvent.event}
+            className={`wcpro-subtab${ev.event === activeEvent.event ? " active" : ""}`}
+            onClick={() => setActive(ev.event)}
+          >
+            {EVENT_LABEL[ev.event][language]}
+            {ev.live.length > 0 && <span className="wcpro-subtab-live" aria-label={language === "vi" ? "đang đấu" : "live"}>{ev.live.length}</span>}
+          </button>
+        ))}
       </div>
 
-      {isLoading ? (
-        <p className="wcpro-loading">{language === "vi" ? "Đang tải…" : "Loading…"}</p>
-      ) : (
-        <div className="wcpro-events">
-          {data!.events
-            .slice()
-            .sort((a, b) => PRO_EVENT_ORDER.indexOf(a.event) - PRO_EVENT_ORDER.indexOf(b.event))
-            .map((ev) => {
-              const shown = [...ev.live, ...ev.vietnam];
-              return (
-                <div key={ev.event} className="wcpro-event">
-                  <h3 className="wcpro-event-title">
-                    {EVENT_LABEL[ev.event][language]}
-                    {ev.live.length > 0 && <span className="wcpro-event-live">{ev.live.length} {language === "vi" ? "live" : "live"}</span>}
-                  </h3>
-                  <div className="wcpro-match-grid">
-                    {shown.map((m) => (
-                      <MatchRow key={m.match_id} m={m} lang={language} />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-        </div>
-      )}
+      <div className="wcpro-match-grid">
+        {shown.map((m) => (
+          <MatchRow key={m.match_id} m={m} lang={language} />
+        ))}
+      </div>
       <p className="wcpro-source">
         {language === "vi"
-          ? "Trận đang đấu + trận có tay vợt Việt Nam · nguồn: ban tổ chức (sporttora.com) · cập nhật gần thời gian thực"
-          : "Live matches + matches with Vietnamese players · source: organizers (sporttora.com) · near real-time"}
+          ? "Trận đang đấu + trận có tay vợt Việt Nam · nguồn: ban tổ chức (sporttora.com)"
+          : "Live matches + matches with Vietnamese players · source: organizers (sporttora.com)"}
       </p>
-    </section>
+    </div>
   );
 }
 
 const WCPRO_CSS = `
-.wcpro { border: 1px solid var(--tl-border); border-radius: var(--tl-radius-xl, 20px); background: var(--tl-surface); padding: 20px; margin: 8px 0 20px; }
-.wcpro-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
-.wcpro-kicker { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--tl-gold); font-weight: 700; }
-.wcpro-title { margin: 4px 0 0; font-size: 19px; line-height: 1.2; color: var(--tl-fg); font-weight: 800; }
-.wcpro-status { font-size: 12.5px; font-weight: 600; padding: 5px 11px; border-radius: 999px; white-space: nowrap; display: inline-flex; align-items: center; gap: 7px; color: var(--tl-live); border: 1px solid var(--tl-live); }
+.wcpro-subtabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; scrollbar-width: thin; }
+.wcpro-subtab { flex: none; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--tl-dim); background: var(--tl-bg-elev); border: 1px solid var(--tl-border); border-radius: 999px; padding: 6px 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; transition: color .12s, border-color .12s; }
+.wcpro-subtab:hover { color: var(--tl-fg); }
+.wcpro-subtab.active { color: var(--tl-fg); border-color: var(--tl-fg); font-weight: 700; }
+.wcpro-subtab-live { font-size: 10px; font-weight: 700; color: #fff; background: var(--tl-live); border-radius: 999px; padding: 0 6px; line-height: 16px; min-width: 16px; text-align: center; }
+.wcpro-subtab:focus-visible { outline: 2px solid var(--tl-gold); outline-offset: 2px; }
 .wcpro-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--tl-live); animation: wcpro-pulse 1.4s ease-in-out infinite; flex: none; }
 @keyframes wcpro-pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
 @media (prefers-reduced-motion: reduce) { .wcpro-dot { animation: none; } }
-.wcpro-events { display: flex; flex-direction: column; gap: 18px; }
-.wcpro-event-title { margin: 0 0 10px; font-size: 14px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: var(--tl-fg); display: flex; align-items: center; gap: 9px; }
-.wcpro-event-live { font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--tl-live); border: 1px solid var(--tl-live); border-radius: 999px; padding: 1px 7px; }
 .wcpro-match-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
 .wcpro-match { border: 1px solid var(--tl-border); border-radius: var(--tl-radius, 10px); background: var(--tl-bg-elev); padding: 10px 12px; }
 .wcpro-match--live { border-color: var(--tl-live); }
@@ -160,5 +149,4 @@ const WCPRO_CSS = `
 .wcpro-serve { color: var(--tl-gold); font-weight: 700; }
 .wcpro-score { margin-top: 6px; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--tl-fg); letter-spacing: .02em; }
 .wcpro-source { margin: 16px 0 0; font-size: 11.5px; color: var(--tl-dim); }
-.wcpro-loading { color: var(--tl-dim); font-size: 13px; padding: 16px 0; }
 `;
