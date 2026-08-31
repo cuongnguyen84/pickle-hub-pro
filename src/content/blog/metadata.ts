@@ -29,8 +29,8 @@ export const blogMetadata: BlogPostMetadata[] = [
       vi: "Theo dõi World Cup trực tiếp trên ThePickleHub",
     },
     heroImage: {
-      src: "/images/blog/pickleball-world-cup-2026-da-nang-hero.webp",
-      alt: "Pickleball World Cup 2026 in Da Nang, Vietnam — two players at the net on a blue court with the Dragon Bridge behind them.",
+      src: "/images/blog/pickleball-world-cup-2026-da-nang-results-hero.webp",
+      alt: "Illustration: a courtside results board glows beside a blue championship court at the Pickleball World Cup 2026 in Da Nang, Vietnam, as a player walks past carrying a paddle.",
     },
     titleEn: "Pickleball World Cup 2026 Results: Vietnam's Matches, Live from Da Nang",
     titleVi: "Kết quả Pickleball World Cup 2026 Đà Nẵng: trận của Việt Nam, cập nhật từng phút",
