@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-// The home-page strip: hides when the feed is empty, features a Vietnamese
-// player's live match with its score when one is on court, links to /live in
-// the right language, and falls back gracefully when nothing is live.
+// The home-page livescore card: hides unless a match is live, shows the logo
+// banner + a "Livescore" header, renders up to two live matches with a score
+// per side (Vietnamese players first and highlighted), and links to /live.
 
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
@@ -14,58 +14,68 @@ vi.mock("@/hooks/useWcProLive", async (orig) => ({ ...(await orig<typeof import(
 import { WorldCupLiveCard } from "../WorldCupLiveCard";
 
 const match = (over: Partial<WcProMatchRow>): WcProMatchRow => ({
-  match_id: "m1", category_id: "pro_singles_mens", division_name: null, round_name: "R32",
+  match_id: "m1", category_id: "pro_singles_mens", division_name: null, round_name: "Round of 32",
   round_num: 3, entry_a_name: "Nguyễn Văn Linh", entry_a_seed: 1, entry_b_name: "Kento Tamaki",
   entry_b_seed: 2, current_a: 11, current_b: 7, games_json: [], serving_side: "A",
   leader_side: "A", status: "in_progress", is_vietnam: true, venue_name: null,
   court_label: null, scheduled_at: null, ...over,
 });
-const feed = (events: WcProEventGroup[], liveCount = 0): WcProFeed => ({ events, liveCount });
+const feed = (live: WcProMatchRow[], liveCount = live.length): WcProFeed => ({
+  events: live.length ? [{ event: "pro_singles_mens", live, vietnam: [] } as WcProEventGroup] : [],
+  liveCount,
+});
 const wrap = (lang: "vi" | "en") => render(<MemoryRouter><WorldCupLiveCard language={lang} /></MemoryRouter>);
 
 afterEach(() => { cleanup(); proMock.mockReset(); });
 
 describe("WorldCupLiveCard", () => {
-  it("hides when there is nothing to show", () => {
-    proMock.mockReturnValue({ data: { events: [], liveCount: 0 }, isLoading: false, isError: false });
+  it("hides when nothing is live, even if there are scheduled events", () => {
+    proMock.mockReturnValue({
+      data: { events: [{ event: "pro_singles_mens", live: [], vietnam: [match({ status: "scheduled" })] }], liveCount: 0 },
+      isLoading: false, isError: false,
+    });
     const { container } = wrap("vi");
     expect(container.querySelector(".wclc")).toBeNull();
   });
 
-  it("features a Vietnamese live match with its score and links to /vi/live", () => {
+  it("shows the logo banner, the Livescore header and the live count", () => {
+    proMock.mockReturnValue({ data: feed([match({})], 4), isLoading: false, isError: false });
+    const { container } = wrap("vi");
+    expect(screen.getByText("Livescore")).toBeTruthy();
+    expect(screen.getByText(/4 trận/)).toBeTruthy();
+    const img = container.querySelector(".wclc-banner img");
+    expect(img?.getAttribute("src")).toBe("/images/world-cup-2026-logo.jpg");
+  });
+
+  it("shows a score per side and highlights the Vietnamese name and the leader", () => {
+    const { container } = (proMock.mockReturnValue({ data: feed([match({ current_a: 11, current_b: 7, leader_side: "A" })]), isLoading: false, isError: false }), wrap("vi"));
+    expect(screen.getByText("Nguyễn Văn Linh")).toBeTruthy();
+    expect(screen.getByText("11")).toBeTruthy();
+    expect(screen.getByText("7")).toBeTruthy();
+    const vn = [...container.querySelectorAll(".wclc-m-name--vn")].map((n) => n.textContent);
+    expect(vn).toContain("Nguyễn Văn Linh");
+    expect(vn).not.toContain("Kento Tamaki");
+    expect(container.querySelectorAll(".wclc-m-row--win").length).toBe(1);
+  });
+
+  it("shows at most two matches, Vietnamese first", () => {
     proMock.mockReturnValue({
-      data: feed([{ event: "pro_singles_mens", live: [match({ current_a: 11, current_b: 7 })], vietnam: [] }], 3),
+      data: feed([
+        match({ match_id: "f1", entry_a_name: "Patrick Kawka", entry_b_name: "Yuta Yoshida", is_vietnam: false }),
+        match({ match_id: "f2", entry_a_name: "Alex Newman", entry_b_name: "Sam Tan", is_vietnam: false }),
+        match({ match_id: "vn", entry_a_name: "Lê Xuân Đức", entry_b_name: "Stanley Owusu" }),
+      ], 3),
       isLoading: false, isError: false,
     });
     const { container } = wrap("vi");
-    expect(screen.getByText("Nguyễn Văn Linh")).toBeTruthy();
-    expect(screen.getByText("11-7")).toBeTruthy();
-    expect(screen.getByText(/3 trận/)).toBeTruthy();
-    expect(container.querySelector("a.wclc")?.getAttribute("href")).toBe("/vi/live");
-    // Vietnamese side is highlighted, opponent is not
-    const vn = [...container.querySelectorAll(".wclc-side--vn")].map((n) => n.textContent);
-    expect(vn).toContain("Nguyễn Văn Linh");
-    expect(vn).not.toContain("Kento Tamaki");
+    expect(container.querySelectorAll(".wclc-m").length).toBe(2);
+    expect(screen.getByText("Lê Xuân Đức")).toBeTruthy(); // VN pulled into the top two
   });
 
-  it("prefers a Vietnamese match even when another is live first", () => {
-    proMock.mockReturnValue({
-      data: feed([
-        { event: "pro_singles_mens", live: [
-          match({ match_id: "foreign", entry_a_name: "Patrick Kawka", entry_b_name: "Yuta Yoshida", is_vietnam: false }),
-          match({ match_id: "vn", entry_a_name: "Lê Xuân Đức", entry_b_name: "Stanley Owusu", current_a: 5, current_b: 2 }),
-        ], vietnam: [] },
-      ], 2),
-      isLoading: false, isError: false,
-    });
-    wrap("vi");
-    expect(screen.getByText("Lê Xuân Đức")).toBeTruthy();
-    expect(screen.queryByText("Patrick Kawka")).toBeNull();
-  });
-
-  it("links to /live in English", () => {
-    proMock.mockReturnValue({ data: feed([{ event: "pro_singles_mens", live: [match({})], vietnam: [] }], 1), isLoading: false, isError: false });
+  it("links to /live in the right language", () => {
+    proMock.mockReturnValue({ data: feed([match({})]), isLoading: false, isError: false });
     const { container } = wrap("en");
-    expect(container.querySelector("a.wclc")?.getAttribute("href")).toBe("/live");
+    const links = [...container.querySelectorAll("a")].map((a) => a.getAttribute("href"));
+    expect(links).toContain("/live");
   });
 });
