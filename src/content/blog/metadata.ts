@@ -32,14 +32,14 @@ export const blogMetadata: BlogPostMetadata[] = [
       src: "/images/blog/pickleball-world-cup-2026-da-nang-results-hero.webp",
       alt: "Illustration: a courtside results board glows beside a blue championship court at the Pickleball World Cup 2026 in Da Nang, Vietnam, as a player walks past carrying a paddle.",
     },
-    titleEn: "Pickleball World Cup 2026 Results: Vietnam's Matches, Live from Da Nang",
-    titleVi: "Kết quả Pickleball World Cup 2026 Đà Nẵng: trận của Việt Nam, cập nhật từng phút",
-    metaTitleEn: "Pickleball World Cup 2026 Results: Vietnam Matches",
+    titleEn: "Pickleball World Cup 2026 Da Nang Results: Every Pro Match, Day by Day",
+    titleVi: "Kết quả Pickleball World Cup 2026 Đà Nẵng: mọi trận Pro, cập nhật từng phút",
+    metaTitleEn: "Pickleball World Cup 2026 Results: Every Pro Match",
     metaTitleVi: "Kết quả Pickleball World Cup 2026 Đà Nẵng",
     metaDescriptionEn:
-      "Pickleball World Cup 2026 Da Nang results: every match with a Vietnamese player plus live scores from the five Pro draws, updated continuously.",
+      "Pickleball World Cup 2026 Da Nang results: every match in the five Pro draws, live and completed, with per-game scores and winners.",
     metaDescriptionVi:
-      "Kết quả Pickleball World Cup 2026 Đà Nẵng: trận của Việt Nam và trận đang đấu, tỉ số từng ván, cập nhật liên tục.",
+      "Kết quả Pickleball World Cup 2026 Đà Nẵng: mọi trận Pro ở năm nội dung cá nhân, tỉ số từng ván, cập nhật liên tục.",
   },
   {
     slug: "pickleball-world-cup-2026-mens-pro-doubles-field",

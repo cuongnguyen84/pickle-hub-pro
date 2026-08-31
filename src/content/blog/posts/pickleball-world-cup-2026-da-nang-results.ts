@@ -38,10 +38,10 @@ const post: BlogPost = {
   },
   content: {
     en: {
-      title: "Pickleball World Cup 2026 Results: Vietnam's Matches, Live from Da Nang",
-      metaTitle: "Pickleball World Cup 2026 Results: Vietnam Matches",
+      title: "Pickleball World Cup 2026 Da Nang Results: Every Pro Match, Day by Day",
+      metaTitle: "Pickleball World Cup 2026 Results: Every Pro Match",
       metaDescription:
-        "Pickleball World Cup 2026 Da Nang results: every match with a Vietnamese player plus live scores from the five Pro draws, updated continuously.",
+        "Pickleball World Cup 2026 Da Nang results: every match in the five Pro draws, live and completed, with per-game scores and winners.",
       sections: [
         {
           heading: "Latest results",
@@ -131,10 +131,10 @@ const post: BlogPost = {
       ],
     },
     vi: {
-      title: "Kết quả Pickleball World Cup 2026 Đà Nẵng: trận của Việt Nam, cập nhật từng phút",
+      title: "Kết quả Pickleball World Cup 2026 Đà Nẵng: mọi trận Pro, cập nhật từng phút",
       metaTitle: "Kết quả Pickleball World Cup 2026 Đà Nẵng",
       metaDescription:
-        "Kết quả Pickleball World Cup 2026 Đà Nẵng: trận của Việt Nam và trận đang đấu, tỉ số từng ván, cập nhật liên tục.",
+        "Kết quả Pickleball World Cup 2026 Đà Nẵng: mọi trận Pro ở năm nội dung cá nhân, tỉ số từng ván, cập nhật liên tục.",
       sections: [
         {
           heading: "Kết quả mới nhất",
