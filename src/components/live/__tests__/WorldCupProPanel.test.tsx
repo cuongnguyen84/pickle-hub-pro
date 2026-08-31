@@ -64,6 +64,37 @@ describe("WorldCupProContent", () => {
     expect(within(container).getByRole("tab", { name: /Women's Singles/ })).toBeTruthy();
   });
 
+  it("searches by player name across all events, diacritic-insensitive", () => {
+    render(
+      <WorldCupProContent
+        feed={feed([
+          evt({ event: "pro_singles_mens", vietnam: [match({ match_id: "a", entry_a_name: "Nguyễn Việt Hoàng", entry_b_name: "Drake Palm", status: "completed", leader_side: "B" })] }),
+          evt({ event: "pro_mixed", vietnam: [match({ match_id: "b", category_id: "pro_mixed", entry_a_name: "Trần Đức Minh", entry_b_name: "Long Phạm", status: "completed", leader_side: "A" })] }),
+        ])}
+        language="vi"
+      />,
+    );
+    const box = screen.getByRole("searchbox");
+    // "hoang" (no diacritics, lowercase) finds "Nguyễn Việt Hoàng", in a different event than the default tab
+    fireEvent.change(box, { target: { value: "hoang" } });
+    expect(screen.getByText(/Nguyễn Việt Hoàng/)).toBeTruthy();
+    expect(screen.queryByText(/Trần Đức Minh/)).toBeNull();
+    // result carries its event label
+    expect(screen.getByText(/Đơn nam ·/)).toBeTruthy();
+    // sub-tabs are hidden while searching
+    expect(document.querySelector(".wcpro-subtab")).toBeNull();
+  });
+
+  it("shows an empty state when nothing matches, and restores on clear", () => {
+    render(<WorldCupProContent feed={feed([evt({ event: "pro_singles_mens", vietnam: [match({ status: "completed" })] })])} language="vi" />);
+    const box = screen.getByRole("searchbox");
+    fireEvent.change(box, { target: { value: "zzzznobody" } });
+    expect(screen.getByText(/Không thấy trận nào/)).toBeTruthy();
+    fireEvent.change(box, { target: { value: "" } });
+    // back to the normal per-event view
+    expect(document.querySelector(".wcpro-subtab")).not.toBeNull();
+  });
+
   it("shows a completed match as a kept result with its score", () => {
     render(<WorldCupProContent feed={feed([evt({ event: "pro_singles_womens", vietnam: [match({ category_id: "pro_singles_womens", status: "completed", games_json: [{ a: 21, b: 15 }], current_a: null, current_b: null, leader_side: "A" })] })])} language="vi" />);
     expect(screen.getByText("Kết thúc")).toBeTruthy();

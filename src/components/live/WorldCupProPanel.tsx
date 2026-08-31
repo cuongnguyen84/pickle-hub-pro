@@ -28,7 +28,21 @@ const EVENT_LABEL: Record<ProEvent, { vi: string; en: string }> = {
 // VN-vs-VN match lights both). Uses the parser's detection — one source of truth.
 const sideIsVietnam = (name: string | null): boolean => isVietnameseName(name);
 
-function MatchRow({ m, lang }: { m: WcProMatchRow; lang: Lang }) {
+// Fold a name for search: drop diacritics and case so "hoang", "Hoàng" and
+// "HOÀNG" all match, and "duc minh" finds "ĐỨC MINH".
+function foldName(s: string | null | undefined): string {
+  return (s ?? "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toLowerCase();
+}
+
+// Rank for ordering search results: live first, then finished, then upcoming.
+const STATUS_RANK: Record<string, number> = { in_progress: 0, completed: 1, scheduled: 2 };
+
+function MatchRow({ m, lang, eventLabel }: { m: WcProMatchRow; lang: Lang; eventLabel?: string }) {
   const aVN = sideIsVietnam(m.entry_a_name);
   const bVN = sideIsVietnam(m.entry_b_name);
   const line = scoreLine(m);
@@ -36,7 +50,7 @@ function MatchRow({ m, lang }: { m: WcProMatchRow; lang: Lang }) {
   return (
     <div className={`wcpro-match${isLive ? " wcpro-match--live" : ""}`}>
       <div className="wcpro-match-head">
-        <span className="wcpro-round">{m.round_name ?? ""}</span>
+        <span className="wcpro-round">{eventLabel ? `${eventLabel} · ` : ""}{m.round_name ?? ""}</span>
         {isLive ? (
           <span className="wcpro-live-tag"><span className="wcpro-dot" aria-hidden="true" />{lang === "vi" ? "Trực tiếp" : "Live"}</span>
         ) : m.status === "completed" ? (
@@ -75,36 +89,90 @@ export function WorldCupProContent({ feed, language }: { feed: WcProFeed; langua
   // Default to the first event that has a live match, else the first event.
   const defaultEvent = (events.find((e) => e.live.length > 0) ?? events[0])?.event;
   const [active, setActive] = useState<ProEvent | undefined>(defaultEvent);
+  const [query, setQuery] = useState("");
+
+  // Every stored match across all events (live + Vietnamese), for name search.
+  const allMatches = useMemo(() => events.flatMap((e) => [...e.live, ...e.vietnam]), [events]);
+  const q = foldName(query).trim();
+  const results = useMemo(() => {
+    if (!q) return [];
+    return allMatches
+      .filter((m) => foldName(m.entry_a_name).includes(q) || foldName(m.entry_b_name).includes(q))
+      .sort((a, b) => (STATUS_RANK[a.status] ?? 3) - (STATUS_RANK[b.status] ?? 3));
+  }, [allMatches, q]);
+
   // Keep the selection valid as the feed changes (an event can empty out).
   const activeEvent = events.find((e) => e.event === active) ?? events[0];
-
   if (!activeEvent) return null;
+  const searching = q.length > 0;
   const shown = [...activeEvent.live, ...activeEvent.vietnam];
 
   return (
     <div className="wcpro">
       <style>{WCPRO_CSS}</style>
-      <div className="wcpro-subtabs" role="tablist" aria-label={language === "vi" ? "Nội dung" : "Events"}>
-        {events.map((ev) => (
-          <button
-            key={ev.event}
-            type="button"
-            role="tab"
-            aria-selected={ev.event === activeEvent.event}
-            className={`wcpro-subtab${ev.event === activeEvent.event ? " active" : ""}`}
-            onClick={() => setActive(ev.event)}
-          >
-            {EVENT_LABEL[ev.event][language]}
-            {ev.live.length > 0 && <span className="wcpro-subtab-live" aria-label={language === "vi" ? "đang đấu" : "live"}>{ev.live.length}</span>}
+
+      <div className="wcpro-search">
+        <span className="wcpro-search-ic" aria-hidden="true">⌕</span>
+        <input
+          type="search"
+          className="wcpro-search-in"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={language === "vi" ? "Tìm theo tên tay vợt…" : "Search by player name…"}
+          aria-label={language === "vi" ? "Tìm trận theo tên tay vợt" : "Search matches by player name"}
+        />
+        {query && (
+          <button type="button" className="wcpro-search-x" onClick={() => setQuery("")} aria-label={language === "vi" ? "Xoá tìm kiếm" : "Clear search"}>
+            ×
           </button>
-        ))}
+        )}
       </div>
 
-      <div className="wcpro-match-grid">
-        {shown.map((m) => (
-          <MatchRow key={m.match_id} m={m} lang={language} />
-        ))}
-      </div>
+      {searching ? (
+        results.length > 0 ? (
+          <>
+            <p className="wcpro-count">
+              {language === "vi" ? `${results.length} trận` : `${results.length} ${results.length === 1 ? "match" : "matches"}`}
+            </p>
+            <div className="wcpro-match-grid">
+              {results.map((m) => (
+                <MatchRow key={m.match_id} m={m} lang={language} eventLabel={EVENT_LABEL[m.category_id][language]} />
+              ))}
+            </div>
+          </>
+        ) : (
+          <p className="wcpro-empty">
+            {language === "vi"
+              ? `Không thấy trận nào cho “${query}”. Chỉ tìm được trong các trận đang đấu và trận có tay vợt Việt Nam.`
+              : `No matches for “${query}”. Search covers live matches and matches with Vietnamese players.`}
+          </p>
+        )
+      ) : (
+        <>
+          <div className="wcpro-subtabs" role="tablist" aria-label={language === "vi" ? "Nội dung" : "Events"}>
+            {events.map((ev) => (
+              <button
+                key={ev.event}
+                type="button"
+                role="tab"
+                aria-selected={ev.event === activeEvent.event}
+                className={`wcpro-subtab${ev.event === activeEvent.event ? " active" : ""}`}
+                onClick={() => setActive(ev.event)}
+              >
+                {EVENT_LABEL[ev.event][language]}
+                {ev.live.length > 0 && <span className="wcpro-subtab-live" aria-label={language === "vi" ? "đang đấu" : "live"}>{ev.live.length}</span>}
+              </button>
+            ))}
+          </div>
+
+          <div className="wcpro-match-grid">
+            {shown.map((m) => (
+              <MatchRow key={m.match_id} m={m} lang={language} />
+            ))}
+          </div>
+        </>
+      )}
+
       <p className="wcpro-source">
         {language === "vi"
           ? "Trận đang đấu + trận có tay vợt Việt Nam · nguồn: ban tổ chức (sporttora.com)"
@@ -115,6 +183,16 @@ export function WorldCupProContent({ feed, language }: { feed: WcProFeed; langua
 }
 
 const WCPRO_CSS = `
+.wcpro-search { display: flex; align-items: center; gap: 8px; border: 1px solid var(--tl-border); background: var(--tl-bg-elev); border-radius: 999px; padding: 0 12px; margin-bottom: 14px; }
+.wcpro-search:focus-within { border-color: var(--tl-fg); }
+.wcpro-search-ic { color: var(--tl-dim); font-size: 16px; line-height: 1; flex: none; }
+.wcpro-search-in { flex: 1 1 auto; min-width: 0; background: none; border: none; outline: none; color: var(--tl-fg); font-family: inherit; font-size: 14px; padding: 9px 0; }
+.wcpro-search-in::placeholder { color: var(--tl-dim); }
+.wcpro-search-in::-webkit-search-cancel-button { display: none; }
+.wcpro-search-x { flex: none; background: none; border: none; color: var(--tl-dim); font-size: 20px; line-height: 1; cursor: pointer; padding: 0 2px; }
+.wcpro-search-x:hover { color: var(--tl-fg); }
+.wcpro-count { margin: 0 0 10px; font-size: 12px; font-weight: 700; color: var(--tl-dim); }
+.wcpro-empty { margin: 6px 0 0; font-size: 13.5px; color: var(--tl-dim); line-height: 1.5; }
 .wcpro-subtabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; scrollbar-width: thin; }
 .wcpro-subtab { flex: none; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--tl-dim); background: var(--tl-bg-elev); border: 1px solid var(--tl-border); border-radius: 999px; padding: 6px 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; transition: color .12s, border-color .12s; }
 .wcpro-subtab:hover { color: var(--tl-fg); }
