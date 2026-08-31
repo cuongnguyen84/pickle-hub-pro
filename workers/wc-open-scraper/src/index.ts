@@ -256,12 +256,15 @@ async function sbUpsertProMatches(env: Env, rows: ReturnType<typeof proRowBody>[
   if (!res.ok) throw new Error(`upsert pro ${res.status}: ${await res.text()}`);
 }
 
-/** Mark a stored match `completed`, keeping its last-observed score. */
+function idInList(matchIds: string[]): string {
+  return matchIds.map((id) => `"${id}"`).join(",");
+}
+
+/** Mark stored matches `completed`, keeping their last-observed score. */
 async function sbMarkProCompleted(env: Env, matchIds: string[], nowIso: string): Promise<void> {
   if (matchIds.length === 0) return;
-  const inList = matchIds.map((id) => `"${id}"`).join(",");
   const res = await fetch(
-    `${env.SUPABASE_URL}/rest/v1/wc_pro_matches?match_id=in.(${inList})`,
+    `${env.SUPABASE_URL}/rest/v1/wc_pro_matches?match_id=in.(${idInList(matchIds)})`,
     {
       method: "PATCH",
       headers: {
@@ -274,6 +277,23 @@ async function sbMarkProCompleted(env: Env, matchIds: string[], nowIso: string):
     },
   );
   if (!res.ok) throw new Error(`mark completed ${res.status}: ${await res.text()}`);
+}
+
+/** Delete stored matches — used for scheduled ones that vanished unplayed. */
+async function sbDeleteProMatches(env: Env, matchIds: string[]): Promise<void> {
+  if (matchIds.length === 0) return;
+  const res = await fetch(
+    `${env.SUPABASE_URL}/rest/v1/wc_pro_matches?match_id=in.(${idInList(matchIds)})`,
+    {
+      method: "DELETE",
+      headers: {
+        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        Prefer: "return=minimal",
+      },
+    },
+  );
+  if (!res.ok) throw new Error(`delete pro ${res.status}: ${await res.text()}`);
 }
 
 export interface ProScrapeResult {
@@ -313,13 +333,19 @@ export async function runScrapePro(env: Env): Promise<ProScrapeResult> {
   const changed = toStore.filter((m) => proRowChanged(m, existing.get(m.matchId)));
   await sbUpsertProMatches(env, changed.map((m) => proRowBody(m, nowIso)));
 
-  // History: rows we hold as not-yet-completed that the source no longer lists
-  // have finished — freeze them as completed with their last-seen score.
+  // A stored row the source no longer lists needs one of two fates, and getting
+  // it wrong is what filled the table with scoreless "completed" rows:
+  //   * it was in_progress → it finished. Mark completed, keep the last score
+  //     we saw (the source never carries a finished match's final score).
+  //   * it was scheduled → it never started under this id (rescheduled, or the
+  //     draw moved). Delete it. Marking it completed would publish a match that
+  //     was never played, with a null score.
   const sourceIds = new Set(toStore.map((m) => m.matchId));
-  const nowCompleted = [...existing.values()]
-    .filter((r) => r.status !== "completed" && !sourceIds.has(r.match_id))
-    .map((r) => r.match_id);
+  const gone = [...existing.values()].filter((r) => !sourceIds.has(r.match_id));
+  const nowCompleted = gone.filter((r) => r.status === "in_progress").map((r) => r.match_id);
+  const toDelete = gone.filter((r) => r.status === "scheduled").map((r) => r.match_id);
   await sbMarkProCompleted(env, nowCompleted, nowIso);
+  await sbDeleteProMatches(env, toDelete);
 
   return {
     ok: true,
