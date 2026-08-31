@@ -9,6 +9,7 @@ import { formatTime, formatRelative } from "@/lib/format-datetime";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
+import { WorldCupOpenPanel } from "@/components/live/WorldCupOpenPanel";
 
 type Filter = "all" | "live" | "scheduled" | "ended";
 
@@ -181,6 +182,12 @@ const Live = () => {
               : "Matches streaming right now, upcoming within the next 24 hours, and replays from the past week. Pulled live from the database — no cache."}
           </p>
         </header>
+
+        {/* World Cup 2026 OPEN national-team board — tournament-week panel,
+            self-retiring after Sep 7 and self-hiding when the feed is empty.
+            Above the filters because during the World Cup it is the reason most
+            visitors are on /live. */}
+        <WorldCupOpenPanel language={language} />
 
         {/* Counts come from the same `= []` defaults the body no longer trusts:
             rendering "Live 0 · Replays 0" directly above a network error is the

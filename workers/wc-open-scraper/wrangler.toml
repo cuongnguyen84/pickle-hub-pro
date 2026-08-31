@@ -1,0 +1,24 @@
+name = "wc-open-scraper"
+main = "src/index.ts"
+compatibility_date = "2026-08-31"
+compatibility_flags = ["nodejs_compat"]
+
+# ── Cron trigger — INTENTIONALLY COMMENTED OUT ─────────────────────────────
+# This worker polls a third-party public site (sporttora.com). It is NOT
+# deployed with an active cron until Cuong approves the /live World Cup panel.
+# The handler itself already refuses to hit the network outside the Sep 3–6
+# match window (see withinMatchWindow), so once enabled a 1-minute cron only
+# actually fetches during play.
+#
+# To enable after approval, uncomment and `wrangler deploy` from this dir:
+# [triggers]
+# crons = ["* * * * *"]   # every minute; handler no-ops outside the window
+
+[vars]
+SUPABASE_URL = "https://ajvlcamxemgbxduhiqrl.supabase.co"
+
+# [secrets] — set via `wrangler secret put` before first deploy:
+#   SUPABASE_SERVICE_ROLE_KEY  PostgREST writes (bypasses RLS)
+#   SCRAPER_AUTH_SECRET        HMAC for the on-demand POST /scrape
+#   TELEGRAM_BOT_TOKEN         parse-guard + error alerts (optional)
+#   TELEGRAM_CHAT_ID           where alerts land (optional)

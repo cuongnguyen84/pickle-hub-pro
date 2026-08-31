@@ -1,0 +1,10 @@
+{
+  "name": "wc-open-scraper",
+  "version": "1.0.0",
+  "private": true,
+  "description": "World Cup 2026 OPEN national-team live feed scraper (Cloudflare Worker)",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev"
+  }
+}

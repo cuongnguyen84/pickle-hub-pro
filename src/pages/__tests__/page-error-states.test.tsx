@@ -84,6 +84,12 @@ vi.mock("@/components/content", () => ({
   EmptyState: () => null,
 }));
 
+vi.mock("@/hooks/useWcOpenLive", () => ({
+  // The World Cup panel is orthogonal to the Live error state under test; an
+  // empty feed makes it self-hide so it never reaches the real useQuery.
+  useWcOpenLive: () => ({ data: { groups: [], hasLive: false, drawOnly: true }, isLoading: false, isError: false }),
+}));
+
 vi.mock("@/hooks/usePullToRefresh", () => ({
   usePullToRefresh: () => ({ pullDistance: 0, isRefreshing: false, isPulling: false }),
 }));
