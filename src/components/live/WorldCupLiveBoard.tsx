@@ -44,11 +44,11 @@ export function WorldCupLiveBoard({ language }: { language: Lang }) {
   const activeTab: Tab = tab === "pro" && !proHasData && teamHasData ? "team" : tab;
 
   return (
-    <section className="wcb" aria-label={language === "vi" ? "World Cup Đà Nẵng — trực tiếp" : "World Cup Da Nang — live"}>
+    <section className="wcb" aria-label={language === "vi" ? "Pickleball World Cup Đà Nẵng — trực tiếp" : "Pickleball World Cup Da Nang — live"}>
       <style>{WCB_CSS}</style>
       <div className="wcb-head">
         <span className="wcb-kicker">🏓 Pickleball World Cup 2026 · Đà Nẵng</span>
-        <h2 className="wcb-title">{language === "vi" ? "Trực tiếp giải" : "Live from the tournament"}</h2>
+        <h2 className="wcb-title">{language === "vi" ? "Pickleball World Cup 2026 — Trực tiếp" : "Pickleball World Cup 2026 — Live"}</h2>
       </div>
 
       <div className="wcb-tabs" role="tablist" aria-label={language === "vi" ? "Nhóm giải" : "Competitions"}>

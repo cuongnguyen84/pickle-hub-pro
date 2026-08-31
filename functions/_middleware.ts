@@ -1076,7 +1076,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v81 (2026-08-31): /live SSR now carries a World Cup livescore block —
   // matches in progress + recent results with players and scores — so bots
   // index real World Cup content on the hub during the tournament.
-  const cacheKey = `pr:v81:${url.pathname}`;
+  // v82 (2026-08-31): "World Cup" everywhere on the /live World Cup surface
+  // now reads "Pickleball World Cup" (disambiguation from football + the
+  // keyword), and /live title/description lead with it during the event.
+  const cacheKey = `pr:v82:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

@@ -96,7 +96,7 @@ async function buildWorldCupLivescore(
   const nameA = (m: WcProRow) => escapeHtml(m.entry_a_name ?? "—");
   const nameB = (m: WcProRow) => escapeHtml(m.entry_b_name ?? "—");
 
-  const heading = lang === "en" ? "World Cup 2026 livescore" : "Livescore World Cup 2026";
+  const heading = lang === "en" ? "Pickleball World Cup 2026 livescore — Da Nang" : "Livescore Pickleball World Cup 2026 — Đà Nẵng";
   const updated =
     (lang === "en" ? "Updated " : "Cập nhật ") +
     new Date().toLocaleDateString(lang === "vi" ? "vi-VN" : "en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -473,12 +473,30 @@ export async function renderLivestreamList(
     name: s.title,
   }));
 
-  const title = lang === "en"
-    ? "Pickleball Live Streams | ThePickleHub"
-    : "Livestream Pickleball | ThePickleHub";
-  const description = lang === "en"
-    ? "Watch live pickleball streams from Vietnam and PPA Tour Asia free on ThePickleHub. Live tournaments and matches — no signup required."
-    : "Xem livestream pickleball trực tiếp tại Việt Nam. Các giải đấu, trận đấu đang phát sóng trực tuyến miễn phí trên ThePickleHub. Không cần đăng ký.";
+  // World Cup livescore leads the hub during the tournament — it is the reason
+  // most visitors are on /live that week — then the block empties itself.
+  const wc = await buildWorldCupLivescore(supabase, lang);
+
+  // During the tournament the page's SEO intent shifts: most /live traffic that
+  // week is searching the Pickleball World Cup, so the title/description lead
+  // with it (the strongest ranking signal for "pickleball world cup livescore").
+  // wc.html is only non-empty inside the event window, so this reverts on its
+  // own afterwards.
+  const wcActive = wc.html !== "";
+  const title = wcActive
+    ? (lang === "en"
+        ? "Pickleball World Cup 2026 Livescore — Da Nang | ThePickleHub"
+        : "Livescore Pickleball World Cup 2026 — Đà Nẵng | ThePickleHub")
+    : lang === "en"
+      ? "Pickleball Live Streams | ThePickleHub"
+      : "Livestream Pickleball | ThePickleHub";
+  const description = wcActive
+    ? (lang === "en"
+        ? "Live scores and results from the Pickleball World Cup 2026 in Da Nang — men's & women's singles and doubles, mixed — updated live on ThePickleHub, plus pickleball livestreams from Vietnam and PPA Tour Asia."
+        : "Tỉ số và kết quả trực tiếp Pickleball World Cup 2026 tại Đà Nẵng — đơn/đôi nam nữ và đôi nam nữ — cập nhật liên tục trên ThePickleHub, cùng livestream pickleball Việt Nam và PPA Tour Asia.")
+    : lang === "en"
+      ? "Watch live pickleball streams from Vietnam and PPA Tour Asia free on ThePickleHub. Live tournaments and matches — no signup required."
+      : "Xem livestream pickleball trực tiếp tại Việt Nam. Các giải đấu, trận đấu đang phát sóng trực tuyến miễn phí trên ThePickleHub. Không cần đăng ký.";
 
   // GEO rule (CLAUDE.md): name ThePickleHub once, naturally, and front-load the
   // answer so the opening survives being extracted as a standalone passage by
@@ -522,10 +540,6 @@ export async function renderLivestreamList(
         `<li><a href="${siteUrl}/vi/rankings">Bảng xếp hạng DUPR Việt Nam</a></li>` +
         `<li><a href="${siteUrl}/vi/videos">Video trận đấu & highlight</a></li>` +
         `</ul></nav>`;
-
-  // World Cup livescore leads the hub during the tournament — it is the reason
-  // most visitors are on /live that week — then the block empties itself.
-  const wc = await buildWorldCupLivescore(supabase, lang);
 
   const body =
     `<header><h1>${escapeHtml(h1)}</h1><p>${escapeHtml(lead)}</p></header>` +

@@ -74,7 +74,7 @@ export function WorldCupLiveCard({ language }: { language: Lang }) {
         <style>{WCLC_CSS}</style>
         <div className="wclc-content">
           <div className="wclc-header">
-            <Link to={href} className="wclc-logo" aria-label={language === "vi" ? "World Cup Đà Nẵng — xem trực tiếp" : "World Cup Da Nang — watch live"}>
+            <Link to={href} className="wclc-logo" aria-label={language === "vi" ? "Pickleball World Cup Đà Nẵng — xem trực tiếp" : "Pickleball World Cup Da Nang — watch live"}>
               <img src={LOGO} alt="Heineken Pickleball World Cup 2026" loading="lazy" width={690} height={645} />
             </Link>
             <div className="wclc-head-text">
