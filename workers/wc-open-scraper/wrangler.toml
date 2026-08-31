@@ -10,9 +10,10 @@ compatibility_flags = ["nodejs_compat"]
 # match window (see withinMatchWindow), so once enabled a 1-minute cron only
 # actually fetches during play.
 #
-# To enable after approval, uncomment and `wrangler deploy` from this dir:
-# [triggers]
-# crons = ["* * * * *"]   # every minute; handler no-ops outside the window
+# Enabled 2026-08-31 with Cuong's go-live approval. Every minute; the handler
+# no-ops outside the Aug 30 – Sep 6 match window, so it only fetches during play.
+[triggers]
+crons = ["* * * * *"]
 
 [vars]
 SUPABASE_URL = "https://ajvlcamxemgbxduhiqrl.supabase.co"
