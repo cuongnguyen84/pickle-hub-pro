@@ -482,6 +482,17 @@ function pathCacheTtl(pathname: string): number {
   if (stripped === "/shop" || stripped.startsWith("/shop/")) {
     return HUB_LIST_TTL_SECONDS;
   }
+  // World Cup 2026 results pages carry a live table built from wc_pro_matches
+  // (functions/_lib/render/wc-results.ts). At the 6h default the bot view would
+  // show yesterday's scores on a page whose whole claim is that it is current,
+  // and dateModified would be a lie told to the crawler. Both language twins;
+  // the /vi prefix is already stripped above.
+  if (
+    stripped === "/blog/pickleball-world-cup-2026-da-nang-results" ||
+    stripped === "/blog/ket-qua-pickleball-world-cup-2026-da-nang"
+  ) {
+    return HUB_LIST_TTL_SECONDS;
+  }
   return DEFAULT_TTL_SECONDS;
 }
 

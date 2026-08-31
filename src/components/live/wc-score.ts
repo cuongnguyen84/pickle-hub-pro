@@ -8,7 +8,9 @@
 // finished bo3 reads "14-16, 16-14, 15-6" rather than losing a game, and a
 // single-game knockout still shows its score instead of rendering blank.
 
-import type { WcProMatchRow } from "@/hooks/useWcProLive";
+// Relative, not "@/": functions/_lib/render/wc-results.ts imports scoreLine
+// and the Pages Functions build has no path aliases.
+import type { WcProMatchRow } from "../../hooks/useWcProLive";
 
 /** The games to show for a match, per side. Finished games plus the last game
  * still in view (the one being played when live, or the last one observed

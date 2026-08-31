@@ -23,6 +23,7 @@ import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { blogHeroSrcSet, heroDimsProps } from "@/lib/image-utils";
 import { AdSlot } from "@/components/monetization/AdSlot";
 import { Skeleton } from "@/components/ui/skeleton";
+import { WorldCupResultsBoard } from "@/components/live/WorldCupResultsBoard";
 
 /**
  * /blog/:slug — English long-form article page.
@@ -357,6 +358,9 @@ const BlogPost = () => {
                       </tbody>
                     </table>
                   </div>
+                )}
+                {section.liveBlock === "wc-results" && (
+                  <WorldCupResultsBoard language="en" />
                 )}
                 {section.internalLinks && section.internalLinks.length > 0 && (
                   <p>

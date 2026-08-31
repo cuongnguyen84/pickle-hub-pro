@@ -247,6 +247,11 @@ const FeaturedImage = ({ src, alt }: { src: string | null; alt: string }) => {
 };
 
 const BlogCard = ({ post, viewCount }: { post: UnifiedPost; viewCount: number }) => {
+  // `language` was read here without being in scope — the "Cập nhật/Updated"
+  // label is inside the truthy branch of `post.refreshed`, so it only throws
+  // once a post is refreshed rather than on every render, which is why it
+  // survived. Caught by tsc while adding the World Cup results post.
+  const { language } = useI18n();
   const [failed, setFailed] = useState(false);
   const showImg = post.coverImageUrl && !failed;
   return (

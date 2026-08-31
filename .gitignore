@@ -86,3 +86,6 @@ graphify-out/
 scripts/seo/.index_coverage.sqlite
 docs/proposals/shop-marketplace/screenshots/
 scripts/seo/.seo_drift.db
+
+# Local coverage output (vitest --coverage)
+coverage/

@@ -24,6 +24,17 @@ import {
 } from "../utils";
 import { blogImageDims } from "../../../src/content/blog/image-dims";
 import { render404 } from "./static-pages";
+import { fetchWcResultsBlock } from "./wc-results";
+
+// The two slugs whose body carries the live World Cup results block. Kept as
+// an explicit pair rather than "does the post declare a liveBlock" so that
+// rendering any other post never costs a wc_pro_matches round trip.
+export const WC_RESULTS_EN_SLUG = "pickleball-world-cup-2026-da-nang-results";
+export const WC_RESULTS_VI_SLUG = "ket-qua-pickleball-world-cup-2026-da-nang";
+/** Literal marker a VI post puts in content_html where the block goes. It
+ *  survives sanitizeBlogHtml as plain text, so substitution happens after
+ *  sanitising and the injected HTML is ours, never the database's. */
+export const WC_RESULTS_MARKER = "[[WC_RESULTS]]";
 
 // ─── Blog ─────────────────────��───────────────────────────
 
@@ -106,11 +117,20 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
   // howToSteps. Those answers are now rendered in the body below, which is
   // what Google requires before the markup is eligible.
   const graph: Record<string, unknown>[] = [jsonLd, buildBreadcrumbJsonLd(crumbs)];
+  const wcBlock =
+    slug === WC_RESULTS_EN_SLUG ? await fetchWcResultsBlock(supabase, "en") : null;
   const [body, faqNode, howToNode] = await Promise.all([
-    renderEnBlogBody(slug, siteUrl),
+    renderEnBlogBody(slug, siteUrl, wcBlock?.html ? { "wc-results": wcBlock.html } : {}),
     enBlogFaqJsonLd(slug),
     enBlogHowToJsonLd(slug),
   ]);
+  // dateModified is the whole point of a live results page: the freshness
+  // signal has to come from the data, not from when the prose was last edited.
+  // Only ever moves it forward — a feed that briefly returns nothing must not
+  // rewind the page to its publish date.
+  if (wcBlock?.dataUpdatedAt && wcBlock.dataUpdatedAt > String(jsonLd.dateModified ?? "")) {
+    jsonLd.dateModified = wcBlock.dataUpdatedAt;
+  }
   if (faqNode) graph.push(faqNode);
   if (howToNode) graph.push(howToNode);
   const blogGraph = { "@context": "https://schema.org", "@graph": graph };
@@ -283,6 +303,18 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
   const p = post as any;
   const url = `${siteUrl}/vi/blog/${slug}`;
 
+  // Fetched here rather than next to the body it decorates: articleSchema is
+  // JSON.stringify'd into extraMeta a few lines below, so dateModified has to
+  // be settled before that. Only the results post pays for the query.
+  const wc =
+    slug === WC_RESULTS_VI_SLUG ? await fetchWcResultsBlock(supabase, "vi") : null;
+  // Freshness comes from the data. Only ever moves forward — an empty feed
+  // must not rewind the page to when the prose was last edited.
+  const viDateModified =
+    wc?.dataUpdatedAt && wc.dataUpdatedAt > String(p.updated_at ?? "")
+      ? wc.dataUpdatedAt
+      : p.updated_at;
+
   // VI-first posts (no EN counterpart) still need a self-referencing hreflang
   // set, mirroring the EN-side fallback in renderBlogPost. Without it, VI-first
   // pages (/vi/blog/san-pickleball-tphcm, .../san-pickleball-da-nang) emitted
@@ -298,7 +330,7 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
     description: p.meta_description,
     image: absImage(p.cover_image_url, siteUrl),
     datePublished: p.published_at,
-    dateModified: p.updated_at,
+    dateModified: viDateModified,
     author: { "@type": "Person", name: "Cuong Nguyen", url: siteUrl },
     publisher: { "@type": "Organization", name: "ThePickleHub", logo: { "@type": "ImageObject", url: DEFAULT_OG_IMAGE } },
     inLanguage: "vi-VN",
@@ -325,6 +357,15 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
     ? `<section><h2>Bài viết liên quan</h2><ul>${relatedItems.map((r) => `<li><a href="${siteUrl}/vi/blog/${r.slug}">${escapeHtml(r.title)}</a></li>`).join("")}</ul></section>`
     : "";
 
+  let viBody = withViCoverImage(
+    sanitizeBlogHtml(normalizeImagesInHtml(p.content_html)),
+    p.cover_image_url,
+    p.title,
+  );
+  // Marker substitution happens after sanitising: the block is our HTML, the
+  // database only says where it goes.
+  viBody = viBody.split(WC_RESULTS_MARKER).join(wc?.html ?? "");
+
   return htmlResponse(buildHtml({
     title: buildTitle(p.meta_title.replace(/ \| ThePickleHub$/, "")),
     description: p.meta_description,
@@ -334,7 +375,7 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
     type: "article",
     lang: "vi",
     extraMeta,
-    bodyContent: `${bc}<article>${withViCoverImage(sanitizeBlogHtml(normalizeImagesInHtml(p.content_html)), p.cover_image_url, p.title)}</article>${relatedSection}`,
+    bodyContent: `${bc}<article>${viBody}</article>${relatedSection}`,
   }));
 }
 

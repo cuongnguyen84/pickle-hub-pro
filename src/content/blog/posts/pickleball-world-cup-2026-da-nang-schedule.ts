@@ -37,6 +37,10 @@ const post: BlogPost = {
             "Updated August 31, 2026 — day two of competition. The Heineken Pickleball World Cup 2026 runs August 30 to September 6, 2026 in Da Nang, Vietnam, and it is really two tournaments on one schedule. The individual tournament started Sunday August 30 at 08:00 with 47 events across eight court clusters on day one, and by the morning of August 31 it had produced champions in 12 of the 69 events, all amateur draws. The Opening Ceremony is Wednesday September 2, on Vietnam's National Day. The national-team competition — the part with Vietnam in it — does not start until Thursday September 3, and the finals close the event on Sunday September 6 at Tien Son, where the five OPEN Pro finals are now timed 10:10 to 14:50. This ThePickleHub schedule page lists both competitions day by day and names the venues. All times are Vietnam time (GMT+7), and the organizers mark the schedule subject to change.",
           internalLinks: [
             {
+              text: "Results so far, updated as they come in",
+              path: "/blog/pickleball-world-cup-2026-da-nang-results",
+            },
+            {
               text: "Tickets, venues and how to watch on FPT Play",
               path: "/blog/pickleball-world-cup-2026-da-nang-how-to-watch",
             },
