@@ -33,6 +33,8 @@ export interface WcResultsFeed {
   days: WcResultsDay[];
   completedCount: number;
   vietnamCount: number;
+  /** True when the budget forced older days down to Vietnamese matches only. */
+  trimmed: boolean;
   /** Newest last_seen_at across the feed — the page's "cập nhật lần cuối". */
   dataUpdatedAt: string | null;
 }
@@ -44,9 +46,17 @@ const COLS =
   "entry_b_name,entry_b_seed,current_a,current_b,games_json,serving_side,leader_side," +
   "status,is_vietnam,venue_name,court_label,scheduled_at,last_seen_at";
 
-// 500 would have started dropping the earliest days around September 4 — day
-// one alone produced 93 Vietnamese results. 1000 is PostgREST's own ceiling.
-const ROW_CAP = 1000;
+// PostgREST returns at most 1000 rows and reports the truncation only in
+// Content-Range, so an unpaginated read looks fine while returning a prefix.
+// Since the scraper started keeping every completed match the table passes that
+// mid-tournament, and the prefix it would return is the newest rows — silently
+// amputating the archive this page exists for.
+const PAGE = 1000;
+/** Hard ceiling on rows read, so a runaway feed cannot hang the article. */
+const MAX_ROWS = 6000;
+/** Completed rows rendered in full before the budget starts protecting only
+ *  Vietnamese matches. Mirrors DISPLAY_CAP in the SSR module. */
+export const DISPLAY_CAP = 600;
 
 /** Vietnam-time calendar day for a real UTC timestamp (GMT+7, no DST). */
 export function vnDayFromUtc(iso: string | null | undefined): string {
@@ -72,20 +82,19 @@ export function matchDayKey(row: {
   return vnDayFromUtc(row.last_seen_at);
 }
 
-/** Exported for tests: the grouping is the part with rules in it. */
-export async function fetchWcResults(): Promise<WcResultsFeed> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const res = await (supabase as any)
-    .from("wc_pro_matches")
-    .select(COLS)
-    .order("last_seen_at", { ascending: false })
-    .limit(ROW_CAP);
-  if (res.error) throw res.error;
-  const rows = (res.data ?? []) as RowWithSeen[];
-
-  const live = rows.filter((r) => r.status === "in_progress");
-  const done = rows.filter((r) => r.status === "completed");
-
+/**
+ * Group completed matches by playing day, newest first, spending a row budget.
+ *
+ * Whole days render until the budget is gone; after that a day contributes only
+ * its Vietnamese matches. Never drops a Vietnamese result — that is the archive
+ * this page exists for, and it is the smallest slice, so protecting it is
+ * nearly free. Mirrors selectDaysForDisplay in the SSR module: change one,
+ * change the other, or a reader and a crawler see different tables.
+ */
+export function selectDaysForDisplay(
+  done: WcProMatchRow[],
+  cap: number,
+): { days: WcResultsDay[]; trimmed: boolean } {
   const byDay = new Map<string, WcProMatchRow[]>();
   for (const m of done) {
     const key = matchDayKey(m);
@@ -93,13 +102,50 @@ export async function fetchWcResults(): Promise<WcResultsFeed> {
     if (bucket) bucket.push(m);
     else byDay.set(key, [m]);
   }
+  const ordered = [...byDay.keys()].sort().reverse();
+
+  const days: WcResultsDay[] = [];
+  let spent = 0;
+  let trimmed = false;
+  for (const day of ordered) {
+    const all = byDay.get(day) ?? [];
+    if (spent + all.length <= cap) {
+      days.push({ day, matches: all });
+      spent += all.length;
+      continue;
+    }
+    const vn = all.filter((m) => m.is_vietnam);
+    if (vn.length !== all.length) trimmed = true;
+    if (vn.length > 0) days.push({ day, matches: vn });
+    spent += vn.length;
+  }
+  return { days, trimmed };
+}
+
+/** Exported for tests: the grouping is the part with rules in it. */
+export async function fetchWcResults(): Promise<WcResultsFeed> {
+  const rows: RowWithSeen[] = [];
+  for (let from = 0; from < MAX_ROWS; from += PAGE) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const res = await (supabase as any)
+      .from("wc_pro_matches")
+      .select(COLS)
+      .order("last_seen_at", { ascending: false })
+      .range(from, from + PAGE - 1);
+    if (res.error) throw res.error;
+    const page = (res.data ?? []) as RowWithSeen[];
+    rows.push(...page);
+    if (page.length < PAGE) break;
+  }
+
+  const live = rows.filter((r) => r.status === "in_progress");
+  const done = rows.filter((r) => r.status === "completed");
+  const { days, trimmed } = selectDaysForDisplay(done, DISPLAY_CAP);
 
   return {
     live,
-    days: [...byDay.keys()]
-      .sort()
-      .reverse()
-      .map((day) => ({ day, matches: byDay.get(day) ?? [] })),
+    days,
+    trimmed,
     completedCount: done.length,
     vietnamCount: done.filter((m) => m.is_vietnam).length,
     dataUpdatedAt:

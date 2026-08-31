@@ -141,8 +141,12 @@ export function WorldCupResultsBoard({ language }: { language: Lang }) {
 
       <p>
         {vi
-          ? "Bảng này gồm mọi trận Pro đang thi đấu và mọi trận Pro có vận động viên Việt Nam, không phải toàn bộ 33 nội dung cá nhân. Tỉ số các trận đã kết thúc lấy từ trang nhánh đấu chính thức của giải, kèm người thắng do nhánh đấu công bố. Một trận Việt Nam vừa rời bảng trực tiếp mà nhánh đấu chưa cập nhật sẽ tạm hiển thị tỉ số ThePickleHub ghi nhận cuối cùng, và được thay bằng kết quả chính thức ở lượt quét sau."
-          : "This table covers every Pro match on court now plus every Pro match involving a Vietnamese player — not all 33 individual events. Completed scores come from the tournament's own bracket pages, with the winner the bracket declares. A Vietnamese match that has just left the live feed before its bracket syncs shows the last score ThePickleHub observed, replaced by the official result on the next pass."}
+          ? "Bảng này gồm mọi trận Pro đang thi đấu và mọi trận Pro đã kết thúc ở năm nội dung cá nhân Pro. Tỉ số lấy từ trang nhánh đấu chính thức của giải, kèm người thắng do nhánh đấu công bố. Một trận vừa rời bảng trực tiếp mà nhánh đấu chưa cập nhật sẽ tạm hiển thị tỉ số ThePickleHub ghi nhận cuối cùng, và được thay bằng kết quả chính thức ở lượt quét sau."
+          : "This table covers every Pro match on court now and every completed match across the five Pro individual draws. Scores come from the tournament's own bracket pages, with the winner the bracket declares. A match that has just left the live feed before its bracket syncs shows the last score ThePickleHub observed, replaced by the official result on the next pass."}
+        {data.trimmed &&
+          (vi
+            ? " Những ngày cũ hơn chỉ hiển thị các trận có vận động viên Việt Nam, để trang không quá nặng trên điện thoại."
+            : " Older days list only the matches involving a Vietnamese player, to keep the page light on a phone.")}
       </p>
     </div>
   );

@@ -9,11 +9,16 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const limit = vi.fn();
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
-    from: () => ({ select: () => ({ order: () => ({ limit }) }) }),
+    from: () => ({ select: () => ({ order: () => ({ range: limit }) }) }),
   },
 }));
 
-import { fetchWcResults, matchDayKey, vnDayFromUtc } from "../useWcResults";
+import {
+  fetchWcResults,
+  matchDayKey,
+  selectDaysForDisplay,
+  vnDayFromUtc,
+} from "../useWcResults";
 
 const row = (over: Record<string, unknown> = {}) => ({
   match_id: "m1",
@@ -80,7 +85,42 @@ describe("matchDayKey", () => {
   });
 });
 
+describe("selectDaysForDisplay", () => {
+  it("keeps whole days until the budget runs out, then Vietnamese matches only", () => {
+    const rows = ["2026-09-02", "2026-09-01"].flatMap((day, di) =>
+      Array.from({ length: 4 }, (_, i) =>
+        row({
+          match_id: `d${di}m${i}`,
+          is_vietnam: i === 0,
+          scheduled_at: `${day}T09:00:00+00:00`,
+        }),
+      ),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ) as any[];
+    const { days, trimmed } = selectDaysForDisplay(rows, 4);
+    expect(days.map((d) => [d.day, d.matches.length])).toEqual([
+      ["2026-09-02", 4],
+      ["2026-09-01", 1],
+    ]);
+    expect(days[1].matches[0].is_vietnam).toBe(true);
+    expect(trimmed).toBe(true);
+  });
+});
+
 describe("fetchWcResults", () => {
+  it("pages past PostgREST's 1000-row ceiling instead of taking the prefix", async () => {
+    const first = Array.from({ length: 1000 }, (_, i) =>
+      row({ match_id: `p${i}`, scheduled_at: "2026-08-31T09:00:00+00:00" }),
+    );
+    const second = [row({ match_id: "tail", scheduled_at: "2026-08-30T09:00:00+00:00" })];
+    limit
+      .mockResolvedValueOnce({ data: first, error: null })
+      .mockResolvedValueOnce({ data: second, error: null });
+    const feed = await fetchWcResults();
+    expect(feed.completedCount).toBe(1001);
+    expect(feed.days.map((d) => d.day)).toContain("2026-08-30");
+  });
+
   it("groups completed matches by playing day, newest day first", async () => {
     limit.mockResolvedValue({
       data: [

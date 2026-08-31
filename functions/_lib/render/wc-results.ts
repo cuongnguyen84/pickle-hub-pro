@@ -8,13 +8,19 @@
 // is live: the same wc_pro_matches rows the /live board reads, rendered to HTML
 // at request time for the bot path and mounted as React for humans.
 //
-// ── What the table actually contains ───────────────────────────────────────
-// Not every Pro match at the tournament. wc-open-scraper stores the live and
-// scheduled rows from the organizers' /live feed plus the COMPLETED matches
-// involving a Vietnamese player, read off the bracket pages; a foreign match
-// that finishes is pruned so the table stays well under PostgREST's row cap.
-// The article says so in as many words — a page headlined "every match" that
-// silently holds only some is worse than one that states its scope.
+// ── What the table contains ────────────────────────────────────────────────
+// Every completed Pro match, read off the bracket pages, plus whatever is on
+// court right now. The scraper kept only Vietnamese finals until 2026-08-31;
+// widening it moved the row-count problem here, which is where it belongs:
+// reads are paginated past PostgREST's 1000-row ceiling, and the page spends a
+// display budget rather than dropping data.
+//
+// The budget spends newest-first: recent playing days render complete, and once
+// the budget runs out the remaining older days render their Vietnamese matches
+// only. Vietnamese results are never dropped — they are the archive this
+// audience comes back for, and they are the smallest slice, so protecting them
+// costs almost nothing. The footnote says exactly this rather than letting a
+// reader guess why an older day looks short.
 //
 // ── Where a score comes from ───────────────────────────────────────────────
 // A completed row is the bracket page's own per-game final with the winner the
@@ -64,10 +70,16 @@ const SELECT_COLS =
   "match_id,category_id,round_name,entry_a_name,entry_b_name,current_a,current_b," +
   "games_json,leader_side,status,is_vietnam,court_label,scheduled_at,last_seen_at";
 
-// 500 would have started dropping the earliest days around September 4: day one
-// alone produced 93 Vietnamese results, and the rows accumulate because the
-// bracket keeps re-confirming them. 1000 is PostgREST's own ceiling.
-const ROW_CAP = 1000;
+// PostgREST returns at most 1000 rows and reports the truncation only in
+// Content-Range, so an unpaginated read looks fine while silently returning a
+// prefix — the oldest days, on a page whose value is the archive.
+const PAGE = 1000;
+/** Hard ceiling on rows read, so a runaway feed cannot hang the render. */
+const MAX_ROWS = 6000;
+/** Completed rows rendered in full before the budget starts protecting only
+ *  Vietnamese matches. ~600 rows is ~90 KB of table HTML — enough for several
+ *  playing days, small enough for a phone on a Vietnamese mobile network. */
+const DISPLAY_CAP = 600;
 
 export const EVENT_LABEL: Record<string, { en: string; vi: string }> = {
   pro_singles_mens: { en: "Men's Pro Singles", vi: "Đơn Pro nam" },
@@ -152,6 +164,50 @@ function table(headers: string[], bodyRows: string[]): string {
   );
 }
 
+export interface WcDisplayDay {
+  day: string;
+  matches: WcResultRow[];
+}
+
+/**
+ * Group completed matches by playing day, newest first, spending a row budget.
+ *
+ * Whole days render until the budget is gone; after that a day contributes only
+ * its Vietnamese matches. Never drops a Vietnamese result — that is the archive
+ * this page exists for, and it is the smallest slice, so protecting it is
+ * nearly free. `trimmed` tells the caller whether to explain the shortfall.
+ */
+export function selectDaysForDisplay<T extends WcResultRow>(
+  done: T[],
+  cap: number,
+): { days: { day: string; matches: T[] }[]; trimmed: boolean } {
+  const byDay = new Map<string, T[]>();
+  for (const m of done) {
+    const key = matchDayKey(m);
+    const bucket = byDay.get(key);
+    if (bucket) bucket.push(m);
+    else byDay.set(key, [m]);
+  }
+  const ordered = [...byDay.keys()].sort().reverse();
+
+  const days: { day: string; matches: T[] }[] = [];
+  let spent = 0;
+  let trimmed = false;
+  for (const day of ordered) {
+    const all = byDay.get(day) ?? [];
+    if (spent + all.length <= cap) {
+      days.push({ day, matches: all });
+      spent += all.length;
+      continue;
+    }
+    const vn = all.filter((m) => m.is_vietnam);
+    if (vn.length !== all.length) trimmed = true;
+    if (vn.length > 0) days.push({ day, matches: vn });
+    spent += vn.length;
+  }
+  return { days, trimmed };
+}
+
 /**
  * Fetch wc_pro_matches and render the results block.
  *
@@ -163,15 +219,19 @@ export async function fetchWcResultsBlock(
   lang: Lang,
 ): Promise<WcResultsBlock> {
   const empty: WcResultsBlock = { html: "", dataUpdatedAt: null, completedCount: 0, liveCount: 0 };
-  let rows: WcResultRow[];
+  const rows: WcResultRow[] = [];
   try {
-    const res = await supabase
-      .from("wc_pro_matches")
-      .select(SELECT_COLS)
-      .order("last_seen_at", { ascending: false })
-      .limit(ROW_CAP);
-    if (res.error) return empty;
-    rows = (res.data ?? []) as WcResultRow[];
+    for (let from = 0; from < MAX_ROWS; from += PAGE) {
+      const res = await supabase
+        .from("wc_pro_matches")
+        .select(SELECT_COLS)
+        .order("last_seen_at", { ascending: false })
+        .range(from, from + PAGE - 1);
+      if (res.error) return empty;
+      const page = (res.data ?? []) as WcResultRow[];
+      rows.push(...page);
+      if (page.length < PAGE) break;
+    }
   } catch {
     return empty;
   }
@@ -208,29 +268,22 @@ export async function fetchWcResultsBlock(
     parts.push(table(headers, live.map((m) => `<tr>${matchRowCells(m, lang)}</tr>`)));
   }
 
-  // Completed matches, newest playing day first. Grouping by the Vietnam day
-  // the match was played is what makes this a results-by-day page rather than
-  // one long list.
-  const byDay = new Map<string, WcResultRow[]>();
-  for (const m of done) {
-    const key = matchDayKey(m);
-    const bucket = byDay.get(key);
-    if (bucket) bucket.push(m);
-    else byDay.set(key, [m]);
-  }
-  const days = [...byDay.keys()].sort().reverse();
-  for (const day of days) {
-    const dayRows = byDay.get(day) ?? [];
-    parts.push(`<h3>${escapeHtml(dayHeading(day, lang))}</h3>`);
-    parts.push(table(headers, dayRows.map((m) => `<tr>${matchRowCells(m, lang)}</tr>`)));
+  // Completed matches, newest playing day first, spending the display budget.
+  const { days, trimmed } = selectDaysForDisplay(done, DISPLAY_CAP);
+  for (const d of days) {
+    parts.push(`<h3>${escapeHtml(dayHeading(d.day, lang))}</h3>`);
+    parts.push(table(headers, d.matches.map((m) => `<tr>${matchRowCells(m, lang)}</tr>`)));
   }
 
+  const trimNote = vi
+    ? " Những ngày cũ hơn chỉ hiển thị các trận có vận động viên Việt Nam, để trang không quá nặng trên điện thoại."
+    : " Older days list only the matches involving a Vietnamese player, to keep the page light on a phone.";
   parts.push(
     `<p>${
       vi
-        ? "Bảng này gồm mọi trận Pro đang thi đấu và mọi trận Pro có vận động viên Việt Nam, không phải toàn bộ 33 nội dung cá nhân. Tỉ số các trận đã kết thúc lấy từ trang nhánh đấu chính thức của giải, kèm người thắng do nhánh đấu công bố. Một trận Việt Nam vừa rời bảng trực tiếp mà nhánh đấu chưa cập nhật sẽ tạm hiển thị tỉ số ThePickleHub ghi nhận cuối cùng, và được thay bằng kết quả chính thức ở lượt quét sau."
-        : "This table covers every Pro match on court now plus every Pro match involving a Vietnamese player — not all 33 individual events. Completed scores come from the tournament's own bracket pages, with the winner the bracket declares. A Vietnamese match that has just left the live feed before its bracket syncs shows the last score ThePickleHub observed, replaced by the official result on the next pass."
-    }</p>`,
+        ? "Bảng này gồm mọi trận Pro đang thi đấu và mọi trận Pro đã kết thúc ở năm nội dung cá nhân Pro. Tỉ số lấy từ trang nhánh đấu chính thức của giải, kèm người thắng do nhánh đấu công bố. Một trận vừa rời bảng trực tiếp mà nhánh đấu chưa cập nhật sẽ tạm hiển thị tỉ số ThePickleHub ghi nhận cuối cùng, và được thay bằng kết quả chính thức ở lượt quét sau."
+        : "This table covers every Pro match on court now and every completed match across the five Pro individual draws. Scores come from the tournament's own bracket pages, with the winner the bracket declares. A match that has just left the live feed before its bracket syncs shows the last score ThePickleHub observed, replaced by the official result on the next pass."
+    }${trimmed ? escapeHtml(trimNote) : ""}</p>`,
   );
 
   return {

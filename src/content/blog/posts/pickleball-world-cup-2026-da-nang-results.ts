@@ -8,10 +8,10 @@ import type { BlogPost } from "@/content/blog/types";
 // goes for a hand-typed "last updated" line, which is why the dateline is
 // generated inside the block. See functions/_lib/render/wc-results.ts.
 //
-// Scope claims here are deliberately narrower than the first draft. wc-open-
-// scraper retains completed matches only where a Vietnamese player is involved
-// (foreign finals are pruned to stay under the row cap), so "every Pro match at
-// the tournament" would have been an overclaim that quietly got worse each day.
+// Scope claims track what the scraper actually stores. It kept Vietnamese
+// finals only until 2026-08-31; it now keeps every completed Pro match, so the
+// page says so. The one thing still worth stating plainly is the boundary: the
+// five Pro draws, not the amateur, junior, senior and master brackets.
 
 const post: BlogPost = {
   slug: "pickleball-world-cup-2026-da-nang-results",
@@ -46,7 +46,7 @@ const post: BlogPost = {
         {
           heading: "Latest results",
           content:
-            "The Heineken Pickleball World Cup 2026 runs August 30 to September 6, 2026 in Da Nang, Vietnam, with 69 events, 156 national teams and nearly 5,000 athletes from more than 80 countries and territories. ThePickleHub tracks the five Pro individual draws here: the table below lists every match on court right now and every Pro match involving a Vietnamese player, with the score game by game and the winner, grouped by the day it was played, newest day first. The feed is read from the organizers' own system every minute, so the \"last updated\" line at the top of the table is a real timestamp rather than the date this article was written.",
+            "The Heineken Pickleball World Cup 2026 runs August 30 to September 6, 2026 in Da Nang, Vietnam, with 69 events, 156 national teams and nearly 5,000 athletes from more than 80 countries and territories. ThePickleHub tracks the five Pro individual draws here: the table below lists every match on court right now and every completed match in those draws, with the score game by game and the winner, grouped by the day it was played, newest day first. The feed is read from the organizers' own system every minute, so the \"last updated\" line at the top of the table is a real timestamp rather than the date this article was written.",
           liveBlock: "wc-results",
           internalLinks: [
             {
@@ -58,7 +58,7 @@ const post: BlogPost = {
         {
           heading: "What this table covers, and what it leaves out",
           content:
-            "Worth being exact, because a results page that overstates its scope is worse than one that states it plainly. The table above holds two things: every Pro match currently being played at the Pickleball World Cup 2026, and every completed Pro match with a Vietnamese player in it. It is not a full archive of all 33 individual events — a foreign match that finishes leaves the organizers' live feed and is not retained. Completed scores are read from the tournament's official bracket pages, which publish the per-game final and name the winner, so these are real results rather than a frozen snapshot. The one exception is brief: a Vietnamese match that has just left the live feed before its bracket page catches up shows the last score ThePickleHub observed, and the official result replaces it on the next pass a minute or two later.",
+            "Worth being exact, because a results page that overstates its scope is worse than one that states it plainly. The table above holds every match currently being played in the five Pro individual draws at the Pickleball World Cup 2026, and every completed match in those same draws — both Vietnamese and foreign. What it does not hold is the rest of the individual tournament: the amateur brackets split by DUPR band, and the junior, senior and master draws, which run on their own schedule and are not part of the Pro competition. Completed scores are read from the tournament's official bracket pages, which publish the per-game final and name the winner, so these are real results rather than a frozen snapshot. The one exception is brief: a match that has just left the live feed before its bracket page catches up shows the last score ThePickleHub observed, and the official result replaces it on the next pass a minute or two later.",
         },
         {
           heading: "Two tournaments on one schedule",
@@ -101,17 +101,17 @@ const post: BlogPost = {
         {
           question: "Where can I find Pickleball World Cup 2026 results?",
           answer:
-            "ThePickleHub publishes live Pickleball World Cup 2026 results from Da Nang on this page: every Pro match on court now and every Pro match involving a Vietnamese player, with per-game scores and the winner, grouped by the day it was played. The feed is read from the tournament's own system every minute rather than typed up once a day.",
+            "ThePickleHub publishes live Pickleball World Cup 2026 results from Da Nang on this page: every match in the five Pro individual draws, on court and completed, with per-game scores and the winner, grouped by the day it was played. The feed is read from the tournament's own system every minute rather than typed up once a day.",
         },
         {
           question: "Are these the official Pickleball World Cup 2026 scores?",
           answer:
-            "Yes for completed matches: ThePickleHub reads them from the tournament's official bracket pages, which publish the per-game final and name the winner. The single exception is a Vietnamese match that has just finished and left the live feed before its bracket page updates — it shows the last observed score for a minute or two until the official result replaces it.",
+            "Yes for completed matches: ThePickleHub reads them from the tournament's official bracket pages, which publish the per-game final and name the winner. The single exception is a match that has just finished and left the live feed before its bracket page updates — it shows the last observed score for a minute or two until the official result replaces it.",
         },
         {
           question: "Does this page cover every match at the Pickleball World Cup 2026?",
           answer:
-            "No. It covers the five Pro individual draws — men's and women's singles, men's and women's doubles, and mixed — showing all live matches and all completed matches with a Vietnamese player. The amateur, junior, senior and master brackets, and completed matches between two foreign players, are not included.",
+            "It covers the five Pro individual draws in full — men's and women's singles, men's and women's doubles, and mixed — every match live and completed, whatever the players' nationality. The amateur brackets split by DUPR band and the junior, senior and master draws are separate competitions and are not included.",
         },
         {
           question: "When does Vietnam's national team play at the Pickleball World Cup 2026?",
@@ -139,7 +139,7 @@ const post: BlogPost = {
         {
           heading: "Kết quả mới nhất",
           content:
-            "Heineken Pickleball World Cup 2026 diễn ra từ 30/8 đến 6/9/2026 tại Đà Nẵng với 69 nội dung, 156 đội tuyển quốc gia và gần 5.000 vận động viên từ hơn 80 quốc gia và vùng lãnh thổ. ThePickleHub theo dõi năm nội dung cá nhân Pro tại đây: bảng ngay bên dưới liệt kê mọi trận đang thi đấu và mọi trận Pro có vận động viên Việt Nam, kèm tỉ số từng ván và người thắng, nhóm theo ngày thi đấu, ngày mới nhất lên đầu. Dữ liệu đọc thẳng từ hệ thống của ban tổ chức mỗi phút, nên dòng \"cập nhật lần cuối\" ở đầu bảng là giờ thật chứ không phải ngày viết bài.",
+            "Heineken Pickleball World Cup 2026 diễn ra từ 30/8 đến 6/9/2026 tại Đà Nẵng với 69 nội dung, 156 đội tuyển quốc gia và gần 5.000 vận động viên từ hơn 80 quốc gia và vùng lãnh thổ. ThePickleHub theo dõi năm nội dung cá nhân Pro tại đây: bảng ngay bên dưới liệt kê mọi trận đang thi đấu và mọi trận đã kết thúc ở các nội dung này, kèm tỉ số từng ván và người thắng, nhóm theo ngày thi đấu, ngày mới nhất lên đầu. Dữ liệu đọc thẳng từ hệ thống của ban tổ chức mỗi phút, nên dòng \"cập nhật lần cuối\" ở đầu bảng là giờ thật chứ không phải ngày viết bài.",
           liveBlock: "wc-results",
           internalLinks: [
             {
@@ -151,7 +151,7 @@ const post: BlogPost = {
         {
           heading: "Bảng này có gì và không có gì",
           content:
-            "Nói rõ cho đúng, vì một trang kết quả nói quá phạm vi của mình thì tệ hơn một trang nói thẳng. Bảng phía trên chứa hai thứ: mọi trận Pro đang thi đấu tại Pickleball World Cup 2026, và mọi trận Pro đã kết thúc có vận động viên Việt Nam. Đây không phải kho lưu trữ đầy đủ của cả 33 nội dung cá nhân — trận giữa hai vận động viên nước ngoài khi kết thúc sẽ rời dữ liệu trực tiếp của ban tổ chức và không được giữ lại. Tỉ số các trận đã xong lấy từ trang nhánh đấu chính thức của giải, nơi công bố tỉ số từng ván và tên người thắng, nên đây là kết quả thật chứ không phải ảnh chụp đông cứng. Chỉ có một ngoại lệ ngắn: trận Việt Nam vừa kết thúc và rời bảng trực tiếp trước khi nhánh đấu kịp cập nhật sẽ hiển thị tỉ số ThePickleHub ghi nhận cuối cùng, rồi được thay bằng kết quả chính thức ở lượt quét sau đó một hai phút.",
+            "Nói rõ cho đúng, vì một trang kết quả nói quá phạm vi của mình thì tệ hơn một trang nói thẳng. Bảng phía trên chứa mọi trận đang thi đấu ở năm nội dung cá nhân Pro của Pickleball World Cup 2026, và mọi trận đã kết thúc ở chính năm nội dung đó — cả trận Việt Nam lẫn trận nước ngoài. Thứ bảng không có là phần còn lại của giải cá nhân: các bảng nghiệp dư chia theo trình DUPR, cùng các nhánh trẻ, senior và master, vốn chạy lịch riêng và không thuộc hệ Pro. Tỉ số các trận đã xong lấy từ trang nhánh đấu chính thức của giải, nơi công bố tỉ số từng ván và tên người thắng, nên đây là kết quả thật chứ không phải ảnh chụp đông cứng. Chỉ có một ngoại lệ ngắn: trận vừa kết thúc và rời bảng trực tiếp trước khi nhánh đấu kịp cập nhật sẽ hiển thị tỉ số ThePickleHub ghi nhận cuối cùng, rồi được thay bằng kết quả chính thức ở lượt quét sau đó một hai phút.",
         },
         {
           heading: "Hai giải trên cùng một lịch",
@@ -194,17 +194,17 @@ const post: BlogPost = {
         {
           question: "Xem kết quả Pickleball World Cup 2026 ở đâu?",
           answer:
-            "ThePickleHub đăng kết quả trực tiếp Pickleball World Cup 2026 Đà Nẵng trên trang này: mọi trận Pro đang thi đấu và mọi trận Pro có vận động viên Việt Nam, kèm tỉ số từng ván và người thắng, nhóm theo ngày thi đấu. Dữ liệu đọc từ hệ thống của ban tổ chức mỗi phút chứ không nhập tay mỗi ngày một lần.",
+            "ThePickleHub đăng kết quả trực tiếp Pickleball World Cup 2026 Đà Nẵng trên trang này: mọi trận ở năm nội dung cá nhân Pro, cả đang đấu lẫn đã kết thúc, kèm tỉ số từng ván và người thắng, nhóm theo ngày thi đấu. Dữ liệu đọc từ hệ thống của ban tổ chức mỗi phút chứ không nhập tay mỗi ngày một lần.",
         },
         {
           question: "Đây có phải tỉ số chính thức của Pickleball World Cup 2026 không?",
           answer:
-            "Với các trận đã kết thúc thì có: ThePickleHub lấy từ trang nhánh đấu chính thức của giải, nơi công bố tỉ số từng ván và tên người thắng. Ngoại lệ duy nhất là trận Việt Nam vừa kết thúc và rời bảng trực tiếp trước khi nhánh đấu kịp cập nhật — trận đó hiển thị tỉ số ghi nhận cuối cùng trong một hai phút, rồi được thay bằng kết quả chính thức.",
+            "Với các trận đã kết thúc thì có: ThePickleHub lấy từ trang nhánh đấu chính thức của giải, nơi công bố tỉ số từng ván và tên người thắng. Ngoại lệ duy nhất là trận vừa kết thúc và rời bảng trực tiếp trước khi nhánh đấu kịp cập nhật — trận đó hiển thị tỉ số ghi nhận cuối cùng trong một hai phút, rồi được thay bằng kết quả chính thức.",
         },
         {
           question: "Trang này có đủ mọi trận của Pickleball World Cup 2026 không?",
           answer:
-            "Không. Trang này bao gồm năm nội dung cá nhân Pro — đơn nam, đơn nữ, đôi nam, đôi nữ và đôi nam nữ — hiển thị tất cả trận đang đấu và tất cả trận đã kết thúc có vận động viên Việt Nam. Các bảng nghiệp dư, trẻ, senior, master và các trận đã kết thúc giữa hai vận động viên nước ngoài không nằm trong bảng.",
+            "Trang này bao gồm đầy đủ năm nội dung cá nhân Pro — đơn nam, đơn nữ, đôi nam, đôi nữ và đôi nam nữ — mọi trận đang đấu và đã kết thúc, không phân biệt quốc tịch. Các bảng nghiệp dư chia theo trình DUPR cùng các nhánh trẻ, senior và master là những giải riêng, không nằm trong bảng.",
         },
         {
           question: "Đội tuyển Việt Nam thi đấu Pickleball World Cup 2026 ngày nào?",
