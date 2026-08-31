@@ -3,6 +3,7 @@
  * SEO-04 — split from index.ts, code moved verbatim.
  */
 
+import { byEffectiveDateDesc } from "../../../src/lib/blogOrder";
 import type { SupabaseClient } from "../supabase";
 import { buildHtml, htmlResponse } from "../html";
 import { escapeHtml, DEFAULT_OG_IMAGE } from "../utils";
@@ -36,17 +37,32 @@ async function flooredVenueCount(supabase: SupabaseClient): Promise<number | nul
   }
 }
 
+type ViBlogListRow = {
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  published_at: string | null;
+  updated_at: string | null;
+};
+
 export async function renderHome(supabase: SupabaseClient, siteUrl: string): Promise<Response> {
   const [liveRes, videoRes, viBlogRes, venueCount] = await Promise.all([
     supabase.from("public_livestreams").select("id, title, status").in("status", ["live", "scheduled"]).order("created_at", { ascending: false }).limit(10),
     supabase.from("videos").select("id, title").eq("status", "published").order("published_at", { ascending: false }).limit(10),
-    supabase.from("vi_blog_posts").select("slug, title, excerpt").eq("status", "published").order("published_at", { ascending: false }).limit(3),
+    // Fetch wide, then order by the LATER of published/updated and take 3.
+    // A refreshed post can sit well below the top 3 by published_at (the Group
+    // A article was 8th on 2026-08-31), so slicing at the query would drop the
+    // very post the listing is meant to surface. See src/lib/blogOrder.
+    supabase.from("vi_blog_posts").select("slug, title, excerpt, published_at, updated_at").eq("status", "published").order("published_at", { ascending: false }).limit(30),
     flooredVenueCount(supabase),
   ]);
 
   const liveItems = (liveRes.data || []).map((l) => `<li><a href="${siteUrl}/live/${l.id}">${escapeHtml(l.title)}</a> (${l.status})</li>`).join("");
   const videoItems = (videoRes.data || []).map((v) => `<li><a href="${siteUrl}/watch/${v.id}">${escapeHtml(v.title)}</a></li>`).join("");
-  const viBlogItems = (viBlogRes.data || []).map((b) => `<li><a href="${siteUrl}/vi/blog/${b.slug}" hreflang="vi">${escapeHtml(b.title)}</a></li>`).join("");
+  const viBlogItems = ((viBlogRes.data || []) as ViBlogListRow[])
+    .sort(byEffectiveDateDesc((b) => b.published_at, (b) => b.updated_at))
+    .slice(0, 3)
+    .map((b) => `<li><a href="${siteUrl}/vi/blog/${b.slug}" hreflang="vi">${escapeHtml(b.title)}</a></li>`).join("");
 
   const viBlogSection = viBlogItems
     ? `<h2>Pickleball in Vietnam</h2><p>Vietnamese pickleball content from our local team:</p><ul>${viBlogItems}</ul><p><a href="${siteUrl}/vi" hreflang="vi">Visit Vietnamese site</a></p>`
@@ -228,13 +244,17 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
   const [liveRes, videoRes, blogRes, venueCount] = await Promise.all([
     supabase.from("public_livestreams").select("id, title, status").in("status", ["live", "scheduled"]).order("created_at", { ascending: false }).limit(10),
     supabase.from("videos").select("id, title").eq("status", "published").order("published_at", { ascending: false }).limit(10),
-    supabase.from("vi_blog_posts").select("slug, title, excerpt").eq("status", "published").order("published_at", { ascending: false }).limit(6),
+    // Same widen-then-sort as renderHome — see src/lib/blogOrder.
+    supabase.from("vi_blog_posts").select("slug, title, excerpt, published_at, updated_at").eq("status", "published").order("published_at", { ascending: false }).limit(30),
     flooredVenueCount(supabase),
   ]);
 
   const liveItems = (liveRes.data || []).map((l) => `<li><a href="${siteUrl}/live/${l.id}">${escapeHtml(l.title)}</a> (${l.status})</li>`).join("");
   const videoItems = (videoRes.data || []).map((v) => `<li><a href="${siteUrl}/watch/${v.id}">${escapeHtml(v.title)}</a></li>`).join("");
-  const blogItems = (blogRes.data || []).map((b) => `<li><a href="${siteUrl}/vi/blog/${b.slug}"><h3>${escapeHtml(b.title)}</h3><p>${escapeHtml(b.excerpt || "")}</p></a></li>`).join("");
+  const blogItems = ((blogRes.data || []) as ViBlogListRow[])
+    .sort(byEffectiveDateDesc((b) => b.published_at, (b) => b.updated_at))
+    .slice(0, 6)
+    .map((b) => `<li><a href="${siteUrl}/vi/blog/${b.slug}"><h3>${escapeHtml(b.title)}</h3><p>${escapeHtml(b.excerpt || "")}</p></a></li>`).join("");
 
   const blogSection = blogItems ? `<h2>Bài viết mới nhất</h2><ul>${blogItems}</ul><p><a href="${siteUrl}/vi/blog">Xem tất cả bài viết</a></p>` : "";
 

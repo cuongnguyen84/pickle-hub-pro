@@ -83,8 +83,11 @@ export function usePublishedViBlogPosts() {
   return useQuery({
     queryKey: ["vi-blog-posts", "published"],
     queryFn: () =>
-      viBlogFetch<Pick<ViBlogPost, "id" | "slug" | "title" | "excerpt" | "cover_image_url" | "category" | "published_at" | "tags">[]>(
-        "?select=id,slug,title,excerpt,cover_image_url,category,published_at,tags&status=eq.published&order=published_at.desc",
+      viBlogFetch<Pick<ViBlogPost, "id" | "slug" | "title" | "excerpt" | "cover_image_url" | "category" | "published_at" | "updated_at" | "tags">[]>(
+        // updated_at rides along so listings can order by the later of the two
+        // dates (see lib/blogOrder). The server order stays published_at so the
+        // payload is deterministic; the effective-date sort happens client-side.
+        "?select=id,slug,title,excerpt,cover_image_url,category,published_at,updated_at,tags&status=eq.published&order=published_at.desc",
       ),
     staleTime: 5 * 60 * 1000,
   });

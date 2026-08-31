@@ -16,6 +16,7 @@ import { PPA_ASIA_STOPS } from "@/lib/constants";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Countdown } from "@/components/Countdown";
 import { formatDate, formatRelative, formatTime } from "@/lib/format-datetime";
+import { byEffectiveDateDesc, effectiveDateIso, isRefreshed } from "@/lib/blogOrder";
 import { shouldReserveLiveSlot, writeLiveLeadHint } from "@/lib/home-live-lead";
 import { HreflangTags } from "@/components/seo";
 import { VideoThumbnail } from "@/components/video/VideoThumbnail";
@@ -167,7 +168,9 @@ const Index = () => {
     image: string | null;
     imageAlt: string;
     author: string;
+    /** The LATER of publish/update — see lib/blogOrder. */
     date: string | null;
+    refreshed: boolean;
     href: string;
   };
 
@@ -176,7 +179,10 @@ const Index = () => {
     // without an EN manifest entry still surface here. EN keeps the synchronous
     // bilingual manifest for immediate LCP.
     if (language === "vi") {
-      return viPosts.slice(0, 6).map((p) => ({
+      return [...viPosts]
+        .sort(byEffectiveDateDesc((p) => p.published_at, (p) => p.updated_at))
+        .slice(0, 6)
+        .map((p) => ({
         slug: p.slug,
         title: p.title,
         summary: p.excerpt ?? "",
@@ -184,12 +190,13 @@ const Index = () => {
         image: p.cover_image_url,
         imageAlt: p.title,
         author: "ThePickleHub",
-        date: p.published_at,
+        date: effectiveDateIso(p.published_at, p.updated_at),
+        refreshed: isRefreshed(p.published_at, p.updated_at),
         href: `/vi/blog/${p.slug}`,
       }));
     }
     return [...blogMetadata]
-      .sort((a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime())
+      .sort(byEffectiveDateDesc((p) => p.publishedDate, (p) => p.updatedDate))
       .slice(0, 6)
       .map((p) => ({
         slug: p.slug,
@@ -199,7 +206,8 @@ const Index = () => {
         image: p.heroImage?.src ?? null,
         imageAlt: p.heroImage?.alt ?? p.titleEn,
         author: p.author,
-        date: p.publishedDate,
+        date: effectiveDateIso(p.publishedDate, p.updatedDate),
+        refreshed: isRefreshed(p.publishedDate, p.updatedDate),
         href: `/blog/${p.slug}`,
       }));
   }, [language, viPosts]);
@@ -551,7 +559,11 @@ const Index = () => {
                           {story.date && (
                             <>
                               <span>·</span>
-                              <span>{formatDate(story.date).full}</span>
+                              <span>
+                                {story.refreshed
+                                  ? `${language === "vi" ? "Cập nhật" : "Updated"} ${formatDate(story.date).full}`
+                                  : formatDate(story.date).full}
+                              </span>
                             </>
                           )}
                         </div>

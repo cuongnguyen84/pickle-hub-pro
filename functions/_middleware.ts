@@ -1066,7 +1066,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // competition it belongs to runs Sep 3-6, and 0 of its 222 ties were played
   // as of Aug 31. Only the individual tournament is under way (12/69 events
   // decided, all amateur). EN + FAQ updated here; VI body ships via SQL.
-  const cacheKey = `pr:v78:${url.pathname}`;
+  // v79 (2026-08-31): blog listings now order by the LATER of published/
+  // updated, so a post refreshed mid-event resurfaces instead of staying
+  // buried at its original publish date. Changes the SSR body of /vi,
+  // / (VI block) and /vi/blog, so the cached copies must be retired.
+  const cacheKey = `pr:v79:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

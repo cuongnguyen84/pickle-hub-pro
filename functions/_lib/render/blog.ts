@@ -3,6 +3,7 @@
  * SEO-04 — split from index.ts, code moved verbatim.
  */
 
+import { byEffectiveDateDesc } from "../../../src/lib/blogOrder";
 import type { SupabaseClient } from "../supabase";
 import { buildHtml, htmlResponse } from "../html";
 import { BLOG_POST_META } from "./blog-meta";
@@ -328,8 +329,18 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
 }
 
 export async function renderViBlogIndex(supabase: SupabaseClient, siteUrl: string): Promise<Response> {
-  const { data: posts } = await supabase.from("vi_blog_posts").select("slug, title, excerpt").eq("status", "published").order("published_at", { ascending: false }).limit(20);
-  const rows = (posts || []) as { slug: string; title: string; excerpt: string | null }[];
+  // Ordered by the LATER of published/updated so a refreshed post resurfaces
+  // here the same way it does for readers. See src/lib/blogOrder.
+  const { data: posts } = await supabase.from("vi_blog_posts").select("slug, title, excerpt, published_at, updated_at").eq("status", "published").order("published_at", { ascending: false }).limit(60);
+  const rows = ((posts || []) as {
+    slug: string;
+    title: string;
+    excerpt: string | null;
+    published_at: string | null;
+    updated_at: string | null;
+  }[])
+    .sort(byEffectiveDateDesc((p) => p.published_at, (p) => p.updated_at))
+    .slice(0, 20);
   const items = rows.map((p) => `<li><a href="${siteUrl}/vi/blog/${p.slug}">${escapeHtml(p.title)}</a><p>${escapeHtml(p.excerpt || "")}</p></li>`).join("");
 
   // SEO audit 2026-08-11 — mirror the EN /blog fix: emit an ItemList of the
