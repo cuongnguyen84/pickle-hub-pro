@@ -521,7 +521,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // URL's equity with a single permanent hop instead of returning a soft 404.
   if (url.pathname === "/live/10779a7c") {
     return secureRedirect(
-      `https://${url.hostname}/live/10779a7c-46f4-4501-a65e-e852eb2fb565`,
+      `https://${url.hostname}/live/10779a7c-46f4-4501-a65e-e852eb2fb565${url.search}`,
       301,
     );
   }
@@ -707,7 +707,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const viBlogMatch = url.pathname.match(/^\/vi\/blog\/([^/?#]+)$/);
   if (viBlogMatch && VI_BLOG_DIRECT[viBlogMatch[1]]) {
     return secureRedirect(
-      `https://${url.hostname}${VI_BLOG_DIRECT[viBlogMatch[1]]}`,
+      `https://${url.hostname}${VI_BLOG_DIRECT[viBlogMatch[1]]}${url.search}`,
       301,
     );
   }
@@ -716,16 +716,16 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     // dedupe target — avoids a /vi/blog → /blog → /tools 301 chain.
     const enSlug = VI_BLOG_REDIRECTS[viBlogMatch[1]];
     const dest = BLOG_TO_TOOLS.has(enSlug) ? "tools" : `blog/${enSlug}`;
-    return secureRedirect(`https://${url.hostname}/${dest}`, 301);
+    return secureRedirect(`https://${url.hostname}/${dest}${url.search}`, 301);
   }
 
   const enBlogToTools = url.pathname.match(/^\/blog\/([^/?#]+)$/);
   if (enBlogToTools && BLOG_TO_TOOLS.has(enBlogToTools[1])) {
-    return secureRedirect(`https://${url.hostname}/tools`, 301);
+    return secureRedirect(`https://${url.hostname}/tools${url.search}`, 301);
   }
   if (enBlogToTools && BLOG_MERGED[enBlogToTools[1]]) {
     return secureRedirect(
-      `https://${url.hostname}/blog/${BLOG_MERGED[enBlogToTools[1]]}`,
+      `https://${url.hostname}/blog/${BLOG_MERGED[enBlogToTools[1]]}${url.search}`,
       301,
     );
   }

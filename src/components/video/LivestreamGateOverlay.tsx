@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
@@ -23,7 +24,17 @@ export function LivestreamGateOverlay({
   const { t } = useI18n();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const isEmbed = surface === "embed";
-  const redirectPath = `/live/${livestreamId}`;
+  // Carry the current query string into the post-login destination. Facebook
+  // sends this week's World Cup livestream traffic in as
+  // /live/<id>?fbclid=...&utm_source=..., and a signed-out viewer meets this
+  // gate before the player. Hardcoding `/live/<id>` dropped those params, so
+  // the viewer came back from /login with no campaign on the URL and GA4
+  // opened a fresh, sourceless session — the "Unassigned" channel. RequireAuth
+  // already round-trips pathname+search through the same validator
+  // (isValidInternalPath accepts a query string), so this matches behaviour
+  // that is already in production rather than widening it.
+  const { search } = useLocation();
+  const redirectPath = `/live/${livestreamId}${search}`;
 
   const signupHref = `/login?mode=signup&redirect=${encodeURIComponent(redirectPath)}${isEmbed ? "&source=embed_live_gate" : ""}`;
   const loginHref = `/login?redirect=${encodeURIComponent(redirectPath)}${isEmbed ? "&source=embed_live_gate" : ""}`;
