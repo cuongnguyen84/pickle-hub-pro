@@ -37,6 +37,16 @@ import {
   type ProCategory,
 } from "../../../src/lib/wc-open/parse-pro";
 
+import {
+  diagnose,
+  emptyDigest,
+  fingerprint,
+  formatAlert,
+  formatDigest,
+  hourKeyOf,
+  type DigestState,
+} from "./report";
+
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
@@ -381,6 +391,8 @@ export interface ProScrapeResult {
   matchesSeen: number;
   matchesWritten: number;
   completed: number;
+  /** Matches on court on this cycle — the number the hourly digest leads with. */
+  live: number;
   error?: string;
 }
 
@@ -415,7 +427,7 @@ export async function runScrapePro(env: Env): Promise<ProScrapeResult> {
     if (err instanceof ParseGuardError) {
       await alert(env, `pro parse guard: ${err.message}. Kept existing rows.`);
     }
-    return { ok: false, matchesSeen: 0, matchesWritten: 0, completed: 0, error: err.message };
+    return { ok: false, matchesSeen: 0, matchesWritten: 0, completed: 0, live: 0, error: err.message };
   }
 
   // The authoritative finals. A page failure is non-fatal but blocks pruning.
@@ -469,6 +481,7 @@ export async function runScrapePro(env: Env): Promise<ProScrapeResult> {
     matchesSeen: parsed.matches.length,
     matchesWritten: liveChanged.length + bracketChanged.length,
     completed: bracketDone.length,
+    live: parsed.matches.filter((m) => m.status === "in_progress").length,
   };
 }
 
@@ -490,15 +503,156 @@ async function verifyHmac(secret: string, body: string, signature: string | null
   return diff === 0;
 }
 
+// ── Reporting state ────────────────────────────────────────────────────────
+// The cron is stateless between minutes, so the hourly accumulator and the
+// alert cooldowns live in wc_scraper_ops. Every call here is best-effort:
+// reporting must never be the reason a scrape cycle fails.
+
+const ALERT_COOLDOWN_MIN = 30;
+/** Last minute of the play window in UTC — force the final digest out then, or
+ *  the 14:00 hour would sit unsent until the next day's first cycle. */
+const WINDOW_LAST_HOUR_UTC = 14;
+
+async function opsGet<T>(env: Env, key: string): Promise<T | null> {
+  try {
+    const res = await fetch(
+      `${env.SUPABASE_URL}/rest/v1/wc_scraper_ops?key=eq.${encodeURIComponent(key)}&select=value`,
+      {
+        headers: {
+          apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+          Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        },
+      },
+    );
+    if (!res.ok) return null;
+    const rows = (await res.json()) as { value: T }[];
+    return rows[0]?.value ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function opsSet(env: Env, key: string, value: unknown): Promise<void> {
+  try {
+    await fetch(`${env.SUPABASE_URL}/rest/v1/wc_scraper_ops?on_conflict=key`, {
+      method: "POST",
+      headers: {
+        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify({ key, value, updated_at: new Date().toISOString() }),
+    });
+  } catch {
+    // best-effort
+  }
+}
+
+/** Total stored matches, read from the Content-Range header rather than pulling
+ *  rows. Once an hour, so exact counting is affordable. */
+async function countProMatches(env: Env): Promise<number | null> {
+  try {
+    const res = await fetch(`${env.SUPABASE_URL}/rest/v1/wc_pro_matches?select=match_id`, {
+      method: "HEAD",
+      headers: {
+        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        Prefer: "count=exact",
+        Range: "0-0",
+      },
+    });
+    const total = res.headers.get("content-range")?.split("/")[1];
+    return total && total !== "*" ? Number(total) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Send an alert for a failed cycle, at most once per fingerprint per cooldown.
+ * A source outage repeats identically every minute; without this the channel
+ * fills with sixty copies of the same sentence an hour and stops being read.
+ */
+async function alertOnce(env: Env, error: string): Promise<void> {
+  const fp = fingerprint(error);
+  const key = `alert:${fp}`;
+  const last = await opsGet<{ at: string }>(env, key);
+  const lastAt = last?.at ? Date.parse(last.at) : 0;
+  if (Date.now() - lastAt < ALERT_COOLDOWN_MIN * 60_000) return;
+  await alert(env, formatAlert(error, diagnose(error), ALERT_COOLDOWN_MIN));
+  await opsSet(env, key, { at: new Date().toISOString(), error });
+}
+
+/**
+ * Fold one cycle into the hourly accumulator and flush when the hour turns (or
+ * when the play window is about to close, so the last hour is not held until
+ * tomorrow).
+ */
+async function recordCycle(
+  env: Env,
+  now: Date,
+  teams: ScrapeResult,
+  pro: ProScrapeResult,
+): Promise<void> {
+  const hourKey = hourKeyOf(now);
+  const stored = (await opsGet<DigestState>(env, "digest")) ?? emptyDigest(hourKey);
+
+  if (stored.hourKey !== hourKey) {
+    if (stored.cycles > 0) await alert(env, formatDigest(stored, await countProMatches(env)));
+    Object.assign(stored, emptyDigest(hourKey));
+  }
+
+  stored.cycles += 1;
+  if (!teams.ok || !pro.ok) stored.errorCycles += 1;
+  stored.proWritten += pro.matchesWritten;
+  stored.teamsWritten += teams.teamsWritten;
+  stored.liveNow = pro.live;
+  stored.completedNow = pro.completed;
+  if (stored.completedAtStart == null && pro.ok) stored.completedAtStart = pro.completed;
+  for (const e of [teams.error, pro.error]) {
+    if (e && !stored.errors.includes(e) && stored.errors.length < 5) stored.errors.push(e);
+  }
+
+  // Window closes at 14:59 UTC; flush here so the final hour arrives tonight
+  // rather than with tomorrow morning's first cycle.
+  const windowClosing = now.getUTCHours() === WINDOW_LAST_HOUR_UTC && now.getUTCMinutes() >= 58;
+  if (windowClosing) {
+    await alert(env, formatDigest(stored, await countProMatches(env)));
+    await opsSet(env, "digest", emptyDigest(hourKeyOf(new Date(now.getTime() + 3_600_000))));
+    return;
+  }
+  await opsSet(env, "digest", stored);
+}
+
 export default {
   async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
     // Outside the match window there is nothing new — skip the fetch entirely.
     if (!withinMatchWindow(new Date())) return;
+    const now = new Date();
     ctx.waitUntil(
-      Promise.allSettled([runScrape(env), runScrapePro(env)]).then((results) => {
-        for (const r of results) {
+      Promise.allSettled([runScrape(env), runScrapePro(env)]).then(async ([t, p]) => {
+        for (const r of [t, p]) {
           if (r.status === "fulfilled" && !r.value.ok) console.error("wc-open-scraper cron:", r.value.error);
           if (r.status === "rejected") console.error("wc-open-scraper cron threw:", r.reason);
+        }
+        const teams: ScrapeResult =
+          t.status === "fulfilled"
+            ? t.value
+            : { ok: false, teamsSeen: 0, teamsWritten: 0, error: String(t.reason) };
+        const pro: ProScrapeResult =
+          p.status === "fulfilled"
+            ? p.value
+            : { ok: false, matchesSeen: 0, matchesWritten: 0, completed: 0, live: 0, error: String(p.reason) };
+
+        // Alerts first: a failing cycle should reach a phone now, not at the
+        // top of the hour. Reporting is wrapped so it can never turn a partial
+        // scrape into a thrown cron.
+        try {
+          for (const e of [pro.error, teams.error]) if (e) await alertOnce(env, e);
+          await recordCycle(env, now, teams, pro);
+        } catch (err) {
+          console.error("wc-open-scraper report:", err);
         }
       }),
     );
