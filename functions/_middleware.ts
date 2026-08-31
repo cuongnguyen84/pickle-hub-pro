@@ -1070,7 +1070,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // updated, so a post refreshed mid-event resurfaces instead of staying
   // buried at its original publish date. Changes the SSR body of /vi,
   // / (VI block) and /vi/blog, so the cached copies must be retired.
-  const cacheKey = `pr:v79:${url.pathname}`;
+  // v80 (2026-08-31): follow-up — /blog (EN) was still emitting the old
+  // insertion order to bots while readers got the new sort. Its cached
+  // copies and ItemList JSON-LD must be retired with it.
+  const cacheKey = `pr:v80:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

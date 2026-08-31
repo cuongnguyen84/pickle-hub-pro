@@ -131,10 +131,20 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
 }
 
 export function renderBlog(siteUrl: string): Response {
-  // BLOG_POST_META is insertion-ordered newest-first (metadata.ts prepends new
-  // entries at the top; blog-meta.ts is generated from it), so Object.entries
-  // already yields the same DESC order the visible list renders in.
-  const entries = Object.entries(BLOG_POST_META);
+  // Ordered by the LATER of datePublished/dateModified so a refreshed post
+  // resurfaces, matching what Blog.tsx renders for readers. Relying on
+  // BLOG_POST_META's insertion order (metadata.ts prepends new entries) used to
+  // be equivalent to a publishedDate sort, but that is exactly the ordering the
+  // 2026-08-31 change moved away from — leaving it here would have shown
+  // Googlebot a different /blog order than readers get. dateModified is absent
+  // when it equals datePublished, and effectiveDateMs treats that as 0, so such
+  // posts fall back to their publish date. See src/lib/blogOrder.
+  const entries = Object.entries(BLOG_POST_META).sort(
+    byEffectiveDateDesc(
+      ([, m]) => m.datePublished,
+      ([, m]) => m.dateModified,
+    ),
+  );
   const blogLinks = entries.map(([slug, m]) => `<li><a href="${siteUrl}/blog/${slug}">${escapeHtml(m.title)}</a></li>`).join("");
 
   // SEO audit 2026-08-11 — the EN blog index emitted zero JSON-LD. Add an
