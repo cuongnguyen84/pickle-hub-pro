@@ -7,6 +7,11 @@ struct HomeView: View {
     @State private var model = HomeViewModel()
     @State private var openURL: IdentifiedURL?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let openLiveTab: () -> Void
+
+    init(openLiveTab: @escaping () -> Void = {}) {
+        self.openLiveTab = openLiveTab
+    }
 
     var body: some View {
         ScrollView {
@@ -17,6 +22,7 @@ struct HomeView: View {
 
                 VStack(alignment: .leading, spacing: 34) {
                     VStack(alignment: .leading, spacing: 18) {
+                        WorldCupHomeLiveCard(openLiveTab: openLiveTab)
                         partnerCard
                         if ShopFeatureGate.isEnabled {
                             shopEntry

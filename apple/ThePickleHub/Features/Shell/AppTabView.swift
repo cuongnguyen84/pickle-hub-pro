@@ -49,7 +49,10 @@ struct AppTabView: View {
 
     private var homeTab: some View {
         NavigationStack(path: $homePath) {
-            HomeView()
+            HomeView {
+                homePath = NavigationPath()
+                selection = .live
+            }
                 .navigationTitle("ThePickleHub")
                 .navigationDestination(for: HomeRoute.self) { route in
                     switch route {

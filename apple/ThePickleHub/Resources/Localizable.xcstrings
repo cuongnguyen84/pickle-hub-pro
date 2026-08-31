@@ -1066,6 +1066,9 @@
         }
       }
     },
+    "%lld LIVE" : {
+
+    },
     "%lld nam / %lld nữ (cần %lld/%lld)" : {
       "localizations" : {
         "en" : {
@@ -1410,6 +1413,16 @@
         }
       }
     },
+    "%lld/%lld trận" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld/%2$lld trận"
+          }
+        }
+      }
+    },
     "%llds" : {
       "localizations" : {
         "en" : {
@@ -1660,6 +1673,9 @@
           }
         }
       }
+    },
+    "● %lld TRẬN ĐANG ĐẤU" : {
+
     },
     "⚠️ Đội này đã báo/đã xác nhận đóng tiền. Xóa đội là xóa luôn bằng chứng đóng tiền — hệ thống KHÔNG hoàn tiền." : {
       "localizations" : {
@@ -2376,6 +2392,9 @@
           }
         }
       }
+    },
+    "BẢNG %@" : {
+
     },
     "Bảng %@ · %lld VĐV" : {
       "localizations" : {
@@ -4740,6 +4759,9 @@
         }
       }
     },
+    "Chưa có trận đấu ở nội dung này." : {
+
+    },
     "Chưa có trận nào." : {
       "localizations" : {
         "en" : {
@@ -6110,6 +6132,9 @@
         }
       }
     },
+    "Đang giao bóng" : {
+
+    },
     "đang giao: %@" : {
       "localizations" : {
         "en" : {
@@ -6612,10 +6637,16 @@
         }
       }
     },
+    "Đang tải kết quả World Cup" : {
+
+    },
     "Đang tải mã thanh toán…" : {
 
     },
     "Đang tải sản phẩm" : {
+
+    },
+    "Đang tải tỷ số World Cup" : {
 
     },
     "Đang tải…" : {
@@ -6657,6 +6688,9 @@
           }
         }
       }
+    },
+    "Đang thi đấu" : {
+
     },
     "ĐANG THI ĐẤU" : {
       "localizations" : {
@@ -9284,26 +9318,6 @@
         }
       }
     },
-    "HOÀN TÁC" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "UNDO"
-          }
-        }
-      }
-    },
-    "Hồ sơ" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Profile"
-          }
-        }
-      }
-    },
     "Hồ sơ công khai" : {
       "localizations" : {
         "en" : {
@@ -9333,6 +9347,16 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Or join an existing team"
+          }
+        }
+      }
+    },
+    "HOÀN TÁC" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "UNDO"
           }
         }
       }
@@ -9373,6 +9397,16 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Complete your profile so friends can find you and get matched at the right level."
+          }
+        }
+      }
+    },
+    "Hồ sơ" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Profile"
           }
         }
       }
@@ -9589,6 +9623,9 @@
           }
         }
       }
+    },
+    "KẾT QUẢ HÔM NAY" : {
+
     },
     "Kết thúc" : {
       "localizations" : {
@@ -10904,6 +10941,9 @@
         }
       }
     },
+    "Không tìm thấy vận động viên." : {
+
+    },
     "Không tìm thấy VĐV này." : {
       "localizations" : {
         "en" : {
@@ -11344,6 +11384,12 @@
           }
         }
       }
+    },
+    "Livescore" : {
+
+    },
+    "LIVESCORE" : {
+
     },
     "Loại" : {
       "localizations" : {
@@ -12363,16 +12409,6 @@
         }
       }
     },
-    "Ngoài trời" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Outdoor"
-          }
-        }
-      }
-    },
     "Ngoại tuyến. Đang hiển thị dữ liệu công khai đã lưu gần đây" : {
 
     },
@@ -12382,6 +12418,16 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Sitting out: %@"
+          }
+        }
+      }
+    },
+    "Ngoài trời" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Outdoor"
           }
         }
       }
@@ -12558,6 +12604,9 @@
           }
         }
       }
+    },
+    "Nguồn: ban tổ chức · cập nhật gần thời gian thực" : {
+
     },
     "Nguồn: DUPR.com" : {
       "localizations" : {
@@ -13230,6 +13279,12 @@
           }
         }
       }
+    },
+    "PICKLEBALL WORLD CUP 2026" : {
+
+    },
+    "PICKLEBALL WORLD CUP 2026 · ĐÀ NẴNG" : {
+
     },
     "Pickleball xứng đáng có sự chăm sóc " : {
       "localizations" : {
@@ -15249,6 +15304,9 @@
         }
       }
     },
+    "TẤT CẢ KẾT QUẢ" : {
+
+    },
     "Tất cả thể thức" : {
       "localizations" : {
         "en" : {
@@ -16477,6 +16535,9 @@
         }
       }
     },
+    "Thử nhập tên khác hoặc chọn nội dung thi đấu khác." : {
+
+    },
     "Thử từ khoá khác hoặc thêm sân mới." : {
       "localizations" : {
         "en" : {
@@ -16729,6 +16790,9 @@
         }
       }
     },
+    "Tìm tên vận động viên" : {
+
+    },
     "Tìm theo tên" : {
       "localizations" : {
         "en" : {
@@ -16748,6 +16812,9 @@
           }
         }
       }
+    },
+    "Tìm vận động viên" : {
+
     },
     "Tìm vợt, giày, bóng…" : {
 
@@ -18420,6 +18487,9 @@
         }
       }
     },
+    "VIỆT NAM" : {
+
+    },
     "VÔ ĐỊCH" : {
       "localizations" : {
         "en" : {
@@ -18535,6 +18605,9 @@
           }
         }
       }
+    },
+    "Vòng bảng · 16 bảng · 64 quốc gia" : {
+
     },
     "Vòng bảng + Playoff" : {
       "localizations" : {
@@ -19147,6 +19220,9 @@
         }
       }
     },
+    "Xem tỷ số trực tiếp Pickleball World Cup" : {
+
+    },
     "Xếp cặp" : {
       "localizations" : {
         "en" : {
@@ -19436,6 +19512,9 @@
           }
         }
       }
+    },
+    "Xóa tên đang tìm" : {
+
     },
     "Xóa toàn bộ giải" : {
       "localizations" : {
