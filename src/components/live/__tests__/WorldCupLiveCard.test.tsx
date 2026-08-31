@@ -111,6 +111,35 @@ describe("WorldCupLiveCard", () => {
     expect(bCells).toEqual(["17", "10", "9"]);
   });
 
+  it("rotates the featured pair every 15 minutes (deterministic by clock)", () => {
+    // Four results on the same VN day; the card shows two at a time and the
+    // pair advances by two each 15-minute bucket, so consecutive buckets are
+    // disjoint pairs.
+    const day = "2026-08-31";
+    const mk = (id: string, hhmm: string) =>
+      match({ match_id: id, entry_a_name: id, entry_b_name: `${id}-opp`, status: "completed", current_a: null, current_b: null, games_json: [{ a: 15, b: 0 }], leader_side: "A", scheduled_at: `${day}T0${hhmm}:00+00:00` });
+    proMock.mockReturnValue({
+      data: resultsFeed([mk("AAA", "1:00"), mk("BBB", "2:00"), mk("CCC", "3:00"), mk("DDD", "4:00")]),
+      isLoading: false, isError: false,
+    });
+    const base = Date.parse(`${day}T05:00:00+00:00`); // ~noon VN, same day
+    const shownAt = (t: number): string[] => {
+      const spy = vi.spyOn(Date, "now").mockReturnValue(t);
+      try {
+        const { container } = wrap("vi");
+        return [...container.querySelectorAll(".wclc-r-row--win .wclc-r-name")].map((n) => n.textContent ?? "");
+      } finally {
+        cleanup();
+        spy.mockRestore();
+      }
+    };
+    const a = shownAt(base);
+    const b = shownAt(base + 15 * 60 * 1000);
+    expect(a.length).toBe(2);
+    expect(b.length).toBe(2);
+    expect(a.some((n) => b.includes(n))).toBe(false); // different pair after 15 min
+  });
+
   it("does not count a result from another day as today", () => {
     proMock.mockReturnValue({
       data: resultsFeed([

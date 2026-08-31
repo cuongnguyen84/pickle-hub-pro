@@ -19,7 +19,19 @@ import { scoreGames } from "./wc-score";
 const HIDE_AFTER = Date.UTC(2026, 8, 7, 17, 0, 0); // 2026-09-08 00:00 Vietnam time
 const LOGO = "/images/world-cup-2026-logo.jpg";
 const VN_OFFSET_MS = 7 * 60 * 60 * 1000; // UTC+7
+const ROTATE_MS = 15 * 60 * 1000; // cycle the two featured results every 15 minutes
 type Lang = "en" | "vi";
+
+// Which two of today's results to feature, cycling through them all every 15
+// minutes so the card doesn't sit on the same pair. Deterministic by wall
+// clock, so everyone viewing in the same window sees the same two. The hook's
+// 60s refetch re-renders the card, so the pair advances within a minute of the
+// boundary. Fewer than three results → just show them.
+function rotatePair<T>(arr: T[], now: number): T[] {
+  if (arr.length <= 2) return arr;
+  const start = (Math.floor(now / ROTATE_MS) * 2) % arr.length;
+  return [arr[start], arr[(start + 1) % arr.length]];
+}
 
 const sideIsVietnam = (name: string | null): boolean => isVietnameseName(name);
 
@@ -110,7 +122,7 @@ export function WorldCupLiveCard({ language }: { language: Lang }) {
 
   const featured = live
     ? [...allLive].sort((x, y) => (isVn(x) ? 0 : 1) - (isVn(y) ? 0 : 1)).slice(0, 2)
-    : todayResults.slice(0, 2);
+    : rotatePair(todayResults, Date.now());
 
   const href = language === "vi" ? "/vi/live" : "/live";
 
