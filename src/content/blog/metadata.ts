@@ -256,7 +256,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "pickleball-world-cup-2026-group-a-vietnam",
     publishedDate: "2026-08-17",
-    updatedDate: "2026-08-20",
+    updatedDate: "2026-08-31",
     author: "Cuong Nguyen",
     tags: [
       "pickleball world cup 2026",

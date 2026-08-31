@@ -1059,7 +1059,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // the opening is the passage AI search extracts. Openings now carry an Aug 31
   // dateline with absolute dates only, plus the first verified day-one outcome:
   // 12 of 69 events already have champions (organizers' own site, amateur draws).
-  const cacheKey = `pr:v77:${url.pathname}`;
+  // v78 (2026-08-31): the Group A article was the one World Cup post the day-two
+  // pass missed — still datelined August 20 while the tournament was live. Its
+  // opening now leads with the fact readers are actually searching for during
+  // the spike: Vietnam has NOT played a Group A match yet: the national-team
+  // competition it belongs to runs Sep 3-6, and 0 of its 222 ties were played
+  // as of Aug 31. Only the individual tournament is under way (12/69 events
+  // decided, all amateur). EN + FAQ updated here; VI body ships via SQL.
+  const cacheKey = `pr:v78:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
