@@ -1100,7 +1100,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // now carry the August 31 Pro Singles semifinal results and the September 1
   // doubles start time, all read from wc_pro_matches. SSR body changes on all
   // five EN posts, so the cached copies must be retired.
-  const cacheKey = `pr:v84:${url.pathname}`;
+  // v85 (2026-09-01): correction — the Men's Pro Doubles page said "13 men's
+  // Round-of-64 matches carry a time". wc_pro_matches holds 9; 13 came from
+  // subtracting the 15 men's qualifying matches from the day's 28 total, which
+  // also included the four women's matches. Now nine, with the qualifying
+  // split stated so the arithmetic is checkable from the sentence itself.
+  const cacheKey = `pr:v85:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
