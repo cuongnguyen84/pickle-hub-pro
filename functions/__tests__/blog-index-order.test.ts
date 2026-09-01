@@ -49,14 +49,25 @@ describe("renderBlog ordering", () => {
     const ordered = Object.entries(BLOG_POST_META).sort(
       byEffectiveDateDesc(([, m]) => m.datePublished, ([, m]) => m.dateModified),
     );
-    const lifted = ordered.findIndex(([, m], i) =>
+    // findIndex locates the post that was PASSED — the one with an
+    // earlier-published post sitting above it. The post that actually jumped is
+    // that earlier-published one, and it is the one whose lift must be genuine.
+    // Asserting on the passed post instead only held while it happened to carry
+    // a dateModified of its own; on 2026-09-01 the passed post was the results
+    // article (published 2026-08-31, never refreshed) and the assertion failed
+    // on a correctly ordered list.
+    const passedIdx = ordered.findIndex(([, m], i) =>
       ordered.slice(0, i).some(([, prev]) => (prev.datePublished ?? "") < (m.datePublished ?? "")),
     );
     // Either nothing is currently refreshed, or the lift is genuine.
-    if (lifted !== -1) {
-      const [, m] = ordered[lifted];
-      expect(effectiveDateMs(m.datePublished, m.dateModified)).toBeGreaterThan(
-        effectiveDateMs(m.datePublished, undefined),
+    if (passedIdx !== -1) {
+      const [, passed] = ordered[passedIdx];
+      const jumper = ordered
+        .slice(0, passedIdx)
+        .find(([, prev]) => (prev.datePublished ?? "") < (passed.datePublished ?? ""))?.[1];
+      expect(jumper).toBeTruthy();
+      expect(effectiveDateMs(jumper!.datePublished, jumper!.dateModified)).toBeGreaterThan(
+        effectiveDateMs(jumper!.datePublished, undefined),
       );
     }
   });
