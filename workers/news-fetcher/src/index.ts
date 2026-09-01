@@ -85,6 +85,29 @@ const MAX_ARTICLE_FETCHES_PER_RUN = 10;
 // Thử lại feed tối đa 2 lần cho CẢ run (không phải mỗi nguồn) — nếu mỗi nguồn
 // được thử lại thì 9 nguồn cùng hỏng sẽ đẩy run qua trần 50 subrequest.
 const MAX_FEED_RETRIES_PER_RUN = 2;
+
+// Một chuỗi User-Agent duy nhất cho MỌI request ra ngoài (feed, listing, trang
+// bài). Trước 2026-09-01 chuỗi này là "ThePickleHub-news-fetcher/1.0 (+...)" —
+// lễ phép và trung thực, nhưng KHÔNG theo khuôn "Mozilla/5.0 (compatible;
+// <bot>; +<url>)" mà Googlebot/Bingbot dùng, nên WAF của pickleball.com bắt
+// đầu trả 403 cho nó từ 2026-08-28: 4 ngày, ~48 lượt fetch, 1/9 nguồn chết âm
+// thầm (run vẫn ở trạng thái "warning" nên không ai bị đánh thức).
+//
+// Đo tay 2026-09-01 trên https://pickleball.com/api/feed:
+//   "ThePickleHub-news-fetcher/1.0 (+...)"                          → 403
+//   + Accept / Accept-Language / Accept-Encoding                     → 403
+//   "SimplePie/1.5 (Feed Parser)"                                    → 403
+//   "Mozilla/5.0 (compatible; ThePickleHub-news-fetcher/1.0; +...)"  → 200
+//
+// Nên đổi KHUÔN, không đổi DANH TÍNH: vẫn tự khai đúng tên bot + URL liên hệ,
+// chỉ bọc trong tiền tố "Mozilla/5.0 (compatible; …)" mà bộ lọc mong đợi.
+// KHÔNG giả dạng trình duyệt. robots.txt của pickleball.com cho phép "/" với
+// mọi user-agent, nên đây là đi đúng cửa chứ không phải lách. Đã thử lại cả 9
+// nguồn với chuỗi mới: 8 nguồn giữ nguyên mã trạng thái, pickleball-com
+// 403 → 200.
+export const NEWS_FETCHER_USER_AGENT =
+  "Mozilla/5.0 (compatible; ThePickleHub-news-fetcher/1.0; +https://www.thepicklehub.net)";
+
 const MAX_AGE_DAYS = 30;
 const TITLE_LIMIT = 120;
 const SUMMARY_LIMIT = 300;
@@ -651,7 +674,7 @@ async function scrapeHtmlListing(
   if (!source.feed_url) throw new Error("source has no feed_url");
 
   const listingRes = await fetch(source.feed_url, {
-    headers: { "User-Agent": "ThePickleHub-news-fetcher/1.0 (+https://www.thepicklehub.net)" },
+    headers: { "User-Agent": NEWS_FETCHER_USER_AGENT },
     signal: AbortSignal.timeout(12_000),
   });
   if (!listingRes.ok) throw new Error(`listing HTTP ${listingRes.status}`);
@@ -696,7 +719,7 @@ async function scrapeHtmlListing(
     budget.left -= 1;
     try {
       const articleRes = await fetch(url, {
-        headers: { "User-Agent": "ThePickleHub-news-fetcher/1.0 (+https://www.thepicklehub.net)" },
+        headers: { "User-Agent": NEWS_FETCHER_USER_AGENT },
         signal: AbortSignal.timeout(12_000),
       });
       if (!articleRes.ok) continue;
@@ -773,7 +796,7 @@ async function fetchFeedWithRetry(feedUrl: string, budget: FetchBudget): Promise
 async function fetchFeedOnce(feedUrl: string): Promise<Response> {
   return await fetch(feedUrl, {
     headers: {
-      "User-Agent": "ThePickleHub-news-fetcher/1.0 (+https://www.thepicklehub.net)",
+      "User-Agent": NEWS_FETCHER_USER_AGENT,
       Accept: "application/rss+xml, application/atom+xml, application/xml;q=0.9",
     },
     // 20s (trước là 12s). Đo từ chính edge Cloudflare: feed pickleball.com trả
@@ -879,7 +902,7 @@ async function fetchArticleBody(rawUrl: string): Promise<string | null> {
 
   const res = await fetch(rawUrl, {
     headers: {
-      "User-Agent": "ThePickleHub-news-fetcher/1.0 (+https://www.thepicklehub.net)",
+      "User-Agent": NEWS_FETCHER_USER_AGENT,
       Accept: "text/html,application/xhtml+xml",
     },
     redirect: "follow",
