@@ -719,3 +719,34 @@ redeploy; probe trực tiếp và dùng CLI local khi blob-loss tái phát.
 len(s.encode('utf-8'))  # meta_title ≤60, meta_description ≤160
 ```
 Trim set-score parentheticals / drop the leading "Kết quả PPA Asia 500 …" prefix first — those buy the most bytes. The INSERT uses `WHERE NOT EXISTS` on slug, so a failed attempt leaves **no partial row** — just fix the two fields and re-run (idempotent).
+
+## 2026-09-01 — `/tmp` persistent: mở rộng rule từ "verify" sang MỌI file tạm
+
+Rule cũ chỉ nói bước verify phải dùng `mktemp -d`. Ngày 1/9 dính **ba** lần trong một phiên, hai lần đầu suýt làm hỏng kết luận:
+
+1. `rm -rf /tmp/phwork` **fail im lặng** (file root-owned của phiên trước) → `git clone` vào thư mục không rỗng cũng fail → đọc nhầm cây cũ, tưởng `origin/main = f5b057a` trong khi thật là `187c1ca`. Chỉ phát hiện vì đối chiếu lại bằng GitHub API.
+2. Glob `/tmp/vi_*.json` trộn file phiên cũ → hai file cùng slug, khác nội dung.
+3. `> /tmp/urls.txt` bị Permission denied → vòng `while read` đọc **file urls.txt của phiên trước** → ping IndexNow **44 URL không liên quan**, còn 10 URL cần ping thì không được ping.
+
+**Rule:** mọi file/thư mục tạm trong một phiên phải nằm dưới một `mktemp -d` riêng của phiên đó. Không bao giờ dùng tên cố định trong `/tmp`, kể cả để ghi. Và **luôn kiểm exit code / kết quả của bước ghi file** trước khi đọc lại nó — `>` thất bại không dừng script, chỉ để lại file cũ.
+
+**Hệ quả rộng hơn:** `rm -rf` fail, `>` fail, `curl -o` fail đều **không** làm bash dừng. Bước sau đó đọc phải dữ liệu cũ và **trông hoàn toàn hợp lệ**. Đây là cùng một họ lỗi với "đọc cây git cũ trên mount" — dữ liệu sai nhưng tự tin.
+
+## 2026-09-01 — Khẳng định tương đối vs khẳng định có gắn ngày
+
+Ngày 31/8 sửa "play starts **today**, August 30". Ngày 1/9 lại gặp biến thể: **"day two of competition"** trong 9 chỗ (6 mở bài + 3 dateline phụ, EN+VI).
+
+Phân biệt quan trọng, vì nó quyết định có phải sửa gấp không:
+
+- "tính đến **sáng 31/8** có 12/69 nội dung đã có nhà vô địch" → **có gắn ngày**, đọc ngày nào cũng vẫn đúng, chỉ **cũ**. Không gấp.
+- "**day two of competition**" → **không gắn gì**, phụ thuộc hoàn toàn vào việc người đọc mở trang đúng ngày. Sang ngày sau là **sai**, và nó nằm trong đoạn AI search trích đứng một mình.
+
+**Rule:** trong mở bài, mọi mốc thời gian phải tự đứng được — ngày tuyệt đối, hoặc "tính đến <ngày>". Cụm đếm tương đối ("ngày thi đấu thứ N", "còn N ngày", "N days out") chỉ được dùng khi **ngay cạnh nó có ngày tuyệt đối** để neo.
+
+## 2026-09-01 — Số tự tính phải kèm phép chia để tự kiểm được
+
+Viết "13 trận vòng 64 của nam có giờ". Thật ra là **9**. Nguồn sai: lấy 28 (tổng trận trong ngày) − 15 (vòng loại nam) = 13 — nhưng 28 gồm cả 4 trận nữ. Đúng: nam = 15 vòng loại + 9 vòng 64 = 24.
+
+Không phải dữ liệu đổi (cả 9 hàng có `last_seen_at` không đổi từ trước lúc đăng). Là **cộng sai**, và nó lên production ~25 phút trước khi bước verify độc lập bắt được.
+
+**Rule:** con số do mình **suy ra bằng phép tính** (không đọc thẳng từ nguồn) thì (a) phải `GROUP BY` đếm lại từ nguồn, đừng trừ; (b) trong bài nên viết kèm phần chia — "9 vòng 64 (15 trận nam còn lại là vòng loại)" — để chính câu văn tự kiểm được. Số trần không ai kiểm được, kể cả mình lúc đọc lại.
