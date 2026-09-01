@@ -1093,7 +1093,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v83 (2026-08-31): World Cup livescore results now show the full scoreline
   // (all finished games + the last-observed game) instead of a single game, so
   // completed and bo3 matches read as "14-16, 16-14, 13-5" not "16-14".
-  const cacheKey = `pr:v83:${url.pathname}`;
+  // v84 (2026-09-01): day-three refresh of the five static World Cup posts.
+  // "day two of competition" was a bare relative claim in six openings and is
+  // wrong on day three; the Men's Pro Doubles page still carried an August 26
+  // dateline and "four days out" on the morning its own draw plays. Openings
+  // now carry the August 31 Pro Singles semifinal results and the September 1
+  // doubles start time, all read from wc_pro_matches. SSR body changes on all
+  // five EN posts, so the cached copies must be retired.
+  const cacheKey = `pr:v84:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

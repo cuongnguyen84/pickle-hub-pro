@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "pickleball-world-cup-2026-mens-pro-doubles-field",
   publishedDate: "2026-08-26",
-  updatedDate: "2026-08-26",
+  updatedDate: "2026-09-01",
   author: "Cuong Nguyen",
   tags: [
     "pickleball world cup 2026",
@@ -35,7 +35,7 @@ const post: BlogPost = {
         {
           heading: "The field is set — Men's Pro Doubles plays Tuesday, September 1",
           content:
-            "Last updated August 26, 2026 — the Men's Pro Doubles draw at the Heineken Pickleball World Cup 2026 in Da Nang, Vietnam (August 30 – September 6, 2026) is now final, and it plays on Tuesday, September 1, alongside Women's Pro Doubles. The Pro finals for every category close the tournament on Sunday, September 6 on court 1 at Tien Son Sports Palace. Ranked by combined DUPR, the top three pairs are Jack Munro and Richard Livornese Jr. (12.51), Jay Devilliers and Émilien Burnel (12.27), and Quang Duong and Harsh Mehta (12.18). This ThePickleHub breakdown ranks every published pair in the draw, explains what the ratings do and do not tell you, and flags the two Vietnamese pairs whose DUPR the organizers have not published. All times are Vietnam time (GMT+7).",
+            "Last updated September 1, 2026 — day three of competition, and the day Men's Pro Doubles plays. The draw at the Heineken Pickleball World Cup 2026 in Da Nang, Vietnam (August 30 – September 6, 2026) is final, and play starts at 15:00 Vietnam time on Tuesday, September 1 at Tien Son Center and Tuyen Son A&D, alongside Women's Pro Doubles. Twenty-eight Pro doubles matches are on the schedule for the day — 24 men's, four women's — running from 15:00 to 17:40. The Pro finals for every category close the tournament on Sunday, September 6 on court 1 at Tien Son Sports Palace. Ranked by combined DUPR, the top three pairs are Jack Munro and Richard Livornese Jr. (12.51), Jay Devilliers and Émilien Burnel (12.27), and Quang Duong and Harsh Mehta (12.18). This ThePickleHub breakdown ranks every published pair in the draw, explains what the ratings do and do not tell you, and flags the two Vietnamese pairs whose DUPR the organizers have not published. All times are Vietnam time (GMT+7).",
           internalLinks: [
             {
               text: "Full World Cup schedule, both tournaments day by day",
@@ -116,7 +116,7 @@ const post: BlogPost = {
         {
           heading: "What is still not known",
           content:
-            "Three honest gaps, four days out. First, start times for individual Pro matches on September 1 were not published as of August 26 — the organizers' schedule marks day-by-day categories but the tournament states the schedule is subject to change, so check on the day. Second, the organizers have not confirmed whether FPT Play's World Cup coverage is free or behind a subscription; we are not going to write \"watch it free\" without a source. Third, DUPR ratings move. The figures in the table above are the ones printed on the official bracket as of August 26, 2026, and a rating that shifts after this page was updated will not be reflected until we refresh it.",
+            "Three honest gaps, read from the organizers' own feed at 07:00 on September 1. First, the draw is only partly timed. Qualifying starts at 15:00 and the Round of 64 follows in waves at 15:25, 16:10, 16:55 and 17:40, but only 13 men's Round-of-64 matches carry a time so far, several of them still listing an opponent to be decided in qualifying — and the top two pairs by combined DUPR, Munro–Livornese and Devilliers–Burnel, have no published start time yet. That is what an unfinished schedule looks like, not evidence anybody is missing; the tournament states the schedule is subject to change. Second, the organizers have not confirmed whether FPT Play's World Cup coverage is free or behind a subscription; we are not going to write \"watch it free\" without a source. Third, DUPR ratings move. The figures in the table above are the ones printed on the official bracket as of August 26, 2026, and a rating that shifts after this page was updated will not be reflected until we refresh it.",
           internalLinks: [
             {
               text: "Tickets, venues and how to watch",
@@ -166,7 +166,7 @@ const post: BlogPost = {
         {
           heading: "Danh sách đã chốt — đôi nam pro đấu thứ Ba 1/9",
           content:
-            "Cập nhật lần cuối 26/8/2026 — nhánh đấu Đôi nam chuyên nghiệp tại Heineken Pickleball World Cup 2026 ở Đà Nẵng (30/8 – 6/9/2026) đã chốt danh sách, và thi đấu vào thứ Ba 1/9, cùng ngày với Đôi nữ chuyên nghiệp. Chung kết toàn bộ nhóm Pro khép lại giải vào Chủ nhật 6/9 tại sân 1 Cung Thể thao Tiên Sơn. Xếp theo tổng DUPR, ba cặp dẫn đầu là Jack Munro – Richard Livornese Jr. (12,51), Jay Devilliers – Émilien Burnel (12,27) và Quang Dương – Harsh Mehta (12,18). Đây là bản phân tích do ThePickleHub thực hiện: xếp hạng từng cặp có công bố chỉ số, nói rõ DUPR đo được gì và không đo được gì, và chỉ ra hai cặp Việt Nam mà ban tổ chức chưa công bố DUPR. Mọi mốc giờ theo giờ Việt Nam (GMT+7).",
+            "Cập nhật 1/9/2026 — ngày thi đấu thứ ba, và là ngày Đôi nam chuyên nghiệp ra quân. Nhánh đấu Đôi nam chuyên nghiệp tại Heineken Pickleball World Cup 2026 ở Đà Nẵng (30/8 – 6/9/2026) đã chốt danh sách, bóng lăn từ 15:00 giờ Việt Nam thứ Ba 1/9 tại Tien Son Center và Tuyen Son A&D, cùng ngày với Đôi nữ chuyên nghiệp. Cả ngày có 28 trận đôi Pro trên lịch — 24 trận nam, 4 trận nữ — trải từ 15:00 đến 17:40. Chung kết toàn bộ nhóm Pro khép lại giải vào Chủ nhật 6/9 tại sân 1 Cung Thể thao Tiên Sơn. Xếp theo tổng DUPR, ba cặp dẫn đầu là Jack Munro – Richard Livornese Jr. (12,51), Jay Devilliers – Émilien Burnel (12,27) và Quang Dương – Harsh Mehta (12,18). Đây là bản phân tích do ThePickleHub thực hiện: xếp hạng từng cặp có công bố chỉ số, nói rõ DUPR đo được gì và không đo được gì, và chỉ ra hai cặp Việt Nam mà ban tổ chức chưa công bố DUPR. Mọi mốc giờ theo giờ Việt Nam (GMT+7).",
           internalLinks: [
             {
               text: "Lịch thi đấu World Cup đầy đủ, cả hai giải, từng ngày",
@@ -246,7 +246,7 @@ const post: BlogPost = {
         {
           heading: "Những gì vẫn chưa rõ",
           content:
-            "Ba khoảng trống, nói thẳng, khi chỉ còn 4 ngày. Thứ nhất, giờ thi đấu cụ thể của các trận Pro cá nhân ngày 1/9 tính tới 26/8 vẫn chưa được công bố — lịch của ban tổ chức mới chia hạng mục theo ngày, và chính họ ghi rõ lịch có thể thay đổi, nên hãy kiểm lại vào đúng ngày. Thứ hai, ban tổ chức chưa xác nhận sóng World Cup trên FPT Play là miễn phí hay cần thuê bao; chúng tôi sẽ không viết \"xem miễn phí\" khi chưa có nguồn. Thứ ba, chỉ số DUPR luôn thay đổi. Các con số trong bảng trên là con số in trên bracket chính thức tính tới ngày 26/8/2026; nếu một chỉ số đổi sau thời điểm cập nhật này thì phải chờ lần làm mới sau.",
+            "Ba khoảng trống, nói thẳng, đọc từ chính dữ liệu của ban tổ chức lúc 07:00 ngày 1/9. Thứ nhất, lịch mới được xếp giờ một phần. Vòng loại bắt đầu 15:00, vòng 64 nối tiếp theo từng đợt 15:25, 16:10, 16:55 và 17:40, nhưng mới có 13 trận vòng 64 của nam có giờ, trong đó nhiều trận còn bỏ trống đối thủ chờ vòng loại — và hai cặp mạnh nhất theo tổng DUPR là Munro–Livornese và Devilliers–Burnel thì chưa có giờ thi đấu nào được công bố. Đó là dấu hiệu của một bản lịch chưa xếp xong, không phải bằng chứng ai đó vắng mặt; ban tổ chức cũng ghi rõ lịch có thể thay đổi. Thứ hai, ban tổ chức chưa xác nhận sóng World Cup trên FPT Play là miễn phí hay cần thuê bao; chúng tôi sẽ không viết \"xem miễn phí\" khi chưa có nguồn. Thứ ba, chỉ số DUPR luôn thay đổi. Các con số trong bảng trên là con số in trên bracket chính thức tính tới ngày 26/8/2026; nếu một chỉ số đổi sau thời điểm cập nhật này thì phải chờ lần làm mới sau.",
           internalLinks: [
             {
               text: "Vé, địa điểm và cách xem World Cup",
