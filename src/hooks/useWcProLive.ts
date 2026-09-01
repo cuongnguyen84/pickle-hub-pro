@@ -50,6 +50,11 @@ export interface WcProMatchRow {
 export interface WcProEventGroup {
   event: ProEvent;
   live: WcProMatchRow[];
+  /** Every finished match of the event (all nationalities), most recent first —
+   * the /live board's results list. */
+  completed: WcProMatchRow[];
+  /** Vietnamese matches not in progress (VN finished + VN upcoming) — used by
+   * the home-page card, which stays Vietnam-focused. */
   vietnam: WcProMatchRow[];
 }
 
@@ -79,13 +84,17 @@ async function fetchWcProFeed(): Promise<WcProFeed> {
     const forEvent = rows.filter((r) => r.category_id === event);
     const sortByState = (a: WcProMatchRow, b: WcProMatchRow) =>
       (STATUS_RANK[a.status] ?? 3) - (STATUS_RANK[b.status] ?? 3);
+    // Results: most recently played first, by scheduled slot (unique tiebreak).
+    const recentFirst = (a: WcProMatchRow, b: WcProMatchRow) =>
+      (b.scheduled_at ?? "").localeCompare(a.scheduled_at ?? "") || a.match_id.localeCompare(b.match_id);
     return {
       event,
       live: forEvent.filter((r) => r.status === "in_progress"),
+      completed: forEvent.filter((r) => r.status === "completed").sort(recentFirst),
       // Vietnamese matches that aren't already shown in the live column.
       vietnam: forEvent.filter((r) => r.is_vietnam && r.status !== "in_progress").sort(sortByState),
     };
-  }).filter((g) => g.live.length > 0 || g.vietnam.length > 0);
+  }).filter((g) => g.live.length > 0 || g.completed.length > 0 || g.vietnam.length > 0);
 
   return { events, liveCount: rows.filter((r) => r.status === "in_progress").length };
 }

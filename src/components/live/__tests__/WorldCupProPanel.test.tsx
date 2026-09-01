@@ -17,7 +17,7 @@ const match = (over: Partial<WcProMatchRow>): WcProMatchRow => ({
   court_label: "Sân 3", scheduled_at: null, ...over,
 });
 const evt = (over: Partial<WcProEventGroup> & { event: WcProEventGroup["event"] }): WcProEventGroup => ({
-  live: [], vietnam: [], ...over,
+  live: [], completed: [], vietnam: [], ...over,
 });
 const feed = (events: WcProEventGroup[], liveCount = 0): WcProFeed => ({ events, liveCount });
 
@@ -95,8 +95,26 @@ describe("WorldCupProContent", () => {
     expect(document.querySelector(".wcpro-subtab")).not.toBeNull();
   });
 
+  it("shows completed matches with no Vietnamese player, not just Vietnamese ones", () => {
+    render(
+      <WorldCupProContent
+        feed={feed([
+          evt({
+            event: "pro_doubles_mens",
+            completed: [
+              match({ match_id: "f", category_id: "pro_doubles_mens", entry_a_name: "Jeremy Luke Soh", entry_b_name: "Wong Hong Kit", is_vietnam: false, status: "completed", games_json: [{ a: 15, b: 9 }], current_a: null, current_b: null, leader_side: "A" }),
+            ],
+          }),
+        ])}
+        language="vi"
+      />,
+    );
+    expect(screen.getByText(/Jeremy Luke Soh/)).toBeTruthy();
+    expect(screen.getByText(/Wong Hong Kit/)).toBeTruthy();
+  });
+
   it("shows a completed match as a kept result with its score", () => {
-    render(<WorldCupProContent feed={feed([evt({ event: "pro_singles_womens", vietnam: [match({ category_id: "pro_singles_womens", status: "completed", games_json: [{ a: 21, b: 15 }], current_a: null, current_b: null, leader_side: "A" })] })])} language="vi" />);
+    render(<WorldCupProContent feed={feed([evt({ event: "pro_singles_womens", completed: [match({ category_id: "pro_singles_womens", status: "completed", games_json: [{ a: 21, b: 15 }], current_a: null, current_b: null, leader_side: "A" })] })])} language="vi" />);
     expect(screen.getByText("Kết thúc")).toBeTruthy();
     expect(screen.getByText("21-15")).toBeTruthy();
   });
@@ -104,17 +122,17 @@ describe("WorldCupProContent", () => {
   it("shows the last-observed score of a completed match that has no finished games", () => {
     // The source drops a match the moment it ends, so a single-game knockout may
     // freeze with only a current game (empty games_json). It must not render blank.
-    render(<WorldCupProContent feed={feed([evt({ event: "pro_singles_mens", vietnam: [match({ status: "completed", games_json: [], current_a: 7, current_b: 10, leader_side: "B" })] })])} language="vi" />);
+    render(<WorldCupProContent feed={feed([evt({ event: "pro_singles_mens", completed: [match({ status: "completed", games_json: [], current_a: 7, current_b: 10, leader_side: "B" })] })])} language="vi" />);
     expect(screen.getByText("7-10")).toBeTruthy();
   });
 
   it("keeps the last-observed decider on a completed bo3", () => {
-    render(<WorldCupProContent feed={feed([evt({ event: "pro_singles_mens", vietnam: [match({ status: "completed", games_json: [{ a: 14, b: 16 }, { a: 16, b: 14 }], current_a: 13, current_b: 5, leader_side: "A" })] })])} language="vi" />);
+    render(<WorldCupProContent feed={feed([evt({ event: "pro_singles_mens", completed: [match({ status: "completed", games_json: [{ a: 14, b: 16 }, { a: 16, b: 14 }], current_a: 13, current_b: 5, leader_side: "A" })] })])} language="vi" />);
     expect(screen.getByText("14-16, 16-14, 13-5")).toBeTruthy();
   });
 
   it("does not double-print the last game when the current game duplicates it", () => {
-    render(<WorldCupProContent feed={feed([evt({ event: "pro_singles_mens", vietnam: [match({ status: "completed", games_json: [{ a: 15, b: 8 }], current_a: 15, current_b: 8, leader_side: "A" })] })])} language="vi" />);
+    render(<WorldCupProContent feed={feed([evt({ event: "pro_singles_mens", completed: [match({ status: "completed", games_json: [{ a: 15, b: 8 }], current_a: 15, current_b: 8, leader_side: "A" })] })])} language="vi" />);
     expect(screen.getByText("15-8")).toBeTruthy();
   });
 
@@ -122,7 +140,7 @@ describe("WorldCupProContent", () => {
     const { container: live } = render(<WorldCupProContent feed={feed([evt({ event: "pro_singles_mens", live: [match({ games_json: [], current_a: 0, current_b: 0 })] })], 1)} language="vi" />);
     expect(within(live).getByText("0-0")).toBeTruthy();
     cleanup();
-    const { container: done } = render(<WorldCupProContent feed={feed([evt({ event: "pro_singles_mens", vietnam: [match({ status: "completed", games_json: [{ a: 21, b: 15 }], current_a: 0, current_b: 0, leader_side: "A" })] })])} language="vi" />);
+    const { container: done } = render(<WorldCupProContent feed={feed([evt({ event: "pro_singles_mens", completed: [match({ status: "completed", games_json: [{ a: 21, b: 15 }], current_a: 0, current_b: 0, leader_side: "A" })] })])} language="vi" />);
     expect(within(done).getByText("21-15")).toBeTruthy();
     expect(within(done).queryByText(/0-0/)).toBeNull();
   });

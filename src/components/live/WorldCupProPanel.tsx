@@ -91,8 +91,21 @@ export function WorldCupProContent({ feed, language }: { feed: WcProFeed; langua
   const [active, setActive] = useState<ProEvent | undefined>(defaultEvent);
   const [query, setQuery] = useState("");
 
-  // Every stored match across all events (live + Vietnamese), for name search.
-  const allMatches = useMemo(() => events.flatMap((e) => [...e.live, ...e.vietnam]), [events]);
+  // Every stored match across all events, de-duplicated, for name search
+  // (a Vietnamese finished match appears in both `completed` and `vietnam`).
+  const allMatches = useMemo(() => {
+    const seen = new Set<string>();
+    const out: WcProMatchRow[] = [];
+    for (const e of events) {
+      for (const m of [...e.live, ...e.completed, ...e.vietnam]) {
+        if (!seen.has(m.match_id)) {
+          seen.add(m.match_id);
+          out.push(m);
+        }
+      }
+    }
+    return out;
+  }, [events]);
   const q = foldName(query).trim();
   const results = useMemo(() => {
     if (!q) return [];
@@ -105,7 +118,13 @@ export function WorldCupProContent({ feed, language }: { feed: WcProFeed; langua
   const activeEvent = events.find((e) => e.event === active) ?? events[0];
   if (!activeEvent) return null;
   const searching = q.length > 0;
-  const shown = [...activeEvent.live, ...activeEvent.vietnam];
+  // Live first, then every finished match of the event, then the upcoming
+  // Vietnamese matches (all completed now show, not just the Vietnamese ones).
+  const shown = [
+    ...activeEvent.live,
+    ...activeEvent.completed,
+    ...activeEvent.vietnam.filter((m) => m.status === "scheduled"),
+  ];
 
   return (
     <div className="wcpro">
@@ -175,8 +194,8 @@ export function WorldCupProContent({ feed, language }: { feed: WcProFeed; langua
 
       <p className="wcpro-source">
         {language === "vi"
-          ? "Trận đang đấu + trận có tay vợt Việt Nam · nguồn: ban tổ chức (sporttora.com)"
-          : "Live matches + matches with Vietnamese players · source: organizers (sporttora.com)"}
+          ? "Trận đang đấu + toàn bộ kết quả · nguồn: ban tổ chức (sporttora.com)"
+          : "Live matches + all results · source: organizers (sporttora.com)"}
       </p>
     </div>
   );

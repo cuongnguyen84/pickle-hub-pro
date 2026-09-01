@@ -16,7 +16,7 @@ import { WorldCupLiveBoard } from "../WorldCupLiveBoard";
 
 const proFeed = (): WcProFeed => ({
   liveCount: 2,
-  events: [{ event: "pro_singles_mens", live: [{ match_id: "m", category_id: "pro_singles_mens", division_name: null, round_name: "R32", round_num: 3, entry_a_name: "Nguyễn Văn Linh", entry_a_seed: 1, entry_b_name: "Kento Tamaki", entry_b_seed: 2, current_a: 5, current_b: 3, games_json: [], serving_side: "A", leader_side: "A", status: "in_progress", is_vietnam: true, venue_name: null, court_label: null, scheduled_at: null }], vietnam: [] }],
+  events: [{ event: "pro_singles_mens", live: [{ match_id: "m", category_id: "pro_singles_mens", division_name: null, round_name: "R32", round_num: 3, entry_a_name: "Nguyễn Văn Linh", entry_a_seed: 1, entry_b_name: "Kento Tamaki", entry_b_seed: 2, current_a: 5, current_b: 3, games_json: [], serving_side: "A", leader_side: "A", status: "in_progress", is_vietnam: true, venue_name: null, court_label: null, scheduled_at: null }], completed: [], vietnam: [] }],
 });
 const teamFeed = (): WcOpenFeed => ({
   drawOnly: true, hasLive: false,
