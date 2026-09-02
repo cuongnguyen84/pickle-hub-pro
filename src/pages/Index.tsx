@@ -16,7 +16,7 @@ import { PPA_ASIA_STOPS } from "@/lib/constants";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Countdown } from "@/components/Countdown";
 import { formatDate, formatRelative, formatTime } from "@/lib/format-datetime";
-import { byEffectiveDateDesc, effectiveDateIso, isRefreshed } from "@/lib/blogOrder";
+import { byEffectiveDateDesc, effectiveDateIso, isRefreshed, pinWorldCupResults } from "@/lib/blogOrder";
 import { shouldReserveLiveSlot, writeLiveLeadHint } from "@/lib/home-live-lead";
 import { HreflangTags } from "@/components/seo";
 import { VideoThumbnail } from "@/components/video/VideoThumbnail";
@@ -180,8 +180,10 @@ const Index = () => {
     // without an EN manifest entry still surface here. EN keeps the synchronous
     // bilingual manifest for immediate LCP.
     if (language === "vi") {
-      return [...viPosts]
-        .sort(byEffectiveDateDesc((p) => p.published_at, (p) => p.updated_at))
+      return pinWorldCupResults(
+        [...viPosts].sort(byEffectiveDateDesc((p) => p.published_at, (p) => p.updated_at)),
+        (p) => p.slug,
+      )
         .slice(0, 6)
         .map((p) => ({
         slug: p.slug,
@@ -196,8 +198,10 @@ const Index = () => {
         href: `/vi/blog/${p.slug}`,
       }));
     }
-    return [...blogMetadata]
-      .sort(byEffectiveDateDesc((p) => p.publishedDate, (p) => p.updatedDate))
+    return pinWorldCupResults(
+      [...blogMetadata].sort(byEffectiveDateDesc((p) => p.publishedDate, (p) => p.updatedDate)),
+      (p) => p.slug,
+    )
       .slice(0, 6)
       .map((p) => ({
         slug: p.slug,
