@@ -9,6 +9,7 @@ import {
   effectiveDateIso,
   isRefreshed,
   byEffectiveDateDesc,
+  pinWorldCupResults,
 } from "../blogOrder";
 
 type P = { slug: string; pub: string | null; upd: string | null };
@@ -67,5 +68,39 @@ describe("blogOrder", () => {
     // A backdated updated_at must not drag a post below its own publish date.
     expect(effectiveDateIso("2026-08-20", "2026-08-01")).toBe("2026-08-20");
     expect(isRefreshed("2026-08-20", "2026-08-01")).toBe(false);
+  });
+});
+
+describe("pinWorldCupResults", () => {
+  const during = Date.parse("2026-09-02T12:00:00+07:00");
+  const after = Date.parse("2026-09-07T08:00:00+07:00");
+  const posts = [
+    { slug: "pickleball-world-cup-2026-mens-pro-doubles-field" },
+    { slug: "pickleball-world-cup-2026-da-nang-schedule" },
+    { slug: "pickleball-world-cup-2026-da-nang-results" },
+  ];
+
+  it("lifts the EN results post to the front during the event", () => {
+    expect(pinWorldCupResults(posts, (p) => p.slug, during).map((p) => p.slug)[0]).toBe(
+      "pickleball-world-cup-2026-da-nang-results",
+    );
+  });
+
+  it("lifts the VI twin too", () => {
+    const vi = [{ slug: "khac" }, { slug: "ket-qua-pickleball-world-cup-2026-da-nang" }];
+    expect(pinWorldCupResults(vi, (p) => p.slug, during).map((p) => p.slug)[0]).toBe(
+      "ket-qua-pickleball-world-cup-2026-da-nang",
+    );
+  });
+
+  it("does nothing after finals day", () => {
+    expect(pinWorldCupResults(posts, (p) => p.slug, after)).toEqual(posts);
+  });
+
+  it("does nothing when the post is absent or already first", () => {
+    const absent = [{ slug: "a" }, { slug: "b" }];
+    expect(pinWorldCupResults(absent, (p) => p.slug, during)).toEqual(absent);
+    const first = [{ slug: "pickleball-world-cup-2026-da-nang-results" }, { slug: "b" }];
+    expect(pinWorldCupResults(first, (p) => p.slug, during)).toEqual(first);
   });
 });

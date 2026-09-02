@@ -73,3 +73,33 @@ export function byEffectiveDateDesc<T>(
     effectiveDateMs(getPublished(b), getUpdated(b)) -
     effectiveDateMs(getPublished(a), getUpdated(a));
 }
+
+// ============================================================================
+// World Cup week pin (lệnh #77, 2026-09-02)
+// ----------------------------------------------------------------------------
+// The homepage renders only the top TWO stories. The live results article
+// updates itself every minute through the wc_pro_matches widget, but its
+// static updatedDate does not move — so every hand-edit to another World Cup
+// post buries the one page that is actually freshest. VI dodges this only
+// because its DB trigger bumps updated_at; EN has no such signal.
+//
+// While the event is running, the results article (either language twin)
+// holds the top slot. Self-expires after finals day — safe to delete after.
+// ============================================================================
+
+const WC_PIN_UNTIL = Date.parse("2026-09-07T00:00:00+07:00");
+const WC_PIN_SLUGS = new Set([
+  "pickleball-world-cup-2026-da-nang-results",
+  "ket-qua-pickleball-world-cup-2026-da-nang",
+]);
+
+/** Lift the live World Cup results post to the front while the event runs. */
+export function pinWorldCupResults<T>(
+  list: T[],
+  slugOf: (item: T) => string,
+  now: number = Date.now(),
+): T[] {
+  if (now > WC_PIN_UNTIL) return list;
+  const i = list.findIndex((item) => WC_PIN_SLUGS.has(slugOf(item)));
+  return i > 0 ? [list[i], ...list.slice(0, i), ...list.slice(i + 1)] : list;
+}
