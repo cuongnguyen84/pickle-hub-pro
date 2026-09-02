@@ -39,11 +39,16 @@ const sideIsVietnam = (name: string | null): boolean => isVietnameseName(name);
 function vnDay(ms: number): string {
   return new Date(ms + VN_OFFSET_MS).toISOString().slice(0, 10);
 }
-/** Was this match played today, Vietnam time? Uses its scheduled slot. */
+/** Was this match played today, Vietnam time? Uses its scheduled slot, whose
+ *  date is the organizers' Vietnam wall-clock stored verbatim (see the column
+ *  comment in migration 20260831140000 and matchDayKey in useWcResults.ts) —
+ *  take it as-is. Shifting it +7 like a real UTC instant pushes any match from
+ *  17:00 onward onto tomorrow and drops it out of "today's results". Date.now()
+ *  IS a real instant, so vnDay() still applies to it. */
 function isToday(m: WcProMatchRow): boolean {
-  if (!m.scheduled_at) return false;
-  const t = Date.parse(m.scheduled_at);
-  return !Number.isNaN(t) && vnDay(t) === vnDay(Date.now());
+  const sched = m.scheduled_at;
+  if (!sched || Number.isNaN(Date.parse(sched))) return false;
+  return sched.slice(0, 10) === vnDay(Date.now());
 }
 
 // The score to show against each side of a LIVE match: the current game if in

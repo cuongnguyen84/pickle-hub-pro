@@ -22,7 +22,7 @@ const match = (over: Partial<WcProMatchRow>): WcProMatchRow => ({
   court_label: null, scheduled_at: null, ...over,
 });
 const feed = (live: WcProMatchRow[], liveCount = live.length): WcProFeed => ({
-  events: live.length ? [{ event: "pro_singles_mens", live, vietnam: [] } as WcProEventGroup] : [],
+  events: live.length ? [{ event: "pro_singles_mens", live, vietnam: [], completed: [] } as WcProEventGroup] : [],
   liveCount,
 });
 const wrap = (lang: "vi" | "en") => render(<MemoryRouter><WorldCupLiveCard language={lang} /></MemoryRouter>);
@@ -32,7 +32,7 @@ afterEach(() => { cleanup(); proMock.mockReset(); });
 describe("WorldCupLiveCard", () => {
   it("hides when nothing is live, even if there are scheduled events", () => {
     proMock.mockReturnValue({
-      data: { events: [{ event: "pro_singles_mens", live: [], vietnam: [match({ status: "scheduled" })] }], liveCount: 0 },
+      data: { events: [{ event: "pro_singles_mens", live: [], vietnam: [match({ status: "scheduled" })], completed: [] }], liveCount: 0 },
       isLoading: false, isError: false,
     });
     const { container } = wrap("vi");
@@ -83,7 +83,7 @@ describe("WorldCupLiveCard", () => {
   // ── Results mode: nothing live → today's finished Vietnamese matches ────────
   const todayIso = new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10) + "T05:00:00+00:00";
   const resultsFeed = (vietnam: WcProMatchRow[]): WcProFeed => ({
-    events: [{ event: "pro_singles_mens", live: [], vietnam } as WcProEventGroup],
+    events: [{ event: "pro_singles_mens", live: [], vietnam, completed: [] } as WcProEventGroup],
     liveCount: 0,
   });
 
@@ -158,6 +158,7 @@ describe("WorldCupLiveCard", () => {
           event: "pro_singles_mens",
           live: [match({ match_id: "L", status: "in_progress" })],
           vietnam: [match({ match_id: "r", status: "completed", current_a: null, current_b: null, games_json: [{ a: 15, b: 9 }], scheduled_at: todayIso })],
+          completed: [],
         }],
         liveCount: 1,
       },
