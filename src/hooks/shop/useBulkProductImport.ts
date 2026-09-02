@@ -15,6 +15,18 @@ import { useCallback, useState } from "react";
 // ponytail: the mini build (76 KB gz vs 219 KB) reads XLSX/CSV and writes
 // XLSX — everything this hook needs. It drops legacy .xls/ODS codecs; switch
 // back to "xlsx" if a seller ever needs those.
+//
+// SEC (2026-09-02): package.json pins SheetJS to the vendor tarball
+// https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz, NOT the npm registry.
+// This is deliberate and must not be "cleaned up" back to "xlsx": ^0.18.5.
+// SheetJS stopped publishing to npm at 0.18.5, so the registry copy is
+// permanently vulnerable to CVE-2023-30533 (prototype pollution in the
+// workbook parser, fixed in 0.19.3) and CVE-2024-22363 (ReDoS, fixed in
+// 0.20.2). Both fire on PARSE — i.e. on the exact call below, against a
+// spreadsheet a seller was handed by someone else — so the "it's only the
+// uploader's own file" reasoning does not hold. `npm audit` reports the
+// registry package as high severity with no fix available, because from
+// npm's point of view there is none; the fix only exists on the vendor CDN.
 import * as XLSX from "xlsx/dist/xlsx.mini.min.js";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyShop } from "@/hooks/shop/useSellerApplication";
