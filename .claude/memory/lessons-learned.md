@@ -750,3 +750,37 @@ Viết "13 trận vòng 64 của nam có giờ". Thật ra là **9**. Nguồn sa
 Không phải dữ liệu đổi (cả 9 hàng có `last_seen_at` không đổi từ trước lúc đăng). Là **cộng sai**, và nó lên production ~25 phút trước khi bước verify độc lập bắt được.
 
 **Rule:** con số do mình **suy ra bằng phép tính** (không đọc thẳng từ nguồn) thì (a) phải `GROUP BY` đếm lại từ nguồn, đừng trừ; (b) trong bài nên viết kèm phần chia — "9 vòng 64 (15 trận nam còn lại là vòng loại)" — để chính câu văn tự kiểm được. Số trần không ai kiểm được, kể cả mình lúc đọc lại.
+
+## Thay "day four"→"day five" mà quên ngày đứng bên cạnh (2026-09-03)
+
+**Occurrence:** sed đổi `day four of competition` → `day five` ở 3 dateline bài how-to-watch, nhưng
+tiền tố `Updated September 2, 2026,` thì không đổi. Kết quả lên production: *"Updated September 2,
+2026, day five of competition"* — 30/8 là day one nên 2/9 là day four; câu **tự sai với chính nó**.
+Verify độc lập bắt được, không phải em.
+
+**LUẬT:** dateline là **một cặp** (ngày tuyệt đối + số thứ tự ngày). Sửa một nửa là tạo mâu thuẫn
+nội bộ, tệ hơn để nguyên cả hai vế cũ. Thay cả cụm, và grep lại bằng chính cặp mới
+(`grep -c "September 2, 2026, day five"` phải = 0).
+
+## Sửa .ts KHÔNG chạm vi_blog_posts — và drift đi được cả HAI CHIỀU (2026-09-03)
+
+Luật 30/8 đã ghi "sửa .ts không đụng hàng Supabase". Hôm nay gặp **cả hai chiều trong một buổi**:
+- **EN sửa, VI sót:** bản VI bài cẩm nang xem vẫn còn "chỉ còn ba ngày nữa là khai cuộc",
+  "Cập nhật 27/8/2026, còn 3 ngày là bóng lăn", "đây **sẽ là** lần đầu tiên Việt Nam góp mặt"
+  (thì tương lai, giải đã sang ngày thứ năm) — bản EN đã viết lại sang quá khứ từ nhiều ngày trước.
+- **VI sửa, EN sót:** cùng bài đó, dateline EN thì sai như mục trên còn VI đã đúng.
+
+**LUẬT:** mỗi lần sửa nội dung một bài song ngữ, chạy grep **trên production cả hai URL** với cùng
+bộ chuỗi, chứ không grep trong repo. Repo chỉ chứa một nửa sự thật.
+
+## Kiểm chứng phải được hỏi "tìm lỗi tôi CHƯA hỏi" (2026-09-03)
+
+Subagent verify PASS 8/8 trên toàn bộ danh sách em tự đưa ra — rồi mục mở "tự tìm lỗi tôi chưa hỏi"
+ra **7 phát hiện, 4 là lỗi thật vừa mới tạo ra**, gồm cả chuyện em **nói hụt chính câu chuyện của
+mình** (viết "hai trận chung kết" trong khi bài trụ cột của chính site đã đăng dữ kiện đủ để nói
+"có thể ba"). Danh sách kiểm do tác giả viết chỉ kiểm được thứ tác giả đã nghĩ tới.
+
+**LUẬT:** mọi lần verify phải có một mục cuối để mở, liệt kê sẵn các họ lỗi cần soi (tự mâu thuẫn ·
+ngày tương đối hết hạn · khẳng định vượt dữ liệu · loãng entity · suy luận bracket không nhất quán),
+và grep production sau khi deploy — lần sửa thứ nhất hôm nay sót một chuỗi cách chỗ đã sửa hai
+mệnh đề, chỉ grep prod mới thấy.
