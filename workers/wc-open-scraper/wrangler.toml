@@ -12,6 +12,11 @@ compatibility_flags = ["nodejs_compat"]
 #
 # Enabled 2026-08-31 with Cuong's go-live approval. Every minute; the handler
 # no-ops outside the Aug 30 – Sep 6 match window, so it only fetches during play.
+#
+# 2026-09-03: cron DETACHED in prod (`wrangler triggers deploy` with crons=[])
+# on Cuong's order — no matches until the team event resumes. The line below is
+# kept so the next `wrangler deploy` restores it; a date guard in scheduled()
+# keeps the handler silent until 00:00 Sep 6 Vietnam time.
 [triggers]
 crons = ["* * * * *"]
 

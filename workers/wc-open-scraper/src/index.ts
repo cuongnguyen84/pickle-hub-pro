@@ -29,6 +29,7 @@
 // ============================================================================
 
 import { parseWcOpenDelegations, ParseGuardError, type WcOpenTeam } from "../../../src/lib/wc-open/parse";
+import { parseWcOpenTies, type WcOpenTie } from "../../../src/lib/wc-open/parse-ties";
 import {
   parseWcProLive,
   parseWcProBrackets,
@@ -180,18 +181,99 @@ export interface ScrapeResult {
   ok: boolean;
   teamsSeen: number;
   teamsWritten: number;
+  tiesSeen: number;
+  tiesWritten: number;
+  /** Ties in play this cycle — for the digest and the on-demand response. */
+  tiesLive: number;
   error?: string;
 }
 
+// ── OPEN team ties (wc_open_matches) ───────────────────────────────────────
+
+interface ExistingTieRow {
+  match_id: string;
+  home_score: number | null;
+  away_score: number | null;
+  status: string;
+  court: string | null;
+  start_time: string | null;
+}
+
+async function sbSelectOpenMatches(env: Env): Promise<Map<string, ExistingTieRow>> {
+  const res = await fetch(
+    `${env.SUPABASE_URL}/rest/v1/wc_open_matches?select=match_id,home_score,away_score,status,court,start_time`,
+    {
+      headers: {
+        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+      },
+    },
+  );
+  if (!res.ok) throw new Error(`select open matches ${res.status}`);
+  const rows = (await res.json()) as ExistingTieRow[];
+  return new Map(rows.map((r) => [r.match_id, r]));
+}
+
+/** PostgREST returns timestamptz as "2026-09-03T08:00:00+00:00"; the source
+ *  emits "2026-09-03T08:00:00". Compare on the instant, not the spelling. */
+function sameInstant(a: string | null, b: string | null): boolean {
+  if (a == null || b == null) return a === b;
+  return Date.parse(a.endsWith("Z") || a.includes("+") ? a : `${a}Z`) ===
+    Date.parse(b.endsWith("Z") || b.includes("+") ? b : `${b}Z`);
+}
+
+function tieChanged(next: WcOpenTie, prev: ExistingTieRow | undefined): boolean {
+  if (!prev) return true;
+  return (
+    prev.home_score !== next.homeScore ||
+    prev.away_score !== next.awayScore ||
+    prev.status !== next.status ||
+    prev.court !== next.court ||
+    !sameInstant(prev.start_time, next.startTime)
+  );
+}
+
+async function sbUpsertOpenMatches(env: Env, ties: WcOpenTie[]): Promise<void> {
+  if (ties.length === 0) return;
+  const body = ties.map((t) => ({
+    match_id: t.matchId,
+    group_letter: t.group,
+    round: t.round,
+    home_slug: t.homeSlug,
+    away_slug: t.awaySlug,
+    home_score: t.homeScore,
+    away_score: t.awayScore,
+    status: t.status,
+    court: t.court,
+    start_time: t.startTime,
+    updated_at: new Date().toISOString(),
+  }));
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/wc_open_matches?on_conflict=match_id`, {
+    method: "POST",
+    headers: {
+      apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+      Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+      "Content-Type": "application/json",
+      Prefer: "resolution=merge-duplicates,return=minimal",
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`upsert open matches ${res.status}: ${await res.text()}`);
+}
+
 /**
- * One scrape cycle: fetch → parse (guarded) → diff → upsert only what changed.
- * Match ingestion is added here once the source exposes tie results (Sep 3);
- * until then this keeps the 64-team draw fresh.
+ * One scrape cycle over the delegations page: fetch once, then two guarded
+ * parses over the same HTML — the 64-team draw, and (since the team
+ * competition started on 2026-09-03) the 96 group-stage ties. Each parse
+ * diffs against Supabase and upserts only what changed, so Realtime fires
+ * solely on genuine updates. A tie parse-guard alerts but does not undo the
+ * team write — the draw staying fresh is not hostage to the schedule markup.
  */
 export async function runScrape(env: Env): Promise<ScrapeResult> {
+  let html: string;
   let parsed;
   try {
-    const html = await fetchDelegations();
+    html = await fetchDelegations();
     parsed = parseWcOpenDelegations(html);
   } catch (e) {
     const err = e as Error;
@@ -199,7 +281,7 @@ export async function runScrape(env: Env): Promise<ScrapeResult> {
       // The source layout changed. Do NOT write — alert and keep last-good rows.
       await alert(env, `parse guard: ${err.message}. Kept existing rows.`);
     }
-    return { ok: false, teamsSeen: 0, teamsWritten: 0, error: err.message };
+    return { ok: false, teamsSeen: 0, teamsWritten: 0, tiesSeen: 0, tiesWritten: 0, tiesLive: 0, error: err.message };
   }
 
   const existing = await sbSelectTeams(env);
@@ -207,7 +289,36 @@ export async function runScrape(env: Env): Promise<ScrapeResult> {
   if (changed.length > 0) {
     await sbUpsertTeams(env, changed);
   }
-  return { ok: true, teamsSeen: parsed.teams.length, teamsWritten: changed.length };
+
+  let tiesSeen = 0;
+  let tiesWritten = 0;
+  let tiesLive = 0;
+  let tieError: string | undefined;
+  try {
+    const tiesParsed = parseWcOpenTies(html);
+    tiesSeen = tiesParsed.ties.length;
+    tiesLive = tiesParsed.liveTieCount;
+    const existingTies = await sbSelectOpenMatches(env);
+    const changedTies = tiesParsed.ties.filter((t) => tieChanged(t, existingTies.get(t.matchId)));
+    await sbUpsertOpenMatches(env, changedTies);
+    tiesWritten = changedTies.length;
+  } catch (e) {
+    const err = e as Error;
+    tieError = `ties: ${err.message}`;
+    if (err instanceof ParseGuardError) {
+      await alert(env, `tie parse guard: ${err.message}. Kept existing tie rows.`);
+    }
+  }
+
+  return {
+    ok: tieError == null,
+    teamsSeen: parsed.teams.length,
+    teamsWritten: changed.length,
+    tiesSeen,
+    tiesWritten,
+    tiesLive,
+    error: tieError,
+  };
 }
 
 // ── Pro individual events ──────────────────────────────────────────────────
@@ -606,7 +717,9 @@ async function recordCycle(
   stored.cycles += 1;
   if (!teams.ok || !pro.ok) stored.errorCycles += 1;
   stored.proWritten += pro.matchesWritten;
-  stored.teamsWritten += teams.teamsWritten;
+  // Tie rows fold into the same "dòng đội tuyển" digest line as team rows —
+  // both are the national-team competition.
+  stored.teamsWritten += teams.teamsWritten + teams.tiesWritten;
   stored.liveNow = pro.live;
   stored.completedNow = pro.completed;
   if (stored.completedAtStart == null && pro.ok) stored.completedAtStart = pro.completed;
@@ -627,6 +740,13 @@ async function recordCycle(
 
 export default {
   async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    // Paused through Saturday Sep 5 (Cuong, 03/09: Pro finals done, no matches
+    // until the team competition resumes). 17:00 UTC Sep 5 == 00:00 Sep 6 VN,
+    // so the first cron on Sunday picks the team ties up again by itself. The
+    // prod cron trigger was also detached on 03/09 — redeploying restores it
+    // and this guard keeps it quiet until then. On-demand POST /scrape is not
+    // gated, so a signed manual run still works during the pause.
+    if (Date.now() < Date.UTC(2026, 8, 5, 17)) return;
     // Outside the match window there is nothing new — skip the fetch entirely.
     if (!withinMatchWindow(new Date())) return;
     const now = new Date();
@@ -639,7 +759,7 @@ export default {
         const teams: ScrapeResult =
           t.status === "fulfilled"
             ? t.value
-            : { ok: false, teamsSeen: 0, teamsWritten: 0, error: String(t.reason) };
+            : { ok: false, teamsSeen: 0, teamsWritten: 0, tiesSeen: 0, tiesWritten: 0, tiesLive: 0, error: String(t.reason) };
         const pro: ProScrapeResult =
           p.status === "fulfilled"
             ? p.value

@@ -69,8 +69,9 @@ export function decodeFlight(html: string): string {
   return joined;
 }
 
-/** Balance-match a JSON array/object starting at `start` (which must be [ or {). */
-function matchBalanced(s: string, start: number): string | null {
+/** Balance-match a JSON array/object starting at `start` (which must be [ or {).
+ *  Exported for parse-ties.ts, which walks the same flight payload. */
+export function matchBalanced(s: string, start: number): string | null {
   const open = s[start];
   const close = open === "[" ? "]" : "}";
   let depth = 0;
