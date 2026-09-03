@@ -102,7 +102,7 @@ const post: BlogPost = {
             "Juniors (U18), Group A: Vietnam, Costa Rica, South Korea, Malaysia — group stage September 4",
             "Kids (U14), Group A: Vietnam, Singapore, Australia — a three-team group, September 4",
             "Seniors (50+): Vietnam has no team entered",
-            "Open squad: Quan Do (captain), Hoang Nam Ly, Quang Duong, Phuc Huynh, Hien Truong, Linh Giang Trinh, Ken Tam, Sophia Huynh Tran, Trang Huynh, Boi Ngoc Si",
+            "Open squad: Quan Do (captain), Ly Hoang Nam, Quang Duong, Phuc Huynh, Hien Truong, Linh Giang Trinh, Ken Tam, Sophia Huynh Tran, Trang Huynh, Boi Ngoc Si",
             "Junior and Kids names to watch: Nhat Minh Tong, Hoai Anh Pham, Bao Duong, Khang Tran, Sophia Phuong Anh",
           ],
           internalLinks: [
