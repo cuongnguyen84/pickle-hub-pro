@@ -10,6 +10,41 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "pickleball-world-cup-2026-vietnam-team-lineup",
+    publishedDate: "2026-09-03",
+    updatedDate: "2026-09-03",
+    author: "Cuong Nguyen",
+    tags: [
+      "vietnam pickleball team",
+      "doi tuyen pickleball viet nam",
+      "pickleball world cup 2026",
+      "world cup pickleball da nang",
+      "ly hoang nam",
+      "quang duong",
+      "ken tam",
+      "sophia huynh tran",
+    ],
+    ctaPath: "/live",
+    ctaLabel: {
+      en: "Follow Vietnam's World Cup matches live on ThePickleHub",
+      vi: "Theo dõi đội tuyển Việt Nam trực tiếp trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/vietnam-pickleball-players-to-watch-2026-hero.webp",
+      alt: "Vietnam's leading pickleball players in national red and gold ahead of the national-team competition at the Pickleball World Cup 2026 in Da Nang, September 3-6.",
+    },
+    titleEn:
+      "Vietnam Before the Team Event at the Pickleball World Cup 2026: An Imperfect Squad With a Real Shot",
+    titleVi:
+      "Đội tuyển Việt Nam trước giờ G World Cup Pickleball 2026: đội hình không hoàn hảo, nhưng đủ để chiến",
+    metaTitleEn: "Vietnam's Team Lineup | Pickleball World Cup 2026",
+    metaTitleVi: "Đội tuyển Việt Nam trước giờ G World Cup 2026",
+    metaDescriptionEn:
+      "Vietnam's team campaign at the Pickleball World Cup 2026 in Da Nang, Sep 3-6: injuries, the case for Ly Hoang Nam in three events, and the six-match math.",
+    metaDescriptionVi:
+      "Đội tuyển pickleball Việt Nam đá giải Đồng đội World Cup 2026 ở Đà Nẵng 3–6/9: kỳ vọng Lý Hoàng Nam và phép tính 6 trận.",
+  },
+  {
     slug: "pickleball-world-cup-2026-da-nang-results",
     publishedDate: "2026-08-31",
     updatedDate: "2026-08-31",
