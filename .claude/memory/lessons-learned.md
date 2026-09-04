@@ -784,3 +784,46 @@ mình** (viết "hai trận chung kết" trong khi bài trụ cột của chính
 ngày tương đối hết hạn · khẳng định vượt dữ liệu · loãng entity · suy luận bracket không nhất quán),
 và grep production sau khi deploy — lần sửa thứ nhất hôm nay sót một chuỗi cách chỗ đã sửa hai
 mệnh đề, chỉ grep prod mới thấy.
+
+## Ô TRỐNG trong feed BTC ≠ "chưa xác định" — phải hỏi báo chí (2026-09-04)
+
+**Occurrence:** từ 31/8 tới 3/9, năm bài World Cup đều viết rằng "bảng đấu chưa bao giờ điền tên vào
+ô thứ hai của chung kết đơn nam 11:20", và hôm 3/9 em còn cố ý hạ xuống **"Lý Hoàng Nam có mặt ở ít
+nhất hai trận chung kết"** thay vì ba — vì tin vào `wc_pro_matches`. Thực tế **Báo Công an TP Đà Nẵng
+đã chạy tít "Hai tay vợt Việt Nam gặp nhau ở chung kết đơn nam Pro" từ 31/8**, và 3/9 ANTĐ trích lời
+chính Lý Hoàng Nam: *"lần thứ 3 có mặt ở cả 3 trận chung kết"*. Mình đứng số 1 Google cho truy vấn
+lịch thi đấu mà lại là nơi cuối cùng biết tin.
+
+Cùng buổi, cùng gốc: `wc_open_matches` có 0 hàng nên em tưởng "không có dữ liệu vòng bảng Đồng đội".
+Dân Trí + ANTĐ đã đăng **đủ 18 tỉ số** từ chiều 3/9. Feed câm không có nghĩa là không có tin.
+
+**LUẬT:** feed của BTC là nguồn *nhanh nhất*, không phải nguồn *duy nhất*. Trước khi viết bất kỳ câu
+nào có dạng "chưa có / chưa được điền / chưa xác định", chạy **một** WebSearch tiếng Việt cho đúng
+thực thể đó. Ô trống trong feed chỉ chứng minh feed trống.
+
+## Bump dateline xong phải grep cả THÌ TƯƠNG LAI, không chỉ ngày tương đối (2026-09-04)
+
+Luật 30/8 dặn grep `ngày mai|the day before|còn N ngày`. Chưa đủ. Hôm nay verify độc lập bắt được
+bài trụ — trang có mở bài 4/9 nói Việt Nam **đã** quét bảng A với Phúc Huỳnh và Quang Dương trong đội
+— vẫn còn nguyên trong thân bài và **hai câu FAQ**: *"The final team has not been announced.
+Speculation centers on whether ... Phuc Huynh ... and ... Quang Duong **will play for Vietnam**"*, và
+*"Da Nang 2026 **will be** Vietnam's first appearance"* (×2 EN, ×2 VI).
+
+**LUẬT:** thêm vào bộ grep sau mỗi lần bump dateline: `will be|will play|has not been announced|
+Speculation|sẽ là|sẽ chọn|chưa được công bố|còn là ẩn số`. Một sự kiện đang diễn ra biến **mọi**
+câu dự đoán về nó thành câu sai — và câu dự đoán thường nằm cách dateline vài nghìn từ.
+
+## `vi_blog_posts.faq_items` là một bề mặt RIÊNG — sửa content_html không chạm tới nó (2026-09-04)
+
+Luật 30/8 nói "sửa .ts không đụng `vi_blog_posts`". Hôm nay lộ thêm một tầng: trong cùng một hàng
+Supabase, **`content_html` và `faq_items` là hai cột độc lập**, và `faq_items` mới là thứ sinh ra
+`FAQPage` JSON-LD. Sau khi sửa sạch 6 `content_html`, grep production vẫn còn `Master 60+` — nó nằm
+trong `faq_items`. Verify độc lập còn tìm thêm hai lỗi chỉ tồn tại ở cột đó:
+- **8/12 mục FAQ bài trụ bản VI dính tiền tố chữ `Q: ` / `A: ` bên trong chuỗi** → JSON-LD phát ra
+  `"name":"Q: World Cup Pickleball 2026 diễn ra khi nào?"`. Bốn mục đầu sạch nên lỗi sống sót nhiều tháng.
+- FAQ bản VI trả lời phí đăng ký bằng **giá Fort Lauderdale 2025** trên trang về Đà Nẵng 2026, trong
+  khi bản EN đã đúng giá 2026 từ lâu.
+
+**LUẬT:** mỗi lần sửa một bài song ngữ, đụng **ba** bề mặt, không phải hai: `posts/<slug>.ts` ·
+`vi_blog_posts.content_html` · `vi_blog_posts.faq_items`. Và verify bằng cách grep **HTML bot của
+production**, nơi cả ba đã hợp nhất — grep repo hay grep một cột chỉ thấy một phần ba sự thật.
