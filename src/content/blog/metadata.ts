@@ -138,10 +138,10 @@ export const blogMetadata: BlogPostMetadata[] = [
       "Pickleball World Cup 2026 Da Nang Schedule: Every Date, Both Tournaments",
     titleVi:
       "Lịch thi đấu Pickleball World Cup 2026 Đà Nẵng: đủ hai giải, từng ngày",
-    metaTitleEn: "Pickleball World Cup 2026 Schedule: Day by Day",
+    metaTitleEn: "Pickleball World Cup 2026 Schedule: Times & Finals Sep 6",
     metaTitleVi: "Lịch thi đấu World Cup Pickleball 2026 Đà Nẵng",
     metaDescriptionEn:
-      "Pickleball World Cup 2026 Da Nang schedule: individual draws from Aug 30, national teams Sep 3-6, Vietnam's dates, venues and the Open final gap.",
+      "Full Pickleball World Cup 2026 Da Nang schedule: day-by-day match times, national team ties Sep 3-6, Vietnam's route, and Sunday's finals lineup.",
     metaDescriptionVi:
       "Lịch thi đấu World Cup Pickleball 2026 Đà Nẵng: Cá nhân từ 30/8, Đồng đội 3-6/9, Việt Nam đấu ngày nào và ở sân nào.",
   },
@@ -589,10 +589,10 @@ export const blogMetadata: BlogPostMetadata[] = [
       "How to Watch — and Enter — the Heineken Pickleball World Cup 2026 in Da Nang",
     titleVi:
       "Cẩm nang xem và thi đấu Heineken Pickleball World Cup 2026 tại Đà Nẵng",
-    metaTitleEn: "Pickleball World Cup 2026 Da Nang: How to Watch & Register",
+    metaTitleEn: "How to Watch the Pickleball World Cup 2026: TV & Streaming",
     metaTitleVi: "World Cup Pickleball 2026 Đà Nẵng | Cách xem",
     metaDescriptionEn:
-      "Pickleball World Cup 2026 Da Nang: tickets, all 7 venues, FPT Play broadcast, hotels and the key dates. Aug 30-Sep 6, with Vietnam at home.",
+      "Watch the Pickleball World Cup 2026 live from Da Nang: FPT Play streams, TV broadcast, tickets for finals weekend, all 7 venues and key match times.",
     metaDescriptionVi:
       "World Cup Pickleball 2026 Đà Nẵng: vé, 7 địa điểm, xem trên FPT Play, khách sạn và các mốc chính. 30/8-6/9, Việt Nam đá sân nhà.",
   },

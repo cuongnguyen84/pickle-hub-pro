@@ -27,9 +27,9 @@ const post: BlogPost = {
     en: {
       title:
         "How to Watch — and Enter — the Heineken Pickleball World Cup 2026 in Da Nang",
-      metaTitle: "Pickleball World Cup 2026 Da Nang: How to Watch & Register",
+      metaTitle: "How to Watch the Pickleball World Cup 2026: TV & Streaming",
       metaDescription:
-        "Pickleball World Cup 2026 Da Nang: tickets, all 7 venues, FPT Play broadcast, hotels and the key dates. Aug 30-Sep 6, with Vietnam at home.",
+        "Watch the Pickleball World Cup 2026 live from Da Nang: FPT Play streams, TV broadcast, tickets for finals weekend, all 7 venues and key match times.",
       sections: [
         {
           heading: "The Short Version",

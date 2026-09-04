@@ -27,9 +27,9 @@ const post: BlogPost = {
     en: {
       title:
         "Pickleball World Cup 2026 Da Nang Schedule: Every Date, Both Tournaments",
-      metaTitle: "Pickleball World Cup 2026 Schedule: Day by Day",
+      metaTitle: "Pickleball World Cup 2026 Schedule: Times & Finals Sep 6",
       metaDescription:
-        "Pickleball World Cup 2026 Da Nang schedule: individual draws from Aug 30, national teams Sep 3-6, Vietnam's dates, venues and the Open final gap.",
+        "Full Pickleball World Cup 2026 Da Nang schedule: day-by-day match times, national team ties Sep 3-6, Vietnam's route, and Sunday's finals lineup.",
       sections: [
         {
           heading: "Every date that matters, in one place",
