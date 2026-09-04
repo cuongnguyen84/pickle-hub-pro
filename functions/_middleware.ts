@@ -1105,6 +1105,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // subtracting the 15 men's qualifying matches from the day's 28 total, which
   // also included the four women's matches. Now nine, with the qualifying
   // split stated so the arithmetic is checkable from the sentence itself.
+  // v89 (2026-09-04): World Cup day six — Vietnam swept Open Group A on Sep 3
+  // (three 6-0 ties vs Chile, Cayman Islands, Colombia; 18 individual matches to
+  // nil) and the Sep 6 men's singles Grand Final is confirmed all-Vietnamese
+  // (Ly Hoang Nam v Phuc Huynh), so the "second slot never filled" hedge is gone
+  // from all six World Cup openings; "day five"/Sep 3 datelines bumped; the Sep 3
+  // opening tie corrected from Colombia to Chile; Masters-team claim now flagged
+  // as source-disputed.
   // v88 (2026-09-03): World Cup day five — Ly Hoang Nam's second Grand Final
   // (mixed doubles, Sep 6 14:50, with Roos Van Reek) added to five openings; the
   // Sep 2 mixed day corrected from "fifteen matches 08:00-10:40" to the 176 the
@@ -1115,7 +1122,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v86 (2026-09-02): World Cup day four — corrected a +7h timezone error in
   // five posts (the organizers' feed carries Vietnam wall-clock in a UTC-labelled
   // field; we had converted it twice), and added the men's Pro Doubles final result.
-  const cacheKey = `pr:v88:${url.pathname}`;
+  const cacheKey = `pr:v89:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

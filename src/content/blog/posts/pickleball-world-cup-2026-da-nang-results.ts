@@ -63,7 +63,7 @@ const post: BlogPost = {
         {
           heading: "Two tournaments on one schedule",
           content:
-            "The individual tournament and the national-team competition are separate events sharing a venue and a name, and confusing them is the most common mistake in coverage of this World Cup. The individual tournament — the Pro draws in the table above, plus the amateur, junior, senior and master brackets — started Sunday August 30 and runs to September 6, 2026. The national-team competition, the one Vietnam's team is in, starts Thursday September 3 and finishes Sunday September 6. A Vietnamese player winning a Pro draw is not the Vietnam team winning anything, and the reverse.",
+            "The individual tournament and the national-team competition are separate events sharing a venue and a name, and confusing them is the most common mistake in coverage of this World Cup. The individual tournament — the Pro draws in the table above, plus the amateur, junior, senior and master brackets — started Sunday August 30 and runs to September 6, 2026. The national-team competition, the one Vietnam's team is in, started Thursday September 3 and finishes Sunday September 6. A Vietnamese player winning a Pro draw is not the Vietnam team winning anything, and the reverse.",
           table: {
             caption: "The two competitions at the Pickleball World Cup 2026",
             headers: ["", "Individual tournament", "National-team competition"],
@@ -79,7 +79,7 @@ const post: BlogPost = {
         {
           heading: "When Vietnam plays at the Pickleball World Cup 2026",
           content:
-            "Vietnam is the top seed in Group A of the Open division at the Pickleball World Cup 2026, drawn with Colombia, the Cayman Islands and Chile, and enters on Thursday September 3. The three remaining Vietnamese teams start on Friday September 4: Master 60+, U18 in Group A with Malaysia, Costa Rica and South Korea, and U14 in Group A with Australia and Singapore. Because a team tie is six predetermined singles and doubles matches rather than a best-of-three between two stars, squad depth decides these ties more often than a headline name does — which is the thing to watch in Group A.",
+            "Vietnam won Group A of the Open division at the Pickleball World Cup 2026 on Thursday September 3, beating Chile, the Cayman Islands and Colombia 6-0 each — 18 individual matches to nil — as the group's top seed. Vietnam's junior teams follow on Friday September 4: U18 in Group A with Malaysia, Costa Rica and South Korea, and U14 in Group A with Australia and Singapore. Sources disagree on whether Vietnam also entered a Masters team: VNA's report of the August 16 draw put Vietnam in Group A in Open, Masters, Juniors and Kids, while the squad announcement of August 17 named athletes for the Open, U18 and U14 teams only. Because a team tie is six predetermined singles and doubles matches rather than a best-of-three between two stars, squad depth decides these ties more often than a headline name does — which is the thing to watch in Group A.",
         },
         {
           heading: "The finals, September 6",
@@ -116,7 +116,7 @@ const post: BlogPost = {
         {
           question: "When does Vietnam's national team play at the Pickleball World Cup 2026?",
           answer:
-            "Vietnam's Open team enters on Thursday September 3, 2026 as the top seed in Group A alongside Colombia, the Cayman Islands and Chile. The Master 60+, U18 and U14 teams start on Friday September 4, 2026.",
+            "Vietnam's Open team won Group A on Thursday September 3, 2026, beating Chile, the Cayman Islands and Colombia 6-0 each as the group's top seed. The U18 and U14 teams start on Friday September 4, 2026.",
         },
         {
           question: "When is the Pickleball World Cup 2026 final?",
@@ -156,7 +156,7 @@ const post: BlogPost = {
         {
           heading: "Hai giải trên cùng một lịch",
           content:
-            "Giải cá nhân và giải đồng đội quốc gia là hai giải riêng biệt dùng chung địa điểm và chung cái tên, và nhầm hai giải này là lỗi phổ biến nhất khi đưa tin về World Cup lần này. Giải cá nhân — các nhánh Pro trong bảng trên, cộng với các bảng nghiệp dư, trẻ, senior và master — bắt đầu Chủ nhật 30/8 và chạy tới 6/9/2026. Giải đồng đội quốc gia, nơi đội tuyển Việt Nam góp mặt, bắt đầu thứ Năm 3/9 và kết thúc Chủ nhật 6/9. Một vận động viên Việt Nam vô địch một nhánh Pro không có nghĩa là đội tuyển Việt Nam vô địch, và ngược lại.",
+            "Giải cá nhân và giải đồng đội quốc gia là hai giải riêng biệt dùng chung địa điểm và chung cái tên, và nhầm hai giải này là lỗi phổ biến nhất khi đưa tin về World Cup lần này. Giải cá nhân — các nhánh Pro trong bảng trên, cộng với các bảng nghiệp dư, trẻ, senior và master — bắt đầu Chủ nhật 30/8 và chạy tới 6/9/2026. Giải đồng đội quốc gia, nơi đội tuyển Việt Nam góp mặt, đã bắt đầu thứ Năm 3/9 và kết thúc Chủ nhật 6/9. Một vận động viên Việt Nam vô địch một nhánh Pro không có nghĩa là đội tuyển Việt Nam vô địch, và ngược lại.",
           table: {
             caption: "Hai giải tại Pickleball World Cup 2026",
             headers: ["", "Giải cá nhân", "Giải đồng đội quốc gia"],
@@ -172,7 +172,7 @@ const post: BlogPost = {
         {
           heading: "Việt Nam thi đấu ngày nào tại Pickleball World Cup 2026",
           content:
-            "Việt Nam là hạt giống số 1 bảng A nội dung Open tại Pickleball World Cup 2026, cùng bảng Colombia, Quần đảo Cayman và Chile, ra quân thứ Năm 3/9. Ba đội còn lại vào cuộc thứ Sáu 4/9: Master 60+, U18 ở bảng A cùng Malaysia, Costa Rica và Hàn Quốc, U14 ở bảng A cùng Úc và Singapore. Vì một cặp đấu đồng đội gồm sáu trận đơn và đôi đã ấn định trước chứ không phải cuộc so tài giữa hai ngôi sao, chiều sâu đội hình quyết định nhiều hơn một cái tên lớn — và đó là điều đáng theo dõi ở bảng A.",
+            "Việt Nam nhất bảng A nội dung Open tại Pickleball World Cup 2026 ngay trong ngày thứ Năm 3/9, thắng Chile, Quần đảo Cayman và Colombia cùng tỉ số 6-0 — tổng cộng 18 trận thắng, 0 thua — với tư cách hạt giống số 1. Các đội trẻ vào cuộc thứ Sáu 4/9: U18 ở bảng A cùng Malaysia, Costa Rica và Hàn Quốc, U14 ở bảng A cùng Úc và Singapore. Các nguồn còn vênh nhau về việc Việt Nam có đội Master hay không: TTXVN khi đưa tin bốc thăm ngày 16/8 xếp Việt Nam vào bảng A ở Open, Master, Junior và Kids, còn bản công bố danh sách ngày 17/8 chỉ nêu VĐV cho ba đội Open, U18 và U14. Vì một cặp đấu đồng đội gồm sáu trận đơn và đôi đã ấn định trước chứ không phải cuộc so tài giữa hai ngôi sao, chiều sâu đội hình quyết định nhiều hơn một cái tên lớn — và đó là điều đáng theo dõi ở bảng A.",
         },
         {
           heading: "Chung kết ngày 6/9",
@@ -209,7 +209,7 @@ const post: BlogPost = {
         {
           question: "Đội tuyển Việt Nam thi đấu Pickleball World Cup 2026 ngày nào?",
           answer:
-            "Đội Open Việt Nam ra quân thứ Năm 3/9/2026, là hạt giống số 1 bảng A cùng Colombia, Quần đảo Cayman và Chile. Các đội Master 60+, U18 và U14 vào cuộc thứ Sáu 4/9/2026.",
+            "Đội Open Việt Nam nhất bảng A ngày thứ Năm 3/9/2026, thắng Chile, Quần đảo Cayman và Colombia cùng tỉ số 6-0 với tư cách hạt giống số 1. Hai đội U18 và U14 vào cuộc thứ Sáu 4/9/2026.",
         },
         {
           question: "Chung kết Pickleball World Cup 2026 diễn ra khi nào?",
