@@ -1105,6 +1105,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // subtracting the 15 men's qualifying matches from the day's 28 total, which
   // also included the four women's matches. Now nine, with the qualifying
   // split stated so the arithmetic is checkable from the sentence itself.
+  // v91 (2026-09-04): /tools* no longer falls through to the hub — unmatched
+  // /tools/<anything> now renders the 404 body instead of a 200 duplicate,
+  // so the cached copies of the hub under crawler-invented paths must go.
   // v90 (2026-09-04): follow-up to v89 — the independent verification pass found
   // the pillar post still asking, in body and FAQ, whether Phuc Huynh and Quang
   // Duong "will play for Vietnam" and calling Da Nang 2026 something that "will be"
@@ -1127,7 +1130,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v86 (2026-09-02): World Cup day four — corrected a +7h timezone error in
   // five posts (the organizers' feed carries Vietnam wall-clock in a UTC-labelled
   // field; we had converted it twice), and added the men's Pro Doubles final result.
-  const cacheKey = `pr:v90:${url.pathname}`;
+  const cacheKey = `pr:v91:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
@@ -1204,8 +1207,18 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         }
       } else {
         const ttl = pathCacheTtl(url.pathname);
+        // Guarded like the telemetry waitUntil above: KV throttles writes to
+        // ~1/sec per key, and a hot key (`pr:vN:/`) is written by every
+        // concurrent bot miss. An unguarded rejection here is the same
+        // unhandled-await shape that produced the Cloudflare 502 in 219da014
+        // (fix(indexnow): stop two unguarded awaits from turning into a 502).
+        // The response has already been returned, so a failed cache write
+        // should cost us a cache entry, not a log line and a stray alert.
         context.waitUntil(
-          env.PRERENDER_CACHE.put(cacheKey, html, { expirationTtl: ttl }),
+          env.PRERENDER_CACHE.put(cacheKey, html, { expirationTtl: ttl }).then(
+            () => {},
+            () => {},
+          ),
         );
       }
     }
@@ -1431,8 +1444,27 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string, accep
   if (path === "/tools/doubles-elimination") return renderToolPage("doubles-elimination", siteUrl, rawPath, lang);
   if (path === "/tools/flex-tournament") return renderToolPage("flex-tournament", siteUrl, rawPath, lang);
 
-  // Tools hub
-  if (path.startsWith("/tools")) return renderTools(siteUrl, rawPath, lang);
+  // Tools hub — exact match, plus the /tools/* routes the SPA genuinely
+  // owns but that have no dedicated renderer above (quick-tables parent /
+  // referee / setup views, the per-match scoring screens). This used to be
+  // a bare `startsWith("/tools")`, which handed a 200 copy of the hub to
+  // EVERY /tools* path: /tools/foo/bar, /tools/pickleball-bracket-generator
+  // and even /toolsPhone all rendered the hub for bots while humans got a
+  // 404 from the isKnownSpaPath gate on the user path. That is exactly the
+  // soft-404 the render404 fallback at the end of this function exists to
+  // prevent — and the /tools-prefixed duplicates were being written to KV
+  // under a passing canonical check, so crawler-invented URLs each got a
+  // cached 200. Bot and human now agree on every /tools* path that reaches
+  // this router. Two shapes still differ and are NOT fixed here, because
+  // they return from the isNoindex shortcut (~L891) long before
+  // routeAndRender runs: /tools/dashboard/a/b/c and /tools/foo/bar/setup
+  // give bots a noindex shell where humans get 404. Harmless (empty body,
+  // noindex+nofollow, dashboard is robots-Disallowed) but real — do not
+  // read the line above as a blanket invariant.
+  if (path === "/tools") return renderTools(siteUrl, rawPath, lang);
+  if (path.startsWith("/tools/") && isKnownSpaPath(path)) {
+    return renderTools(siteUrl, rawPath, lang);
+  }
 
   // Blog post
   match = path.match(/^\/blog\/([^/]+)$/);

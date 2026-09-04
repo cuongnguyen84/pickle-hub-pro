@@ -90,7 +90,9 @@ const STATIC_URLS = [
   `https://${HOST}/tools/team-match`,
   `https://${HOST}/tools/doubles-elimination`,
   `https://${HOST}/tools/flex-tournament`,
-  `https://${HOST}/tools/dashboard`,
+  // /tools/dashboard is deliberately absent: robots.txt Disallows it and
+  // NOINDEX_PATTERNS serves it a noindex shell, so announcing it to Bing and
+  // Yandex only earns a "Blocked by robots.txt" row on every ping.
 ];
 
 // EN blog slugs come straight from the generated list, which derives from
