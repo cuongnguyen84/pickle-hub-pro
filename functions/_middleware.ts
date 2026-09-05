@@ -1151,7 +1151,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // won the U18 mixed doubles world title on September 3; updatedDate for
   // group-A and men's-doubles, whose openings changed in d22d4bc but whose
   // metadata entries did not, so their dateModified was still September 4.
-  const cacheKey = `pr:v95:${url.pathname}`;
+  // v96 (2026-09-05): three corrections to this morning's own edits, found by
+  // independent verification against production, not by re-reading the source.
+  // (1) "Everything remaining happens tomorrow" was false and contradicted the
+  // schedule page's own Sep 5 row ten lines below it. (2) The two Guinness
+  // records were asserted as "66 delegations + 4,900 athletes"; sources
+  // disagree on both the count and on what record two is. (3) The results page
+  // claimed a minute-fresh feed that has returned nothing since Sep 2 17:10.
+  const cacheKey = `pr:v96:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
