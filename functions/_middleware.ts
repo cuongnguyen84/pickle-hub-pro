@@ -1146,7 +1146,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // two matching vi_blog_posts rows. Cause was the sweep, not the edit: the
   // greps used a fixed-width leading context (.{50}) so any match less than 50
   // characters from the start of its line was invisible. Sweep unanchored.
-  const cacheKey = `pr:v94:${url.pathname}`;
+  // v95 (2026-09-05): results FAQ said the U18/U14 teams "start on Friday
+  // September 4" on September 5, and did not mention that Vietnam had already
+  // won the U18 mixed doubles world title on September 3; updatedDate for
+  // group-A and men's-doubles, whose openings changed in d22d4bc but whose
+  // metadata entries did not, so their dateModified was still September 4.
+  const cacheKey = `pr:v95:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

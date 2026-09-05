@@ -44,7 +44,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "pickleball-world-cup-2026-mens-pro-doubles-field",
     publishedDate: "2026-08-26",
-    updatedDate: "2026-09-04",
+    updatedDate: "2026-09-05",
     author: "Cuong Nguyen",
     tags: [
       "pickleball world cup 2026",
@@ -288,7 +288,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "pickleball-world-cup-2026-group-a-vietnam",
     publishedDate: "2026-08-17",
-    updatedDate: "2026-09-04",
+    updatedDate: "2026-09-05",
     author: "Cuong Nguyen",
     tags: [
       "pickleball world cup 2026",

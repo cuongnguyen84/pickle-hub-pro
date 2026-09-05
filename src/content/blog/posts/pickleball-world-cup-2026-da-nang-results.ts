@@ -130,7 +130,7 @@ const post: BlogPost = {
         {
           question: "When does Vietnam's national team play at the Pickleball World Cup 2026?",
           answer:
-            "Vietnam's Open team won Group A on Thursday September 3, 2026, beating Chile, the Cayman Islands and Colombia 6-0 each as the group's top seed. The U18 and U14 teams start on Friday September 4, 2026.",
+            "Vietnam's Open team won Group A on Thursday September 3, 2026, beating Chile, the Cayman Islands and Colombia 6-0 each as the group's top seed. The U18 and U14 national teams played their group stage on Friday September 4, 2026. Separately, in the individual junior draws, Tong Nhat Minh and Jolie Lam won the U18 mixed doubles world title on September 3.",
         },
         {
           question: "How many medals has Vietnam won at the Pickleball World Cup 2026?",
@@ -242,7 +242,7 @@ const post: BlogPost = {
         {
           question: "Đội tuyển Việt Nam thi đấu Pickleball World Cup 2026 ngày nào?",
           answer:
-            "Đội Open Việt Nam nhất bảng A ngày thứ Năm 3/9/2026, thắng Chile, Quần đảo Cayman và Colombia cùng tỉ số 6-0 với tư cách hạt giống số 1. Hai đội U18 và U14 vào cuộc thứ Sáu 4/9/2026.",
+            "Đội Open Việt Nam nhất bảng A ngày thứ Năm 3/9/2026, thắng Chile, Quần đảo Cayman và Colombia cùng tỉ số 6-0 với tư cách hạt giống số 1. Hai đội tuyển trẻ U18 và U14 đã đấu vòng bảng thứ Sáu 4/9/2026. Riêng ở nhánh trẻ cá nhân, Tống Nhật Minh và Jolie Lam vô địch thế giới đôi nam nữ U18 ngày 3/9.",
         },
         {
           question: "Việt Nam giành bao nhiêu huy chương tại Pickleball World Cup 2026?",
