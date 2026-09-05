@@ -1141,7 +1141,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // how-to-watch (the VI quick summary in the .ts, plus two in the Supabase copy
   // whose wording differs from the source), and the clinic-pro line's "will be
   // named in the coming weeks", which expires when the tournament ends tomorrow.
-  const cacheKey = `pr:v93:${url.pathname}`;
+  // v94 (2026-09-05): six more day-six datelines that two prior sweeps missed —
+  // how-to-watch EN x2 + VI x1, group-A EN + VI, men's-doubles EN + VI, plus the
+  // two matching vi_blog_posts rows. Cause was the sweep, not the edit: the
+  // greps used a fixed-width leading context (.{50}) so any match less than 50
+  // characters from the start of its line was invisible. Sweep unanchored.
+  const cacheKey = `pr:v94:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
