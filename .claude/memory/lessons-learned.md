@@ -827,3 +827,54 @@ trong `faq_items`. Verify độc lập còn tìm thêm hai lỗi chỉ tồn t�
 **LUẬT:** mỗi lần sửa một bài song ngữ, đụng **ba** bề mặt, không phải hai: `posts/<slug>.ts` ·
 `vi_blog_posts.content_html` · `vi_blog_posts.faq_items`. Và verify bằng cách grep **HTML bot của
 production**, nơi cả ba đã hợp nhất — grep repo hay grep một cột chỉ thấy một phần ba sự thật.
+
+---
+
+## Sweeps: never use a fixed-width context prefix in the grep that decides "clean"
+
+**Occurrence (1 — 2026-09-05, shipped a page to production still saying "day six"
+twice, on the same run that had verified it):**
+
+Bumping the World Cup datelines from day six to day seven, the post-edit check was:
+
+```sh
+grep -rn -oE '.{50}(day six|September 4, 2026|4/9/2026|thứ sáu).{70}' src/content/blog/posts/*world-cup*.ts
+```
+
+It returned one hit, which was fixed, and the sweep then returned empty. Production
+served `day six` twice on `/blog/pickleball-world-cup-2026-da-nang-how-to-watch`.
+
+**Cause:** `.{50}` requires fifty characters *before* the match **on the same line**.
+Datelines open a content string, so they sit ~26–46 characters from line start:
+
+```ts
+            "Last updated September 4, 2026 — day six of competition, and the day
+```
+
+`September 4` is at column 26 and `day six` at column 46 — both under 50, so neither
+can match. The sweep is not merely incomplete, it is *systematically blind to exactly
+the position datelines occupy*, and it reports success while blind. Three separate
+passes that morning each declared clean; each was measuring the same blind spot.
+
+**Rule:**
+- The grep that decides whether a string is gone is **plain**: `grep -rn 'pattern' <paths>`.
+- Context flags for reading a hit are `-C`/`-A`/`-B`, which are line-relative and safe.
+- **Never** `.{N}` or `.{0,N}` as a leading context in a sweep. Same trap in Postgres:
+  `regexp_matches(col, '.{130}needle.{80}')` silently returns nothing for a needle near
+  the start of the column — that variant also fired on 2026-09-05 against `vi_blog_posts`.
+- A sweep that returns empty is only evidence if the same pattern, run without any
+  context, also returns empty.
+
+**Verify:**
+```sh
+# both must be empty, and the second is the one that counts
+grep -rn -c 'day six' src/content/blog/posts/ | grep -v ':0$'
+```
+
+**Related:** the same run also showed that **the .ts file and the Supabase
+`vi_blog_posts` copy word the same passage differently** (`<strong>4/9/2026</strong>`,
+`<em>Cập nhật 4/9/2026</em>`, and a quick summary whose VI sentence differs from the
+source). An anchor copied from the .ts matched nothing in the DB and the UPDATE
+reported success having changed zero rows. Always confirm a `vi_blog_posts` UPDATE by
+re-reading `length(content_html)` or a `LIKE` predicate, never by the empty `[]` that
+the Management API returns for any UPDATE.
