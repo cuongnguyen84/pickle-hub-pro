@@ -1137,7 +1137,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // certification from the Sep 2 opening (66 delegations, 4,900+ athletes) in
   // the pillar; added Vietnam's U18 mixed-doubles world title of Sep 3; bumped
   // four datelines to day seven and flagged that Tien Son free entry ends today.
-  const cacheKey = `pr:v92:${url.pathname}`;
+  // v93 (2026-09-05): follow-up to v92 — three more day-six datelines in
+  // how-to-watch (the VI quick summary in the .ts, plus two in the Supabase copy
+  // whose wording differs from the source), and the clinic-pro line's "will be
+  // named in the coming weeks", which expires when the tournament ends tomorrow.
+  const cacheKey = `pr:v93:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
