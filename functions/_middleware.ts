@@ -1130,7 +1130,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v86 (2026-09-02): World Cup day four — corrected a +7h timezone error in
   // five posts (the organizers' feed carries Vietnam wall-clock in a UTC-labelled
   // field; we had converted it twice), and added the men's Pro Doubles final result.
-  const cacheKey = `pr:v91:${url.pathname}`;
+  // v92 (2026-09-05): World Cup day seven — added the medal table (Vietnam 106
+  // golds / 244 medals through Sep 3, Korea 10, USA 9) with a day-by-day
+  // progression and the "why the lead is this wide" caveat, EN + VI, to the
+  // results post; replaced the unsourced 81-countries answer with the Guinness
+  // certification from the Sep 2 opening (66 delegations, 4,900+ athletes) in
+  // the pillar; added Vietnam's U18 mixed-doubles world title of Sep 3; bumped
+  // four datelines to day seven and flagged that Tien Son free entry ends today.
+  const cacheKey = `pr:v92:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

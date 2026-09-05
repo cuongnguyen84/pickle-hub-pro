@@ -12,7 +12,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "pickleball-world-cup-2026-da-nang-results",
     publishedDate: "2026-08-31",
-    updatedDate: "2026-09-04",
+    updatedDate: "2026-09-05",
     author: "Cuong Nguyen",
     tags: [
       "ket qua pickleball world cup 2026",
@@ -114,7 +114,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "pickleball-world-cup-2026-da-nang-schedule",
     publishedDate: "2026-08-24",
-    updatedDate: "2026-09-04",
+    updatedDate: "2026-09-05",
     author: "Cuong Nguyen",
     tags: [
       "lịch thi đấu world cup pickleball",
@@ -565,7 +565,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "pickleball-world-cup-2026-da-nang-how-to-watch",
     publishedDate: "2026-07-17",
-    updatedDate: "2026-09-04",
+    updatedDate: "2026-09-05",
     author: "The PickleHub Team",
     tags: [
       "world cup pickleball",
@@ -1500,7 +1500,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "pickleball-world-cup-2026-da-nang",
     publishedDate: "2026-04-23",
-    updatedDate: "2026-09-04",
+    updatedDate: "2026-09-05",
     author: "The PickleHub Team",
     tags: [
       "world cup pickleball",

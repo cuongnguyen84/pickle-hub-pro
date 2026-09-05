@@ -46,7 +46,7 @@ const post: BlogPost = {
         {
           heading: "Latest results",
           content:
-            "The Heineken Pickleball World Cup 2026 runs August 30 to September 6, 2026 in Da Nang, Vietnam, with 69 events, 156 national teams and nearly 5,000 athletes from more than 80 countries and territories. ThePickleHub tracks the five Pro individual draws here: the table below lists every match on court right now and every completed match in those draws, with the score game by game and the winner, grouped by the day it was played, newest day first. The feed is read from the organizers' own system every minute, so the \"last updated\" line at the top of the table is a real timestamp rather than the date this article was written.",
+            "The Heineken Pickleball World Cup 2026 runs August 30 to September 6, 2026 in Da Nang, Vietnam, with 69 events, 156 national teams and nearly 5,000 athletes from more than 80 countries and territories. Last updated September 5, 2026, day seven of eight: Vietnam leads the medal table with 106 golds and 244 medals through September 3, won Group A of the Open team competition 6-0, 6-0, 6-0 on September 3, and has all five Pro finals plus the team finals still to play on Sunday September 6. ThePickleHub tracks the five Pro individual draws here: the table below lists every match on court right now and every completed match in those draws, with the score game by game and the winner, grouped by the day it was played, newest day first. The feed is read from the organizers' own system every minute, so the \"last updated\" line at the top of the table is a real timestamp rather than the date this article was written.",
           liveBlock: "wc-results",
           internalLinks: [
             {
@@ -59,6 +59,20 @@ const post: BlogPost = {
           heading: "What this table covers, and what it leaves out",
           content:
             "Worth being exact, because a results page that overstates its scope is worse than one that states it plainly. The table above holds every match currently being played in the five Pro individual draws at the Pickleball World Cup 2026, and every completed match in those same draws — both Vietnamese and foreign. What it does not hold is the rest of the individual tournament: the amateur brackets split by DUPR band, and the junior, senior and master draws, which run on their own schedule and are not part of the Pro competition. Completed scores are read from the tournament's official bracket pages, which publish the per-game final and name the winner, so these are real results rather than a frozen snapshot. The one exception is brief: a match that has just left the live feed before its bracket page catches up shows the last score ThePickleHub observed, and the official result replaces it on the next pass a minute or two later.",
+        },
+        {
+          heading: "The medal table: Vietnam 106 golds after five days",
+          content:
+            "Vietnam leads the Heineken Pickleball World Cup 2026 medal table with 106 gold medals and 244 medals in total after five days of play, counted through September 3, 2026, ahead of South Korea on 10 golds and the United States on 9 — figures reported by Tuoi Tre on September 4 and by 24h on September 3, both citing the organizers. ThePickleHub tracks the five Pro draws in the table above, but the medal table counts something far wider, and the size of the lead has a structural explanation rather than a competitive one. The tournament runs close to 8,500 matches across seven court clusters in Da Nang, roughly 1,000 a day, spread over 69 events: the 156-team national competition and a much larger individual programme banded by DUPR level, age group and category. The host has by far the most entrants across those bands, so it reaches the most finals. Tuoi Tre quotes a Da Nang badminton federation official making the point plainly — the Vietnam Pickleball Federation itself was founded only months ago, and Da Nang 2026 is better read as a sport-tourism festival than as a ranking of national strength. Both things hold at once: the number is real, and it does not mean what a World Cup medal table usually means.",
+          table: {
+            caption: "Vietnam's medal count at the Pickleball World Cup 2026, day by day",
+            headers: ["Counted through", "Gold", "Silver", "Bronze", "Total"],
+            rows: [
+              ["September 1 (3 days)", "90", "62", "54", "206"],
+              ["September 2 (4 days)", "96", "66", "58", "220"],
+              ["September 3 (5 days)", "106", "not published", "not published", "244"],
+            ],
+          },
         },
         {
           heading: "Two tournaments on one schedule",
@@ -79,7 +93,7 @@ const post: BlogPost = {
         {
           heading: "When Vietnam plays at the Pickleball World Cup 2026",
           content:
-            "Vietnam won Group A of the Open division at the Pickleball World Cup 2026 on Thursday September 3, beating Chile, the Cayman Islands and Colombia 6-0 each — 18 individual matches to nil — as the group's top seed. Vietnam's junior teams follow on Friday September 4: U18 in Group A with Malaysia, Costa Rica and South Korea, and U14 in Group A with Australia and Singapore. Sources disagree on whether Vietnam also entered a Masters team: VNA's report of the August 16 draw put Vietnam in Group A in Open, Masters, Juniors and Kids, while the squad announcement of August 17 named athletes for the Open, U18 and U14 teams only. Because a team tie is six predetermined singles and doubles matches rather than a best-of-three between two stars, squad depth decides these ties more often than a headline name does — which is the thing to watch in Group A.",
+            "Vietnam won Group A of the Open division at the Pickleball World Cup 2026 on Thursday September 3, beating Chile, the Cayman Islands and Colombia 6-0 each — 18 individual matches to nil — as the group's top seed. Vietnam's junior teams follow on Friday September 4: U18 in Group A with Malaysia, Costa Rica and South Korea, and U14 in Group A with Australia and Singapore. That is the national-team competition; in the individual junior draws Vietnam had already taken a world title on September 3, when Tong Nhat Minh (Minh Tit) and Jolie Lam beat Hudson Hall and Circa Luna Sacca 2-0 in the U18 mixed doubles final, the first game 15-7. Sources disagree on whether Vietnam also entered a Masters team: VNA's report of the August 16 draw put Vietnam in Group A in Open, Masters, Juniors and Kids, while the squad announcement of August 17 named athletes for the Open, U18 and U14 teams only. Because a team tie is six predetermined singles and doubles matches rather than a best-of-three between two stars, squad depth decides these ties more often than a headline name does — which is the thing to watch in Group A.",
         },
         {
           heading: "The finals, September 6",
@@ -119,6 +133,11 @@ const post: BlogPost = {
             "Vietnam's Open team won Group A on Thursday September 3, 2026, beating Chile, the Cayman Islands and Colombia 6-0 each as the group's top seed. The U18 and U14 teams start on Friday September 4, 2026.",
         },
         {
+          question: "How many medals has Vietnam won at the Pickleball World Cup 2026?",
+          answer:
+            "106 gold medals and 244 medals in total after five days of play, counted through September 3, 2026, ahead of South Korea on 10 golds and the United States on 9. That count covers every division at the event — the 156-team national competition, the Pro draws, and the much larger amateur, age-group and junior individual brackets — not the five Pro draws listed on this page. The host enters by far the most players across those bands, which is the main reason the lead is this wide.",
+        },
+        {
           question: "When is the Pickleball World Cup 2026 final?",
           answer:
             "Sunday September 6, 2026 at Tien Son Sports Palace in Da Nang. The five OPEN Pro finals run 10:10 to 14:50 on court 1; the national-team matches are timed 08:00, 16:00 and 18:00.",
@@ -139,7 +158,7 @@ const post: BlogPost = {
         {
           heading: "Kết quả mới nhất",
           content:
-            "Heineken Pickleball World Cup 2026 diễn ra từ 30/8 đến 6/9/2026 tại Đà Nẵng với 69 nội dung, 156 đội tuyển quốc gia và gần 5.000 vận động viên từ hơn 80 quốc gia và vùng lãnh thổ. ThePickleHub theo dõi năm nội dung cá nhân Pro tại đây: bảng ngay bên dưới liệt kê mọi trận đang thi đấu và mọi trận đã kết thúc ở các nội dung này, kèm tỉ số từng ván và người thắng, nhóm theo ngày thi đấu, ngày mới nhất lên đầu. Dữ liệu đọc thẳng từ hệ thống của ban tổ chức mỗi phút, nên dòng \"cập nhật lần cuối\" ở đầu bảng là giờ thật chứ không phải ngày viết bài.",
+            "Heineken Pickleball World Cup 2026 diễn ra từ 30/8 đến 6/9/2026 tại Đà Nẵng với 69 nội dung, 156 đội tuyển quốc gia và gần 5.000 vận động viên từ hơn 80 quốc gia và vùng lãnh thổ. Cập nhật lần cuối 5/9/2026, ngày thi đấu thứ 7 trên tổng số 8: Việt Nam dẫn đầu bảng tổng sắp với 106 HCV và 244 huy chương tính tới hết 3/9, nhất bảng A đồng đội Open với ba trận thắng 6-0, và còn nguyên năm trận chung kết Pro cùng các trận đồng đội vào Chủ nhật 6/9. ThePickleHub theo dõi năm nội dung cá nhân Pro tại đây: bảng ngay bên dưới liệt kê mọi trận đang thi đấu và mọi trận đã kết thúc ở các nội dung này, kèm tỉ số từng ván và người thắng, nhóm theo ngày thi đấu, ngày mới nhất lên đầu. Dữ liệu đọc thẳng từ hệ thống của ban tổ chức mỗi phút, nên dòng \"cập nhật lần cuối\" ở đầu bảng là giờ thật chứ không phải ngày viết bài.",
           liveBlock: "wc-results",
           internalLinks: [
             {
@@ -152,6 +171,20 @@ const post: BlogPost = {
           heading: "Bảng này có gì và không có gì",
           content:
             "Nói rõ cho đúng, vì một trang kết quả nói quá phạm vi của mình thì tệ hơn một trang nói thẳng. Bảng phía trên chứa mọi trận đang thi đấu ở năm nội dung cá nhân Pro của Pickleball World Cup 2026, và mọi trận đã kết thúc ở chính năm nội dung đó — cả trận Việt Nam lẫn trận nước ngoài. Thứ bảng không có là phần còn lại của giải cá nhân: các bảng nghiệp dư chia theo trình DUPR, cùng các nhánh trẻ, senior và master, vốn chạy lịch riêng và không thuộc hệ Pro. Tỉ số các trận đã xong lấy từ trang nhánh đấu chính thức của giải, nơi công bố tỉ số từng ván và tên người thắng, nên đây là kết quả thật chứ không phải ảnh chụp đông cứng. Chỉ có một ngoại lệ ngắn: trận vừa kết thúc và rời bảng trực tiếp trước khi nhánh đấu kịp cập nhật sẽ hiển thị tỉ số ThePickleHub ghi nhận cuối cùng, rồi được thay bằng kết quả chính thức ở lượt quét sau đó một hai phút.",
+        },
+        {
+          heading: "Bảng tổng sắp huy chương: Việt Nam 106 HCV sau 5 ngày",
+          content:
+            "Việt Nam dẫn đầu bảng tổng sắp Heineken Pickleball World Cup 2026 với 106 huy chương vàng và 244 huy chương sau 5 ngày thi đấu, tính tới hết 3/9/2026, xếp trên Hàn Quốc 10 HCV và Hoa Kỳ 9 HCV — số liệu do Tuổi Trẻ đăng ngày 4/9 và 24h đăng ngày 3/9, đều dẫn ban tổ chức. ThePickleHub theo dõi năm nhánh Pro ở bảng phía trên, nhưng bảng tổng sắp đếm phạm vi rộng hơn rất nhiều, và khoảng cách lớn này đến từ cấu trúc giải chứ không phải từ tương quan trình độ. Giải có gần 8.500 trận trên bảy cụm sân tại Đà Nẵng, trung bình khoảng 1.000 trận mỗi ngày, trải trên 69 nội dung: giải đồng đội 156 đội, cộng với một chương trình cá nhân lớn hơn nhiều, chia theo trình DUPR, nhóm tuổi và hạng mục. Chủ nhà có số lượng VĐV dự các nhánh đó đông áp đảo, nên vào tới chung kết ở nhiều nhánh nhất. Tuổi Trẻ dẫn lời một thành viên Liên đoàn Cầu lông TP Đà Nẵng nói thẳng điều này: Liên đoàn Pickleball Việt Nam mới thành lập vài tháng, và nên xem Đà Nẵng 2026 là ngày hội thể thao — du lịch chứ không phải bảng xếp hạng sức mạnh pickleball các nước. Hai điều cùng đúng: con số là thật, và nó không mang ý nghĩa mà một bảng tổng sắp World Cup thường mang.",
+          table: {
+            caption: "Huy chương của đoàn Việt Nam tại Pickleball World Cup 2026, theo từng mốc",
+            headers: ["Tính tới hết", "HCV", "HCB", "HCĐ", "Tổng"],
+            rows: [
+              ["1/9 (3 ngày)", "90", "62", "54", "206"],
+              ["2/9 (4 ngày)", "96", "66", "58", "220"],
+              ["3/9 (5 ngày)", "106", "chưa công bố", "chưa công bố", "244"],
+            ],
+          },
         },
         {
           heading: "Hai giải trên cùng một lịch",
@@ -172,7 +205,7 @@ const post: BlogPost = {
         {
           heading: "Việt Nam thi đấu ngày nào tại Pickleball World Cup 2026",
           content:
-            "Việt Nam nhất bảng A nội dung Open tại Pickleball World Cup 2026 ngay trong ngày thứ Năm 3/9, thắng Chile, Quần đảo Cayman và Colombia cùng tỉ số 6-0 — tổng cộng 18 trận thắng, 0 thua — với tư cách hạt giống số 1. Các đội trẻ vào cuộc thứ Sáu 4/9: U18 ở bảng A cùng Malaysia, Costa Rica và Hàn Quốc, U14 ở bảng A cùng Úc và Singapore. Các nguồn còn vênh nhau về việc Việt Nam có đội Master hay không: TTXVN khi đưa tin bốc thăm ngày 16/8 xếp Việt Nam vào bảng A ở Open, Master, Junior và Kids, còn bản công bố danh sách ngày 17/8 chỉ nêu VĐV cho ba đội Open, U18 và U14. Vì một cặp đấu đồng đội gồm sáu trận đơn và đôi đã ấn định trước chứ không phải cuộc so tài giữa hai ngôi sao, chiều sâu đội hình quyết định nhiều hơn một cái tên lớn — và đó là điều đáng theo dõi ở bảng A.",
+            "Việt Nam nhất bảng A nội dung Open tại Pickleball World Cup 2026 ngay trong ngày thứ Năm 3/9, thắng Chile, Quần đảo Cayman và Colombia cùng tỉ số 6-0 — tổng cộng 18 trận thắng, 0 thua — với tư cách hạt giống số 1. Các đội trẻ vào cuộc thứ Sáu 4/9: U18 ở bảng A cùng Malaysia, Costa Rica và Hàn Quốc, U14 ở bảng A cùng Úc và Singapore. Đó là giải đồng đội; còn ở các nhánh trẻ cá nhân, Việt Nam đã có một chức vô địch thế giới từ ngày 3/9, khi Tống Nhật Minh (Minh Tít) và Jolie Lam thắng Hudson Hall – Circa Luna Sacca 2-0 ở chung kết đôi nam nữ U18, ván đầu 15-7. Các nguồn còn vênh nhau về việc Việt Nam có đội Master hay không: TTXVN khi đưa tin bốc thăm ngày 16/8 xếp Việt Nam vào bảng A ở Open, Master, Junior và Kids, còn bản công bố danh sách ngày 17/8 chỉ nêu VĐV cho ba đội Open, U18 và U14. Vì một cặp đấu đồng đội gồm sáu trận đơn và đôi đã ấn định trước chứ không phải cuộc so tài giữa hai ngôi sao, chiều sâu đội hình quyết định nhiều hơn một cái tên lớn — và đó là điều đáng theo dõi ở bảng A.",
         },
         {
           heading: "Chung kết ngày 6/9",
@@ -210,6 +243,11 @@ const post: BlogPost = {
           question: "Đội tuyển Việt Nam thi đấu Pickleball World Cup 2026 ngày nào?",
           answer:
             "Đội Open Việt Nam nhất bảng A ngày thứ Năm 3/9/2026, thắng Chile, Quần đảo Cayman và Colombia cùng tỉ số 6-0 với tư cách hạt giống số 1. Hai đội U18 và U14 vào cuộc thứ Sáu 4/9/2026.",
+        },
+        {
+          question: "Việt Nam giành bao nhiêu huy chương tại Pickleball World Cup 2026?",
+          answer:
+            "106 huy chương vàng và 244 huy chương sau 5 ngày thi đấu, tính tới hết 3/9/2026, xếp trên Hàn Quốc (10 HCV) và Hoa Kỳ (9 HCV). Con số này đếm toàn bộ các hạng mục của giải — giải đồng đội 156 đội, các nhánh Pro, và phần lớn hơn nhiều là các nhánh cá nhân nghiệp dư, nhóm tuổi và trẻ — chứ không phải năm nhánh Pro liệt kê trong bảng ở trang này. Chủ nhà có số VĐV dự các nhánh đó đông áp đảo, đây là lý do chính khiến khoảng cách rộng đến vậy.",
         },
         {
           question: "Chung kết Pickleball World Cup 2026 diễn ra khi nào?",
