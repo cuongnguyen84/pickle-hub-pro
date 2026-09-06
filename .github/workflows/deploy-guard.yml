@@ -118,7 +118,7 @@ jobs:
           MSG="🛡️ *Deploy guard FAILED on main*%0A%0A"
           MSG="$MSG*Commit:* \`${GITHUB_SHA:0:7}\`%0A"
           MSG="$MSG*Run:* https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}%0A"
-          MSG="$MSG_An edge function failed to deploy._"
+          MSG="${MSG}_An edge function failed to deploy._"
           curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             -d "chat_id=${TELEGRAM_CHAT_ID}" -d "text=${MSG}" \
             -d "parse_mode=Markdown" -d "disable_web_page_preview=true" > /dev/null
