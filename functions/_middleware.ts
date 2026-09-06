@@ -1175,7 +1175,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // (opening ceremony "is", "book accommodation now rather than in August",
   // "be in the building on September 1"), Juniors final listed on both Sep 5
   // and Sep 6, "156 teams drawn" vs 152, "all three of them" for five finals.
-  const cacheKey = `pr:v98:${url.pathname}`;
+  // v99 (2026-09-06): the organisers' bracket feed came back online mid-morning
+  // on finals day and disagrees with their own published order of play on three
+  // of the four remaining Pro finals (feed 11:20/13:40/14:50, published list
+  // 10:50/18:20/12:40; both agree on 09:30 for the women's singles). Schedule
+  // page now states the conflict instead of silently picking one.
+  const cacheKey = `pr:v99:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
