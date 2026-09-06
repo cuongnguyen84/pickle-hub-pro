@@ -1158,7 +1158,16 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // records were asserted as "66 delegations + 4,900 athletes"; sources
   // disagree on both the count and on what record two is. (3) The results page
   // claimed a minute-fresh feed that has returned nothing since Sep 2 17:10.
-  const cacheKey = `pr:v96:${url.pathname}`;
+  // v97 (2026-09-06): final day. The organisers published a labelled order of
+  // play on the morning of Sep 6 and it moves the finals: men's singles 10:50
+  // (was 11:20), mixed 12:40 (was 14:50), men's doubles 18:20 (was 13:40),
+  // women's doubles 17:00 (had no slot at all), and the Open team final is
+  // 19:40 Vietnam v United States — not the unlabelled 18:00 slot this site
+  // had flagged as the likely candidate, and not the 17:00 some outlets ran.
+  // All six World Cup posts rewritten EN + VI against that list. Also: seven
+  // court clusters, not eight (Tuoi Tre Sep 4, and the site's own venue
+  // section already said seven).
+  const cacheKey = `pr:v97:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
