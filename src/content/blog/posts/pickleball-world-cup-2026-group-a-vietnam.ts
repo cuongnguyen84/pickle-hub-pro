@@ -170,7 +170,7 @@ const post: BlogPost = {
           listItems: [
             "Confirmed: the dates and venues (August 30 – September 6, 2026, Da Nang); Pablo Tellez's PPA Tour record; the Cayman Islands' 2024 quarter-final run; DUPR as the official rating system.",
             "Not confirmed: official squad lists for Colombia, Chile and the Cayman Islands had not been published at the time of writing. This analysis is built from public data on each nation's most prominent players, so the travelling rosters may differ. DUPR figures move constantly and should be read as a range, not a fixed number.",
-            "On the draw itself: the organisers held the official draw on August 16, 2026, and Dan Tri reported the following day that Vietnam is in Group A with Colombia, the Cayman Islands and Chile — the composition this article had carried since publication. The World Cup drew 156 national teams in total, 64 of them in the Open division across 16 groups. A full bracket still has not been posted on an international channel.",
+            "On the draw itself: the organisers held the official draw on August 16, 2026, and Dan Tri reported the following day that Vietnam is in Group A with Colombia, the Cayman Islands and Chile — the composition this article had carried since publication. The World Cup had 156 national teams registered — the drawn brackets contain 152 — with 64 in the Open division across 16 groups. A full bracket still has not been posted on an international channel.",
           ],
         },
       ],

@@ -70,7 +70,7 @@ const post: BlogPost = {
               ],
               [
                 "Sat Sep 5",
-                "Quarter-finals for Seniors, Kids, Open and Masters from 08:00. Semi-finals for Seniors, Kids and Open. Kids bronze and final at 12:00. Masters and Juniors finals and bronze matches through the afternoon",
+                "Quarter-finals for Seniors, Kids, Open and Masters from 08:00. Semi-finals for Seniors, Kids and Open. Kids bronze and final at 12:00. Masters finals and bronze matches through the afternoon",
               ],
               [
                 "Sun Sep 6",
@@ -189,7 +189,7 @@ const post: BlogPost = {
         {
           heading: "What the schedule does not tell you",
           content:
-            "Three gaps to plan around. First, there are no individual match times or court assignments anywhere — the schedule gives each day's events and venues only, and the organizers note explicitly that a listed time covers the whole event window from first match to last, not your match. Turn up for the window, not the time. Second, the three timed national-team matches on September 6 are not labelled by division, as above. Third, the organizers mark the entire schedule subject to change, and they have already moved things: the venue list on their own site no longer matches the venues in their own schedule. If you are travelling for a specific match, confirm the day before.",
+            "Three gaps to plan around. First, there are no individual match times or court assignments anywhere — the schedule gives each day's events and venues only, and the organizers note explicitly that a listed time covers the whole event window from first match to last, not your match. Turn up for the window, not the time. Second, that gap is now closed: the September 6 order of play labels all three national-team finals by division. Third, the organizers mark the entire schedule subject to change, and they have already moved things: the venue list on their own site no longer matches the venues in their own schedule. If you are travelling for a specific match, confirm the day before.",
         },
         {
           heading: "How to follow it",
@@ -211,7 +211,7 @@ const post: BlogPost = {
         {
           question: "When does the Pickleball World Cup 2026 in Da Nang start?",
           answer:
-            "The individual tournament started Sunday August 30, 2026 at 08:00, with 47 events across seven court clusters. The Opening Ceremony is Wednesday September 2 at Tien Son Sports Palace, on Vietnam's National Day — the schedule has shown an 18:00–20:00 window, while FPT Play gave the start as 17:30 when it announced its broadcast on August 28. The national-team competition started Thursday September 3 and the finals are on Sunday September 6.",
+            "The individual tournament started Sunday August 30, 2026 at 08:00, with 47 events across seven court clusters. The Opening Ceremony was Wednesday September 2 at Tien Son Sports Palace, on Vietnam's National Day — the schedule has shown an 18:00–20:00 window, while FPT Play gave the start as 17:30 when it announced its broadcast on August 28. The national-team competition started Thursday September 3 and the finals are on Sunday September 6.",
         },
         {
           question: "When does Vietnam play at the Pickleball World Cup 2026?",
@@ -221,7 +221,7 @@ const post: BlogPost = {
         {
           question: "When is the Open final at the Pickleball World Cup 2026?",
           answer:
-            "19:40 on Sunday September 6 at Tien Son Sports Palace, Vietnam against the United States. It is the last match of the tournament. The order of play the organisers published on the morning of September 6 labels every final: Juniors 08:00 Vietnam v United States, Pro women's singles 09:30, Pro men's singles 10:50, Pro mixed doubles 12:40, Seniors 14:00 Brazil v Spain, Pro women's doubles 17:00, Pro men's doubles 18:20, Open team final 19:40. Earlier in the week some outlets reported 17:00 and this page flagged an unlabelled 18:00 slot as the likely candidate; both are supersed it.",
+            "19:40 on Sunday September 6 at Tien Son Sports Palace, Vietnam against the United States. It is the last match of the tournament. The order of play the organisers published on the morning of September 6 labels every final: Juniors 08:00 Vietnam v United States, Pro women's singles 09:30, Pro men's singles 10:50, Pro mixed doubles 12:40, Seniors 14:00 Brazil v Spain, Pro women's doubles 17:00, Pro men's doubles 18:20, Open team final 19:40. Earlier in the week some outlets reported 17:00 and this page flagged an unlabelled 18:00 slot as the likely candidate; the organisers' own list supersedes both.",
         },
         {
           question: "How many teams are at the Pickleball World Cup 2026?",
@@ -282,7 +282,7 @@ const post: BlogPost = {
               ],
               [
                 "Thứ Bảy 5/9",
-                "Tứ kết Seniors, Kids, Open và Masters từ 08:00. Bán kết Seniors, Kids và Open. Kids tranh HCĐ và chung kết lúc 12:00. Chung kết và tranh HCĐ Masters, Juniors suốt buổi chiều",
+                "Tứ kết Seniors, Kids, Open và Masters từ 08:00. Bán kết Seniors, Kids và Open. Kids tranh HCĐ và chung kết lúc 12:00. Chung kết và tranh HCĐ Masters suốt buổi chiều",
               ],
               [
                 "Chủ nhật 6/9",

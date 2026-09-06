@@ -1167,7 +1167,15 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // All six World Cup posts rewritten EN + VI against that list. Also: seven
   // court clusters, not eight (Tuoi Tre Sep 4, and the site's own venue
   // section already said seven).
-  const cacheKey = `pr:v97:${url.pathname}`;
+  // v98 (2026-09-06): independent verification against production found 20+
+  // defects the morning's own edits left behind or created, including a typo
+  // ("both are supersed it") shipped straight into FAQPage schema, and two
+  // sections that still said the Open team final slot was unlabelled three
+  // paragraphs after the page said it is 19:40. Also: expired future tense
+  // (opening ceremony "is", "book accommodation now rather than in August",
+  // "be in the building on September 1"), Juniors final listed on both Sep 5
+  // and Sep 6, "156 teams drawn" vs 152, "all three of them" for five finals.
+  const cacheKey = `pr:v98:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
