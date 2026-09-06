@@ -720,36 +720,38 @@ len(s.encode('utf-8'))  # meta_title ≤60, meta_description ≤160
 ```
 Trim set-score parentheticals / drop the leading "Kết quả PPA Asia 500 …" prefix first — those buy the most bytes. The INSERT uses `WHERE NOT EXISTS` on slug, so a failed attempt leaves **no partial row** — just fix the two fields and re-run (idempotent).
 
-## 2026-09-01 — `/tmp` persistent: mở rộng rule từ "verify" sang MỌI file tạm
+## Bump một dateline = phải grep MỌI câu phụ thuộc vào ngày đó (2026-08-30)
 
-Rule cũ chỉ nói bước verify phải dùng `mktemp -d`. Ngày 1/9 dính **ba** lần trong một phiên, hai lần đầu suýt làm hỏng kết luận:
+**Occurrence (WC Đà Nẵng, ngày khai mạc):** Sau khi đưa `updatedDate` 3 bài World Cup từ 29/8 → 30/8, bước verify độc lập tìm ra ba câu sống sót, và một trong số đó bị bump làm cho **sai hẳn** chứ không chỉ cũ:
+- `"…đúng một ngày trước khi trang này được cập nhật"` (bài lịch, bản VI). Đúng khi trang ghi 24/8. Bump lên 30/8 → câu này khẳng định 29/8. Ngày thật là 23/8. Bản EN đã sửa từ commit trước, bản VI thì không.
+- `"the day before play starts"` / `"ngày mai là bóng lăn"` × 4 chỗ trong bài how-to-watch — hôm nay là ngày thi đấu, "ngày mai" đã thành quá khứ.
 
-1. `rm -rf /tmp/phwork` **fail im lặng** (file root-owned của phiên trước) → `git clone` vào thư mục không rỗng cũng fail → đọc nhầm cây cũ, tưởng `origin/main = f5b057a` trong khi thật là `187c1ca`. Chỉ phát hiện vì đối chiếu lại bằng GitHub API.
-2. Glob `/tmp/vi_*.json` trộn file phiên cũ → hai file cùng slug, khác nội dung.
-3. `> /tmp/urls.txt` bị Permission denied → vòng `while read` đọc **file urls.txt của phiên trước** → ping IndexNow **44 URL không liên quan**, còn 10 URL cần ping thì không được ping.
+**Rule:** ngày tương đối là một khẳng định **có hạn dùng**. Trước khi bump dateline, grep các cụm: `the day before|tomorrow|ngày mai|hôm qua|ngày trước|tuần tới|còn N ngày|trước khi trang này`. Và grep **cả hai ngôn ngữ + cả hàng Supabase**, vì bản VI trong `vi_blog_posts.content_html` là HTML soạn tay, **không sinh ra từ file .ts** — sửa .ts không đụng tới nó (finding A ngày 30/8: câu "tính tới 27/8 link vé đã không còn" chỉ tồn tại trong Supabase, grep trong repo trả 0).
 
-**Rule:** mọi file/thư mục tạm trong một phiên phải nằm dưới một `mktemp -d` riêng của phiên đó. Không bao giờ dùng tên cố định trong `/tmp`, kể cả để ghi. Và **luôn kiểm exit code / kết quả của bước ghi file** trước khi đọc lại nó — `>` thất bại không dừng script, chỉ để lại file cũ.
+**Kèm theo:** `vi_blog_posts.updated_at` có trigger ghi đè `now()` — đặt tay giá trị này là vô nghĩa, đừng đưa vào payload.
 
-**Hệ quả rộng hơn:** `rm -rf` fail, `>` fail, `curl -o` fail đều **không** làm bash dừng. Bước sau đó đọc phải dữ liệu cũ và **trông hoàn toàn hợp lệ**. Đây là cùng một họ lỗi với "đọc cây git cũ trên mount" — dữ liệu sai nhưng tự tin.
+---
 
-## 2026-09-01 — Khẳng định tương đối vs khẳng định có gắn ngày
+## `tsc --noEmit` KHÔNG kiểm gì cả — phải dùng `tsc -b --noEmit` (2026-09-02)
 
-Ngày 31/8 sửa "play starts **today**, August 30". Ngày 1/9 lại gặp biến thể: **"day two of competition"** trong 9 chỗ (6 mở bài + 3 dateline phụ, EN+VI).
+**Occurrence:** Trước hai commit sáng 2/9 em chạy `npx tsc --noEmit`, thấy sạch, và commit. CI `Quality gate` vẫn đỏ. Lý do: `tsconfig.json` gốc dùng `files: []` + project references, nên `tsc --noEmit` **type-check ĐÚNG 0 file và luôn pass** (silent no-op). Workflow `quality.yml` dùng `npx tsc -b --noEmit` (build mode) — chính comment trong workflow đã cảnh báo điều này từ trước.
 
-Phân biệt quan trọng, vì nó quyết định có phải sửa gấp không:
+**Hệ quả thật:** `tsc -b` đã đỏ trên `main` từ `2e5527e` (1/9) — commit đó thêm field bắt buộc `completed` vào `WcProEventGroup` mà không cập nhật 4 fixture trong `WorldCupLiveCard.test.tsx`. Không ai thấy vì check "typecheck" nội bộ luôn xanh. Sửa ở `a32d6c0`.
 
-- "tính đến **sáng 31/8** có 12/69 nội dung đã có nhà vô địch" → **có gắn ngày**, đọc ngày nào cũng vẫn đúng, chỉ **cũ**. Không gấp.
-- "**day two of competition**" → **không gắn gì**, phụ thuộc hoàn toàn vào việc người đọc mở trang đúng ngày. Sang ngày sau là **sai**, và nó nằm trong đoạn AI search trích đứng một mình.
+**LUẬT:** lệnh typecheck trước commit của repo này là **`npx tsc -b --noEmit`**. `tsc --noEmit` trần = vô nghĩa, đừng dùng làm bằng chứng "sạch" trong báo cáo.
 
-**Rule:** trong mở bài, mọi mốc thời gian phải tự đứng được — ngày tuyệt đối, hoặc "tính đến <ngày>". Cụm đếm tương đối ("ngày thi đấu thứ N", "còn N ngày", "N days out") chỉ được dùng khi **ngay cạnh nó có ngày tuyệt đối** để neo.
+## `wc_pro_matches.scheduled_at` là GIỜ VIỆT NAM lưu trong cột UTC — KHÔNG BAO GIỜ `AT TIME ZONE` (2026-09-02)
 
-## 2026-09-01 — Số tự tính phải kèm phép chia để tự kiểm được
+**Occurrence:** BTC World Cup phát `"scheduledAt":"2026-09-01T08:00:00"` — chuỗi naive, không timezone. Scraper ghi verbatim vào cột `timestamptz`, Postgres hiểu là UTC. Migration `20260831140000` ghi rõ ở dòng 70: `scheduled_at timestamptz, -- Vietnam time stored as UTC`.
 
-Viết "13 trận vòng 64 của nam có giờ". Thật ra là **9**. Nguồn sai: lấy 28 (tổng trận trong ngày) − 15 (vòng loại nam) = 13 — nhưng 28 gồm cả 4 trận nữ. Đúng: nam = 15 vòng loại + 9 vòng 64 = 24.
+Em truy vấn bằng `scheduled_at AT TIME ZONE 'Asia/Ho_Chi_Minh'` → **cộng +7 lần thứ hai**. Mọi giờ đưa vào 5 bài World Cup ngày 31/8 và 1/9 đều **trễ 7 tiếng**: "1/9 từ 15:00–17:40" (thật: 08:00–16:20), "chung kết đơn nam 6/9 18:20" (thật: 11:20), "chung kết đôi nam 20:40" (thật: 13:40). Trang `/vi/blog/lich-thi-dau-...` — trang top toàn site — bảo độc giả đến muộn 7 tiếng.
 
-Không phải dữ liệu đổi (cả 9 hàng có `last_seen_at` không đổi từ trước lúc đăng). Là **cộng sai**, và nó lên production ~25 phút trước khi bước verify độc lập bắt được.
+**Ba cách tự bắt lỗi này, dùng lần sau:**
+1. **Bài tự mâu thuẫn:** cùng bài đã ghi "đơn nam 11:20" (lấy từ lịch BTC công bố) lại vừa ghi "Grand Final 18:20" (quy đổi từ DB). Chênh đúng 7h = dấu vân tay.
+2. **`completed` mà `last_seen_at < scheduled_at`:** 322/532 hàng. Không thể thấy kết quả trước giờ bóng lăn.
+3. **Nhìn dải giờ thô:** 08:00–16:20 là một ngày thi đấu bình thường; 15:00–23:20 thì không.
 
-**Rule:** con số do mình **suy ra bằng phép tính** (không đọc thẳng từ nguồn) thì (a) phải `GROUP BY` đếm lại từ nguồn, đừng trừ; (b) trong bài nên viết kèm phần chia — "9 vòng 64 (15 trận nam còn lại là vòng loại)" — để chính câu văn tự kiểm được. Số trần không ai kiểm được, kể cả mình lúc đọc lại.
+**LUẬT:** đọc `scheduled_at` **verbatim** (`.slice(0,10)` cho ngày, phần giờ lấy thẳng). Code đúng đã có sẵn: `matchDayKey()` trong `functions/_lib/render/wc-results.ts` + `src/hooks/useWcResults.ts`. `last_seen_at` thì NGƯỢC LẠI — đó là instant UTC thật, phải +7.
 
 ## Thay "day four"→"day five" mà quên ngày đứng bên cạnh (2026-09-03)
 
@@ -785,96 +787,39 @@ ngày tương đối hết hạn · khẳng định vượt dữ liệu · loãn
 và grep production sau khi deploy — lần sửa thứ nhất hôm nay sót một chuỗi cách chỗ đã sửa hai
 mệnh đề, chỉ grep prod mới thấy.
 
-## Ô TRỐNG trong feed BTC ≠ "chưa xác định" — phải hỏi báo chí (2026-09-04)
+## Bản VI có HAI nguồn sự thật, không phải một: `content_html` VÀ `faq_items` (2026-09-06)
 
-**Occurrence:** từ 31/8 tới 3/9, năm bài World Cup đều viết rằng "bảng đấu chưa bao giờ điền tên vào
-ô thứ hai của chung kết đơn nam 11:20", và hôm 3/9 em còn cố ý hạ xuống **"Lý Hoàng Nam có mặt ở ít
-nhất hai trận chung kết"** thay vì ba — vì tin vào `wc_pro_matches`. Thực tế **Báo Công an TP Đà Nẵng
-đã chạy tít "Hai tay vợt Việt Nam gặp nhau ở chung kết đơn nam Pro" từ 31/8**, và 3/9 ANTĐ trích lời
-chính Lý Hoàng Nam: *"lần thứ 3 có mặt ở cả 3 trận chung kết"*. Mình đứng số 1 Google cho truy vấn
-lịch thi đấu mà lại là nơi cuối cùng biết tin.
+**Occurrence:** sáng 6/9 em viết lại cả 6 hàng `vi_blog_posts.content_html`, verify bằng predicate,
+`like '%19:40%'` = true trên cả 6. Rồi `curl -A Googlebot ...?nocache=1` vẫn trả về giờ chung kết CŨ
+(10:10–14:50) trên trang lịch VI và trang kết quả VI. Không phải cache — chuỗi cũ nằm trong khối
+`"@type":"FAQPage"` của JSON-LD, và khối đó **sinh từ cột `vi_blog_posts.faq_items` (jsonb)**, hoàn
+toàn tách rời `content_html`. Sửa `content_html` không đụng nó, y hệt cách sửa `.ts` không đụng
+`vi_blog_posts`.
 
-Cùng buổi, cùng gốc: `wc_open_matches` có 0 hàng nên em tưởng "không có dữ liệu vòng bảng Đồng đội".
-Dân Trí + ANTĐ đã đăng **đủ 18 tỉ số** từ chiều 3/9. Feed câm không có nghĩa là không có tin.
+**LUẬT:** một bài song ngữ có **ba** nơi chứa cùng một dữ kiện, không phải hai:
+`posts/<slug>.ts` (EN) · `vi_blog_posts.content_html` (VI, HTML soạn tay) · `vi_blog_posts.faq_items`
+(VI, JSON-LD FAQ). Mỗi lần sửa một con số phải quét cả ba. Predicate kiểm nhanh:
+`select slug, faq_items::text like '%<chuỗi cũ>%' from vi_blog_posts where ...`.
 
-**LUẬT:** feed của BTC là nguồn *nhanh nhất*, không phải nguồn *duy nhất*. Trước khi viết bất kỳ câu
-nào có dạng "chưa có / chưa được điền / chưa xác định", chạy **một** WebSearch tiếng Việt cho đúng
-thực thể đó. Ô trống trong feed chỉ chứng minh feed trống.
+## Splice chuỗi bằng index thì phải đếm cả dấu nháy đóng (2026-09-06)
 
-## Bump dateline xong phải grep cả THÌ TƯƠNG LAI, không chỉ ngày tương đối (2026-09-04)
+`s = s[:i] + new + s[j+1:]` với `j = s.find('",\n        },', i)` — `j` trỏ vào dấu `"` đóng, nên
+`s[j+1:]` bắt đầu từ `,`. Nếu `new` không tự kết thúc bằng `"` thì chuỗi mất nắp. Lần này `tsc -b`
+bắt được (TS1002 Unterminated string literal). Nhưng lần thứ hai cùng buổi, một replace prefix cắt
+giữa câu lại **không** vỡ cú pháp — nó ship ra production nguyên văn `"both are supersed it."`,
+nằm trong FAQPage JSON-LD của trang top-traffic. `tsc` không bắt được câu văn vỡ.
 
-Luật 30/8 dặn grep `ngày mai|the day before|còn N ngày`. Chưa đủ. Hôm nay verify độc lập bắt được
-bài trụ — trang có mở bài 4/9 nói Việt Nam **đã** quét bảng A với Phúc Huỳnh và Quang Dương trong đội
-— vẫn còn nguyên trong thân bài và **hai câu FAQ**: *"The final team has not been announced.
-Speculation centers on whether ... Phuc Huynh ... and ... Quang Duong **will play for Vietnam**"*, và
-*"Da Nang 2026 **will be** Vietnam's first appearance"* (×2 EN, ×2 VI).
+**LUẬT:** sau mọi lượt sửa nội dung, đọc lại **văn bản đã render** của chính đoạn vừa sửa (grep 200
+ký tự quanh chỗ thay), đừng chỉ tin typecheck. Và ưu tiên replace nguyên câu trọn vẹn thay vì
+splice theo index.
 
-**LUẬT:** thêm vào bộ grep sau mỗi lần bump dateline: `will be|will play|has not been announced|
-Speculation|sẽ là|sẽ chọn|chưa được công bố|còn là ẩn số`. Một sự kiện đang diễn ra biến **mọi**
-câu dự đoán về nó thành câu sai — và câu dự đoán thường nằm cách dateline vài nghìn từ.
+## Ba lần liên tiếp: viết mở bài mới mà không đọc thân bài (2026-09-06)
 
-## `vi_blog_posts.faq_items` là một bề mặt RIÊNG — sửa content_html không chạm tới nó (2026-09-04)
+5/9: "mọi nội dung còn lại diễn ra vào ngày mai" trong khi bảng ngay dưới liệt kê 3 chung kết hôm đó.
+6/9: mục mới ghi "cả tám trận chung kết nay đều có giờ và tên nội dung", ba đoạn dưới vẫn còn
+"the three timed national-team matches are not labelled by division"; và hàng bảng "Thứ Bảy 5/9" vẫn
+ghi chung kết Junior trong khi hàng "Chủ nhật 6/9" ghi chung kết Junior 08:00.
 
-Luật 30/8 nói "sửa .ts không đụng `vi_blog_posts`". Hôm nay lộ thêm một tầng: trong cùng một hàng
-Supabase, **`content_html` và `faq_items` là hai cột độc lập**, và `faq_items` mới là thứ sinh ra
-`FAQPage` JSON-LD. Sau khi sửa sạch 6 `content_html`, grep production vẫn còn `Master 60+` — nó nằm
-trong `faq_items`. Verify độc lập còn tìm thêm hai lỗi chỉ tồn tại ở cột đó:
-- **8/12 mục FAQ bài trụ bản VI dính tiền tố chữ `Q: ` / `A: ` bên trong chuỗi** → JSON-LD phát ra
-  `"name":"Q: World Cup Pickleball 2026 diễn ra khi nào?"`. Bốn mục đầu sạch nên lỗi sống sót nhiều tháng.
-- FAQ bản VI trả lời phí đăng ký bằng **giá Fort Lauderdale 2025** trên trang về Đà Nẵng 2026, trong
-  khi bản EN đã đúng giá 2026 từ lâu.
-
-**LUẬT:** mỗi lần sửa một bài song ngữ, đụng **ba** bề mặt, không phải hai: `posts/<slug>.ts` ·
-`vi_blog_posts.content_html` · `vi_blog_posts.faq_items`. Và verify bằng cách grep **HTML bot của
-production**, nơi cả ba đã hợp nhất — grep repo hay grep một cột chỉ thấy một phần ba sự thật.
-
----
-
-## Sweeps: never use a fixed-width context prefix in the grep that decides "clean"
-
-**Occurrence (1 — 2026-09-05, shipped a page to production still saying "day six"
-twice, on the same run that had verified it):**
-
-Bumping the World Cup datelines from day six to day seven, the post-edit check was:
-
-```sh
-grep -rn -oE '.{50}(day six|September 4, 2026|4/9/2026|thứ sáu).{70}' src/content/blog/posts/*world-cup*.ts
-```
-
-It returned one hit, which was fixed, and the sweep then returned empty. Production
-served `day six` twice on `/blog/pickleball-world-cup-2026-da-nang-how-to-watch`.
-
-**Cause:** `.{50}` requires fifty characters *before* the match **on the same line**.
-Datelines open a content string, so they sit ~26–46 characters from line start:
-
-```ts
-            "Last updated September 4, 2026 — day six of competition, and the day
-```
-
-`September 4` is at column 26 and `day six` at column 46 — both under 50, so neither
-can match. The sweep is not merely incomplete, it is *systematically blind to exactly
-the position datelines occupy*, and it reports success while blind. Three separate
-passes that morning each declared clean; each was measuring the same blind spot.
-
-**Rule:**
-- The grep that decides whether a string is gone is **plain**: `grep -rn 'pattern' <paths>`.
-- Context flags for reading a hit are `-C`/`-A`/`-B`, which are line-relative and safe.
-- **Never** `.{N}` or `.{0,N}` as a leading context in a sweep. Same trap in Postgres:
-  `regexp_matches(col, '.{130}needle.{80}')` silently returns nothing for a needle near
-  the start of the column — that variant also fired on 2026-09-05 against `vi_blog_posts`.
-- A sweep that returns empty is only evidence if the same pattern, run without any
-  context, also returns empty.
-
-**Verify:**
-```sh
-# both must be empty, and the second is the one that counts
-grep -rn -c 'day six' src/content/blog/posts/ | grep -v ':0$'
-```
-
-**Related:** the same run also showed that **the .ts file and the Supabase
-`vi_blog_posts` copy word the same passage differently** (`<strong>4/9/2026</strong>`,
-`<em>Cập nhật 4/9/2026</em>`, and a quick summary whose VI sentence differs from the
-source). An anchor copied from the .ts matched nothing in the DB and the UPDATE
-reported success having changed zero rows. Always confirm a `vi_blog_posts` UPDATE by
-re-reading `length(content_html)` or a `LIKE` predicate, never by the empty `[]` that
-the Management API returns for any UPDATE.
+**LUẬT:** khi một mục đổi *kết luận* (từ "chưa biết X" sang "X = 19:40"), grep toàn bài theo **mệnh
+đề phủ định cũ** ("chưa", "không được ghi", "unlabelled", "still not", "chưa rõ", "no slot") chứ
+không grep theo con số mới. Con số mới có mặt không chứng minh câu cũ đã biến mất.
