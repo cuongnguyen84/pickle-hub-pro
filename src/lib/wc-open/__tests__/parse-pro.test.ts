@@ -98,10 +98,17 @@ describe("parseWcProLive guard", () => {
   it("throws when there are no flight chunks", () => {
     expect(() => parseWcProLive("<html><body>shell</body></html>")).toThrow(ParseGuardError);
   });
-  it("throws when no pro category is present", () => {
+  it("returns empty when other categories are present but no Pro (individual events over)", () => {
+    // Real state since Sep 3: the five Pro events finished, /live carries only
+    // team/other matches. That is not a layout change and must not alert.
     const payload = "2:" + JSON.stringify({ matches: [{ id: "amateur_x__m1", status: "in_progress", categoryId: "amateur_singles_mens" }] }) + "\n";
     const html = `<body><script>self.__next_f.push([1,${JSON.stringify(payload)}])</script></body>`;
-    expect(() => parseWcProLive(html)).toThrow(/no Pro individual matches/);
+    expect(parseWcProLive(html).matches).toEqual([]);
+  });
+  it("throws when the flight carries no match objects at all", () => {
+    const payload = "2:" + JSON.stringify({ hello: "world" }) + "\n";
+    const html = `<body><script>self.__next_f.push([1,${JSON.stringify(payload)}])</script></body>`;
+    expect(() => parseWcProLive(html)).toThrow(/no match objects/);
   });
 });
 

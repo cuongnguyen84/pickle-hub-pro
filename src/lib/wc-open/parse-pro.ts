@@ -259,7 +259,14 @@ export function parseWcProLive(html: string): ProParseResult {
 
   const covered = PRO_CATEGORIES.filter((c) => (perCategory[c] ?? 0) > 0).length;
   if (covered === 0) {
-    throw new ParseGuardError("no Pro individual matches found — source layout changed");
+    // Zero Pro matches stopped being a layout-change signal once the five
+    // individual events finished (Sep 2–3): /live then legitimately lists only
+    // national-team ties. Match objects of OTHER categories still present mean
+    // the page shape is intact and there is simply nothing Pro on court; only
+    // a flight with no match objects at all is treated as a changed layout.
+    if (!flight.includes('"categoryId":"')) {
+      throw new ParseGuardError("no match objects found — source layout changed");
+    }
   }
 
   return { matches, perCategory };

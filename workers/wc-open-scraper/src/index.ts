@@ -277,11 +277,12 @@ export async function runScrape(env: Env): Promise<ScrapeResult> {
     parsed = parseWcOpenDelegations(html);
   } catch (e) {
     const err = e as Error;
-    if (err instanceof ParseGuardError) {
-      // The source layout changed. Do NOT write — alert and keep last-good rows.
-      await alert(env, `parse guard: ${err.message}. Kept existing rows.`);
-    }
-    return { ok: false, teamsSeen: 0, teamsWritten: 0, tiesSeen: 0, tiesWritten: 0, tiesLive: 0, error: err.message };
+    // The "parse guard" prefix routes the error through diagnose()'s guard
+    // branch. Alerting itself happens in the cron handler via alertOnce — a
+    // direct alert() here used to fire every single minute (no cooldown) when
+    // the guard tripped, which is spam, not signal.
+    const msg = err instanceof ParseGuardError ? `parse guard: ${err.message}` : err.message;
+    return { ok: false, teamsSeen: 0, teamsWritten: 0, tiesSeen: 0, tiesWritten: 0, tiesLive: 0, error: msg };
   }
 
   const existing = await sbSelectTeams(env);
@@ -304,10 +305,8 @@ export async function runScrape(env: Env): Promise<ScrapeResult> {
     tiesWritten = changedTies.length;
   } catch (e) {
     const err = e as Error;
-    tieError = `ties: ${err.message}`;
-    if (err instanceof ParseGuardError) {
-      await alert(env, `tie parse guard: ${err.message}. Kept existing tie rows.`);
-    }
+    // Same as above: the cron handler alerts (with cooldown); we only label.
+    tieError = err instanceof ParseGuardError ? `tie parse guard: ${err.message}` : `ties: ${err.message}`;
   }
 
   return {
@@ -535,15 +534,18 @@ export async function runScrapePro(env: Env): Promise<ProScrapeResult> {
     parsed = parseWcProLive(await res.text());
   } catch (e) {
     const err = e as Error;
-    if (err instanceof ParseGuardError) {
-      await alert(env, `pro parse guard: ${err.message}. Kept existing rows.`);
-    }
-    return { ok: false, matchesSeen: 0, matchesWritten: 0, completed: 0, live: 0, error: err.message };
+    // Label only — alerting happens in the cron handler via alertOnce. The
+    // direct alert() that used to live here had no cooldown and sent one
+    // Telegram message per minute for as long as the guard tripped.
+    const msg = err instanceof ParseGuardError ? `pro parse guard: ${err.message}` : err.message;
+    return { ok: false, matchesSeen: 0, matchesWritten: 0, completed: 0, live: 0, error: msg };
   }
 
   // The authoritative finals. A page failure is non-fatal but blocks pruning.
   const { completed: bracketDone, errors: bracketErrors } = await fetchProBracketsCompleted();
-  if (bracketErrors.length) await alert(env, `brackets: ${bracketErrors.join("; ")}`);
+  // Through alertOnce, not alert(): a bracket page failing repeats identically
+  // every minute, and one diagnosed message per 30' beats sixty raw ones.
+  if (bracketErrors.length) await alertOnce(env, `brackets: ${bracketErrors.join("; ")}`);
   const canPrune = bracketErrors.length === 0;
   const bracketDoneIds = new Set(bracketDone.map((m) => m.matchId));
 
