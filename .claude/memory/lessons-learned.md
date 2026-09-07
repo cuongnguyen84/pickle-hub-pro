@@ -823,3 +823,14 @@ ghi chung kết Junior trong khi hàng "Chủ nhật 6/9" ghi chung kết Junior
 **LUẬT:** khi một mục đổi *kết luận* (từ "chưa biết X" sang "X = 19:40"), grep toàn bài theo **mệnh
 đề phủ định cũ** ("chưa", "không được ghi", "unlabelled", "still not", "chưa rõ", "no slot") chứ
 không grep theo con số mới. Con số mới có mặt không chứng minh câu cũ đã biến mất.
+
+## 2026-09-07 — ba bài học từ lượt "giải đã kết thúc"
+
+**1. Bản VI có BA nguồn sự thật, không phải hai.** Ngày 6/9 đã ghi "content_html VÀ faq_items". Hôm nay lộ thêm cái thứ ba: **`title` và `meta_description` trong `vi_blog_posts`**. Trang kết quả VI có `title` = "…cập nhật từng phút" và `meta_description` = "…cập nhật liên tục" — hai chuỗi đi thẳng vào SERP, sống sót qua cả lượt sửa content_html lẫn faq_items, và không nằm trong file TS nào. Ngoài ra `metadata.ts` giữ bản sao EN+VI của title/description và **có test canh drift** (`seo-byte-budget.test.ts`), nên sửa post file mà quên metadata.ts thì vitest bắt được; còn sửa Supabase mà quên metadata.ts thì **không ai bắt được**. Danh sách đầy đủ khi đổi tiêu đề/mô tả một bài song ngữ: `posts/<slug>.ts` → `metadata.ts` → `vi_blog_posts.title` → `vi_blog_posts.meta_description`.
+
+**2. Thay một đoạn theo CHỈ SỐ `<p>` thì phải kiểm tra đoạn đó có xuất hiện lại ở chỗ khác không.** Lượt sửa sáng nay thay `<p>` số 0 của bài đôi nam bằng đoạn mở mới, rồi lượt sau tìm-thay chuỗi "Cập nhật Chủ nhật 6/9…" và gặp một đoạn GIỐNG HỆT nằm sâu trong thân bài — kết quả là **cùng một đoạn mở in hai lần trên production**, do chính mình tạo ra. Lần sau: trước khi ghi, `assert content.count(new_paragraph) == 1`.
+
+**3. Grep tìm chuỗi cũ phải chạy trên BẢN RENDER, không phải trên file nguồn.** Ba vòng verify hôm nay tìm ra ba lớp khác nhau, và lớp nào cũng vô hình với lớp trước: (a) file TS EN sạch nhưng Supabase VI còn nguyên đoạn cũ; (b) cả hai sạch nhưng **`functions/_lib/render/wc-results.ts`** vẫn in "mọi trận Pro đang thi đấu" — chuỗi sinh ra ở tầng code, không ở tầng nội dung; (c) thân bài sạch nhưng **`faqItems`/`faq_items`** còn thì tương lai, và FAQ chính là thứ AI search trích. Quy trình đúng: `curl -A Googlebot "<URL>?nocache=1"` rồi grep trên HTML trả về, cho cả 12 URL, sau mỗi deploy — không phải `grep` trong `src/`.
+
+**4. Subagent verify có mục mở đáng giá hơn checklist.** Yêu cầu "tìm cả những lỗi tôi chưa hỏi tới" trả về đúng những thứ checklist không thể có: câu cụt giữa sở hữu cách ("beating Peru's"), đoạn mồ côi về đội trưởng Cayman nằm dưới heading về Việt Nam, danh sách "ba khoảng trống" mà mục 2 nói khoảng trống đó đã hết, và trang trụ EN **thiếu hẳn FAQ "ai vô địch"** trong khi bản VI đã có — một lệch EN/VI mà không grep nào bắt được vì nó là sự VẮNG MẶT.
+
