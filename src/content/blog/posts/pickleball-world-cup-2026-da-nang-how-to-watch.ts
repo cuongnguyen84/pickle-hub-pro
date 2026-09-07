@@ -146,7 +146,7 @@ const post: BlogPost = {
         {
           heading: "Beyond the Matches",
           content:
-            "Three side events are open to people who are not competing, and for Vietnamese clubs and coaches they may outlast the medal table. There is a pickleball clinic with a professional player (the organizers said the pro would be named closer to the event; as of September 6, the final day, no name has been published), a Referee Masterclass — theoretical and practical officiating training run by experienced officials — and the Pickleball World Promoters Forum, expected to bring together representatives from more than 50 countries around the sport's push toward the Olympics. The wider programme also includes a trade exhibition with an OCOP showcase of Vietnamese regional products and a cultural exhibition introducing the participating nations.",
+            "Three side events are open to people who are not competing, and for Vietnamese clubs and coaches they may outlast the medal table. There is a pickleball clinic with a professional player (the organizers said the pro would be named closer to the event, but no name was ever published), a Referee Masterclass — theoretical and practical officiating training run by experienced officials — and the Pickleball World Promoters Forum, expected to bring together representatives from more than 50 countries around the sport's push toward the Olympics. The wider programme also includes a trade exhibition with an OCOP showcase of Vietnamese regional products and a cultural exhibition introducing the participating nations.",
         },
         {
           heading: "What Still Isn't Known",

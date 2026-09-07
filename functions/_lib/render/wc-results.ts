@@ -278,11 +278,20 @@ export async function fetchWcResultsBlock(
   const trimNote = vi
     ? " Những ngày cũ hơn chỉ hiển thị các trận có vận động viên Việt Nam, để trang không quá nặng trên điện thoại."
     : " Older days list only the matches involving a Vietnamese player, to keep the page light on a phone.";
+  // The scope sentence used to promise "every match on court now" even after the
+  // last match of the tournament had been played, which reads as a broken
+  // promise on a page whose whole job is telling people who won. With no live
+  // match in the feed the table is a final record, so say that instead.
+  const anyLive = live.length > 0;
   parts.push(
     `<p>${
       vi
-        ? "Bảng này gồm mọi trận Pro đang thi đấu và mọi trận Pro đã kết thúc ở năm nội dung cá nhân Pro. Tỉ số lấy từ trang nhánh đấu chính thức của giải, kèm người thắng do nhánh đấu công bố. Một trận vừa rời bảng trực tiếp mà nhánh đấu chưa cập nhật sẽ tạm hiển thị tỉ số ThePickleHub ghi nhận cuối cùng, và được thay bằng kết quả chính thức ở lượt quét sau."
-        : "This table covers every Pro match on court now and every completed match across the five Pro individual draws. Scores come from the tournament's own bracket pages, with the winner the bracket declares. A match that has just left the live feed before its bracket syncs shows the last score ThePickleHub observed, replaced by the official result on the next pass."
+        ? anyLive
+          ? "Bảng này gồm mọi trận Pro đang thi đấu và mọi trận Pro đã kết thúc ở năm nội dung cá nhân Pro. Tỉ số lấy từ trang nhánh đấu chính thức của giải, kèm người thắng do nhánh đấu công bố. Một trận vừa rời bảng trực tiếp mà nhánh đấu chưa cập nhật sẽ tạm hiển thị tỉ số ThePickleHub ghi nhận cuối cùng, và được thay bằng kết quả chính thức ở lượt quét sau."
+          : "Bảng này gồm mọi trận Pro đã kết thúc ở năm nội dung cá nhân Pro; hiện không có trận nào đang thi đấu. Tỉ số lấy từ trang nhánh đấu chính thức của giải, kèm người thắng do nhánh đấu công bố."
+        : anyLive
+          ? "This table covers every Pro match on court now and every completed match across the five Pro individual draws. Scores come from the tournament's own bracket pages, with the winner the bracket declares. A match that has just left the live feed before its bracket syncs shows the last score ThePickleHub observed, replaced by the official result on the next pass."
+          : "This table covers every completed match across the five Pro individual draws; no match is on court right now. Scores come from the tournament's own bracket pages, with the winner the bracket declares."
     }${trimmed ? escapeHtml(trimNote) : ""}</p>`,
   );
 
