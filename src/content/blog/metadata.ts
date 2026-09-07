@@ -10,6 +10,38 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "pickleball-world-cup-2026-da-nang-from-the-stands",
+    publishedDate: "2026-09-07",
+    updatedDate: "2026-09-07",
+    author: "Cuong Nguyen",
+    tags: [
+      "pickleball world cup 2026",
+      "world cup pickleball da nang",
+      "pickleball da nang 2026",
+      "nhat ky pickleball world cup",
+      "heineken pickleball world cup",
+      "cong dong pickleball viet nam",
+      "pickleball viet nam",
+    ],
+    ctaPath: "/vi/blog/ket-qua-pickleball-world-cup-2026-da-nang",
+    ctaLabel: {
+      en: "See every result from Da Nang 2026",
+      vi: "Xem toàn bộ kết quả Đà Nẵng 2026",
+    },
+    heroImage: {
+      src: "/images/blog/pickleball-world-cup-2026-da-nang-hero.webp",
+      alt: "Pickleball World Cup 2026 in Da Nang, Vietnam — the view a spectator had from the stands at Tien Son Sports Palace.",
+    },
+    titleEn: "Pickleball World Cup 2026 in Da Nang, From the Stands",
+    titleVi: "Nhật ký Pickleball World Cup 2026 Đà Nẵng: tôi đã ở đó",
+    metaTitleEn: "Pickleball World Cup 2026 Da Nang: From the Stands",
+    metaTitleVi: "Nhật ký Pickleball World Cup 2026 Đà Nẵng",
+    metaDescriptionEn:
+      "A week at the Pickleball World Cup 2026 in Da Nang from a seat in the stands: the crowd, the city, the organizers, and the friends made from 81 countries.",
+    metaDescriptionVi:
+      "Một tuần ở Pickleball World Cup 2026 Đà Nẵng nhìn từ khán đài: đám đông, thành phố, ban tổ chức và những người bạn mới.",
+  },
+  {
     slug: "pickleball-world-cup-2026-da-nang-results",
     publishedDate: "2026-08-31",
     updatedDate: "2026-09-07",
