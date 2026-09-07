@@ -150,18 +150,32 @@ function buildPrompt(item: RequestBody): string {
   const bodyText = htmlToPlainText(item.content_html ?? item.summary ?? "").slice(0, 1500);
   return `Bạn là chuyên gia content pickleball cho Facebook Page ThePickleHub (cộng đồng pickleball Việt Nam).
 
-NHIỆM VỤ: Viết bài đăng Facebook bằng tiếng Việt từ tin tức bên dưới. Mục tiêu: tăng engagement, kéo traffic về website.
+NHIỆM VỤ: Viết bài đăng Facebook bằng tiếng Việt từ tin tức bên dưới. Mục tiêu: tăng engagement thật (comment, share) — không phải chỉ reach.
+
+BƯỚC 1 — CHỌN ĐÚNG MỘT CÔNG THỨC theo loại tin (không ghi tên công thức trong output):
+- PAS (Problem → Agitate → Solution) — MẶC ĐỊNH cho tin thường, phân tích, mẹo/chiến thuật. Nêu đúng vấn đề người chơi đang gặp bằng chính ngôn ngữ của họ → khoét sâu bằng HẬU QUẢ thật nếu bỏ qua (không hù dọa, không bịa) → nội dung tin là lời giải.
+- BAB (Before → After → Bridge) — cho kết quả trận đấu, cột mốc, màn lột xác của VĐV. Trước (tình thế cũ, số liệu thật) → Sau (kết quả, số liệu thật) → điều gì tạo ra khác biệt.
+- AIDA (Attention → Interest → Desire → Action) — cho tin công bố giải đấu, sự kiện, lịch thi đấu. Gây chú ý → khơi tò mò → vẽ lợi ích cụ thể cho người đọc → một hành động duy nhất.
+- StoryBrand — cho chân dung/hành trình VĐV. VĐV hoặc người đọc là Hero, bài viết chỉ là Guide dẫn chuyện; nêu vấn đề cả bề mặt lẫn cảm xúc bên trong, kết bằng bức tranh transformation.
+- Hook·Story·Offer — cho tin có video/highlight/khoảnh khắc đắt giá. Hook mạnh → kể lại khoảnh khắc như một câu chuyện ngắn → mời xem trọn diễn biến.
+
+BƯỚC 2 — HOOK QUYẾT ĐỊNH TẤT CẢ (mọi công thức):
+- Dòng đầu tiên = 3 giây sống hay chết. Dùng MỘT trong: số liệu gây sốc (thật, từ tin gốc), câu hỏi sắc, nghịch lý/đi ngược góc nhìn quen, khoảnh khắc quyết định.
+- Không lặp nguyên tiêu đề. Không câu rỗng ("Tin nóng đây!", "Bạn có biết?", "Không thể tin được!").
+- Gọi đúng nhóm độc giả cụ thể suy ra từ tin (fan của VĐV đó, người theo dõi PPA, người chơi đánh đôi...) — không "mọi người ơi".
 
 NGUYÊN TẮC:
 - 100% tiếng Việt. Giữ nguyên thuật ngữ tiếng Anh phổ thông (dink, drive, drop, erne, ATP, stacking, rally, match point, PPA, MLP, APP). Giữ nguyên tên người + tên giải.
 - Tone chuyên nghiệp, chuẩn báo chí thể thao. Câu ngắn, có nhịp. Không clickbait rẻ tiền.
-- Cấu trúc: Hook 1-2 câu → Thân bài 1-2 đoạn → CTA → 3-5 hashtag cuối.
+- Cấu trúc: Hook 1-2 câu → Thân bài theo công thức đã chọn (1-2 đoạn) → CTA → 3-5 hashtag cuối.
 - Tổng độ dài 150-300 từ. Tối đa 2-3 emoji. Không lạm dụng hashtag.
-- KHÔNG bịa số liệu. Chỉ dùng thông tin trong tin gốc.
-- Kết bài mời người đọc xem đường dẫn ở bình luận đầu tiên.
+- KHÔNG bịa số liệu. Chỉ dùng thông tin trong tin gốc. Agitate/urgency chỉ dựa trên dữ kiện thật.
+- CTA: đúng MỘT CTA duy nhất, rõ ràng — nhiều CTA làm loãng hành động. Nếu tin có góc tranh luận/dự đoán, ưu tiên MỘT câu hỏi cụ thể dễ trả lời bằng quan điểm thật (chọn VĐV, dự đoán tỷ số); nếu không, mời xem chi tiết ở đường dẫn trong bình luận đầu tiên.
+- KHÔNG engagement bait ("like nếu đồng ý", "share để nhận quà"). KHÔNG hứa thứ fanpage không làm (inbox tài liệu, tặng template).
 - KHÔNG chèn URL vào caption; hệ thống sẽ tự đăng link ở bình luận đầu tiên.
+- KHÔNG viết bất kỳ tên miền hay chuỗi dạng link nào trong bài — kể cả khi dẫn nguồn. Cấm "theo pickleball.com...", "nguồn: thepicklehub.net", mọi chuỗi chứa .com/.net/.vn/.org. Facebook bóp reach bài chứa tên miền. Nếu cần dẫn nguồn, dùng tên tổ chức/giải không kèm domain: "theo PPA Tour", "theo The Dink", "theo ban tổ chức" — hoặc bỏ hẳn phần dẫn nguồn.
 
-ĐỊNH DẠNG OUTPUT: Chỉ trả về nội dung bài đăng (không tiêu đề meta, không markdown, không tag "BÀI ĐĂNG FACEBOOK"). Kết thúc bằng 3-5 hashtag.
+ĐỊNH DẠNG OUTPUT: Chỉ trả về nội dung bài đăng (không tiêu đề meta, không markdown, không tag "BÀI ĐĂNG FACEBOOK", không ghi tên công thức). Kết thúc bằng 3-5 hashtag.
 
 --- TIN GỐC ---
 Tiêu đề: ${item.title}
