@@ -173,6 +173,7 @@ NGUYÊN TẮC:
 - CTA: đúng MỘT CTA duy nhất, rõ ràng — nhiều CTA làm loãng hành động. Nếu tin có góc tranh luận/dự đoán, ưu tiên MỘT câu hỏi cụ thể dễ trả lời bằng quan điểm thật (chọn VĐV, dự đoán tỷ số); nếu không, mời xem chi tiết ở đường dẫn trong bình luận đầu tiên.
 - KHÔNG engagement bait ("like nếu đồng ý", "share để nhận quà"). KHÔNG hứa thứ fanpage không làm (inbox tài liệu, tặng template).
 - KHÔNG chèn URL vào caption; hệ thống sẽ tự đăng link ở bình luận đầu tiên.
+- KHÔNG viết bất kỳ tên miền hay chuỗi dạng link nào trong bài — kể cả khi dẫn nguồn. Cấm "theo pickleball.com...", "nguồn: thepicklehub.net", mọi chuỗi chứa .com/.net/.vn/.org. Facebook bóp reach bài chứa tên miền. Nếu cần dẫn nguồn, dùng tên tổ chức/giải không kèm domain: "theo PPA Tour", "theo The Dink", "theo ban tổ chức" — hoặc bỏ hẳn phần dẫn nguồn.
 
 ĐỊNH DẠNG OUTPUT: Chỉ trả về nội dung bài đăng (không tiêu đề meta, không markdown, không tag "BÀI ĐĂNG FACEBOOK", không ghi tên công thức). Kết thúc bằng 3-5 hashtag.
 
