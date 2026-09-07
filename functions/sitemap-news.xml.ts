@@ -37,6 +37,14 @@ interface Env {
   CANONICAL_HOST: string;
 }
 
+/**
+ * How far back sitemap-news.xml advertises. 90 days covered 696 of the 937
+ * published VI rows on 2026-09-07; the 241 it drops had produced effectively
+ * no search traffic. Raise it only against fresh GSC evidence that older
+ * articles earn clicks — the number is a traffic judgement, not a convention.
+ */
+export const NEWS_SITEMAP_WINDOW_DAYS = 90;
+
 interface NewsRow {
   id: string;
   slug: string | null;
@@ -56,12 +64,36 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     // silently truncated the sitemap to the ~500 newest articles.
     // `id` is the tie breaker — same-timestamp rows would otherwise shuffle
     // between pages and get lost.
+    //
+    // ─── 2026-09-07: recency window ──────────────────────────────────────
+    // GSC export of the same date: 206 of the 419 URLs in "Discovered –
+    // currently not indexed" are /vi/news/*, and not one EN news URL is in
+    // there. Google is not failing to find this cluster; it found all 937 of
+    // them, crawled ~695, and stopped. Over the 90 days to 2026-09-04 those
+    // 695 crawled URLs returned 116 clicks and 5,457 impressions in total,
+    // with 622 of them on zero clicks — 0.12 clicks per URL per quarter,
+    // against 65 for a blog post.
+    //
+    // A sitemap is a request to spend crawl budget, not an index. Asking for
+    // all 937 while intake runs at ~290/month is asking Google to re-evaluate
+    // a cluster it has already judged, every time it reads the index. The
+    // window keeps the ask proportional to what the cluster earns; older
+    // articles stay 200, stay linked from /news, and stay indexed if they
+    // already are — they simply stop being advertised.
+    //
+    // This is a throttle on the *ask*, not a fix for the *cluster*. The 0.12
+    // clicks/URL number is a verdict on machine-translated aggregation, and no
+    // sitemap change moves it — see docs/defects/ note in the PR body.
+    const windowStart = new Date(Date.now() - NEWS_SITEMAP_WINDOW_DAYS * 86_400_000)
+      .toISOString()
+      .slice(0, 10);
     const rows = await fetchAllRows<NewsRow>((from, to) =>
       supabase
         .from("news_items")
         .select("id, slug, language, updated_at, published_at, parent_news_id")
         .eq("status", "published")
         .not("slug", "is", null)
+        .gte("published_at", windowStart)
         .order("published_at", { ascending: false })
         .order("id", { ascending: true })
         .range(from, to)

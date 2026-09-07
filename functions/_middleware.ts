@@ -328,6 +328,25 @@ const GONE_EXACT = new Set<string>([
   "/vi/blog/hop-", "/vi/blog/thuat-",
   // Truncated news slug emitted by an old internal link; no unambiguous post.
   "/vi/news/vi-sao-cu-",
+  // ─── 2026-09-07 sweep ────────────────────────────────────────────────────
+  // Re-crawling all 91 URLs from the GSC "Not found (404)" export showed the
+  // 2026-07-30 and 2026-08-27 passes had already handled 86 of them: 57 answer
+  // 410, 28 redirect, 1 is back to 200. These five were what remained on a
+  // bare 404, which is the one answer that keeps a URL in Google's retry
+  // queue indefinitely.
+  //
+  // Deleted Mux videos. /watch/:id has no tombstone path of its own — the SPA
+  // catch-all soft-404s it — so a removed asset looks identical to a typo.
+  // These three were crawled 2026-09-03..05, so they are recent removals, not
+  // ancient history.
+  "/watch/9439d561-5857-4b94-8304-7d787c5502c3",
+  "/watch/c2138621-6d0d-4bb1-82e4-7cb9ff249de0",
+  "/watch/c8e56c37-d405-4281-b66f-c5d925f89595",
+  // Two more Google-truncated URLs, same family as the entries above: a
+  // livestream id cut mid-UUID, and a news slug cut to two letters. Neither
+  // can be resolved to a real page, so 410 rather than a guessed redirect.
+  "/live/3e211e67-2caa-",
+  "/vi/news/ly",
 ]);
 const GONE_PATTERNS: RegExp[] = [
   // Old MLP-Dallas scraper double-"mlp-mlp-" slug bug (matches 001–025);
@@ -1199,7 +1218,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // Cup pages moved from future/live tense to results — five Pro finals, the
   // Open team final (USA 4-0 Vietnam) and the medal table — so every cached
   // copy from finals day is now wrong about who won.
-  const cacheKey = `pr:v106:${url.pathname}`;
+  // v107 (2026-09-07): five URLs from the GSC "Not found (404)" export moved
+  // into GONE_EXACT — three deleted /watch videos and two Google-truncated
+  // paths. They currently have a cached 404 body; without the bump they would
+  // keep serving it instead of the 410. (Opened as v103; main claimed v103-v106
+  // for the World Cup content pass while this branch was in review, so this
+  // takes the higher number per CLAUDE.md.)
+  const cacheKey = `pr:v107:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
