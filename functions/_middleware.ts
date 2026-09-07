@@ -1180,6 +1180,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // of the four remaining Pro finals (feed 11:20/13:40/14:50, published list
   // 10:50/18:20/12:40; both agree on 09:30 for the women's singles). Schedule
   // page now states the conflict instead of silently picking one.
+  // v105 (2026-09-07): Cuong's own photos replace the illustrated hero on the
+  // from-the-stands post and fill five section slots, so og:image changes too.
   // v104 (2026-09-07): new post — a first-person account of the week in Da Nang
   // (EN from-the-stands / VI nhat-ky-...), so the blog index and sitemap change.
   // v103 (2026-09-07): the pillar page still asked, in the present tense, which
@@ -1194,7 +1196,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // Cup pages moved from future/live tense to results — five Pro finals, the
   // Open team final (USA 4-0 Vietnam) and the medal table — so every cached
   // copy from finals day is now wrong about who won.
-  const cacheKey = `pr:v104:${url.pathname}`;
+  const cacheKey = `pr:v105:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

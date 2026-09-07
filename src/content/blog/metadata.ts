@@ -29,8 +29,8 @@ export const blogMetadata: BlogPostMetadata[] = [
       vi: "Xem toàn bộ kết quả Đà Nẵng 2026",
     },
     heroImage: {
-      src: "/images/blog/pickleball-world-cup-2026-da-nang-hero.webp",
-      alt: "Pickleball World Cup 2026 in Da Nang, Vietnam — the view a spectator had from the stands at Tien Son Sports Palace.",
+      src: "/images/blog/wc-2026-from-the-stands-hero.webp",
+      alt: "Stands at Tien Son Sports Palace during the Pickleball World Cup 2026 in Da Nang, Vietnam: teams applauding courtside beneath the Heineken boards, a Vietnamese flag in the upper tier, photographers working the near court.",
     },
     titleEn: "Pickleball World Cup 2026 in Da Nang, From the Stands",
     titleVi: "Nhật ký Pickleball World Cup 2026 Đà Nẵng: tôi đã ở đó",

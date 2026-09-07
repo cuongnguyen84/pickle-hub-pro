@@ -37,8 +37,8 @@ const post: BlogPost = {
     vi: "Xem toàn bộ kết quả Đà Nẵng 2026",
   },
   heroImage: {
-    src: "/images/blog/pickleball-world-cup-2026-da-nang-hero.webp",
-    alt: "Pickleball World Cup 2026 in Da Nang, Vietnam — the view a spectator had from the stands at Tien Son Sports Palace.",
+    src: "/images/blog/wc-2026-from-the-stands-hero.webp",
+    alt: "Stands at Tien Son Sports Palace during the Pickleball World Cup 2026 in Da Nang, Vietnam: teams applauding courtside beneath the Heineken boards, a Vietnamese flag in the upper tier, photographers working the near court.",
   },
   content: {
     en: {
@@ -58,6 +58,11 @@ const post: BlogPost = {
         },
         {
           heading: "My second time at Tien Son",
+          image: {
+            src: "/images/blog/wc-2026-from-the-stands-team-vn.webp",
+            alt: "Cuong Nguyen at Tien Son with a supporter wearing Vietnam national-team kit during the Pickleball World Cup 2026 in Da Nang.",
+            caption: "Tien Son, World Cup week.",
+          },
           content: "But not for a PPA event. For the Pickleball World Cup 2026.\n\nEighty-one countries and territories. Thousands of athletes. Seven court clusters. Flags everywhere. Languages everywhere. Laughter everywhere.\n\nSo much curiosity and excitement before arriving. And on leaving, only that ache.\n\nI remember the days spent giving everything from the stands. I remember Si Boi Ngoc pulling back seven straight points in the Final Battle rubber and the whole arena standing up, applauding and not stopping. I remember Phuc Huynh being clutch in every match. I remember Quang Duong carrying the team in the national-team event. I remember Sophia getting better match by match.\n\nI remember all of it.",
           internalLinks: [
             {
@@ -78,18 +83,38 @@ const post: BlogPost = {
         },
         {
           heading: "The organizers — impressively smooth",
+          image: {
+            src: "/images/blog/wc-2026-from-the-stands-organizer.webp",
+            alt: "Courtside at Tien Son Sports Palace with a member of the Pickleball World Cup 2026 organizing team; the United States squad is warming up behind them.",
+            caption: "Courtside, with one of the organizers.",
+          },
           content: "Eighty-one countries and territories. Thousands of athletes. Seven court clusters across the city. A full week of continuous play, 69 events.\n\nAnd I barely saw a delay. I did not see a single event with a real problem. Everything ran smoothly from the first day to the last.\n\nMaybe I do not know everything that happened behind the scenes. But from a spectator's seat, it all ran clean. At this scale, that is extremely hard.\n\nCongratulations to the organizing committee on a World Cup done properly.",
         },
         {
           heading: "New friends",
+          image: {
+            src: "/images/blog/wc-2026-from-the-stands-friends.webp",
+            alt: "A friend made at the Pickleball World Cup 2026 in Da Nang, in front of the KIVIX banner for Richard Livornese Jr, who went on to win the Pro men's doubles title.",
+            caption: "One of the week's new friends.",
+          },
           content: "And this was the most beautiful part of the whole trip.\n\nJamaica. Malaysia. Portugal. People from places I would never normally meet. Now sitting next to each other in the stands. Taking photos together. Swapping Instagram handles. Promising to meet again at the next one.\n\nMost of them were in Vietnam for the first time. Competing and travelling at once. Impressed by the organization. Impressed by how friendly Da Nang is. And especially surprised that Vietnam has this many good players.\n\nA guy from Jamaica asked me: “Vietnam has this many good players? How?”\n\nI laughed. I did not know how to answer. I just said: “We love the game.”\n\nThey told me how pickleball is growing where they live. Jamaica has a few dozen players. Portugal is exploding. Malaysia is at roughly the same stage as Vietnam.\n\nEvery person a different story. Every country a different journey. All of them in Da Nang for the same love.",
         },
         {
           heading: "The die-hards",
+          image: {
+            src: "/images/blog/wc-2026-from-the-stands-night.webp",
+            alt: "An evening in Da Nang during the Pickleball World Cup 2026, national flags strung across the ceiling of the bar.",
+            caption: "After the matches.",
+          },
           content: "I also owe thanks to the friends who drove me around. Who piled into the stands with me for days on end. Screamed ourselves hoarse. Clapped our hands red.\n\nOld friends, talking rubbish all night. New friends, met courtside. Morning coffee arguing tactics. Evening beer retelling the matches.\n\nPickleball brings us together. A World Cup keeps us together longer.",
         },
         {
           heading: "They are calling boarding",
+          image: {
+            src: "/images/blog/wc-2026-from-the-stands-jersey.webp",
+            alt: "A Heineken Pickleball World Cup 2026 organizer jersey held up in the stands at Tien Son Sports Palace on the final day.",
+            caption: "Last day at Tien Son.",
+          },
           content: "Hanoi is waiting.\n\nBut part of me is still at Tien Son. In those stands. In that roar of “Việt Nam”. In that Jamaican friend's smile. In that Da Nang driver's sweet little curse.\n\nPickleball World Cup 2026. Da Nang. The first time in Asia. The first time in Vietnam.\n\nAnd I was there.\n\nThank you Da Nang. Thank you to the organizers. Thank you to the friends, old and new. Thank you to the Vietnam national team.\n\nThank you, pickleball.\n\nSee you again.",
         },
       ],
@@ -111,6 +136,11 @@ const post: BlogPost = {
         },
         {
           heading: "Tôi trở lại Tiên Sơn lần thứ hai",
+          image: {
+            src: "/images/blog/wc-2026-from-the-stands-team-vn.webp",
+            alt: "Cường Nguyễn tại Tiên Sơn cùng một người mặc áo đội tuyển Việt Nam trong tuần Pickleball World Cup 2026 ở Đà Nẵng.",
+            caption: "Tiên Sơn, tuần World Cup.",
+          },
           content: "Nhưng không phải giải PPA. Mà là Pickleball World Cup 2026.\n\n81 quốc gia và vùng lãnh thổ. Hàng nghìn vận động viên. Bảy cụm sân. Cờ khắp nơi. Ngôn ngữ khắp nơi. Tiếng cười khắp nơi.\n\nBiết bao tò mò và háo hức trước khi đến. Và khi rời đi thì chỉ còn lại bồi hồi.\n\nNhớ những ngày hết mình trên khán đài. Nhớ khoảnh khắc Sĩ Bội Ngọc gỡ liền 7 điểm ở ván phụ Final Battle mà cả nhà thi đấu đứng dậy vỗ tay không ngớt. Nhớ Phúc Huỳnh clutch ở mọi trận. Nhớ Quang Dương gánh đội ở nội dung Đồng đội. Nhớ Sophia tiến bộ từng trận một.\n\nNhớ hết.",
           internalLinks: [
             {
@@ -131,18 +161,38 @@ const post: BlogPost = {
         },
         {
           heading: "Ban tổ chức — trơn tru đáng nể",
+          image: {
+            src: "/images/blog/wc-2026-from-the-stands-organizer.webp",
+            alt: "Bên sân Cung Thể thao Tiên Sơn cùng một thành viên ban tổ chức Pickleball World Cup 2026; phía sau là đội tuyển Mỹ đang khởi động.",
+            caption: "Bên sân, cùng một thành viên ban tổ chức.",
+          },
           content: "81 quốc gia và vùng lãnh thổ. Hàng nghìn vận động viên. Bảy cụm sân trải khắp thành phố. Thi đấu liên tục cả tuần, 69 nội dung.\n\nVà tôi gần như không thấy trễ. Không thấy nội dung nào có vấn đề lớn. Mọi thứ diễn ra trơn tru từ ngày đầu đến ngày cuối.\n\nCó thể tôi không biết hết những gì xảy ra phía sau. Nhưng ở góc nhìn người xem — mọi thứ chạy mượt. Và với quy mô như này, đó là điều cực kỳ khó.\n\nChúc mừng ban tổ chức đã làm được một kỳ World Cup đàng hoàng.",
         },
         {
           heading: "Những người bạn mới",
+          image: {
+            src: "/images/blog/wc-2026-from-the-stands-friends.webp",
+            alt: "Một người bạn mới quen tại Pickleball World Cup 2026 Đà Nẵng, trước tấm banner KIVIX của Richard Livornese Jr — người sau đó vô địch đôi nam Pro.",
+            caption: "Một trong những người bạn mới của tuần đó.",
+          },
           content: "Và đây là thứ đẹp nhất của cả chuyến đi.\n\nJamaica. Malaysia. Bồ Đào Nha. Những con người từ những nơi mà bình thường tôi không bao giờ gặp. Giờ ngồi cạnh nhau trên khán đài. Chụp ảnh cùng nhau. Trao đổi Instagram. Hẹn gặp lại ở giải sau.\n\nHọ đa số sang Việt Nam lần đầu. Kết hợp thi đấu và du lịch. Ấn tượng với cách tổ chức. Ấn tượng với sự thân thiện của Đà Nẵng. Và đặc biệt bất ngờ khi Việt Nam có nhiều người chơi hay đến vậy.\n\nMột anh bạn Jamaica hỏi tôi: “Vietnam has this many good players? How?”\n\nTôi cười. Không biết trả lời sao. Chỉ nói: “We love the game.”\n\nHọ cũng kể pickleball ở đất nước họ phát triển thế nào. Jamaica mới có vài chục người chơi. Bồ Đào Nha đang bùng nổ. Malaysia thì tương đương Việt Nam.\n\nMỗi người một câu chuyện. Mỗi nước một hành trình. Nhưng cùng đến Đà Nẵng vì cùng một tình yêu.",
         },
         {
           heading: "Những “fan cứng”",
+          image: {
+            src: "/images/blog/wc-2026-from-the-stands-night.webp",
+            alt: "Một buổi tối ở Đà Nẵng trong tuần Pickleball World Cup 2026, cờ các nước treo kín trần quán.",
+            caption: "Sau trận đấu.",
+          },
           content: "Cũng phải cảm ơn những anh em đã đưa đón. Cùng nhau “vầy” trên khán đài mấy ngày liền. Hét khàn cổ. Vỗ tay đỏ tay.\n\nGặp bạn cũ chém gió cả đêm. Gặp bạn mới ngay trên sân. Cà phê sáng bàn chiến thuật. Bia tối kể chuyện trận đấu.\n\nPickleball đưa chúng ta đến với nhau. World Cup giữ chúng ta ở lại lâu hơn.",
         },
         {
           heading: "Máy bay sắp gọi boarding",
+          image: {
+            src: "/images/blog/wc-2026-from-the-stands-jersey.webp",
+            alt: "Chiếc áo ban tổ chức Heineken Pickleball World Cup 2026 được giơ lên trên khán đài Cung Thể thao Tiên Sơn ngày thi đấu cuối.",
+            caption: "Ngày cuối ở Tiên Sơn.",
+          },
           content: "Hà Nội đang chờ.\n\nNhưng một phần của tôi vẫn ở Tiên Sơn. Ở khán đài đó. Ở tiếng hét “Việt Nam” vang dội đó. Ở nụ cười anh bạn Jamaica đó. Ở câu chửi dễ thương của anh tài xế Đà Nẵng đó.\n\nPickleball World Cup 2026. Đà Nẵng. Lần đầu tiên tại châu Á. Lần đầu tiên tại Việt Nam.\n\nVà tôi đã ở đó.\n\nCảm ơn Đà Nẵng. Cảm ơn ban tổ chức. Cảm ơn những người bạn cũ và mới. Cảm ơn đội tuyển Việt Nam.\n\nCảm ơn pickleball.\n\nHẹn gặp lại.",
         },
       ],
