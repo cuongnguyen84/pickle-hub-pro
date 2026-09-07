@@ -63,6 +63,10 @@ const post: BlogPost = {
           },
           internalLinks: [
             {
+              text: "What the week was actually like, from the stands at Tien Son",
+              path: "/blog/pickleball-world-cup-2026-da-nang-from-the-stands",
+            },
+            {
               text: "Everything confirmed about the Pickleball World Cup 2026 in Da Nang",
               path: "/blog/pickleball-world-cup-2026-da-nang",
             },
@@ -214,6 +218,10 @@ const post: BlogPost = {
           content:
             "Cập nhật thứ Hai 7/9/2026 — đội tuyển Việt Nam về nhì nội dung Đồng đội Quốc gia Open tại Heineken Pickleball World Cup 2026 ở Đà Nẵng, thua chung kết 0-4 trước Mỹ (21-17, 21-10, 21-16, 21-14) tối Chủ nhật 6/9. Việt Nam vào tới chung kết mà không thua trận nào, đi lên từ chính bảng này: nhất bảng A tuyệt đối trong ngày thứ Năm 3/9, thắng Chile 6-0, Quần đảo Cayman 6-0 và Colombia 6-0, tức 18 trận thắng trên tổng số 18 trận. Việt Nam nằm ở bảng A cùng Colombia, Chile và Cayman Islands theo kết quả bốc thăm chính thức ngày 16/8/2026. Giải Cá nhân đã khởi tranh từ 30/8 và tới sáng 31/8 đã có nhà vô địch ở 12 trong 69 nội dung — đều thuộc nhóm Amateur — còn giải Đồng đội, nơi có bảng A, diễn ra 3–6/9/2026, và cả ba trận bảng A của Việt Nam đã đấu gọn trong ngày mở màn. Từ đó Việt Nam thắng Nam Phi và Hà Lan ngày 4/9, thắng Australia 4-3 rồi Nhật Bản 4-0 ngày 5/9 để vào chung kết và giành huy chương bạc. Trên hồ sơ quốc tế, người mạnh nhất bảng là Pablo Tellez của Colombia — hạng 27 thế giới nam trên PPA Tour, 8 lần vào chung kết; Chile có hai tay vợt Nam Mỹ đã bước vào hệ thống PPA Challenger; còn Cayman Islands, dù dân số chỉ khoảng 70.000, đã vào tới tứ kết Pickleball World Cup 2024 tại Lima. ThePickleHub phân tích từng đối thủ dựa trên dữ liệu công khai của PPA Tour, DUPR và báo chí quốc tế, kèm rõ phần nào đã chắc và phần nào còn chờ xác nhận. Bài được viết trước khi các trận diễn ra và được giữ lại như bản đọc trước trận, đặt cạnh kết quả.",
           internalLinks: [
+            {
+              text: "Một tuần ở Đà Nẵng nhìn từ khán đài — ghi chép tại chỗ",
+              path: "/vi/blog/nhat-ky-pickleball-world-cup-2026-da-nang",
+            },
             {
               text: "Tổng quan Heineken Pickleball World Cup 2026 tại Đà Nẵng",
               path: "/vi/blog/world-cup-pickleball-2026-da-nang",

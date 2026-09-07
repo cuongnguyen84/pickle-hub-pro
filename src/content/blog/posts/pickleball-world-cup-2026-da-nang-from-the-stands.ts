@@ -43,8 +43,8 @@ const post: BlogPost = {
   content: {
     en: {
       title: "Pickleball World Cup 2026 in Da Nang, From the Stands",
-      metaTitle: "Pickleball World Cup 2026 Da Nang: From the Stands",
-      metaDescription: "A week at the Pickleball World Cup 2026 in Da Nang from a seat in the stands: the crowd, the city, the organizers, and the friends made from 81 countries.",
+      metaTitle: "Pickleball World Cup 2026 Da Nang: A Week in the Stands",
+      metaDescription: "Pickleball World Cup 2026 in Da Nang, Aug 30 - Sep 6: what the week was actually like from the stands - the arena, the city, the organizers, the people.",
       sections: [
         {
           heading: "Da Nang airport, September 6, 2026",
@@ -118,11 +118,33 @@ const post: BlogPost = {
           content: "Hanoi is waiting.\n\nBut part of me is still at Tien Son. In those stands. In that roar of “Việt Nam”. In that Jamaican friend's smile. In that Da Nang driver's sweet little curse.\n\nPickleball World Cup 2026. Da Nang. The first time in Asia. The first time in Vietnam.\n\nAnd I was there.\n\nThank you Da Nang. Thank you to the organizers. Thank you to the friends, old and new. Thank you to the Vietnam national team.\n\nThank you, pickleball.\n\nSee you again.",
         },
       ],
+      faqItems: [
+        {
+          question: "What was it like to attend the Pickleball World Cup 2026 in Da Nang?",
+          answer:
+            "The Heineken Pickleball World Cup 2026 ran August 30 to September 6, 2026 across seven court clusters in Da Nang, Vietnam, with roughly 5,000 athletes from 81 countries and territories across 69 events. This ThePickleHub account is written from the stands at Tien Son Sports Palace over that week: flags and languages from everywhere in one arena, free entry to Vietnam's national-team matches from September 3 to 5, and a final day of eight finals that ended with the Open national-team final at 19:40.",
+        },
+        {
+          question: "Was the Pickleball World Cup 2026 in Da Nang well organized?",
+          answer:
+            "From a spectator's seat, yes. Across a full week, seven court clusters and 69 events there were almost no visible delays and no event with an obvious problem, which is hard to achieve at that scale. That is a view from the stands rather than from behind the scenes. The one documented wrinkle came on the final day, when the organizers' published order of play and their own bracket feed disagreed on three Pro finals, and the two evening finals were played about 75 minutes before their listed slots.",
+        },
+        {
+          question: "Who won the Pickleball World Cup 2026 in Da Nang?",
+          answer:
+            "The United States won the Open national-team title, beating Vietnam 4-0 (21-17, 21-10, 21-16, 21-14) in the final on September 6, 2026; Vietnam took silver. Ly Hoang Nam won Pro men's singles over his compatriot Phuc Huynh 6-15, 16-14, 15-10. Katerina Stewart won women's singles, Jack Munro and Nicola Schoeman the mixed doubles, Selina Turulja and Nicola Schoeman the women's doubles, and Richard Livornese Jr and Jack Munro the men's doubles. Vietnam finished top of the medal table.",
+        },
+        {
+          question: "Can you play pickleball in Da Nang outside the World Cup week?",
+          answer:
+            "Yes. Da Nang's pickleball courts run year-round, not only during the tournament. The World Cup used seven clusters across the city, with Tien Son Sports Palace and Tuyen Son Sports Complex as the two main sites, and most of the satellite clubs are open to ordinary players the rest of the year. ThePickleHub lists the courts in Da Nang with addresses and contact details on its Da Nang venue page.",
+        },
+      ],
     },
     vi: {
       title: "Nhật ký Pickleball World Cup 2026 Đà Nẵng: tôi đã ở đó",
-      metaTitle: "Nhật ký Pickleball World Cup 2026 Đà Nẵng",
-      metaDescription: "Một tuần ở Pickleball World Cup 2026 Đà Nẵng nhìn từ khán đài: đám đông, thành phố, ban tổ chức và những người bạn mới.",
+      metaTitle: "World Cup Pickleball 2026 Đà Nẵng nhìn từ khán đài",
+      metaDescription: "Pickleball World Cup 2026 Đà Nẵng (30/8–6/9) nhìn từ khán đài: không khí nhà thi đấu, ban tổ chức và con người Đà Nẵng.",
       sections: [
         {
           heading: "Sân bay Đà Nẵng, 6/9/2026",
@@ -194,6 +216,28 @@ const post: BlogPost = {
             caption: "Ngày cuối ở Tiên Sơn.",
           },
           content: "Hà Nội đang chờ.\n\nNhưng một phần của tôi vẫn ở Tiên Sơn. Ở khán đài đó. Ở tiếng hét “Việt Nam” vang dội đó. Ở nụ cười anh bạn Jamaica đó. Ở câu chửi dễ thương của anh tài xế Đà Nẵng đó.\n\nPickleball World Cup 2026. Đà Nẵng. Lần đầu tiên tại châu Á. Lần đầu tiên tại Việt Nam.\n\nVà tôi đã ở đó.\n\nCảm ơn Đà Nẵng. Cảm ơn ban tổ chức. Cảm ơn những người bạn cũ và mới. Cảm ơn đội tuyển Việt Nam.\n\nCảm ơn pickleball.\n\nHẹn gặp lại.",
+        },
+      ],
+      faqItems: [
+        {
+          question: "Đi xem Pickleball World Cup 2026 tại Đà Nẵng thì thế nào?",
+          answer:
+            "Heineken Pickleball World Cup 2026 diễn ra từ 30/8 đến 6/9/2026 trên bảy cụm sân tại Đà Nẵng, với khoảng 5.000 vận động viên từ 81 quốc gia và vùng lãnh thổ, 69 nội dung thi đấu. Bài này của ThePickleHub được viết từ khán đài Cung Thể thao Tiên Sơn suốt tuần đó: cờ và ngôn ngữ từ khắp nơi trong cùng một nhà thi đấu, vào cửa miễn phí xem tuyển Việt Nam từ 3/9 đến 5/9, và ngày cuối có tám trận chung kết, khép lại bằng chung kết Đồng đội Quốc gia Open lúc 19:40.",
+        },
+        {
+          question: "Ban tổ chức Pickleball World Cup 2026 Đà Nẵng làm có tốt không?",
+          answer:
+            "Ở góc nhìn khán giả thì có. Suốt một tuần, bảy cụm sân và 69 nội dung, gần như không thấy trận nào trễ và không nội dung nào có vấn đề lớn — điều rất khó ở quy mô đó. Đây là góc nhìn từ khán đài chứ không phải từ hậu trường. Điểm gợn duy nhất ghi nhận được là ngày cuối: lịch ban tổ chức công bố và dữ liệu nhánh đấu của chính họ vênh nhau ở ba trận chung kết Pro, và hai trận chung kết buổi tối diễn ra sớm hơn lịch khoảng 75 phút.",
+        },
+        {
+          question: "Ai vô địch Pickleball World Cup 2026 tại Đà Nẵng?",
+          answer:
+            "Mỹ vô địch nội dung Đồng đội Quốc gia Open sau khi thắng Việt Nam 4-0 (21-17, 21-10, 21-16, 21-14) ở chung kết ngày 6/9/2026; Việt Nam giành huy chương bạc. Lý Hoàng Nam vô địch đơn nam Pro sau khi thắng đồng hương Phúc Huỳnh 6-15, 16-14, 15-10. Katerina Stewart vô địch đơn nữ, Jack Munro – Nicola Schoeman vô địch đôi nam nữ, Selina Turulja – Nicola Schoeman vô địch đôi nữ, Richard Livornese Jr – Jack Munro vô địch đôi nam. Việt Nam dẫn đầu bảng tổng sắp huy chương.",
+        },
+        {
+          question: "Hết World Cup rồi thì chơi pickleball ở Đà Nẵng ở đâu?",
+          answer:
+            "Sân pickleball ở Đà Nẵng hoạt động quanh năm chứ không chỉ trong tuần giải. World Cup dùng bảy cụm sân khắp thành phố, với Cung Thể thao Tiên Sơn và Làng Thể thao Tuyên Sơn là hai sân chính, và phần lớn các cụm sân câu lạc bộ vẫn mở cho người chơi bình thường vào những ngày còn lại trong năm. ThePickleHub liệt kê các sân tại Đà Nẵng kèm địa chỉ và thông tin liên hệ ở trang sân theo khu vực.",
         },
       ],
     },

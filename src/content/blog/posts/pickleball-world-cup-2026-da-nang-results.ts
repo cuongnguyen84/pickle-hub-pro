@@ -50,6 +50,10 @@ const post: BlogPost = {
           liveBlock: "wc-results",
           internalLinks: [
             {
+              text: "What the week was actually like, from the stands at Tien Son",
+              path: "/blog/pickleball-world-cup-2026-da-nang-from-the-stands",
+            },
+            {
               text: "Full schedule for both tournaments, day by day",
               path: "/blog/pickleball-world-cup-2026-da-nang-schedule",
             },
@@ -161,6 +165,10 @@ const post: BlogPost = {
             "Heineken Pickleball World Cup 2026 tại Đà Nẵng đã khép lại Chủ nhật 6/9/2026, và cả năm trận chung kết Pro đều đã có kết quả. Cập nhật lần cuối thứ Hai 7/9/2026. Lý Hoàng Nam thắng ngược đồng hương Phúc Huỳnh 6-15, 16-14, 15-10 để giành HCV đơn nam Pro — trận chung kết nội bộ Việt Nam duy nhất của giải. Đơn nữ Pro: Katerina Stewart thắng Roos Van Reek 15-4, 15-9. Đôi nam nữ Pro: Jack Munro – Nicola Schoeman thắng Lý Hoàng Nam – Roos Van Reek 15-11, 15-10. Đôi nữ Pro: Selina Turulja – Nicola Schoeman thắng Domenika Turkovic – Katerina Stewart 15-7, 15-8. Đôi nam Pro: Richard Livornese Jr – Jack Munro thắng Lý Hoàng Nam – Nguyễn Ảnh Gia Huy 15-12, 15-13. Ở chung kết Đồng đội Quốc gia Open lúc 19:40 — trận khép lại cả giải — Mỹ thắng Việt Nam 4-0 (21-17, 21-10, 21-16, 21-14), Việt Nam giành huy chương bạc. Lý Hoàng Nam đánh bốn trong tám trận chung kết và thắng một. Giải diễn ra từ 30/8 đến 6/9/2026 với 69 nội dung, 156 đội tuyển quốc gia và gần 5.000 VĐV từ hơn 80 quốc gia và vùng lãnh thổ; Việt Nam dẫn đầu bảng tổng sắp huy chương. ThePickleHub theo dõi năm nội dung cá nhân Pro tại đây: bảng ngay bên dưới liệt kê mọi trận đã kết thúc ở năm nhánh đó, kèm tỉ số từng ván và người thắng, nhóm theo ngày thi đấu, ngày mới nhất trước. Bảng giờ là bản ghi cuối chứ không còn trực tiếp — dữ liệu ban tổ chức trả về trận Pro mới cuối cùng lúc 17:57 ngày 6/9, ngay sau chung kết đôi nam, rồi ngừng.",
           liveBlock: "wc-results",
           internalLinks: [
+            {
+              text: "Một tuần ở Đà Nẵng nhìn từ khán đài — ghi chép tại chỗ",
+              path: "/vi/blog/nhat-ky-pickleball-world-cup-2026-da-nang",
+            },
             {
               text: "Lịch thi đấu đầy đủ cả hai giải, theo từng ngày",
               path: "/vi/blog/lich-thi-dau-pickleball-world-cup-2026-da-nang",

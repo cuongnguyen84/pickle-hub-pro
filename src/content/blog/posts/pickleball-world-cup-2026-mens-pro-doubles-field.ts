@@ -38,6 +38,10 @@ const post: BlogPost = {
             "Last updated Monday September 7, 2026 — Richard Livornese Jr. and Jack Munro won the Men's Pro Doubles title at the Heineken Pickleball World Cup 2026 in Da Nang, Vietnam, beating Ly Hoang Nam and Nguyen Anh Gia Huy 15-12, 15-13 in the Grand Final on Sunday September 6 on court 1 at Tien Son Sports Palace. Ly Hoang Nam played four of the day's eight finals and won one: he took the all-Vietnamese men's singles title over Phuc Huynh 6-15, 16-14, 15-10, and finished runner-up here, in mixed doubles with Roos Van Reek, and with Vietnam's Open team, which lost the national-team final 0-4 to the United States. Getting to that final, Ly Hoang Nam and Nguyen Anh Gia Huy, who competes as Robert Huy, dropped the opening game and took the next two to beat Quang Duong and Harsh Mehta 11-15, 15-11, 15-12 in Tuesday's semifinal. Munro and Livornese, the draw's top pair by combined DUPR, came through 15-12, 15-12 against Brandon Lane and Ryler DeHeart; Quang Duong and Harsh Mehta then took the bronze-medal match against that same Lane and DeHeart pair, 15-10 in the only game the bracket records. The whole draw played out on Tuesday, September 1 from 08:00 to 16:20 Vietnam time at Tien Son Center and Tuyen Son A&amp;D, alongside Women's Pro Doubles. Ranked by combined DUPR before the draw, the top three pairs were Jack Munro and Richard Livornese Jr. (12.51), Jay Devilliers and Émilien Burnel (12.27), and Quang Duong and Harsh Mehta (12.18) — the top seed won it. This ThePickleHub breakdown ranks every published pair in the draw, explains what the ratings do and do not tell you, and flags the two Vietnamese pairs whose DUPR the organizers never published. All times are Vietnam time (GMT+7).",
           internalLinks: [
             {
+              text: "What the week was actually like, from the stands at Tien Son",
+              path: "/blog/pickleball-world-cup-2026-da-nang-from-the-stands",
+            },
+            {
               text: "Full World Cup schedule, both tournaments day by day",
               path: "/blog/pickleball-world-cup-2026-da-nang-schedule",
             },
@@ -168,6 +172,10 @@ const post: BlogPost = {
           content:
             "Cập nhật thứ Hai 7/9/2026 — Richard Livornese Jr. và Jack Munro vô địch nội dung đôi nam Pro tại Heineken Pickleball World Cup 2026 ở Đà Nẵng, thắng Lý Hoàng Nam – Nguyễn Ảnh Gia Huy 15-12, 15-13 ở trận Chung kết Chủ nhật 6/9 trên sân 1 Cung Thể thao Tiên Sơn. Lý Hoàng Nam đánh bốn trong tám trận chung kết của ngày và thắng một: anh vô địch đơn nam trong trận nội bộ Việt Nam trước Phúc Huỳnh 6-15, 16-14, 15-10, và về nhì ở nội dung này, ở đôi nam nữ cùng Roos Van Reek, và cùng đội tuyển Open — đội thua chung kết Đồng đội 0-4 trước Mỹ. Trên đường vào chung kết, Lý Hoàng Nam – Nguyễn Ảnh Gia Huy (thi đấu với tên Robert Huy) thua ván đầu rồi thắng liền hai ván, hạ Quang Dương – Harsh Mehta 11-15, 15-11, 15-12 ở bán kết chiều thứ Ba. Munro – Livornese, cặp mạnh nhất nhánh theo tổng DUPR, vào chung kết sau khi thắng Brandon Lane – Ryler DeHeart 15-12, 15-12; còn Quang Dương – Harsh Mehta thắng chính cặp Lane – DeHeart ở trận tranh hạng ba, 15-10 ở ván duy nhất mà bảng đấu ghi lại. Toàn bộ nhánh đấu diễn ra gọn trong thứ Ba 1/9, từ 08:00 đến 16:20 giờ Việt Nam tại Tien Son Center và Tuyen Son A&amp;D, cùng ngày với Đôi nữ chuyên nghiệp. Xếp theo tổng DUPR trước khi bốc thăm, ba cặp dẫn đầu là Jack Munro – Richard Livornese Jr. (12,51), Jay Devilliers – Émilien Burnel (12,27) và Quang Dương – Harsh Mehta (12,18) — và hạt giống số 1 đã vô địch. Đây là bản phân tích do ThePickleHub thực hiện: xếp hạng từng cặp có công bố chỉ số, nói rõ DUPR đo được gì và không đo được gì, và chỉ ra hai cặp Việt Nam mà ban tổ chức chưa từng công bố DUPR. Mọi mốc giờ theo giờ Việt Nam (GMT+7).",
           internalLinks: [
+            {
+              text: "Một tuần ở Đà Nẵng nhìn từ khán đài — ghi chép tại chỗ",
+              path: "/vi/blog/nhat-ky-pickleball-world-cup-2026-da-nang",
+            },
             {
               text: "Lịch thi đấu World Cup đầy đủ, cả hai giải, từng ngày",
               path: "/vi/blog/lich-thi-dau-pickleball-world-cup-2026-da-nang",

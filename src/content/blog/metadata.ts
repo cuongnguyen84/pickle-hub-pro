@@ -34,12 +34,12 @@ export const blogMetadata: BlogPostMetadata[] = [
     },
     titleEn: "Pickleball World Cup 2026 in Da Nang, From the Stands",
     titleVi: "Nhật ký Pickleball World Cup 2026 Đà Nẵng: tôi đã ở đó",
-    metaTitleEn: "Pickleball World Cup 2026 Da Nang: From the Stands",
-    metaTitleVi: "Nhật ký Pickleball World Cup 2026 Đà Nẵng",
+    metaTitleEn: "Pickleball World Cup 2026 Da Nang: A Week in the Stands",
+    metaTitleVi: "World Cup Pickleball 2026 Đà Nẵng nhìn từ khán đài",
     metaDescriptionEn:
-      "A week at the Pickleball World Cup 2026 in Da Nang from a seat in the stands: the crowd, the city, the organizers, and the friends made from 81 countries.",
+      "Pickleball World Cup 2026 in Da Nang, Aug 30 - Sep 6: what the week was actually like from the stands - the arena, the city, the organizers, the people.",
     metaDescriptionVi:
-      "Một tuần ở Pickleball World Cup 2026 Đà Nẵng nhìn từ khán đài: đám đông, thành phố, ban tổ chức và những người bạn mới.",
+      "Pickleball World Cup 2026 Đà Nẵng (30/8–6/9) nhìn từ khán đài: không khí nhà thi đấu, ban tổ chức và con người Đà Nẵng.",
   },
   {
     slug: "pickleball-world-cup-2026-da-nang-results",
