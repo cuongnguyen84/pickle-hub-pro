@@ -30,7 +30,7 @@ const post: BlogPost = {
         "Pickleball World Cup 2026 Men's Pro Doubles: The Final Field, Ranked by Combined DUPR",
       metaTitle: "World Cup 2026 Men's Pro Doubles: Field Ranked by DUPR",
       metaDescription:
-        "Men's Pro Doubles at the Pickleball World Cup 2026 Da Nang plays Tuesday Sep 1. The final field ranked by combined DUPR, with every pair broken down.",
+        "Men's Pro Doubles at the Pickleball World Cup 2026 Da Nang: Livornese Jr and Munro won it. The full field ranked by combined DUPR, every pair broken down.",
       sections: [
         {
           heading: "The draw is done — Men's Pro Doubles played Tuesday, September 1",
@@ -130,7 +130,7 @@ const post: BlogPost = {
           question:
             "When does Men's Pro Doubles play at the Pickleball World Cup 2026?",
           answer:
-            "Men's Pro Doubles at the Heineken Pickleball World Cup 2026 in Da Nang was played on Tuesday, September 1, 2026, from 08:00 to 16:20, on the same day as Women's Pro Doubles. The Pro finals across all categories are held on Sunday, September 6 on court 1 at Tien Son Sports Palace. All times are Vietnam time (GMT+7), and the organizers list the schedule as subject to change.",
+            "Men's Pro Doubles at the Heineken Pickleball World Cup 2026 in Da Nang was played on Tuesday, September 1, 2026, from 08:00 to 16:20, on the same day as Women's Pro Doubles. The Pro finals across all categories were played on Sunday, September 6 on court 1 at Tien Son Sports Palace, where Richard Livornese Jr and Jack Munro beat Ly Hoang Nam and Nguyen Anh Gia Huy 15-12, 15-13 for the men's doubles title. All times are Vietnam time (GMT+7).",
         },
         {
           question:
@@ -139,9 +139,9 @@ const post: BlogPost = {
             "Jack Munro and Richard Livornese Jr. lead at 12.51 combined (6.323 + 6.187). Jay Devilliers and Émilien Burnel are second at 12.27, and Quang Duong and Harsh Mehta third at 12.18. Devilliers holds the highest individual rating in the field at 6.599.",
         },
         {
-          question: "Is Quang Duong playing at the Pickleball World Cup 2026?",
+          question: "How did Quang Duong do at the Pickleball World Cup 2026?",
           answer:
-            "Yes. Quang Duong plays Men's Pro Doubles with India's Harsh Mehta, a partnership with a combined DUPR of 12.18. The pair won the Men's Pro Doubles title at the Leapmotor APP Asia Penang Open 2026 and the men's doubles championship at the Asian Open Pickleball Championships 2026.",
+            "He took bronze in Men's Pro Doubles with India's Harsh Mehta, a partnership with a combined DUPR of 12.18. They lost the semifinal to Ly Hoang Nam and Nguyen Anh Gia Huy 15-11, 11-15, 12-15 and then beat Brandon Lane and Ryler DeHeart 15-10 in the bronze-medal match. He also reached the Pro men's singles semifinal, where the Da Nang city portal reported he had to stop with a wrist injury while trailing Ly Hoang Nam 8-15, 2-15. The pair had won the Men's Pro Doubles title at the Leapmotor APP Asia Penang Open 2026 and the men's doubles championship at the Asian Open Pickleball Championships 2026.",
         },
         {
           question:

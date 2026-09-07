@@ -32,14 +32,14 @@ export const blogMetadata: BlogPostMetadata[] = [
       src: "/images/blog/pickleball-world-cup-2026-da-nang-results-hero.webp",
       alt: "Illustration: a courtside results board glows beside a blue championship court at the Pickleball World Cup 2026 in Da Nang, Vietnam, as a player walks past carrying a paddle.",
     },
-    titleEn: "Pickleball World Cup 2026 Da Nang Results: Every Pro Match, Day by Day",
-    titleVi: "Kết quả Pickleball World Cup 2026 Đà Nẵng: mọi trận Pro, cập nhật từng phút",
+    titleEn: "Pickleball World Cup 2026 Da Nang Results: Every Final and Every Pro Match",
+    titleVi: "Kết quả Pickleball World Cup 2026 Đà Nẵng: toàn bộ chung kết, mọi trận Pro",
     metaTitleEn: "Pickleball World Cup 2026 Results: Every Pro Match",
     metaTitleVi: "Kết quả Pickleball World Cup 2026 Đà Nẵng",
     metaDescriptionEn:
-      "Pickleball World Cup 2026 Da Nang results: every match in the five Pro draws, live and completed, with per-game scores and winners.",
+      "Pickleball World Cup 2026 Da Nang results: Ly Hoang Nam wins men's singles, USA beat Vietnam 4-0 in the Open team final. Every Pro match, game by game.",
     metaDescriptionVi:
-      "Kết quả Pickleball World Cup 2026 Đà Nẵng: mọi trận Pro ở năm nội dung cá nhân, tỉ số từng ván, cập nhật liên tục.",
+      "Kết quả Pickleball World Cup 2026 Đà Nẵng: Lý Hoàng Nam vô địch đơn nam, Mỹ thắng Việt Nam 4-0 chung kết Đồng đội Open.",
   },
   {
     slug: "pickleball-world-cup-2026-mens-pro-doubles-field",
@@ -72,7 +72,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     metaTitleEn: "World Cup 2026 Men's Pro Doubles: Field Ranked by DUPR",
     metaTitleVi: "Đôi nam pro World Cup 2026: xếp theo DUPR",
     metaDescriptionEn:
-      "Men's Pro Doubles at the Pickleball World Cup 2026 Da Nang plays Tuesday Sep 1. The final field ranked by combined DUPR, with every pair broken down.",
+      "Men's Pro Doubles at the Pickleball World Cup 2026 Da Nang: Livornese Jr and Munro won it. The full field ranked by combined DUPR, every pair broken down.",
     metaDescriptionVi:
       "Đôi nam pro World Cup Pickleball 2026 Đà Nẵng đấu thứ Ba 1/9. Danh sách chốt, xếp theo tổng DUPR.",
   },
@@ -592,7 +592,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     metaTitleEn: "How to Watch the Pickleball World Cup 2026: TV & Streaming",
     metaTitleVi: "World Cup Pickleball 2026 Đà Nẵng | Cách xem",
     metaDescriptionEn:
-      "Watch the Pickleball World Cup 2026 live from Da Nang: FPT Play streams, TV broadcast, tickets for finals weekend, all 7 venues and key match times.",
+      "Pickleball World Cup 2026 Da Nang, Aug 30 - Sep 6: how it was watched on FPT Play, all 7 venues, what tickets existed, and how the finals day ran.",
     metaDescriptionVi:
       "World Cup Pickleball 2026 Đà Nẵng: vé, 7 địa điểm, xem trên FPT Play, khách sạn và các mốc chính. 30/8-6/9, Việt Nam đá sân nhà.",
   },

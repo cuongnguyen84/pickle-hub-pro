@@ -37,7 +37,7 @@ const post: BlogPost = {
             "The Heineken Pickleball World Cup 2026 in Da Nang, Vietnam finished on Sunday September 6, 2026 after eight days. Updated Monday September 7, 2026 — this ThePickleHub page is now the completed schedule, with results. The final day produced eight finals at Tien Son Sports Palace. Juniors team final 08:00, Vietnam against the United States · Pro women's singles: Katerina Stewart beat Roos Van Reek 15-4, 15-9 · Pro men's singles: Ly Hoang Nam beat Phuc Huynh 6-15, 16-14, 15-10 in an all-Vietnamese final · Pro mixed doubles: Jack Munro and Nicola Schoeman beat Ly Hoang Nam and Roos Van Reek 15-11, 15-10 · Seniors team final 14:00, Brazil against Spain · Pro women's doubles: Selina Turulja and Nicola Schoeman beat Domenika Turkovic and Katerina Stewart 15-7, 15-8 · Pro men's doubles: Richard Livornese Jr and Jack Munro beat Ly Hoang Nam and Nguyen Anh Gia Huy 15-12, 15-13 · and the Open national-team final at 19:40, where the United States beat Vietnam 4-0 (21-17, 21-10, 21-16, 21-14) to win the title, Vietnam taking silver. Ly Hoang Nam was in four of the eight finals and won one. The week before that ran as two tournaments on one schedule. The individual tournament started Sunday August 30 at 08:00 with 47 events across seven court clusters, and by the morning of August 31 it had champions in 12 of the 69 events, all amateur. Pro Singles was decided on Sunday August 31 from 08:00 to 16:20, leaving the all-Vietnamese men's final. Men's and Women's Pro Doubles played Tuesday September 1 from 08:00 to 16:20, and Ly Hoang Nam and Nguyen Anh Gia Huy reached the men's doubles final. Mixed Pro Doubles filled Wednesday September 2 with 176 matches from 08:00 to 15:20, where Ly Hoang Nam and Roos Van Reek beat Eunggwon Kim and Mihae Kwon in the semi-final. The Opening Ceremony was Wednesday September 2, 18:00 to 20:00, in the middle of the individual tournament rather than before it. The national-team competition ran Thursday September 3 to Sunday September 6: Vietnam won Open Group A on September 3 with three 6-0 ties, then beat South Africa and the Netherlands on September 4 and Australia 4-3 and Japan 4-0 on September 5 to reach the final. This page lists both competitions day by day, and every day is now in the past tense.",
           internalLinks: [
             {
-              text: "Results so far, updated as they come in",
+              text: "Every Pro result, match by match",
               path: "/blog/pickleball-world-cup-2026-da-nang-results",
             },
             {
@@ -93,7 +93,7 @@ const post: BlogPost = {
           ],
         },
         {
-          heading: "When does Vietnam play?",
+          heading: "How Vietnam's week went",
           content:
             "Vietnam is the top seed in Group A in four of the five categories — Open, Masters, Juniors and Kids — and has no team in Seniors. That meant Vietnam's tournament started on Thursday September 3 with the Open group stage, opening against Chile and closing against Colombia, and Vietnam won all three ties 6-0. The Open squad is captained by Quan Do and includes Ken Tam and Sophia Huynh Tran, who won women's doubles gold at the Shenzhen Open on August 23.",
           listItems: [
@@ -189,12 +189,12 @@ const post: BlogPost = {
         {
           heading: "What the schedule does not tell you",
           content:
-            "Three gaps to plan around. First, there are no individual match times or court assignments anywhere — the schedule gives each day's events and venues only, and the organizers note explicitly that a listed time covers the whole event window from first match to last, not your match. Turn up for the window, not the time. Second, that gap is now closed: the September 6 order of play labels all three national-team finals by division. Third, the organizers mark the entire schedule subject to change, and they have already moved things: the venue list on their own site no longer matches the venues in their own schedule. If you are travelling for a specific match, confirm the day before.",
+            "Two gaps ran the whole week, and one closed at the end. Individual match times and court assignments were never published anywhere — the schedule gave each day's events and venues only, and the organizers noted explicitly that a listed time covered the whole event window from first match to last, not a single match. The organizers also marked the entire schedule subject to change and did move things: the venue list on their own site never matched the venues in their own schedule, and on the final day the two evening Pro finals were played about 75 minutes before their published slots. The gap that closed: the September 6 order of play labelled all three national-team finals by division, which the bracket feed never had.",
         },
         {
           heading: "How to follow it",
           content:
-            "FPT Play is both a co-organizer of the tournament and its exclusive Vietnamese broadcaster, carrying it on SmartTV, mobile, FPT Play Box and fptplay.vn. Whether the tournament sits inside the free tier or behind a subscription has not been stated, and international broadcast arrangements have not been announced. On tickets, be aware that only four hospitality packages are on sale, from $1,000 to $5,400 — no general-admission ticket has been published at any price. ThePickleHub carries bilingual coverage and live match tracking throughout.",
+            "FPT Play was both a co-organizer of the tournament and its exclusive Vietnamese broadcaster, carrying it on SmartTV, mobile, FPT Play Box and fptplay.vn. Whether the tournament sat inside the free tier or behind a subscription was never stated, and international broadcast arrangements were never announced. On tickets, only four hospitality packages were ever published, from $1,000 to $5,400 — no general-admission ticket at any price. ThePickleHub carried bilingual coverage and match tracking throughout, and keeps the full Pro results here.",
           internalLinks: [
             {
               text: "Live pickleball on ThePickleHub",
@@ -214,9 +214,9 @@ const post: BlogPost = {
             "The individual tournament started Sunday August 30, 2026 at 08:00, with 47 events across seven court clusters. The Opening Ceremony was Wednesday September 2 at Tien Son Sports Palace, on Vietnam's National Day — the schedule has shown an 18:00–20:00 window, while FPT Play gave the start as 17:30 when it announced its broadcast on August 28. The national-team competition started Thursday September 3 and the finals are on Sunday September 6.",
         },
         {
-          question: "When does Vietnam play at the Pickleball World Cup 2026?",
+          question: "How did Vietnam do at the Pickleball World Cup 2026?",
           answer:
-            "Vietnam played its Open group stage on Thursday September 3 and won all three ties 6-0 — against Chile, the Cayman Islands and Colombia — to finish top of Group A. Vietnam is the top seed in Group A in Open, Masters, Juniors and Kids, and has no team entered in Seniors. The Masters, Juniors and Kids group stages are on Friday September 4.",
+            "Vietnam finished runner-up in the Open national-team competition, losing the final 0-4 to the United States (21-17, 21-10, 21-16, 21-14) on the evening of September 6. It got there unbeaten: three 6-0 ties in Group A on Thursday September 3 against Chile, the Cayman Islands and Colombia, then South Africa and the Netherlands on September 4, Australia 4-3 and Japan 4-0 on September 5. Vietnam was the top seed in Group A in Open, Masters, Juniors and Kids, and had no team entered in Seniors; the Masters, Juniors and Kids group stages were on Friday September 4. In the individual draws, Ly Hoang Nam won Pro men's singles.",
         },
         {
           question: "Who won the Open final at the Pickleball World Cup 2026?",

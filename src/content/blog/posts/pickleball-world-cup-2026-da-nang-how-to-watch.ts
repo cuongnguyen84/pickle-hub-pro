@@ -29,7 +29,7 @@ const post: BlogPost = {
         "How to Watch — and Enter — the Heineken Pickleball World Cup 2026 in Da Nang",
       metaTitle: "How to Watch the Pickleball World Cup 2026: TV & Streaming",
       metaDescription:
-        "Watch the Pickleball World Cup 2026 live from Da Nang: FPT Play streams, TV broadcast, tickets for finals weekend, all 7 venues and key match times.",
+        "Pickleball World Cup 2026 Da Nang, Aug 30 - Sep 6: how it was watched on FPT Play, all 7 venues, what tickets existed, and how the finals day ran.",
       sections: [
         {
           heading: "The Short Version",
@@ -178,9 +178,9 @@ const post: BlogPost = {
             "No general-admission ticket has ever been published at any price. On August 24, 2026 the official platform sold four hospitality packages and nothing else: Finals & Music Festival table for two on Sep 6 at $2,000; VVIP Finals single seat on Sep 6 at $1,000; Full Package for all five days Sep 2–6 at $3,600; and VVIP Special, a table of three across five days, at $5,400. The ticket link then disappeared from the event homepage for three days — no entry in the navigation, footer or page body on August 27, 28 or 29 — and returned on August 30, opening day, marked \"tickets on sale\". The page behind it renders client-side, so we cannot read what it currently offers. Treat those prices as a record of August 24, not a live list, and contact the organizers directly before travelling to spectate.",
         },
         {
-          question: "Where exactly are the matches played?",
+          question: "Where exactly were the matches played?",
           answer:
-            "Across seven venues in Da Nang. The main sites are Tien Son Sports Palace (8 courts, Phan Dang Luu street) and Tuyen Son Sports Complex (31 courts, Nai Nam 2 street). Five satellite club venues carry the rest: Trang Hoang (16 courts), AK (9), KingKong (8), Hop Thanh Phat (8) and Furama (7). All are roughly 10 minutes from Da Nang International Airport.",
+            "Across seven venues in Da Nang. The main sites were Tien Son Sports Palace (8 courts, Phan Dang Luu street) and Tuyen Son Sports Complex (31 courts, Nai Nam 2 street). Five satellite club venues carried the rest: Trang Hoang (16 courts), AK (9), KingKong (8), Hop Thanh Phat (8) and Furama (7). All are roughly 10 minutes from Da Nang International Airport, and the Pro finals were played on court 1 at Tien Son on September 6.",
         },
         {
           question: "When is the opening ceremony?",
@@ -194,7 +194,7 @@ const post: BlogPost = {
             "Two routes. The organizers' own Livestream Premium package is 250,000₫ for the whole tournament, covering the 16 PRO and national-team courts. FPT Play is the exclusive Vietnamese broadcaster — it confirmed on August 28 that it will carry the whole tournament live and exclusively, on its Smart TV app, mobile, PC and laptop, FPT Play Box and fptplay.vn; it has not said whether that sits inside its free tier or behind a subscription. International broadcast arrangements have not been announced. Follow @pickleballworldcupofficial on Instagram and ThePickleHub for bilingual coverage.",
         },
         {
-          question: "When does Vietnam play at the Pickleball World Cup 2026?",
+          question: "How did Vietnam do at the Pickleball World Cup 2026?",
           answer:
             "The national-team competition ran Thursday September 3 to Sunday September 6. Vietnam was the top seed in Group A in Open, Masters, Juniors and Kids, and had no team in Seniors. In the Open group Vietnam was drawn with Colombia, the Cayman Islands and Chile. The Open group stage was played from 08:00 on September 3 with pools A–L, and Vietnam won all three of its ties 6-0 to top Group A, then reached the final and lost it 0-4 to the United States. The Open squad was captained by Quan Do and included Ly Hoang Nam, Quang Duong, Phuc Huynh, Hien Truong, Linh Giang Trinh, Ken Tam, Sophia Huynh Tran, Trang Huynh and Boi Ngoc Si.",
         },

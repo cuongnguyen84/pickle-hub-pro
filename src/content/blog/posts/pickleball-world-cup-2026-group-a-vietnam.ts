@@ -133,7 +133,7 @@ const post: BlogPost = {
           listItems: [
             "Beat Honduras, Slovakia and Bolivia in the group stage",
             "Edged Bermuda in the round of 16, in a tie decided by a singles decider won 21-19",
-            "Reached the quarter-finals and fell only to hosts Peru, the eventual silver medallists, by two matches to one — with the Cayman men's doubles pair beating Peru's",
+            "Reached the quarter-finals and fell only to hosts Peru, the eventual silver medallists, by two matches to one, with the Cayman men's doubles pair beating Peru's doubles pair along the way",
           ],
           internalLinks: [
             {
@@ -145,7 +145,7 @@ const post: BlogPost = {
         {
           heading: "So where does Vietnam actually stand?",
           content:
-            "Captain Jerry Beck was named the tournament's best captain in 2024, the squad had trained together for five weeks beforehand, and in March 2026 they took medals home from the Caribbean Pickleball Championships. The lesson is concrete: in a team format, roster depth and nerve in a deciding singles matter more than reputation. Ranking Group A purely on public international data gives Colombia, then Chile, then Vietnam, then the Cayman Islands — but the gap between the bottom three is narrow, and three factors do not show up in that data at all.",
+            "Vietnam won this group outright on September 3 with three 6-0 ties, then went through the knockout unbeaten until the final, where the United States won 4-0. Written before the ties were played, the read below was that a team format rewards roster depth and nerve in a deciding singles match more than one big name at the top, and that is roughly how it went: Vietnam's closest call was the 4-3 quarter-final against Australia, decided in a Final Battle rubber from 8-12 down. Three things were in Vietnam's favour going in.",
           orderedList: [
             "Home advantage. Tien Son and Tuyen Son are familiar surfaces, and late-August conditions in Da Nang are something no South American squad has played in. Add a home crowd during Vietnam's National Day period.",
             "Squad depth. As hosts, Vietnam can prepare over a longer runway and test more doubles combinations than teams flying halfway around the world.",

@@ -38,10 +38,10 @@ const post: BlogPost = {
   },
   content: {
     en: {
-      title: "Pickleball World Cup 2026 Da Nang Results: Every Pro Match, Day by Day",
+      title: "Pickleball World Cup 2026 Da Nang Results: Every Final and Every Pro Match",
       metaTitle: "Pickleball World Cup 2026 Results: Every Pro Match",
       metaDescription:
-        "Pickleball World Cup 2026 Da Nang results: every match in the five Pro draws, live and completed, with per-game scores and winners.",
+        "Pickleball World Cup 2026 Da Nang results: Ly Hoang Nam wins men's singles, USA beat Vietnam 4-0 in the Open team final. Every Pro match, game by game.",
       sections: [
         {
           heading: "Latest results",
@@ -115,7 +115,7 @@ const post: BlogPost = {
         {
           question: "Where can I find Pickleball World Cup 2026 results?",
           answer:
-            "ThePickleHub publishes live Pickleball World Cup 2026 results from Da Nang on this page: every match in the five Pro individual draws, on court and completed, with per-game scores and the winner, grouped by the day it was played. The feed is read from the tournament's own system every minute rather than typed up once a day.",
+        "ThePickleHub publishes the full Pickleball World Cup 2026 results from Da Nang on this page: every completed match in the five Pro individual draws, with per-game scores and the winner, grouped by the day it was played. The tournament finished on September 6, 2026, so the table is a final record; the organizers' feed returned its last new Pro match at 17:57 that evening.",
         },
         {
           question: "Are these the official Pickleball World Cup 2026 scores?",
@@ -125,7 +125,7 @@ const post: BlogPost = {
         {
           question: "Does this page cover every match at the Pickleball World Cup 2026?",
           answer:
-            "It covers the five Pro individual draws in full — men's and women's singles, men's and women's doubles, and mixed — every match live and completed, whatever the players' nationality. The amateur brackets split by DUPR band and the junior, senior and master draws are separate competitions and are not included.",
+        "It covers the five Pro individual draws in full — men's and women's singles, men's and women's doubles, and mixed — every completed match, whatever the players' nationality. The amateur brackets split by DUPR band and the junior, senior and master draws are not part of the Pro competition and are not in the table.",
         },
         {
           question: "When does Vietnam's national team play at the Pickleball World Cup 2026?",
@@ -150,10 +150,10 @@ const post: BlogPost = {
       ],
     },
     vi: {
-      title: "Kết quả Pickleball World Cup 2026 Đà Nẵng: mọi trận Pro, cập nhật từng phút",
+      title: "Kết quả Pickleball World Cup 2026 Đà Nẵng: toàn bộ chung kết, mọi trận Pro",
       metaTitle: "Kết quả Pickleball World Cup 2026 Đà Nẵng",
       metaDescription:
-        "Kết quả Pickleball World Cup 2026 Đà Nẵng: mọi trận Pro ở năm nội dung cá nhân, tỉ số từng ván, cập nhật liên tục.",
+        "Kết quả Pickleball World Cup 2026 Đà Nẵng: Lý Hoàng Nam vô địch đơn nam, Mỹ thắng Việt Nam 4-0 chung kết Đồng đội Open.",
       sections: [
         {
           heading: "Kết quả mới nhất",
@@ -227,7 +227,7 @@ const post: BlogPost = {
         {
           question: "Xem kết quả Pickleball World Cup 2026 ở đâu?",
           answer:
-            "ThePickleHub đăng kết quả trực tiếp Pickleball World Cup 2026 Đà Nẵng trên trang này: mọi trận ở năm nội dung cá nhân Pro, cả đang đấu lẫn đã kết thúc, kèm tỉ số từng ván và người thắng, nhóm theo ngày thi đấu. Dữ liệu đọc từ hệ thống của ban tổ chức mỗi phút chứ không nhập tay mỗi ngày một lần.",
+        "ThePickleHub đăng kết quả đầy đủ Pickleball World Cup 2026 Đà Nẵng trên trang này: mọi trận đã kết thúc ở năm nội dung cá nhân Pro, kèm tỉ số từng ván và người thắng, nhóm theo ngày thi đấu. Giải khép lại ngày 6/9/2026 nên bảng là bản ghi cuối; dữ liệu ban tổ chức trả về trận Pro mới cuối cùng lúc 17:57 tối hôm đó.",
         },
         {
           question: "Đây có phải tỉ số chính thức của Pickleball World Cup 2026 không?",

@@ -1180,6 +1180,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // of the four remaining Pro finals (feed 11:20/13:40/14:50, published list
   // 10:50/18:20/12:40; both agree on 09:30 for the women's singles). Schedule
   // page now states the conflict instead of silently picking one.
+  // v102 (2026-09-07): second verification pass — FAQ answers, meta descriptions
+  // and section headings that the first two passes left in live/future tense,
+  // plus a truncated sentence and an orphaned paragraph in the Group A post.
   // v101 (2026-09-07): the wc-results scope line no longer promises "every match
   // on court now" once the feed has no live match, and the how-to-watch clinic
   // line no longer says "as of September 6, the final day".
@@ -1187,7 +1190,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // Cup pages moved from future/live tense to results — five Pro finals, the
   // Open team final (USA 4-0 Vietnam) and the medal table — so every cached
   // copy from finals day is now wrong about who won.
-  const cacheKey = `pr:v101:${url.pathname}`;
+  const cacheKey = `pr:v102:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

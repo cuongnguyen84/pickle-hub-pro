@@ -131,12 +131,12 @@ const post: BlogPost = {
           answer: "Both numbers appear in print and the difference comes down to the Lima 2023 event, which was staged as a 'Pickleball World Cup: Special Edition' — a 14-nation invitational won by Peru on November 12, 2023. Counting it makes Da Nang the 4th edition, which is how we number it. Organizers and Vietnamese media typically reference only Lima 2024 and Fort Lauderdale 2025, making Da Nang the 3rd. Neither is wrong; they use different conventions."
         },
         {
-          question: "When is the Pickleball World Cup 2026?",
-          answer: "The Pickleball World Cup 2026 runs from August 30 through September 6, 2026 in Da Nang, Vietnam. The dates were chosen deliberately to overlap Vietnam's National Day holiday week."
+          question: "When was the Pickleball World Cup 2026, and who won it?",
+          answer: "The Pickleball World Cup 2026 ran from August 30 through September 6, 2026 in Da Nang, Vietnam; the dates were chosen deliberately to overlap Vietnam's National Day holiday week. Ly Hoang Nam won Pro men's singles over Phuc Huynh 6-15, 16-14, 15-10; Katerina Stewart won Pro women's singles; Jack Munro and Nicola Schoeman won Pro mixed doubles; Selina Turulja and Nicola Schoeman won Pro women's doubles; Richard Livornese Jr and Jack Munro won Pro men's doubles; and the United States beat Vietnam 4-0 in the Open national-team final, with Vietnam taking silver. Vietnam finished top of the medal table."
         },
         {
           question: "Where will the Pickleball World Cup 2026 be held?",
-          answer: "Seven venues across Da Nang. The two main sites are Cung Thể thao Tiên Sơn (Tien Son Sports Palace, 8 courts, Phan Dang Luu street) and Làng Thể thao Tuyên Sơn (Tuyen Son Sports Complex, 31 courts, Nai Nam 2 street) — the same venues that hosted the 2025 PPA Tour Asia – MB Vietnam Cup. Five satellite club venues carry the rest: Trang Hoang (16 courts), AK (9), KingKong (8), Hop Thanh Phat (8) and Furama (7). Organizers say more venues are still under consideration."
+          answer: "Seven venues across Da Nang. The two main sites were Cung Thể thao Tiên Sơn (Tien Son Sports Palace, 8 courts, Phan Dang Luu street) and Làng Thể thao Tuyên Sơn (Tuyen Son Sports Complex, 31 courts, Nai Nam 2 street) — the same venues that hosted the 2025 PPA Tour Asia – MB Vietnam Cup. Five satellite club venues carried the rest: Trang Hoang (16 courts), AK (9), KingKong (8), Hop Thanh Phat (8) and Furama (7). Organizers say more venues are still under consideration."
         },
         {
           question: "How many countries and athletes are competing?",
@@ -155,12 +155,12 @@ const post: BlogPost = {
           answer: "No. Da Nang 2026 is Vietnam's first appearance, as hosts, and the team played its first ties on September 3, 2026. Vietnamese media reported in October 2025 that a national team would compete at Fort Lauderdale, based on the organizers' list of participating countries, but no Vietnam team result was recorded there — and the post-event round-up in Vietnam's own pickleball press listed the competing nations without Vietnam among them. Appearing on an entry list is not the same as taking the court."
         },
         {
-          question: "Who will represent Vietnam at WCP 2026?",
+          question: "Who represented Vietnam at WCP 2026?",
           answer: "The question is settled: both US-based dual-heritage stars chose Vietnam. The Open squad announced on August 17 is captained by Do Minh Quan and includes Ly Hoang Nam, Quang Duong, Phuc Huynh (winner of the 2025 MB Vietnam Open), Truong Vinh Hien, Trinh Linh Giang, Ken Tam, Sophia Huynh Tran, Trang Huynh and Si Boi Ngoc. Phuc Huynh and Quang Duong both played in the Group A ties of September 3, which Vietnam swept 6-0, 6-0, 6-0."
         },
         {
           question: "How can I watch the Pickleball World Cup 2026 in Vietnam?",
-          answer: "FPT Play holds the Vietnamese broadcast rights for the Pickleball World Cup 2026. International broadcast arrangements have not yet been finalized. Follow the official Instagram @pickleballworldcupofficial for updates, and ThePickleHub for English and Vietnamese coverage."
+          answer: "FPT Play held the Vietnamese broadcast rights for the Pickleball World Cup 2026 and carried the whole tournament live and exclusively in Vietnam. International broadcast arrangements were never announced. The official Instagram @pickleballworldcupofficial carried updates, and ThePickleHub carried English and Vietnamese coverage."
         },
         {
           question: "Why was Da Nang chosen to host the 2026 Pickleball World Cup?",
