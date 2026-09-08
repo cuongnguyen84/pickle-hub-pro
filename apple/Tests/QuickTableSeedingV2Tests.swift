@@ -126,4 +126,23 @@ struct QuickTableSeedingV2Tests {
         let m2 = prs.first { $0.p1.name == "s2" || $0.p2.name == "s2" }!
         #expect([m2.p1.name, m2.p2.name].sorted() == ["s2", "s7"])
     }
+
+    @Test func resolveBracketConflictsKeepsWinnersVsRunnersUp() {
+        // Giải 4 bảng thật (share 5c86f3d9551a): seed 1&8 cùng bảng A, seed 3&6 cùng bảng C.
+        // Resolver cũ đẩy nhất bảng B (seed 4) sang gặp nhất bảng A (seed 1) ở vòng 1.
+        let gA = UUID(), gB = UUID(), gC = UUID(), gD = UUID()
+        let groupOf = [1: gA, 2: gD, 3: gC, 4: gB, 5: gD, 6: gC, 7: gB, 8: gA]
+        let seeded = (1...8).map { i in
+            QTSeedingV2.Seeded(playerID: UUID(), name: "s\(i)", seed: i, sourceGroupID: groupOf[i],
+                               wins: 0, pointDiff: 0, pointsFor: 0, tier: i <= 4 ? .winner : .runnerUp)
+        }
+        let resolved = QTSeedingV2.resolveBracketConflicts(QTSeedingV2.pairings(seeded))
+        #expect(resolved.count == 4)
+        for m in resolved {
+            #expect(m.p1.seed <= 4 && m.p2.seed >= 5)          // nhất bảng luôn gặp nhì bảng
+            #expect(m.p1.sourceGroupID != m.p2.sourceGroupID)  // không cùng bảng
+        }
+        #expect(resolved.first { $0.p1.seed == 1 }?.p2.seed == 7)  // seed 8 cùng bảng → floater yếu nhất khác bảng
+        #expect(resolved.first { $0.p1.seed == 3 }?.p2.seed == 5)
+    }
 }

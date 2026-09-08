@@ -168,40 +168,39 @@ enum QTSeedingV2 {
         return out
     }
 
-    /// Tránh hai người CÙNG BẢNG gặp nhau ngay vòng 1 — port web resolveGroupConflicts
-    /// (đổi chỗ player2 giữa các cặp; BYE/sourceGroupID nil không bao giờ xung đột; đệ quy tối đa 3).
-    static func resolveGroupConflicts(_ pairings: [(p1: Seeded, p2: Seeded, matchNumber: Int)],
-                                      depth: Int = 3) -> [(p1: Seeded, p2: Seeded, matchNumber: Int)] {
-        if depth <= 0 { return pairings }
-        func conflict(_ a: Seeded, _ b: Seeded) -> Bool {
+    /// Tránh hai người CÙNG BẢNG gặp nhau ngay vòng 1 — port web `resolveBracketConflicts`.
+    /// GIỮ NGUYÊN anchor (seed nhỏ hơn = nửa trên: nhất bảng) trong match của nó → cấu trúc nhánh
+    /// bất biến, nhất bảng KHÔNG BAO GIỜ bị đẩy sang gặp nhất bảng khác ở vòng 1 (lỗi của bản cũ
+    /// "đổi player2 với trận gần nhất": player2 không phải lúc nào cũng là seed yếu). Chỉ gán lại
+    /// floater bằng backtracking: anchor mạnh hơn gặp floater yếu nhất khác bảng. BYE (sourceGroupID
+    /// nil) hợp lệ với mọi anchor. Không xung đột → trả y hệt đầu vào.
+    static func resolveBracketConflicts(_ pairings: [(p1: Seeded, p2: Seeded, matchNumber: Int)])
+        -> [(p1: Seeded, p2: Seeded, matchNumber: Int)] {
+        func sameGroup(_ a: Seeded, _ b: Seeded) -> Bool {
             guard let ga = a.sourceGroupID, let gb = b.sourceGroupID else { return false }
             return ga == gb
         }
-        var resolved = pairings
-        let conflicts = resolved.indices.filter { conflict(resolved[$0].p1, resolved[$0].p2) }
-        if conflicts.isEmpty { return resolved }
-
-        for ci in conflicts {
-            if !conflict(resolved[ci].p1, resolved[ci].p2) { continue }
-            let lower = resolved[ci].p2
-            var best: Int? = nil
-            var bestDist = Int.max
-            for j in resolved.indices where j != ci {
-                let cand = resolved[j].p2
-                let here = cand.sourceGroupID != nil && cand.sourceGroupID == resolved[ci].p1.sourceGroupID
-                let there = lower.sourceGroupID != nil && lower.sourceGroupID == resolved[j].p1.sourceGroupID
-                if !here && !there {
-                    let dist = abs(ci - j)
-                    if dist < bestDist { best = j; bestDist = dist }
-                }
-            }
-            if let b = best {
-                let tmp = resolved[ci].p2
-                resolved[ci].p2 = resolved[b].p2
-                resolved[b].p2 = tmp
-            }
+        let matches = pairings.map { pr -> (anchor: Seeded, floater: Seeded, matchNumber: Int) in
+            pr.p1.seed <= pr.p2.seed ? (pr.p1, pr.p2, pr.matchNumber) : (pr.p2, pr.p1, pr.matchNumber)
         }
-        return resolveGroupConflicts(resolved, depth: depth - 1)
+        let anchors = matches.sorted { $0.anchor.seed < $1.anchor.seed }   // seed 1 trước
+        let floaters = matches.map { $0.floater }
+        let order = floaters.indices.sorted { floaters[$0].seed > floaters[$1].seed }  // yếu nhất trước
+        var assignment = [Seeded?](repeating: nil, count: anchors.count)
+        var used = [Bool](repeating: false, count: floaters.count)
+        func solve(_ k: Int) -> Bool {
+            if k == anchors.count { return true }
+            for i in order where !used[i] && !sameGroup(anchors[k].anchor, floaters[i]) {
+                used[i] = true; assignment[k] = floaters[i]
+                if solve(k + 1) { return true }
+                used[i] = false; assignment[k] = nil
+            }
+            return false
+        }
+        guard solve(0) else { return pairings }  // cực hiếm: không tách hết được → giữ nguyên
+        return zip(anchors, assignment)
+            .map { (p1: $0.anchor, p2: $1!, matchNumber: $0.matchNumber) }
+            .sorted { $0.matchNumber < $1.matchNumber }
     }
 
     /// Map pairings → `[QTBracketMatch]` cho `createPlayoff`. BYE → player nil.
