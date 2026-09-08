@@ -7,11 +7,11 @@ không bật OTP và không đổi production setting nếu chưa có phê duy�
 
 | Configuration | Bundle ID | Version | Environment | Native registration | FCM push |
 |---|---|---|---|---|---|
-| Debug | `net.thepicklehub.app` | `2.1.5 (10)` | production | ON | OFF |
-| Release | `net.thepicklehub.app` | `2.1.5 (10)` | production | ON | ON |
+| Debug | `net.thepicklehub.app` | `2.1.6 (11)` | production | ON | OFF |
+| Release | `net.thepicklehub.app` | `2.1.6 (11)` | production | ON | ON |
 
-`2.1.5 (10)` nối tiếp bản đã upload `2.1.4 (9)` và bổ sung World Cup livescore
-cho bản Shop native. Nếu App Store Connect
+`2.1.6 (11)` nối tiếp bản đã upload `2.1.5 (10)` và sửa chia cặp playoff quick-table
+(#744 #745 #746: cặp cổ điển 2/4/8 bảng, resolver v2 đúng, preview + đổi cặp). Nếu App Store Connect
 đã có build/version mới hơn bảng này, tăng cả `MARKETING_VERSION` và
 `CURRENT_PROJECT_VERSION` trong `Config/Debug.xcconfig` + `Config/Release.xcconfig`
 trước khi archive.

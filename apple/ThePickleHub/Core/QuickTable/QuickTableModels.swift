@@ -351,7 +351,8 @@ enum QTPlayoff {
         for g in groups {
             let gp = players.filter { $0.groupID == g.id }.sorted {
                 if $0.matchesWon != $1.matchesWon { return $0.matchesWon > $1.matchesWon }
-                return $0.pointDiff > $1.pointDiff
+                if $0.pointDiff != $1.pointDiff { return $0.pointDiff > $1.pointDiff }
+                return $0.pointsFor > $1.pointsFor   // = bảng xếp hạng hiển thị + web getQualifiedPlayers
             }
             for (idx, p) in gp.prefix(topPerGroup).enumerated() { qualified.append((p, idx + 1)) }
             if gp.count > topPerGroup { thirdPlace.append(gp[topPerGroup]) }
