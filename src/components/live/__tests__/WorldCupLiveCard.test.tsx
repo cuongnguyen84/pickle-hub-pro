@@ -4,7 +4,7 @@
 // "Kết quả hôm nay" (today's finished Vietnamese matches with full scorelines)
 // when nothing is live. Hidden only when there is neither. Always links to /live.
 
-import { describe, it, expect, afterEach, vi } from "vitest";
+import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import type { WcProFeed, WcProMatchRow, WcProEventGroup } from "@/hooks/useWcProLive";
@@ -27,9 +27,24 @@ const feed = (live: WcProMatchRow[], liveCount = live.length): WcProFeed => ({
 });
 const wrap = (lang: "vi" | "en") => render(<MemoryRouter><WorldCupLiveCard language={lang} /></MemoryRouter>);
 
-afterEach(() => { cleanup(); proMock.mockReset(); });
+// The card retires itself at HIDE_AFTER (2026-09-08 00:00 Vietnam time) and
+// reads the wall clock to do it, so every render assertion below has to be made
+// from inside the tournament. Without this the whole file went red on its own
+// at midnight on 2026-09-08 — a green suite that fails on a date nobody
+// changed. The retirement itself is asserted in its own test.
+const DURING_TOURNAMENT = new Date("2026-09-03T08:00:00Z");
+
+beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(DURING_TOURNAMENT); });
+afterEach(() => { vi.useRealTimers(); cleanup(); proMock.mockReset(); });
 
 describe("WorldCupLiveCard", () => {
+  it("retires itself once the tournament window has passed", () => {
+    vi.setSystemTime(new Date("2026-09-08T00:01:00+07:00"));
+    proMock.mockReturnValue({ data: feed([match({})], 4), isLoading: false, isError: false });
+    const { container } = wrap("vi");
+    expect(container.querySelector(".wclc")).toBeNull();
+  });
+
   it("hides when nothing is live, even if there are scheduled events", () => {
     proMock.mockReturnValue({
       data: { events: [{ event: "pro_singles_mens", live: [], vietnam: [match({ status: "scheduled" })], completed: [] }], liveCount: 0 },
@@ -81,7 +96,10 @@ describe("WorldCupLiveCard", () => {
   });
 
   // ── Results mode: nothing live → today's finished Vietnamese matches ────────
-  const todayIso = new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10) + "T05:00:00+00:00";
+  // Derived from the frozen clock, not Date.now(): this line runs at collection
+  // time, before beforeEach installs the fake timers, so a real-clock value here
+  // would never match the day the component sees.
+  const todayIso = new Date(DURING_TOURNAMENT.getTime() + 7 * 3600 * 1000).toISOString().slice(0, 10) + "T05:00:00+00:00";
   const resultsFeed = (vietnam: WcProMatchRow[]): WcProFeed => ({
     events: [{ event: "pro_singles_mens", live: [], vietnam, completed: [] } as WcProEventGroup],
     liveCount: 0,

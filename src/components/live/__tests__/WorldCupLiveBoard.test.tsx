@@ -2,7 +2,7 @@
 // The board's level-1 tabs (Cá nhân Pro / Đội tuyển) and self-hide. Both data
 // hooks are mocked; the content components are covered by their own tests.
 
-import { describe, it, expect, afterEach, vi } from "vitest";
+import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import type { WcProFeed } from "@/hooks/useWcProLive";
 import type { WcOpenFeed } from "@/hooks/useWcOpenLive";
@@ -24,9 +24,21 @@ const teamFeed = (): WcOpenFeed => ({
 });
 const ok = <T,>(data: T) => ({ data, isLoading: false, isError: false });
 
-afterEach(() => { cleanup(); proMock.mockReset(); teamMock.mockReset(); });
+// Same wall-clock retirement as WorldCupLiveCard — see the note there.
+const DURING_TOURNAMENT = new Date("2026-09-03T08:00:00Z");
+
+beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(DURING_TOURNAMENT); });
+afterEach(() => { vi.useRealTimers(); cleanup(); proMock.mockReset(); teamMock.mockReset(); });
 
 describe("WorldCupLiveBoard", () => {
+  it("retires itself once the tournament window has passed", () => {
+    vi.setSystemTime(new Date("2026-09-08T00:01:00+07:00"));
+    proMock.mockReturnValue(ok(proFeed()));
+    teamMock.mockReturnValue(ok(teamFeed()));
+    const { container } = render(<WorldCupLiveBoard language="vi" />);
+    expect(container.querySelector(".wcb")).toBeNull();
+  });
+
   it("hides entirely when both feeds are empty", () => {
     proMock.mockReturnValue(ok({ events: [], liveCount: 0 }));
     teamMock.mockReturnValue(ok({ groups: [], hasLive: false, drawOnly: true }));
