@@ -7,6 +7,7 @@ import * as src from "../ppa-rankings";
 // `node scripts/gen-native-wpr.mjs` and commit the regenerated file.
 describe("wpr-rankings.json (native) mirrors src/content/ppa-rankings.ts", () => {
   it("is byte-for-byte what the generator produces from the TS constants", async () => {
+    // @ts-expect-error plain .mjs script (no declaration file); shape checked by the assertions below
     const { buildNativeWpr } = await import("../../../scripts/gen-native-wpr.mjs");
     const file = path.resolve(__dirname, "../../../apple/ThePickleHub/Resources/wpr-rankings.json");
     const onDisk = JSON.parse(readFileSync(file, "utf8"));
