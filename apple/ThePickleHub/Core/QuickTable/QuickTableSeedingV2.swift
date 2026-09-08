@@ -10,11 +10,6 @@ import Foundation
 /// các số bảng 2/4/8 vẫn chạy bảng cứng nếu tắt v2). Tái dùng `DEBracket.seedPositions`.
 enum QTSeedingV2 {
 
-    // Bật thuật toán seeding tổng quát (thay QTPlayoff bảng cứng). Số người vào playoff
-    // (advancePerGroup = 1 hoặc 2 → cỡ bracket) do người dùng chọn lúc Start Playoff;
-    // xem QuickTableViewModel.bracketOptionsV2 / .startPlayoff. BYE tự tính.
-    static let enabled = true
-
     enum Tier: String { case winner, runnerUp = "runner_up", wildcard, bye }
 
     struct Seeded: Equatable {
