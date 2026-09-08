@@ -32,14 +32,27 @@ function dayHeading(day: string, lang: Lang): string {
   return lang === "vi" ? `Ngày ${Number(d)}/${Number(m)}/${y}` : `${y}-${m}-${d}`;
 }
 
-/** "17:42 · 31/8/2026" in Vietnam time, from a UTC instant. */
-export function vnStamp(iso: string | null): string {
+const EN_MONTHS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+/**
+ * "17:42 · 31/8/2026" (vi) or "17:42 · 31 Aug 2026" (en), in Vietnam time.
+ * Kept in step with vnStamp() in functions/_lib/render/wc-results.ts — the
+ * bot path and the React path render the same dateline.
+ */
+export function vnStamp(iso: string | null, lang: "en" | "vi" = "vi"): string {
   if (!iso) return "";
   const t = Date.parse(iso);
   if (Number.isNaN(t)) return "";
   const d = new Date(t + 7 * 3600 * 1000);
   const p = (n: number) => String(n).padStart(2, "0");
-  return `${p(d.getUTCHours())}:${p(d.getUTCMinutes())} · ${d.getUTCDate()}/${d.getUTCMonth() + 1}/${d.getUTCFullYear()}`;
+  const clock = `${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`;
+  const date = lang === "en"
+    ? `${d.getUTCDate()} ${EN_MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`
+    : `${d.getUTCDate()}/${d.getUTCMonth() + 1}/${d.getUTCFullYear()}`;
+  return `${clock} · ${date}`;
 }
 
 /** The winner the bracket declares. Never inferred from the score: a stopgap
@@ -113,15 +126,20 @@ export function WorldCupResultsBoard({ language }: { language: Lang }) {
     );
   }
 
-  const stamp = vnStamp(data.dataUpdatedAt);
+  const stamp = vnStamp(data.dataUpdatedAt, vi ? "vi" : "en");
+  // Dropped once nothing is live: "0 on court now" on a finished tournament is
+  // live-tense phrasing that adds nothing to the completed count.
+  const onCourt = data.live.length > 0
+    ? (vi ? ` ${data.live.length} trận đang thi đấu.` : ` ${data.live.length} on court now.`)
+    : "";
 
   return (
     <div className="wc-results-block">
       {stamp && (
         <p>
           {vi
-            ? `Cập nhật lần cuối: ${stamp} (giờ Việt Nam). ${data.completedCount} trận đã có kết quả, ${data.live.length} trận đang thi đấu.`
-            : `Last updated ${stamp} Vietnam time. ${data.completedCount} matches have a result, ${data.live.length} on court now.`}
+            ? `Cập nhật lần cuối: ${stamp} (giờ Việt Nam). ${data.completedCount} trận đã có kết quả.${onCourt}`
+            : `Last updated ${stamp} Vietnam time. ${data.completedCount} matches have a result.${onCourt}`}
         </p>
       )}
 

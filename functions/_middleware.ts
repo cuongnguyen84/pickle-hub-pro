@@ -1224,7 +1224,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // keep serving it instead of the 410. (Opened as v103; main claimed v103-v106
   // for the World Cup content pass while this branch was in review, so this
   // takes the higher number per CLAUDE.md.)
-  const cacheKey = `pr:v107:${url.pathname}`;
+  // v108 (2026-09-08): the results dateline. English served "6/9/2026" for
+  // 6 September, which an English reader takes for 9 June, and it still said
+  // "0 on court now" five days after the last ball.
+  const cacheKey = `pr:v108:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

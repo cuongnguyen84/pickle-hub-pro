@@ -120,14 +120,28 @@ export function matchDayKey(row: Pick<WcResultRow, "scheduled_at" | "last_seen_a
   return vnDayFromUtc(row.last_seen_at);
 }
 
-/** "17:42 · 31/8/2026" in Vietnam time, from a UTC instant. */
-export function vnStamp(iso: string | null): string {
+const EN_MONTHS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+/**
+ * "17:42 · 31/8/2026" (vi) or "17:42 · 31 Aug 2026" (en), in Vietnam time,
+ * from a UTC instant. The English branch spells the month because d/m/yyyy is
+ * read as m/d/yyyy by an English audience: "6/9/2026" was being served on the
+ * results page meaning 6 September and read as 9 June.
+ */
+export function vnStamp(iso: string | null, lang: Lang = "vi"): string {
   if (!iso) return "";
   const t = Date.parse(iso);
   if (Number.isNaN(t)) return "";
   const d = new Date(t + 7 * 3600 * 1000);
   const p = (n: number) => String(n).padStart(2, "0");
-  return `${p(d.getUTCHours())}:${p(d.getUTCMinutes())} · ${d.getUTCDate()}/${d.getUTCMonth() + 1}/${d.getUTCFullYear()}`;
+  const clock = `${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`;
+  const date = lang === "en"
+    ? `${d.getUTCDate()} ${EN_MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`
+    : `${d.getUTCDate()}/${d.getUTCMonth() + 1}/${d.getUTCFullYear()}`;
+  return `${clock} · ${date}`;
 }
 
 function dayHeading(dayKey: string, lang: Lang): string {
@@ -252,13 +266,19 @@ export async function fetchWcResultsBlock(
   // Dateline. Generated, never typed: a "cập nhật liên tục" claim with a
   // hand-written date is a promise nobody can check, and it is the first thing
   // an AI answer quotes back when it cites the page.
-  const stamp = vnStamp(dataUpdatedAt);
+  const stamp = vnStamp(dataUpdatedAt, lang);
   if (stamp) {
+    // The "on court now" half of the sentence is dropped once nothing is live:
+    // on a finished tournament "0 on court now" is the live-tense phrasing an
+    // AI answer quotes back, and it says nothing the count above does not.
+    const onCourt = live.length > 0
+      ? (vi ? ` ${live.length} trận đang thi đấu.` : ` ${live.length} on court now.`)
+      : "";
     parts.push(
       `<p>${
         vi
-          ? `Cập nhật lần cuối: ${escapeHtml(stamp)} (giờ Việt Nam). ${done.length} trận đã có kết quả, ${live.length} trận đang thi đấu.`
-          : `Last updated ${escapeHtml(stamp)} Vietnam time. ${done.length} matches have a result, ${live.length} on court now.`
+          ? `Cập nhật lần cuối: ${escapeHtml(stamp)} (giờ Việt Nam). ${done.length} trận đã có kết quả.${onCourt}`
+          : `Last updated ${escapeHtml(stamp)} Vietnam time. ${done.length} matches have a result.${onCourt}`
       }</p>`,
     );
   }

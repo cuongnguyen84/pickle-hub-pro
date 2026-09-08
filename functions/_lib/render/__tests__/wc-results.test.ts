@@ -199,7 +199,15 @@ describe("fetchWcResultsBlock", () => {
 
   it("formats the Vietnam stamp, and nothing for a missing one", () => {
     expect(vnStamp("2026-08-31T10:42:00Z")).toBe("17:42 · 31/8/2026");
+    expect(vnStamp("2026-08-31T10:42:00Z", "vi")).toBe("17:42 · 31/8/2026");
     expect(vnStamp(null)).toBe("");
     expect(vnStamp("nope")).toBe("");
+  });
+
+  // Regression: the English page served "6/9/2026" for 6 September, which an
+  // English reader takes for 9 June. The month is spelled on the en branch.
+  it("spells the month on the English stamp", () => {
+    expect(vnStamp("2026-09-06T10:57:00Z", "en")).toBe("17:57 · 6 Sep 2026");
+    expect(vnStamp("2026-08-31T10:42:00Z", "en")).toBe("17:42 · 31 Aug 2026");
   });
 });
