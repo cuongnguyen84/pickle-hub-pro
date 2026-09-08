@@ -14,6 +14,14 @@
 // which is exactly the drift shape the frame-src incident had, so the directive
 // is now locked here too rather than trusted to reviewer diligence.
 //
+// 2026-09-08: the non-CSP security headers joined too. Permissions-Policy was
+// moved into the /* block of public/_headers on 2026-08-19 so it would cover
+// the whole site, and nothing carried it across to SECURITY_HEADERS — so for
+// three weeks every prerendered (bot) response advertised five security
+// headers where the human response advertised six, and the file that claims
+// to "mirror public/_headers exactly" was wrong with no test to say so. CSP
+// parity was locked; the headers sitting three lines above it were not.
+//
 // Full-policy equality is still not asserted: report-uri legitimately differs.
 // ============================================================================
 
@@ -115,5 +123,75 @@ describe("CSP parity between public/_headers and functions/_middleware.ts", () =
     }
     expect(reportOnlyLine).toContain("report-uri ");
     expect(enforcedLine).not.toContain("report-uri ");
+  });
+});
+
+// ============================================================================
+// Non-CSP security headers: public/_headers `/*` ↔ SECURITY_HEADERS
+// ----------------------------------------------------------------------------
+// Derived from the file rather than hand-listed, for the same reason
+// enforcedDirectives is: a header added to /* tomorrow must fail this test
+// until it is mirrored, without anyone remembering to extend a list here.
+// ============================================================================
+
+/** Header lines under the final `/*` rule of public/_headers. */
+function starBlockHeaders(source: string): Map<string, string> {
+  const lines = source.split("\n");
+  const start = lines.findIndex((l) => l.trimEnd() === "/*");
+  if (start === -1) throw new Error("`/*` rule not found in public/_headers");
+  const out = new Map<string, string>();
+  for (const line of lines.slice(start + 1)) {
+    // A rule block ends at the first line that is not an indented header.
+    if (!/^\s+\S/.test(line)) break;
+    const idx = line.indexOf(":");
+    if (idx === -1) continue;
+    out.set(line.slice(0, idx).trim(), line.slice(idx + 1).trim());
+  }
+  return out;
+}
+
+/**
+ * The single-line entries of SECURITY_HEADERS. The CSP is deliberately out of
+ * scope: it is built from concatenated literals and already has its own,
+ * stricter, directive-by-directive parity tests above.
+ */
+function middlewareSimpleHeaders(source: string): Map<string, string> {
+  const start = source.indexOf("const SECURITY_HEADERS");
+  if (start === -1) throw new Error("SECURITY_HEADERS not found in functions/_middleware.ts");
+  const out = new Map<string, string>();
+  for (const line of source.slice(start).split("\n").slice(1)) {
+    const trimmed = line.trim();
+    if (trimmed === "};") break;
+    const m = trimmed.match(/^"([A-Za-z-]+)":\s*"(.*)",$/);
+    if (m) out.set(m[1], m[2]);
+  }
+  return out;
+}
+
+describe("non-CSP security header parity", () => {
+  const wanted = starBlockHeaders(headersFile);
+  const got = middlewareSimpleHeaders(
+    readFileSync("functions/_middleware.ts", "utf8"),
+  );
+
+  it("reads a plausible `/*` block (guards the parser, not the code)", () => {
+    expect(wanted.get("Content-Security-Policy")).toBeDefined();
+    expect(wanted.size).toBeGreaterThanOrEqual(6);
+  });
+
+  for (const [name, value] of starBlockHeaders(headersFile)) {
+    // Both CSP headers are covered by the directive tests above; Report-Only
+    // additionally carries a report-uri the bot path has no way to build.
+    if (name.startsWith("Content-Security-Policy")) continue;
+    it(`bot path sends ${name} with the same value as public/_headers`, () => {
+      expect({ name, value: got.get(name) }).toEqual({ name, value });
+    });
+  }
+
+  it("Permissions-Policy specifically (the drift that bit us on 2026-09-08)", () => {
+    expect(got.get("Permissions-Policy")).toBe(
+      wanted.get("Permissions-Policy"),
+    );
+    expect(got.get("Permissions-Policy")).toContain("camera=()");
   });
 });

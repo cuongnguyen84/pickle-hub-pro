@@ -380,6 +380,24 @@ const SECURITY_HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "SAMEORIGIN",
   "Referrer-Policy": "strict-origin-when-cross-origin",
+  // Added 2026-09-08. public/_headers moved Permissions-Policy out of the
+  // homepage-only block and into /* on 2026-08-19 precisely so it would cover
+  // the whole site — but /* is a STATIC-asset rule, and this bot path builds
+  // its Responses in code, so the move covered every human response and no
+  // prerendered one. Verified against production the same day: a Googlebot
+  // request for / came back with HSTS, CSP, X-Frame-Options,
+  // X-Content-Type-Options and Referrer-Policy, and no Permissions-Policy;
+  // the identical request with a browser UA carried all six.
+  //
+  // The value is a copy of the /* line, which every human request has been
+  // served since 2026-08-19 — so this closes a gap in what the bot view
+  // advertises rather than tightening anything a reader can feel.
+  //
+  // Note the Report-Only policy is deliberately NOT mirrored here: its
+  // report-uri is rewritten at build time by the supabase-origin-in-static-
+  // assets plugin (vite.config.ts), which only ever touches the emitted
+  // _headers file, and a crawler runs no script to violate it with.
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
   "Content-Security-Policy":
     "default-src 'self'; " +
     // AdSense domains (pagead2/tpc googlesyndication, doubleclick, adtrafficquality)
