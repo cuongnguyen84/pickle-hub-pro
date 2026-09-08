@@ -1250,7 +1250,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // name from "Kuala Lumpur Cup" to the official "Leapmotor Kuala Lumpur Cup".
   // v110 (2026-09-08): hero image wired on the Kuala Lumpur Cup preview, so
   // og:image moves off the site-wide fallback on both the EN and VI URLs.
-  const cacheKey = `pr:v110:${url.pathname}`;
+  // v111 (2026-09-08): the KL Cup hero was re-cut to 16:9, so the og:image
+  // dimensions cached under v110 no longer match the file being served.
+  const cacheKey = `pr:v111:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
