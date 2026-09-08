@@ -302,12 +302,19 @@ final class QuickTableViewModel {
     @MainActor
     private func runPlayoffV2(shareID: String, advancePerGroup: Int) async {
         guard let d = detail else { return }
+        // Bracket sạch 2/4/8 bảng (A=2, không wildcard): cặp cổ điển y hệt web —
+        // nhất A gặp nhì B nhánh trên, nhất B gặp nhì A nhánh dưới. Không xếp lại theo thành tích.
+        if advancePerGroup == 2, [2, 4, 8].contains(d.groups.count) {
+            pendingQualified = QTPlayoff.qualify(groups: d.groups, players: d.players, topPerGroup: 2).qualified
+            await runPlayoff(shareID: shareID, wildcards: [])
+            return
+        }
         generatingPlayoff = true; playoffError = nil
         do {
             let result = try QTSeedingV2.generateSeeding(
                 groups: d.groups, players: d.players, matches: d.matches,
                 advancePerGroup: advancePerGroup)
-            let resolved = QTSeedingV2.resolveGroupConflicts(QTSeedingV2.pairings(result.seeded))
+            let resolved = QTSeedingV2.resolveBracketConflicts(QTSeedingV2.pairings(result.seeded))
             let bracket = QTSeedingV2.toBracketMatches(resolved)
             let directs = result.seeded
                 .filter { $0.tier == .winner || $0.tier == .runnerUp }
