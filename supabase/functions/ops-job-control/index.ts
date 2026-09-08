@@ -10,7 +10,6 @@ type Job = {
   error_message: string | null;
   executor: string;
   schedule_label: string;
-  metrics: Record<string, unknown>;
 };
 
 const tgToken = Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "";
@@ -62,22 +61,8 @@ function jobsText(jobs: Job[]): string {
   for (const job of jobs.filter((item) => ["warning", "failed"].includes(item.health_state))) {
     lines.push(`${job.health_state === "failed" ? "❌" : "⚠️"} ${job.job_key}: ${job.error_message || job.summary || "Không có chi tiết"}`);
   }
-  const social = jobs.find((job) => job.job_key === "social-poster");
-  if (social) lines.push(`📣 Facebook: ThePickleHub ${Number(social.metrics?.thepicklehub_posts_today ?? 0)} bài · TA Pickleball ${Number(social.metrics?.ta_pickleball_posts_today ?? 0)} bài${Number(social.metrics?.pages_no_eligible ?? 0) > 0 ? " · không có bài đủ điều kiện" : ""}`);
-  const proTour = jobs.find((job) => job.job_key === "pro-tour-scraper");
-  if (proTour) lines.push(`🏓 Pro Tour: lượt gần nhất ${Number(proTour.metrics?.matches_imported ?? 0)} trận · hôm nay ${Number(proTour.metrics?.matches_today ?? 0)} trận · ${Number(proTour.metrics?.events_processed ?? proTour.metrics?.due ?? 0)} event`);
   lines.push("https://www.thepicklehub.net/admin/jobs");
   return lines.join("\n").slice(0, 4000);
-}
-
-function businessDetail(job: Job): string | null {
-  if (job.job_key === "social-poster") {
-    return `Facebook hôm nay: ThePickleHub ${Number(job.metrics?.thepicklehub_posts_today ?? 0)} bài · TA Pickleball ${Number(job.metrics?.ta_pickleball_posts_today ?? 0)} bài${Number(job.metrics?.pages_no_eligible ?? 0) > 0 ? " · không có bài đủ điều kiện" : ""}`;
-  }
-  if (job.job_key === "pro-tour-scraper") {
-    return `Pro Tour ingest: lượt gần nhất ${Number(job.metrics?.matches_imported ?? 0)} trận · hôm nay ${Number(job.metrics?.matches_today ?? 0)} trận · ${Number(job.metrics?.events_processed ?? job.metrics?.due ?? 0)} event · ${Number(job.metrics?.events_failed ?? job.metrics?.failed ?? 0)} lỗi`;
-  }
-  return null;
 }
 
 type EdgeState = { function_slug: string; display_name: string; job_key: string | null; state: string; http_status: number | null; response_ms: number | null; reason: string | null };
@@ -319,6 +304,100 @@ async function agentFixWatchdog(supabase: ReturnType<typeof createClient>): Prom
   }
 }
 
+
+// ---------------------------------------------------------------------------
+// Lệnh giao việc cho agent (/xuly, /lam, /idea) — thêm 2026-09-01.
+//
+// Cố ý KHÔNG đi qua processTelegram: các lệnh này không có job key, không cần
+// snapshot cron, và người tiêu thụ là AGENT TRỰC (phiên Claude chạy theo lịch)
+// chứ không phải bot này. Bot chỉ làm đúng ba việc: giữ dòng lệnh ở trạng thái
+// `pending` cho agent rút, trả về một MÃ VIỆC để người dùng bám vào, và nói rõ
+// bước tiếp theo. Trước đây mọi text ngoài allowlist bị trả "Chưa hiểu lệnh
+// này" — người nhận không biết phải làm gì tiếp, đó là ngõ cụt chứ không phải
+// câu trả lời.
+// ---------------------------------------------------------------------------
+const TASK_COMMAND_RE = /^\/(xuly|lam|viec|idea|bo)(?:@\w+)?(?:\s|$)/i;
+
+async function handleTaskCommand(
+  supabase: ReturnType<typeof createClient>,
+  chatId: string,
+  rowId: number,
+  text: string,
+): Promise<Record<string, unknown>> {
+  const trimmed = text.trim();
+  const [rawCmd, ...rest] = trimmed.split(/\s+/);
+  const cmd = rawCmd.toLowerCase().replace(/@\w+$/, "");
+  const body = rest.join(" ").trim();
+
+  const close = async (result: string) => {
+    await supabase.from("telegram_commands")
+      .update({ status: "done", processed_at: new Date().toISOString(), result: result.slice(0, 2000) })
+      .eq("id", rowId);
+  };
+
+  // /viec — hàng đợi việc đang chờ agent
+  if (cmd === "/viec") {
+    const { data } = await supabase.from("telegram_commands")
+      .select("id,text,message_date")
+      .eq("status", "pending").ilike("text", "/xuly%")
+      .order("message_date", { ascending: true }).limit(10);
+    const rows = data ?? [];
+    const reply = rows.length === 0
+      ? "📭 Không có việc nào đang chờ.\n\nGiao việc mới: /xuly <mô tả việc>"
+      : ["📋 Việc đang chờ agent:", "", ...rows.map((r: Record<string, unknown>) =>
+          `XL-${r.id} · ${String(r.text).replace(/^\/xuly\s*/i, "").slice(0, 70)}`)].join("\n");
+    await close("listed_queue");
+    await sendTelegram(chatId, reply);
+    return { ok: true, task_command: cmd };
+  }
+
+  // /bo XL-12 — huỷ một việc chưa xử lý
+  if (cmd === "/bo") {
+    const id = Number(body.replace(/^XL-/i, ""));
+    if (!Number.isFinite(id)) {
+      await close("cancel_bad_id");
+      await sendTelegram(chatId, "Cần mã việc. Ví dụ: /bo XL-77 (xem mã bằng /viec).");
+      return { ok: true, task_command: cmd };
+    }
+    const { data } = await supabase.from("telegram_commands")
+      .update({ status: "done", processed_at: new Date().toISOString(), result: "cancelled_by_user" })
+      .eq("id", id).eq("status", "pending").select("id").maybeSingle();
+    await close(`cancel_${id}`);
+    await sendTelegram(chatId, data ? `🗑 Đã huỷ việc XL-${id}.` : `Không thấy việc XL-${id} đang chờ (có thể agent đã xử lý xong).`);
+    return { ok: true, task_command: cmd };
+  }
+
+  // /xuly, /lam, /idea không kèm nội dung → hướng dẫn, không tạo việc rỗng
+  if (!body) {
+    await close("empty_body");
+    await sendTelegram(chatId, [
+      cmd === "/idea" ? "💡 Gửi ý tưởng kèm nội dung:" : "📥 Giao việc kèm nội dung:",
+      `${cmd} <mô tả bằng lời thường>`,
+      "",
+      "Ví dụ:",
+      "/xuly cập nhật kết quả World Cup vào bài lịch thi đấu",
+      "/xuly trang /san mất hết click tuần này, kiểm tra giúp anh",
+      "/idea gộp trang kết quả và trang lịch làm một?",
+      "",
+      "Xem việc đang chờ: /viec · Huỷ: /bo XL-<mã>",
+    ].join("\n"));
+    return { ok: true, task_command: cmd };
+  }
+
+  // Có nội dung → GIỮ NGUYÊN status pending để agent trực rút, và xác nhận ngay.
+  const label = cmd === "/idea" ? "💡 ĐÃ GHI Ý TƯỞNG" : "📥 ĐÃ NHẬN VIỆC";
+  await sendTelegram(chatId, [
+    `${label} · XL-${rowId}`,
+    `“${body.slice(0, 120)}${body.length > 120 ? "…" : ""}”`,
+    "",
+    "Agent trực rút hàng đợi mỗi đầu giờ, làm xong sẽ báo lại ngay trong chat này kèm bằng chứng (URL, số từ, mã PR).",
+    "Việc thuộc vùng cần duyệt thì agent dừng trước production và hỏi lại anh.",
+    "",
+    "Xem hàng đợi: /viec · Huỷ: /bo XL-" + rowId,
+  ].join("\n"));
+  return { ok: true, task_queued: rowId };
+}
+
 async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId?: number): Promise<Record<string, unknown>> {
   let query = supabase.from("telegram_commands")
     .select("id,chat_id,text,from_id,from_username")
@@ -347,19 +426,10 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
       let replyMarkup: Record<string, unknown> | undefined;
       if (command.toLowerCase().startsWith("/jobs")) {
         const functions = await edgeStates(supabase);
+        const facebook = await facebookCountsToday(supabase);
         const sources = await newsSourcesLine(supabase);
         const failedEdges = functions.filter((fn) => fn.state !== "available").length;
-        // MỘT dòng Facebook. `jobsText` nay tự in dòng đó từ metrics của job
-        // social-poster (migration 20260802190000 làm giàu snapshot). Đếm trực
-        // tiếp qua facebookCountsToday chỉ còn là đường lùi khi snapshot chưa
-        // có job ấy — nếu chạy cả hai thì /jobs in Facebook hai lần với hai con
-        // số khác nhau, cùng lỗi vừa vá trong job-health-digest.
-        const facebookFallback = jobs.some((job) => job.job_key === "social-poster")
-          ? ""
-          : await facebookCountsToday(supabase).then((fb) =>
-            `\n📣 Facebook hôm nay: ThePickleHub ${fb.thepicklehub ?? "—"} bài · TAPickleball ${fb.taPickleball ?? "—"} bài`
-          );
-        reply = `${jobsText(jobs)}${facebookFallback}${sources ? `\n${sources}` : ""}\n⚙️ Edge runtime: ${functions.length - failedEdges}/${functions.length} available${failedEdges ? ` · ❌ ${failedEdges}` : ""}`;
+        reply = `${jobsText(jobs)}\n📣 Facebook hôm nay: ThePickleHub ${facebook.thepicklehub ?? "—"} bài · TAPickleball ${facebook.taPickleball ?? "—"} bài${sources ? `\n${sources}` : ""}\n⚙️ Edge runtime: ${functions.length - failedEdges}/${functions.length} available${failedEdges ? ` · ❌ ${failedEdges}` : ""}`;
         replyMarkup = jobActionButtons(jobs);
       } else if (command.toLowerCase().startsWith("/functions")) {
         reply = functionsText(await edgeStates(supabase));
@@ -367,7 +437,7 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
       } else if (command.toLowerCase().startsWith("/probe")) {
         reply = `🔄 Probe hoàn tất\n${functionsText(await runEdgeProbe(supabase))}`;
       } else if (command.toLowerCase().startsWith("/start") || command.toLowerCase().startsWith("/help")) {
-        reply = ["🤖 TPH Job Operations", "", "Dùng các nút bên dưới để xem trạng thái.", "Trong /jobs, job lỗi sẽ có nút Chẩn đoán và Fix.", "", "Lệnh nâng cao:", "/diagnose <job>", "/retry <job>", "/fix <job>"].join("\n");
+        reply = ["🤖 TPH Job Operations", "", "Dùng các nút bên dưới để xem trạng thái.", "Trong /jobs, job lỗi sẽ có nút Chẩn đoán và Fix.", "", "Giao việc cho agent:", "/xuly <mô tả việc>", "/idea <ý tưởng>", "/viec — xem hàng đợi", "", "Lệnh nâng cao:", "/diagnose <job>", "/retry <job>", "/fix <job>"].join("\n");
         replyMarkup = mainKeyboard;
       } else if (!key) {
         reply = `Thiếu job key. Ví dụ: ${command.toLowerCase().startsWith("/fix") ? "/fix news-rewrite" : command.toLowerCase().startsWith("/retry") ? "/retry dupr-sync-daily" : "/diagnose dupr-sync-daily"}`;
@@ -375,9 +445,6 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
         const job = jobs.find((item) => item.job_key === key);
         if (!job) reply = `Không tìm thấy job: ${key}`;
         else if (command.toLowerCase().startsWith("/diagnose")) {
-          // Giữ khung của main (đã Việt hoá + giờ ICT) và nối thêm dòng số liệu
-          // nghiệp vụ của nhánh này. `.filter(Boolean)` vì businessDetail trả
-          // null cho job không có số nghiệp vụ nào.
           reply = [
             `🔎 ${job.display_name}`,
             `Job: ${job.job_key}`,
@@ -385,8 +452,7 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
             `Lịch: ${job.schedule_label}`,
             `Lần gần nhất: ${fmtICT(job.last_activity_at)} (giờ VN)`,
             `Lý do: ${job.error_message || job.summary || "Không có chi tiết"}`,
-            businessDetail(job),
-          ].filter(Boolean).join("\n");
+          ].join("\n");
         } else {
           if (command.toLowerCase().startsWith("/fix")) {
             const functions = await runEdgeProbe(supabase);
@@ -474,6 +540,10 @@ async function installWebhook(): Promise<Record<string, unknown>> {
       { command: "retry", description: "Chạy lại một job" },
       { command: "fix", description: "Chẩn đoán và sửa an toàn" },
       { command: "help", description: "Hiện bàn phím chức năng" },
+      { command: "xuly", description: "Giao việc cho agent" },
+      { command: "idea", description: "Gửi ý tưởng cho agent" },
+      { command: "viec", description: "Việc đang chờ agent xử lý" },
+      { command: "bo", description: "Huỷ một việc đang chờ" },
     ] }),
   });
   if (!commandsResponse.ok) throw new Error(`set_commands_failed_${commandsResponse.status}`);
@@ -522,13 +592,27 @@ async function handleTelegramWebhook(req: Request, supabase: ReturnType<typeof c
   if (error) throw error;
   if (!inserted) return { ok: true, duplicate: true };
 
+  if (TASK_COMMAND_RE.test(message.text.trim())) {
+    return await handleTaskCommand(supabase, chatId, inserted.id, message.text);
+  }
+
   if (/^\/(start|help|jobs|retry|diagnose|functions|probe|fix)(?:@\w+)?(?:\s|$)/i.test(message.text.trim())) {
     return await processTelegram(supabase, inserted.id);
   }
   // Text tự do không có consumer nào — nói thật thay vì hứa suông, và đóng row
   // ngay để không tồn kho pending vô hạn (risk-auditor #7).
-  await supabase.from("telegram_commands").update({ status: "skipped", processed_at: new Date().toISOString(), result: "free_text_unsupported" }).eq("id", inserted.id);
-  await sendTelegram(chatId, `Chưa hiểu lệnh này. Gửi /help để xem các lệnh có sẵn, hoặc /jobs để thao tác bằng nút.`);
+  // BUG (phát hiện 2026-09-01): status "skipped" vi phạm telegram_commands_status_check
+  // nên UPDATE này im lặng thất bại từ ngày viết — mọi text tự do nằm lại `pending`
+  // vĩnh viễn, đúng thứ risk-auditor #7 định chặn. Dùng giá trị hợp lệ: "done".
+  await supabase.from("telegram_commands").update({ status: "done", processed_at: new Date().toISOString(), result: "free_text_unsupported" }).eq("id", inserted.id);
+  await sendTelegram(chatId, [
+    "Chưa rõ đây là việc hay chỉ là ghi chú.",
+    "",
+    "Muốn agent làm → thêm /xuly ở đầu:",
+    `/xuly ${String(message.text).trim().slice(0, 60)}`,
+    "",
+    "Khác: /viec (việc đang chờ) · /jobs (trạng thái hệ thống) · /help",
+  ].join("\n"));
   return { ok: true, skipped: true };
 }
 
