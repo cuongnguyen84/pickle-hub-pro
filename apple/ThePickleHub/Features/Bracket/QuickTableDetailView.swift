@@ -50,27 +50,7 @@ final class QuickTableViewModel {
     // Playoff generation
     var generatingPlayoff = false
     var playoffError: String?
-    var showWildcard = false
-    var wildcardNeed = 0
-    var wildcardCandidates: [QTPlayer] = []
     private var pendingQualified: [(player: QTPlayer, seed: Int)] = []
-
-    // V2: người dùng chọn cỡ bracket (vd 3 bảng → 4/8, 6 bảng → 8/16). BYE tự tính.
-    struct BracketOption: Identifiable {
-        let advancePerGroup: Int
-        let bracketSize: Int
-        let wildcards: Int
-        let byes: Int
-        var id: Int { advancePerGroup }
-        var buttonLabel: String {
-            var parts = [String(localized: "\(bracketSize) người"), advancePerGroup == 2 ? String(localized: "top-2 mỗi bảng") : String(localized: "nhất bảng")]
-            if wildcards > 0 { parts.append("+\(wildcards) wildcard") }
-            if byes > 0 { parts.append("+\(byes) BYE") }
-            return parts.joined(separator: " · ")
-        }
-    }
-    var showBracketChoice = false
-    var bracketOptions: [BracketOption] = []
 
     /// Bracket đã sinh, chờ chủ giải xem/đổi chỗ rồi xác nhận (sheet PlayoffPreviewSheet). nil = đóng.
     struct PendingPlayoff {
@@ -228,40 +208,19 @@ final class QuickTableViewModel {
         }
     }
 
+    /// Y HỆT web `QuickTableView.handleStartPlayoff` (prod):
+    ///   3/6 bảng → seeding v2 (top-2 mỗi bảng + best 3rd, seed chuẩn, tránh cùng bảng);
+    ///   2/4/8 bảng → cặp cổ điển nhất A–nhì B / nhất B–nhì A;
+    ///   số bảng khác → báo lỗi (web cũng vậy). Không có lựa chọn cỡ bracket, không chọn wildcard tay.
     @MainActor
     func startPlayoff(shareID: String) async {
         guard let d = detail else { return }
-        // V2 (native): cho người dùng chọn cỡ bracket (4/8, 8/16…). BYE tự tính.
-        // Web/Android giữ nguyên; đây chỉ là app native /apple.
-        if QTSeedingV2.enabled {
-            let opts = bracketOptionsV2(d)
-            if opts.isEmpty { playoffError = String(localized: "Không đủ người để sinh playoff."); return }
-            if opts.count == 1 {
-                await runPlayoffV2(shareID: shareID, advancePerGroup: opts[0].advancePerGroup)
-            } else {
-                bracketOptions = opts
-                showBracketChoice = true
-            }
+        if d.groups.count == 3 || d.groups.count == 6 {
+            await runPlayoffV2(shareID: shareID, advancePerGroup: 2)
             return
         }
-        let need = QTPlayoff.wildcardCount(groupCount: d.groups.count)
-        let q = QTPlayoff.qualify(groups: d.groups, players: d.players, topPerGroup: d.table.topPerGroup ?? 2)
-        pendingQualified = q.qualified
-        if need > 0 {
-            wildcardNeed = need
-            wildcardCandidates = QTPlayoff.rankThirdPlace(q.thirdPlace)
-            showWildcard = true
-        } else {
-            await runPlayoff(shareID: shareID, wildcards: [])
-        }
-    }
-
-    @MainActor
-    func confirmWildcards(shareID: String, selectedIDs: [UUID]) async {
-        showWildcard = false
-        // Preserve ranked candidate order (markQualified seeds 100+i by this order).
-        let selected = wildcardCandidates.filter { selectedIDs.contains($0.id) }
-        await runPlayoff(shareID: shareID, wildcards: selected)
+        pendingQualified = QTPlayoff.qualify(groups: d.groups, players: d.players, topPerGroup: 2).qualified
+        await runPlayoff(shareID: shareID, wildcards: [])
     }
 
     @MainActor
@@ -314,42 +273,11 @@ final class QuickTableViewModel {
         swapBusy = false
     }
 
-    /// Cỡ bracket khả dĩ cho số bảng hiện tại: advancePerGroup ∈ {2,1} mà mọi bảng đủ người.
-    /// Mỗi option kèm số wildcard + BYE (tự tính). 2 đứng trước (bracket lớn hơn).
-    func bracketOptionsV2(_ d: QuickTableDetail) -> [BracketOption] {
-        let G = d.groups.count
-        let sizes = d.groups.map { g in d.players.filter { $0.groupID == g.id }.count }
-        var opts: [BracketOption] = []
-        for A in [2, 1] {
-            guard G >= 2, sizes.allSatisfy({ $0 >= A }) else { continue }  // mỗi bảng đủ A người
-            let plan = QTSeedingV2.computeSeedingPlan(groupCount: G, advancePerGroup: A)
-            let candidates = sizes.filter { $0 > A }.count                  // bảng có hạng (A+1)
-            let wild = min(plan.wildcardCount, candidates)
-            let byes = plan.bracketSize - plan.directSpots - wild
-            opts.append(BracketOption(advancePerGroup: A, bracketSize: plan.bracketSize,
-                                      wildcards: wild, byes: byes))
-        }
-        return opts
-    }
-
-    @MainActor
-    func chooseBracket(shareID: String, advancePerGroup: Int) async {
-        showBracketChoice = false
-        await runPlayoffV2(shareID: shareID, advancePerGroup: advancePerGroup)
-    }
-
-    /// V2: seeding tổng quát (QTSeedingV2) — auto chọn wildcard theo best (A+1)-place,
-    /// pad BYE nếu thiếu, cặp đấu theo seed chuẩn + resolve trùng bảng. `advancePerGroup` do user chọn.
+    /// V2 (3/6 bảng, giống web `generateSeedingGeneral` + `generateBracketPairings` + `resolveBracketConflicts`):
+    /// top-2 mỗi bảng + best 3rd theo điểm chỉ tính trận gặp top-2, pad BYE nếu thiếu, seed chuẩn, tránh cùng bảng.
     @MainActor
     private func runPlayoffV2(shareID: String, advancePerGroup: Int) async {
         guard let d = detail else { return }
-        // Bracket sạch 2/4/8 bảng (A=2, không wildcard): cặp cổ điển y hệt web —
-        // nhất A gặp nhì B nhánh trên, nhất B gặp nhì A nhánh dưới. Không xếp lại theo thành tích.
-        if advancePerGroup == 2, [2, 4, 8].contains(d.groups.count) {
-            pendingQualified = QTPlayoff.qualify(groups: d.groups, players: d.players, topPerGroup: 2).qualified
-            await runPlayoff(shareID: shareID, wildcards: [])
-            return
-        }
         playoffError = nil
         do {
             let result = try QTSeedingV2.generateSeeding(
@@ -772,21 +700,6 @@ struct QuickTableDetailView: View {
                     Task { await model.confirmPlayoff(shareID: shareID, bracket: bracket) }
                 }
             }
-        }
-        .sheet(isPresented: Binding(get: { model.showWildcard }, set: { model.showWildcard = $0 })) {
-            WildcardSelectionSheet(candidates: model.wildcardCandidates, need: model.wildcardNeed) { selected in
-                Task { await model.confirmWildcards(shareID: shareID, selectedIDs: selected) }
-            }
-        }
-        .confirmationDialog("Số người vào Playoff",
-                            isPresented: Binding(get: { model.showBracketChoice }, set: { model.showBracketChoice = $0 }),
-                            titleVisibility: .visible) {
-            ForEach(model.bracketOptions) { opt in
-                Button(opt.buttonLabel) {
-                    Task { await model.chooseBracket(shareID: shareID, advancePerGroup: opt.advancePerGroup) }
-                }
-            }
-            Button("Hủy", role: .cancel) {}
         }
         .sheet(isPresented: Binding(get: { model.showRegistrations }, set: { model.showRegistrations = $0 })) {
             QuickTableRegistrationsSheet(model: model) {

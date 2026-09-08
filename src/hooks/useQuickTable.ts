@@ -284,7 +284,8 @@ export function useQuickTable() {
         .filter(p => p.group_id === group.id)
         .sort((a, b) => {
           if (b.matches_won !== a.matches_won) return b.matches_won - a.matches_won;
-          return b.point_diff - a.point_diff;
+          if (b.point_diff !== a.point_diff) return b.point_diff - a.point_diff;
+          return b.points_for - a.points_for; // cùng khoá với bảng xếp hạng hiển thị (getGroupStandings) + native
         });
 
       groupPlayers.slice(0, topPerGroup).forEach((p, idx) => {

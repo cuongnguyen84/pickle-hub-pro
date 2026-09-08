@@ -5,9 +5,9 @@ import { useI18n } from '@/i18n';
 import {
   type SeededPlayer,
   type BracketPairing,
-  resolveGroupConflicts,
   BYE_PLAYER_ID,
 } from '@/lib/quick-table-playoff';
+import { resolveBracketConflicts } from '@/lib/quick-table-seeding-v2';
 
 interface PlayoffPreviewDialogProps {
   open: boolean;
@@ -104,7 +104,8 @@ export default function PlayoffPreviewDialog({
   };
 
   const handleAutoResolve = () => {
-    const result = resolveGroupConflicts(pairings);
+    // Anchor (seed mạnh) giữ nguyên, chỉ gán lại floater — cùng thuật toán native.
+    const result = resolveBracketConflicts(pairings);
     setPairings(result.pairings);
     setSelectedPlayer(null);
   };
