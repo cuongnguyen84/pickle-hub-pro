@@ -53,8 +53,17 @@
 # at the top of this file), so the homepage shipped each of those three
 # twice. Permissions-Policy was declared ONLY here, so every page except /
 # shipped without it — it now lives in /* and covers the whole site.
+#
+# 2026-09-08 — was `max-age=300, s-maxage=3600`. Every other route ships
+# `max-age=0, must-revalidate`; the homepage alone let phones keep the SPA
+# shell for 5 minutes after a deploy. Old hashed chunks are gone from the
+# production origin the moment a new deployment goes live (404), so a stale
+# shell throws "Unexpected token '<'" / "Importing a module script failed"
+# and the recovery reload could be answered from the same HTTP cache — users
+# sat on "Đang tải lại..." on the busiest page. The service worker already
+# does NetworkFirst for navigations, so browser caching buys nothing here.
 /
-  Cache-Control: public, max-age=300, s-maxage=3600
+  Cache-Control: public, max-age=0, must-revalidate
 
 # All other pages inherit security headers + CSP including DUPR SSO iframe
 # allowance. DUPR SSO embeds dashboard.dupr.com (prod) or uat.dupr.gg

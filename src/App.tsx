@@ -338,6 +338,22 @@ import { isChunkErrorMessage } from "@/lib/chunkError";
 import { reportCaughtError } from "@/lib/errorReporter";
 
 // Error boundary for lazy-loaded chunks (handles stale cache after deploy)
+/**
+ * Refresh the HTTP-cache entry for the current document before reloading.
+ * A stale shell (cached index.html referencing chunk hashes the new deploy
+ * deleted) is the thing we are trying to escape; `location.reload()` alone
+ * can be answered from that same cache while it is still fresh, which turns
+ * the recovery into a loop. `cache: "reload"` forces a network round-trip and
+ * stores the fresh copy, so the reload that follows picks it up.
+ */
+async function refetchShellBypassingCache(): Promise<void> {
+  try {
+    await fetch(window.location.href, { cache: "reload", credentials: "same-origin" });
+  } catch {
+    // Offline or blocked — reload anyway; the SW NetworkFirst path handles it.
+  }
+}
+
 class ChunkErrorBoundary extends Component<
   { children: ReactNode },
   { hasError: boolean; error: Error | null; giveUp: boolean }
@@ -414,6 +430,7 @@ class ChunkErrorBoundary extends Component<
       sessionStorage.setItem(KEY, String(count + 1));
       sessionStorage.setItem(TS_KEY, String(first));
     } catch { /* ignore */ }
+    await refetchShellBypassingCache();
     window.location.reload();
   }
   render() {
