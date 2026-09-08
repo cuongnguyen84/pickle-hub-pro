@@ -4,16 +4,30 @@ import SwiftUI
 /// snapshot for Open/Junior/continents) over per-scope format tabs. Tapping a
 /// live Vietnam player opens their native profile; snapshot rows are inert.
 struct RankingsView: View {
+    /// Top-level ranking type, like web `RankingsTabs` (DUPR = /rankings, WPR = /rankings/ppa-tour).
+    enum Kind: String, CaseIterable, Identifiable {
+        case dupr, wpr
+        var id: String { rawValue }
+        var title: String { self == .dupr ? "DUPR" : "WPR" }
+        var caption: String { self == .dupr ? String(localized: "RATING CÁ NHÂN") : String(localized: "NHÀ NGHỀ PPA TOUR") }
+    }
+
     @State private var model = RankingsViewModel()
+    @State private var kind: Kind = .dupr
 
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                scopeChips.padding(.bottom, 12)
-                formatChips.padding(.horizontal, 16).padding(.bottom, 16)
-                content
-                if !model.scope.isVietnam {
-                    attribution.padding(.top, 20)
+                kindTabs.padding(.horizontal, 16).padding(.bottom, 16)
+                if kind == .wpr {
+                    WprRankingsView()
+                } else {
+                    scopeChips.padding(.bottom, 12)
+                    formatChips.padding(.horizontal, 16).padding(.bottom, 16)
+                    content
+                    if !model.scope.isVietnam {
+                        attribution.padding(.top, 20)
+                    }
                 }
             }
             .padding(.top, 8)
@@ -23,6 +37,32 @@ struct RankingsView: View {
         .navigationTitle("Xếp hạng")
         .navigationBarTitleDisplayMode(.large)
         .task { await model.load() }
+    }
+
+    // MARK: DUPR | WPR
+
+    private var kindTabs: some View {
+        HStack(spacing: 8) {
+            ForEach(Kind.allCases) { k in
+                let selected = k == kind
+                Button { Haptics.light(); kind = k } label: {
+                    VStack(spacing: 2) {
+                        Text(k.title)
+                            .font(TLFont.sans(15, .bold))
+                            .foregroundStyle(selected ? TLColor.accentInk : TLColor.fg)
+                        Text(k.caption)
+                            .font(TLFont.mono(9, .medium)).tracking(0.8)
+                            .foregroundStyle(selected ? TLColor.accentInk.opacity(0.75) : TLColor.fg4)
+                    }
+                    .frame(maxWidth: .infinity).padding(.vertical, 10)
+                    .background(selected ? TLColor.accent : TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(selected ? .clear : TLColor.border, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(k.title) — \(k.caption)")
+                .accessibilityAddTraits(selected ? .isSelected : [])
+            }
+        }
     }
 
     // MARK: Scope selector
