@@ -10,6 +10,32 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "kuala-lumpur-cup-2026-preview",
+    publishedDate: "2026-09-08",
+    updatedDate: "2026-09-08",
+    author: "The PickleHub Team",
+    tags: [
+      "kuala lumpur cup 2026",
+      "leapmotor kuala lumpur cup",
+      "ppa tour asia",
+      "ppa asia 1000",
+      "pickleball malaysia",
+      "lich thi dau ppa tour asia",
+      "ho tam pickleball",
+    ],
+    ctaPath: "/live",
+    ctaLabel: {
+      en: "Follow live scores on ThePickleHub",
+      vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub",
+    },
+    titleEn: "Leapmotor Kuala Lumpur Cup 2026: Schedule, Seeds, Prize Money and How to Watch",
+    titleVi: "Leapmotor Kuala Lumpur Cup 2026: lịch thi đấu, hạt giống, tiền thưởng và cách xem",
+    metaTitleEn: "Leapmotor KL Cup 2026: Schedule, Seeds, Prize Money",
+    metaTitleVi: "KL Cup 2026 (9–13/9): lịch thi đấu, cách xem",
+    metaDescriptionEn: "Leapmotor Kuala Lumpur Cup 2026, Sep 9-13 at The Hood, KL: US$300,000, 1000 points, day-by-day schedule, every seed and where to watch.",
+    metaDescriptionVi: "Leapmotor Kuala Lumpur Cup 2026 (9–13/9): lịch thi đấu theo giờ Việt Nam, 300.000 USD, Hồ Tâm hạt giống số 8, và cách xem trực tiếp.",
+  },
+  {
     slug: "pickleball-world-cup-2026-da-nang-from-the-stands",
     publishedDate: "2026-09-07",
     updatedDate: "2026-09-07",

@@ -1245,7 +1245,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v108 (2026-09-08): the results dateline. English served "6/9/2026" for
   // 6 September, which an English reader takes for 9 June, and it still said
   // "0 on court now" five days after the last ball.
-  const cacheKey = `pr:v108:${url.pathname}`;
+  // v109 (2026-09-08): the Leapmotor Kuala Lumpur Cup preview (EN + VI) goes
+  // live the day before the event, and the calendar row it links from changed
+  // name from "Kuala Lumpur Cup" to the official "Leapmotor Kuala Lumpur Cup".
+  const cacheKey = `pr:v109:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

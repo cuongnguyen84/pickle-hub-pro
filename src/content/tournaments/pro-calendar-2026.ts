@@ -179,8 +179,14 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
   },
   {
     id: "kuala-lumpur-cup-2026",
-    nameEn: "Kuala Lumpur Cup",
-    nameVi: "Kuala Lumpur Cup",
+    // "Kuala Lumpur Cup" was the bare name carried over from the season
+    // announcement. Leapmotor is the presenting partner and the official event
+    // name is the Leapmotor Kuala Lumpur Cup — confirmed 2026-09-08 from the
+    // PPA Tour Asia event page. Our own Singapore post already uses the
+    // parallel entity "Leapmotor Singapore Open"; this row was the odd one out.
+    // Same defect as the "China Open 2" placeholder fixed on 2026-08-28.
+    nameEn: "Leapmotor Kuala Lumpur Cup",
+    nameVi: "Leapmotor Kuala Lumpur Cup",
     placeEn: "Kuala Lumpur, Malaysia",
     placeVi: "Kuala Lumpur, Malaysia",
     startDate: "2026-09-09",
@@ -189,6 +195,8 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
     organizer: "PPA Tour Asia",
     prizeEn: "up to $300,000",
     prizeVi: "tối đa 300.000 USD",
+    blogEn: "/blog/kuala-lumpur-cup-2026-preview",
+    blogVi: "/vi/blog/kuala-lumpur-cup-2026-lich-thi-dau-cach-xem",
   },
   {
     id: "hong-kong-slam-2026",
