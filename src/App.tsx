@@ -385,7 +385,11 @@ class ChunkErrorBoundary extends Component<
     // OLD chunk hashes — when the SW serves stale HTML, browser fetches
     // OLD chunk URLs, CDN SPA-fallback returns NEW HTML, parser hits "<"
     // → loop. Blowing the cache breaks the loop after one reload.
-    try {
+    // Bounded: on iOS Safari the CacheStorage / SW registration promises
+    // can stall; the page must never sit on "Đang tải lại..." waiting for
+    // them. Whatever finished within the budget is enough — the reload
+    // below re-fetches the shell past the HTTP cache anyway.
+    const purge = (async () => {
       if (typeof caches !== "undefined") {
         const keys = await caches.keys();
         await Promise.all(keys.map((k) => caches.delete(k)));
@@ -394,6 +398,10 @@ class ChunkErrorBoundary extends Component<
         const regs = await navigator.serviceWorker.getRegistrations();
         await Promise.all(regs.map((r) => r.unregister()));
       }
+    })();
+    const budget = new Promise<void>((resolve) => setTimeout(resolve, 2500));
+    try {
+      await Promise.race([purge, budget]);
     } catch {
       // Storage may be disabled (private mode, quota) — fall through to reload anyway.
     }
