@@ -271,9 +271,11 @@ if [[ -n "$ipa_path" ]]; then
   ipa_entitlements="$(codesign -d --entitlements :- "$ipa_app_path" 2>/dev/null || true)"
   ipa_aps_environment="$(printf '%s' "$ipa_entitlements" | plutil -extract aps-environment raw -o - - 2>/dev/null || true)"
   [[ "$ipa_aps_environment" == "production" ]] || fail "IPA lacks production APNs entitlement"
+  # plutil -extract treats dots as key-path separators, so a dotted entitlement key
+  # can only be read after converting the whole plist to JSON.
   printf '%s' "$ipa_entitlements" \
-    | plutil -extract 'com.apple.developer.applesignin' json -o - - 2>/dev/null \
-    | jq -e 'index("Default") != null' >/dev/null \
+    | plutil -convert json -o - - 2>/dev/null \
+    | jq -e '.["com.apple.developer.applesignin"] | index("Default") != null' >/dev/null \
     || fail "IPA lacks Sign in with Apple entitlement"
 
   ipa_profile="$ipa_extract_dir/embedded-profile.plist"
