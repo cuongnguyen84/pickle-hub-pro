@@ -1,7 +1,8 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
-import { Crown, Trophy, Check, Pencil, Play, Radio, MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Crown, Trophy, Check, Pencil, Play, Radio, MapPin, ArrowLeftRight, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n';
 import { toast } from 'sonner';
@@ -33,17 +34,34 @@ export interface BracketPlayer {
   group_id?: string | null;
 }
 
+export interface SwapSlot {
+  matchId: string;
+  slot: 1 | 2;
+}
+
 interface PlayoffBracketProps {
   matches: BracketMatch[];
   players: BracketPlayer[];
   canEdit: boolean;
   onScoreUpdate: (matchId: string, score1: number, score2: number) => void;
   onCourtNameUpdate?: (matchId: string, courtName: string) => void;
+  /** Chủ giải đổi chỗ 2 người giữa 2 trận vòng 1 chưa đá (chạm 2 lần). */
+  onSwapPlayers?: (a: SwapSlot, b: SwapSlot) => void;
   groupNames?: Map<string, string>;
 }
 
-const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, onCourtNameUpdate, groupNames }: PlayoffBracketProps) => {
+const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, onCourtNameUpdate, onSwapPlayers, groupNames }: PlayoffBracketProps) => {
   const { t } = useI18n();
+  const [swapSel, setSwapSel] = useState<SwapSlot | null>(null);
+
+  const handleSwapSlot = useCallback((next: SwapSlot) => {
+    if (!swapSel || swapSel.matchId === next.matchId) {
+      setSwapSel(swapSel && swapSel.matchId === next.matchId && swapSel.slot === next.slot ? null : next);
+      return;
+    }
+    onSwapPlayers?.(swapSel, next);
+    setSwapSel(null);
+  }, [swapSel, onSwapPlayers]);
 
   const getPlayer = useCallback((id: string | null): BracketPlayer | undefined =>
     id ? players.find(p => p.id === id) : undefined, [players]);
@@ -167,6 +185,36 @@ const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, onCourtNameU
         </div>
       )}
 
+      {swapSel && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            padding: '10px 12px',
+            marginBottom: 12,
+            borderRadius: 'var(--tl-radius)',
+            background: 'var(--tl-green-glow)',
+            border: '1px solid rgba(0, 185, 107, 0.30)',
+            fontSize: 13,
+            color: 'var(--tl-fg-2)',
+          }}
+        >
+          <ArrowLeftRight className="w-4 h-4" style={{ color: 'var(--tl-green)', flexShrink: 0 }} />
+          <span style={{ flex: 1 }}>{t.quickTable.playoff.swapHint}</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setSwapSel(null)}
+            style={{ height: 26, padding: '0 8px', fontSize: 11 }}
+          >
+            <X className="w-3 h-3" />
+            {t.quickTable.playoff.swapCancel}
+          </Button>
+        </div>
+      )}
+
       <div style={{ overflowX: 'auto', paddingBottom: 16, margin: '0 -16px', padding: '0 16px 16px' }}>
         <div
           style={{
@@ -225,6 +273,13 @@ const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, onCourtNameU
                       getGroupName={getGroupName}
                       formatPlayerName={formatPlayerName}
                       isFinal={isFinal}
+                      swappable={
+                        canEdit && !!onSwapPlayers && roundIdx === 0 &&
+                        match.status === 'pending' && !match.live_referee_id &&
+                        !!match.player1_id && !!match.player2_id
+                      }
+                      swapSel={swapSel}
+                      onSwapSlot={handleSwapSlot}
                       t={t}
                     />
                   ))}
@@ -291,6 +346,9 @@ interface BracketMatchCardProps {
   getGroupName: (player: BracketPlayer | undefined) => string | null;
   formatPlayerName: (player: BracketPlayer | undefined) => string;
   isFinal: boolean;
+  swappable: boolean;
+  swapSel: SwapSlot | null;
+  onSwapSlot: (slot: SwapSlot) => void;
   t: ReturnType<typeof useI18n>['t'];
 }
 
@@ -305,6 +363,9 @@ const BracketMatchCard = ({
   getGroupName,
   formatPlayerName,
   isFinal,
+  swappable,
+  swapSel,
+  onSwapSlot,
   t,
 }: BracketMatchCardProps) => {
   const navigate = useNavigate();
@@ -430,6 +491,36 @@ const BracketMatchCard = ({
 
   const scoreInputCls =
     'w-12 h-8 text-center text-sm p-1 rounded bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+
+  const swapButton = (slot: 1 | 2) => {
+    if (!swappable) return null;
+    const selected = swapSel?.matchId === match.id && swapSel.slot === slot;
+    const armed = !!swapSel && !selected;
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => onSwapSlot({ matchId: match.id, slot })}
+        title={t.quickTable.playoff.swap}
+        aria-label={t.quickTable.playoff.swap}
+        aria-pressed={selected}
+        style={{
+          height: 26,
+          width: 26,
+          padding: 0,
+          flexShrink: 0,
+          ...(selected
+            ? { background: 'var(--tl-green)', color: 'var(--tl-bg)', borderColor: 'var(--tl-green)' }
+            : armed
+              ? { borderColor: 'var(--tl-green)', color: 'var(--tl-green)' }
+              : {}),
+        }}
+      >
+        <ArrowLeftRight className="w-3 h-3" />
+      </Button>
+    );
+  };
 
   return (
     <div
@@ -655,6 +746,7 @@ const BracketMatchCard = ({
 
       {/* Player 1 row */}
       <div style={playerRowStyle(isP1Winner, !player1)}>
+        {swapButton(1)}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={playerNameStyle(isP1Winner, !player1)}>
             {formatPlayerName(player1)}
@@ -735,6 +827,7 @@ const BracketMatchCard = ({
           borderBottom: 0,
         }}
       >
+        {swapButton(2)}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={playerNameStyle(isP2Winner, !player2)}>
             {formatPlayerName(player2)}

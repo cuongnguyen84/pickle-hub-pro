@@ -203,6 +203,24 @@ enum QTSeedingV2 {
             .sorted { $0.matchNumber < $1.matchNumber }
     }
 
+    /// Đổi chỗ 2 slot giữa 2 trận vòng 1 (preview trước khi tạo playoff). Index ngoài mảng → trả nguyên.
+    static func swapSlots(_ bracket: [QTBracketMatch],
+                          _ a: (match: Int, slot: Int), _ b: (match: Int, slot: Int)) -> [QTBracketMatch] {
+        guard bracket.indices.contains(a.match), bracket.indices.contains(b.match),
+              [1, 2].contains(a.slot), [1, 2].contains(b.slot),
+              !(a.match == b.match && a.slot == b.slot) else { return bracket }
+        func get(_ m: QTBracketMatch, _ slot: Int) -> UUID? { slot == 1 ? m.player1 : m.player2 }
+        func set(_ m: QTBracketMatch, _ slot: Int, _ v: UUID?) -> QTBracketMatch {
+            QTBracketMatch(player1: slot == 1 ? v : m.player1, player2: slot == 2 ? v : m.player2,
+                           position: m.position, matchNumber: m.matchNumber)
+        }
+        var out = bracket
+        let va = get(out[a.match], a.slot), vb = get(out[b.match], b.slot)
+        out[a.match] = set(out[a.match], a.slot, vb)
+        out[b.match] = set(out[b.match], b.slot, va)
+        return out
+    }
+
     /// Map pairings → `[QTBracketMatch]` cho `createPlayoff`. BYE → player nil.
     /// position: nửa đầu match = "upper", nửa sau = "lower" (chỉ để hiển thị; advance dựa theo thứ tự).
     static func toBracketMatches(_ pairings: [(p1: Seeded, p2: Seeded, matchNumber: Int)]) -> [QTBracketMatch] {

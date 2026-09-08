@@ -1292,6 +1292,31 @@ struct QuickTableRepository {
         let p_expected_version: Int64
     }
 
+    private struct SwapPlayoffParams: Encodable {
+        let p_table_id: String
+        let p_match_a: String
+        let p_slot_a: Int
+        let p_match_b: String
+        let p_slot_b: Int
+    }
+
+    /// Chủ giải đổi chỗ 2 người giữa 2 trận vòng 1 playoff chưa đá (RPC kiểm tra quyền + trạng thái).
+    func swapPlayoffPlayers(tableID: UUID, matchA: UUID, slotA: Int, matchB: UUID, slotB: Int) async throws {
+        let result: AtomicLifecycleResult = try await client
+            .rpc("swap_quick_table_playoff_players", params: SwapPlayoffParams(
+                p_table_id: tableID.uuidString.lowercased(),
+                p_match_a: matchA.uuidString.lowercased(),
+                p_slot_a: slotA,
+                p_match_b: matchB.uuidString.lowercased(),
+                p_slot_b: slotB
+            ))
+            .execute().value
+        guard result.success else {
+            throw NSError(domain: "quicktable", code: 4,
+                          userInfo: [NSLocalizedDescriptionKey: result.detail ?? result.error ?? String(localized: "Không đổi được cặp.")])
+        }
+    }
+
     /// Score, group-stat recompute, and playoff propagation commit together.
     func score(match: QTMatch, score1: Int, score2: Int) async throws {
         let result: AtomicTournamentMutationResult = try await client

@@ -7939,6 +7939,16 @@ export type Database = {
         Args: { p_first_round: Json; p_qualifiers: Json; p_table_id: string }
         Returns: Json
       }
+      swap_quick_table_playoff_players: {
+        Args: {
+          p_match_a: string
+          p_match_b: string
+          p_slot_a: number
+          p_slot_b: number
+          p_table_id: string
+        }
+        Returns: Json
+      }
       create_quick_table_with_quota: {
         Args: {
           _auto_approve_registrations?: boolean

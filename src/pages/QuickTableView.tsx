@@ -18,6 +18,7 @@ import {
   UserMinus, ClipboardList, MapPin, Trash2, RefreshCw, Pencil, ListRestart, Monitor,
 } from 'lucide-react';
 import QuickTablePlayoffView from '@/components/quicktable/QuickTablePlayoffView';
+import type { SwapSlot } from '@/components/tournament/PlayoffBracket';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import RefereeManagement from '@/components/quicktable/RefereeManagement';
@@ -37,8 +38,7 @@ import { useConfirm } from '@/hooks/useConfirm';
 import PlayoffPreviewDialog from '@/components/quicktable/PlayoffPreviewDialog';
 import {
   BYE_PLAYER_ID,
-  type BracketPairing,
-} from '@/lib/quick-table-playoff';
+  type BracketPairing, toBracketPairings } from '@/lib/quick-table-playoff';
 import {
   generateSeedingGeneral,
   generateBracketPairings,
@@ -61,7 +61,7 @@ const QuickTableView = () => {
     addPlayerToGroup, removePlayerFromGroup, regenerateGroupMatches,
     updatePlayerName, updateTableName, updateTableCourtSettings,
     reassignCourtsAndTimes, deleteTable,
-    updateCourtName, pending,
+    updateCourtName, swapPlayoffPlayers, pending,
   } = useQuickTable();
   const { isAdmin } = useAdminAuth();
   const { user } = useAuth();
@@ -368,6 +368,19 @@ const QuickTableView = () => {
     const { qualified, thirdPlace } = getQualifiedPlayers(groups, players, 2);
     const needed = getWildcardCount(table.group_count);
 
+    // Bracket sạch (2/4/8 bảng): cặp cổ điển nhất A–nhì B / nhất B–nhì A, nhưng vẫn mở
+    // preview để chủ giải xem và chạm đổi chỗ trước khi tạo (không tạo thẳng nữa).
+    if (needed === 0) {
+      const classic = generatePlayoffBracket(table.group_count, qualified, [], groups);
+      if (classic.length === 0) {
+        toast.error(t.quickTable.view.errorOccurred);
+        return;
+      }
+      setPreviewPairings(toBracketPairings(classic));
+      setShowPlayoffPreview(true);
+      return;
+    }
+
     if (needed > 0) {
       setThirdPlacePlayers(thirdPlace.sort((a, b) => {
         if (b.matches_won !== a.matches_won) return b.matches_won - a.matches_won;
@@ -408,6 +421,17 @@ const QuickTableView = () => {
 
     setShowWildcardDialog(false);
     createPlayoffWithWildcards(qualified, wildcards);
+  };
+
+  const handleSwapPlayoffPlayers = async (a: SwapSlot, b: SwapSlot) => {
+    if (!table) return;
+    const result = await swapPlayoffPlayers(table.id, a, b);
+    if (!result.success) {
+      toast.error(t.quickTable.playoff.swapFailed.replace('{error}', result.error ?? ''));
+      return;
+    }
+    await loadData();
+    toast.success(t.quickTable.playoff.swapped);
   };
 
   const handleConfirmPlayoffPreview = async (confirmedPairings: BracketPairing[]) => {
@@ -1390,6 +1414,7 @@ const QuickTableView = () => {
                   canEdit={canEditScores}
                   onScoreUpdate={(matchId, s1, s2) => handleScoreUpdate(matchId, s1, s2, true)}
                   onCourtNameUpdate={(matchId, courtName) => updateCourtName(matchId, courtName).then(() => loadData())}
+                  onSwapPlayers={canManageTable ? handleSwapPlayoffPlayers : undefined}
                 />
               )}
             </div>

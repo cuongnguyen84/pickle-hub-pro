@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import PlayoffBracket from '@/components/tournament/PlayoffBracket';
+import PlayoffBracket, { type SwapSlot } from '@/components/tournament/PlayoffBracket';
 import type { QuickTableMatch, QuickTablePlayer, QuickTableGroup } from '@/hooks/useQuickTable';
 
 interface QuickTablePlayoffViewProps {
@@ -9,6 +9,7 @@ interface QuickTablePlayoffViewProps {
   canEdit: boolean;
   onScoreUpdate: (matchId: string, score1: number, score2: number) => void;
   onCourtNameUpdate?: (matchId: string, courtName: string) => void;
+  onSwapPlayers?: (a: SwapSlot, b: SwapSlot) => void;
 }
 
 export default function QuickTablePlayoffView({
@@ -18,6 +19,7 @@ export default function QuickTablePlayoffView({
   canEdit,
   onScoreUpdate,
   onCourtNameUpdate,
+  onSwapPlayers,
 }: QuickTablePlayoffViewProps) {
   const groupNames = useMemo(() => {
     const map = new Map<string, string>();
@@ -49,6 +51,7 @@ export default function QuickTablePlayoffView({
       canEdit={canEdit}
       onScoreUpdate={onScoreUpdate}
       onCourtNameUpdate={onCourtNameUpdate}
+      onSwapPlayers={onSwapPlayers}
       groupNames={groupNames}
     />
   );
