@@ -1013,6 +1013,11 @@ export interface Translations {
       editScore: string;
       openScoring: string;
       tieNotAllowed: string;
+      swap: string;
+      swapHint: string;
+      swapCancel: string;
+      swapped: string;
+      swapFailed: string;
     };
     // Quota / soft launch
     quota: {
@@ -4047,6 +4052,11 @@ export const vi: Translations = {
       editScore: "Sửa",
       openScoring: "Mở trang chấm điểm",
       tieNotAllowed: "Không cho phép tỉ số hòa",
+      swap: "Đổi cặp",
+      swapHint: "Chọn đội thứ hai ở trận khác để đổi chỗ",
+      swapCancel: "Huỷ đổi",
+      swapped: "Đã đổi cặp",
+      swapFailed: "Không đổi được: {error}",
     },
     // Quota / soft launch
     quota: {
@@ -4248,7 +4258,7 @@ export const vi: Translations = {
     },
     playoffPreview: {
       title: "Preview Bracket Playoff",
-      subtitle: "16 đội vào playoff — kiểm tra trước khi xác nhận",
+      subtitle: "{count} đội vào playoff — kiểm tra, chạm 2 đội để đổi chỗ trước khi xác nhận",
       seed: "Seed",
       fromGroup: "Bảng",
       conflictWarning: "Có cặp đấu cùng bảng!",

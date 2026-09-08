@@ -307,3 +307,31 @@ export function resolveGroupConflicts(
   // Recursive re-check
   return resolveGroupConflicts(resolved, maxDepth - 1);
 }
+
+/**
+ * Chuyển bracket cổ điển (nhất A–nhì B, …; playoff_seed = 1/2 trong bảng) sang
+ * BracketPairing để mở PlayoffPreviewDialog cho người tổ chức xem/đổi chỗ trước khi tạo.
+ * Slot trống (không tìm thấy người) → BYE.
+ */
+export function toBracketPairings(
+  bracket: Array<{ player1: QuickTablePlayer | null; player2: QuickTablePlayer | null; matchNumber: number }>
+): BracketPairing[] {
+  const toSeeded = (p: QuickTablePlayer | null, seedForBye: number): SeededPlayer =>
+    p
+      ? {
+          playerId: p.id,
+          name: p.name,
+          seed: p.playoff_seed ?? 0,
+          sourceGroupId: p.group_id ?? '',
+          wins: p.matches_won,
+          pointDiff: p.point_diff,
+          pointsFor: p.points_for,
+          tier: p.playoff_seed === 1 ? 'winner' : 'runner_up',
+        }
+      : createByePlayer(seedForBye);
+  return bracket.map(m => ({
+    player1: toSeeded(m.player1, 0),
+    player2: toSeeded(m.player2, 0),
+    matchNumber: m.matchNumber,
+  }));
+}

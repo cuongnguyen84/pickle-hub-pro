@@ -145,4 +145,18 @@ struct QuickTableSeedingV2Tests {
         #expect(resolved.first { $0.p1.seed == 1 }?.p2.seed == 7)  // seed 8 cùng bảng → floater yếu nhất khác bảng
         #expect(resolved.first { $0.p1.seed == 3 }?.p2.seed == 5)
     }
+
+    @Test func swapSlotsExchangesTwoSlotsAcrossMatches() {
+        let ids = (0..<4).map { _ in UUID() }
+        let bracket = [
+            QTBracketMatch(player1: ids[0], player2: ids[1], position: "upper", matchNumber: 1),
+            QTBracketMatch(player1: ids[2], player2: ids[3], position: "lower", matchNumber: 2),
+        ]
+        let out = QTSeedingV2.swapSlots(bracket, (0, 2), (1, 1))
+        #expect(out[0].player2 == ids[2])
+        #expect(out[1].player1 == ids[1])
+        #expect(out[0].player1 == ids[0] && out[1].player2 == ids[3])   // slot khác giữ nguyên
+        #expect(QTSeedingV2.swapSlots(bracket, (0, 1), (0, 1)) == bracket) // cùng ô → no-op
+        #expect(QTSeedingV2.swapSlots(bracket, (0, 1), (5, 1)) == bracket) // index sai → no-op
+    }
 }

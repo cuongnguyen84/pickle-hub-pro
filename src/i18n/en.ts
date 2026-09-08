@@ -1027,6 +1027,11 @@ export const en: Translations = {
       editScore: "Edit",
       openScoring: "Open scoring page",
       tieNotAllowed: "Tie scores not allowed",
+      swap: "Swap",
+      swapHint: "Pick the second team in another match to swap places",
+      swapCancel: "Cancel swap",
+      swapped: "Players swapped",
+      swapFailed: "Swap failed: {error}",
     },
     // Quota / soft launch
     quota: {
@@ -1228,7 +1233,7 @@ export const en: Translations = {
     },
     playoffPreview: {
       title: "Playoff Bracket Preview",
-      subtitle: "16 teams qualified — review before confirming",
+      subtitle: "{count} teams qualified — review, tap two teams to swap, then confirm",
       seed: "Seed",
       fromGroup: "Group",
       conflictWarning: "Same-group matchups detected!",
