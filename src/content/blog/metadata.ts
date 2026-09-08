@@ -44,7 +44,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "pickleball-world-cup-2026-da-nang-results",
     publishedDate: "2026-08-31",
-    updatedDate: "2026-09-07",
+    updatedDate: "2026-09-08",
     author: "Cuong Nguyen",
     tags: [
       "ket qua pickleball world cup 2026",
