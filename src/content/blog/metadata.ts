@@ -28,6 +28,11 @@ export const blogMetadata: BlogPostMetadata[] = [
       en: "Follow live scores on ThePickleHub",
       vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub",
     },
+    heroImage: {
+      src: "/images/blog/kuala-lumpur-cup-2026-preview-hero.webp",
+      alt:
+        "Leapmotor Kuala Lumpur Cup 2026 banner — a rooftop pickleball court at blue hour with a paddle and a yellow ball on the teal-blue surface, the floodlit Kuala Lumpur skyline and Petronas Twin Towers behind, and the tournament lockup reading \"PPA Asia 1000 · Leapmotor Kuala Lumpur Cup 2026 · September 9-13 · The Hood, Kuala Lumpur, Malaysia\".",
+    },
     titleEn: "Leapmotor Kuala Lumpur Cup 2026: Schedule, Seeds, Prize Money and How to Watch",
     titleVi: "Leapmotor Kuala Lumpur Cup 2026: lịch thi đấu, hạt giống, tiền thưởng và cách xem",
     metaTitleEn: "Leapmotor KL Cup 2026: Schedule, Seeds, Prize Money",

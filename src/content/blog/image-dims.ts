@@ -40,6 +40,8 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/khoi-dong-tranh-chan-thuong-giay-san.webp": [1200, 675],
   "/images/blog/khoi-dong-tranh-chan-thuong-pickleball-hero-768.webp": [768, 432],
   "/images/blog/khoi-dong-tranh-chan-thuong-pickleball-hero.webp": [1600, 900],
+  "/images/blog/kuala-lumpur-cup-2026-preview-hero-768.webp": [768, 512],
+  "/images/blog/kuala-lumpur-cup-2026-preview-hero.webp": [1536, 1024],
   "/images/blog/loi-thuong-gap-khi-choi-pickleball-hero-768.webp": [768, 404],
   "/images/blog/loi-thuong-gap-khi-choi-pickleball-hero.webp": [1729, 910],
   "/images/blog/luat-pickleball-co-ban-hero-768.webp": [768, 429],

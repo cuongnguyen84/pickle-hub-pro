@@ -1248,7 +1248,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v109 (2026-09-08): the Leapmotor Kuala Lumpur Cup preview (EN + VI) goes
   // live the day before the event, and the calendar row it links from changed
   // name from "Kuala Lumpur Cup" to the official "Leapmotor Kuala Lumpur Cup".
-  const cacheKey = `pr:v109:${url.pathname}`;
+  // v110 (2026-09-08): hero image wired on the Kuala Lumpur Cup preview, so
+  // og:image moves off the site-wide fallback on both the EN and VI URLs.
+  const cacheKey = `pr:v110:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
