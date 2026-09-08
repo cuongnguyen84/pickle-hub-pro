@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Crown, Trophy, Check, Pencil, Play, Radio, MapPin, ArrowLeftRight, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n';
@@ -201,15 +202,16 @@ const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, onCourtNameU
         >
           <ArrowLeftRight className="w-4 h-4" style={{ color: 'var(--tl-green)', flexShrink: 0 }} />
           <span style={{ flex: 1 }}>{t.quickTable.playoff.swapHint}</span>
-          <button
+          <Button
             type="button"
-            className="tl-btn"
+            variant="outline"
+            size="sm"
             onClick={() => setSwapSel(null)}
-            style={{ padding: '4px 8px', fontSize: 11 }}
+            style={{ height: 26, padding: '0 8px', fontSize: 11 }}
           >
             <X className="w-3 h-3" />
             {t.quickTable.playoff.swapCancel}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -495,16 +497,18 @@ const BracketMatchCard = ({
     const selected = swapSel?.matchId === match.id && swapSel.slot === slot;
     const armed = !!swapSel && !selected;
     return (
-      <button
+      <Button
         type="button"
-        className="tl-btn"
+        variant="outline"
+        size="sm"
         onClick={() => onSwapSlot({ matchId: match.id, slot })}
         title={t.quickTable.playoff.swap}
         aria-label={t.quickTable.playoff.swap}
         aria-pressed={selected}
         style={{
-          padding: '4px 6px',
-          fontSize: 11,
+          height: 26,
+          width: 26,
+          padding: 0,
           flexShrink: 0,
           ...(selected
             ? { background: 'var(--tl-green)', color: 'var(--tl-bg)', borderColor: 'var(--tl-green)' }
@@ -514,7 +518,7 @@ const BracketMatchCard = ({
         }}
       >
         <ArrowLeftRight className="w-3 h-3" />
-      </button>
+      </Button>
     );
   };
 
