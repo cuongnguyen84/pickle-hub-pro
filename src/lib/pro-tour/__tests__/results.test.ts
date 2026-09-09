@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   classifyEvent,
+  collectLiveMatches,
   filterProResults,
   groupProResults,
   playersLine,
@@ -148,5 +149,16 @@ describe("filterProResults", () => {
     expect(sf.matches[0].id).toBe("on");
     expect(sf.matches[0].isLive).toBe(true);
     expect(sf.matches[1].isLive).toBe(false);
+  });
+
+  it("collectLiveMatches gathers live matches across events with labels", () => {
+    const out = groupProResults([
+      row({ id: "on1", winning_team: null, notes: '{"live":true}' }),
+      row({ id: "on2", tournament_event: "Pro Women's Singles", round_name: "SF", winning_team: null, notes: '{"live":true}' }),
+      row({ id: "done" }),
+    ]);
+    const live = collectLiveMatches(out, "vi");
+    expect(live).toHaveLength(2);
+    expect(new Set(live.map((m) => m.eventLabel))).toEqual(new Set(["Đôi nam", "Đơn nữ"]));
   });
 });

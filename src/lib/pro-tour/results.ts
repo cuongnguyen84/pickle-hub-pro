@@ -296,3 +296,20 @@ export function filterProResults(results: ProResults, query: string): ProResults
   }
   return { events, total, vietnamCount };
 }
+
+/** Every in-progress match across all events, tagged with its event label —
+ * the page pins these at the very top while they run. */
+export function collectLiveMatches(
+  results: ProResults,
+  lang: "en" | "vi",
+): Array<ProResultMatch & { eventLabel: string }> {
+  const out: Array<ProResultMatch & { eventLabel: string }> = [];
+  for (const ev of results.events) {
+    for (const round of ev.rounds) {
+      for (const m of round.matches) {
+        if (m.isLive) out.push({ ...m, eventLabel: lang === "vi" ? ev.labelVi : ev.labelEn });
+      }
+    }
+  }
+  return out.sort((x, y) => (x.playedAt ?? "").localeCompare(y.playedAt ?? "") || x.slug.localeCompare(y.slug));
+}
