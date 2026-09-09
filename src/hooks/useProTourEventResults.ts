@@ -35,6 +35,13 @@ export function useProTourEventResults(meta: ProTourEventMeta | undefined) {
     enabled: !!meta,
     queryFn: async () => groupProResults(await fetchProTourEventRows(meta!)),
     refetchInterval: live ? 60_000 : 3_600_000,
+    // Measured 2026-09-09 (Cuong: "chờ hơn 1 phút không thấy cập nhật, F5 thì
+    // thấy ngay"): React Query pauses refetchInterval while the tab is
+    // unfocused, and the app-wide refetchOnWindowFocus:false meant coming
+    // back never refetched either — only a hard reload showed new scores.
+    // A live scoreboard is the one surface where both defaults are wrong.
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
     staleTime: 30_000,
   });
 }
