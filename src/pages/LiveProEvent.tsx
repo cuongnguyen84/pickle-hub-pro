@@ -7,6 +7,7 @@
 // event is live the hook polls every minute — no manual refresh needed.
 // ============================================================================
 
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
@@ -15,6 +16,7 @@ import { eventPhase, formatEventDates } from "@/content/pro-tour-events";
 import { useProTourEvent } from "@/hooks/useProTourEvents";
 import { useProTourEventResults } from "@/hooks/useProTourEventResults";
 import {
+  filterProResults,
   playersLine,
   scoreLine,
   type ProResultEvent,
@@ -33,6 +35,7 @@ export default function LiveProEvent() {
   const vi = language === "vi";
   const { meta, isLoading: metaLoading } = useProTourEvent(slug);
   const results = useProTourEventResults(meta);
+  const [playerQuery, setPlayerQuery] = useState("");
 
   if (metaLoading && !meta) {
     return (
@@ -136,21 +139,78 @@ export default function LiveProEvent() {
           </div>
         ) : (
           <>
-            {results.data.vietnamCount > 0 && (
-              <p className="lpe-vn-note">
-                🇻🇳{" "}
-                {vi
-                  ? `${results.data.vietnamCount} trận có VĐV Việt Nam — được đánh dấu bên dưới.`
-                  : `${results.data.vietnamCount} matches feature Vietnamese players — highlighted below.`}
-              </p>
-            )}
-            {results.data.events.map((ev) => (
-              <EventSection key={ev.name} ev={ev} vi={vi} />
-            ))}
+            <div className="lpe-search">
+              <input
+                type="search"
+                value={playerQuery}
+                onChange={(e) => setPlayerQuery(e.target.value)}
+                placeholder={vi ? "Tìm theo tên VĐV…" : "Search players…"}
+                aria-label={vi ? "Tìm trận theo tên vận động viên" : "Search matches by player name"}
+              />
+              {playerQuery && (
+                <button type="button" className="lpe-search-clear" onClick={() => setPlayerQuery("")}
+                  aria-label={vi ? "Xoá tìm kiếm" : "Clear search"}>
+                  ✕
+                </button>
+              )}
+            </div>
+            {(() => {
+              const shown = filterProResults(results.data, playerQuery);
+              if (playerQuery.trim() && shown.total === 0) {
+                return (
+                  <div className="lpe-empty">
+                    <p>
+                      {vi
+                        ? `Không có trận nào của VĐV khớp "${playerQuery}".`
+                        : `No matches for a player matching "${playerQuery}".`}
+                    </p>
+                  </div>
+                );
+              }
+              return (
+                <>
+                  {playerQuery.trim() !== "" && (
+                    <p className="lpe-vn-note">
+                      {vi
+                        ? `${shown.total} trận khớp "${playerQuery}"`
+                        : `${shown.total} matches for "${playerQuery}"`}
+                    </p>
+                  )}
+                  <ResultsTree shown={shown} vi={vi} showVnNote={!playerQuery.trim()} />
+                </>
+              );
+            })()}
           </>
         )}
       </div>
     </TheLineLayout>
+  );
+}
+
+function ResultsTree({
+  shown,
+  vi,
+  showVnNote,
+}: {
+  shown: ReturnType<typeof filterProResults>;
+  vi: boolean;
+  showVnNote: boolean;
+}) {
+  return (
+    <>
+      {showVnNote && shown.vietnamCount > 0 && (
+              <p className="lpe-vn-note">
+                🇻🇳{" "}
+                {vi
+                  ? `${shown.vietnamCount} trận có VĐV Việt Nam — được đánh dấu bên dưới.`
+                  : `${shown.vietnamCount} matches feature Vietnamese players — highlighted below.`}
+              </p>
+            )}
+            {/* was: results.data 🇻🇳 note — now lives in ResultsTree */}
+      {shown.events.map((ev) => (
+        <EventSection key={ev.name} ev={ev} vi={vi} />
+      ))}
+    </>
   );
 }
 
@@ -197,6 +257,12 @@ function MatchRow({ m }: { m: ProResultMatch }) {
 }
 
 const LPE_CSS = `
+.lpe-search { position: relative; margin: 4px 0 14px; max-width: 420px; }
+.lpe-search input { width: 100%; padding: 10px 38px 10px 14px; font-size: 14.5px; color: var(--tl-fg); background: var(--tl-surface); border: 1px solid var(--tl-border); border-radius: 12px; outline: none; }
+.lpe-search input:focus-visible { border-color: var(--tl-gold); }
+.lpe-search input::placeholder { color: var(--tl-dim); }
+.lpe-search-clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: 0; background: none; color: var(--tl-dim); font-size: 14px; cursor: pointer; padding: 4px 6px; }
+.lpe-search-clear:hover { color: var(--tl-fg); }
 .lpe-title { overflow-wrap: anywhere; }
 .lpe-meta { color: var(--tl-dim); }
 .lpe-badges { display: flex; align-items: center; gap: 12px; margin: 8px 0 0; }

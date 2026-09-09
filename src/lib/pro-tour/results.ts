@@ -245,3 +245,46 @@ export function groupProResults(rowsIn: ProResultRow[]): ProResults {
   const total = events.reduce((n, e) => n + e.matchCount, 0);
   return { events, total, vietnamCount };
 }
+
+/* ─── Player search ──────────────────────────────────────────────────── */
+
+// Same fold as src/lib/wpr-search.ts / social/slug.ts — NFD + strip
+// combining marks; đ/Đ by hand. Telex input ("truong") matches "Trương".
+const fold = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toLowerCase()
+    .trim();
+
+/** Filter a grouped result tree down to matches where any player name
+ * contains the query (diacritic-insensitive). Empty query → input returned
+ * as-is. Counts (matchCount/total/vietnamCount) are recomputed from the
+ * kept matches so the header numbers stay honest. */
+export function filterProResults(results: ProResults, query: string): ProResults {
+  const q = fold(query);
+  if (!q) return results;
+  let total = 0;
+  let vietnamCount = 0;
+  const events: ProResultEvent[] = [];
+  for (const ev of results.events) {
+    const rounds: ProResultRound[] = [];
+    for (const round of ev.rounds) {
+      const matches = round.matches.filter((m) =>
+        [...m.teamA, ...m.teamB].some((pl) => fold(pl.name).includes(q)),
+      );
+      if (matches.length > 0) rounds.push({ ...round, matches });
+    }
+    if (rounds.length === 0) continue;
+    const matchCount = rounds.reduce((n, r) => n + r.matches.length, 0);
+    total += matchCount;
+    vietnamCount += rounds.reduce(
+      (n, r) => n + r.matches.filter((m) => m.hasVietnam).length,
+      0,
+    );
+    events.push({ ...ev, rounds, matchCount });
+  }
+  return { events, total, vietnamCount };
+}
