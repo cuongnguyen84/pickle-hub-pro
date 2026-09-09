@@ -82,8 +82,11 @@ export function describeUnimportableSlots(
   teamOneExternalIds: readonly string[],
   teamTwoExternalIds: readonly string[],
 ): string | null {
-  if (teamOneExternalIds.length === 0 || teamTwoExternalIds.length === 0) {
-    return "empty team";
+  // 2026-09-09: a slot waiting on a feeder match has ONE empty side and IS
+  // importable — the page renders it as "vs TBD" (Cuong). Only a match with
+  // no players at all stays unimportable.
+  if (teamOneExternalIds.length === 0 && teamTwoExternalIds.length === 0) {
+    return "empty match";
   }
 
   const placeholders = [...teamOneExternalIds, ...teamTwoExternalIds].filter((id) =>

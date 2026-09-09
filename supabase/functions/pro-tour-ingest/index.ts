@@ -394,6 +394,7 @@ async function reconcileMatches(
         .update(updateRow)
         .eq("id", prior.id);
       if (upErr) throw new Error(`Match update ${match.external_match_id}: ${upErr.message}`);
+      await topUpParticipants(supabase, prior.id, match, externalIdToProfileId);
       imported += 1;
       continue;
     }
@@ -428,6 +429,7 @@ async function reconcileMatches(
             `[ingest] live refresh ${match.external_match_id} failed: ${liveErr.message}`,
           );
         }
+        await topUpParticipants(supabase, prior.id, match, externalIdToProfileId);
       }
       continue;
     }
@@ -445,6 +447,33 @@ async function reconcileMatches(
     // resolved provider without richer notes to refresh → leave it unchanged.
   }
   return imported;
+}
+
+/** A row inserted as "X vs TBD" gains its opponent later — updates never
+ * touched participants, so the slot stayed TBD forever. Resolve both sides
+ * and upsert with ignoreDuplicates: existing rows are untouched, the newly
+ * filled side appears. Unresolvable ids are skipped (next pass reconciles). */
+async function topUpParticipants(
+  supabase: ReturnType<typeof createClient>,
+  matchRowId: string,
+  match: ScrapedMatch,
+  externalIdToProfileId: Map<string, string>,
+): Promise<void> {
+  const rows: Array<{ match_id: string; player_id: string; team: string; position: number }> = [];
+  (["one", "two"] as const).forEach((side) => {
+    const ids = side === "one"
+      ? match.team_one.player_external_ids
+      : match.team_two.player_external_ids;
+    ids.forEach((eid, i) => {
+      const pid = externalIdToProfileId.get(eid);
+      if (pid) rows.push({ match_id: matchRowId, player_id: pid, team: side === "one" ? "a" : "b", position: i + 1 });
+    });
+  });
+  if (rows.length === 0) return;
+  const { error } = await supabase
+    .from("match_participants")
+    .upsert(rows, { onConflict: "match_id,player_id", ignoreDuplicates: true });
+  if (error) console.error(`[ingest] participants top-up ${match.external_match_id}: ${error.message}`);
 }
 
 async function insertMatchWithParticipants(
