@@ -1261,7 +1261,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // also a PPA Asia 1000 at the same ceiling; it promised eight seeds per
   // event then listed four for Women's Doubles; "two weeks ago" for a
   // August 23 result; and it read as a preview on day one of play.
-  const cacheKey = `pr:v113:${url.pathname}`;
+  // v114 (2026-09-09): post-World-Cup SEO pass. The how-to-watch post's meta
+  // title/description were rewritten for the "live stream" (EN) and "vé / giá
+  // vé" (VI) queries that were drawing 2.5% and 1.1% CTR at position 8-9, and
+  // the schedule post now links on to the Vietnam 2026 calendar so the traffic
+  // spike has somewhere to go now that the event is over.
+  const cacheKey = `pr:v114:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
