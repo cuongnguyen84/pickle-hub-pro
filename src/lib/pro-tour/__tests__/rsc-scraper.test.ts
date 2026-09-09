@@ -342,3 +342,22 @@ describe("parseTournamentHtml — defensive cases", () => {
     expect(out.tournament_event).toBe("Unknown Event");
   });
 });
+
+describe("single-team (TBD) slots", () => {
+  const FIX =
+    String.raw`\"roundId\":\"r16\",\"title\":\"Round 16\",\"matches\":[` +
+    String.raw`{\"id\":\"aaaaaaaa-1111-2222-3333-444444444444\",\"maxGames\":3,\"inBracketType\":\"W\",\"date\":\"Sep 10 - 10:00 AM MYT\",\"court\":\"CC\",\"matchStatus\":1,\"teams\":[` +
+    String.raw`{\"id\":\"bbbbbbbb-1111-2222-3333-444444444444\",\"players\":[\"Eunggwon Kim\"],\"seedNumber\":3,\"games\":[{\"score\":\"\",\"isWinner\":false}],\"isWinner\":false}]},` +
+    String.raw`{\"id\":\"cccccccc-1111-2222-3333-444444444444\",\"maxGames\":3,\"inBracketType\":\"W\",\"date\":\"Sep 10 - 10:00 AM MYT\",\"court\":\"CC\",\"matchStatus\":1,\"teams\":[` +
+    String.raw`{\"id\":\"dddddddd-1111-2222-3333-444444444444\",\"players\":[\"Noe Khlif\"],\"seedNumber\":7,\"games\":[{\"score\":\"\",\"isWinner\":false}],\"isWinner\":false}]}]`;
+
+  it("does not borrow the neighbouring match's team for a TBD slot", () => {
+    const r = parseTournamentHtml(FIX, "https://x");
+    expect(r.matches).toHaveLength(2);
+    expect(r.matches[0].team_one.player_external_ids).toEqual(["eunggwon-kim"]);
+    expect(r.matches[0].team_two.player_external_ids).toEqual([]);
+    expect(r.matches[1].team_one.player_external_ids).toEqual(["noe-khlif"]);
+    expect(r.matches[1].team_two.player_external_ids).toEqual([]);
+    expect(r.matches[0].winner_team).toBeNull();
+  });
+});

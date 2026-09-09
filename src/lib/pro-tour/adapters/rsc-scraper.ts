@@ -328,8 +328,15 @@ function extractMatches(html: string, sourceUrl: string): ScrapedMatch[] {
   // Net effect on the PPA Finals fixture: SF2 record showed SF1's
   // teams + date; the actual Final match showed SF2's teams + date.
   // Scoping matchSlice to the matchId position fixes both.
-  for (const teamsMatch of html.matchAll(MATCH_TEAMS_MARKER)) {
-    const teamsIdx = teamsMatch.index ?? 0;
+  const teamsMarkers = Array.from(html.matchAll(MATCH_TEAMS_MARKER));
+  for (let ti = 0; ti < teamsMarkers.length; ti++) {
+    const teamsIdx = teamsMarkers[ti].index ?? 0;
+    // 2026-09-09 (KL Cup R16): a slot whose opponent is still TBD has only
+    // ONE team block, and the fixed +5000 window then swallowed the NEXT
+    // match's first team — the page showed a sliding chain of fabricated
+    // pairings ("Kim vs Khlif", "Khlif vs Wong", …). The next teams-marker
+    // is a hard boundary no current-match team block can live beyond.
+    const nextTeamsIdx = teamsMarkers[ti + 1]?.index ?? html.length;
 
     const lookBehindStart = Math.max(0, teamsIdx - 3000);
     const lookBehindWindow = html.slice(lookBehindStart, teamsIdx);
@@ -347,7 +354,7 @@ function extractMatches(html: string, sourceUrl: string): ScrapedMatch[] {
     // \"id\":\"<uuid>\""). Slice from here forward so per-match regexes
     // can't see previous-match residue.
     const matchIdStart = lookBehindStart + matchIdLocalIdx;
-    const forwardEnd = Math.min(html.length, teamsIdx + 5000);
+    const forwardEnd = Math.min(html.length, teamsIdx + 5000, nextTeamsIdx);
     const matchSlice = html.slice(matchIdStart, forwardEnd);
 
     const dateRaw = matchSlice.match(MATCH_DATE_RE)?.[1] ?? "";
@@ -366,9 +373,15 @@ function extractMatches(html: string, sourceUrl: string): ScrapedMatch[] {
     const round_name = canonicalRoundName(lastRoundTitle, bracketType);
 
     const teamBlocks = Array.from(matchSlice.matchAll(MATCH_TEAM_BLOCK_RE));
-    if (teamBlocks.length < 2) continue;
+    if (teamBlocks.length === 0) continue;
     const team_one = parseTeamBlock(teamBlocks[0]);
-    const team_two = parseTeamBlock(teamBlocks[1]);
+    // One block = the opponent is TBD (waiting on a feeder match). Emit the
+    // match with an empty second side so the page can show "vs TBD" instead
+    // of dropping the slot — or worse, borrowing the neighbour's team.
+    const team_two: ParsedTeam =
+      teamBlocks.length > 1
+        ? parseTeamBlock(teamBlocks[1])
+        : { seed: null, scores: [], isWinner: false, displayNames: [], externalIds: [] };
 
     // Determine winner from team.isWinner flags. Drop inconclusive
     // matches (both teams isWinner=false) into winner_team=null;
