@@ -5,6 +5,7 @@ import { useI18n } from "@/i18n";
 import { useLivestreams, useTournaments, useVideos } from "@/hooks/useSupabaseData";
 import { useLiveStatusRealtime } from "@/hooks/useLiveStatusRealtime";
 import { LiveSection, LiveSectionSkeleton } from "@/components/home/LiveSection";
+import { ProTourEventsStrip } from "@/components/live/ProTourEventsStrip";
 import { HomeNewsFeed } from "@/components/home/HomeNewsFeed";
 import { useHomepageStats } from "@/hooks/useHomepageStats";
 import { useNewsletterSubscribe } from "@/hooks/useNewsletterSubscribe";
@@ -642,6 +643,16 @@ const Index = () => {
 
         const cluster: Array<{ key: string; node: ReactNode }> = [
           liveNode,
+          {
+            // Pro-tour tournaments in season — same registry-driven strip as
+            // /live (zero requests, self-hides out of season).
+            key: "protour",
+            node: (
+              <section className="tl-shell">
+                <ProTourEventsStrip language={language} />
+              </section>
+            ),
+          },
           editorialNode ? { key: "editorial", node: editorialNode } : null,
           {
             key: "news",
