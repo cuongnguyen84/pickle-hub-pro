@@ -1268,7 +1268,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // spike has somewhere to go now that the event is over.
   // v115 (2026-09-09): new Kuala Lumpur Cup results post (EN + VI), and the
   // preview post now links on to it in both locales.
-  const cacheKey = `pr:v115:${url.pathname}`;
+  // v116 (2026-09-09): the KL Cup results post gets its own hero — it had been
+  // sharing the preview post's image, so both shipped the same og:image.
+  const cacheKey = `pr:v116:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
