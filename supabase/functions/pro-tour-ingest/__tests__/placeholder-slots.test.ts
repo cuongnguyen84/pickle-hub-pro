@@ -107,8 +107,14 @@ describe("describeUnimportableSlots", () => {
     ).toContain("duplicate player slot");
   });
 
-  it("rejects an empty side", () => {
-    expect(describeUnimportableSlots([], ["he-phoenix", "ryan-ng"])).toBe("empty team");
-    expect(describeUnimportableSlots(["luc-pham"], [])).toBe("empty team");
+  it("accepts a one-sided slot — that's a TBD match the page shows as 'vs TBD'", () => {
+    // 2026-09-09: R16 slots waiting on feeder matches must be imported with
+    // one empty side instead of vanishing (or, worse, borrowing a neighbour).
+    expect(describeUnimportableSlots([], ["he-phoenix", "ryan-ng"])).toBeNull();
+    expect(describeUnimportableSlots(["luc-pham"], [])).toBeNull();
+  });
+
+  it("still rejects a match with no players at all", () => {
+    expect(describeUnimportableSlots([], [])).toBe("empty match");
   });
 });
