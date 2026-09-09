@@ -49,7 +49,7 @@ const post: BlogPost = {
       sections: [
         {
           heading: "Leapmotor Kuala Lumpur Cup 2026 at a glance",
-          content: "Last updated September 9, 2026 — the Leapmotor Kuala Lumpur Cup 2026 runs September 9-13, 2026 at The Hood in Kuala Lumpur, Malaysia, with up to US$300,000 in prize money and 1000 ranking points to each gold medalist. It is PPA Tour Asia's top-tier stop of the season so far, played the week after the Pickleball World Cup in Da Nang finished. Qualifying opens Wednesday September 9 and the finals are Sunday September 13, 13:00-18:00 GMT+8 (12:00-17:00 Vietnam time). Gabe Tardio, the world No. 2 as reported by the New Straits Times, tops the Men's Doubles seeds with Noe Khlif; Kaitlyn Christian tops the Women's Singles seeds; and Vietnam's Ho Tam is seeded 8th in Women's Singles two weeks after winning Vietnam's first PPA Tour Asia Women's Doubles gold. This ThePickleHub guide has the day-by-day schedule in both Malaysian and Vietnamese time, the full prize and points table, every seed, the five Vietnamese players in the main draw, and an honest account of what the organizers have and have not published.",
+          content: "Last updated September 9, 2026, day one — the Leapmotor Kuala Lumpur Cup 2026 is under way and runs September 9-13, 2026 at The Hood in Kuala Lumpur, Malaysia, with up to US$300,000 in prize money and 1000 ranking points to each gold medalist. It is the season's second PPA Asia 1000 stop, level with the MB Hanoi Cup played April 1-5, and it lands the week after the Pickleball World Cup in Da Nang finished. Today, Wednesday September 9, is qualifying day, 09:00-21:00 GMT+8 (08:00-20:00 Vietnam time); the finals are Sunday September 13, 13:00-18:00 GMT+8 (12:00-17:00 Vietnam time). Gabe Tardio, the world No. 2 as reported by the New Straits Times, tops the Men's Doubles seeds with Noe Khlif; Kaitlyn Christian tops the Women's Singles seeds; and Vietnam's Ho Tam is seeded 8th in Women's Singles, seventeen days after winning Vietnam's first PPA Tour Asia Women's Doubles gold on August 23. This ThePickleHub guide has the day-by-day schedule in both Malaysian and Vietnamese time, the full prize and points table, every seed, the five Vietnamese players in the main draw, and an honest account of what the organizers have and have not published.",
           internalLinks: [
             {
               text: "See the full PPA Tour Asia 2026 calendar and prize money",
@@ -152,7 +152,7 @@ const post: BlogPost = {
         },
         {
           heading: "Vietnam in the main draw: five players, and one notable absence",
-          content: "Five Vietnamese-flagged players are in the main draw, and the headline is Ho Tam — Ho Thi Truc Tam, entered as \"HO Tam\" — seeded 8th in Women's Singles. Two weeks ago in Shenzhen she and Sophia Nhi Huynh won the first Women's Doubles gold taken by a Vietnamese pair on PPA Tour Asia. In Kuala Lumpur that pair is split: Ho Tam plays Women's Doubles with Chinese Taipei's A. Huang, while Sophia Nhi Huynh partners Sophia Phuong Anh Tran, a different player often confused with her. The absence is just as worth naming: Hien Truong (Truong Vinh Hien), who took two silvers in Shenzhen and is Vietnam's most visible man on this tour, does not appear anywhere in the Kuala Lumpur entry lists — not in the main draw, not in qualifying, not in any event. The organizers have not said why.",
+          content: "Five Vietnamese-flagged players are in the main draw, and the headline is Ho Tam — Ho Thi Truc Tam, entered as \"HO Tam\" — seeded 8th in Women's Singles. On August 23 in Shenzhen she and Sophia Nhi Huynh won the first Women's Doubles gold taken by a Vietnamese pair on PPA Tour Asia. In Kuala Lumpur that pair is split: Ho Tam plays Women's Doubles with Chinese Taipei's A. Huang, while Sophia Nhi Huynh partners Sophia Phuong Anh Tran, a different player often confused with her. The absence is just as worth naming: Hien Truong (Truong Vinh Hien), who took two silvers in Shenzhen and is Vietnam's most visible man on this tour, does not appear anywhere in the Kuala Lumpur entry lists — not in the main draw, not in qualifying, not in any event. The organizers have not said why.",
           listItems: [
             "Women's Singles main draw: Ho Tam (seeded 8), Sophia Phuong Anh Tran, Sophia Nhi Huynh",
             "Men's Singles main draw: Ngo Dang, Hoang Nguyen Anh",
@@ -174,7 +174,7 @@ const post: BlogPost = {
         },
         {
           heading: "The seeds",
-          content: "PPA Tour Asia numbers the top eight in each event and lists the rest of the field unnumbered. Seeds as published:",
+          content: "PPA Tour Asia numbers up to eight seeds per event and lists the rest of the field unnumbered. Women's Doubles is the exception: the organizers published only four seeds there. Seeds as published:",
           listItems: [
             "Men's Singles: 1 Zane Ford (USA), 2 Hong Kit Wong (HKG), 3 Tama Shimabukuro (USA), 4 Noe Khlif (FRA), 5 Luc Pham (USA), 6 Kenta Miyoshi (JPN), 7 Matthew Finnerty (GBR), 8 Harrison Brown (AUS)",
             "Women's Singles: 1 Kaitlyn Christian (USA), 2 Brooke Buckner (USA), 3 Chao Yi Wang (TPE), 4 Sahra Dennehy (AUS), 5 Judit Castillo (ESP), 6 Yufei Long (CHN), 7 Rika Fujiwara (JPN), 8 Ho Tam (VIE)",
@@ -185,9 +185,9 @@ const post: BlogPost = {
         },
         {
           heading: "How to watch, and what has not been published",
-          content: "PPA Tour Asia says matches stream on its own YouTube channel across all five days, and points viewers to \"your local broadcaster\" through a regional list. Three caveats are worth stating plainly, because the organizers have not: the page does not say whether the YouTube stream is free or gated, the broadcaster list renders empty, and Media Prima Omnia is credited as Official Media Partner without any statement that it will carry the event. Tickets are a separate trap. The tournament page carries only a bare Tixr button, but PPA Tour Asia published a full ticket breakdown as a news post on August 7 that is easy to miss from the tournament page itself. Four passes are on sale: a DINKER GA Season Pass covering all five days; single-day general admission split into BANGER (left stand, directly behind the players) and DINKER (right stand); a VIP Pass with reserved seating, lounge access, complimentary food and drink and player meet-and-greets; and a Premium Courtside Pass on Championship Court that adds priority entry and an official merch pack the organizers value at over RM200. Every pass includes Pickletown, the food-and-games area running all five days, and every pass allows re-entry on a credential scan. What is genuinely missing is the price: no ticket figure appears on either PPA page, so the only way to see what a seat costs is to open Tixr. There is also still no street address for The Hood, only a map link. If any of that changes during the week, this page will be updated.",
+          content: "PPA Tour Asia says matches stream on its own YouTube channel across all five days, and points viewers to \"your local broadcaster\" through a regional list. Three caveats are worth stating plainly, because the organizers have not: the page does not say whether the YouTube stream is free or gated, the broadcaster list renders empty, and Media Prima Omnia is credited as Official Media Partner without any statement that it will carry the event. Tickets are a separate trap. The tournament page carries only a bare Tixr button, but PPA Tour Asia published a full ticket breakdown as a news post on August 7 that is easy to miss from the tournament page itself. Four passes are on sale: a DINKER GA Season Pass covering all five days; single-day general admission split into BANGER (left stand, directly behind the players) and DINKER (right stand); a VIP Pass with reserved seating, lounge access, complimentary food and drink and player meet-and-greets; and a Premium Courtside Pass in the front row of Championship Court, which carries everything the VIP Pass does — lounge, complimentary food and drink, meet-and-greets — and adds priority entry plus an official merch pack the organizers value at over RM200. Every pass includes Pickletown, the food-and-games area running all five days, and every pass allows re-entry on a credential scan. What is genuinely missing is the price: no ticket figure appears on either PPA page, so the only way to see what a seat costs is to open Tixr. There is also still no street address for The Hood, only a map link. If any of that changes during the week, this page will be updated.",
           listItems: [
-            "Stream: PPA Tour Asia's YouTube channel, September 9-13. Free-to-watch is likely but not stated",
+            "Stream: PPA Tour Asia's YouTube channel (youtube.com/@ppatourasia), September 9-13. The organizers do not say whether it is free or gated",
             "Broadcast: a regional broadcaster list exists on the tournament page but is currently empty",
             "Tickets: on sale via Tixr. Four passes \u2014 GA season, single-day Banger or Dinker, VIP, Premium Courtside. Prices appear on Tixr only, not on PPA's own pages",
             "Venue: The Hood, Kuala Lumpur. Map link only, no address given",
@@ -219,7 +219,7 @@ const post: BlogPost = {
         },
         {
           question: "What tier is the Kuala Lumpur Cup on PPA Tour Asia?",
-          answer: "It is the tour's 1000-point tier, the highest so far in the 2026 Asian season, above the 500-point stops such as the Skechers Shenzhen Open. Only the Hong Kong Slam in October carries more prize money.",
+          answer: "It is the tour's 1000-point tier, above the 500-point stops such as the Skechers Shenzhen Open. It is the second 1000-point stop of the 2026 Asian season — the MB Hanoi Cup in April was the first, at the same prize ceiling. Only the Hong Kong Slam in October carries more prize money.",
         },
       ],
     },
@@ -230,7 +230,7 @@ const post: BlogPost = {
       sections: [
         {
           heading: "Leapmotor Kuala Lumpur Cup 2026 — những điều cần biết",
-          content: "Cập nhật ngày 9/9/2026 — Leapmotor Kuala Lumpur Cup 2026 diễn ra từ 9 đến 13/9/2026 tại The Hood, Kuala Lumpur (Malaysia), tổng thưởng tối đa 300.000 USD và 1000 điểm xếp hạng cho mỗi nhà vô địch. Đây là chặng có thang điểm cao nhất của PPA Tour Asia mùa 2026 tính tới lúc này, diễn ra ngay tuần sau khi Pickleball World Cup ở Đà Nẵng khép lại. Vòng loại khởi tranh thứ Tư 9/9, chung kết vào Chủ nhật 13/9 lúc 12:00–17:00 giờ Việt Nam. Đáng chú ý với người hâm mộ Việt: Hồ Tâm là hạt giống số 8 đơn nữ, chỉ hai tuần sau khi cùng Sophia Nhi Huynh giành HCV đôi nữ đầu tiên của Việt Nam trên PPA Tour Asia. Bài viết này do ThePickleHub tổng hợp, gồm lịch thi đấu quy đổi sang giờ Việt Nam, bảng tiền thưởng đầy đủ, toàn bộ hạt giống, năm tay vợt Việt trong main draw, và cả những thông tin ban tổ chức CHƯA công bố.",
+          content: "Cập nhật ngày 9/9/2026, ngày thi đấu đầu tiên — Leapmotor Kuala Lumpur Cup 2026 đã khởi tranh, diễn ra từ 9 đến 13/9/2026 tại The Hood, Kuala Lumpur (Malaysia), tổng thưởng tối đa 300.000 USD và 1000 điểm xếp hạng cho mỗi nhà vô địch. Đây là chặng thang 1000 điểm thứ hai của PPA Tour Asia mùa 2026, ngang hạng với MB Hanoi Cup hồi 1–5/4, và diễn ra ngay tuần sau khi Pickleball World Cup ở Đà Nẵng khép lại. Hôm nay thứ Tư 9/9 là ngày vòng loại, 09:00–21:00 giờ Malaysia (08:00–20:00 giờ Việt Nam); chung kết vào Chủ nhật 13/9 lúc 12:00–17:00 giờ Việt Nam. Đáng chú ý với người hâm mộ Việt: Hồ Tâm là hạt giống số 8 đơn nữ, 17 ngày sau khi cùng Sophia Nhi Huynh giành HCV đôi nữ đầu tiên của Việt Nam trên PPA Tour Asia ngày 23/8. Bài viết này do ThePickleHub tổng hợp, gồm lịch thi đấu quy đổi sang giờ Việt Nam, bảng tiền thưởng đầy đủ, toàn bộ hạt giống, năm tay vợt Việt trong main draw, và cả những thông tin ban tổ chức CHƯA công bố.",
           internalLinks: [
             {
               text: "Xem lịch và tiền thưởng toàn mùa PPA Tour Asia 2026",
@@ -333,7 +333,7 @@ const post: BlogPost = {
         },
         {
           heading: "Năm tay vợt Việt ở main draw — và một cái tên vắng mặt",
-          content: "Năm tay vợt mang cờ Việt Nam có tên ở main draw, nổi bật nhất là Hồ Tâm — Hồ Thị Trúc Tâm, đăng ký dưới tên \"HO Tam\" — hạt giống số 8 đơn nữ. Hai tuần trước tại Thâm Quyến, cô cùng Sophia Nhi Huynh giành HCV đôi nữ đầu tiên cho một cặp Việt Nam trên PPA Tour Asia. Ở Kuala Lumpur, cặp đó TÁCH RA: Hồ Tâm đánh đôi nữ với A. Huang (Đài Bắc Trung Hoa), còn Sophia Nhi Huynh ghép với Sophia Phương Anh Trần — một tay vợt khác, rất hay bị nhầm là cùng một người. Sự vắng mặt cũng đáng nói không kém: Trương Vinh Hiển, người giành 2 HCB ở Thâm Quyến và là gương mặt nam Việt Nam nổi bật nhất trên tour này, KHÔNG có tên ở bất kỳ nội dung nào tại Kuala Lumpur — không main draw, không vòng loại. Ban tổ chức không giải thích lý do.",
+          content: "Năm tay vợt mang cờ Việt Nam có tên ở main draw, nổi bật nhất là Hồ Tâm — Hồ Thị Trúc Tâm, đăng ký dưới tên \"HO Tam\" — hạt giống số 8 đơn nữ. Ngày 23/8 tại Thâm Quyến, cô cùng Sophia Nhi Huynh giành HCV đôi nữ đầu tiên cho một cặp Việt Nam trên PPA Tour Asia. Ở Kuala Lumpur, cặp đó TÁCH RA: Hồ Tâm đánh đôi nữ với A. Huang (Đài Bắc Trung Hoa), còn Sophia Nhi Huynh ghép với Sophia Phương Anh Trần — một tay vợt khác, rất hay bị nhầm là cùng một người. Sự vắng mặt cũng đáng nói không kém: Trương Vinh Hiển, người giành 2 HCB ở Thâm Quyến và là gương mặt nam Việt Nam nổi bật nhất trên tour này, KHÔNG có tên ở bất kỳ nội dung nào tại Kuala Lumpur — không main draw, không vòng loại. Ban tổ chức không giải thích lý do.",
           listItems: [
             "Đơn nữ (main draw): Hồ Tâm (hạt giống 8), Sophia Phương Anh Trần, Sophia Nhi Huynh",
             "Đơn nam (main draw): Ngô Đăng, Hoàng Nguyễn Anh",
@@ -359,7 +359,7 @@ const post: BlogPost = {
         },
         {
           heading: "Bảng hạt giống",
-          content: "PPA Tour Asia đánh số 8 hạt giống đầu mỗi nội dung, phần còn lại của nhánh không đánh số. Danh sách theo công bố:",
+          content: "PPA Tour Asia đánh số tối đa 8 hạt giống mỗi nội dung, phần còn lại của nhánh không đánh số. Riêng đôi nữ là ngoại lệ: ban tổ chức chỉ công bố 4 hạt giống. Danh sách theo công bố:",
           listItems: [
             "Đơn nam: 1 Zane Ford (Mỹ), 2 Hong Kit Wong (Hồng Kông), 3 Tama Shimabukuro (Mỹ), 4 Noe Khlif (Pháp), 5 Luc Pham (Mỹ), 6 Kenta Miyoshi (Nhật), 7 Matthew Finnerty (Anh), 8 Harrison Brown (Úc)",
             "Đơn nữ: 1 Kaitlyn Christian (Mỹ), 2 Brooke Buckner (Mỹ), 3 Chao Yi Wang (Đài Bắc TH), 4 Sahra Dennehy (Úc), 5 Judit Castillo (Tây Ban Nha), 6 Yufei Long (Trung Quốc), 7 Rika Fujiwara (Nhật), 8 Hồ Tâm (Việt Nam)",
@@ -370,9 +370,9 @@ const post: BlogPost = {
         },
         {
           heading: "Xem ở đâu — và những gì ban tổ chức chưa nói",
-          content: "PPA Tour Asia nói các trận được phát trên kênh YouTube của chính họ suốt 5 ngày, và có mục \"đài phát sóng tại khu vực của bạn\". Có ba điểm cần nói thẳng vì ban tổ chức không nói: trang giải KHÔNG ghi stream YouTube miễn phí hay phải trả tiền, danh sách đài phát sóng hiện đang TRỐNG, và Media Prima Omnia được ghi là Đối tác truyền thông chính thức nhưng không có câu nào khẳng định đài này sẽ phát giải. Riêng chuyện vé thì dễ hiểu nhầm: trang giải chỉ có đúng một nút Tixr trơ trọi, nhưng PPA Tour Asia đã đăng một bài riêng ngày 7/8 mô tả đầy đủ các hạng vé — từ trang giải rất dễ bỏ sót. Vé ĐANG BÁN với bốn hạng: DINKER GA Season Pass trọn 5 ngày; vé ngày hạng phổ thông chia làm BANGER (khán đài trái, ngay sau lưng VĐV) và DINKER (khán đài phải); VIP Pass có chỗ ngồi riêng, phòng chờ VIP, đồ ăn uống miễn phí và cơ hội gặp VĐV; và Premium Courtside Pass ngồi hàng đầu sân Championship, thêm lối vào ưu tiên và một túi merch chính hãng ban tổ chức định giá trên 200 RM. Mọi hạng vé đều vào được khu hội chợ Pickletown mở suốt 5 ngày, và đều được ra vào lại khi quét thẻ. Thứ thật sự còn thiếu là GIÁ: không trang PPA nào ghi giá vé, muốn biết bao nhiêu tiền thì phải mở Tixr. Và vẫn không có địa chỉ đường phố của The Hood, chỉ có link bản đồ. Nếu trong tuần có thay đổi, bài này sẽ được cập nhật.",
+          content: "PPA Tour Asia nói các trận được phát trên kênh YouTube của chính họ suốt 5 ngày, và có mục \"đài phát sóng tại khu vực của bạn\". Có ba điểm cần nói thẳng vì ban tổ chức không nói: trang giải KHÔNG ghi stream YouTube miễn phí hay phải trả tiền, danh sách đài phát sóng hiện đang TRỐNG, và Media Prima Omnia được ghi là Đối tác truyền thông chính thức nhưng không có câu nào khẳng định đài này sẽ phát giải. Riêng chuyện vé thì dễ hiểu nhầm: trang giải chỉ có đúng một nút Tixr trơ trọi, nhưng PPA Tour Asia đã đăng một bài riêng ngày 7/8 mô tả đầy đủ các hạng vé — từ trang giải rất dễ bỏ sót. Vé ĐANG BÁN với bốn hạng: DINKER GA Season Pass trọn 5 ngày; vé ngày hạng phổ thông chia làm BANGER (khán đài trái, ngay sau lưng VĐV) và DINKER (khán đài phải); VIP Pass có chỗ ngồi riêng, phòng chờ VIP, đồ ăn uống miễn phí và cơ hội gặp VĐV; và Premium Courtside Pass ngồi hàng đầu sân Championship — có đủ mọi quyền lợi của VIP Pass (phòng chờ, đồ ăn uống miễn phí, gặp VĐV), cộng thêm lối vào ưu tiên và một túi merch chính hãng ban tổ chức định giá trên 200 RM. Mọi hạng vé đều vào được khu hội chợ Pickletown mở suốt 5 ngày, và đều được ra vào lại khi quét thẻ. Thứ thật sự còn thiếu là GIÁ: không trang PPA nào ghi giá vé, muốn biết bao nhiêu tiền thì phải mở Tixr. Và vẫn không có địa chỉ đường phố của The Hood, chỉ có link bản đồ. Nếu trong tuần có thay đổi, bài này sẽ được cập nhật.",
           listItems: [
-            "Livestream: kênh YouTube PPA Tour Asia, 9–13/9. Nhiều khả năng miễn phí nhưng không được ghi rõ",
+            "Livestream: kênh YouTube PPA Tour Asia (youtube.com/@ppatourasia), 9–13/9. Ban tổ chức không nói miễn phí hay phải trả tiền",
             "Truyền hình: trang giải có mục danh sách đài theo khu vực nhưng hiện không hiển thị đài nào",
             "Vé: ĐANG BÁN qua Tixr. Bốn hạng — GA trọn 5 ngày, vé ngày Banger/Dinker, VIP, Premium Courtside. Giá chỉ hiện trên Tixr, không có trên trang PPA",
             "Địa điểm: The Hood, Kuala Lumpur. Chỉ có link bản đồ, không có địa chỉ",
@@ -404,7 +404,7 @@ const post: BlogPost = {
         },
         {
           question: "Kuala Lumpur Cup thuộc hạng nào của PPA Tour Asia?",
-          answer: "Đây là chặng thang 1000 điểm, cao nhất của mùa giải châu Á 2026 tính tới lúc này, trên các chặng 500 điểm như Skechers Shenzhen Open. Chỉ Hong Kong Slam tháng 10 có tổng thưởng lớn hơn.",
+          answer: "Đây là chặng thang 1000 điểm, trên các chặng 500 điểm như Skechers Shenzhen Open. Đây là chặng 1000 điểm thứ hai của mùa châu Á 2026 — MB Hanoi Cup hồi tháng 4 là chặng đầu, cùng trần tiền thưởng. Chỉ Hong Kong Slam tháng 10 có tổng thưởng lớn hơn.",
         },
       ],
     },

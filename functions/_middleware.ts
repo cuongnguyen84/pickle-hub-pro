@@ -1255,7 +1255,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v112 (2026-09-09): the KL Cup preview said no ticket tiers or on-sale
   // status were published. PPA had published both on a separate news page
   // since August 7 — the body now names the four passes on both locales.
-  const cacheKey = `pr:v112:${url.pathname}`;
+  // v113 (2026-09-09): same post, defects independent verification found —
+  // it called KL the season's top-tier stop when MB Hanoi Cup in April was
+  // also a PPA Asia 1000 at the same ceiling; it promised eight seeds per
+  // event then listed four for Women's Doubles; "two weeks ago" for a
+  // August 23 result; and it read as a preview on day one of play.
+  const cacheKey = `pr:v113:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
