@@ -536,9 +536,14 @@ async function insertMatchWithParticipants(
     })),
   ];
 
+  // 2026-09-09: the KL Cup run died with 23505 on
+  // match_participants(match_id, player_id) — the player matcher can map two
+  // scraped names in ONE match to the same profile (near-identical names),
+  // and one bad row used to void the whole 84-match ingest. ON CONFLICT DO
+  // NOTHING keeps the healthy rows and also survives cross-run races.
   const { error: partErr } = await supabase
     .from("match_participants")
-    .insert(participants);
+    .upsert(participants, { onConflict: "match_id,player_id", ignoreDuplicates: true });
   if (partErr) {
     // Insert participants failed. The match row is already committed (there is
     // no transaction across these two statements), so without this it stays

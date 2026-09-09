@@ -658,7 +658,13 @@ async function fetchDueWatchlistRows(env: Env): Promise<WatchlistRow[]> {
     `${env.SUPABASE_URL}/rest/v1/pro_tour_watchlist` +
     `?select=id,tournament_url,scrape_frequency` +
     `&status=eq.active` +
-    `&or=(and(next_scrape_at.is.null,scrape_frequency.in.(daily,weekly)),next_scrape_at.lte.${nowIso})`;
+    `&or=(and(next_scrape_at.is.null,scrape_frequency.in.(daily,weekly)),next_scrape_at.lte.${nowIso})` +
+    // 2026-09-09: no cap meant 10 due rows in one tick — each scrape costs
+    // several subrequests and Workers kill the invocation at 50 with no log
+    // (the 00:00 UTC run vanished without a job-run row). 4 per tick stays
+    // safely under the ceiling; oldest-due first so the rest rotate through
+    // on the following ticks instead of starving.
+    `&order=next_scrape_at.asc.nullsfirst&limit=4`;
   const res = await fetch(url, {
     headers: {
       apikey: env.SUPABASE_SERVICE_ROLE_KEY,
