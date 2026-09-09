@@ -280,9 +280,13 @@ const ROUND_TITLE_TO_CODE: Array<{ pattern: RegExp; code: string }> = [
   { pattern: /^(third\s+place|bronze(?:\s+medal)?\s+match)$/i, code: "3P" },
   { pattern: /^(semi[-\s]?finals?|sf)$/i, code: "SF" },
   { pattern: /^(quarter[-\s]?finals?|qf)$/i, code: "QF" },
-  { pattern: /^(round\s+of\s+16|r16)$/i, code: "R16" },
-  { pattern: /^(round\s+of\s+32|r32)$/i, code: "R32" },
-  { pattern: /^(round\s+of\s+64|r64)$/i, code: "R64" },
+  // 2026-09-09 (KL Cup): the source titles these "Round 64" — no "of" —
+  // so every main-draw early round fell through to the coarse "W" and the
+  // page showed a meaningless "EARLY ROUNDS" heading.
+  { pattern: /^(round\s+(?:of\s+)?16|r16)$/i, code: "R16" },
+  { pattern: /^(round\s+(?:of\s+)?32|r32)$/i, code: "R32" },
+  { pattern: /^(round\s+(?:of\s+)?64|r64)$/i, code: "R64" },
+  { pattern: /^(round\s+(?:of\s+)?128|r128)$/i, code: "R128" },
 ];
 
 function canonicalRoundName(rawTitle: string, bracketType: string): string {

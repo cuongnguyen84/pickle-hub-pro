@@ -81,6 +81,8 @@ export interface ProResultEvent {
   labelVi: string;
   rounds: ProResultRound[];
   matchCount: number;
+  /** Qualifier draws sink below every main draw on the page. */
+  isQualifier: boolean;
   /** Winner of the final, when exactly one match is labelled F. */
   champion: ProResultPlayer[] | null;
 }
@@ -99,9 +101,10 @@ const ROUND_ORDER: Record<string, { rank: number; en: string; vi: string }> = {
   R16: { rank: 4, en: "Round of 16", vi: "Vòng 16" },
   R32: { rank: 5, en: "Round of 32", vi: "Vòng 32" },
   R64: { rank: 6, en: "Round of 64", vi: "Vòng 64" },
-  W: { rank: 7, en: "Early rounds", vi: "Vòng đầu" },
-  L: { rank: 8, en: "Consolation bracket", vi: "Nhánh thua" },
-  GS: { rank: 9, en: "Group stage", vi: "Vòng bảng" },
+  R128: { rank: 7, en: "Round of 128", vi: "Vòng 128" },
+  W: { rank: 8, en: "Early rounds", vi: "Vòng đầu" },
+  L: { rank: 9, en: "Consolation bracket", vi: "Nhánh thua" },
+  GS: { rank: 10, en: "Group stage", vi: "Vòng bảng" },
 };
 
 const EVENT_LABEL: Record<ProEventKey, { rank: number; en: string; vi: string }> = {
@@ -242,6 +245,7 @@ export function groupProResults(rowsIn: ProResultRow[]): ProResults {
     return {
       key,
       name,
+      isQualifier,
       labelEn: EVENT_LABEL[key].en + (isQualifier ? " — Qualifier" : ""),
       labelVi: EVENT_LABEL[key].vi + (isQualifier ? " — Vòng loại" : ""),
       rounds,
@@ -251,7 +255,12 @@ export function groupProResults(rowsIn: ProResultRow[]): ProResults {
   });
 
   events.sort(
-    (x, y) => EVENT_LABEL[x.key].rank - EVENT_LABEL[y.key].rank || x.name.localeCompare(y.name),
+    (x, y) =>
+      // Qualifiers (typically finished after day one) sink below every
+      // main draw (Cuong, 2026-09-09).
+      Number(x.isQualifier) - Number(y.isQualifier) ||
+      EVENT_LABEL[x.key].rank - EVENT_LABEL[y.key].rank ||
+      x.name.localeCompare(y.name),
   );
 
   const total = events.reduce((n, e) => n + e.matchCount, 0);
