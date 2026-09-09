@@ -1,6 +1,42 @@
 {
   "sourceLanguage" : "vi",
   "strings" : {
+    "Cập nhật tự động" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Updates automatically" } } }
+    },
+    "Chưa có kết quả" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No results yet" } } }
+    },
+    "GIẢI CHUYÊN NGHIỆP" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "PRO TOURS" } } }
+    },
+    "Kết quả giải đấu" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Tournament results" } } }
+    },
+    "Kết quả sẽ xuất hiện khi các trận đấu bắt đầu." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Results will appear once matches begin." } } }
+    },
+    "Không tìm thấy giải đấu" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Tournament not found" } } }
+    },
+    "Không tìm thấy vận động viên" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No player found" } } }
+    },
+    "NGUỒN CHÍNH THỨC" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "OFFICIAL SOURCES" } } }
+    },
+    "Sơ đồ thi đấu" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Draws and results" } } }
+    },
+    "Trang giải đấu" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Tournament page" } } }
+    },
+    "trận đấu" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "matches" } } }
+    },
+    "Thử một tên khác hoặc bỏ dấu tiếng Việt." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Try another name or search without diacritics." } } }
+    },
     "" : {
       "localizations" : {
         "en" : {

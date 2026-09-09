@@ -34,6 +34,15 @@ struct DeepLinkTests {
         #expect(parse("https://www.thepicklehub.net/join/XYZ789") == .joinInvite(code: "XYZ789"))
     }
 
+    @Test func proTourResultLinksOpenNativeDetail() {
+        #expect(parse("https://www.thepicklehub.net/live/pro/ppa-asia-kuala-lumpur-2026") ==
+            .proTourEvent(slug: "ppa-asia-kuala-lumpur-2026"))
+        #expect(parse("https://thepicklehub.net/vi/live/pro/ppa-asia-kuala-lumpur-2026") ==
+            .proTourEvent(slug: "ppa-asia-kuala-lumpur-2026"))
+        #expect(parse("thepicklehub://live/pro/ppa-asia-kuala-lumpur-2026") ==
+            .proTourEvent(slug: "ppa-asia-kuala-lumpur-2026"))
+    }
+
     @Test func bracketLabUniversalLinksOpenNativeDetails() {
         let matchID = UUID(uuidString: "10000000-0000-4000-8000-000000000001")!
         #expect(parse("https://www.thepicklehub.net/tools/quick-tables/qt123") == .quickTable(shareID: "qt123"))

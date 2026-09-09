@@ -176,12 +176,14 @@ struct LiveView: View {
     private var liveContent: some View {
         let live = model.liveStreams
         let upcoming = model.upcoming
-        if live.isEmpty && upcoming.isEmpty {
-            emptyState(icon: "dot.radiowaves.up.forward", title: String(localized: "Hiện chưa có trận trực tiếp"),
-                       subtitle: String(localized: "Các buổi phát sẽ xuất hiện ở đây khi bắt đầu."))
-            if !model.replays.isEmpty { featuredReplays }
-        } else {
-            VStack(alignment: .leading, spacing: 26) {
+        VStack(alignment: .leading, spacing: 26) {
+            ProTourEventsStrip()
+                .padding(.horizontal, 22)
+            if live.isEmpty && upcoming.isEmpty {
+                emptyState(icon: "dot.radiowaves.up.forward", title: String(localized: "Hiện chưa có trận trực tiếp"),
+                           subtitle: String(localized: "Các buổi phát sẽ xuất hiện ở đây khi bắt đầu."))
+                if !model.replays.isEmpty { featuredReplays }
+            } else {
                 if let hero = live.first ?? upcoming.first {
                     LiveHeroCard(stream: hero, reduceMotion: reduceMotion)
                 }

@@ -19,6 +19,8 @@ struct DeepLinkDestinationView: View {
                 SocialEventLoaderView(slug: slug)
             case .livestream(let id):
                 LivestreamLoaderView(id: id)
+            case .proTourEvent(let slug):
+                ProTourEventView(slug: slug)
             case .quickTable(let shareID):
                 QuickTableDetailView(shareID: shareID, fallbackName: "Quick Table")
             case .quickTableScore(let matchID):

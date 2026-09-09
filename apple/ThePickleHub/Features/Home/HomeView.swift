@@ -17,6 +17,7 @@ struct HomeView: View {
 
                 VStack(alignment: .leading, spacing: 34) {
                     VStack(alignment: .leading, spacing: 18) {
+                        ProTourEventsStrip()
                         partnerCard
                         if ShopFeatureGate.isEnabled {
                             shopEntry

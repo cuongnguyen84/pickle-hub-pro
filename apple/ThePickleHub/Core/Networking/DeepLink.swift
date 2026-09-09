@@ -16,6 +16,8 @@ enum DeepLink: Identifiable, Equatable {
     case socialEvent(slug: String)
     /// `/live/:id` — livestream (từ notification "Nhắc tôi" hoặc link).
     case livestream(id: UUID)
+    /// `/live/pro/:slug` — kết quả một giải chuyên nghiệp.
+    case proTourEvent(slug: String)
     case quickTable(shareID: String)
     case quickTableScore(matchID: UUID)
     case parentTournament(shareID: String)
@@ -44,6 +46,7 @@ enum DeepLink: Identifiable, Equatable {
         case .joinInvite(let c): "join/\(c)"
         case .socialEvent(let s): "social/\(s)"
         case .livestream(let i): "live/\(i.uuidString)"
+        case .proTourEvent(let slug): "live/pro/\(slug)"
         case .quickTable(let shareID): "tools/quick-tables/\(shareID)"
         case .quickTableScore(let matchID): "tools/quick-tables/referee/\(matchID.uuidString)"
         case .parentTournament(let shareID): "tools/quick-tables/parent/\(shareID)"
@@ -102,6 +105,9 @@ enum DeepLink: Identifiable, Equatable {
         case ("live", 2):
             guard let uuid = UUID(uuidString: segments[1]) else { return nil }
             return .livestream(id: uuid)
+        case ("live", 3) where segments[1] == "pro":
+            guard !segments[2].isEmpty else { return nil }
+            return .proTourEvent(slug: segments[2])
         default:
             return parseTools(segments)
         }

@@ -186,6 +186,19 @@ Bốn `FIREBASE_*` giữ ở file ignored `Secrets.xcconfig`/CI secret, không c
 
 ## 5. Archive và distribution
 
+Trước mọi archive dùng để upload, bắt buộc xác nhận source release mới nhất và
+có thể tái tạo chính xác:
+
+```sh
+git switch <release-branch>
+./scripts/release_preflight.sh --release-source
+```
+
+Gate này tự fetch `origin/main`, rồi fail nếu `HEAD` chưa chứa toàn bộ main,
+worktree còn thay đổi chưa commit, branch chưa có upstream hoặc commit local chưa
+được push. Không build TestFlight/App Store trực tiếp từ một feature branch cũ
+chỉ vì branch đó đang khớp với upstream riêng của nó.
+
 Unsigned artifact check, không cần certificate:
 
 ```sh
