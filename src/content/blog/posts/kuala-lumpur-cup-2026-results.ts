@@ -20,8 +20,8 @@ const post: BlogPost = {
     vi: "Theo dõi kết quả Pro trực tiếp trên ThePickleHub",
   },
   heroImage: {
-    src: "/images/blog/kuala-lumpur-cup-2026-preview-hero.webp",
-    alt: "Leapmotor Kuala Lumpur Cup 2026 at The Hood in Kuala Lumpur, Malaysia — a floodlit indoor pickleball court in PPA Asia colours, with the tournament dates September 9 to 13 and the PPA Asia 1000 tier mark",
+    src: "/images/blog/kuala-lumpur-cup-2026-results-hero.webp",
+    alt: "Leapmotor Kuala Lumpur Cup 2026 results — an empty floodlit indoor pickleball court seen from the stands, blue playing surface and net with a blank dark screen behind the far baseline and empty navy seating either side, overlaid with the PPA Asia 1000 tournament badge, the dates September 9 to 13 at The Hood, Kuala Lumpur, and the words RESULTS · KẾT QUẢ",
   },
   content: {
     en: {
