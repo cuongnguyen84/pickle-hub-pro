@@ -72,6 +72,10 @@
     "element": "<Live />"
   },
   {
+    "path": "/live/pro/:slug",
+    "element": "<LiveProEvent />"
+  },
+  {
     "path": "/live/:id",
     "element": "<WatchLive />"
   },
@@ -726,6 +730,10 @@
   {
     "path": "/vi/live",
     "element": "<ViLanguageWrapper><Live /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/live/pro/:slug",
+    "element": "<ViLanguageWrapper><LiveProEvent /></ViLanguageWrapper>"
   },
   {
     "path": "/vi/live/:id",
