@@ -92,4 +92,13 @@ describe("groupProResults", () => {
     ]);
     expect(out.total).toBe(2);
   });
+
+  it("skips bye/walkover rows with no names on either side", () => {
+    const out = groupProResults([
+      row({ id: "real" }),
+      row({ id: "bye", match_participants: [] }),
+    ]);
+    expect(out.total).toBe(1);
+    expect(out.events[0].matchCount).toBe(1);
+  });
 });

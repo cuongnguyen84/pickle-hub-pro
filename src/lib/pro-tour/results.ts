@@ -186,6 +186,10 @@ export function groupProResults(rowsIn: ProResultRow[]): ProResults {
       const code = (r.round_name ?? "UNKNOWN").trim() || "UNKNOWN";
       const teamA = toPlayers(r.match_participants, "a");
       const teamB = toPlayers(r.match_participants, "b");
+      // Bye/walkover rows with no participants on either side render as
+      // "- vs -": noise, not results. Skip them (a one-sided bye keeps
+      // its named side and stays).
+      if (teamA.length === 0 && teamB.length === 0) continue;
       const hasVietnam = [...teamA, ...teamB].some((p) => p.isVietnam);
       if (hasVietnam) vietnamCount++;
       const winner = r.winning_team === "a" || r.winning_team === "b" ? r.winning_team : null;
@@ -229,7 +233,7 @@ export function groupProResults(rowsIn: ProResultRow[]): ProResults {
       labelEn: EVENT_LABEL[key].en,
       labelVi: EVENT_LABEL[key].vi,
       rounds,
-      matchCount: list.length,
+      matchCount: rounds.reduce((n, r) => n + r.matches.length, 0),
       champion,
     };
   });
@@ -238,5 +242,6 @@ export function groupProResults(rowsIn: ProResultRow[]): ProResults {
     (x, y) => EVENT_LABEL[x.key].rank - EVENT_LABEL[y.key].rank || x.name.localeCompare(y.name),
   );
 
-  return { events, total: rows.length, vietnamCount };
+  const total = events.reduce((n, e) => n + e.matchCount, 0);
+  return { events, total, vietnamCount };
 }
