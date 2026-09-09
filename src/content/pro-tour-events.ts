@@ -39,6 +39,10 @@ export interface ProTourEventMeta {
   /** Public draws/results page at the bracket site. */
   bracketsUrl: string;
   prizeMoney?: string;
+  /** Event badge/logo (local asset, lazy-loaded on the card). */
+  logoUrl?: string;
+  /** Brand card background (CSS gradient or color) + implies light text. */
+  brandBg?: string;
 }
 
 export const PRO_TOUR_EVENTS: ProTourEventMeta[] = [
@@ -60,6 +64,8 @@ export const PRO_TOUR_EVENTS: ProTourEventMeta[] = [
     officialUrl: "https://www.ppatour-asia.com/tournament/2026/kuala-lumpur-cup/",
     bracketsUrl: "https://pickleballtournaments.com/tournaments/ppa-asia-1000-leapmotor-kuala-lumpur-cup-2026/events",
     prizeMoney: "US$300,000",
+    logoUrl: "/images/events/kl-cup-2026-badge.png",
+    brandBg: "linear-gradient(135deg, #10283d 0%, #1c405f 55%, #16324a 100%)",
   },
   {
     slug: "ppa-asia-500-skechers-shenzhen-open-2026",
