@@ -170,4 +170,16 @@ describe("filterProResults", () => {
     const labels = out.events.map((e) => e.labelVi).sort();
     expect(labels).toEqual(["Đôi nam", "Đôi nam — Vòng loại"]);
   });
+
+  it("sinks qualifier draws below every main draw", () => {
+    const out = groupProResults([
+      row({ id: "q", tournament_event: "Pro Men's Singles Qualifier", round_name: "W", winning_team: "a",
+        match_participants: [
+          { team: "a", position: 1, profile: { display_name: "A One", username: null } },
+          { team: "b", position: 1, profile: { display_name: "B Two", username: null } },
+        ] }),
+      row({ id: "wd", tournament_event: "Pro Women's Doubles", round_name: "R64" }),
+    ]);
+    expect(out.events.map((e) => e.isQualifier)).toEqual([false, true]);
+  });
 });

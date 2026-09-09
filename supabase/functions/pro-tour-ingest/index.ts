@@ -333,14 +333,14 @@ async function reconcileMatches(
   const externalIds = scrape.matches.map((m) => m.external_match_id);
   const { data: existing, error } = await supabase
     .from("matches")
-    .select("id, external_match_id, winning_team, notes")
+    .select("id, external_match_id, winning_team, notes, round_name")
     .eq("source_provider", scrape.source_provider)
     .in("external_match_id", externalIds);
   if (error) throw new Error(`Match lookup: ${error.message}`);
 
   const existingMap = new Map<
     string,
-    { id: string; winning_team: string | null; notes: string | null }
+    { id: string; winning_team: string | null; notes: string | null; round_name: string | null }
   >(
     (existing ?? []).map((r) => [
       r.external_match_id as string,
@@ -348,6 +348,7 @@ async function reconcileMatches(
         id: r.id as string,
         winning_team: r.winning_team as string | null,
         notes: (r.notes as string | null) ?? null,
+        round_name: (r.round_name as string | null) ?? null,
       },
     ]),
   );
@@ -360,8 +361,16 @@ async function reconcileMatches(
 
     const transitionedToResolved = prior?.winning_team == null && newWinner !== null;
     const hasRefreshableDetails = match.notes != null;
+    // Parser upgrades (e.g. "Round 64" → R64, 2026-09-09) leave old rows
+    // holding the coarse W/L/GS code forever unless a re-scrape may touch
+    // them — treat a changed round code as refresh-worthy.
+    const roundChanged = prior != null && prior.round_name !== match.round_name;
 
-    if (prior && newWinner !== null && (transitionedToResolved || hasRefreshableDetails)) {
+    if (
+      prior &&
+      newWinner !== null &&
+      (transitionedToResolved || hasRefreshableDetails || roundChanged)
+    ) {
       // Update a newly resolved row, or refresh adapter-supplied details on an
       // already resolved row. Keep verified_at stable for refreshes so a cron
       // re-scrape does not repeatedly republish an old result at the top of
@@ -400,6 +409,7 @@ async function reconcileMatches(
       const hasSignal =
         match.notes != null ||
         priorLive ||
+        prior.round_name !== match.round_name ||
         (match.scores_team_one ?? []).some((n) => n > 0) ||
         (match.scores_team_two ?? []).some((n) => n > 0);
       if (hasSignal) {
@@ -409,6 +419,7 @@ async function reconcileMatches(
             team_a_score: match.scores_team_one,
             team_b_score: match.scores_team_two,
             court_number: match.court_number ?? match.court,
+            round_name: match.round_name,
             notes: match.notes ?? null,
           })
           .eq("id", prior.id);
