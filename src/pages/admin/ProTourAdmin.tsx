@@ -126,6 +126,9 @@ const ProTourAdmin = () => {
             <TabsTrigger value="watchlist">
               {language === "vi" ? "Watchlist" : "Watchlist"}
             </TabsTrigger>
+            <TabsTrigger value="events">
+              {language === "vi" ? "Sự kiện" : "Events"}
+            </TabsTrigger>
             <TabsTrigger value="logs">
               {language === "vi" ? "Lịch sử" : "Logs"}
             </TabsTrigger>
@@ -134,6 +137,10 @@ const ProTourAdmin = () => {
           <TabsContent value="manual" className="pt-6">
             <ManualTriggerTab language={language} />
           </TabsContent>
+          <TabsContent value="events" className="pt-6">
+            <EventsTab language={language} />
+          </TabsContent>
+
           <TabsContent value="watchlist" className="pt-6">
             <WatchlistTab language={language} />
           </TabsContent>
@@ -970,3 +977,183 @@ function StatusBadge({ status }: { status: LogRow["status"] }) {
 }
 
 export default ProTourAdmin;
+
+/* ─── Tab: Sự kiện (pro_tour_events registry) ──────────────────────────
+   Thêm/sửa giải ở đây là section trên trang chủ + /live và trang
+   /live/pro/<slug> tự xuất hiện — không cần deploy (Cuong, 2026-09-09). */
+
+type EventRowMap = Record<string, string | null>;
+
+const EVENT_FIELDS: Array<{ key: string; label: string; required?: boolean; ph?: string }> = [
+  { key: "slug", label: "Slug (/live/pro/<slug>)", required: true, ph: "ppa-asia-1000-..." },
+  { key: "name_en", label: "Tên EN", required: true },
+  { key: "name_vi", label: "Tên VI", required: true },
+  { key: "name_pattern", label: "Pattern khớp matches.tournament_name", required: true, ph: "%Kuala Lumpur%2026%" },
+  { key: "tier", label: "Tier", required: true, ph: "PPA Asia 1000" },
+  { key: "tour", label: "Tour", required: true, ph: "PPA Tour Asia" },
+  { key: "sponsor", label: "Sponsor" },
+  { key: "city", label: "Thành phố", required: true },
+  { key: "country", label: "Quốc gia", required: true },
+  { key: "country_code", label: "Mã QG (MY/VN/...)", required: true },
+  { key: "venue", label: "Địa điểm thi đấu" },
+  { key: "start_date", label: "Ngày bắt đầu (YYYY-MM-DD)", required: true },
+  { key: "end_date", label: "Ngày kết thúc (YYYY-MM-DD)", required: true },
+  { key: "official_url", label: "URL trang giải", required: true },
+  { key: "brackets_url", label: "URL nhánh đấu công khai", required: true },
+  { key: "prize_money", label: "Tiền thưởng", ph: "US$300,000" },
+  { key: "logo_url", label: "Logo (đường dẫn /images/... hoặc URL)" },
+  { key: "brand_bg", label: "Nền thẻ (CSS gradient/màu)", ph: "linear-gradient(135deg, #10283d, #1c405f)" },
+];
+
+const EMPTY_EVENT: EventRowMap = Object.fromEntries(EVENT_FIELDS.map((f) => [f.key, ""]));
+
+function EventsTab({ language }: { language: "vi" | "en" }) {
+  const queryClient = useQueryClient();
+  const vi = language === "vi";
+  const [form, setForm] = useState<EventRowMap | null>(null);
+  const [isNew, setIsNew] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deleteArm, setDeleteArm] = useState<string | null>(null);
+
+  const eventsQ = useQuery({
+    queryKey: ["admin", "pro-tour-events"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pro_tour_events")
+        .select("*")
+        .order("start_date", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as EventRowMap[];
+    },
+  });
+
+  const refresh = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["admin", "pro-tour-events"] }),
+      queryClient.invalidateQueries({ queryKey: ["pro-tour-events"] }),
+    ]);
+
+  const save = async () => {
+    if (!form) return;
+    for (const f of EVENT_FIELDS) {
+      if (f.required && !String(form[f.key] ?? "").trim()) {
+        toast.error((vi ? "Thiếu trường: " : "Missing field: ") + f.label);
+        return;
+      }
+    }
+    setSaving(true);
+    try {
+      const row = Object.fromEntries(
+        EVENT_FIELDS.map((f) => [f.key, String(form[f.key] ?? "").trim() || null]),
+      );
+      const { error } = await supabase.from("pro_tour_events").upsert(row as never);
+      if (error) throw error;
+      toast.success(vi ? "Đã lưu sự kiện" : "Event saved", {
+        description: vi
+          ? "Section trang chủ + /live và trang /live/pro/… cập nhật trong ~5 phút (cache)."
+          : "Homepage/live strip and the event page refresh within ~5 minutes (cache).",
+      });
+      setForm(null);
+      await refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const remove = async (slug: string) => {
+    if (deleteArm !== slug) {
+      setDeleteArm(slug);
+      return;
+    }
+    setDeleteArm(null);
+    const { error } = await supabase.from("pro_tour_events").delete().eq("slug", slug);
+    if (error) toast.error(error.message);
+    else {
+      toast.success(vi ? "Đã xoá" : "Deleted");
+      await refresh();
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          {vi
+            ? "Mỗi dòng = một thẻ trên trang chủ + /live và một trang /live/pro/<slug>. Nhớ thêm URL nhánh đấu vào tab Watchlist để scraper kéo kết quả."
+            : "Each row = a card on the homepage + /live and a /live/pro/<slug> page. Add bracket URLs in the Watchlist tab so the scraper pulls results."}
+        </p>
+        <Button
+          size="sm"
+          onClick={() => {
+            setIsNew(true);
+            setForm({ ...EMPTY_EVENT });
+          }}
+        >
+          {vi ? "+ Thêm sự kiện" : "+ Add event"}
+        </Button>
+      </div>
+
+      {form && (
+        <div className="rounded-md border p-4 space-y-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            {EVENT_FIELDS.map((f) => (
+              <div key={f.key}>
+                <Label className="mb-1 block text-xs">{f.label}{f.required ? " *" : ""}</Label>
+                <Input
+                  value={String(form[f.key] ?? "")}
+                  placeholder={f.ph}
+                  disabled={f.key === "slug" && !isNew}
+                  onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+                />
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={save} disabled={saving}>
+              {saving ? (vi ? "Đang lưu…" : "Saving…") : vi ? "Lưu" : "Save"}
+            </Button>
+            <Button variant="outline" onClick={() => setForm(null)}>
+              {vi ? "Huỷ" : "Cancel"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {(eventsQ.data ?? []).map((ev) => (
+          <div
+            key={String(ev.slug)}
+            className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3"
+          >
+            <div className="min-w-0">
+              <div className="font-medium">{String(ev.name_vi ?? ev.name_en)}</div>
+              <div className="text-xs text-muted-foreground">
+                /live/pro/{String(ev.slug)} · {String(ev.start_date)} → {String(ev.end_date)}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setIsNew(false);
+                  setForm({ ...EMPTY_EVENT, ...ev });
+                }}
+              >
+                {vi ? "Sửa" : "Edit"}
+              </Button>
+              <Button size="sm" variant="destructive" onClick={() => void remove(String(ev.slug))}>
+                {deleteArm === ev.slug ? (vi ? "Bấm lần nữa để xoá" : "Click again") : vi ? "Xoá" : "Delete"}
+              </Button>
+            </div>
+          </div>
+        ))}
+        {eventsQ.isLoading && (
+          <p className="text-sm text-muted-foreground">{vi ? "Đang tải…" : "Loading…"}</p>
+        )}
+      </div>
+    </div>
+  );
+}

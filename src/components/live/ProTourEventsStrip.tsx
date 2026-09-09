@@ -9,10 +9,11 @@
 import { Link } from "react-router-dom";
 import {
   eventPhase,
+  eventsOnLive,
   formatEventDates,
-  proTourEventsOnLive,
   type ProTourEventMeta,
 } from "@/content/pro-tour-events";
+import { useProTourEvents } from "@/hooks/useProTourEvents";
 
 type Lang = "en" | "vi";
 
@@ -23,7 +24,10 @@ const PHASE_LABEL = {
 } as const;
 
 export function ProTourEventsStrip({ language, now = Date.now() }: { language: Lang; now?: number }) {
-  const events = proTourEventsOnLive(now);
+  const { data } = useProTourEvents();
+  const events = eventsOnLive(data ?? [], now);
+  // Loading and empty render the same nothing: the strip is a bonus row,
+  // never a layout anchor, so it must not reserve space it may not fill.
   if (events.length === 0) return null;
   const vi = language === "vi";
   return (

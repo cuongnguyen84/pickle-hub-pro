@@ -11,11 +11,8 @@ import { Link, useParams } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { ErrorState } from "@/components/states/PageStates";
-import {
-  eventPhase,
-  formatEventDates,
-  getProTourEvent,
-} from "@/content/pro-tour-events";
+import { eventPhase, formatEventDates } from "@/content/pro-tour-events";
+import { useProTourEvent } from "@/hooks/useProTourEvents";
 import { useProTourEventResults } from "@/hooks/useProTourEventResults";
 import {
   playersLine,
@@ -34,8 +31,18 @@ export default function LiveProEvent() {
   const { slug = "" } = useParams();
   const { language } = useI18n();
   const vi = language === "vi";
-  const meta = getProTourEvent(slug);
+  const { meta, isLoading: metaLoading } = useProTourEvent(slug);
   const results = useProTourEventResults(meta);
+
+  if (metaLoading && !meta) {
+    return (
+      <TheLineLayout title="…" description="" active="live">
+        <div className="tl-shell">
+          <p style={{ color: "var(--tl-dim)" }}>{vi ? "Đang tải…" : "Loading…"}</p>
+        </div>
+      </TheLineLayout>
+    );
+  }
 
   if (!meta) {
     return (
