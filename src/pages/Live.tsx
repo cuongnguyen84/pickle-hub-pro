@@ -10,6 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { WorldCupLiveBoard } from "@/components/live/WorldCupLiveBoard";
+import { ProTourEventsStrip } from "@/components/live/ProTourEventsStrip";
 
 type Filter = "all" | "live" | "scheduled" | "ended";
 
@@ -188,6 +189,10 @@ const Live = () => {
             self-retires after Sep 7. Above the filters because during the World
             Cup it is why most visitors are on /live. */}
         <WorldCupLiveBoard language={language} />
+
+        {/* Pro-tour tournaments in season (registry-driven, zero requests) —
+            cards linking to /live/pro/<slug>. Self-hides out of season. */}
+        <ProTourEventsStrip language={language} />
 
         {/* Counts come from the same `= []` defaults the body no longer trusts:
             rendering "Live 0 · Replays 0" directly above a network error is the
