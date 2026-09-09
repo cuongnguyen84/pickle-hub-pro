@@ -90,6 +90,10 @@ vi.mock("@/hooks/usePullToRefresh", () => ({
 
 vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
+  // ProTourEventsStrip (mounted on Live/Index) reads the pro_tour_events
+  // registry through useQuery; an empty result makes it render null, which
+  // is exactly what these error-state assertions want out of the way.
+  useQuery: () => ({ data: undefined, isLoading: false, isError: false, refetch: vi.fn() }),
 }));
 
 const NETWORK_ERROR = "Lỗi kết nối";
