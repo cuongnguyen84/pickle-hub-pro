@@ -26,6 +26,10 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2.89.0";
 import { proTourIngestCorsHeaders as corsHeaders } from "../_shared/cors.ts";
+import {
+  describeUnimportableSlots,
+  isPlaceholderExternalId,
+} from "./placeholder-slots.ts";
 import type {
   TournamentScrapeResult,
   ScrapedPlayer,
@@ -184,12 +188,20 @@ async function reconcilePlayers(
   externalIdToProfileId: Map<string, string>;
 }> {
   const out = new Map<string, string>();
-  if (players.length === 0) {
+
+  // Undecided bracket slots ("tbd", "bye") are not people. Minting a ghost
+  // profile for them puts a player called "Tbd" on the roster, and — because
+  // every such slot resolves to that ONE ghost — makes two slots on the same
+  // match collide on match_participants' UNIQUE (match_id, player_id).
+  // Dropping them here is what makes the skip in insertMatchWithParticipants
+  // reachable instead of a 23505.
+  const realPlayers = players.filter((p) => !isPlaceholderExternalId(p.external_id));
+  if (realPlayers.length === 0) {
     return { players_created: 0, players_matched: 0, externalIdToProfileId: out };
   }
 
   // Bulk lookup existing ghosts by (source_provider, external_id).
-  const externalIds = players.map((p) => p.external_id);
+  const externalIds = realPlayers.map((p) => p.external_id);
   const { data: existing, error } = await supabase
     .from("profiles")
     .select("id, external_id")
@@ -205,7 +217,7 @@ async function reconcilePlayers(
   let players_created = 0;
   let players_matched = 0;
 
-  for (const p of players) {
+  for (const p of realPlayers) {
     const hit = existingByExt.get(p.external_id);
     if (hit) {
       out.set(p.external_id, hit);
@@ -391,9 +403,25 @@ async function insertMatchWithParticipants(
   match: ScrapedMatch,
   externalIdToProfileId: Map<string, string>,
 ): Promise<boolean> {
-  // Resolve participant profile ids; bail if any player wasn't reconciled
-  // (would yield an orphan match — log via throw so the surrounding
-  // try/catch flips the log to failed).
+  // A bracket slot that is still "tbd"/"bye", or the same player listed
+  // twice, cannot become a match: both shapes end in two participant rows
+  // with the same (match_id, player_id), which violates
+  // match_participants_match_id_player_id_key and 500s the whole event.
+  // Skipping is recoverable — the next scheduled pass ingests the match once
+  // the draw resolves.
+  const unimportable = describeUnimportableSlots(
+    match.team_one.player_external_ids,
+    match.team_two.player_external_ids,
+  );
+  if (unimportable) {
+    console.log(
+      `pro-tour-ingest: skip match ${match.external_match_id} — ${unimportable}`,
+    );
+    return false;
+  }
+
+  // Resolve participant profile ids. Every slot must resolve: a partially
+  // resolved team would insert a doubles match holding one player.
   const teamAIds = match.team_one.player_external_ids
     .map((eid) => externalIdToProfileId.get(eid))
     .filter((id): id is string => Boolean(id));
@@ -401,8 +429,26 @@ async function insertMatchWithParticipants(
     .map((eid) => externalIdToProfileId.get(eid))
     .filter((id): id is string => Boolean(id));
 
-  if (teamAIds.length === 0 || teamBIds.length === 0) {
-    // Skip silently — this is recoverable; next ingest pass reconciles.
+  if (
+    teamAIds.length !== match.team_one.player_external_ids.length ||
+    teamBIds.length !== match.team_two.player_external_ids.length
+  ) {
+    // Recoverable: the scrape named a player it did not list in `players`, so
+    // the next ingest pass reconciles. Logged rather than silent — before this
+    // the half-resolved side was inserted anyway, producing a doubles match
+    // card with one player on it.
+    console.log(
+      `pro-tour-ingest: skip match ${match.external_match_id} — unresolved player slot`,
+    );
+    return false;
+  }
+
+  // Belt and braces: two distinct external ids can still map to one profile
+  // (an alias the source later merged). Same collision, so skip the same way.
+  if (new Set([...teamAIds, ...teamBIds]).size !== teamAIds.length + teamBIds.length) {
+    console.log(
+      `pro-tour-ingest: skip match ${match.external_match_id} — external ids share a profile`,
+    );
     return false;
   }
 
@@ -494,10 +540,21 @@ async function insertMatchWithParticipants(
     .from("match_participants")
     .insert(participants);
   if (partErr) {
-    // Insert participants failed — match row is orphan. Throw so the
-    // surrounding try/catch logs status='failed' with the reason.
+    // Insert participants failed. The match row is already committed (there is
+    // no transaction across these two statements), so without this it stays
+    // behind as a PUBLIC match with nobody in it — 9 such rows existed on
+    // production before this fix, rendering empty /tran-dau/<slug> pages that
+    // renderMatch happily served to crawlers. Remove it, then throw so the
+    // surrounding try/catch still logs status='failed' with the reason.
+    const { error: cleanupErr } = await supabase
+      .from("matches")
+      .delete()
+      .eq("id", matchRow.id);
+    const cleanupNote = cleanupErr
+      ? ` (orphan match row ${matchRow.id} could NOT be removed: ${cleanupErr.message})`
+      : " (orphan match row removed)";
     throw new Error(
-      `Insert participants for match ${matchRow.id} failed: ${partErr.message}`,
+      `Insert participants for match ${matchRow.id} failed: ${partErr.message}${cleanupNote}`,
     );
   }
   return true;
