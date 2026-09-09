@@ -101,7 +101,8 @@ describe("App.tsx route table characterization", () => {
     // 69 -> 70: P3 S5 adds /shop/orders. /seller/orders(/:code) are NOT here —
     // no /seller route is mirrored, they are literal <Route> tags.
     // 70 -> 72: agent-readiness adds bilingual About and Contact pages.
-    expect(mirrored.length).toBe(72);
+    // 72 -> 73: pro-tour event results page /live/pro/:slug.
+    expect(mirrored.length).toBe(73);
   });
 
   it("route table matches the checked-in snapshot exactly", () => {

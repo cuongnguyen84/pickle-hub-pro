@@ -51,6 +51,7 @@ const AuthCallback = lazyRetry(() => import("./pages/AuthCallback"));
 const ResetPassword = lazyRetry(() => import("./pages/ResetPassword"));
 const WatchVideo = lazyRetry(() => import("./pages/WatchVideo"));
 const WatchLive = lazyRetry(() => import("./pages/WatchLive"));
+const LiveProEvent = lazyRetry(() => import("./pages/LiveProEvent"));
 const Account = lazyRetry(() => import("./pages/Account"));
 const DuprConnect = lazyRetry(() => import("./pages/DuprConnect"));
 const MatchNewPage = lazyRetry(() => import("./pages/MatchNew"));
@@ -629,6 +630,7 @@ const MIRRORED: MirroredRoute[] = [
   { path: "/shop/order/:code", element: <RequireAuth><ShopOrderDetail /></RequireAuth> },
   { path: "/shop/orders", element: <RequireAuth><ShopOrders /></RequireAuth> },
   { path: "/live", element: <Live /> },
+  { path: "/live/pro/:slug", element: <LiveProEvent /> },
   { path: "/live/:id", element: <WatchLive /> },
   { path: "/videos", element: <Videos /> },
   { path: "/watch/:id", element: <WatchVideo /> },
