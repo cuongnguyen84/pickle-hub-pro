@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   classifyEvent,
+  filterProResults,
   groupProResults,
   playersLine,
   scoreLine,
@@ -100,5 +101,40 @@ describe("groupProResults", () => {
     ]);
     expect(out.total).toBe(1);
     expect(out.events[0].matchCount).toBe(1);
+  });
+});
+
+describe("filterProResults", () => {
+  const grouped = groupProResults([
+    row({ id: "f1", round_name: "F" }),
+    row({
+      id: "ws",
+      tournament_event: "Pro Women's Singles",
+      round_name: "SF",
+      match_participants: [
+        { team: "a", position: 1, profile: { display_name: "Anna Leigh Waters", username: null } },
+        { team: "b", position: 1, profile: { display_name: "Sophia Nhi Huỳnh", username: null } },
+      ],
+    }),
+  ]);
+
+  it("returns the input untouched for an empty query", () => {
+    expect(filterProResults(grouped, "  ")).toBe(grouped);
+  });
+
+  it("matches diacritic-insensitively and recounts honestly", () => {
+    const out = filterProResults(grouped, "truong");
+    expect(out.total).toBe(1);
+    expect(out.events).toHaveLength(1);
+    expect(out.events[0].matchCount).toBe(1);
+    expect(out.vietnamCount).toBe(1);
+    // "huynh" finds the WS match via the folded "Huỳnh".
+    expect(filterProResults(grouped, "HUYNH").total).toBe(1);
+  });
+
+  it("returns an empty tree when nobody matches", () => {
+    const out = filterProResults(grouped, "nguyen-khong-ton-tai");
+    expect(out.total).toBe(0);
+    expect(out.events).toHaveLength(0);
   });
 });
