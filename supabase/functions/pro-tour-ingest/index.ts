@@ -521,6 +521,7 @@ async function insertMatchWithParticipants(
       // verification (pending → verified), never the reverse.
       const hasNews =
         winning_team !== null ||
+        match.notes != null ||
         (match.scores_team_one ?? []).some((n) => n > 0) ||
         (match.scores_team_two ?? []).some((n) => n > 0);
       if (hasNews) {
@@ -530,6 +531,9 @@ async function insertMatchWithParticipants(
           winning_team,
           round_name: match.round_name,
           court_number: match.court_number ?? match.court,
+          // Live flag rides in notes; writing it here both sets it while a
+          // match runs and clears it on the pass that sees the final score.
+          notes: match.notes ?? null,
         };
         if (winning_team) updateFields.verification_status = "verified";
         if (match.played_at) updateFields.played_at = match.played_at;

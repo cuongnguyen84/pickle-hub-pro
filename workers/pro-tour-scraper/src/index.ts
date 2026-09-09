@@ -185,6 +185,9 @@ async function runScheduledBatch(env: Env): Promise<void> {
     // Recording 96 "No rows due" job-runs a day would bury real signal —
     // keep the top-of-hour one as the alive heartbeat.
     if (due.length === 0 && startedAt.getUTCMinutes() !== 0) return;
+    // Event days at a 1-minute cron would write ~1440 job-run rows/day.
+    // recordProTourJobRun below is gated the same way: hourly heartbeat
+    // or any failure — see recordGate.
     const liveNow = await isLiveEventWindow(env);
     const results = await Promise.all(due.map(async (row) => {
       const result = await runScrape(
@@ -225,6 +228,8 @@ async function runScheduledBatch(env: Env): Promise<void> {
     const matches = results.reduce((sum, result) => sum + result.matches_extracted, 0);
     const status = failed === 0 ? (skipped === due.length && due.length > 0 ? "skipped" : "success")
       : failed < due.length ? "warning" : "failed";
+    const recordGate = failed > 0 || startedAt.getUTCMinutes() === 0;
+    if (!recordGate) return;
     await recordProTourJobRun(env, {
       externalRunId, status, startedAt,
       summary: due.length === 0
@@ -708,7 +713,10 @@ function nextScrapeAt(
   // Event days: a daily row graduates to a ~20-minute cadence. The */15
   // cron + limit=4 rotate ~12 sources/hour, comfortably under the
   // 50-subrequest ceiling.
-  if (frequency === "daily" && liveNow) return new Date(now + 20 * 60_000).toISOString();
+  // 1-minute cron + limit=4 + a +2min per-source hold: each of ~10 sources
+  // re-scrapes roughly every 3 minutes during play — near-live without
+  // hammering the bracket site (~3-4 fetches/min total).
+  if (frequency === "daily" && liveNow) return new Date(now + 2 * 60_000).toISOString();
   if (frequency === "daily") return new Date(now + 24 * 3600_000).toISOString();
   if (frequency === "weekly") return new Date(now + 7 * 24 * 3600_000).toISOString();
   // 'on_event_end' + 'manual' → set to NULL so the cron stops touching them

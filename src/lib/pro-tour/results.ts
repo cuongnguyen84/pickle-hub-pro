@@ -31,6 +31,7 @@ export interface ProResultRow {
   winning_team: string | null;
   played_at: string | null;
   court_number: string | null;
+  notes: string | null;
   match_participants: ProResultParticipant[] | null;
 }
 
@@ -50,6 +51,9 @@ export interface ProResultMatch {
   winner: "a" | "b" | null;
   courtNumber: string | null;
   playedAt: string | null;
+  /** Source says the match is in progress right now (notes {"live":true},
+   *  stamped by the scraper, cleared on the finishing pass). */
+  isLive: boolean;
   /** Either side has a Vietnamese player (name heuristic, see parse-pro). */
   hasVietnam: boolean;
 }
@@ -197,6 +201,7 @@ export function groupProResults(rowsIn: ProResultRow[]): ProResults {
         id: r.id,
         slug: r.slug,
         round: code,
+        isLive: r.winning_team == null && /"live"\s*:\s*true/.test(r.notes ?? ""),
         teamA,
         teamB,
         games: toGames(r.team_a_score, r.team_b_score),
@@ -218,7 +223,10 @@ export function groupProResults(rowsIn: ProResultRow[]): ProResults {
         // uuids, so this is deterministic without pretending it is bracket
         // order — the source does not give us the slot number).
         matches: matches.sort(
-          (x, y) => (x.playedAt ?? "").localeCompare(y.playedAt ?? "") || x.slug.localeCompare(y.slug),
+          (x, y) =>
+            Number(y.isLive) - Number(x.isLive) ||
+            (x.playedAt ?? "").localeCompare(y.playedAt ?? "") ||
+            x.slug.localeCompare(y.slug),
         ),
       }))
       .sort((x, y) => (ROUND_ORDER[x.code]?.rank ?? 99) - (ROUND_ORDER[y.code]?.rank ?? 99));
@@ -287,4 +295,21 @@ export function filterProResults(results: ProResults, query: string): ProResults
     events.push({ ...ev, rounds, matchCount });
   }
   return { events, total, vietnamCount };
+}
+
+/** Every in-progress match across all events, tagged with its event label —
+ * the page pins these at the very top while they run. */
+export function collectLiveMatches(
+  results: ProResults,
+  lang: "en" | "vi",
+): Array<ProResultMatch & { eventLabel: string }> {
+  const out: Array<ProResultMatch & { eventLabel: string }> = [];
+  for (const ev of results.events) {
+    for (const round of ev.rounds) {
+      for (const m of round.matches) {
+        if (m.isLive) out.push({ ...m, eventLabel: lang === "vi" ? ev.labelVi : ev.labelEn });
+      }
+    }
+  }
+  return out.sort((x, y) => (x.playedAt ?? "").localeCompare(y.playedAt ?? "") || x.slug.localeCompare(y.slug));
 }

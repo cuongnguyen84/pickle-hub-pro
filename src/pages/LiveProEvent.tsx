@@ -16,6 +16,7 @@ import { eventPhase, formatEventDates } from "@/content/pro-tour-events";
 import { useProTourEvent } from "@/hooks/useProTourEvents";
 import { useProTourEventResults } from "@/hooks/useProTourEventResults";
 import {
+  collectLiveMatches,
   filterProResults,
   playersLine,
   scoreLine,
@@ -139,6 +140,26 @@ export default function LiveProEvent() {
           </div>
         ) : (
           <>
+            {(() => {
+              const liveNow = collectLiveMatches(results.data, vi ? "vi" : "en");
+              if (liveNow.length === 0) return null;
+              return (
+                <section className="lpe-onair" aria-label={vi ? "Trận đang diễn ra" : "Matches in progress"}>
+                  <h2 className="lpe-onair-head">
+                    <span className="lpe-live-dot" aria-hidden="true" />
+                    {vi ? `Đang diễn ra (${liveNow.length})` : `In progress (${liveNow.length})`}
+                  </h2>
+                  <div className="lpe-matches">
+                    {liveNow.map((m) => (
+                      <div key={`on-${m.id}`} className="lpe-onair-item">
+                        <span className="lpe-onair-event">{m.eventLabel}</span>
+                        <MatchRow m={m} />
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              );
+            })()}
             <div className="lpe-search">
               <input
                 type="search"
@@ -239,7 +260,13 @@ function EventSection({ ev, vi }: { ev: ProResultEvent; vi: boolean }) {
 
 function MatchRow({ m }: { m: ProResultMatch }) {
   return (
-    <div className={`lpe-match${m.hasVietnam ? " lpe-match--vn" : ""}`}>
+    <div className={`lpe-match${m.hasVietnam ? " lpe-match--vn" : ""}${m.isLive ? " lpe-match--on" : ""}`}>
+      {m.isLive && (
+        <span className="lpe-live" aria-label="live">
+          <span className="lpe-live-dot" aria-hidden="true" />
+          LIVE
+        </span>
+      )}
       <div className="lpe-teams">
         <span className={m.winner === "a" ? "lpe-win" : undefined}>
           {playersLine(m.teamA)}
@@ -257,6 +284,14 @@ function MatchRow({ m }: { m: ProResultMatch }) {
 }
 
 const LPE_CSS = `
+.lpe-onair { margin: 4px 0 20px; border: 1px solid var(--tl-live); border-radius: var(--tl-radius-xl, 20px); padding: 14px 16px; }
+.lpe-onair-head { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--tl-live); }
+.lpe-onair-event { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--tl-dim); margin-bottom: 4px; }
+.lpe-onair-item + .lpe-onair-item { margin-top: 10px; }
+.lpe-match--on { border-color: var(--tl-live); }
+.lpe-live { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; color: var(--tl-live); }
+.lpe-live-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tl-live); animation: lpePulse 1.4s ease-in-out infinite; }
+@keyframes lpePulse { 0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--tl-live) 45%, transparent); } 50% { box-shadow: 0 0 0 5px transparent; } }
 .lpe-search { position: relative; margin: 4px 0 14px; max-width: 420px; }
 .lpe-search input { width: 100%; padding: 10px 38px 10px 14px; font-size: 14.5px; color: var(--tl-fg); background: var(--tl-surface); border: 1px solid var(--tl-border); border-radius: 12px; outline: none; }
 .lpe-search input:focus-visible { border-color: var(--tl-gold); }

@@ -12,7 +12,7 @@ import { eventPhase, type ProTourEventMeta } from "@/content/pro-tour-events";
 import { groupProResults, type ProResultRow, type ProResults } from "@/lib/pro-tour/results";
 
 export const PRO_RESULTS_SELECT =
-  "id,slug,tournament_name,tournament_event,round_name,team_a_score,team_b_score,winning_team,played_at,court_number," +
+  "id,slug,tournament_name,tournament_event,round_name,team_a_score,team_b_score,winning_team,played_at,court_number,notes," +
   "match_participants(team,position,profile:profiles!match_participants_player_id_fkey(display_name,username))";
 
 export async function fetchProTourEventRows(meta: ProTourEventMeta): Promise<ProResultRow[]> {

@@ -46,7 +46,10 @@ compatibility_flags = ["nodejs_compat"]
 # 2026-09-09 (Cuong): trong ngày diễn ra giải cần cập nhật liên tục.
 # Tick 15' + trần 4 nguồn/lượt; ngoài ngày giải, hàng đợi rỗng nên tick
 # gần như miễn phí (1 REST call, không ghi job-run trừ nhịp tim mỗi giờ).
-crons = ["*/15 * * * *"]
+# 2026-09-09 v2 (Cuong): "lịch quét cần 1 phút 1 lần" trong ngày giải.
+# Tick mỗi phút; NGOÀI ngày giải hàng đợi rỗng nên tick chỉ tốn 1 REST call.
+# Nhịp thật per-source do nextScrapeAt quyết (+2' khi live, +24h khi không).
+crons = ["* * * * *"]
 
 # Public env vars — non-sensitive identifiers. Secrets go through
 # `wrangler secret put`, never committed.

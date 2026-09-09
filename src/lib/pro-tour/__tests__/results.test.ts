@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   classifyEvent,
+  collectLiveMatches,
   filterProResults,
   groupProResults,
   playersLine,
@@ -20,6 +21,7 @@ function row(over: Partial<ProResultRow>): ProResultRow {
     winning_team: "a",
     played_at: "2026-09-13T10:00:00Z",
     court_number: null,
+    notes: null,
     match_participants: [
       { team: "a", position: 1, profile: { display_name: "Alex Smith", username: "alex" } },
       { team: "a", position: 2, profile: { display_name: "Ben Jones", username: null } },
@@ -136,5 +138,27 @@ describe("filterProResults", () => {
     const out = filterProResults(grouped, "nguyen-khong-ton-tai");
     expect(out.total).toBe(0);
     expect(out.events).toHaveLength(0);
+  });
+
+  it("flags a live match from notes and sorts it first in its round", () => {
+    const out = groupProResults([
+      row({ id: "done", round_name: "SF", winning_team: "a", played_at: "2026-09-09T01:00:00Z" }),
+      row({ id: "on", round_name: "SF", winning_team: null, notes: '{"live":true}', played_at: "2026-09-09T09:00:00Z" }),
+    ]);
+    const sf = out.events[0].rounds.find((r) => r.code === "SF")!;
+    expect(sf.matches[0].id).toBe("on");
+    expect(sf.matches[0].isLive).toBe(true);
+    expect(sf.matches[1].isLive).toBe(false);
+  });
+
+  it("collectLiveMatches gathers live matches across events with labels", () => {
+    const out = groupProResults([
+      row({ id: "on1", winning_team: null, notes: '{"live":true}' }),
+      row({ id: "on2", tournament_event: "Pro Women's Singles", round_name: "SF", winning_team: null, notes: '{"live":true}' }),
+      row({ id: "done" }),
+    ]);
+    const live = collectLiveMatches(out, "vi");
+    expect(live).toHaveLength(2);
+    expect(new Set(live.map((m) => m.eventLabel))).toEqual(new Set(["Đôi nam", "Đơn nữ"]));
   });
 });
