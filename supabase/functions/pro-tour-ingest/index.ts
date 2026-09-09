@@ -512,6 +512,39 @@ async function insertMatchWithParticipants(
     // status='failed' with the underlying error_message.
     const errCode = (matchErr as { code?: string } | null)?.code;
     if (errCode === "23505") {
+      // 2026-09-09 (live cadence, #761 follow-up): the row already exists —
+      // usually from an earlier pass that saw the pairing before it was
+      // played. Skipping forever means a live event never fills in its
+      // scores, so push the result fields forward when the incoming row
+      // knows more. Never blanks data: only fires when the source reports
+      // a winner or at least one real game score, and only tightens
+      // verification (pending → verified), never the reverse.
+      const hasNews =
+        winning_team !== null ||
+        (match.scores_team_one ?? []).some((n) => n > 0) ||
+        (match.scores_team_two ?? []).some((n) => n > 0);
+      if (hasNews) {
+        const updateFields: Record<string, unknown> = {
+          team_a_score: match.scores_team_one,
+          team_b_score: match.scores_team_two,
+          winning_team,
+          round_name: match.round_name,
+          court_number: match.court_number ?? match.court,
+        };
+        if (winning_team) updateFields.verification_status = "verified";
+        if (match.played_at) updateFields.played_at = match.played_at;
+        const { error: updErr } = await supabase
+          .from("matches")
+          .update(updateFields)
+          .eq("source_provider", scrape.source_provider)
+          .eq("external_match_id", match.external_match_id);
+        if (updErr) {
+          // One bad update must not void the batch (the 84-match lesson).
+          console.error(
+            `[ingest] score update for ${match.external_match_id} failed: ${updErr.message}`,
+          );
+        }
+      }
       return false;
     }
     throw new Error(
