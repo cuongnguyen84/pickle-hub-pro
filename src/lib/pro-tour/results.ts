@@ -164,7 +164,9 @@ export function scoreLine(m: Pick<ProResultMatch, "games">): string {
 }
 
 export function playersLine(players: ProResultPlayer[]): string {
-  return players.length ? players.map((p) => p.name).join(" / ") : "—";
+  // "TBD" — the bracket slot exists but its player comes from an unfinished
+  // feeder match (universal bracket convention, reads fine in VI and EN).
+  return players.length ? players.map((p) => p.name).join(" / ") : "TBD";
 }
 
 /** Keep the professional draws. The watchlist is curated so this is a
