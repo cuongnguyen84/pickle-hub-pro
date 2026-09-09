@@ -45,8 +45,24 @@ function EventCard({ meta, language, now }: { meta: ProTourEventMeta; language: 
   const vi = language === "vi";
   const phase = eventPhase(meta, now);
   const href = `${vi ? "/vi" : ""}/live/pro/${meta.slug}`;
+  const branded = Boolean(meta.brandBg);
   return (
-    <Link to={href} className={`pts-card pts-card--${phase}`}>
+    <Link
+      to={href}
+      className={`pts-card pts-card--${phase}${branded ? " pts-card--brand" : ""}`}
+      style={branded ? { background: meta.brandBg } : undefined}
+    >
+      {meta.logoUrl && (
+        <img
+          className="pts-logo"
+          src={meta.logoUrl}
+          alt=""
+          width={64}
+          height={100}
+          loading="lazy"
+          aria-hidden="true"
+        />
+      )}
       <div className="pts-card-top">
         <span className="pts-tier">{meta.tier}</span>
         <span className={`pts-phase pts-phase--${phase}`}>
@@ -72,6 +88,15 @@ const PTS_CSS = `
 .pts-card:hover { border-color: var(--tl-gold); transform: translateY(-1px); }
 .pts-card:focus-visible { outline: 2px solid var(--tl-gold); outline-offset: 2px; }
 .pts-card--live { border-color: var(--tl-live); }
+.pts-card--brand { position: relative; overflow: hidden; border-color: rgba(255,255,255,.18); }
+.pts-card--brand:hover { border-color: rgba(255,255,255,.45); }
+.pts-card--brand .pts-name, .pts-card--brand .pts-cta { color: #fff; }
+.pts-card--brand .pts-meta, .pts-card--brand .pts-tier { color: rgba(255,255,255,.72); }
+.pts-card--brand .pts-phase { color: rgba(255,255,255,.72); }
+.pts-card--brand .pts-phase--live { color: #6ee7a0; }
+.pts-card--brand .pts-dot { background: #6ee7a0; box-shadow: 0 0 0 3px rgba(110,231,160,.25); }
+.pts-logo { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 64px; height: auto; opacity: .95; pointer-events: none; filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
+.pts-card--brand .pts-card-top, .pts-card--brand .pts-name, .pts-card--brand .pts-meta, .pts-card--brand .pts-cta { position: relative; max-width: calc(100% - 72px); }
 .pts-card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .pts-tier { font-family: "Geist Mono", ui-monospace, monospace; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--tl-dim); }
 .pts-phase { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--tl-dim); display: inline-flex; align-items: center; gap: 6px; }
