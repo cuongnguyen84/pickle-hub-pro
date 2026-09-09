@@ -91,6 +91,16 @@ export const rscScraperAdapter: ProTourAdapter<ScraperEnv> = {
       throw new Error(`rsc_scraper: URL not recognised: ${url}`);
     }
     const html = await renderWithBrowser(env, url);
+    // 2026-09-09: the bracket site intermittently serves a ~1KB JS-challenge
+    // shell instead of the RSC payload. Parsing it yields 0 matches and the
+    // run used to report "success, imported 0" — a silent empty scrape that
+    // also advanced next_scrape_at past live matches. Fail loudly so the
+    // 1-minute tick simply retries.
+    if (!html.includes("__next_f")) {
+      throw new Error(
+        `rsc_scraper: source returned a shell/challenge page (${html.length} bytes) — no RSC payload`,
+      );
+    }
     return parseTournamentHtml(html, url);
   },
 };

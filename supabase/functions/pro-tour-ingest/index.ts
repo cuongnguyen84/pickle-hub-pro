@@ -333,15 +333,22 @@ async function reconcileMatches(
   const externalIds = scrape.matches.map((m) => m.external_match_id);
   const { data: existing, error } = await supabase
     .from("matches")
-    .select("id, external_match_id, winning_team")
+    .select("id, external_match_id, winning_team, notes")
     .eq("source_provider", scrape.source_provider)
     .in("external_match_id", externalIds);
   if (error) throw new Error(`Match lookup: ${error.message}`);
 
-  const existingMap = new Map<string, { id: string; winning_team: string | null }>(
+  const existingMap = new Map<
+    string,
+    { id: string; winning_team: string | null; notes: string | null }
+  >(
     (existing ?? []).map((r) => [
       r.external_match_id as string,
-      { id: r.id as string, winning_team: r.winning_team as string | null },
+      {
+        id: r.id as string,
+        winning_team: r.winning_team as string | null,
+        notes: (r.notes as string | null) ?? null,
+      },
     ]),
   );
 
@@ -379,6 +386,38 @@ async function reconcileMatches(
         .eq("id", prior.id);
       if (upErr) throw new Error(`Match update ${match.external_match_id}: ${upErr.message}`);
       imported += 1;
+      continue;
+    }
+
+    // 2026-09-09 LIVE-REFRESH: an existing row with no winner used to be
+    // "leave it unchanged" — so a match that went LIVE on the source never
+    // received its notes {"live":true} nor its in-progress game points
+    // (the badge shipped in #766 was dead code on this path). Refresh when
+    // the source has anything new (live flag, points) or when a previously
+    // live row needs its flag cleared. Never touches winner/verification.
+    if (prior && newWinner === null) {
+      const priorLive = (prior.notes ?? "").includes('"live"');
+      const hasSignal =
+        match.notes != null ||
+        priorLive ||
+        (match.scores_team_one ?? []).some((n) => n > 0) ||
+        (match.scores_team_two ?? []).some((n) => n > 0);
+      if (hasSignal) {
+        const { error: liveErr } = await supabase
+          .from("matches")
+          .update({
+            team_a_score: match.scores_team_one,
+            team_b_score: match.scores_team_two,
+            court_number: match.court_number ?? match.court,
+            notes: match.notes ?? null,
+          })
+          .eq("id", prior.id);
+        if (liveErr) {
+          console.error(
+            `[ingest] live refresh ${match.external_match_id} failed: ${liveErr.message}`,
+          );
+        }
+      }
       continue;
     }
 
