@@ -10,6 +10,38 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "kuala-lumpur-cup-2026-results",
+    publishedDate: "2026-09-09",
+    updatedDate: "2026-09-09",
+    author: "Cuong Nguyen",
+    tags: [
+      "ket qua kuala lumpur cup 2026",
+      "kuala lumpur cup 2026 results",
+      "ppa asia 1000",
+      "ppa tour asia",
+      "leapmotor kuala lumpur cup",
+      "ho tam",
+      "pickleball malaysia 2026",
+    ],
+    ctaPath: "/live/pro/ppa-asia-1000-leapmotor-kuala-lumpur-cup-2026",
+    ctaLabel: {
+      en: "Follow live Pro results on ThePickleHub",
+      vi: "Theo dõi kết quả Pro trực tiếp trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/kuala-lumpur-cup-2026-preview-hero.webp",
+      alt: "Leapmotor Kuala Lumpur Cup 2026 at The Hood in Kuala Lumpur, Malaysia — a floodlit indoor pickleball court in PPA Asia colours, with the tournament dates September 9 to 13 and the PPA Asia 1000 tier mark",
+    },
+    titleEn: "Kuala Lumpur Cup 2026 Results: Every Pro Match, Day by Day",
+    titleVi: "Kết quả Kuala Lumpur Cup 2026: từng trận Pro, từng ngày",
+    metaTitleEn: "Kuala Lumpur Cup 2026 Results: Every Pro Match",
+    metaTitleVi: "Kết quả Kuala Lumpur Cup 2026 (9–13/9)",
+    metaDescriptionEn:
+      "Leapmotor Kuala Lumpur Cup 2026 results, Sep 9-13 at The Hood, Kuala Lumpur: every Pro draw as it lands, Ho Tam seeded 8th, finals Sunday Sep 13.",
+    metaDescriptionVi:
+      "Kết quả Kuala Lumpur Cup 2026 (9–13/9) cập nhật liên tục: mọi nhánh Pro, Hồ Tâm hạt giống 8, chung kết 13/9 12:00 giờ VN.",
+  },
+  {
     slug: "kuala-lumpur-cup-2026-preview",
     publishedDate: "2026-09-08",
     updatedDate: "2026-09-09",

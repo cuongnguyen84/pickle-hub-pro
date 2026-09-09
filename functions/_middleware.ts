@@ -1266,7 +1266,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // vé" (VI) queries that were drawing 2.5% and 1.1% CTR at position 8-9, and
   // the schedule post now links on to the Vietnam 2026 calendar so the traffic
   // spike has somewhere to go now that the event is over.
-  const cacheKey = `pr:v114:${url.pathname}`;
+  // v115 (2026-09-09): new Kuala Lumpur Cup results post (EN + VI), and the
+  // preview post now links on to it in both locales.
+  const cacheKey = `pr:v115:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
