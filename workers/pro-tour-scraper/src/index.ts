@@ -181,6 +181,11 @@ async function runScheduledBatch(env: Env): Promise<void> {
   const externalRunId = `scheduled:${startedAt.toISOString()}:${crypto.randomUUID()}`;
   try {
     const due = await fetchDueWatchlistRows(env);
+    // */15 cron: an empty tick is the common case outside event days.
+    // Recording 96 "No rows due" job-runs a day would bury real signal —
+    // keep the top-of-hour one as the alive heartbeat.
+    if (due.length === 0 && startedAt.getUTCMinutes() !== 0) return;
+    const liveNow = await isLiveEventWindow(env);
     const results = await Promise.all(due.map(async (row) => {
       const result = await runScrape(
           {
@@ -203,7 +208,7 @@ async function runScheduledBatch(env: Env): Promise<void> {
           // upcoming event's first real scrape by +24h/+7d after it goes
           // live instead of catching it on the next 6h tick.
           if (result.ok && !result.skipped) {
-            await updateWatchlistAfterScrape(env, row.id, row.scrape_frequency);
+            await updateWatchlistAfterScrape(env, row.id, row.scrape_frequency, liveNow);
             return result;
           }
           console.error(
@@ -678,8 +683,32 @@ async function fetchDueWatchlistRows(env: Env): Promise<WatchlistRow[]> {
   return (await res.json()) as WatchlistRow[];
 }
 
-function nextScrapeAt(frequency: WatchlistRow["scrape_frequency"]): string | null {
+/** Any event in pro_tour_events live today (venue-local ≈ UTC+8)?
+ * Decides the scrape cadence: event days want ~20-minute updates
+ * (Cuong, 2026-09-09), quiet weeks want daily. */
+async function isLiveEventWindow(env: Env): Promise<boolean> {
+  const today = new Date(Date.now() + 8 * 3600_000).toISOString().slice(0, 10);
+  try {
+    const res = await fetch(
+      `${env.SUPABASE_URL}/rest/v1/pro_tour_events?select=slug&start_date=lte.${today}&end_date=gte.${today}&limit=1`,
+      { headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}` } },
+    );
+    if (!res.ok) return false;
+    return ((await res.json()) as unknown[]).length > 0;
+  } catch {
+    return false; // fail closed to the cheap daily cadence
+  }
+}
+
+function nextScrapeAt(
+  frequency: WatchlistRow["scrape_frequency"],
+  liveNow: boolean,
+): string | null {
   const now = Date.now();
+  // Event days: a daily row graduates to a ~20-minute cadence. The */15
+  // cron + limit=4 rotate ~12 sources/hour, comfortably under the
+  // 50-subrequest ceiling.
+  if (frequency === "daily" && liveNow) return new Date(now + 20 * 60_000).toISOString();
   if (frequency === "daily") return new Date(now + 24 * 3600_000).toISOString();
   if (frequency === "weekly") return new Date(now + 7 * 24 * 3600_000).toISOString();
   // 'on_event_end' + 'manual' → set to NULL so the cron stops touching them
@@ -691,8 +720,9 @@ async function updateWatchlistAfterScrape(
   env: Env,
   id: string,
   frequency: WatchlistRow["scrape_frequency"],
+  liveNow: boolean,
 ): Promise<void> {
-  const next = nextScrapeAt(frequency);
+  const next = nextScrapeAt(frequency, liveNow);
   await fetch(`${env.SUPABASE_URL}/rest/v1/pro_tour_watchlist?id=eq.${id}`, {
     method: "PATCH",
     headers: {
