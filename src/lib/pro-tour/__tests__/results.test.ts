@@ -161,4 +161,13 @@ describe("filterProResults", () => {
     expect(live).toHaveLength(2);
     expect(new Set(live.map((m) => m.eventLabel))).toEqual(new Set(["Đôi nam", "Đơn nữ"]));
   });
+
+  it("suffixes qualifier draws so two sections never share a heading", () => {
+    const out = groupProResults([
+      row({ id: "main" }),
+      row({ id: "q", tournament_event: "Pro Men's Doubles Qualifier", round_name: "W", winning_team: null }),
+    ]);
+    const labels = out.events.map((e) => e.labelVi).sort();
+    expect(labels).toEqual(["Đôi nam", "Đôi nam — Vòng loại"]);
+  });
 });

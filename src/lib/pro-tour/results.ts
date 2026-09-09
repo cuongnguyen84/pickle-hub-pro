@@ -235,11 +235,15 @@ export function groupProResults(rowsIn: ProResultRow[]): ProResults {
     const champion =
       finals.length === 1 && finals[0].winner ? (finals[0].winner === "a" ? finals[0].teamA : finals[0].teamB) : null;
 
+    // Main draw and its qualifier classify to the same key; without the
+    // suffix the page shows two sections both headed "Men's Singles"
+    // (Cuong's screenshot, 2026-09-09). The source label is the tiebreak.
+    const isQualifier = /qualif/i.test(name);
     return {
       key,
       name,
-      labelEn: EVENT_LABEL[key].en,
-      labelVi: EVENT_LABEL[key].vi,
+      labelEn: EVENT_LABEL[key].en + (isQualifier ? " — Qualifier" : ""),
+      labelVi: EVENT_LABEL[key].vi + (isQualifier ? " — Vòng loại" : ""),
       rounds,
       matchCount: rounds.reduce((n, r) => n + r.matches.length, 0),
       champion,
