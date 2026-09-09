@@ -34,6 +34,7 @@ import {
   renderNotificationsShell,
   renderNoindexShell,
   render404,
+  renderProTourEvent,
 } from "./_lib/render";
 
 // ─── PR72 (SEO Phase 2A I-7) — noindex route patterns ────────
@@ -1602,6 +1603,15 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string, accep
 
   // Blog index
   if (path === "/blog") return renderBlog(siteUrl);
+
+  // Pro-tour event results (/live/pro/<slug>) — registry-driven, DB-free
+  // bot summary; the SPA page polls live scores. Unknown slug falls
+  // through to the 404 fallback below.
+  match = path.match(/^\/live\/pro\/([^/]+)$/);
+  if (match) {
+    const proEvent = renderProTourEvent(match[1], siteUrl, rawPath, lang);
+    if (proEvent) return proEvent;
+  }
 
   // Livestream listing
   if (path === "/livestream") return await renderLivestreamList(supabase, siteUrl, rawPath, lang);
