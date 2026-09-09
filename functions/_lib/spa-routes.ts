@@ -19,6 +19,7 @@ const STATIC_PATHS = new Set([
 ]);
 
 const DYNAMIC_PATHS: RegExp[] = [
+  /^\/live\/pro\/[^/]+$/,
   /^\/live\/[^/]+$/, /^\/watch\/[^/]+$/, /^\/tournament\/[^/]+$/,
   /^\/org\/[^/]+$/, /^\/social\/[^/]+(?:\/(?:danh-sach|xep-cap|live))?$/,
   /^\/san\/khu-vuc\/[^/]+$/, /^\/san\/[^/]+$/, /^\/dang-ky\/[^/]+$/,
