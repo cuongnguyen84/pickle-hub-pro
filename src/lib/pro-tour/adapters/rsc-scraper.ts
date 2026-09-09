@@ -240,6 +240,11 @@ const MATCH_ID_RE = /\\"id\\":\\"([a-f0-9-]{36})\\"/g;
 const MATCH_DATE_RE = /\\"date\\":\\"([^"\\]+)\\"/;
 const MATCH_COURT_RE = /\\"court\\":\\"([^"\\]*)\\"/;
 const MATCH_BRACKET_TYPE_RE = /\\"inBracketType\\":\\"([^"\\]+)\\"/;
+// matchStatus mapping observed live on the 2026 KL Cup qualifiers
+// (2026-09-09): 1 = scheduled, 2 = IN PROGRESS (the bracket page shows the
+// red LIVE badge and per-game points), 4 = finished. Anything else is
+// treated as not-live; the flag only decorates, never gates data.
+const MATCH_STATUS_RE = /\\"matchStatus\\":(\d+)/;
 const MATCH_TEAM_BLOCK_RE =
   /\\"id\\":\\"[a-f0-9-]{36}\\",\\"players\\":\[([^\]]+)\],\\"seedNumber\\":(\d+|null),\\"games\\":\[([^\]]*)\],\\"isWinner\\":(true|false)/g;
 const PLAYER_NAME_RE = /\\"([^"\\]+)\\"/g;
@@ -334,6 +339,7 @@ function extractMatches(html: string, sourceUrl: string): ScrapedMatch[] {
     const dateRaw = matchSlice.match(MATCH_DATE_RE)?.[1] ?? "";
     const court = matchSlice.match(MATCH_COURT_RE)?.[1] ?? null;
     const bracketType = matchSlice.match(MATCH_BRACKET_TYPE_RE)?.[1] ?? "";
+    const isLiveNow = matchSlice.match(MATCH_STATUS_RE)?.[1] === "2";
 
     // Round title lives BEFORE the match record (in the round wrapper).
     // Scan from start-of-html to matchIdStart and pick the LAST title —
@@ -368,6 +374,9 @@ function extractMatches(html: string, sourceUrl: string): ScrapedMatch[] {
       court,
       played_at: parsePpaDate(dateRaw),
       source_url: sourceUrl,
+      // Live badge for the results page; cleared by the next re-scrape
+      // once the source flips the match to finished.
+      notes: isLiveNow ? '{"live":true}' : null,
     });
   }
 

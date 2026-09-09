@@ -239,7 +239,13 @@ function EventSection({ ev, vi }: { ev: ProResultEvent; vi: boolean }) {
 
 function MatchRow({ m }: { m: ProResultMatch }) {
   return (
-    <div className={`lpe-match${m.hasVietnam ? " lpe-match--vn" : ""}`}>
+    <div className={`lpe-match${m.hasVietnam ? " lpe-match--vn" : ""}${m.isLive ? " lpe-match--on" : ""}`}>
+      {m.isLive && (
+        <span className="lpe-live" aria-label="live">
+          <span className="lpe-live-dot" aria-hidden="true" />
+          LIVE
+        </span>
+      )}
       <div className="lpe-teams">
         <span className={m.winner === "a" ? "lpe-win" : undefined}>
           {playersLine(m.teamA)}
@@ -257,6 +263,10 @@ function MatchRow({ m }: { m: ProResultMatch }) {
 }
 
 const LPE_CSS = `
+.lpe-match--on { border-color: var(--tl-live); }
+.lpe-live { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; color: var(--tl-live); }
+.lpe-live-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tl-live); animation: lpePulse 1.4s ease-in-out infinite; }
+@keyframes lpePulse { 0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--tl-live) 45%, transparent); } 50% { box-shadow: 0 0 0 5px transparent; } }
 .lpe-search { position: relative; margin: 4px 0 14px; max-width: 420px; }
 .lpe-search input { width: 100%; padding: 10px 38px 10px 14px; font-size: 14.5px; color: var(--tl-fg); background: var(--tl-surface); border: 1px solid var(--tl-border); border-radius: 12px; outline: none; }
 .lpe-search input:focus-visible { border-color: var(--tl-gold); }
