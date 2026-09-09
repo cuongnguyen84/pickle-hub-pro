@@ -20,7 +20,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "kuala-lumpur-cup-2026-preview",
   publishedDate: "2026-09-08",
-  updatedDate: "2026-09-08",
+  updatedDate: "2026-09-09",
   author: "The PickleHub Team",
   tags: [
     "kuala lumpur cup 2026",
@@ -49,7 +49,7 @@ const post: BlogPost = {
       sections: [
         {
           heading: "Leapmotor Kuala Lumpur Cup 2026 at a glance",
-          content: "Last updated September 8, 2026 — the Leapmotor Kuala Lumpur Cup 2026 runs September 9-13, 2026 at The Hood in Kuala Lumpur, Malaysia, with up to US$300,000 in prize money and 1000 ranking points to each gold medalist. It is PPA Tour Asia's top-tier stop of the season so far, played the week after the Pickleball World Cup in Da Nang finished. Qualifying opens Wednesday September 9 and the finals are Sunday September 13, 13:00-18:00 GMT+8 (12:00-17:00 Vietnam time). Gabe Tardio, the world No. 2 as reported by the New Straits Times, tops the Men's Doubles seeds with Noe Khlif; Kaitlyn Christian tops the Women's Singles seeds; and Vietnam's Ho Tam is seeded 8th in Women's Singles two weeks after winning Vietnam's first PPA Tour Asia Women's Doubles gold. This ThePickleHub guide has the day-by-day schedule in both Malaysian and Vietnamese time, the full prize and points table, every seed, the five Vietnamese players in the main draw, and an honest account of what the organizers have and have not published.",
+          content: "Last updated September 9, 2026 — the Leapmotor Kuala Lumpur Cup 2026 runs September 9-13, 2026 at The Hood in Kuala Lumpur, Malaysia, with up to US$300,000 in prize money and 1000 ranking points to each gold medalist. It is PPA Tour Asia's top-tier stop of the season so far, played the week after the Pickleball World Cup in Da Nang finished. Qualifying opens Wednesday September 9 and the finals are Sunday September 13, 13:00-18:00 GMT+8 (12:00-17:00 Vietnam time). Gabe Tardio, the world No. 2 as reported by the New Straits Times, tops the Men's Doubles seeds with Noe Khlif; Kaitlyn Christian tops the Women's Singles seeds; and Vietnam's Ho Tam is seeded 8th in Women's Singles two weeks after winning Vietnam's first PPA Tour Asia Women's Doubles gold. This ThePickleHub guide has the day-by-day schedule in both Malaysian and Vietnamese time, the full prize and points table, every seed, the five Vietnamese players in the main draw, and an honest account of what the organizers have and have not published.",
           internalLinks: [
             {
               text: "See the full PPA Tour Asia 2026 calendar and prize money",
@@ -185,11 +185,11 @@ const post: BlogPost = {
         },
         {
           heading: "How to watch, and what has not been published",
-          content: "PPA Tour Asia says matches stream on its own YouTube channel across all five days, and points viewers to \"your local broadcaster\" through a regional list. Three caveats are worth stating plainly, because the organizers have not: the page does not say whether the YouTube stream is free or gated, the broadcaster list renders empty, and Media Prima Omnia is credited as Official Media Partner without any statement that it will carry the event. Tickets are sold through Tixr; no prices, tiers or on-sale status appear anywhere on the tournament page, and there is no street address for The Hood, only a map link. If any of that changes during the week, this page will be updated.",
+          content: "PPA Tour Asia says matches stream on its own YouTube channel across all five days, and points viewers to \"your local broadcaster\" through a regional list. Three caveats are worth stating plainly, because the organizers have not: the page does not say whether the YouTube stream is free or gated, the broadcaster list renders empty, and Media Prima Omnia is credited as Official Media Partner without any statement that it will carry the event. Tickets are a separate trap. The tournament page carries only a bare Tixr button, but PPA Tour Asia published a full ticket breakdown as a news post on August 7 that is easy to miss from the tournament page itself. Four passes are on sale: a DINKER GA Season Pass covering all five days; single-day general admission split into BANGER (left stand, directly behind the players) and DINKER (right stand); a VIP Pass with reserved seating, lounge access, complimentary food and drink and player meet-and-greets; and a Premium Courtside Pass on Championship Court that adds priority entry and an official merch pack the organizers value at over RM200. Every pass includes Pickletown, the food-and-games area running all five days, and every pass allows re-entry on a credential scan. What is genuinely missing is the price: no ticket figure appears on either PPA page, so the only way to see what a seat costs is to open Tixr. There is also still no street address for The Hood, only a map link. If any of that changes during the week, this page will be updated.",
           listItems: [
             "Stream: PPA Tour Asia's YouTube channel, September 9-13. Free-to-watch is likely but not stated",
             "Broadcast: a regional broadcaster list exists on the tournament page but is currently empty",
-            "Tickets: sold via Tixr. No prices or availability published",
+            "Tickets: on sale via Tixr. Four passes \u2014 GA season, single-day Banger or Dinker, VIP, Premium Courtside. Prices appear on Tixr only, not on PPA's own pages",
             "Venue: The Hood, Kuala Lumpur. Map link only, no address given",
           ],
           internalLinks: [
@@ -230,7 +230,7 @@ const post: BlogPost = {
       sections: [
         {
           heading: "Leapmotor Kuala Lumpur Cup 2026 — những điều cần biết",
-          content: "Cập nhật ngày 8/9/2026 — Leapmotor Kuala Lumpur Cup 2026 diễn ra từ 9 đến 13/9/2026 tại The Hood, Kuala Lumpur (Malaysia), tổng thưởng tối đa 300.000 USD và 1000 điểm xếp hạng cho mỗi nhà vô địch. Đây là chặng có thang điểm cao nhất của PPA Tour Asia mùa 2026 tính tới lúc này, diễn ra ngay tuần sau khi Pickleball World Cup ở Đà Nẵng khép lại. Vòng loại khởi tranh thứ Tư 9/9, chung kết vào Chủ nhật 13/9 lúc 12:00–17:00 giờ Việt Nam. Đáng chú ý với người hâm mộ Việt: Hồ Tâm là hạt giống số 8 đơn nữ, chỉ hai tuần sau khi cùng Sophia Nhi Huynh giành HCV đôi nữ đầu tiên của Việt Nam trên PPA Tour Asia. Bài viết này do ThePickleHub tổng hợp, gồm lịch thi đấu quy đổi sang giờ Việt Nam, bảng tiền thưởng đầy đủ, toàn bộ hạt giống, năm tay vợt Việt trong main draw, và cả những thông tin ban tổ chức CHƯA công bố.",
+          content: "Cập nhật ngày 9/9/2026 — Leapmotor Kuala Lumpur Cup 2026 diễn ra từ 9 đến 13/9/2026 tại The Hood, Kuala Lumpur (Malaysia), tổng thưởng tối đa 300.000 USD và 1000 điểm xếp hạng cho mỗi nhà vô địch. Đây là chặng có thang điểm cao nhất của PPA Tour Asia mùa 2026 tính tới lúc này, diễn ra ngay tuần sau khi Pickleball World Cup ở Đà Nẵng khép lại. Vòng loại khởi tranh thứ Tư 9/9, chung kết vào Chủ nhật 13/9 lúc 12:00–17:00 giờ Việt Nam. Đáng chú ý với người hâm mộ Việt: Hồ Tâm là hạt giống số 8 đơn nữ, chỉ hai tuần sau khi cùng Sophia Nhi Huynh giành HCV đôi nữ đầu tiên của Việt Nam trên PPA Tour Asia. Bài viết này do ThePickleHub tổng hợp, gồm lịch thi đấu quy đổi sang giờ Việt Nam, bảng tiền thưởng đầy đủ, toàn bộ hạt giống, năm tay vợt Việt trong main draw, và cả những thông tin ban tổ chức CHƯA công bố.",
           internalLinks: [
             {
               text: "Xem lịch và tiền thưởng toàn mùa PPA Tour Asia 2026",
@@ -370,11 +370,11 @@ const post: BlogPost = {
         },
         {
           heading: "Xem ở đâu — và những gì ban tổ chức chưa nói",
-          content: "PPA Tour Asia nói các trận được phát trên kênh YouTube của chính họ suốt 5 ngày, và có mục \"đài phát sóng tại khu vực của bạn\". Có ba điểm cần nói thẳng vì ban tổ chức không nói: trang giải KHÔNG ghi stream YouTube miễn phí hay phải trả tiền, danh sách đài phát sóng hiện đang TRỐNG, và Media Prima Omnia được ghi là Đối tác truyền thông chính thức nhưng không có câu nào khẳng định đài này sẽ phát giải. Vé bán qua Tixr; trang giải không có giá vé, hạng vé hay tình trạng còn/hết, và cũng không có địa chỉ đường phố của The Hood, chỉ có link bản đồ. Nếu trong tuần có thay đổi, bài này sẽ được cập nhật.",
+          content: "PPA Tour Asia nói các trận được phát trên kênh YouTube của chính họ suốt 5 ngày, và có mục \"đài phát sóng tại khu vực của bạn\". Có ba điểm cần nói thẳng vì ban tổ chức không nói: trang giải KHÔNG ghi stream YouTube miễn phí hay phải trả tiền, danh sách đài phát sóng hiện đang TRỐNG, và Media Prima Omnia được ghi là Đối tác truyền thông chính thức nhưng không có câu nào khẳng định đài này sẽ phát giải. Riêng chuyện vé thì dễ hiểu nhầm: trang giải chỉ có đúng một nút Tixr trơ trọi, nhưng PPA Tour Asia đã đăng một bài riêng ngày 7/8 mô tả đầy đủ các hạng vé — từ trang giải rất dễ bỏ sót. Vé ĐANG BÁN với bốn hạng: DINKER GA Season Pass trọn 5 ngày; vé ngày hạng phổ thông chia làm BANGER (khán đài trái, ngay sau lưng VĐV) và DINKER (khán đài phải); VIP Pass có chỗ ngồi riêng, phòng chờ VIP, đồ ăn uống miễn phí và cơ hội gặp VĐV; và Premium Courtside Pass ngồi hàng đầu sân Championship, thêm lối vào ưu tiên và một túi merch chính hãng ban tổ chức định giá trên 200 RM. Mọi hạng vé đều vào được khu hội chợ Pickletown mở suốt 5 ngày, và đều được ra vào lại khi quét thẻ. Thứ thật sự còn thiếu là GIÁ: không trang PPA nào ghi giá vé, muốn biết bao nhiêu tiền thì phải mở Tixr. Và vẫn không có địa chỉ đường phố của The Hood, chỉ có link bản đồ. Nếu trong tuần có thay đổi, bài này sẽ được cập nhật.",
           listItems: [
             "Livestream: kênh YouTube PPA Tour Asia, 9–13/9. Nhiều khả năng miễn phí nhưng không được ghi rõ",
             "Truyền hình: trang giải có mục danh sách đài theo khu vực nhưng hiện không hiển thị đài nào",
-            "Vé: bán qua Tixr. Không công bố giá vé hay tình trạng vé",
+            "Vé: ĐANG BÁN qua Tixr. Bốn hạng — GA trọn 5 ngày, vé ngày Banger/Dinker, VIP, Premium Courtside. Giá chỉ hiện trên Tixr, không có trên trang PPA",
             "Địa điểm: The Hood, Kuala Lumpur. Chỉ có link bản đồ, không có địa chỉ",
           ],
           internalLinks: [

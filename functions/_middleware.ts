@@ -1252,7 +1252,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // og:image moves off the site-wide fallback on both the EN and VI URLs.
   // v111 (2026-09-08): the KL Cup hero was re-cut to 16:9, so the og:image
   // dimensions cached under v110 no longer match the file being served.
-  const cacheKey = `pr:v111:${url.pathname}`;
+  // v112 (2026-09-09): the KL Cup preview said no ticket tiers or on-sale
+  // status were published. PPA had published both on a separate news page
+  // since August 7 — the body now names the four passes on both locales.
+  const cacheKey = `pr:v112:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

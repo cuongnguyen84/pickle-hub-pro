@@ -12,7 +12,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "kuala-lumpur-cup-2026-preview",
     publishedDate: "2026-09-08",
-    updatedDate: "2026-09-08",
+    updatedDate: "2026-09-09",
     author: "The PickleHub Team",
     tags: [
       "kuala lumpur cup 2026",
