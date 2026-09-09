@@ -1,12 +1,11 @@
 /**
  * SSR for /live/pro/<slug> (+ /vi twin) — pro-tour event results pages.
  *
- * Registry-driven and DB-free on purpose: the SPA page polls `matches` for
- * live scores, but a bot only needs the event facts (name, dates, venue,
- * tier, prize, credit links) and an honest phase line. Both come from
- * src/content/pro-tour-events.ts, the same registry the SPA reads, so the
- * two views can never disagree about which events exist. Unknown slug →
- * null, and the middleware falls through to its render404.
+ * Event facts come from the `pro_tour_events` table (admin-managed since
+ * 2026-09-09) — the same registry the SPA reads, so the two views can never
+ * disagree about which events exist. The bot page needs no `matches` query:
+ * facts + an honest phase line are enough. Unknown slug → null, and the
+ * middleware falls through to its render404.
  */
 
 import { buildHtml, htmlResponse } from "../html";
@@ -14,17 +13,35 @@ import { escapeHtml, type Lang } from "../utils";
 import {
   eventPhase,
   formatEventDates,
-  PRO_TOUR_EVENTS,
+  metaFromRow,
+  type ProTourEventRow,
 } from "../../../src/content/pro-tour-events";
 
-export function renderProTourEvent(
+// Minimal query surface — the middleware hands us its service client.
+type SupabaseLike = {
+  from(table: string): {
+    select(cols: string): {
+      eq(col: string, v: string): {
+        maybeSingle(): Promise<{ data: unknown; error: { message: string } | null }>;
+      };
+    };
+  };
+};
+
+export async function renderProTourEvent(
+  supabase: SupabaseLike,
   slug: string,
   siteUrl: string,
   rawPath: string,
   lang: Lang,
-): Response | null {
-  const meta = PRO_TOUR_EVENTS.find((e) => e.slug === slug);
-  if (!meta) return null;
+): Promise<Response | null> {
+  const { data, error } = await supabase
+    .from("pro_tour_events")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error || !data) return null;
+  const meta = metaFromRow(data as ProTourEventRow);
 
   const vi = lang === "vi";
   const name = escapeHtml(vi ? meta.nameVi : meta.nameEn);

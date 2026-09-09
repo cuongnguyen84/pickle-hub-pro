@@ -1609,7 +1609,7 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string, accep
   // through to the 404 fallback below.
   match = path.match(/^\/live\/pro\/([^/]+)$/);
   if (match) {
-    const proEvent = renderProTourEvent(match[1], siteUrl, rawPath, lang);
+    const proEvent = await renderProTourEvent(supabase, match[1], siteUrl, rawPath, lang);
     if (proEvent) return proEvent;
   }
 
