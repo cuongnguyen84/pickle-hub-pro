@@ -43,7 +43,10 @@ compatibility_flags = ["nodejs_compat"]
 # Worker handler is idempotent so over-triggering is safe (ingest dedupes
 # on (source_provider, external_match_id)).
 [triggers]
-crons = ["0 */6 * * *"]
+# 2026-09-09 (Cuong): trong ngày diễn ra giải cần cập nhật liên tục.
+# Tick 15' + trần 4 nguồn/lượt; ngoài ngày giải, hàng đợi rỗng nên tick
+# gần như miễn phí (1 REST call, không ghi job-run trừ nhịp tim mỗi giờ).
+crons = ["*/15 * * * *"]
 
 # Public env vars — non-sensitive identifiers. Secrets go through
 # `wrangler secret put`, never committed.
