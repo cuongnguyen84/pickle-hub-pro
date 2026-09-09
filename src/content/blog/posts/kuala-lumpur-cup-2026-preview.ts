@@ -52,6 +52,10 @@ const post: BlogPost = {
           content: "Last updated September 9, 2026, day one — the Leapmotor Kuala Lumpur Cup 2026 is under way and runs September 9-13, 2026 at The Hood in Kuala Lumpur, Malaysia, with up to US$300,000 in prize money and 1000 ranking points to each gold medalist. It is the season's second PPA Asia 1000 stop, level with the MB Hanoi Cup played April 1-5, and it lands the week after the Pickleball World Cup in Da Nang finished. Today, Wednesday September 9, is qualifying day, 09:00-21:00 GMT+8 (08:00-20:00 Vietnam time); the finals are Sunday September 13, 13:00-18:00 GMT+8 (12:00-17:00 Vietnam time). Gabe Tardio, the world No. 2 as reported by the New Straits Times, tops the Men's Doubles seeds with Noe Khlif; Kaitlyn Christian tops the Women's Singles seeds; and Vietnam's Ho Tam is seeded 8th in Women's Singles, seventeen days after winning Vietnam's first PPA Tour Asia Women's Doubles gold on August 23. This ThePickleHub guide has the day-by-day schedule in both Malaysian and Vietnamese time, the full prize and points table, every seed, the five Vietnamese players in the main draw, and an honest account of what the organizers have and have not published.",
           internalLinks: [
             {
+              text: "Results: every Pro match as it lands, day by day",
+              path: "/blog/kuala-lumpur-cup-2026-results",
+            },
+            {
               text: "See the full PPA Tour Asia 2026 calendar and prize money",
               path: "/blog/ppa-tour-asia-2026-complete-guide",
             },
@@ -232,6 +236,10 @@ const post: BlogPost = {
           heading: "Leapmotor Kuala Lumpur Cup 2026 — những điều cần biết",
           content: "Cập nhật ngày 9/9/2026, ngày thi đấu đầu tiên — Leapmotor Kuala Lumpur Cup 2026 đã khởi tranh, diễn ra từ 9 đến 13/9/2026 tại The Hood, Kuala Lumpur (Malaysia), tổng thưởng tối đa 300.000 USD và 1000 điểm xếp hạng cho mỗi nhà vô địch. Đây là chặng thang 1000 điểm thứ hai của PPA Tour Asia mùa 2026, ngang hạng với MB Hanoi Cup hồi 1–5/4, và diễn ra ngay tuần sau khi Pickleball World Cup ở Đà Nẵng khép lại. Hôm nay thứ Tư 9/9 là ngày vòng loại, 09:00–21:00 giờ Malaysia (08:00–20:00 giờ Việt Nam); chung kết vào Chủ nhật 13/9 lúc 12:00–17:00 giờ Việt Nam. Đáng chú ý với người hâm mộ Việt: Hồ Tâm là hạt giống số 8 đơn nữ, 17 ngày sau khi cùng Sophia Nhi Huynh giành HCV đôi nữ đầu tiên của Việt Nam trên PPA Tour Asia ngày 23/8. Bài viết này do ThePickleHub tổng hợp, gồm lịch thi đấu quy đổi sang giờ Việt Nam, bảng tiền thưởng đầy đủ, toàn bộ hạt giống, năm tay vợt Việt trong main draw, và cả những thông tin ban tổ chức CHƯA công bố.",
           internalLinks: [
+            {
+              text: "Kết quả: từng trận Pro, cập nhật theo từng vòng",
+              path: "/vi/blog/ket-qua-kuala-lumpur-cup-2026",
+            },
             {
               text: "Xem lịch và tiền thưởng toàn mùa PPA Tour Asia 2026",
               path: "/vi/blog/ppa-tour-asia-2026-lich-thi-dau-tien-thuong",
