@@ -45,9 +45,9 @@ export default function LiveProEvent() {
         active="live"
       >
         <div className="tl-shell">
-          <ErrorState
-            message={vi ? "Không có giải nào ở địa chỉ này." : "No event lives at this address."}
-          />
+          <div className="tl-empty" role="alert">
+            <h3>{vi ? "Không có giải nào ở địa chỉ này." : "No event lives at this address."}</h3>
+          </div>
           <p style={{ marginTop: 12 }}>
             <Link to={vi ? "/vi/live" : "/live"}>
               ← {vi ? "Về Sân trực tiếp" : "Back to Live courts"}
@@ -108,10 +108,7 @@ export default function LiveProEvent() {
         </header>
 
         {results.isError ? (
-          <ErrorState
-            message={vi ? "Không tải được kết quả." : "Could not load the results."}
-            onRetry={() => void results.refetch()}
-          />
+          <ErrorState onRetry={() => void results.refetch()} />
         ) : results.isLoading ? (
           <p className="lpe-empty">{vi ? "Đang tải kết quả…" : "Loading results…"}</p>
         ) : !results.data || results.data.total === 0 ? (
