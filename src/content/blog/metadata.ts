@@ -521,7 +521,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "hong-kong-slam-2026-preview",
     publishedDate: "2026-08-05",
-    updatedDate: "2026-08-25",
+    updatedDate: "2026-09-10",
     author: "Cuong Nguyen",
     tags: [
       "hong kong slam 2026",

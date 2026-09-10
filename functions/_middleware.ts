@@ -1277,7 +1277,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // series (four stops, two of them still to play in October) and carried
   // five events under names without their title sponsor, so /tournaments
   // and its SportsEvent JSON-LD both served an incomplete season.
-  const cacheKey = `pr:v118:${url.pathname}`;
+  // v119 (2026-09-10): the Hong Kong Slam preview gained the prize and
+  // points table PPA published on September 1 — the page about the biggest
+  // purse in Asian pickleball had no breakdown of it at all.
+  const cacheKey = `pr:v119:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
