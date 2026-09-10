@@ -50,9 +50,27 @@ function fakeSupabase(post: unknown): SupabaseClient {
   } as unknown as SupabaseClient;
 }
 
-/** Body text with every <script> block stripped, i.e. what a reader can see. */
+/**
+ * Body text with every <script> block removed, i.e. what a reader can see.
+ *
+ * Written as an explicit scan that keeps the segments BETWEEN script blocks
+ * rather than as `html.replace(/<script.*?<\/script>/g, "")`. The replace form
+ * is the shape CodeQL flags as an incomplete sanitiser (js/bad-tag-filter +
+ * js/incomplete-multi-character-sanitization) and it is right to: a single
+ * pass can leave `<script` behind, and a case-sensitive pattern misses
+ * `<SCRIPT>`. This helper decides whether a test passes, so it being subtly
+ * wrong would mean silently asserting nothing.
+ */
 function visibleText(html: string): string {
-  return html.replace(/<script[\s\S]*?<\/script>/g, "");
+  const SCRIPT_BLOCK = /<script\b[^>]*>[\s\S]*?<\/script\s*>/gi;
+  const kept: string[] = [];
+  let cursor = 0;
+  for (let m = SCRIPT_BLOCK.exec(html); m !== null; m = SCRIPT_BLOCK.exec(html)) {
+    kept.push(html.slice(cursor, m.index));
+    cursor = m.index + m[0].length;
+  }
+  kept.push(html.slice(cursor));
+  return kept.join(" ");
 }
 
 describe("renderViBlogPost FAQ", () => {
