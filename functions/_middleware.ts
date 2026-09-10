@@ -1288,7 +1288,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // played yet" a day after both stopped being true.
   // v122 (2026-09-10): hero wired on the PPA Tour Europe post, so
   // og:image moves off the site-wide fallback on both locales.
-  const cacheKey = `pr:v122:${url.pathname}`;
+  // v123 (2026-09-10): both Kuala Lumpur Cup posts now bridge the three
+  // names one player is filed under, so a reader following the link to the
+  // Shenzhen gold post does not think it is about someone else.
+  const cacheKey = `pr:v123:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

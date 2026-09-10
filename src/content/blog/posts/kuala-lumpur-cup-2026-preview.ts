@@ -156,7 +156,7 @@ const post: BlogPost = {
         },
         {
           heading: "Vietnam in the main draw: five players, and one notable absence",
-          content: "Five Vietnamese-flagged players are in the main draw, and the headline is Ho Tam — Ho Thi Truc Tam, entered as \"HO Tam\" — seeded 8th in Women's Singles. On August 23 in Shenzhen she and Sophia Nhi Huynh won the first Women's Doubles gold taken by a Vietnamese pair on PPA Tour Asia. In Kuala Lumpur that pair is split: Ho Tam plays Women's Doubles with Chinese Taipei's A. Huang, while Sophia Nhi Huynh partners Sophia Phuong Anh Tran, a different player often confused with her. The absence is just as worth naming: Hien Truong (Truong Vinh Hien), who took two silvers in Shenzhen and is Vietnam's most visible man on this tour, does not appear anywhere in the Kuala Lumpur entry lists — not in the main draw, not in qualifying, not in any event. The organizers have not said why.",
+          content: "Five Vietnamese-flagged players are in the main draw, and the headline is Ho Tam — Ho Thi Truc Tam, whom PPA Tour Asia enters as \"HO Tam\" and DUPR lists as \"Ken Tam\" — seeded 8th in Women's Singles. On August 23 in Shenzhen she and Sophia Nhi Huynh won the first Women's Doubles gold taken by a Vietnamese pair on PPA Tour Asia. In Kuala Lumpur that pair is split: Ho Tam plays Women's Doubles with Chinese Taipei's A. Huang, while Sophia Nhi Huynh partners Sophia Phuong Anh Tran, a different player often confused with her. The absence is just as worth naming: Hien Truong (Truong Vinh Hien), who took two silvers in Shenzhen and is Vietnam's most visible man on this tour, does not appear anywhere in the Kuala Lumpur entry lists — not in the main draw, not in qualifying, not in any event. The organizers have not said why.",
           listItems: [
             "Women's Singles main draw: Ho Tam (seeded 8), Sophia Phuong Anh Tran, Sophia Nhi Huynh",
             "Men's Singles main draw: Ngo Dang, Hoang Nguyen Anh",
@@ -167,7 +167,7 @@ const post: BlogPost = {
           ],
           internalLinks: [
             {
-              text: "How Huynh and Ken Tam won Vietnam's first Women's Doubles gold",
+              text: "How Sophia Nhi Huynh and Ho Tam won Vietnam's first Women's Doubles gold",
               path: "/blog/sophia-huynh-ken-tam-womens-doubles-gold-2026",
             },
           ],
@@ -341,7 +341,7 @@ const post: BlogPost = {
         },
         {
           heading: "Năm tay vợt Việt ở main draw — và một cái tên vắng mặt",
-          content: "Năm tay vợt mang cờ Việt Nam có tên ở main draw, nổi bật nhất là Hồ Tâm — Hồ Thị Trúc Tâm, đăng ký dưới tên \"HO Tam\" — hạt giống số 8 đơn nữ. Ngày 23/8 tại Thâm Quyến, cô cùng Sophia Nhi Huynh giành HCV đôi nữ đầu tiên cho một cặp Việt Nam trên PPA Tour Asia. Ở Kuala Lumpur, cặp đó TÁCH RA: Hồ Tâm đánh đôi nữ với A. Huang (Đài Bắc Trung Hoa), còn Sophia Nhi Huynh ghép với Sophia Phương Anh Trần — một tay vợt khác, rất hay bị nhầm là cùng một người. Sự vắng mặt cũng đáng nói không kém: Trương Vinh Hiển, người giành 2 HCB ở Thâm Quyến và là gương mặt nam Việt Nam nổi bật nhất trên tour này, KHÔNG có tên ở bất kỳ nội dung nào tại Kuala Lumpur — không main draw, không vòng loại. Ban tổ chức không giải thích lý do.",
+          content: "Năm tay vợt mang cờ Việt Nam có tên ở main draw, nổi bật nhất là Hồ Tâm — Hồ Thị Trúc Tâm, PPA Tour Asia đăng ký dưới tên \"HO Tam\" còn DUPR ghi là \"Ken Tam\" — hạt giống số 8 đơn nữ. Ngày 23/8 tại Thâm Quyến, cô cùng Sophia Nhi Huynh giành HCV đôi nữ đầu tiên cho một cặp Việt Nam trên PPA Tour Asia. Ở Kuala Lumpur, cặp đó TÁCH RA: Hồ Tâm đánh đôi nữ với A. Huang (Đài Bắc Trung Hoa), còn Sophia Nhi Huynh ghép với Sophia Phương Anh Trần — một tay vợt khác, rất hay bị nhầm là cùng một người. Sự vắng mặt cũng đáng nói không kém: Trương Vinh Hiển, người giành 2 HCB ở Thâm Quyến và là gương mặt nam Việt Nam nổi bật nhất trên tour này, KHÔNG có tên ở bất kỳ nội dung nào tại Kuala Lumpur — không main draw, không vòng loại. Ban tổ chức không giải thích lý do.",
           listItems: [
             "Đơn nữ (main draw): Hồ Tâm (hạt giống 8), Sophia Phương Anh Trần, Sophia Nhi Huynh",
             "Đơn nam (main draw): Ngô Đăng, Hoàng Nguyễn Anh",
