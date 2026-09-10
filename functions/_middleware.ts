@@ -1291,7 +1291,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v123 (2026-09-10): both Kuala Lumpur Cup posts now bridge the three
   // names one player is filed under, so a reader following the link to the
   // Shenzhen gold post does not think it is about someone else.
-  const cacheKey = `pr:v123:${url.pathname}`;
+  // v124 (2026-09-10): every VI post now renders its FAQ in the
+  // prerendered body, not only as FAQPage JSON-LD. Every cached VI blog
+  // page is missing that section and has to be re-rendered.
+  const cacheKey = `pr:v124:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
