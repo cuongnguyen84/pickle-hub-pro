@@ -102,6 +102,8 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/ppa-tour-asia-2026-recap-hero.webp": [1536, 1024],
   "/images/blog/ppa-tour-asia-2026-schedule-map-768.webp": [768, 429],
   "/images/blog/ppa-tour-asia-2026-schedule-map.webp": [1200, 670],
+  "/images/blog/ppa-tour-europe-2026-27-schedule-hero-768.webp": [768, 432],
+  "/images/blog/ppa-tour-europe-2026-27-schedule-hero.webp": [1672, 941],
   "/images/blog/professional-pickleball-tours-guide-2026-hero-768.webp": [768, 432],
   "/images/blog/professional-pickleball-tours-guide-2026-hero.webp": [1199, 675],
   "/images/blog/san-pickleball-da-nang-hero-768.webp": [768, 404],

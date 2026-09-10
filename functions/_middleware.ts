@@ -1286,7 +1286,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v121 (2026-09-10): KL Cup results post refreshed for day two — the
   // opening still said "qualifying today" and "no main-draw match has been
   // played yet" a day after both stopped being true.
-  const cacheKey = `pr:v121:${url.pathname}`;
+  // v122 (2026-09-10): hero wired on the PPA Tour Europe post, so
+  // og:image moves off the site-wide fallback on both locales.
+  const cacheKey = `pr:v122:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

@@ -28,6 +28,11 @@ export const blogMetadata: BlogPostMetadata[] = [
       en: "See the full 2026 pro tournament calendar",
       vi: "Xem lịch giải chuyên nghiệp 2026 đầy đủ",
     },
+    heroImage: {
+      src: "/images/blog/ppa-tour-europe-2026-27-schedule-hero.webp",
+      alt:
+        "Leapmotor-blue outdoor pickleball court at sunset overlooking Barcelona, the net across the foreground and rows of empty navy spectator seats along the far side, with the city skyline and the spires of the Sagrada Familia silhouetted against an orange sky, overlaid with the tournament lockup reading \"PPA Pickleball Tour Europe · 2026-2027 Season · 20 PPA events across Europe\".",
+    },
     titleEn:
       "PPA Tour Europe 2026-27: Every Confirmed Date, and Everything Still Unannounced",
     titleVi:
