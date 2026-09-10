@@ -1270,7 +1270,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // preview post now links on to it in both locales.
   // v116 (2026-09-09): the KL Cup results post gets its own hero — it had been
   // sharing the preview post's image, so both shipped the same og:image.
-  const cacheKey = `pr:v116:${url.pathname}`;
+  // v117 (2026-09-10): /live/pro/<slug> and its /vi twin shipped two <h1>s —
+  // renderProTourEvent opened its bodyContent with a heading but never passed
+  // omitAutoHeader, so buildHtml() added the decorated title as a second one.
+  const cacheKey = `pr:v117:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
