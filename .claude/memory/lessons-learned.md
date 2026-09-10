@@ -834,3 +834,42 @@ không grep theo con số mới. Con số mới có mặt không chứng minh c�
 
 **4. Subagent verify có mục mở đáng giá hơn checklist.** Yêu cầu "tìm cả những lỗi tôi chưa hỏi tới" trả về đúng những thứ checklist không thể có: câu cụt giữa sở hữu cách ("beating Peru's"), đoạn mồ côi về đội trưởng Cayman nằm dưới heading về Việt Nam, danh sách "ba khoảng trống" mà mục 2 nói khoảng trống đó đã hết, và trang trụ EN **thiếu hẳn FAQ "ai vô địch"** trong khi bản VI đã có — một lệch EN/VI mà không grep nào bắt được vì nó là sự VẮNG MẶT.
 
+## Một VĐV có thể có BA cái tên, mỗi tên một nguồn — nêu cả ba, đừng chọn bừa (2026-09-10)
+
+**Occurrence:** site gọi Hồ Thị Trúc Tâm là **"Ken Tam"** ở các bài cũ (bài HCV Thâm Quyến dùng 29 lần, kể cả trong slug `sophia-huynh-ken-tam-womens-doubles-gold-2026` và trong `metaTitle` cả EN lẫn VI) nhưng là **"Ho Tam / Hồ Tâm"** ở hai bài KL Cup (16 và 26 lần), **không bài nào bắc cầu giữa hai tên**. Riêng bài KL preview nhắc "Ken Tam" đúng một lần — trong anchor link — nên người đọc bấm vào tưởng sang bài về người khác.
+
+**Ba tên đều có nguồn thật, không cái nào sai:**
+- `Hồ Thị Trúc Tâm` — tên thật
+- `HO Tam` — PPA Tour Asia đăng ký trong bảng hạt giống
+- `Ken Tam` — DUPR (`src/content/dupr-rankings.ts`, nữ đơn hạng 18, 5.037, parse từ dupr.com 20/7/2026)
+
+**LUẬT:**
+1. **Dạng chính cho nội dung MỚI: `Ho Tam` / `Hồ Tâm`** — khớp bảng đấu người đọc đang nhìn, và khớp cách người Việt tìm kiếm.
+2. **KHÔNG đổi slug và KHÔNG đổi `metaTitle` đã index** để chạy theo dạng chính. Slug `...ken-tam...` và hai metaTitle chứa "Ken Tam" giữ nguyên — đổi là churn SERP để lấy về đúng con số không.
+3. **Mọi trang nhắc tên cô phải nêu đủ ba tên MỘT lần ở lần nhắc đầu**, kèm nguồn: *"Ho Tam — Ho Thi Truc Tam, whom PPA Tour Asia enters as HO Tam and DUPR lists as Ken Tam"*. Đây vừa là chống nhầm cho người đọc, vừa là đoạn văn hợp nhất thực thể cho AI search — ba chuỗi cùng trỏ về một người, có nguồn cho từng chuỗi.
+4. Cùng họ vấn đề, chưa xử: `Sophia Nhi Huynh` (không dấu) đứng cạnh `Sophia Phương Anh Trần` (có dấu) trong cùng danh sách, và `metadata.ts` từng gọi người thắng HCV Thâm Quyến là `Sophia Huynh Tran` — trộn tên của **hai người khác nhau** mà chính bài KL Cup cảnh báo là hay bị nhầm.
+
+**Cách tự bắt lỗi này lần sau:** khi thêm một bài về VĐV đã có bài cũ, grep tên VĐV đó trên **toàn repo** trước khi viết, không chỉ trong bài đang soạn. Anchor link là chỗ lộ ra sớm nhất — nó mang tên theo bài đích trong khi thân bài mang tên theo bài nguồn.
+
+## Apply SQL qua Management API thì PHẢI ghi sổ ngay trong cùng phiên (2026-09-10)
+
+**Occurrence:** `Deploy guard` đỏ **8 run liên tiếp** từ 9/9 12:47 tới 10/9, và không ai để ý vì nó đỏ liên tục nên trông như "bình thường". Nguyên nhân: PR #760 (`9e11ad9`) thêm `supabase/migrations/20260909040000_pro_tour_events_registry.sql`, **đã chạy vào prod nhưng không ghi vào** `supabase_migrations.schema_migrations`. Sổ dừng ở `20260908120000`.
+
+**Đây KHÔNG phải migration chưa chạy.** Em đối chiếu từng câu lệnh với DB thật trước khi làm gì: bảng 20 cột ✓, RLS bật ✓, đúng 2 policy đúng tên/cmd/roles ✓, `GRANT SELECT TO anon` ✓, `GRANT INSERT,UPDATE,DELETE TO authenticated` ✓, 1 hàng seed từ `INSERT` ✓. Tức là **8/8 câu lệnh đã vào DB, chỉ thiếu đúng một dòng ghi sổ.**
+
+**Vì sao chuyện này sẽ LẶP:** trong Cowork, đường chuẩn để chạy SQL prod là Management API — đúng đường em dùng cả ngày cho `vi_blog_posts`. `docs/ops-runbook.md` §1 có ghi bước ghi sổ ngay sau bước apply, nhưng nó là bước *rời*, dễ quên, và không có gì chặn lúc chạy. Cái chặn duy nhất là `check-migration-drift.mjs` trong CI — **chạy SAU khi merge**, nên lỗi luôn được phát hiện muộn và luôn ở dạng "main đã đỏ sẵn".
+
+**LUẬT:**
+1. Apply migration qua Management API thì **gộp cả hai vào MỘT lệnh curl**, đừng tách:
+   ```sql
+   SELECT 1;  -- gotcha runbook: câu đầu hay bị nuốt
+   <DDL của migration>
+   INSERT INTO supabase_migrations.schema_migrations (version, name)
+   VALUES ('<version>', '<name>') ON CONFLICT (version) DO NOTHING;
+   ```
+2. `name` = tên file bỏ tiền tố version và bỏ `.sql` (`20260909040000_pro_tour_events_registry.sql` → `pro_tour_events_registry`).
+3. Verify bằng `DRIFT_STRICT=1 node scripts/check-migration-drift.mjs` — phải in `Local migrations: N · Applied on prod: N`.
+4. **Phân biệt cho rõ:** `UPDATE`/`INSERT` vào bảng dữ liệu (như `vi_blog_posts`) **không phải migration**, không ghi sổ. Chỉ DDL trong `supabase/migrations/*.sql` mới ghi.
+5. **CẤM `db push --include-all`** (runbook §1) — sổ remote còn drift lịch sử.
+
+**Bài học rộng hơn, đáng giá hơn cái fix:** một CI check đỏ thường trực còn tệ hơn không có check. Tám lần đỏ liên tiếp đã dạy mọi người (kể cả em, sáng nay em báo "CI 4/4 xanh" cho ba commit mà thật ra Deploy guard đang đỏ) rằng màu đỏ đó là nền. Lần sau thấy một check đỏ nhiều run liền: **truy xem nó đỏ từ commit nào** (`workflows/<id>/runs`) trước khi cho rằng đó là do mình hoặc là chuyện đã biết.
