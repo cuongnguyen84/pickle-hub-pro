@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "kuala-lumpur-cup-2026-results",
   publishedDate: "2026-09-09",
-  updatedDate: "2026-09-09",
+  updatedDate: "2026-09-10",
   author: "Cuong Nguyen",
   tags: [
     "ket qua kuala lumpur cup 2026",
@@ -33,7 +33,7 @@ const post: BlogPost = {
         {
           heading: "Kuala Lumpur Cup 2026 results, as they land",
           content:
-            "Last updated Wednesday September 9, 2026 — the Leapmotor Kuala Lumpur Cup 2026 is under way at The Hood in Kuala Lumpur, Malaysia, and this ThePickleHub page carries every Pro result from qualifying today through the finals on Sunday September 13, 13:00-18:00 GMT+8 (12:00-17:00 Vietnam time). No main-draw match has been played yet. Wednesday September 9 is qualifying only, 09:00-21:00 GMT+8; the main draw opens Thursday September 10 with the round of 64 and runs to the round of 16, quarterfinals are Friday September 11, semifinals Saturday September 12, and all five Pro golds are decided on Sunday. The event is a PPA Asia 1000 stop worth up to US$300,000, with 1000 ranking points to each gold medalist. Five Vietnamese players are in the main draw across nine entries, led by Ho Tam — Ho Thi Truc Tam — seeded 8th in Women's Singles, seventeen days after she and Sophia Nhi Huynh took Vietnam's first PPA Tour Asia Women's Doubles gold in Shenzhen on August 23. Gabriel Tardio, the world No.2, is top seed in both Men's Doubles (with Noe Khlif) and Mixed Doubles (with Jessie Irvine); Kaitlyn Christian is top seed in Women's Singles and is entered in three events.",
+            "Last updated Thursday September 10, 2026, 11:00 GMT+8 — the Leapmotor Kuala Lumpur Cup 2026 is under way at The Hood in Kuala Lumpur, Malaysia, and this ThePickleHub page carries every Pro result through to the finals on Sunday September 13, 13:00-18:00 GMT+8 (12:00-17:00 Vietnam time). Qualifying is over: all five Pro qualifying draws finished on Wednesday September 9, and the main draw opened on Thursday September 10. Men's Singles is furthest along — its round of 64 is complete, all 20 matches, and the round of 32 is part-played; Women's Singles has begun its round of 32; and the Men's Doubles, Women's Doubles and Mixed Doubles main draws had not played a match at the time of this update. Quarterfinals are Friday September 11, semifinals Saturday September 12, and all five Pro golds are decided on Sunday. The event is a PPA Asia 1000 stop worth up to US$300,000, with 1000 ranking points to each gold medalist. Both Vietnam-flagged men in the Men's Singles main draw are already out: Ngo Dang, entered as Hai Dang Ngo, lost the round of 64 to Matt Burkhardt 3-11, 1-11, and Hoang Nguyen Anh lost an all-Vietnamese round of 64 to Anh Pham, who then went out in the round of 32 to Marco Leung. Luc Pham, the 5th seed who beat Aditya Ruhela 11-6, 11-7, is listed under the United States flag, not Vietnam. The three Vietnamese women play later: Ho Tam — Ho Thi Truc Tam — seeded 8th, Sophia Nhi Huynh and Sophia Phuong Anh Tran are all in the Women's Singles round of 32, after Ho Tam and Sophia Nhi Huynh took Vietnam's first PPA Tour Asia Women's Doubles gold in Shenzhen on August 23.",
           internalLinks: [
             {
               text: "Live Pro scores and draws for this event",
@@ -48,7 +48,7 @@ const post: BlogPost = {
         {
           heading: "Where each result appears first",
           content:
-            "Pro match results are published on the ThePickleHub event page for this tournament as they are scraped, and this article is the written record built on top of them — draw by draw, with the Vietnamese matches called out. The official source is PPA Tour Asia's own tournament page. One warning about that page, because it is genuinely misleading right now: its Live and Completed panels currently render hardcoded theme placeholder cards showing \"J. Sinner / T. John\" with scores and a date of March 2025. Those are template dummies shipped with the site design, not Kuala Lumpur Cup results. As of this update, the tournament's Scheduled, Live and Results panels are all empty.",
+            "Pro match results are published on the ThePickleHub event page for this tournament as they are scraped, and this article is the written record built on top of them — draw by draw, with the Vietnamese matches called out. The official source is PPA Tour Asia's own tournament page. One warning about that page, because it is genuinely misleading right now: its Live and Completed panels currently render hardcoded theme placeholder cards showing \"J. Sinner / T. John\" with scores and a date of March 2025. Those are template dummies shipped with the site design, not Kuala Lumpur Cup results. As of the end of Wednesday September 9, the tournament's Scheduled, Live and Results panels were all empty.",
           internalLinks: [
             {
               text: "ThePickleHub live Pro results for the Kuala Lumpur Cup",
@@ -60,7 +60,7 @@ const post: BlogPost = {
           heading:
             "Vietnam at the Kuala Lumpur Cup: five players, nine entries",
           content:
-            "Five Vietnamese-flagged players are in the main draw, and between them they hold nine entries across the five Pro events. More Vietnamese players are in qualifying on Wednesday, including Anh Pham, Tien Nguyen, Pham Nghi and Thuan Ngo in Men's Singles. One absence is worth naming: Hien Truong (Truong Vinh Hien), who took two silvers in Shenzhen, does not appear in any Kuala Lumpur draw — not main, not qualifying. The organizers have not said why.",
+            "Five Vietnamese-flagged players are in the main draw, and between them they hold nine entries across the five Pro events. Wednesday's qualifying has been played out. Thuan Ngo won a Men's Singles qualifying round and went out in the next; Pham Nghi lost his opening qualifier. Anh Pham and Tien Nguyen both appear in the Men's Singles main draw rather than the qualifying draw in the tournament's own results feed — Anh Pham won an all-Vietnamese round of 64 against Hoang Nguyen Anh before losing the round of 32, and Tien Nguyen lost his round of 64. One absence is worth naming: Hien Truong (Truong Vinh Hien), who took two silvers in Shenzhen, does not appear in any Kuala Lumpur draw — not main, not qualifying. The organizers have not said why.",
           table: {
             caption:
               "Vietnamese players in the Leapmotor Kuala Lumpur Cup 2026 main draw",
@@ -123,7 +123,7 @@ const post: BlogPost = {
             rows: [
               [
                 "Wed, Sep 9",
-                "Qualifying only — no main-draw results",
+                "Qualifying — complete, all five Pro draws",
                 "09:00-21:00",
                 "08:00-20:00",
               ],
@@ -222,7 +222,7 @@ const post: BlogPost = {
         {
           heading: "Kết quả Kuala Lumpur Cup 2026 — cập nhật theo từng vòng",
           content:
-            "Cập nhật thứ Tư 9/9/2026 — Leapmotor Kuala Lumpur Cup 2026 đã khởi tranh tại The Hood, Kuala Lumpur, Malaysia, và trang này của ThePickleHub cập nhật mọi kết quả Pro từ vòng loại hôm nay đến chung kết Chủ nhật 13/9, 13:00-18:00 giờ Malaysia (12:00-17:00 giờ Việt Nam). Chưa có trận main draw nào được đánh. Thứ Tư 9/9 chỉ có vòng loại, 09:00-21:00 giờ Malaysia; main draw bắt đầu thứ Năm 10/9 từ vòng 64 đến vòng 16, tứ kết thứ Sáu 11/9, bán kết thứ Bảy 12/9, và cả năm nội dung Pro đều tranh vàng vào Chủ nhật. Giải thuộc hạng PPA Asia 1000, tổng thưởng tới 300.000 USD và 1000 điểm xếp hạng cho mỗi nhà vô địch. Năm tay vợt Việt Nam góp mặt ở main draw với chín suất đăng ký, dẫn đầu là Hồ Tâm — Hồ Thị Trúc Tâm — hạt giống số 8 đơn nữ, mười bảy ngày sau khi cô cùng Sophia Nhi Huynh giành HCV đôi nữ đầu tiên của Việt Nam trên PPA Tour Asia tại Thâm Quyến ngày 23/8. Gabriel Tardio, số 2 thế giới, là hạt giống số 1 cả đôi nam (cùng Noe Khlif) lẫn đôi nam nữ (cùng Jessie Irvine); Kaitlyn Christian là hạt giống số 1 đơn nữ và dự ba nội dung.",
+            "Cập nhật thứ Năm 10/9/2026, 11:00 giờ Malaysia — Leapmotor Kuala Lumpur Cup 2026 đang diễn ra tại The Hood, Kuala Lumpur, Malaysia, và trang này của ThePickleHub cập nhật mọi kết quả Pro cho tới chung kết Chủ nhật 13/9, 13:00-18:00 giờ Malaysia (12:00-17:00 giờ Việt Nam). Vòng loại đã xong: cả năm nhánh loại Pro kết thúc trong ngày thứ Tư 9/9, và main draw khởi tranh thứ Năm 10/9. Đơn nam đi nhanh nhất — vòng 64 đã đủ 20 trận, vòng 32 đang đánh dở; đơn nữ mới vào vòng 32; còn main draw đôi nam, đôi nữ và đôi nam nữ chưa đánh trận nào tính đến lúc cập nhật này. Tứ kết thứ Sáu 11/9, bán kết thứ Bảy 12/9, và cả năm nội dung Pro đều tranh vàng vào Chủ nhật. Giải thuộc hạng PPA Asia 1000, tổng thưởng tới 300.000 USD và 1000 điểm xếp hạng cho mỗi nhà vô địch. Hai tay vợt nam mang cờ Việt Nam ở main draw đơn nam đều đã dừng bước: Ngô Đăng — đăng ký dưới tên Hai Dang Ngo — thua Matt Burkhardt 3-11, 1-11 ở vòng 64, còn Hoàng Nguyễn Anh thua trận toàn Việt Nam ở vòng 64 trước Anh Phạm — người sau đó cũng dừng ở vòng 32 trước Marco Leung. Luc Pham, hạt giống 5 vừa thắng Aditya Ruhela 11-6, 11-7, đăng ký dưới cờ Mỹ chứ không phải Việt Nam. Ba tay vợt nữ Việt Nam ra quân muộn hơn: Hồ Tâm — Hồ Thị Trúc Tâm — hạt giống số 8, cùng Sophia Nhi Huynh và Sophia Phương Anh Trần đều nằm ở vòng 32 đơn nữ, sau khi Hồ Tâm và Sophia Nhi Huynh giành HCV đôi nữ đầu tiên của Việt Nam trên PPA Tour Asia tại Thâm Quyến ngày 23/8.",
           internalLinks: [
             {
               text: "Tỷ số Pro trực tiếp và bảng đấu của giải",
@@ -237,7 +237,7 @@ const post: BlogPost = {
         {
           heading: "Kết quả xuất hiện ở đâu trước",
           content:
-            'Kết quả từng trận Pro được đẩy lên trang sự kiện của ThePickleHub ngay khi quét được, còn bài này là bản ghi có diễn giải dựng trên đó — theo từng nhánh đấu, và gọi tên riêng các trận có tay vợt Việt Nam. Nguồn chính thức là trang giải của PPA Tour Asia. Có một cảnh báo về trang đó, vì hiện tại nó thực sự gây hiểu nhầm: hai mục Live và Completed đang hiển thị thẻ mẫu cứng của giao diện, ghi "J. Sinner / T. John" kèm tỷ số và ngày tháng 3/2025. Đó là dữ liệu giả đi kèm theme, không phải kết quả Kuala Lumpur Cup. Tính đến lúc cập nhật này, cả ba mục Scheduled, Live và Results của giải đều trống.',
+            'Kết quả từng trận Pro được đẩy lên trang sự kiện của ThePickleHub ngay khi quét được, còn bài này là bản ghi có diễn giải dựng trên đó — theo từng nhánh đấu, và gọi tên riêng các trận có tay vợt Việt Nam. Nguồn chính thức là trang giải của PPA Tour Asia. Có một cảnh báo về trang đó, vì hiện tại nó thực sự gây hiểu nhầm: hai mục Live và Completed đang hiển thị thẻ mẫu cứng của giao diện, ghi "J. Sinner / T. John" kèm tỷ số và ngày tháng 3/2025. Đó là dữ liệu giả đi kèm theme, không phải kết quả Kuala Lumpur Cup. Tính đến hết ngày thứ Tư 9/9, cả ba mục Scheduled, Live và Results của giải đều trống.',
           internalLinks: [
             {
               text: "Kết quả Pro trực tiếp Kuala Lumpur Cup trên ThePickleHub",
@@ -248,7 +248,7 @@ const post: BlogPost = {
         {
           heading: "Việt Nam tại Kuala Lumpur Cup: năm tay vợt, chín suất",
           content:
-            "Năm tay vợt mang cờ Việt Nam có mặt ở main draw, tổng cộng chín suất đăng ký trải trên năm nội dung Pro. Vòng loại thứ Tư còn thêm nhiều tay vợt Việt khác, trong đó có Anh Phạm, Tiến Nguyễn, Phạm Nghị và Thuận Ngô ở đơn nam. Một sự vắng mặt đáng gọi tên: Hiền Trương (Trương Vĩnh Hiền), người giành hai HCB ở Thâm Quyến, không xuất hiện ở bất kỳ nhánh nào tại Kuala Lumpur — cả main draw lẫn vòng loại. Ban tổ chức không giải thích lý do.",
+            "Năm tay vợt mang cờ Việt Nam có mặt ở main draw, tổng cộng chín suất đăng ký trải trên năm nội dung Pro. Vòng loại thứ Tư đã đấu xong. Thuận Ngô thắng một vòng loại đơn nam rồi dừng ở vòng kế tiếp; Phạm Nghị thua ngay trận loại đầu tiên. Anh Phạm và Tiến Nguyễn thì xuất hiện ở main draw đơn nam chứ không phải nhánh loại theo dữ liệu kết quả của chính giải — Anh Phạm thắng trận toàn Việt Nam ở vòng 64 trước Hoàng Nguyễn Anh rồi thua vòng 32, còn Tiến Nguyễn thua ngay vòng 64. Một sự vắng mặt đáng gọi tên: Hiền Trương (Trương Vĩnh Hiền), người giành hai HCB ở Thâm Quyến, không xuất hiện ở bất kỳ nhánh nào tại Kuala Lumpur — cả main draw lẫn vòng loại. Ban tổ chức không giải thích lý do.",
           table: {
             caption:
               "Tay vợt Việt Nam ở main draw Leapmotor Kuala Lumpur Cup 2026",
@@ -314,7 +314,7 @@ const post: BlogPost = {
             rows: [
               [
                 "Thứ Tư 9/9",
-                "Chỉ vòng loại — chưa có kết quả main draw",
+                "Vòng loại — đã xong cả năm nhánh Pro",
                 "09:00-21:00",
                 "08:00-20:00",
               ],

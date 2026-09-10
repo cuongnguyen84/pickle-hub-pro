@@ -1283,7 +1283,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v120 (2026-09-10): new post ppa-tour-europe-2026-27-schedule (EN +
   // VI) — first page outside the Asian beat, published 13 days before the
   // tour's opening stop in Barcelona.
-  const cacheKey = `pr:v120:${url.pathname}`;
+  // v121 (2026-09-10): KL Cup results post refreshed for day two — the
+  // opening still said "qualifying today" and "no main-draw match has been
+  // played yet" a day after both stopped being true.
+  const cacheKey = `pr:v121:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

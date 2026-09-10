@@ -42,7 +42,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "kuala-lumpur-cup-2026-results",
     publishedDate: "2026-09-09",
-    updatedDate: "2026-09-09",
+    updatedDate: "2026-09-10",
     author: "Cuong Nguyen",
     tags: [
       "ket qua kuala lumpur cup 2026",
