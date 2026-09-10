@@ -173,7 +173,7 @@ export function buildAriaLabel(args: {
   teamB: FeedParticipant[];
   scoreA: number[];
   scoreB: number[];
-  winningTeam: "a" | "b";
+  winningTeam: "a" | "b" | null;
   venueName: string | null;
   playedAt: string;
   format: MatchFormat;
@@ -197,10 +197,16 @@ export function buildAriaLabel(args: {
   const when = formatMatchWhen(args.playedAt, args.language, "desktop");
   const venue = args.venueName ?? "";
 
+  // winningTeam is NULL until the match is resolved. The old ternary had no
+  // third branch, so a screen reader heard "namesA thua namesB" / "lost to"
+  // on every in-progress match. Fall back to a neutral "vs", the same shape
+  // functions/_lib/render/match-seo.ts uses for its unresolved description.
+  const resolved = args.winningTeam === "a" || args.winningTeam === "b";
+
   if (args.language === "vi") {
-    const verb = args.winningTeam === "a" ? "thắng" : "thua";
+    const verb = !resolved ? "gặp" : args.winningTeam === "a" ? "thắng" : "thua";
     return `Trận đấu ${args.format === "singles" ? "đơn" : "đôi"}: ${namesA} ${verb} ${namesB}, tỉ số ${scorePairs}. ${venue ? `Tại ${venue}, ` : ""}${when}.`;
   }
-  const verb = args.winningTeam === "a" ? "won against" : "lost to";
+  const verb = !resolved ? "vs" : args.winningTeam === "a" ? "won against" : "lost to";
   return `${args.format === "singles" ? "Singles" : "Doubles"} match: ${namesA} ${verb} ${namesB}, score ${scorePairs}.${venue ? ` At ${venue},` : ""} ${when}.`;
 }

@@ -48,7 +48,12 @@ export const MatchScoreboard = ({ match }: { match: MatchDetail }) => {
   const { language } = useI18n();
   const teamA = match.participants.filter((p) => p.team === "a").sort((a, b) => (a.position ?? 1) - (b.position ?? 1));
   const teamB = match.participants.filter((p) => p.team === "b").sort((a, b) => (a.position ?? 1) - (b.position ?? 1));
+  // Two explicit booleans, never `!aWon`: winning_team is NULL on an
+  // unresolved match, and the negation used to hand team B the WINNER
+  // badge for every in-progress pro-tour row. Same shape MatchRow.tsx
+  // and ticker-mode-resolver.ts already use.
   const aWon = match.winning_team === "a";
+  const bWon = match.winning_team === "b";
   const games = Math.max(match.team_a_score.length, match.team_b_score.length);
 
   const TeamRow = ({
@@ -106,8 +111,8 @@ export const MatchScoreboard = ({ match }: { match: MatchDetail }) => {
 
   return (
     <div className="space-y-3">
-      <TeamRow team="a" isWinner={aWon}  players={teamA} scores={match.team_a_score} />
-      <TeamRow team="b" isWinner={!aWon} players={teamB} scores={match.team_b_score} />
+      <TeamRow team="a" isWinner={aWon} players={teamA} scores={match.team_a_score} />
+      <TeamRow team="b" isWinner={bWon} players={teamB} scores={match.team_b_score} />
     </div>
   );
 };
