@@ -58,11 +58,14 @@ function fakeSupabase(post: unknown): SupabaseClient {
  * is the shape CodeQL flags as an incomplete sanitiser (js/bad-tag-filter +
  * js/incomplete-multi-character-sanitization) and it is right to: a single
  * pass can leave `<script` behind, and a case-sensitive pattern misses
- * `<SCRIPT>`. This helper decides whether a test passes, so it being subtly
- * wrong would mean silently asserting nothing.
+ * `<SCRIPT>`. The closing pattern is `<\/script[^>]*>` rather than
+ * `<\/script\s*>` because HTML tolerates junk inside an end tag
+ * (`</script\t\n bar>`), which CodeQL flagged on the first attempt at this
+ * fix. This helper decides whether a test passes, so it being subtly wrong
+ * would mean silently asserting nothing.
  */
 function visibleText(html: string): string {
-  const SCRIPT_BLOCK = /<script\b[^>]*>[\s\S]*?<\/script\s*>/gi;
+  const SCRIPT_BLOCK = /<script\b[^>]*>[\s\S]*?<\/script[^>]*>/gi;
   const kept: string[] = [];
   let cursor = 0;
   for (let m = SCRIPT_BLOCK.exec(html); m !== null; m = SCRIPT_BLOCK.exec(html)) {
