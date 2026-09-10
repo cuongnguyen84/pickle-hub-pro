@@ -1273,7 +1273,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v117 (2026-09-10): /live/pro/<slug> and its /vi twin shipped two <h1>s —
   // renderProTourEvent opened its bodyContent with a heading but never passed
   // omitAutoHeader, so buildHtml() added the decorated title as a second one.
-  const cacheKey = `pr:v117:${url.pathname}`;
+  // v118 (2026-09-10): the pro calendar was missing the whole PPA Asia 125
+  // series (four stops, two of them still to play in October) and carried
+  // five events under names without their title sponsor, so /tournaments
+  // and its SportsEvent JSON-LD both served an incomplete season.
+  const cacheKey = `pr:v118:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
