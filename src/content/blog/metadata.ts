@@ -10,6 +10,36 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "ppa-tour-europe-2026-27-schedule",
+    publishedDate: "2026-09-10",
+    updatedDate: "2026-09-10",
+    author: "The PickleHub Team",
+    tags: [
+      "ppa tour europe",
+      "ppa tour europe 2026",
+      "ppa spain",
+      "pickleball europe",
+      "ppa tour europe schedule",
+      "pickleball barcelona",
+      "lich thi dau ppa tour europe",
+    ],
+    ctaPath: "/tournaments",
+    ctaLabel: {
+      en: "See the full 2026 pro tournament calendar",
+      vi: "Xem lịch giải chuyên nghiệp 2026 đầy đủ",
+    },
+    titleEn:
+      "PPA Tour Europe 2026-27: Every Confirmed Date, and Everything Still Unannounced",
+    titleVi:
+      "PPA Tour Europe 2026-27: những mốc đã chốt, và tất cả những gì còn bỏ trống",
+    metaTitleEn: "PPA Tour Europe 2026-27: Schedule and What's Still TBA",
+    metaTitleVi: "PPA Tour Europe 2026-27: lịch và phần còn TBA",
+    metaDescriptionEn:
+      "PPA Tour Europe 2026-27: 20 events, 9 countries, EUR 545,000. Only two dates are published - Barcelona Sep 23-27, 2026 and May 5-9, 2027. The full picture.",
+    metaDescriptionVi:
+      "PPA Tour Europe 2026-27: 20 chặng, 9 nước, 545.000 EUR. Mới 2 mốc có ngày — Barcelona 23-27/9/2026 và 5-9/5/2027. Toàn cảnh đầy đủ.",
+  },
+  {
     slug: "kuala-lumpur-cup-2026-results",
     publishedDate: "2026-09-09",
     updatedDate: "2026-09-09",

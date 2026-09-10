@@ -1280,7 +1280,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v119 (2026-09-10): the Hong Kong Slam preview gained the prize and
   // points table PPA published on September 1 — the page about the biggest
   // purse in Asian pickleball had no breakdown of it at all.
-  const cacheKey = `pr:v119:${url.pathname}`;
+  // v120 (2026-09-10): new post ppa-tour-europe-2026-27-schedule (EN +
+  // VI) — first page outside the Asian beat, published 13 days before the
+  // tour's opening stop in Barcelona.
+  const cacheKey = `pr:v120:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
