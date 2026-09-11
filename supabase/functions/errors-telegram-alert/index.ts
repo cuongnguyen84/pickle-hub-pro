@@ -337,6 +337,10 @@ async function runBurnAlert(): Promise<BurnReport> {
   return report;
 }
 
+/** One page per job per hour while it keeps failing; the admin dashboard
+ *  keeps every run. */
+const JOB_FAILURE_COOLDOWN_MS = 60 * 60_000;
+
 async function runJobFailureAlerts(): Promise<JobFailureReport> {
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
@@ -359,13 +363,23 @@ async function runJobFailureAlerts(): Promise<JobFailureReport> {
   let sent = 0;
   let suppressed = 0;
   for (const run of (data ?? []) as FailedJobRun[]) {
-    const dedupeKey = `scheduled-job-failure:${run.id}`;
+    // Per-run key: never page twice for the same run row.
+    const runKey = `scheduled-job-failure:${run.id}`;
+    // Per-job key: a job that keeps failing pages once per cooldown, not
+    // once per run. pro-tour-scraper runs every minute on event days and
+    // paged 258 times in 24h (2026-09-11) before this existed.
+    const jobKey = `scheduled-job-failure:job:${run.job_key}`;
     const { data: existing } = await supabase
       .from("error_alert_dedup")
-      .select("fingerprint")
-      .eq("fingerprint", dedupeKey)
-      .maybeSingle();
-    if (existing) {
+      .select("fingerprint, last_alerted_at")
+      .in("fingerprint", [runKey, jobKey])
+      .returns<Array<{ fingerprint: string; last_alerted_at: string }>>();
+    const seenRun = existing?.some((row) => row.fingerprint === runKey);
+    const lastJobAlert = existing?.find((row) => row.fingerprint === jobKey)?.last_alerted_at;
+    const jobCoolingDown = lastJobAlert
+      ? Date.now() - new Date(lastJobAlert).getTime() < JOB_FAILURE_COOLDOWN_MS
+      : false;
+    if (seenRun || jobCoolingDown) {
       suppressed++;
       continue;
     }
@@ -385,11 +399,11 @@ async function runJobFailureAlerts(): Promise<JobFailureReport> {
 
     if (await sendTelegram(lines.join("\n"), jobFixButtons(run.job_key))) {
       sent++;
-      await supabase.from("error_alert_dedup").upsert({
-        fingerprint: dedupeKey,
-        last_alerted_at: new Date().toISOString(),
-        alert_count: 1,
-      }, { onConflict: "fingerprint" });
+      const now = new Date().toISOString();
+      await supabase.from("error_alert_dedup").upsert([
+        { fingerprint: runKey, last_alerted_at: now, alert_count: 1 },
+        { fingerprint: jobKey, last_alerted_at: now, alert_count: 1 },
+      ], { onConflict: "fingerprint" });
     }
   }
 
