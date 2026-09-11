@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.picklehub.xuly</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/python3</string>
+    <string>/Users/cm10/pickle-hub-pro/scripts/ops/xuly_daemon.py</string>
+  </array>
+  <key>StartInterval</key><integer>300</integer>
+  <key>RunAtLoad</key><false/>
+  <key>WorkingDirectory</key><string>/Users/cm10/pickle-hub-pro</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>SECRETS_FILE</key><string>/Users/cm10/pickle-hub-pro/.claude/secrets.local.md</string>
+    <key>PICKLEHUB_REPO</key><string>/Users/cm10/pickle-hub-pro</string>
+    <key>CLAUDE_BIN</key><string>/Users/cm10/.local/bin/claude</string>
+  </dict>
+  <key>StandardOutPath</key><string>/Users/cm10/Library/Logs/PickleHub/xuly-launchd.log</string>
+  <key>StandardErrorPath</key><string>/Users/cm10/Library/Logs/PickleHub/xuly-launchd.log</string>
+  <key>ProcessType</key><string>Background</string>
+</dict>
+</plist>

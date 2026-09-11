@@ -89,3 +89,7 @@ scripts/seo/.seo_drift.db
 
 # Local coverage output (vitest --coverage)
 coverage/
+
+# agent scratch (chief brief / xuly / content agent outputs) + codex worktrees
+.claude/chief/
+.codex/
