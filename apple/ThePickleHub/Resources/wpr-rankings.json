@@ -1,204 +1,204 @@
 {
-  "fetchedAt": "2026-08-27",
+  "fetchedAt": "2026-09-11",
   "sourceUrl": "https://www.ppatour.com/rankings/",
   "men": [
     {
       "rank": 1,
       "name": "Ben Johns",
-      "points": 19287.5,
-      "eventsPlayed": 38,
+      "points": 19802.5,
+      "eventsPlayed": 39,
       "country": "United States",
       "countryCode": "us"
     },
     {
       "rank": 2,
       "name": "Gabriel Tardio",
-      "points": 13476.25,
-      "eventsPlayed": 41,
+      "points": 14031.25,
+      "eventsPlayed": 40,
       "country": "Bolivia",
       "countryCode": "bo"
     },
     {
       "rank": 3,
       "name": "Christian Alshon",
-      "points": 12052.5,
-      "eventsPlayed": 50,
+      "points": 12812.5,
+      "eventsPlayed": 51,
       "country": "United States",
       "countryCode": "us"
     },
     {
       "rank": 4,
       "name": "Hayden Patriquin",
-      "points": 11437.5,
+      "points": 12057.5,
       "eventsPlayed": 30,
       "country": "United States",
       "countryCode": "us"
     },
     {
       "rank": 5,
+      "name": "JW Johnson",
+      "points": 11500.625,
+      "eventsPlayed": 46,
+      "country": "United States",
+      "countryCode": "us"
+    },
+    {
+      "rank": 6,
       "name": "Federico Staksrud",
-      "points": 10877.5,
+      "points": 11225,
       "eventsPlayed": 60,
       "country": "Argentina",
       "countryCode": "ar"
     },
     {
-      "rank": 6,
+      "rank": 7,
       "name": "Andrei Daescu",
-      "points": 10430,
+      "points": 10900,
       "eventsPlayed": 35,
       "country": "Romania",
       "countryCode": "ro"
     },
     {
-      "rank": 7,
-      "name": "JW Johnson",
-      "points": 10380.625,
-      "eventsPlayed": 43,
-      "country": "United States",
-      "countryCode": "us"
-    },
-    {
       "rank": 8,
       "name": "CJ Klinger",
-      "points": 6415,
-      "eventsPlayed": 30,
+      "points": 6480,
+      "eventsPlayed": 29,
       "country": "United States",
       "countryCode": "us"
     },
     {
       "rank": 9,
       "name": "Eric Oncins",
-      "points": 5861.25,
+      "points": 5903.75,
       "eventsPlayed": 55,
       "country": "Brazil",
       "countryCode": "br"
     },
     {
       "rank": 10,
-      "name": "Connor Garnett",
-      "points": 4487.5,
-      "eventsPlayed": 56,
-      "country": "United States",
-      "countryCode": "us"
-    },
-    {
-      "rank": 11,
       "name": "Noe Khlif",
-      "points": 4303.75,
+      "points": 4468.75,
       "eventsPlayed": 50,
       "country": "France",
       "countryCode": "fr"
     },
     {
+      "rank": 11,
+      "name": "Tama Shimabukuro",
+      "points": 4328.125,
+      "eventsPlayed": 67,
+      "country": "United States",
+      "countryCode": "us"
+    },
+    {
       "rank": 12,
       "name": "Dylan Frazier",
-      "points": 4028.75,
+      "points": 4156.25,
       "eventsPlayed": 54,
       "country": "United States",
       "countryCode": "us"
     },
     {
       "rank": 13,
-      "name": "Tama Shimabukuro",
-      "points": 3838.125,
-      "eventsPlayed": 67,
+      "name": "Connor Garnett",
+      "points": 4112.5,
+      "eventsPlayed": 55,
       "country": "United States",
       "countryCode": "us"
     },
     {
       "rank": 14,
-      "name": "Tyson McGuffin",
-      "points": 3648.75,
-      "eventsPlayed": 43,
-      "country": "United States",
-      "countryCode": "us"
-    },
-    {
-      "rank": 15,
       "name": "Hunter Johnson",
-      "points": 3475,
+      "points": 3672.5,
       "eventsPlayed": 45,
       "country": "United States",
       "countryCode": "us"
     },
     {
-      "rank": 16,
-      "name": "Hong Kit Wong",
-      "points": 3343.75,
-      "eventsPlayed": 48,
-      "country": "Hong Kong S.A.R.",
-      "countryCode": "hk"
+      "rank": 15,
+      "name": "Tyson McGuffin",
+      "points": 3556.25,
+      "eventsPlayed": 42,
+      "country": "United States",
+      "countryCode": "us"
     },
     {
-      "rank": 17,
+      "rank": 16,
       "name": "Christopher Haworth",
-      "points": 3180.625,
+      "points": 3516.875,
       "eventsPlayed": 50,
       "country": "United States",
       "countryCode": "us"
     },
     {
+      "rank": 17,
+      "name": "Hong Kit Wong",
+      "points": 3035,
+      "eventsPlayed": 43,
+      "country": "Hong Kong S.A.R.",
+      "countryCode": "hk"
+    },
+    {
       "rank": 18,
       "name": "Armaan Bhatia",
-      "points": 2924.375,
-      "eventsPlayed": 40,
+      "points": 2973.125,
+      "eventsPlayed": 42,
       "country": "India",
       "countryCode": "in"
     },
     {
       "rank": 19,
-      "name": "Eunggwon KIM",
-      "points": 2917.5,
-      "eventsPlayed": 41,
-      "country": "South Korea",
-      "countryCode": "kr"
-    },
-    {
-      "rank": 20,
       "name": "Riley Newman",
-      "points": 2847.5,
+      "points": 2867.5,
       "eventsPlayed": 31,
       "country": "United States",
       "countryCode": "us"
     },
     {
-      "rank": 21,
-      "name": "Len Yang",
+      "rank": 20,
+      "name": "Roscoe Bellamy",
       "points": 2800.625,
+      "eventsPlayed": 44,
+      "country": "United States",
+      "countryCode": "us"
+    },
+    {
+      "rank": 21,
+      "name": "Jaume Martinez Vich",
+      "points": 2737.5,
+      "eventsPlayed": 43,
+      "country": "Spain",
+      "countryCode": "es"
+    },
+    {
+      "rank": 22,
+      "name": "Len Yang",
+      "points": 2695.625,
       "eventsPlayed": 32,
       "country": "United States",
       "countryCode": "us"
     },
     {
-      "rank": 22,
-      "name": "Jaume Martinez Vich",
-      "points": 2765,
-      "eventsPlayed": 44,
-      "country": "Spain",
-      "countryCode": "es"
-    },
-    {
       "rank": 23,
-      "name": "Jonathan Truong",
-      "points": 2754.375,
-      "eventsPlayed": 44,
-      "country": "United States",
-      "countryCode": "us"
+      "name": "Eunggwon Kim",
+      "points": 2577.5,
+      "eventsPlayed": 37,
+      "country": "South Korea",
+      "countryCode": "kr"
     },
     {
       "rank": 24,
-      "name": "Roscoe Bellamy",
-      "points": 2733.125,
-      "eventsPlayed": 44,
+      "name": "Augustus Ge",
+      "points": 2565.625,
+      "eventsPlayed": 50,
       "country": "United States",
       "countryCode": "us"
     },
     {
       "rank": 25,
-      "name": "Augustus Ge",
-      "points": 2520.625,
-      "eventsPlayed": 48,
+      "name": "Jack Sock",
+      "points": 2550.625,
+      "eventsPlayed": 37,
       "country": "United States",
       "countryCode": "us"
     }
@@ -207,15 +207,15 @@
     {
       "rank": 1,
       "name": "Anna Leigh Waters",
-      "points": 21905,
-      "eventsPlayed": 43,
+      "points": 22705,
+      "eventsPlayed": 44,
       "country": "United States",
       "countryCode": "us"
     },
     {
       "rank": 2,
       "name": "Anna Bright",
-      "points": 16730,
+      "points": 17920,
       "eventsPlayed": 34,
       "country": "United States",
       "countryCode": "us"
@@ -223,7 +223,7 @@
     {
       "rank": 3,
       "name": "Jorja Johnson",
-      "points": 11796.25,
+      "points": 12586.25,
       "eventsPlayed": 42,
       "country": "United States",
       "countryCode": "us"
@@ -231,39 +231,39 @@
     {
       "rank": 4,
       "name": "Tyra Hurricane Black",
-      "points": 10587.5,
+      "points": 10747.5,
       "eventsPlayed": 38,
       "country": "United States",
       "countryCode": "us"
     },
     {
       "rank": 5,
-      "name": "Catherine Parenteau",
-      "points": 8930,
-      "eventsPlayed": 48,
-      "country": "Canada",
-      "countryCode": "ca"
-    },
-    {
-      "rank": 6,
       "name": "Parris Todd",
-      "points": 8570,
-      "eventsPlayed": 30,
+      "points": 8810,
+      "eventsPlayed": 31,
       "country": "United States",
       "countryCode": "us"
     },
     {
+      "rank": 6,
+      "name": "Catherine Parenteau",
+      "points": 8790,
+      "eventsPlayed": 49,
+      "country": "Canada",
+      "countryCode": "ca"
+    },
+    {
       "rank": 7,
       "name": "Rachel Rohrabacher",
-      "points": 7630,
-      "eventsPlayed": 31,
+      "points": 8405,
+      "eventsPlayed": 33,
       "country": "United States",
       "countryCode": "us"
     },
     {
       "rank": 8,
       "name": "Kate Fahey",
-      "points": 6607.5,
+      "points": 7232.5,
       "eventsPlayed": 46,
       "country": "United States",
       "countryCode": "us"
@@ -271,7 +271,7 @@
     {
       "rank": 9,
       "name": "Tina Pisnik",
-      "points": 5596.25,
+      "points": 5740,
       "eventsPlayed": 36,
       "country": "Slovenia",
       "countryCode": "si"
@@ -279,7 +279,7 @@
     {
       "rank": 10,
       "name": "Kaitlyn Christian",
-      "points": 5563.75,
+      "points": 5666.25,
       "eventsPlayed": 55,
       "country": "United States",
       "countryCode": "us"
@@ -303,45 +303,37 @@
     {
       "rank": 13,
       "name": "Lacy Schneemann",
-      "points": 4223.125,
-      "eventsPlayed": 43,
+      "points": 4290.625,
+      "eventsPlayed": 44,
       "country": "United States",
       "countryCode": "us"
     },
     {
       "rank": 14,
-      "name": "Alix Truong",
-      "points": 4107.5,
-      "eventsPlayed": 41,
-      "country": "United States",
-      "countryCode": "us"
-    },
-    {
-      "rank": 15,
-      "name": "Jessie Irvine",
-      "points": 3916.25,
-      "eventsPlayed": 51,
-      "country": "United States",
-      "countryCode": "us"
-    },
-    {
-      "rank": 16,
       "name": "Lea Jansen",
-      "points": 3679.375,
+      "points": 4111.875,
       "eventsPlayed": 54,
       "country": "United States",
       "countryCode": "us"
     },
     {
-      "rank": 17,
-      "name": "Meghan Dizon",
-      "points": 3535,
-      "eventsPlayed": 31,
+      "rank": 15,
+      "name": "Alix Truong",
+      "points": 3970,
+      "eventsPlayed": 39,
       "country": "United States",
       "countryCode": "us"
     },
     {
-      "rank": 18,
+      "rank": 16,
+      "name": "Jessie Irvine",
+      "points": 3938.75,
+      "eventsPlayed": 51,
+      "country": "United States",
+      "countryCode": "us"
+    },
+    {
+      "rank": 17,
       "name": "Jackie Kawamoto",
       "points": 3450,
       "eventsPlayed": 14,
@@ -349,58 +341,66 @@
       "countryCode": "us"
     },
     {
-      "rank": 19,
+      "rank": 18,
       "name": "Brooke Buckner",
-      "points": 3291.25,
+      "points": 3412.5,
       "eventsPlayed": 49,
+      "country": "United States",
+      "countryCode": "us"
+    },
+    {
+      "rank": 19,
+      "name": "Meghan Dizon",
+      "points": 3390,
+      "eventsPlayed": 30,
       "country": "United States",
       "countryCode": "us"
     },
     {
       "rank": 20,
       "name": "Sahra Dennehy",
-      "points": 3283.75,
-      "eventsPlayed": 39,
+      "points": 3058.75,
+      "eventsPlayed": 34,
       "country": "Australia",
       "countryCode": "au"
     },
     {
       "rank": 21,
-      "name": "Ting Chieh Wei",
-      "points": 3171.25,
-      "eventsPlayed": 53,
-      "country": "Chinese Taipei",
-      "countryCode": "tw"
-    },
-    {
-      "rank": 22,
-      "name": "Yufei Long",
-      "points": 2910,
-      "eventsPlayed": 36,
-      "country": "China",
-      "countryCode": "cn"
-    },
-    {
-      "rank": 23,
       "name": "Mari Humberg",
-      "points": 2892.625,
-      "eventsPlayed": 49,
+      "points": 2907.625,
+      "eventsPlayed": 50,
       "country": "Brazil",
       "countryCode": "br"
     },
     {
+      "rank": 22,
+      "name": "Ting Chieh Wei",
+      "points": 2775,
+      "eventsPlayed": 48,
+      "country": "Chinese Taipei",
+      "countryCode": "tw"
+    },
+    {
+      "rank": 23,
+      "name": "Callie Smith",
+      "points": 2643.75,
+      "eventsPlayed": 35,
+      "country": "United States",
+      "countryCode": "us"
+    },
+    {
       "rank": 24,
-      "name": "Danni-Elle Townsend",
-      "points": 2837.5,
-      "eventsPlayed": 30,
-      "country": "Australia",
-      "countryCode": "au"
+      "name": "Milan Rane",
+      "points": 2515.625,
+      "eventsPlayed": 46,
+      "country": "United States",
+      "countryCode": "us"
     },
     {
       "rank": 25,
-      "name": "Callie Smith",
-      "points": 2593.75,
-      "eventsPlayed": 35,
+      "name": "Etta Tuionetoa",
+      "points": 2515,
+      "eventsPlayed": 23,
       "country": "United States",
       "countryCode": "us"
     }
@@ -408,238 +408,238 @@
   "vietHighlights": [
     {
       "board": "women",
-      "rank": 14,
+      "rank": 15,
       "name": "Alix Truong",
       "countryCode": "us",
-      "points": 4107.5
+      "points": 3970
     },
     {
       "board": "men",
-      "rank": 23,
+      "rank": 26,
       "name": "Jonathan Truong",
       "countryCode": "us",
-      "points": 2754.375
+      "points": 2485.625
     },
     {
       "board": "men",
-      "rank": 28,
+      "rank": 30,
       "name": "Hien Truong",
       "countryCode": "vn",
-      "points": 2216.25
+      "points": 2121.25
     },
     {
       "board": "men",
-      "rank": 45,
+      "rank": 41,
       "name": "Luc Pham",
       "countryCode": "us",
-      "points": 1588.625
+      "points": 1619.875
     },
     {
       "board": "women",
       "rank": 52,
       "name": "Sophia Nhi Huynh",
       "countryCode": "vn",
-      "points": 1231.25
+      "points": 1163.75
     },
     {
       "board": "women",
-      "rank": 57,
-      "name": "HO Tam",
+      "rank": 53,
+      "name": "Ho Tam",
       "countryCode": "vn",
-      "points": 1171.25
+      "points": 1121.25
     },
     {
       "board": "men",
-      "rank": 63,
+      "rank": 69,
       "name": "Hoang Nam Ly",
       "countryCode": "vn",
-      "points": 1077.5
+      "points": 950
     },
     {
       "board": "women",
-      "rank": 74,
+      "rank": 76,
       "name": "Sophia Phuong Anh Tran",
       "countryCode": "vn",
-      "points": 882.5
+      "points": 808.5
     },
     {
       "board": "men",
-      "rank": 95,
-      "name": "Phuc Huynh",
-      "countryCode": "vn",
-      "points": 575
-    },
-    {
-      "board": "men",
-      "rank": 108,
+      "rank": 119,
       "name": "Giang Trinh",
       "countryCode": "vn",
-      "points": 517.5
+      "points": 420
     },
     {
       "board": "women",
-      "rank": 134,
-      "name": "Ngoc Si",
+      "rank": 130,
+      "name": "NGOC SI",
       "countryCode": "vn",
       "points": 280
     },
     {
       "board": "men",
-      "rank": 177,
-      "name": "Lê Xuân Đức",
+      "rank": 139,
+      "name": "Phuc Huynh",
       "countryCode": "vn",
-      "points": 178.75
+      "points": 315
     },
     {
       "board": "men",
-      "rank": 193,
+      "rank": 189,
       "name": "Nguyen Hung Anh",
       "countryCode": "vn",
       "points": 145
     },
     {
       "board": "men",
-      "rank": 208,
-      "name": "Khuong Huynh",
+      "rank": 196,
+      "name": "LE Xuan Duc",
       "countryCode": "vn",
-      "points": 125
+      "points": 136.25
     },
     {
       "board": "men",
-      "rank": 209,
-      "name": "Tiến Đạt Lê",
-      "countryCode": "vn",
-      "points": 125
-    },
-    {
-      "board": "men",
-      "rank": 210,
-      "name": "Nguyen Thang",
-      "countryCode": "vn",
-      "points": 125
-    },
-    {
-      "board": "men",
-      "rank": 215,
-      "name": "Andrew Anh Pham",
-      "countryCode": "vn",
-      "points": 120
-    },
-    {
-      "board": "women",
-      "rank": 217,
-      "name": "Jolie Lam",
-      "countryCode": "vn",
-      "points": 75
-    },
-    {
-      "board": "women",
       "rank": 220,
-      "name": "LOI TRAN",
+      "name": "HO Hoan",
       "countryCode": "vn",
-      "points": 75
+      "points": 108.1
     },
     {
       "board": "men",
-      "rank": 224,
-      "name": "Hoàng Nguyễn Anh",
+      "rank": 225,
+      "name": "Hoang Nguyen Anh",
       "countryCode": "vn",
       "points": 105
     },
     {
       "board": "men",
-      "rank": 231,
-      "name": "HO Hoan",
+      "rank": 233,
+      "name": "Khuong Huynh",
       "countryCode": "vn",
       "points": 100
     },
     {
       "board": "men",
-      "rank": 256,
-      "name": "Ngoc Trieu Tran",
+      "rank": 234,
+      "name": "Tiến Đạt Lê",
+      "countryCode": "vn",
+      "points": 100
+    },
+    {
+      "board": "men",
+      "rank": 258,
+      "name": "Nguyen Thang",
       "countryCode": "vn",
       "points": 75
     },
     {
       "board": "women",
-      "rank": 264,
+      "rank": 266,
+      "name": "Jolie Lam",
+      "countryCode": "vn",
+      "points": 50
+    },
+    {
+      "board": "women",
+      "rank": 268,
       "name": "Tran Tue Ngoc",
       "countryCode": "vn",
       "points": 50
     },
     {
-      "board": "men",
-      "rank": 267,
-      "name": "Pham XuanVu",
+      "board": "women",
+      "rank": 270,
+      "name": "LOI TRAN",
       "countryCode": "vn",
-      "points": 66.25
+      "points": 50
+    },
+    {
+      "board": "men",
+      "rank": 278,
+      "name": "Nguyen Huy",
+      "countryCode": "vn",
+      "points": 63.4
+    },
+    {
+      "board": "men",
+      "rank": 280,
+      "name": "Andrew Anh Pham",
+      "countryCode": "vn",
+      "points": 62.5
     },
     {
       "board": "women",
-      "rank": 280,
+      "rank": 284,
       "name": "Binh Phan",
       "countryCode": "vn",
       "points": 42.5
     },
     {
       "board": "men",
-      "rank": 311,
-      "name": "Anh Pham",
+      "rank": 286,
+      "name": "Pham XuanVu",
       "countryCode": "vn",
-      "points": 50
+      "points": 58.75
     },
     {
       "board": "men",
-      "rank": 315,
+      "rank": 310,
       "name": "Carlos Rubio",
       "countryCode": "vn",
       "points": 50
     },
     {
       "board": "men",
-      "rank": 342,
-      "name": "Minh Nhật",
+      "rank": 315,
+      "name": "Ngoc Trieu Tran",
       "countryCode": "vn",
-      "points": 42.5
+      "points": 50
     },
     {
       "board": "men",
-      "rank": 344,
-      "name": "Ngo Dang",
+      "rank": 316,
+      "name": "Anh Pham",
+      "countryCode": "vn",
+      "points": 50
+    },
+    {
+      "board": "men",
+      "rank": 342,
+      "name": "Hai Dang Ngo",
       "countryCode": "vn",
       "points": 41.875
     },
     {
       "board": "women",
-      "rank": 345,
+      "rank": 347,
+      "name": "Bich Hua",
+      "countryCode": "vn",
+      "points": 25
+    },
+    {
+      "board": "men",
+      "rank": 355,
+      "name": "Nhật Minh T",
+      "countryCode": "vn",
+      "points": 38.4
+    },
+    {
+      "board": "women",
+      "rank": 358,
       "name": "Phan Quynh",
       "countryCode": "vn",
       "points": 25
     },
     {
       "board": "women",
-      "rank": 360,
+      "rank": 359,
       "name": "Thilehang Tra",
       "countryCode": "vn",
       "points": 25
     },
     {
-      "board": "women",
-      "rank": 361,
-      "name": "Trang Tran",
-      "countryCode": "vn",
-      "points": 25
-    },
-    {
-      "board": "women",
-      "rank": 362,
-      "name": "Thuy Pham",
-      "countryCode": "vn",
-      "points": 25
-    },
-    {
       "board": "men",
-      "rank": 364,
+      "rank": 362,
       "name": "Khoa Vo",
       "countryCode": "vn",
       "points": 37.5
@@ -647,84 +647,70 @@
     {
       "board": "women",
       "rank": 369,
-      "name": "Bich Hua",
+      "name": "Thuy Pham",
       "countryCode": "vn",
       "points": 25
     },
     {
       "board": "men",
-      "rank": 387,
-      "name": "Nguyen Tien",
-      "countryCode": "vn",
-      "points": 31.25
-    },
-    {
-      "board": "men",
-      "rank": 439,
-      "name": "Minh Le",
-      "countryCode": "vn",
-      "points": 25
-    },
-    {
-      "board": "men",
-      "rank": 446,
-      "name": "Nguyen Huy",
-      "countryCode": "vn",
-      "points": 25
-    },
-    {
-      "board": "men",
-      "rank": 447,
-      "name": "Nguyễn việt hoàng",
-      "countryCode": "vn",
-      "points": 25
-    },
-    {
-      "board": "men",
-      "rank": 454,
+      "rank": 442,
       "name": "Nguyễn Hoàng",
       "countryCode": "vn",
       "points": 22.5
     },
     {
       "board": "men",
-      "rank": 562,
-      "name": "Phong Tran",
+      "rank": 486,
+      "name": "Minh Nhật",
       "countryCode": "vn",
-      "points": 12.5
+      "points": 17.5
     },
     {
       "board": "men",
-      "rank": 563,
-      "name": "Hoang Bao Long",
+      "rank": 502,
+      "name": "Nguyen Tien",
       "countryCode": "vn",
-      "points": 12.5
+      "points": 16.25
     },
     {
       "board": "men",
-      "rank": 564,
+      "rank": 554,
       "name": "Minh Nguyễn Hoàng",
       "countryCode": "vn",
       "points": 12.5
     },
     {
       "board": "men",
-      "rank": 568,
-      "name": "Nam Vu",
+      "rank": 557,
+      "name": "Hoang Bao Long",
       "countryCode": "vn",
       "points": 12.5
     },
     {
       "board": "men",
-      "rank": 569,
+      "rank": 558,
+      "name": "quang tran",
+      "countryCode": "vn",
+      "points": 12.5
+    },
+    {
+      "board": "men",
+      "rank": 566,
       "name": "Tran Tuan Minh",
       "countryCode": "vn",
       "points": 12.5
     },
     {
       "board": "men",
-      "rank": 585,
-      "name": "Quang Tran",
+      "rank": 569,
+      "name": "Nam Vu",
+      "countryCode": "vn",
+      "points": 12.5
+    },
+    {
+      "board": "men",
+      "rank": 578,
+      "name": "Phong Tran",
       "countryCode": "vn",
       "points": 12.5
     }
