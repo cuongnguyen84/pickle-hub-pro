@@ -6914,6 +6914,16 @@
         }
       }
     },
+    "Điểm đang chấm sẽ không được lưu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "The score in progress will not be saved."
+          }
+        }
+      }
+    },
     "Điểm DUPR %@" : {
       "localizations" : {
         "en" : {
@@ -15966,12 +15976,42 @@
         }
       }
     },
+    "Thoát" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Exit"
+          }
+        }
+      }
+    },
     "Thoát chế độ TV" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Exit TV mode"
+          }
+        }
+      }
+    },
+    "Thoát khỏi màn chấm điểm" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Exit scoring screen"
+          }
+        }
+      }
+    },
+    "THOÁT KHỎI MÀN CHẤM ĐIỂM?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "EXIT SCORING SCREEN?"
           }
         }
       }
@@ -16208,6 +16248,16 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Continue"
+          }
+        }
+      }
+    },
+    "Tiếp tục chấm" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Keep scoring"
           }
         }
       }
