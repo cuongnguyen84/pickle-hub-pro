@@ -76,8 +76,16 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const buffer = await upstreamRes.arrayBuffer();
 
   if (env.PRERENDER_CACHE) {
+    // Guarded like the prerender cache write in _middleware.ts: KV throttles
+    // writes to ~1/sec per key, and one shared link makes every crawler miss
+    // the same key at once. An unguarded rejection here is the same
+    // unhandled-await shape that produced the Cloudflare 502 in 219da014.
+    // A failed cache write should cost a cache entry, not an error log.
     context.waitUntil(
-      env.PRERENDER_CACHE.put(cacheKey, buffer, { expirationTtl: CACHE_TTL_SECONDS }),
+      env.PRERENDER_CACHE.put(cacheKey, buffer, { expirationTtl: CACHE_TTL_SECONDS }).then(
+        () => {},
+        () => {},
+      ),
     );
   }
 

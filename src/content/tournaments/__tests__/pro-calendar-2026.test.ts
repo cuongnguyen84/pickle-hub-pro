@@ -75,13 +75,36 @@ describe("PRO_CALENDAR_2026 organizer attribution", () => {
     }
   });
 
-  it("attributes every PPA Tour Asia Open to PPA Tour Asia", () => {
-    const ppa = PRO_CALENDAR_2026.filter((e) => e.tier.startsWith("PPA Asia"));
+  it("attributes every PPA Tour Asia Open and Cup to PPA Tour Asia", () => {
+    // Deliberately excludes the 125 tier — see the next test for why.
+    const ppa = PRO_CALENDAR_2026.filter(
+      (e) => e.tier.startsWith("PPA Asia") && e.tier !== "PPA Asia 125",
+    );
     expect(ppa.length).toBeGreaterThan(0);
     for (const ev of ppa) {
       expect(ev.organizer, `${ev.id} is missing its organizer`).toBe(
         "PPA Tour Asia",
       );
+    }
+  });
+
+  it("never attributes a PPA Asia 125 stop to PPA Tour Asia", () => {
+    // Added 2026-09-10 with the four missing 125 stops. The original rule read
+    // "every PPA Asia tier event is organised by PPA Tour Asia", which was true
+    // of the calendar as it stood but is false of the tour: the 125 series is
+    // third-party events the tour SANCTIONS rather than runs. The organizers'
+    // own pages credit PickleGO (PickleSlam, Singapore) and MSPL Sports with
+    // Tomaz Pickleball Club (Tomaz Cup, Kuala Lumpur). Applying the old rule to
+    // the new rows would have written exactly the false organiser claim that
+    // this describe block was created to prevent — so the rule is inverted for
+    // this tier instead of the data being bent to fit it.
+    const t125 = PRO_CALENDAR_2026.filter((e) => e.tier === "PPA Asia 125");
+    expect(t125.length).toBeGreaterThan(0);
+    for (const ev of t125) {
+      expect(
+        ev.organizer,
+        `${ev.id} must not claim PPA Tour Asia as organiser`,
+      ).toBeUndefined();
     }
   });
 

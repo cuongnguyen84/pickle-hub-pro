@@ -350,6 +350,18 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
     extraMeta += `\n<script type="application/ld+json">${escapeJsonLd(JSON.stringify(faqSchema))}</script>`;
   }
 
+  // The FAQ has to be IN THE BODY, not only in the JSON-LD above. Google's
+  // structured-data policy requires the question and answer text to be visible
+  // on the page, and the prerendered HTML is the copy crawlers get — the React
+  // page (src/pages/ViBlogPost.tsx) has always rendered the accordion, so until
+  // 2026-09-10 the two paths disagreed and only the bot one was in breach.
+  // Heading text matches the React accordion so the two renders read the same.
+  const viFaqSection = (p.faq_items && Array.isArray(p.faq_items) && p.faq_items.length > 0)
+    ? `<section><h2>Câu hỏi thường gặp</h2>${(p.faq_items as { question: string; answer: string }[])
+        .map((f) => `<h3>${escapeHtml(f.question)}</h3><p>${escapeHtml(f.answer)}</p>`)
+        .join("")}</section>`
+    : "";
+
   const bc = breadcrumb([{ label: "Trang chủ", href: `${siteUrl}/vi` }, { label: "Blog", href: `${siteUrl}/vi/blog` }, { label: p.title }]);
 
   const relatedItems = (relatedRes.data || []) as { slug: string; title: string }[];
@@ -375,7 +387,7 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
     type: "article",
     lang: "vi",
     extraMeta,
-    bodyContent: `${bc}<article>${viBody}</article>${relatedSection}`,
+    bodyContent: `${bc}<article>${viBody}${viFaqSection}</article>${relatedSection}`,
   }));
 }
 

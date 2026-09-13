@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "hong-kong-slam-2026-preview",
   publishedDate: "2026-08-05",
-  updatedDate: "2026-08-25",
+  updatedDate: "2026-09-10",
   author: "Cuong Nguyen",
   tags: [
     "hong kong slam 2026",
@@ -33,7 +33,7 @@ const post: BlogPost = {
         {
           heading: "Asia's first-ever pickleball Slam",
           content:
-            "Last updated: August 25, 2026 — registration is now open. The PPA Asia 1500 Hang Seng Bank Hong Kong Slam runs October 19–25, 2026 at the Kai Tak Arena inside Hong Kong's new Kai Tak Sports Park: the first Slam ever staged in Asia, the grand finale of the 2026 tour, and — at up to US$1.1 million (about HK$8.58 million) — the richest prize purse in Asian professional pickleball history. Entry for both the Professional and Amateur divisions opened on August 10, 2026 and remains open on a first-come, first-served basis for amateurs. Organized by F-Sports Promotions and title-sponsored by Hang Seng Bank, with support from the Hong Kong, China Tennis Association, the Slam awards 1,500 ranking points to gold — the most on offer at any tour stop. This ThePickleHub preview covers everything PPA Tour Asia has confirmed, and is updated as qualification, tickets and the player field are announced.",
+            "Last updated: September 10, 2026 — the full prize breakdown is now published and registration is open. The PPA Asia 1500 Hang Seng Bank Hong Kong Slam runs October 19–25, 2026 at the Kai Tak Arena inside Hong Kong's new Kai Tak Sports Park: the first Slam ever staged in Asia, the grand finale of the 2026 tour, and — at up to US$1.1 million (about HK$8.58 million) — the richest prize purse in Asian professional pickleball history. Entry for both the Professional and Amateur divisions opened on August 10, 2026 and remains open on a first-come, first-served basis for amateurs. Organized by F-Sports Promotions and title-sponsored by Hang Seng Bank, with support from the Hong Kong, China Tennis Association, the Slam awards 1,500 ranking points to gold — the most on offer at any tour stop. This ThePickleHub preview covers everything PPA Tour Asia has confirmed, and is updated as qualification, tickets and the player field are announced.",
           internalLinks: [
             {
               text: "Vietnam's PPA Asia 500 in August — how the HCMC Open 2026 finished",
@@ -74,6 +74,28 @@ const post: BlogPost = {
               path: "/blog/professional-pickleball-tours-guide-2026",
             },
           ],
+        },
+        {
+          heading: "The prize money, tier by tier",
+          content:
+            "PPA Tour Asia published the full Hong Kong breakdown on September 1, and it is the largest on the Asian calendar by a wide margin. Gold in either gender doubles event pays US$56,000 — US$18,000 more than the US$38,000 the same medal paid at the Leapmotor Kuala Lumpur Cup in September, which is the tour's 1000-point tier, and more than three times the entire US$15,000 pro purse at a PPA Asia 125 stop such as the Shandong Challenger on October 4-7. Every figure below applies to players on a PPA Gold Contract; the organizers direct players on other contract categories to players@upa-asia.com and publish no separate table for them, so what a non-Gold professional earns in Hong Kong is not public.",
+          table: {
+            caption:
+              "Hang Seng Bank Hong Kong Slam 2026 prize money and ranking points, PPA Gold Contract, in US dollars",
+            headers: [
+              "Finish",
+              "Singles",
+              "Gender doubles",
+              "Mixed doubles",
+              "Ranking points",
+            ],
+            rows: [
+              ["Gold", "14,000", "56,000", "46,000", "1,500"],
+              ["Silver", "7,500", "30,000", "26,000", "1,200"],
+              ["Semi-final", "3,800", "15,000", "12,600", "750"],
+              ["Quarter-final", "1,900", "7,600", "6,400", "300"],
+            ],
+          },
         },
         {
           heading: "The venue: Kai Tak Arena",
@@ -209,6 +231,28 @@ const post: BlogPost = {
               path: "/vi/blog/cac-giai-pickleball-chuyen-nghiep-2026-toan-canh",
             },
           ],
+        },
+        {
+          heading: "Tiền thưởng, theo từng mức thành tích",
+          content:
+            "PPA Tour Asia công bố bảng phân bổ đầy đủ cho Hồng Kông ngày 1/9, và đây là mức lớn nhất trên lịch châu Á, hơn phần còn lại một khoảng xa. HCV một nội dung đôi cùng giới nhận 56.000 USD — nhiều hơn 18.000 USD so với mức 38.000 USD mà chính tấm HCV đó nhận ở Leapmotor Kuala Lumpur Cup hồi tháng 9, chặng thang 1000 điểm của tour, và gấp hơn ba lần toàn bộ tiền thưởng pro 15.000 USD của một chặng PPA Asia 125 như Shandong Challenger ngày 4–7/10. Mọi con số dưới đây áp dụng cho VĐV có hợp đồng PPA hạng Gold; VĐV thuộc hạng hợp đồng khác được ban tổ chức hướng dẫn liên hệ players@upa-asia.com và không có bảng riêng nào được công bố, nên thu nhập của một VĐV chuyên nghiệp ngoài hạng Gold tại Hồng Kông là ẩn số.",
+          table: {
+            caption:
+              "Tiền thưởng và điểm xếp hạng Hang Seng Bank Hong Kong Slam 2026, hợp đồng PPA hạng Gold, đơn vị USD",
+            headers: [
+              "Thành tích",
+              "Đơn",
+              "Đôi cùng giới",
+              "Đôi nam nữ",
+              "Điểm xếp hạng",
+            ],
+            rows: [
+              ["HCV", "14.000", "56.000", "46.000", "1.500"],
+              ["HCB", "7.500", "30.000", "26.000", "1.200"],
+              ["Bán kết", "3.800", "15.000", "12.600", "750"],
+              ["Tứ kết", "1.900", "7.600", "6.400", "300"],
+            ],
+          },
         },
         {
           heading: "Địa điểm: Kai Tak Arena",

@@ -1270,7 +1270,31 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // preview post now links on to it in both locales.
   // v116 (2026-09-09): the KL Cup results post gets its own hero — it had been
   // sharing the preview post's image, so both shipped the same og:image.
-  const cacheKey = `pr:v116:${url.pathname}`;
+  // v117 (2026-09-10): /live/pro/<slug> and its /vi twin shipped two <h1>s —
+  // renderProTourEvent opened its bodyContent with a heading but never passed
+  // omitAutoHeader, so buildHtml() added the decorated title as a second one.
+  // v118 (2026-09-10): the pro calendar was missing the whole PPA Asia 125
+  // series (four stops, two of them still to play in October) and carried
+  // five events under names without their title sponsor, so /tournaments
+  // and its SportsEvent JSON-LD both served an incomplete season.
+  // v119 (2026-09-10): the Hong Kong Slam preview gained the prize and
+  // points table PPA published on September 1 — the page about the biggest
+  // purse in Asian pickleball had no breakdown of it at all.
+  // v120 (2026-09-10): new post ppa-tour-europe-2026-27-schedule (EN +
+  // VI) — first page outside the Asian beat, published 13 days before the
+  // tour's opening stop in Barcelona.
+  // v121 (2026-09-10): KL Cup results post refreshed for day two — the
+  // opening still said "qualifying today" and "no main-draw match has been
+  // played yet" a day after both stopped being true.
+  // v122 (2026-09-10): hero wired on the PPA Tour Europe post, so
+  // og:image moves off the site-wide fallback on both locales.
+  // v123 (2026-09-10): both Kuala Lumpur Cup posts now bridge the three
+  // names one player is filed under, so a reader following the link to the
+  // Shenzhen gold post does not think it is about someone else.
+  // v124 (2026-09-10): every VI post now renders its FAQ in the
+  // prerendered body, not only as FAQPage JSON-LD. Every cached VI blog
+  // page is missing that section and has to be re-rendered.
+  const cacheKey = `pr:v124:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

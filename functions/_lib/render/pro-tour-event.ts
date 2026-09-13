@@ -96,6 +96,10 @@ export async function renderProTourEvent(
       siteUrl,
       lang,
       bodyContent,
+      // bodyContent opens with its own <h1>; without this buildHtml() adds a
+      // second one carrying the decorated "… | ThePickleHub" title. Same
+      // regression single-h1.test.ts was written for.
+      omitAutoHeader: true,
       jsonLd: {
         "@context": "https://schema.org",
         "@type": "SportsEvent",
