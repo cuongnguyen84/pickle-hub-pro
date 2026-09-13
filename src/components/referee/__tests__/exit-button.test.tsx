@@ -114,7 +114,7 @@ describe('RefereeScoringScreen', () => {
 
   it('kết thúc trận: xác nhận thì lưu tỉ số, xoá trạng thái tạm và dọn dòng live', async () => {
     resume();
-    const onFinish = vi.fn(async () => {});
+    const onFinish = vi.fn(async (_a: number, _b: number, _note: string | null) => {});
     const onLiveState = vi.fn();
     renderScreen({ onFinish, onLiveState });
 
@@ -152,7 +152,7 @@ describe('RefereeScoringScreen', () => {
 
   it('ghi chú hai bên được giữ lại và đi kèm khi kết thúc', async () => {
     resume();
-    const onFinish = vi.fn(async () => {});
+    const onFinish = vi.fn(async (_a: number, _b: number, _note: string | null) => {});
     renderScreen({ onFinish });
 
     fireEvent.click(screen.getByText('Ghi chú'));
