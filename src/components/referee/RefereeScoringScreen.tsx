@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, RotateCcw, Dice5, ArrowLeftRight, StickyNote, Timer, Cross, X } from 'lucide-react';
 import {
@@ -582,10 +583,10 @@ function Board(props: {
 
   const bottom = (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, background: 'var(--tl-surface)' }}>
-      <button type="button" className="tl-btn" style={{ padding: 13 }} onClick={props.onExit}
+      <Button variant="outline" size="icon" onClick={props.onExit} style={{ height: 46, width: 46, flexShrink: 0 }}
         aria-label={vi ? 'Thoát khỏi màn chấm điểm' : 'Exit scoring screen'} title={vi ? 'Thoát' : 'Exit'}>
         <X className="w-4 h-4" />
-      </button>
+      </Button>
       <button type="button" className="tl-btn" style={{ flex: 1, justifyContent: 'center', padding: 13, opacity: props.canUndo ? 1 : 0.4 }} disabled={!props.canUndo} onClick={props.onUndo}>
         <RotateCcw className="w-4 h-4" /> {vi ? 'HOÀN TÁC' : 'UNDO'}
       </button>
