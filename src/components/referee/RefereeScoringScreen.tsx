@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, RotateCcw, Dice5, ArrowLeftRight, StickyNote, Timer, Cross } from 'lucide-react';
+import { ArrowLeft, RotateCcw, Dice5, ArrowLeftRight, StickyNote, Timer, Cross, X } from 'lucide-react';
 import {
   startState, applyRally, callout, isGameOver, scoreOf,
   servingPlayer, receivingPlayer, servingSideRight, sideSwitchPoint,
@@ -359,12 +359,19 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
     } finally { setSaving(false); }
   }, [storeKey, noteKey, exitLandscape, onFinish, combinedNote, onLiveState, readOnly]);
 
+  const exit = useCallback(() => { if (onBack) onBack(); else navigate(loaded.backHref); }, [onBack, navigate, loaded.backHref]);
+
   const inner = (
     <div style={{ flex: 1, minWidth: 0, background: 'var(--tl-bg)', color: 'var(--tl-fg)', display: 'flex', flexDirection: 'column' }}>
       <header style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--tl-border)' }}>
-        <button type="button" className="tl-btn" style={{ padding: '6px 10px' }} onClick={() => (onBack ? onBack() : navigate(loaded.backHref))}>
-          <ArrowLeft className="w-4 h-4" />
-        </button>
+        {/* Board phase moves the exit button down to the action bar (next to
+            UNDO / END) — in the CSS-rotated portrait layout the header sits
+            sideways along the screen edge, where referees never found it. */}
+        {!state && (
+          <button type="button" className="tl-btn" style={{ padding: '6px 10px' }} onClick={exit}>
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+        )}
         <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 12, color: 'var(--tl-fg-3)' }}>{vi ? 'CHẤM TRỰC TIẾP' : 'LIVE SCORING'}</span>
         <div style={{ flex: 1 }} />
         {readOnly && (
@@ -409,7 +416,7 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
           onManualServe={() => manualAct(manualNextServe)}
           onManualToggleServer={() => manualAct(manualToggleServer)}
           onManualEndSet={() => manualAct(manualEndSet)}
-          regularTO={regularTO} usedReg={usedReg} usedMed={usedMed} onTimeout={startTO} />
+          regularTO={regularTO} usedReg={usedReg} usedMed={usedMed} onTimeout={startTO} onExit={exit} />
       )}
 
       {showNote && <NoteOverlay vi={vi} loaded={loaded} noteA={noteA} noteB={noteB} setNoteA={setNoteA} setNoteB={setNoteB} onClose={() => setShowNote(false)} />}
@@ -547,6 +554,7 @@ function Board(props: {
   onManualAdjust: (side: ServeSide, delta: number) => void;
   onManualServe: () => void; onManualToggleServer: () => void; onManualEndSet: () => void;
   regularTO: number; usedReg: Sides; usedMed: Sides; onTimeout: (s: ServeSide, k: 'reg' | 'med') => void;
+  onExit: () => void;
 }) {
   const { vi, loaded, state, target } = props;
   const mode = state.mode; // authoritative (survives localStorage resume; React `mode` may be stale)
@@ -574,6 +582,10 @@ function Board(props: {
 
   const bottom = (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, background: 'var(--tl-surface)' }}>
+      <button type="button" className="tl-btn" style={{ padding: 13 }} onClick={props.onExit}
+        aria-label={vi ? 'Thoát khỏi màn chấm điểm' : 'Exit scoring screen'} title={vi ? 'Thoát' : 'Exit'}>
+        <X className="w-4 h-4" />
+      </button>
       <button type="button" className="tl-btn" style={{ flex: 1, justifyContent: 'center', padding: 13, opacity: props.canUndo ? 1 : 0.4 }} disabled={!props.canUndo} onClick={props.onUndo}>
         <RotateCcw className="w-4 h-4" /> {vi ? 'HOÀN TÁC' : 'UNDO'}
       </button>
