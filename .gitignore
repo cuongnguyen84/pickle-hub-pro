@@ -89,3 +89,7 @@ scripts/seo/.seo_drift.db
 
 # Local coverage output (vitest --coverage)
 coverage/
+
+# Cloudflare local development artifacts
+.wrangler/
+.dev.vars

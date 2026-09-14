@@ -19,6 +19,7 @@ import "@/styles/the-line.css";
 
 export interface TheLineLayoutProps {
   title: string;
+  exactTitle?: boolean;
   description?: string;
   /** Optional — production homepage is indexed; pass true for noindex routes. */
   noindex?: boolean;
@@ -74,7 +75,7 @@ const sectionRootFor = (pathname: string): string => {
   return isVi ? `/vi${root}` : root;
 };
 
-export const TheLineLayout = ({ title, description, noindex = false, active, children }: TheLineLayoutProps) => {
+export const TheLineLayout = ({ title, exactTitle, description, noindex = false, active, children }: TheLineLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   usePresenceHeartbeat();
@@ -433,7 +434,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
 
   return (
     <div className="tl-root">
-      <DynamicMeta title={title} description={description} noindex={noindex} url={canonicalUrl} />
+      <DynamicMeta title={title} exactTitle={exactTitle} description={description} noindex={noindex} url={canonicalUrl} />
 
       <div className="tl-scroll">
       <nav className="tl-nav">

@@ -519,3 +519,14 @@
     font-size: max(16px, 1em) !important;
   }
 }
+
+/* Readable public content while route chunks load, and when JavaScript is off. */
+[data-public-content] { max-width: 880px; width: 100%; margin: 0 auto; padding: 24px; line-height: 1.65; overflow-wrap: anywhere; }
+[data-public-content] h1 { font-size: 2rem; line-height: 1.2; margin: 24px 0; }
+[data-public-content] h2 { font-size: 1.4rem; margin: 24px 0 12px; }
+[data-public-content] p, [data-public-content] ul, [data-public-content] ol { margin: 12px 0; }
+[data-public-content] a { text-decoration: underline; }
+[data-public-content] nav { display: flex; flex-wrap: wrap; gap: 12px; }
+[data-public-content] table { display: block; overflow-x: auto; max-width: 100%; }
+[data-public-content] th, [data-public-content] td { padding: 8px; border: 1px solid currentColor; }
+[data-public-content] img { max-width: 100%; height: auto; }

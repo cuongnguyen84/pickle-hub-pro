@@ -1,3 +1,4 @@
+import { PublicSeoHandoff } from "./components/seo/PublicSeoHandoff";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/toaster";
@@ -127,6 +128,7 @@ const TeamMatchScoring = lazyRetry(() => import("./pages/TeamMatchScoring"));
 const JoinTeam = lazyRetry(() => import("./pages/JoinTeam"));
 const Privacy = lazyRetry(() => import("./pages/Privacy"));
 const Terms = lazyRetry(() => import("./pages/Terms"));
+const Author = lazyRetry(() => import("./pages/Author"));
 const About = lazyRetry(() => import("./pages/About"));
 const Contact = lazyRetry(() => import("./pages/Contact"));
 const Advertise = lazyRetry(() => import("./pages/Advertise"));
@@ -688,6 +690,7 @@ const MIRRORED: MirroredRoute[] = [
   { path: "/tools/dashboard/:type/:id", element: <TournamentDashboard /> },
   { path: "/privacy", element: <Privacy /> },
   { path: "/terms", element: <Terms /> },
+  { path: "/authors/cuong-nguyen", element: <Author /> },
   { path: "/about", element: <About /> },
   { path: "/contact", element: <Contact /> },
   { path: "/advertise", element: <Advertise /> },
@@ -709,6 +712,7 @@ const App = () => (
               <PageTracker />
               <LivestreamGateAttribution />
               <ScrollToTop />
+              <PublicSeoHandoff />
 
               <SkipToContent />
               <BottomNav />

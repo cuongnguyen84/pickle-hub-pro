@@ -25,11 +25,11 @@ export type QaPair = [string, string];
 export const TOOLS_FAQ_EN: QaPair[] = [
   [
     "Is the pickleball bracket generator free?",
-    "Yes. Every format — round robin, single elimination, double elimination, MLP team match and flex — is free with no trial and no subscription. Viewing a bracket needs no account at all; an account is only required to create and manage your own tournament.",
+    "Yes. Every format — round robin, single elimination, double elimination, MLP team match and flex — is free with no trial and no subscription. Viewing a public bracket needs no account at all; an account is only required to create and manage your own tournament.",
   ],
   [
     "How do I generate a round robin schedule?",
-    "Open Quick Tables, enter the player or team count, pick your group size, and the tool pairs every player against every other in their group, assigns courts, and keeps standings with point differential as the tiebreaker. A 6-player group is 15 matches; the formula is n × (n − 1) ÷ 2.",
+    "Sign in, open Quick Tables, enter the player or team count, pick your group size, and the tool pairs every player against every other in their group, assigns courts, and keeps standings with point differential as the tiebreaker. A 6-player group is 15 matches; the formula is n × (n − 1) ÷ 2.",
   ],
   [
     "Can it build a double elimination bracket?",
@@ -60,7 +60,7 @@ export const TOOLS_FAQ_VI: QaPair[] = [
   ],
   [
     "Tạo bảng đấu pickleball có mất phí không?",
-    "Không. Cả năm thể thức — vòng tròn tính điểm, loại trực tiếp đơn, loại trực tiếp đôi, đấu đồng đội MLP và Linh hoạt — đều miễn phí, không dùng thử giới hạn, không thuê bao. Xem bảng đấu không cần tài khoản; chỉ khi tự tạo và quản lý giải mới cần đăng nhập.",
+    "Không. Cả năm thể thức — vòng tròn tính điểm, loại trực tiếp đơn, loại trực tiếp đôi, đấu đồng đội MLP và Linh hoạt — đều miễn phí, không dùng thử giới hạn, không thuê bao. Xem bảng đấu công khai không cần tài khoản; chỉ khi tự tạo và quản lý giải mới cần đăng nhập.",
   ],
   [
     "Tối đa bao nhiêu người chơi hoặc bao nhiêu đội?",
@@ -80,7 +80,7 @@ export const TOOLS_FAQ_VI: QaPair[] = [
  */
 export const TOOLS_HOWTO_EN: QaPair[] = [
   [
-    "Pick your tournament format",
+    "Sign in and pick your tournament format",
     "Choose round robin (Quick Tables) for club play, single or double elimination for a knockout draw, MLP team match for team events, or flex for a custom multi-day format. ThePickleHub's Bracket Lab supports all five and every one is free.",
   ],
   [
@@ -103,7 +103,7 @@ export const TOOLS_HOWTO_EN: QaPair[] = [
 
 export const TOOLS_HOWTO_VI: QaPair[] = [
   [
-    "Chọn thể thức giải",
+    "Đăng nhập và chọn thể thức giải",
     "Vòng tròn tính điểm (Bảng đấu nhanh) cho giải câu lạc bộ, loại trực tiếp đơn hoặc đôi cho nhánh knock-out, đấu đồng đội kiểu MLP cho giải đội, hoặc Linh hoạt cho thể thức nhiều ngày tự định nghĩa. Bracket Lab của ThePickleHub hỗ trợ cả năm, tất cả đều miễn phí.",
   ],
   [
@@ -141,5 +141,17 @@ export const TOOLS_HOWTO_META = {
       "Tạo bảng đấu giải pickleball trong khoảng 60 giây bằng Bracket Lab miễn phí của ThePickleHub — chọn thể thức, nhập người chơi, khai báo số sân, bấm tạo, rồi chia sẻ một link chấm điểm trực tiếp.",
     totalTime: "PT1M",
     faqHeading: "Câu hỏi thường gặp",
+  },
+} as const;
+
+/** Route metadata shared by the initial HTML and the interactive page. */
+export const TOOLS_HUB_META = {
+  en: {
+    title: 'Free Pickleball Bracket Generator | ThePickleHub',
+    description: 'Free pickleball bracket generator: round robin, elimination and team formats. Sign in to create; public brackets need no login.',
+  },
+  vi: {
+    title: 'Tạo Bảng Đấu Pickleball Miễn Phí | ThePickleHub',
+    description: 'Tạo bảng đấu pickleball miễn phí. Đăng nhập để tạo giải; xem bảng công khai không cần tài khoản.',
   },
 } as const;

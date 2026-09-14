@@ -102,7 +102,8 @@ describe("App.tsx route table characterization", () => {
     // no /seller route is mirrored, they are literal <Route> tags.
     // 70 -> 72: agent-readiness adds bilingual About and Contact pages.
     // 72 -> 73: pro-tour event results page /live/pro/:slug.
-    expect(mirrored.length).toBe(73);
+    // 73 -> 74: bilingual author profile.
+    expect(mirrored.length).toBe(74);
   });
 
   it("route table matches the checked-in snapshot exactly", () => {

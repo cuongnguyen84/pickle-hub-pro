@@ -76,6 +76,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     { loc: "/tools/doubles-elimination", changefreq: "weekly", priority: "0.7", lastmod: TODAY, hreflang: enOnly("/tools/doubles-elimination") },
     { loc: "/tools/quick-tables", changefreq: "weekly", priority: "0.7", lastmod: TODAY, hreflang: enOnly("/tools/quick-tables") },
     { loc: "/tools/team-match", changefreq: "weekly", priority: "0.7", lastmod: TODAY, hreflang: enOnly("/tools/team-match") },
+    { loc: "/authors/cuong-nguyen", changefreq: "monthly", priority: "0.5", lastmod: "2026-09-14", hreflang: bilingual("/authors/cuong-nguyen", "/vi/authors/cuong-nguyen") },
+    { loc: "/vi/authors/cuong-nguyen", changefreq: "monthly", priority: "0.5", lastmod: "2026-09-14", hreflang: bilingual("/authors/cuong-nguyen", "/vi/authors/cuong-nguyen") },
     { loc: "/blog", changefreq: "weekly", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/blog", "/vi/blog") },
     { loc: "/vi/blog", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/blog", "/vi/blog") },
     // SEO-1.1 (2026-05-28) — Sprint A Vietnam DUPR leaderboard SSR

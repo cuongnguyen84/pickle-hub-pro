@@ -1,3 +1,4 @@
+import { authorIdentity } from "@/content/authors";
 import { useEffect } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { preloadViBlogPostBySlug, useViBlogPostBySlug } from "@/hooks/useViBlogPosts";
@@ -131,12 +132,14 @@ const ViBlogPost = () => {
 
   return (
     <TheLineLayout
-      title={post.meta_title.replace(/ \| ThePickleHub$/, "")}
+      title={post.meta_title}
+      exactTitle
       description={post.meta_description}
       active="stories"
     >
       <DynamicMeta
-        title={post.meta_title.replace(/ \| ThePickleHub$/, "")}
+        title={post.meta_title}
+        exactTitle
         description={post.meta_description}
         image={normalizeImageUrl(post.cover_image_url) || undefined}
         type="article"
@@ -183,7 +186,7 @@ const ViBlogPost = () => {
                   })}
                 </time>
               )}
-              {post.author_name && <span>· {post.author_name}</span>}
+              {post.author_name && <span>· {"url" in authorIdentity(post.author_name) ? <Link to={authorIdentity(post.author_name).url!}>{post.author_name}</Link> : post.author_name}</span>}
               <ViewCountBadge count={viewCount} />
             </div>
           </header>
