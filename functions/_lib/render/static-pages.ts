@@ -209,9 +209,10 @@ export function renderDefault(path: string, siteUrl: string, lang: Lang): Respon
 
 export function render404(path: string, siteUrl: string, accept = ""): Response {
   const isVi = detectLang(path) === "vi";
+  const isArticle = /^\/(?:vi\/)?blog\/[^/]+$/.test(path);
   const title = isVi
-    ? "404 - Không tìm thấy trang | ThePickleHub"
-    : "404 - Page Not Found | ThePickleHub";
+    ? `404 - ${isArticle ? "Không tìm thấy bài viết" : "Không tìm thấy trang"} | ThePickleHub`
+    : `404 - ${isArticle ? "Article not found" : "Page Not Found"} | ThePickleHub`;
   const description = isVi
     ? "Trang bạn tìm không tồn tại. Quay lại trang chủ ThePickleHub để khám phá giải đấu, livestream và cộng đồng pickleball Việt Nam."
     : "The page you're looking for doesn't exist. Return to ThePickleHub for pickleball tournaments, livestreams, and Vietnam's pickleball community.";
