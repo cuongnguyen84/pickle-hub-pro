@@ -18,10 +18,11 @@ describe('metadata after the public HTML boots', () => {
     expect(document.title).toBe('Vietnam Pickleball Tournament Calendar 2026 | Dates & Venues');
   });
   it('keeps public structured data on load but removes it when navigating', () => {
-    document.head.innerHTML = '<script type="application/ld+json" data-public-seo>{"@type":"WebApplication"}</script>';
+    document.head.innerHTML = '<meta data-public-seo property="article:published_time" content="2026-09-14"><script type="application/ld+json" data-public-seo>{"@type":"WebApplication"}</script>';
     const view = render(<MemoryRouter initialEntries={['/tools']}><PublicSeoHandoff /><Routes><Route path="/tools" element={<Link to="/about">About</Link>} /><Route path="/about" element={<p>About page</p>} /></Routes></MemoryRouter>);
     expect(document.querySelector('script[data-public-seo]')).not.toBeNull();
     fireEvent.click(view.getByText('About'));
     expect(document.querySelector('script[data-public-seo]')).toBeNull();
+    expect(document.querySelector('meta[property="article:published_time"]')).toBeNull();
   });
 });

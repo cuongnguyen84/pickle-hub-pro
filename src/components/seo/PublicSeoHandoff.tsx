@@ -9,7 +9,7 @@ export function PublicSeoHandoff(): null {
   const initialPath = useRef(pathname);
   useLayoutEffect(() => {
     if (pathname !== initialPath.current) {
-      document.querySelectorAll('script[data-public-seo]').forEach((node) => node.remove());
+      document.querySelectorAll('script[data-public-seo], meta[data-public-seo][property^="article:"]').forEach((node) => node.remove());
     }
   }, [pathname]);
   return null;
