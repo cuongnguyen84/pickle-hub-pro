@@ -1,5 +1,7 @@
-import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { TOOLS_HUB_META } from "@/content/tools/hub-copy";
+import { HreflangTags } from "@/components/seo";
+import { useEffect, useMemo } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import {
   useActivePublicQuickTables,
@@ -14,8 +16,11 @@ import { ToolsHubFaqSection } from "@/components/seo/ToolsHubFaqSection";
 import { formatRelative } from "@/lib/format-datetime";
 
 const Tools = () => {
-  const { language } = useI18n();
+  const { setLanguageFromUrl } = useI18n();
+  const { pathname } = useLocation();
+  const language = pathname.startsWith("/vi/") ? "vi" : "en";
   const isVi = language === "vi";
+  useEffect(() => { setLanguageFromUrl(language); }, [language, setLanguageFromUrl]);
   const { data: activeQuickTables = [] } = useActivePublicQuickTables({ limit: 20 });
   const { data: openRegTables = [] } = useOpenRegistrationTables({ limit: 20 });
   const { data: completedQuickTables = [] } = useCompletedPublicQuickTables({ limit: 20 });
@@ -135,12 +140,11 @@ const Tools = () => {
 
   return (
     <TheLineLayout
-      title={isVi ? "Bracket Lab" : "Bracket Lab"}
-      description={isVi
-        ? "Công cụ tổ chức giải đấu pickleball miễn phí — round robin, loại trực tiếp đơn/đôi, đấu đồng đội MLP, định dạng linh hoạt. Không cần đăng ký."
-        : "Free pickleball tournament tools — round robin, single/double elimination, MLP team match, Flex format. No signup. Shareable scoreboard."}
+      title={TOOLS_HUB_META[language].title}
+      description={TOOLS_HUB_META[language].description}
       active="lab"
     >
+      <HreflangTags enPath="/tools" viPath="/vi/tools" />
       <div className="tl-shell">
         <nav className="tl-breadcrumb">
           <Link to="/">{isVi ? "Trang chủ" : "Home"}</Link>
@@ -151,8 +155,8 @@ const Tools = () => {
         <header className="tl-page-head">
           <div className="kicker">
             {isVi
-              ? "◆ Tính năng đỉnh · Miễn phí · Không cần đăng ký"
-              : "◆ The killer feature · Free · No signup"}
+              ? "◆ Tính năng đỉnh · Miễn phí · Đăng nhập để tạo giải"
+              : "◆ The killer feature · Free · Sign in to create"}
           </div>
           <h1>
             {isVi ? (
@@ -169,8 +173,8 @@ const Tools = () => {
           </h1>
           <p>
             {isVi
-              ? "Trình tạo bảng đấu pickleball miễn phí — round robin, loại trực tiếp đơn và đôi, đấu đồng đội MLP, và định dạng linh hoạt. Chấm điểm trực tiếp trên điện thoại, link bảng điểm chia sẻ được, bracket in được. Không cần app, không đăng ký, không phụ phí."
-              : "A free pickleball tournament bracket generator — round robin, single and double elimination, MLP team match, and flex format. Live scoring on your phone, shareable scoreboard URL, printable bracket. No apps, no signup, no catch."}
+              ? "Trình tạo bảng đấu pickleball miễn phí — round robin, loại trực tiếp đơn và đôi, đấu đồng đội MLP, và định dạng linh hoạt. Chấm điểm trực tiếp trên điện thoại, link bảng điểm chia sẻ được, bracket in được. Đăng nhập để tạo và quản lý giải. Xem bảng đấu công khai không cần tài khoản."
+              : "A free pickleball tournament bracket generator — round robin, single and double elimination, MLP team match, and flex format. Live scoring on your phone, shareable scoreboard URL, printable bracket. Sign in to create and manage a tournament. Public brackets can be viewed without an account."}
           </p>
           <div style={{ display: "flex", gap: 10, marginTop: 28, flexWrap: "wrap" }}>
             <Link to="/tools/quick-tables" className="tl-btn green">
@@ -345,7 +349,7 @@ const Tools = () => {
             <p>
               {isVi ? (
                 <>
-                  Không cần đăng ký. Không cần tải về. Không có dùng thử 14 ngày rồi biến thành gói đăng ký $99/tháng. Xây dựng và duy trì bởi{" "}
+                  Đăng nhập để tạo giải; xem bảng đấu công khai không cần tài khoản. Các công cụ tạo bảng đấu hiện miễn phí. Xây dựng và duy trì bởi{" "}
                   <Link to="/blog/tournament-organizer-hub" style={{ color: "var(--tl-green)" }}>
                     ThePickleHub
                   </Link>
@@ -353,7 +357,7 @@ const Tools = () => {
                 </>
               ) : (
                 <>
-                  No signup. No download. No 14-day trial that turns into a $99/month subscription. Built and maintained by{" "}
+                  Create and manage tournaments with a free account. Spectators can view public brackets without signing in. Built and maintained by{" "}
                   <Link to="/blog/tournament-organizer-hub" style={{ color: "var(--tl-green)" }}>
                     ThePickleHub
                   </Link>
@@ -367,7 +371,7 @@ const Tools = () => {
         {/* How-to steps + FAQ. Copy is shared with the SSR renderer
             (src/content/tools/hub-copy.ts) so the HowTo/FAQPage JSON-LD the bot
             path emits always describes content a human visitor can see. */}
-        <ToolsHubFaqSection />
+        <ToolsHubFaqSection language={language} />
 
         {/* Extra tools / utilities */}
         <section style={{ marginBottom: 56 }}>

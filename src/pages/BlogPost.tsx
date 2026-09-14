@@ -1,3 +1,4 @@
+import { authorIdentity } from "@/content/authors";
 import { useEffect, useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { useI18n } from "@/i18n";
@@ -148,12 +149,14 @@ const BlogPost = () => {
 
   return (
     <TheLineLayout
-      title={content.metaTitle.replace(/ \| ThePickleHub$/, "")}
+      title={content.metaTitle}
+      exactTitle
       description={content.metaDescription}
       active="stories"
     >
       <DynamicMeta
         title={content.metaTitle}
+        exactTitle
         description={content.metaDescription}
       />
       <HreflangTags
@@ -233,7 +236,7 @@ const BlogPost = () => {
             <p className="lede">{content.metaDescription}</p>
             <div className="tl-article-meta">
               <span>
-                <b>{post.author}</b>
+                <b>{"url" in authorIdentity(post.author) ? <Link to={authorIdentity(post.author).url!}>{post.author}</Link> : post.author}</b>
               </span>
               <span>Published {publishedFull}</span>
               {showUpdated && <span>Updated {updatedFull}</span>}

@@ -4,6 +4,8 @@ import { normalizeImageUrl } from "@/lib/url-utils";
 
 interface DynamicMetaProps {
   title: string;
+  /** Editorial meta titles are already composed and should match the server. */
+  exactTitle?: boolean;
   description?: string;
   image?: string;
   type?: "website" | "video.other" | "article";
@@ -15,6 +17,7 @@ interface DynamicMetaProps {
 
 export const DynamicMeta = ({
   title,
+  exactTitle = false,
   description = "ThePickleHub là nền tảng pickleball hàng đầu với livestream trực tiếp, giải đấu, bracket và cộng đồng pickleball sôi động.",
   image = "https://www.thepicklehub.net/og-image.png",
   type = "website",
@@ -24,15 +27,16 @@ export const DynamicMeta = ({
   publishedTime,
 }: DynamicMetaProps): null => {
   const { language } = useI18n();
-  // Strip trailing slash for canonical consistency (except root "/")
-  const rawUrl = url || (typeof window !== "undefined" ? window.location.href : "https://www.thepicklehub.net");
-  const currentUrl = rawUrl.endsWith("/") && rawUrl.length > 1
-    ? rawUrl.replace(/\/+$/, "")
-    : rawUrl;
+  // Campaign parameters and fragments do not identify a different article.
+  const canonicalUrl = new URL(url || (typeof window !== "undefined" ? window.location.href : "https://www.thepicklehub.net"), "https://www.thepicklehub.net");
+  canonicalUrl.search = "";
+  canonicalUrl.hash = "";
+  canonicalUrl.pathname = canonicalUrl.pathname.replace(/\/+$/, "") || "/";
+  const currentUrl = canonicalUrl.href;
   // The OAuth reviewer compares the homepage's presented application name
   // literally with the consent-screen name — titles that already lead with
   // the brand (home routes) must not get a second " | ThePickleHub" suffix.
-  const fullTitle = title.startsWith("ThePickleHub") ? title : `${title} | ThePickleHub`;
+  const fullTitle = (exactTitle || title.startsWith("ThePickleHub") || title.endsWith(" | ThePickleHub")) ? title : `${title} | ThePickleHub`;
 
   useEffect(() => {
     // Update document title

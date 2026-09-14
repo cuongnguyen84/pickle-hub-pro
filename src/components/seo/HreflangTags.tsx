@@ -38,6 +38,8 @@ export const HreflangTags = ({ enPath, viPath }: HreflangTagsProps): null => {
       link.href = href;
     };
 
+    if (!enPath) document.querySelector('link[hreflang="en"]')?.remove();
+    if (!viPath) document.querySelector('link[hreflang="vi"]')?.remove();
     const xDefault = enPath ?? viPath!;
 
     if (enPath) {

@@ -1,3 +1,4 @@
+import { authorIdentity } from "@/content/authors";
 import { useEffect } from "react";
 
 interface ArticleSchemaProps {
@@ -31,11 +32,7 @@ export const ArticleSchema = ({
       headline,
       datePublished,
       dateModified,
-      author: {
-        "@type": "Organization",
-        name: author,
-        url: "https://www.thepicklehub.net",
-      },
+      author: authorIdentity(author),
       publisher: {
         "@type": "Organization",
         name: "The PickleHub",

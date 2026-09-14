@@ -950,5 +950,13 @@
   {
     "path": "/vi/contact",
     "element": "<ViLanguageWrapper><Contact /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/authors/cuong-nguyen",
+    "element": "<Author />"
+  },
+  {
+    "path": "/vi/authors/cuong-nguyen",
+    "element": "<ViLanguageWrapper><Author /></ViLanguageWrapper>"
   }
 ]
