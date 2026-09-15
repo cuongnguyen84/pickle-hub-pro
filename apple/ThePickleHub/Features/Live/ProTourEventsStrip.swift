@@ -7,19 +7,27 @@ import SwiftUI
 private final class ProTourEventsStripModel {
     var events: [ProTourEvent] = []
     private let repository: any ProTourRepositoryProtocol
+    private let surface: ProTourEvent.Surface
 
-    init(repository: any ProTourRepositoryProtocol = ProTourRepository()) {
+    init(surface: ProTourEvent.Surface = .live,
+         repository: any ProTourRepositoryProtocol = ProTourRepository()) {
+        self.surface = surface
         self.repository = repository
     }
 
     func load() async {
         guard let all = try? await repository.events(forceRefresh: false) else { return }
-        events = all.filter { $0.shouldAppearOnLive() }.sorted { $0.startDate < $1.startDate }
+        events = all.filter { $0.shouldAppear(on: surface) }.sorted { $0.startDate < $1.startDate }
     }
 }
 
 struct ProTourEventsStrip: View {
-    @State private var model = ProTourEventsStripModel()
+    @State private var model: ProTourEventsStripModel
+
+    init(surface: ProTourEvent.Surface = .live) {
+        _model = State(wrappedValue: ProTourEventsStripModel(surface: surface))
+    }
+
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {

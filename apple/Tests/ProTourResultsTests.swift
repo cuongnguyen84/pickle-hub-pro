@@ -183,6 +183,11 @@ struct ProTourResultsTests {
         #expect(event.shouldAppearOnLive(at: formatter.date(from: "2026-09-02T16:00:00Z")!))
         #expect(event.shouldAppearOnLive(at: formatter.date(from: "2026-09-27T15:59:59Z")!))
         #expect(!event.shouldAppearOnLive(at: formatter.date(from: "2026-09-27T16:00:00Z")!))
+        // Trang chủ rụng sớm hơn: hết ngày hôm sau trận chung kết. KL Cup xong
+        // 13/09 mà 15/09 vẫn còn thẻ trên trang chủ — đó là lỗi Cuong báo.
+        #expect(event.shouldAppear(on: .home, at: formatter.date(from: "2026-09-14T15:59:59Z")!))
+        #expect(!event.shouldAppear(on: .home, at: formatter.date(from: "2026-09-14T16:00:00Z")!))
+        #expect(event.shouldAppear(on: .live, at: formatter.date(from: "2026-09-14T16:00:00Z")!))
     }
 
     private func fixtureEvent(start: String, end: String) -> ProTourEvent {

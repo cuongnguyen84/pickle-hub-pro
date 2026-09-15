@@ -66,10 +66,28 @@ extension ProTourEvent {
         return .live
     }
 
-    func shouldAppearOnLive(at now: Date = Date()) -> Bool {
+    /// Bề mặt hiển thị thẻ giải. Tab Trực tiếp là nơi người ta đi tìm kết
+    /// quả nên giữ hai tuần; trang chủ là "đang có gì", giải đã đấu xong thì
+    /// hôm sau là cũ — tự rụng thay vì phải xoá tay.
+    enum Surface: Sendable {
+        case home, live
+
+        var retireDays: Double {
+            switch self {
+            case .home: 1
+            case .live: 14
+            }
+        }
+    }
+
+    func shouldAppear(on surface: Surface, at now: Date = Date()) -> Bool {
         guard let window = window() else { return false }
         return now >= window.start.addingTimeInterval(-7 * 86_400)
-            && now <= window.end.addingTimeInterval(14 * 86_400)
+            && now <= window.end.addingTimeInterval(surface.retireDays * 86_400)
+    }
+
+    func shouldAppearOnLive(at now: Date = Date()) -> Bool {
+        shouldAppear(on: .live, at: now)
     }
 
     func formattedDates(language: String) -> String {
