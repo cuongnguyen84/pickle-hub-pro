@@ -110,17 +110,27 @@ export function eventPhase(
   return "live";
 }
 
-/** Events worth a card on / and /live right now: from a week before the
- * first match to two weeks after the final, so results stay one tap away
- * while people are still talking about them. */
+/** Days a finished event keeps its card, per surface. /live is where people
+ * go looking for results, so it holds them a fortnight. The homepage is a
+ * "what's on now" surface: a tournament that ended is stale there the day
+ * after, and Cuong asked for it to clear itself rather than be deleted by
+ * hand. */
+export const RETIRE_DAYS = { home: 1, live: 14 } as const;
+
+export type ProTourSurface = keyof typeof RETIRE_DAYS;
+
+/** Events worth a card right now: from a week before the first match until
+ * the surface's retire window runs out after the final. */
 export function eventsOnLive(
   events: ProTourEventMeta[],
   now = Date.now(),
+  surface: ProTourSurface = "live",
 ): ProTourEventMeta[] {
+  const afterDays = RETIRE_DAYS[surface];
   return events
     .filter((e) => {
       const { start, end } = eventWindow(e);
-      return now >= start - 7 * DAY_MS && now <= end + 14 * DAY_MS;
+      return now >= start - 7 * DAY_MS && now <= end + afterDays * DAY_MS;
     })
     .sort((a, b) => a.startDate.localeCompare(b.startDate));
 }

@@ -860,7 +860,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "vietnam-pickleball-tournament-calendar-2026",
     publishedDate: "2026-07-06",
-    updatedDate: "2026-08-28",
+    updatedDate: "2026-09-14",
     author: "Cuong Nguyen",
     tags: [
       "vietnam pickleball tournament calendar 2026",
@@ -884,10 +884,8 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Lịch Giải Pickleball Việt Nam 2026: Toàn Bộ Sự Kiện Lớn",
     metaTitleEn: "Vietnam Pickleball Tournament Calendar 2026 | Dates & Venues",
     metaTitleVi: "Lịch giải Pickleball Việt Nam 2026",
-    metaDescriptionEn:
-      "The complete 2026 pickleball tournament calendar for Vietnam: HCMC Open, the Da Nang World Cup, the PPA Tour Asia schedule and domestic events.",
-    metaDescriptionVi:
-      "Lịch giải pickleball Việt Nam 2026: HCMC Open, World Cup Đà Nẵng, lịch PPA Tour Asia và các giải trong nước.",
+    metaDescriptionEn: "The complete 2026 pickleball tournament calendar for Vietnam: HCMC Open, the Da Nang World Cup, the PPA Tour Asia schedule and domestic events.",
+    metaDescriptionVi: "Lịch giải pickleball Việt Nam 2026: HCMC Open, World Cup Đà Nẵng, lịch PPA Tour Asia và các giải trong nước.",
   },
   {
     slug: "ppa-beijing-open-2026-recap",
@@ -1661,22 +1659,18 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "best-pickleball-tournament-software-2026",
     publishedDate: "2025-12-15",
-    updatedDate: "2026-03-27",
-    author: "The PickleHub Team",
+    updatedDate: "2026-09-14",
+    author: "ThePickleHub Team",
     tags: ["tournament", "software", "comparison"],
     ctaPath: "/tools",
     ctaLabel: { en: "Try Free Tournament Tools", vi: "Dùng thử miễn phí" },
     heroImage: undefined,
-    titleEn:
-      "Best Pickleball Tournament Software in 2026 — Free Tools Compared",
-    titleVi:
-      "Phần mềm tổ chức giải Pickleball tốt nhất 2026 — So sánh công cụ miễn phí",
-    metaTitleEn: "Best Pickleball Tournament Software 2026 | Free Tools",
-    metaTitleVi: "Phần mềm tổ chức giải Pickleball 2026 | So sánh",
-    metaDescriptionEn:
-      "Compare the best pickleball tournament software in 2026: free bracket generators, round robin tools, MLP team match platforms. No signup.",
-    metaDescriptionVi:
-      "So sánh phần mềm tổ chức giải pickleball 2026. Tạo bracket miễn phí, round robin, MLP team match. Không cần đăng ký.",
+    titleEn: "Pickleball Tournament Software 2026: Compare Before You Choose",
+    titleVi: "Phần mềm giải Pickleball 2026: So sánh theo nhu cầu",
+    metaTitleEn: "Pickleball Tournament Software 2026 | Compared",
+    metaTitleVi: "Phần mềm giải Pickleball 2026 | So sánh",
+    metaDescriptionEn: "Compare ThePickleHub, Challonge and UTR Sports by organizer needs, account requirements and published features. Sources checked September 14, 2026.",
+    metaDescriptionVi: "So sánh ThePickleHub, Challonge, UTR Sports: tính năng, tài khoản và nguồn. Cập nhật 14/9/2026.",
   },
   {
     slug: "how-to-create-pickleball-bracket",

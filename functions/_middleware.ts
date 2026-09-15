@@ -1,3 +1,4 @@
+import { renderAuthor } from "./_lib/render/author";
 /**
  * Cloudflare Pages Functions Middleware
  *
@@ -8,6 +9,7 @@
  */
 
 import { BOT_UA, detectLang, stripLangPrefix } from "./_lib/utils";
+import { isPublicContentPath, servePublicPage } from "./_lib/public-page";
 import { isKnownSpaPath } from "./_lib/spa-routes";
 import { createSupabaseClient } from "./_lib/supabase";
 import {
@@ -901,7 +903,15 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         headers,
       });
     }
-    // Normal user, public route → serve SPA
+    // Public editorial pages carry their own content and metadata before JS.
+    if (request.method === "GET" && isPublicContentPath(pathname)) {
+      const response = await servePublicPage(await next(), () => routeAndRender(
+        pathname, env, env.CANONICAL_HOST || "https://www.thepicklehub.net",
+      ));
+      const headers = new Headers(response.headers);
+      applySecurityHeaders(headers);
+      return new Response(response.body, { status: response.status, headers });
+    }
     return next();
   }
 
@@ -1294,7 +1304,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v124 (2026-09-10): every VI post now renders its FAQ in the
   // prerendered body, not only as FAQPage JSON-LD. Every cached VI blog
   // page is missing that section and has to be re-rendered.
-  const cacheKey = `pr:v124:${url.pathname}`;
+  // v125: refreshed calendar/access copy, author identities and related links.
+  const cacheKey = `pr:v125:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
@@ -1443,6 +1454,8 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string, accep
 
   const supabase = createSupabaseClient(env);
   let match: RegExpMatchArray | null;
+
+  if (path === "/authors/cuong-nguyen") return renderAuthor(siteUrl, lang);
 
   // Vietnamese home
   if (lang === "vi" && (path === "/" || path === "")) {

@@ -1,0 +1,279 @@
+{
+  "release_pr": "https://github.com/cuongnguyen84/pickle-hub-pro/pull/777",
+  "production_commit": "8cbc3fe5cef7a78cf18794b083abe9ea69c3beff",
+  "verified_on": "2026-09-14",
+  "vi_database_patches": "Both reviewed rows applied and verified; pre-update backups retained outside repository.",
+  "http_checks": [
+    {
+      "path": "/tools",
+      "ua": "Googlebot",
+      "title": "Free Pickleball Bracket Generator | ThePickleHub",
+      "canonical": "https://www.thepicklehub.net/tools",
+      "hreflang": {
+        "en": "https://www.thepicklehub.net/tools",
+        "vi": "https://www.thepicklehub.net/vi/tools",
+        "x-default": "https://www.thepicklehub.net/tools"
+      },
+      "words": 874,
+      "schemas": 1,
+      "updated_content": true,
+      "public_html": false,
+      "seconds": 0.34
+    },
+    {
+      "path": "/tools",
+      "ua": "Mozilla/5.0",
+      "title": "Free Pickleball Bracket Generator | ThePickleHub",
+      "canonical": "https://www.thepicklehub.net/tools",
+      "hreflang": {
+        "en": "https://www.thepicklehub.net/tools",
+        "vi": "https://www.thepicklehub.net/vi/tools",
+        "x-default": "https://www.thepicklehub.net/tools"
+      },
+      "words": 887,
+      "schemas": 1,
+      "updated_content": true,
+      "public_html": true,
+      "seconds": 0.6
+    },
+    {
+      "path": "/vi/tools",
+      "ua": "Googlebot",
+      "title": "Tạo Bảng Đấu Pickleball Miễn Phí | ThePickleHub",
+      "canonical": "https://www.thepicklehub.net/vi/tools",
+      "hreflang": {
+        "en": "https://www.thepicklehub.net/tools",
+        "vi": "https://www.thepicklehub.net/vi/tools",
+        "x-default": "https://www.thepicklehub.net/tools"
+      },
+      "words": 939,
+      "schemas": 1,
+      "updated_content": true,
+      "public_html": false,
+      "seconds": 0.26
+    },
+    {
+      "path": "/vi/tools",
+      "ua": "Mozilla/5.0",
+      "title": "Tạo Bảng Đấu Pickleball Miễn Phí | ThePickleHub",
+      "canonical": "https://www.thepicklehub.net/vi/tools",
+      "hreflang": {
+        "en": "https://www.thepicklehub.net/tools",
+        "vi": "https://www.thepicklehub.net/vi/tools",
+        "x-default": "https://www.thepicklehub.net/tools"
+      },
+      "words": 952,
+      "schemas": 1,
+      "updated_content": true,
+      "public_html": true,
+      "seconds": 0.58
+    },
+    {
+      "path": "/blog/vietnam-pickleball-tournament-calendar-2026",
+      "ua": "Googlebot",
+      "title": "Vietnam Pickleball Tournament Calendar 2026 | Dates & Venues",
+      "canonical": "https://www.thepicklehub.net/blog/vietnam-pickleball-tournament-calendar-2026",
+      "hreflang": {
+        "en": "https://www.thepicklehub.net/blog/vietnam-pickleball-tournament-calendar-2026",
+        "vi": "https://www.thepicklehub.net/vi/blog/lich-giai-pickleball-viet-nam-2026",
+        "x-default": "https://www.thepicklehub.net/blog/vietnam-pickleball-tournament-calendar-2026"
+      },
+      "words": 970,
+      "schemas": 1,
+      "updated_content": true,
+      "public_html": false,
+      "seconds": 0.32
+    },
+    {
+      "path": "/blog/vietnam-pickleball-tournament-calendar-2026",
+      "ua": "Mozilla/5.0",
+      "title": "Vietnam Pickleball Tournament Calendar 2026 | Dates & Venues",
+      "canonical": "https://www.thepicklehub.net/blog/vietnam-pickleball-tournament-calendar-2026",
+      "hreflang": {
+        "en": "https://www.thepicklehub.net/blog/vietnam-pickleball-tournament-calendar-2026",
+        "vi": "https://www.thepicklehub.net/vi/blog/lich-giai-pickleball-viet-nam-2026",
+        "x-default": "https://www.thepicklehub.net/blog/vietnam-pickleball-tournament-calendar-2026"
+      },
+      "words": 983,
+      "schemas": 1,
+      "updated_content": true,
+      "public_html": true,
+      "seconds": 0.65
+    },
+    {
+      "path": "/vi/blog/lich-giai-pickleball-viet-nam-2026",
+      "ua": "Googlebot",
+      "title": "Lịch giải Pickleball Việt Nam 2026 | ThePickleHub",
+      "canonical": "https://www.thepicklehub.net/vi/blog/lich-giai-pickleball-viet-nam-2026",
+      "hreflang": {
+        "en": "https://www.thepicklehub.net/blog/vietnam-pickleball-tournament-calendar-2026",
+        "vi": "https://www.thepicklehub.net/vi/blog/lich-giai-pickleball-viet-nam-2026",
+        "x-default": "https://www.thepicklehub.net/blog/vietnam-pickleball-tournament-calendar-2026"
+      },
+      "words": 1266,
+      "schemas": 2,
+      "updated_content": true,
+      "public_html": false,
+      "seconds": 0.49
+    },
+    {
+      "path": "/vi/blog/lich-giai-pickleball-viet-nam-2026",
+      "ua": "Mozilla/5.0",
+      "title": "Lịch giải Pickleball Việt Nam 2026 | ThePickleHub",
+      "canonical": "https://www.thepicklehub.net/vi/blog/lich-giai-pickleball-viet-nam-2026",
+      "hreflang": {
+        "en": "https://www.thepicklehub.net/blog/vietnam-pickleball-tournament-calendar-2026",
+        "vi": "https://www.thepicklehub.net/vi/blog/lich-giai-pickleball-viet-nam-2026",
+        "x-default": "https://www.thepicklehub.net/blog/vietnam-pickleball-tournament-calendar-2026"
+      },
+      "words": 1279,
+      "schemas": 2,
+      "updated_content": true,
+      "public_html": true,
+      "seconds": 0.43
+    },
+    {
+      "path": "/blog/best-pickleball-tournament-software-2026",
+      "ua": "Googlebot",
+      "title": "Pickleball Tournament Software 2026 | Compared",
+      "canonical": "https://www.thepicklehub.net/blog/best-pickleball-tournament-software-2026",
+      "hreflang": {
+        "en": "https://www.thepicklehub.net/blog/best-pickleball-tournament-software-2026",
+        "vi": "https://www.thepicklehub.net/vi/blog/phan-mem-to-chuc-giai-pickleball-2026",
+        "x-default": "https://www.thepicklehub.net/blog/best-pickleball-tournament-software-2026"
+      },
+      "words": 704,
+      "schemas": 1,
+      "updated_content": true,
+      "public_html": false,
+      "seconds": 0.35
+    },
+    {
+      "path": "/blog/best-pickleball-tournament-software-2026",
+      "ua": "Mozilla/5.0",
+      "title": "Pickleball Tournament Software 2026 | Compared",
+      "canonical": "https://www.thepicklehub.net/blog/best-pickleball-tournament-software-2026",
+      "hreflang": {
+        "en": "https://www.thepicklehub.net/blog/best-pickleball-tournament-software-2026",
+        "vi": "https://www.thepicklehub.net/vi/blog/phan-mem-to-chuc-giai-pickleball-2026",
+        "x-default": "https://www.thepicklehub.net/blog/best-pickleball-tournament-software-2026"
+      },
+      "words": 717,
+      "schemas": 1,
+      "updated_content": true,
+      "public_html": true,
+      "seconds": 0.55
+    },
+    {
+      "path": "/vi/blog/phan-mem-to-chuc-giai-pickleball-2026",
+      "ua": "Googlebot",
+      "title": "Phần mềm giải Pickleball 2026 | So sánh",
+      "canonical": "https://www.thepicklehub.net/vi/blog/phan-mem-to-chuc-giai-pickleball-2026",
+      "hreflang": {
+        "en": "https://www.thepicklehub.net/blog/best-pickleball-tournament-software-2026",
+        "vi": "https://www.thepicklehub.net/vi/blog/phan-mem-to-chuc-giai-pickleball-2026",
+        "x-default": "https://www.thepicklehub.net/blog/best-pickleball-tournament-software-2026"
+      },
+      "words": 958,
+      "schemas": 2,
+      "updated_content": true,
+      "public_html": false,
+      "seconds": 1.48
+    },
+    {
+      "path": "/vi/blog/phan-mem-to-chuc-giai-pickleball-2026",
+      "ua": "Mozilla/5.0",
+      "title": "Phần mềm giải Pickleball 2026 | So sánh",
+      "canonical": "https://www.thepicklehub.net/vi/blog/phan-mem-to-chuc-giai-pickleball-2026",
+      "hreflang": {
+        "en": "https://www.thepicklehub.net/blog/best-pickleball-tournament-software-2026",
+        "vi": "https://www.thepicklehub.net/vi/blog/phan-mem-to-chuc-giai-pickleball-2026",
+        "x-default": "https://www.thepicklehub.net/blog/best-pickleball-tournament-software-2026"
+      },
+      "words": 971,
+      "schemas": 2,
+      "updated_content": true,
+      "public_html": true,
+      "seconds": 0.38
+    },
+    {
+      "path": "/authors/cuong-nguyen",
+      "ua": "Googlebot",
+      "title": "Cuong Nguyen | ThePickleHub",
+      "canonical": "https://www.thepicklehub.net/authors/cuong-nguyen",
+      "hreflang": {
+        "en": "https://www.thepicklehub.net/authors/cuong-nguyen",
+        "vi": "https://www.thepicklehub.net/vi/authors/cuong-nguyen",
+        "x-default": "https://www.thepicklehub.net/authors/cuong-nguyen"
+      },
+      "words": 575,
+      "schemas": 1,
+      "updated_content": true,
+      "public_html": false,
+      "seconds": 0.22
+    },
+    {
+      "path": "/authors/cuong-nguyen",
+      "ua": "Mozilla/5.0",
+      "title": "Cuong Nguyen | ThePickleHub",
+      "canonical": "https://www.thepicklehub.net/authors/cuong-nguyen",
+      "hreflang": {
+        "en": "https://www.thepicklehub.net/authors/cuong-nguyen",
+        "vi": "https://www.thepicklehub.net/vi/authors/cuong-nguyen",
+        "x-default": "https://www.thepicklehub.net/authors/cuong-nguyen"
+      },
+      "words": 588,
+      "schemas": 1,
+      "updated_content": true,
+      "public_html": true,
+      "seconds": 0.25
+    },
+    {
+      "path": "/vi/authors/cuong-nguyen",
+      "ua": "Googlebot",
+      "title": "Cuong Nguyen | ThePickleHub",
+      "canonical": "https://www.thepicklehub.net/vi/authors/cuong-nguyen",
+      "hreflang": {
+        "en": "https://www.thepicklehub.net/authors/cuong-nguyen",
+        "vi": "https://www.thepicklehub.net/vi/authors/cuong-nguyen",
+        "x-default": "https://www.thepicklehub.net/authors/cuong-nguyen"
+      },
+      "words": 599,
+      "schemas": 1,
+      "updated_content": true,
+      "public_html": false,
+      "seconds": 1.25
+    },
+    {
+      "path": "/vi/authors/cuong-nguyen",
+      "ua": "Mozilla/5.0",
+      "title": "Cuong Nguyen | ThePickleHub",
+      "canonical": "https://www.thepicklehub.net/vi/authors/cuong-nguyen",
+      "hreflang": {
+        "en": "https://www.thepicklehub.net/authors/cuong-nguyen",
+        "vi": "https://www.thepicklehub.net/vi/authors/cuong-nguyen",
+        "x-default": "https://www.thepicklehub.net/authors/cuong-nguyen"
+      },
+      "words": 612,
+      "schemas": 1,
+      "updated_content": true,
+      "public_html": true,
+      "seconds": 0.35
+    }
+  ],
+  "indexnow": {
+    "urls": [
+      "https://www.thepicklehub.net/authors/cuong-nguyen",
+      "https://www.thepicklehub.net/blog/best-pickleball-tournament-software-2026",
+      "https://www.thepicklehub.net/blog/vietnam-pickleball-tournament-calendar-2026",
+      "https://www.thepicklehub.net/tools",
+      "https://www.thepicklehub.net/vi/authors/cuong-nguyen",
+      "https://www.thepicklehub.net/vi/blog/lich-giai-pickleball-viet-nam-2026",
+      "https://www.thepicklehub.net/vi/blog/phan-mem-to-chuc-giai-pickleball-2026",
+      "https://www.thepicklehub.net/vi/tools"
+    ],
+    "http_status": 200,
+    "response": ""
+  },
+  "google_request_indexing": "Not submitted: URL Inspection was read-only; no authenticated GSC UI available. IndexNow acceptance does not prove Google indexing."
+}

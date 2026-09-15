@@ -1,107 +1,240 @@
 import type { BlogPost } from "@/content/blog/types";
 
 const post: BlogPost = {
-  slug: "best-pickleball-tournament-software-2026",
-  publishedDate: "2025-12-15",
-  updatedDate: "2026-03-27",
-  author: "The PickleHub Team",
-  tags: ["tournament", "software", "comparison"],
-  ctaPath: "/tools",
-  ctaLabel: { en: "Try Free Tournament Tools", vi: "Dùng thử miễn phí" },
-  content: {
-    en: {
-      title: "Best Pickleball Tournament Software in 2026 — Free Tools Compared",
-      metaTitle: "Best Pickleball Tournament Software 2026 | Free Tools",
-      metaDescription: "Compare the best pickleball tournament software in 2026: free bracket generators, round robin tools, MLP team match platforms. No signup.",
-      sections: [
+  "slug": "best-pickleball-tournament-software-2026",
+  "publishedDate": "2025-12-15",
+  "updatedDate": "2026-09-14",
+  "author": "ThePickleHub Team",
+  "tags": [
+    "tournament",
+    "software",
+    "comparison"
+  ],
+  "ctaPath": "/tools",
+  "ctaLabel": {
+    "en": "Try Free Tournament Tools",
+    "vi": "Dùng thử miễn phí"
+  },
+  "content": {
+    "en": {
+      "title": "Pickleball Tournament Software 2026: Compare Before You Choose",
+      "metaTitle": "Pickleball Tournament Software 2026 | Compared",
+      "metaDescription": "Compare ThePickleHub, Challonge and UTR Sports by organizer needs, account requirements and published features. Sources checked September 14, 2026.",
+      "sections": [
         {
-          heading: "Why You Need Pickleball-Specific Tournament Software",
-          content: "Running a pickleball tournament with spreadsheets or generic bracket makers is painful. Pickleball has unique requirements — court rotation, doubles pairing logic, rest time management, and format diversity (round robin, double elimination, MLP team matches) — that general-purpose tools simply don't handle well. In 2026, several platforms have emerged to solve these problems. Here's how they compare."
+          "heading": "Which software fits your event?",
+          "content": "For a Vietnamese–English pickleball event, ThePickleHub offers free bracket and scoring tools with an organizer account. Challonge publishes a free general tournament plan; UTR Sports offers a provider platform for clubs and rated events. Choose around your format, registration workflow and budget. Last reviewed: September 14, 2026."
         },
         {
-          heading: "Top Pickleball Tournament Software in 2026",
-          content: "We evaluated the most popular pickleball tournament platforms based on features, ease of use, pricing, and mobile experience. Here's our breakdown:",
-          listItems: [
-            "ThePickleHub — Free, mobile-first platform with round robin bracket generator, MLP team match, double elimination, and flex tournament tools. Real-time scoring, referee mode, court scheduling. No signup required to create tournaments.",
-            "Pickleball Brackets — Popular among recreational players. Supports basic round robin and single elimination. Limited to smaller events.",
-            "Challonge — Generic tournament platform that works for pickleball but lacks sport-specific features like court rotation and doubles pairing logic.",
-            "PicklePlay — Club management platform with tournament features. Paid subscription required. Better for leagues than one-off events.",
-            "Pickle Planner — Newer entrant focused on recreational play. Limited format options but clean interface."
+          "heading": "How this comparison was prepared",
+          "content": "ThePickleHub publishes this guide and is one of the products compared. We checked our account requirements against the current application and reviewed the official supplier pages linked below. This is a documented feature comparison, not a hands-on benchmark of every product. We have not measured competitor setup speed, support response or reliability during a live event. Unverified features are questions to ask, not evidence that a product lacks them."
+        },
+        {
+          "heading": "Features, access and costs",
+          "content": "Check the supplier’s current plan and run a small rehearsal before committing an event. Paid registration processing can have separate fees.",
+          "table": {
+            "headers": [
+              "Platform",
+              "Published offer / access",
+              "When to consider it",
+              "Verify before choosing"
+            ],
+            "rows": [
+              [
+                "ThePickleHub",
+                "Free bracket tools; sign in to create/manage; no account to view public brackets",
+                "Vietnamese–English round robin, elimination or team events",
+                "Account quotas, supported field size and the exact scoring workflow for your format"
+              ],
+              [
+                "Challonge",
+                "Standard is free with ads, up to 256 participants; paid plans also available",
+                "A general tournament platform with public brackets",
+                "Court assignments, doubles pairing and payment fees for your event"
+              ],
+              [
+                "UTR Sports",
+                "Provider tools for events, memberships and UTR-P ratings; ask for current terms",
+                "Clubs that want events linked to the UTR Sports ecosystem",
+                "Local availability, plan price and the rating/reporting workflow"
+              ]
+            ]
+          },
+          "internalLinks": [
+            {
+              "text": "ThePickleHub — tournament tools",
+              "path": "/tools"
+            },
+            {
+              "text": "Challonge — official pricing",
+              "path": "https://challonge.com/pricing"
+            },
+            {
+              "text": "UTR Sports — official provider platform",
+              "path": "https://www.utrsports.net/pages/providers"
+            }
           ]
         },
         {
-          heading: "Feature Comparison: What Matters Most",
-          content: "When choosing pickleball tournament software, these features make the biggest difference for organizers:",
-          listItems: [
-            "Court scheduling — Does the software optimize match order to minimize player wait times across limited courts?",
-            "Format variety — Can you run round robin, single elimination, double elimination, and team matches from one platform?",
-            "Real-time scoring — Can referees update scores from their phones with live standings for all participants?",
-            "Free access — Many platforms charge per tournament or require monthly subscriptions. ThePickleHub is completely free.",
-            "No signup barrier — Players and spectators should access brackets without creating accounts.",
-            "Mobile experience — Most pickleball scoring happens on phones at the court. The interface must be touch-optimized."
+          "heading": "A rehearsal for a 16-team event on four courts",
+          "content": "Use this as a repeatable selection exercise; it is not a report of tests already performed. Four groups of four teams produce 24 round-robin matches: six per group. At 20 minutes per match, four continuously occupied courts need a theoretical minimum of 120 minutes, before breaks, changeovers and playoffs.",
+          "orderedList": [
+            "Create four groups with four doubles teams each. Check that the tool generates six unique pairings per group.",
+            "Assign four courts and inspect rest gaps. Record any manual schedule changes.",
+            "Enter sample scores, including a tie in standings, and verify the announced tiebreaker.",
+            "Open the public scoreboard in a signed-out phone browser. Check what spectators can see.",
+            "Ask a second organizer to correct a score. Verify permissions, audit history and recovery options.",
+            "Record setup time, total price and missing features. Compare these observations rather than a generic “best” label."
           ]
         },
         {
-          heading: "Why ThePickleHub Stands Out",
-          content: "ThePickleHub was built specifically for pickleball organizers who need powerful tools without the complexity or cost of enterprise platforms. Every tool is free, works on any device, and requires no technical expertise. You can create a complete tournament bracket in under 60 seconds. The platform supports four distinct tournament formats — Quick Tables (round robin), Team Match (MLP-style), Double Elimination, and Flex Tournament (custom formats) — making it the most versatile free option available in 2026."
+          "heading": "Account requirements and limits on ThePickleHub",
+          "content": "Creating and managing a tournament requires signing in. Public bracket viewing does not. Choose Quick Tables for round robin or single elimination, Double Elimination for winners/losers brackets, Team Match for team fixtures, or Flex for configurable events. Participant limits and account quotas depend on the tool; check the setup screen before announcing registration.",
+          "internalLinks": [
+            {
+              "text": "Round robin setup guide",
+              "path": "/blog/pickleball-round-robin-generator-guide"
+            },
+            {
+              "text": "Tournament budget guide",
+              "path": "/blog/pickleball-tournament-budget-calculator-guide"
+            },
+            {
+              "text": "Organizer hub",
+              "path": "/blog/tournament-organizer-hub"
+            }
+          ]
         },
         {
-          heading: "How to Choose the Right Tournament Software",
-          content: "Your choice depends on your event size and format needs:",
-          listItems: [
-            "Small club events (4-16 players) — Quick Tables bracket generator is fastest. Setup takes under 2 minutes.",
-            "Competitive tournaments (32+ teams) — Double elimination with losers bracket gives every team a second chance.",
-            "Team competitions — MLP Team Match format with lineup management and dreambreaker games.",
-            "Custom or experimental events — Flex Tournament lets you build any structure with no format restrictions."
+          "heading": "Why the earlier product list changed",
+          "content": "The previous edition made unsupported claims about competitor limits and described creating a ThePickleHub tournament without an account. Those claims have been removed. On September 14, 2026, pickleplay.com redirected to UTR Sports; this edition therefore links readers to the current provider page. Pickleball Brackets and Pickle Planner are not scored here because this review did not verify their current organizer terms.",
+          "internalLinks": [
+            {
+              "text": "PicklePlay domain — current destination",
+              "path": "https://pickleplay.com/"
+            }
           ]
+        }
+      ],
+      "faqItems": [
+        {
+          "question": "Can I create a ThePickleHub tournament without signing in?",
+          "answer": "No. Sign in to create and manage a tournament. Spectators can view public brackets without an account."
+        },
+        {
+          "question": "Is this an independent hands-on ranking?",
+          "answer": "No. ThePickleHub publishes the guide. The comparison uses application checks for ThePickleHub and official supplier documentation for other platforms, reviewed September 14, 2026."
         }
       ]
     },
-    vi: {
-      title: "Phần mềm tổ chức giải Pickleball tốt nhất 2026 — So sánh công cụ miễn phí",
-      metaTitle: "Phần mềm tổ chức giải Pickleball 2026 | So sánh",
-      metaDescription: "So sánh phần mềm tổ chức giải pickleball 2026. Tạo bracket miễn phí, round robin, MLP team match. Không cần đăng ký.",
-      sections: [
+    "vi": {
+      "title": "Phần mềm giải Pickleball 2026: So sánh theo nhu cầu",
+      "metaTitle": "Phần mềm giải Pickleball 2026 | So sánh",
+      "metaDescription": "So sánh ThePickleHub, Challonge, UTR Sports: tính năng, tài khoản và nguồn. Cập nhật 14/9/2026.",
+      "sections": [
         {
-          heading: "Tại sao cần phần mềm chuyên dụng cho giải Pickleball?",
-          content: "Tổ chức giải pickleball bằng Excel hay các công cụ bracket tổng hợp rất vất vả. Pickleball có những yêu cầu riêng — xoay sân, logic ghép đôi, quản lý thời gian nghỉ, và đa dạng thể thức (vòng tròn, loại kép, đồng đội MLP) — mà các nền tảng chung không xử lý tốt. Năm 2026, nhiều nền tảng chuyên biệt đã ra đời. Dưới đây là so sánh chi tiết."
+          "heading": "Chọn phần mềm nào cho giải của bạn?",
+          "content": "ThePickleHub có công cụ bảng đấu và chấm điểm miễn phí bằng tiếng Việt–Anh; người tổ chức cần tài khoản. Challonge công bố gói giải đấu miễn phí, còn UTR Sports có nền tảng cho CLB và sự kiện tính điểm UTR-P. Chọn theo thể thức, quy trình đăng ký và ngân sách. Đối chiếu lần cuối: 14/9/2026."
         },
         {
-          heading: "Top phần mềm tổ chức giải Pickleball 2026",
-          content: "Chúng tôi đánh giá các nền tảng phổ biến nhất dựa trên tính năng, dễ sử dụng, giá cả và trải nghiệm mobile:",
-          listItems: [
-            "ThePickleHub — Miễn phí, ưu tiên mobile. Có round robin, MLP team match, loại kép, và flex tournament. Chấm điểm realtime, chế độ trọng tài, xếp lịch sân. Không cần đăng ký.",
-            "Pickleball Brackets — Phổ biến với người chơi phong trào. Hỗ trợ round robin và loại trực tiếp cơ bản. Giới hạn cho giải nhỏ.",
-            "Challonge — Nền tảng giải đấu tổng hợp, dùng được cho pickleball nhưng thiếu tính năng chuyên biệt như xoay sân và ghép đôi.",
-            "PicklePlay — Nền tảng quản lý CLB có tính năng giải đấu. Cần đăng ký trả phí. Phù hợp hơn cho giải liên tục.",
-            "Pickle Planner — Mới ra, tập trung vào pickleball phong trào. Ít thể thức nhưng giao diện sạch."
+          "heading": "Phạm vi và cách đối chiếu",
+          "content": "ThePickleHub xuất bản bài này và cũng là một sản phẩm được so sánh. Yêu cầu tài khoản của ThePickleHub được kiểm tra trong ứng dụng; thông tin nền tảng khác lấy từ trang chính thức bên dưới. Đây là đối chiếu tài liệu, chưa phải thử nghiệm toàn bộ sản phẩm. Chưa đo tốc độ tạo giải, phản hồi hỗ trợ hoặc độ ổn định của đối thủ. Tính năng chưa xác minh là câu hỏi cần hỏi nhà cung cấp, không phải bằng chứng rằng họ thiếu tính năng."
+        },
+        {
+          "heading": "Tính năng, quyền truy cập và chi phí",
+          "content": "Kiểm tra gói hiện hành và chạy thử một giải nhỏ trước khi chọn. Thu phí đăng ký vận động viên có thể phát sinh phí xử lý riêng.",
+          "table": {
+            "headers": [
+              "Nền tảng",
+              "Thông tin đã đối chiếu",
+              "Nhu cầu phù hợp",
+              "Cần xác minh"
+            ],
+            "rows": [
+              [
+                "ThePickleHub",
+                "Công cụ miễn phí; đăng nhập để tạo/quản lý; xem bảng công khai không cần tài khoản",
+                "Giải Việt–Anh: vòng tròn, loại trực tiếp, đồng đội",
+                "Hạn mức tài khoản, số đội và luồng chấm điểm"
+              ],
+              [
+                "Challonge",
+                "Gói Standard miễn phí có quảng cáo, tối đa 256 người; có gói trả phí",
+                "Giải đấu tổng hợp cần chia sẻ bảng đấu",
+                "Xếp sân, ghép đôi và phí thanh toán"
+              ],
+              [
+                "UTR Sports",
+                "Công cụ sự kiện, hội viên và UTR-P cho đơn vị tổ chức",
+                "CLB muốn dùng hệ sinh thái UTR Sports",
+                "Phạm vi hỗ trợ, giá gói và cách báo cáo điểm"
+              ]
+            ]
+          },
+          "internalLinks": [
+            {
+              "text": "Công cụ ThePickleHub",
+              "path": "/vi/tools"
+            },
+            {
+              "text": "Challonge — giá chính thức",
+              "path": "https://challonge.com/pricing"
+            },
+            {
+              "text": "UTR Sports — nền tảng cho đơn vị tổ chức",
+              "path": "https://www.utrsports.net/pages/providers"
+            }
           ]
         },
         {
-          heading: "So sánh tính năng: Điều gì quan trọng nhất?",
-          content: "Khi chọn phần mềm tổ chức giải pickleball, các tính năng sau tạo nên sự khác biệt:",
-          listItems: [
-            "Xếp lịch sân — Phần mềm có tối ưu thứ tự trận đấu để giảm thời gian chờ không?",
-            "Đa dạng thể thức — Có thể chạy round robin, loại trực tiếp, loại kép, và đồng đội từ một nền tảng?",
-            "Chấm điểm realtime — Trọng tài có thể cập nhật điểm từ điện thoại với bảng xếp hạng trực tiếp không?",
-            "Miễn phí — Nhiều nền tảng thu phí theo giải hoặc hàng tháng. ThePickleHub hoàn toàn miễn phí.",
-            "Không cần đăng ký — Người chơi và khán giả xem bracket mà không cần tạo tài khoản.",
-            "Trải nghiệm mobile — Chấm điểm pickleball chủ yếu trên điện thoại. Giao diện phải tối ưu cho cảm ứng."
+          "heading": "Kịch bản kiểm tra 16 đội trên bốn sân",
+          "content": "Đây là kịch bản đề xuất để tự kiểm tra, không phải kết quả thử nghiệm đã thực hiện. Bốn bảng, mỗi bảng bốn đội tạo 24 trận vòng tròn. Với 20 phút/trận và bốn sân luôn được sử dụng, thời gian tối thiểu lý thuyết là 120 phút, chưa tính nghỉ, đổi sân và vòng loại trực tiếp.",
+          "orderedList": [
+            "Tạo bốn bảng gồm bốn đội đôi. Kiểm tra mỗi bảng có sáu cặp đấu không trùng.",
+            "Xếp bốn sân, kiểm tra thời gian nghỉ và ghi lại thao tác phải chỉnh tay.",
+            "Nhập điểm mẫu và tình huống bằng điểm để đối chiếu tiêu chí xếp hạng.",
+            "Mở bảng công khai trên điện thoại chưa đăng nhập, kiểm tra quyền xem.",
+            "Nhờ người tổ chức thứ hai sửa điểm, kiểm tra phân quyền và khả năng phục hồi.",
+            "Ghi lại thời gian thiết lập, chi phí và tính năng còn thiếu trước khi quyết định."
           ]
         },
         {
-          heading: "Tại sao ThePickleHub nổi bật?",
-          content: "ThePickleHub được xây dựng đặc biệt cho ban tổ chức pickleball cần công cụ mạnh mẽ mà không phức tạp hay tốn chi phí. Mọi công cụ đều miễn phí, hoạt động trên mọi thiết bị, không cần kiến thức kỹ thuật. Bạn có thể tạo bracket giải đấu hoàn chỉnh trong chưa đầy 60 giây. Nền tảng hỗ trợ 4 thể thức — Quick Tables (vòng tròn), Team Match (kiểu MLP), Double Elimination, và Flex Tournament (tùy chỉnh) — là lựa chọn miễn phí đa năng nhất năm 2026."
+          "heading": "Tài khoản và giới hạn của ThePickleHub",
+          "content": "Cần đăng nhập để tạo và quản lý giải. Khán giả không cần tài khoản để xem bảng đấu công khai. Quick Tables phục vụ vòng tròn hoặc loại trực tiếp; Double Elimination có nhánh thắng/thua; Team Match cho đồng đội; Flex cho cấu hình giải linh hoạt. Giới hạn số đội và hạn mức tài khoản phụ thuộc công cụ: kiểm tra màn hình tạo giải trước khi mở đăng ký.",
+          "internalLinks": [
+            {
+              "text": "Hướng dẫn vòng tròn",
+              "path": "/blog/pickleball-round-robin-generator-guide"
+            },
+            {
+              "text": "Dự toán chi phí giải",
+              "path": "/blog/pickleball-tournament-budget-calculator-guide"
+            },
+            {
+              "text": "Hướng dẫn dành cho ban tổ chức",
+              "path": "/blog/tournament-organizer-hub"
+            }
+          ]
         },
         {
-          heading: "Cách chọn phần mềm phù hợp",
-          content: "Lựa chọn phụ thuộc vào quy mô và thể thức giải:",
-          listItems: [
-            "Giải CLB nhỏ (4-16 người) — Quick Tables nhanh nhất. Thiết lập chưa đầy 2 phút.",
-            "Giải thi đấu (32+ đội) — Loại kép với nhánh thua cho mỗi đội cơ hội thứ hai.",
-            "Thi đấu đồng đội — MLP Team Match với quản lý lineup và dreambreaker.",
-            "Giải tùy chỉnh — Flex Tournament cho phép xây dựng cấu trúc bất kỳ."
+          "heading": "Đính chính bản trước",
+          "content": "Bản trước có nhận định chưa đủ nguồn về giới hạn của đối thủ và nói có thể tạo giải ThePickleHub không cần tài khoản. Bản này đã bỏ các nhận định đó. Ngày 14/9/2026, pickleplay.com chuyển hướng sang UTR Sports nên bài dẫn tới trang nhà cung cấp hiện tại. Chưa chấm điểm Pickleball Brackets và Pickle Planner vì chưa xác minh điều khoản cho ban tổ chức.",
+          "internalLinks": [
+            {
+              "text": "Tên miền PicklePlay — trang hiện tại",
+              "path": "https://pickleplay.com/"
+            }
           ]
+        }
+      ],
+      "faqItems": [
+        {
+          "question": "Tạo giải ThePickleHub có cần đăng nhập không?",
+          "answer": "Có. Đăng nhập để tạo và quản lý giải. Khán giả xem bảng đấu công khai không cần tài khoản."
+        },
+        {
+          "question": "Đây có phải xếp hạng độc lập từ thử nghiệm thực tế không?",
+          "answer": "Không. Bài do ThePickleHub xuất bản, dựa trên kiểm tra ứng dụng ThePickleHub và tài liệu chính thức của nhà cung cấp, đối chiếu ngày 14/9/2026."
         }
       ]
     }

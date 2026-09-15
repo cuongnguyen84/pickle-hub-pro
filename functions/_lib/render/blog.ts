@@ -1,3 +1,5 @@
+import { authorIdentity } from "../../../src/content/authors";
+import { blogMetadata } from "../../../src/content/blog/metadata";
 /**
  * SSR render handlers — EN static blog + VI database blog pages.
  * SEO-04 — split from index.ts, code moved verbatim.
@@ -98,7 +100,7 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
     description: meta.description,
     image: blogImage,
     url: enUrl,
-    author: { "@type": "Person", name: "Cuong Nguyen", url: siteUrl },
+    author: authorIdentity(blogMetadata.find((post) => post.slug === slug)?.author ?? "ThePickleHub", siteUrl),
     publisher: {
       "@type": "Organization",
       name: "ThePickleHub",
@@ -239,7 +241,7 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
   const [postRes, relatedRes] = await Promise.all([
     supabase
       .from("vi_blog_posts")
-      .select("title, meta_title, meta_description, content_html, cover_image_url, faq_items, alternate_en_slug, published_at, updated_at")
+      .select("title, meta_title, meta_description, content_html, cover_image_url, faq_items, alternate_en_slug, published_at, updated_at, author_name")
       .eq("slug", slug)
       .eq("status", "published")
       .single(),
@@ -331,7 +333,7 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
     image: absImage(p.cover_image_url, siteUrl),
     datePublished: p.published_at,
     dateModified: viDateModified,
-    author: { "@type": "Person", name: "Cuong Nguyen", url: siteUrl },
+    author: authorIdentity(p.author_name || "ThePickleHub", siteUrl),
     publisher: { "@type": "Organization", name: "ThePickleHub", logo: { "@type": "ImageObject", url: DEFAULT_OG_IMAGE } },
     inLanguage: "vi-VN",
   };
