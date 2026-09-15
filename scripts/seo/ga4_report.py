@@ -38,6 +38,16 @@ except ImportError:
     )
     sys.exit(2)
 
+# --- Force IPv4 -------------------------------------------------------------
+# 2026-09-11: on Cuong's network IPv6 SYN to Google (2001:4860::/32) never gets
+# answered, so requests/urllib3 (which try AAAA first) hung in SYN_SENT for the
+# full connect timeout and chief_brief.py's 120s wrapper gave up -> "GSC: chưa
+# đọc được". curl worked because it falls back to IPv4 (Happy Eyeballs). Supabase
+# has no AAAA record, which is why every other script kept working.
+import urllib3.util.connection as _u3c  # noqa: E402
+
+_u3c.HAS_IPV6 = False
+
 SCOPE = "https://www.googleapis.com/auth/analytics.readonly"
 SA_JSON = os.environ.get("GOOGLE_SA_JSON", ".claude/secrets.local.gsc-ga4-sa.json")
 PROP = os.environ.get("GA4_PROPERTY_ID", "").strip()

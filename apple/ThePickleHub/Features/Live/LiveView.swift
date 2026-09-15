@@ -178,6 +178,8 @@ struct LiveView: View {
         let live = model.liveStreams
         let upcoming = model.upcoming
         VStack(alignment: .leading, spacing: 26) {
+            ProTourEventsStrip()
+                .padding(.horizontal, 22)
             WorldCupLiveBoard()
             if live.isEmpty && upcoming.isEmpty {
                 emptyState(icon: "dot.radiowaves.up.forward", title: String(localized: "Hiện chưa có trận trực tiếp"),

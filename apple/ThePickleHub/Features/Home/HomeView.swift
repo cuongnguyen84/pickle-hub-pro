@@ -22,6 +22,7 @@ struct HomeView: View {
 
                 VStack(alignment: .leading, spacing: 34) {
                     VStack(alignment: .leading, spacing: 18) {
+                        ProTourEventsStrip()
                         WorldCupHomeLiveCard(openLiveTab: openLiveTab)
                         partnerCard
                         if ShopFeatureGate.isEnabled {

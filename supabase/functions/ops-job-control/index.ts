@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { requireCronRequest } from "../_shared/cron-auth.ts";
+import { isProgressCommand, parseSnapshot, progressTarget, renderProgress, renderContentCalendar } from "./progress.ts";
 
 type Job = {
   job_key: string;
@@ -304,6 +305,126 @@ async function agentFixWatchdog(supabase: ReturnType<typeof createClient>): Prom
   }
 }
 
+
+// ---------------------------------------------------------------------------
+// Lệnh giao việc cho agent (/xuly, /lam, /idea) — thêm 2026-09-01.
+//
+// Cố ý KHÔNG đi qua processTelegram: các lệnh này không có job key, không cần
+// snapshot cron, và người tiêu thụ là AGENT TRỰC (phiên Claude chạy theo lịch)
+// chứ không phải bot này. Bot chỉ làm đúng ba việc: giữ dòng lệnh ở trạng thái
+// `pending` cho agent rút, trả về một MÃ VIỆC để người dùng bám vào, và nói rõ
+// bước tiếp theo. Trước đây mọi text ngoài allowlist bị trả "Chưa hiểu lệnh
+// này" — người nhận không biết phải làm gì tiếp, đó là ngõ cụt chứ không phải
+// câu trả lời.
+// ---------------------------------------------------------------------------
+const TASK_COMMAND_RE = /^\/(xuly|lam|viec|idea|bo|tien_do|lamngay|lich_content)(?:@\w+)?(?:\s|$)/i;
+
+async function handleTaskCommand(
+  supabase: ReturnType<typeof createClient>,
+  chatId: string,
+  rowId: number,
+  text: string,
+): Promise<Record<string, unknown>> {
+  const trimmed = text.trim();
+  const [rawCmd, ...rest] = trimmed.split(/\s+/);
+  const cmd = rawCmd.toLowerCase().replace(/@\w+$/, "");
+  const body = rest.join(" ").trim();
+
+  const close = async (result: string) => {
+    await supabase.from("telegram_commands")
+      .update({ status: "done", processed_at: new Date().toISOString(), result: result.slice(0, 2000) })
+      .eq("id", rowId);
+  };
+
+  if (isProgressCommand(trimmed) || cmd === "/lamngay") {
+    const { data: saved, error } = await supabase.from("telegram_commands")
+      .select("result").eq("chat_id", Number(chatId)).eq("text", "/team_snapshot")
+      .eq("status", "done").order("id", { ascending: false }).limit(1).maybeSingle();
+    const snapshot = error ? null : parseSnapshot(saved?.result);
+    if (cmd === "/lamngay") {
+      const target = progressTarget(body);
+      const task = target && snapshot?.tasks.find((t) => target === `T${t.id}` || target === `XL${t.telegram_id}`);
+      if (!task || !snapshot || Date.now() - Date.parse(snapshot.heartbeat_at) > 20 * 60_000) {
+        await close("priority_not_queued");
+        await sendTelegram(chatId, "Chưa xác nhận được việc hoặc agent đang mất kết nối. Không tạo việc trùng. Xem /tien_do T47 rồi thử lại /lamngay T47 khi trạng thái cập nhật.");
+        return { ok: true, priority_requested: false };
+      }
+      const { error: updateError } = await supabase.from("telegram_commands")
+        .update({ text: `/xuly team priority T${task.id}`, result: "priority_requested_not_executed" })
+        .eq("id", rowId).eq("status", "pending");
+      if (updateError) throw updateError;
+      await sendTelegram(chatId, `Đã yêu cầu ưu tiên T${task.id}; chưa phải đã chạy hoặc xuất bản. Bộ điều phối sẽ xác nhận riêng. Kiểm tra: /tien_do T${task.id}`);
+      return { ok: true, priority_requested: true };
+    }
+    const target = cmd === "/tien_do" || cmd === "/viec" ? body : undefined;
+    await close("progress_replied");
+    await sendTelegram(chatId, cmd === "/lich_content" ? renderContentCalendar(snapshot) : renderProgress(snapshot, target));
+    return { ok: true, progress_replied: true };
+  }
+
+  // /viec — hàng đợi việc đang chờ agent
+  if (cmd === "/viec") {
+    const { data } = await supabase.from("telegram_commands")
+      .select("id,text,message_date")
+      .eq("status", "pending").ilike("text", "/xuly%")
+      .order("message_date", { ascending: true }).limit(10);
+    const rows = data ?? [];
+    const reply = rows.length === 0
+      ? "📭 Không có việc nào đang chờ.\n\nGiao việc mới: /xuly <mô tả việc>"
+      : ["📋 Việc đang chờ agent:", "", ...rows.map((r: Record<string, unknown>) =>
+          `XL-${r.id} · ${String(r.text).replace(/^\/xuly\s*/i, "").slice(0, 70)}`)].join("\n");
+    await close("listed_queue");
+    await sendTelegram(chatId, reply);
+    return { ok: true, task_command: cmd };
+  }
+
+  // /bo XL-12 — huỷ một việc chưa xử lý
+  if (cmd === "/bo") {
+    const id = Number(body.replace(/^XL-/i, ""));
+    if (!Number.isFinite(id)) {
+      await close("cancel_bad_id");
+      await sendTelegram(chatId, "Cần mã việc. Ví dụ: /bo XL-77 (xem mã bằng /viec).");
+      return { ok: true, task_command: cmd };
+    }
+    const { data } = await supabase.from("telegram_commands")
+      .update({ status: "done", processed_at: new Date().toISOString(), result: "cancelled_by_user" })
+      .eq("id", id).eq("status", "pending").select("id").maybeSingle();
+    await close(`cancel_${id}`);
+    await sendTelegram(chatId, data ? `🗑 Đã huỷ việc XL-${id}.` : `Không thấy việc XL-${id} đang chờ (có thể agent đã xử lý xong).`);
+    return { ok: true, task_command: cmd };
+  }
+
+  // /xuly, /lam, /idea không kèm nội dung → hướng dẫn, không tạo việc rỗng
+  if (!body) {
+    await close("empty_body");
+    await sendTelegram(chatId, [
+      cmd === "/idea" ? "💡 Gửi ý tưởng kèm nội dung:" : "📥 Giao việc kèm nội dung:",
+      `${cmd} <mô tả bằng lời thường>`,
+      "",
+      "Ví dụ:",
+      "/xuly cập nhật kết quả World Cup vào bài lịch thi đấu",
+      "/xuly trang /san mất hết click tuần này, kiểm tra giúp anh",
+      "/idea gộp trang kết quả và trang lịch làm một?",
+      "",
+      "Xem việc đang chờ: /viec · Huỷ: /bo XL-<mã>",
+    ].join("\n"));
+    return { ok: true, task_command: cmd };
+  }
+
+  // Có nội dung → GIỮ NGUYÊN status pending để agent trực rút, và xác nhận ngay.
+  const label = cmd === "/idea" ? "💡 ĐÃ GHI Ý TƯỞNG" : "📥 ĐÃ NHẬN VIỆC";
+  await sendTelegram(chatId, [
+    `${label} · XL-${rowId}`,
+    `“${body.slice(0, 120)}${body.length > 120 ? "…" : ""}”`,
+    "",
+    "Agent trực rút hàng đợi mỗi đầu giờ, làm xong sẽ báo lại ngay trong chat này kèm bằng chứng (URL, số từ, mã PR).",
+    "Việc thuộc vùng cần duyệt thì agent dừng trước production và hỏi lại anh.",
+    "",
+    "Xem hàng đợi: /viec · Huỷ: /bo XL-" + rowId,
+  ].join("\n"));
+  return { ok: true, task_queued: rowId };
+}
+
 async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId?: number): Promise<Record<string, unknown>> {
   let query = supabase.from("telegram_commands")
     .select("id,chat_id,text,from_id,from_username")
@@ -343,7 +464,7 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
       } else if (command.toLowerCase().startsWith("/probe")) {
         reply = `🔄 Probe hoàn tất\n${functionsText(await runEdgeProbe(supabase))}`;
       } else if (command.toLowerCase().startsWith("/start") || command.toLowerCase().startsWith("/help")) {
-        reply = ["🤖 TPH Job Operations", "", "Dùng các nút bên dưới để xem trạng thái.", "Trong /jobs, job lỗi sẽ có nút Chẩn đoán và Fix.", "", "Lệnh nâng cao:", "/diagnose <job>", "/retry <job>", "/fix <job>"].join("\n");
+        reply = ["🤖 TPH Job Operations", "", "Dùng các nút bên dưới để xem trạng thái.", "Trong /jobs, job lỗi sẽ có nút Chẩn đoán và Fix.", "", "Giao việc cho agent:", "/xuly <mô tả việc>", "/idea <ý tưởng>", "/viec — xem hàng đợi", "", "Lệnh nâng cao:", "/diagnose <job>", "/retry <job>", "/fix <job>"].join("\n");
         replyMarkup = mainKeyboard;
       } else if (!key) {
         reply = `Thiếu job key. Ví dụ: ${command.toLowerCase().startsWith("/fix") ? "/fix news-rewrite" : command.toLowerCase().startsWith("/retry") ? "/retry dupr-sync-daily" : "/diagnose dupr-sync-daily"}`;
@@ -446,6 +567,13 @@ async function installWebhook(): Promise<Record<string, unknown>> {
       { command: "retry", description: "Chạy lại một job" },
       { command: "fix", description: "Chẩn đoán và sửa an toàn" },
       { command: "help", description: "Hiện bàn phím chức năng" },
+      { command: "xuly", description: "Giao việc cho agent" },
+      { command: "idea", description: "Gửi ý tưởng cho agent" },
+      { command: "viec", description: "Việc đang chờ agent xử lý" },
+      { command: "tien_do", description: "Tiến độ: /tien_do T47 hoặc /tien_do XL136" },
+      { command: "lich_content", description: "Lịch nội dung tuần này và trạng thái đăng" },
+      { command: "lamngay", description: "Ưu tiên việc đã giao: /lamngay T47" },
+      { command: "bo", description: "Huỷ một việc đang chờ" },
     ] }),
   });
   if (!commandsResponse.ok) throw new Error(`set_commands_failed_${commandsResponse.status}`);
@@ -494,13 +622,27 @@ async function handleTelegramWebhook(req: Request, supabase: ReturnType<typeof c
   if (error) throw error;
   if (!inserted) return { ok: true, duplicate: true };
 
+  if (TASK_COMMAND_RE.test(message.text.trim())) {
+    return await handleTaskCommand(supabase, chatId, inserted.id, message.text);
+  }
+
   if (/^\/(start|help|jobs|retry|diagnose|functions|probe|fix)(?:@\w+)?(?:\s|$)/i.test(message.text.trim())) {
     return await processTelegram(supabase, inserted.id);
   }
   // Text tự do không có consumer nào — nói thật thay vì hứa suông, và đóng row
   // ngay để không tồn kho pending vô hạn (risk-auditor #7).
-  await supabase.from("telegram_commands").update({ status: "skipped", processed_at: new Date().toISOString(), result: "free_text_unsupported" }).eq("id", inserted.id);
-  await sendTelegram(chatId, `Chưa hiểu lệnh này. Gửi /help để xem các lệnh có sẵn, hoặc /jobs để thao tác bằng nút.`);
+  // BUG (phát hiện 2026-09-01): status "skipped" vi phạm telegram_commands_status_check
+  // nên UPDATE này im lặng thất bại từ ngày viết — mọi text tự do nằm lại `pending`
+  // vĩnh viễn, đúng thứ risk-auditor #7 định chặn. Dùng giá trị hợp lệ: "done".
+  await supabase.from("telegram_commands").update({ status: "done", processed_at: new Date().toISOString(), result: "free_text_unsupported" }).eq("id", inserted.id);
+  await sendTelegram(chatId, [
+    "Chưa rõ đây là việc hay chỉ là ghi chú.",
+    "",
+    "Muốn agent làm → thêm /xuly ở đầu:",
+    `/xuly ${String(message.text).trim().slice(0, 60)}`,
+    "",
+    "Khác: /viec (việc đang chờ) · /jobs (trạng thái hệ thống) · /help",
+  ].join("\n"));
   return { ok: true, skipped: true };
 }
 

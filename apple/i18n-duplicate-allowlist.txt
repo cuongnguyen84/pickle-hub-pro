@@ -154,6 +154,11 @@ BỊ TỪ CHỐI
 Đang đăng ký
 Đơn nam
 Đơn nữ
+Đôi nam nữ
+Tranh hạng 3
+VÔ ĐỊCH
+Tìm vận động viên
+ĐANG DIỄN RA
 Vòng tròn
 Vòng \(r.round)
 Loại trực tiếp

@@ -1,8 +1,8 @@
 // ============================================================================
 // news-fetcher — Cloudflare Worker
 // ----------------------------------------------------------------------------
-// Pulls pickleball news from the active news_sources rows, parses RSS/Atom,
-// and writes deduped source material into the protected news_origins queue.
+// Pulls pickleball news from the active news_sources rows, parses RSS/Atom or
+// an allowlisted source API, and writes deduped material into news_origins.
 //
 // Phase 2 of the news aggregator feature. See:
 //   - supabase/migrations/20260519000000_news_aggregator_phase_1.sql
@@ -30,6 +30,8 @@ export interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   SCRAPER_AUTH_SECRET: string;
+  /** Public anon key used by pickle.asia's browser client, stored as a secret so it can rotate. */
+  PICKLE_ASIA_API_KEY?: string;
 }
 
 interface NewsSource {
@@ -37,7 +39,7 @@ interface NewsSource {
   name: string;
   base_url: string;
   feed_url: string | null;
-  feed_type: "rss" | "atom" | "html_scrape" | "manual";
+  feed_type: "rss" | "atom" | "html_scrape" | "json_api" | "manual";
   language: "en" | "vi";
   trust_tier: number;
   auto_publish: boolean;
@@ -50,6 +52,9 @@ interface ParsedItem {
   summary: string;
   image_url: string | null;
   published_at: string; // ISO
+  // undefined: fetch the public article page as usual. null: the source API
+  // already proved the body is too short, so do not waste a second request.
+  raw_body?: string | null;
 }
 
 interface SourceRunResult {
@@ -267,7 +272,7 @@ async function fetchActiveSources(env: Env): Promise<NewsSource[]> {
   const scrapeIds = Object.keys(HTML_SCRAPE_CONFIGS).join(",");
   const url =
     `${env.SUPABASE_URL}/rest/v1/news_sources` +
-    `?active=eq.true&or=(feed_type.in.(rss,atom),id.in.(${scrapeIds}))&select=*`;
+    `?active=eq.true&or=(feed_type.in.(rss,atom,json_api),id.in.(${scrapeIds}))&select=*`;
   const res = await fetch(url, { headers: pgHeaders(env) });
   if (!res.ok) throw new Error(`fetchActiveSources ${res.status}`);
   return (await res.json()) as NewsSource[];
@@ -375,15 +380,17 @@ async function ingestItems(
     }
     const publishedMs = Date.parse(item.published_at);
 
-    let rawBody: string | null = null;
-    try {
-      rawBody = await fetchArticleBody(item.link);
-    } catch (error) {
-      console.warn(
-        `[${source.id}] full article unavailable for ${item.link}: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
+    let rawBody: string | null = item.raw_body ?? null;
+    if (item.raw_body === undefined) {
+      try {
+        rawBody = await fetchArticleBody(item.link);
+      } catch (error) {
+        console.warn(
+          `[${source.id}] full article unavailable for ${item.link}: ${
+            error instanceof Error ? error.message : String(error)
+          }`
+        );
+      }
     }
 
     originRows.push({
@@ -580,6 +587,7 @@ async function scrapeHtmlListing(env: Env, source: NewsSource): Promise<ParsedIt
 
 async function fetchAndParse(source: NewsSource, env: Env): Promise<ParsedItem[]> {
   if (source.feed_type === "html_scrape") return scrapeHtmlListing(env, source);
+  if (source.feed_type === "json_api") return fetchPickleAsiaJson(source, env);
   if (!source.feed_url) throw new Error("source has no feed_url");
   if (!isSafePublicFeedUrl(source.feed_url)) {
     throw new Error(`unsafe feed_url rejected: ${source.feed_url}`);
@@ -602,6 +610,104 @@ async function fetchAndParse(source: NewsSource, env: Env): Promise<ParsedItem[]
   if (source.feed_type === "rss") return parseRss(parsed);
   if (source.feed_type === "atom") return parseAtom(parsed);
   throw new Error(`Unsupported feed_type ${source.feed_type}`);
+}
+
+interface PickleAsiaPost {
+  slug?: unknown;
+  title?: unknown;
+  excerpt?: unknown;
+  content?: unknown;
+  hero_image_url?: unknown;
+  published_at?: unknown;
+  status?: unknown;
+}
+
+const PICKLE_ASIA_ORIGIN = "https://pickle.asia";
+const PICKLE_ASIA_API_HOST = "idepcrgxqnyexinwjqjj.supabase.co";
+const MAX_JSON_FEED_CHARS = 2_500_000;
+
+/** Convert pickle.asia's public blog API rows into the worker's source-neutral shape. */
+export function parsePickleAsiaPosts(payload: unknown): ParsedItem[] {
+  if (!Array.isArray(payload)) return [];
+
+  const items: ParsedItem[] = [];
+  for (const value of payload.slice(0, MAX_ITEMS_PER_FEED)) {
+    if (!value || typeof value !== "object") continue;
+    const row = value as PickleAsiaPost;
+    const slug = typeof row.slug === "string" ? row.slug.trim() : "";
+    const title = typeof row.title === "string" ? row.title.trim() : "";
+    const published = typeof row.published_at === "string" ? row.published_at : "";
+    const publishedMs = Date.parse(published);
+    if (
+      row.status !== "published" ||
+      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) ||
+      !title ||
+      !Number.isFinite(publishedMs)
+    ) {
+      continue;
+    }
+
+    const content = typeof row.content === "string" ? extractArticleText(row.content) : "";
+    items.push({
+      title,
+      link: `${PICKLE_ASIA_ORIGIN}/blogs/${slug}`,
+      summary: stripHtml(typeof row.excerpt === "string" ? row.excerpt : ""),
+      image_url: typeof row.hero_image_url === "string" ? row.hero_image_url : null,
+      published_at: new Date(publishedMs).toISOString(),
+      raw_body: content.length >= MIN_FULL_BODY_CHARS ? content : null,
+    });
+  }
+  return items;
+}
+
+async function fetchPickleAsiaJson(source: NewsSource, env: Env): Promise<ParsedItem[]> {
+  if (source.id !== "pickle-asia") {
+    throw new Error(`json_api source ${source.id} has no parser`);
+  }
+  if (!source.feed_url) throw new Error("source has no feed_url");
+  if (!env.PICKLE_ASIA_API_KEY) throw new Error("PICKLE_ASIA_API_KEY is not configured");
+
+  const url = new URL(source.feed_url);
+  if (
+    url.protocol !== "https:" ||
+    url.hostname !== PICKLE_ASIA_API_HOST ||
+    url.pathname !== "/rest/v1/blog_posts"
+  ) {
+    throw new Error("pickle.asia API URL is not allowlisted");
+  }
+  url.search = "";
+  url.searchParams.set(
+    "select",
+    "slug,title,excerpt,content,hero_image_url,published_at,status",
+  );
+  url.searchParams.set("status", "eq.published");
+  url.searchParams.set("order", "published_at.desc");
+  url.searchParams.set("limit", String(MAX_ITEMS_PER_FEED));
+
+  const res = await fetch(url, {
+    headers: {
+      apikey: env.PICKLE_ASIA_API_KEY,
+      Accept: "application/json",
+      "User-Agent": "ThePickleHub-news-fetcher/1.0 (+https://www.thepicklehub.net)",
+    },
+    signal: AbortSignal.timeout(12_000),
+  });
+  if (!res.ok) throw new Error(`pickle.asia API HTTP ${res.status}`);
+  if (new URL(res.url).hostname !== PICKLE_ASIA_API_HOST) {
+    throw new Error("pickle.asia API redirected outside the allowlisted host");
+  }
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.toLowerCase().includes("application/json")) {
+    throw new Error(`pickle.asia API returned ${contentType || "an unknown content type"}`);
+  }
+  const jsonText = await res.text();
+  if (jsonText.length > MAX_JSON_FEED_CHARS) {
+    throw new Error(`pickle.asia API response exceeds ${MAX_JSON_FEED_CHARS} characters`);
+  }
+
+  const items = parsePickleAsiaPosts(JSON.parse(jsonText));
+  if (items.length === 0) throw new Error("pickle.asia API returned no parseable published posts");
+  return items;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

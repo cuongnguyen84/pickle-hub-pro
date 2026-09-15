@@ -372,6 +372,26 @@
         }
       }
     },
+    "%@  %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@  %2$@"
+          }
+        }
+      }
+    },
+    "%@  %@, %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@  %2$@, %3$@"
+          }
+        }
+      }
+    },
     "%@  VS  %@" : {
       "localizations" : {
         "en" : {
@@ -1686,6 +1706,9 @@
           }
         }
       }
+    },
+    "🇻🇳" : {
+
     },
     "🎾 HÔM NAY!" : {
       "localizations" : {
@@ -3526,6 +3549,16 @@
         }
       }
     },
+    "Cập nhật tự động" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Updates automatically"
+          }
+        }
+      }
+    },
     "Cấu hình vừa thay đổi trên thiết bị khác. Hãy tải lại." : {
       "localizations" : {
         "en" : {
@@ -4609,6 +4642,16 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "No tournaments in progress"
+          }
+        }
+      }
+    },
+    "Chưa có kết quả" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No results yet"
           }
         }
       }
@@ -5701,6 +5744,9 @@
           }
         }
       }
+    },
+    "ĐÃ KẾT THÚC" : {
+
     },
     "Đã khôi phục bản nháp trên thiết bị này" : {
       "localizations" : {
@@ -7076,6 +7122,16 @@
         }
       }
     },
+    "Điểm đang chấm sẽ không được lưu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "The score in progress will not be saved."
+          }
+        }
+      }
+    },
     "Điểm DUPR %@" : {
       "localizations" : {
         "en" : {
@@ -8421,6 +8477,16 @@
         }
       }
     },
+    "GIẢI CHUYÊN NGHIỆP" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PRO TOURS"
+          }
+        }
+      }
+    },
     "Giải đã bắt đầu nên không thể đổi đội." : {
       "localizations" : {
         "en" : {
@@ -9318,6 +9384,16 @@
         }
       }
     },
+    "Hồ sơ" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Profile"
+          }
+        }
+      }
+    },
     "Hồ sơ công khai" : {
       "localizations" : {
         "en" : {
@@ -9397,16 +9473,6 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Complete your profile so friends can find you and get matched at the right level."
-          }
-        }
-      }
-    },
-    "Hồ sơ" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Profile"
           }
         }
       }
@@ -9624,8 +9690,28 @@
         }
       }
     },
+    "Kết quả giải đấu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tournament results"
+          }
+        }
+      }
+    },
     "KẾT QUẢ HÔM NAY" : {
 
+    },
+    "Kết quả sẽ xuất hiện khi các trận đấu bắt đầu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Results will appear once matches begin."
+          }
+        }
+      }
     },
     "Kết thúc" : {
       "localizations" : {
@@ -10828,6 +10914,16 @@
         }
       }
     },
+    "Không tìm thấy giải đấu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tournament not found"
+          }
+        }
+      }
+    },
     "Không tìm thấy giải tổng." : {
       "localizations" : {
         "en" : {
@@ -10937,6 +11033,16 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Match not found."
+          }
+        }
+      }
+    },
+    "Không tìm thấy vận động viên" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No player found"
           }
         }
       }
@@ -12063,6 +12169,12 @@
         }
       }
     },
+    "Mở tab Trực tiếp" : {
+
+    },
+    "Mở trang kết quả giải đấu" : {
+
+    },
     "Mở trên web" : {
       "localizations" : {
         "en" : {
@@ -12409,6 +12521,16 @@
         }
       }
     },
+    "Ngoài trời" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Outdoor"
+          }
+        }
+      }
+    },
     "Ngoại tuyến. Đang hiển thị dữ liệu công khai đã lưu gần đây" : {
 
     },
@@ -12418,16 +12540,6 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Sitting out: %@"
-          }
-        }
-      }
-    },
-    "Ngoài trời" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Outdoor"
           }
         }
       }
@@ -12594,6 +12706,16 @@
     },
     "Người nhận" : {
 
+    },
+    "NGUỒN CHÍNH THỨC" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OFFICIAL SOURCES"
+          }
+        }
+      }
     },
     "Nguồn rating" : {
       "localizations" : {
@@ -13096,6 +13218,9 @@
           }
         }
       }
+    },
+    "Opens tournament results" : {
+
     },
     "option.none" : {
       "extractionState" : "extracted_with_value",
@@ -14359,6 +14484,16 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Playoff bracket"
+          }
+        }
+      }
+    },
+    "Sơ đồ thi đấu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Draws and results"
           }
         }
       }
@@ -16383,12 +16518,42 @@
         }
       }
     },
+    "Thoát" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Exit"
+          }
+        }
+      }
+    },
     "Thoát chế độ TV" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Exit TV mode"
+          }
+        }
+      }
+    },
+    "Thoát khỏi màn chấm điểm" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Exit scoring screen"
+          }
+        }
+      }
+    },
+    "THOÁT KHỎI MÀN CHẤM ĐIỂM?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "EXIT SCORING SCREEN?"
           }
         }
       }
@@ -16535,6 +16700,16 @@
         }
       }
     },
+    "Thử một tên khác hoặc bỏ dấu tiếng Việt." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try another name or search without diacritics."
+          }
+        }
+      }
+    },
     "Thử nhập tên khác hoặc chọn nội dung thi đấu khác." : {
 
     },
@@ -16643,6 +16818,16 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Continue"
+          }
+        }
+      }
+    },
+    "Tiếp tục chấm" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Keep scoring"
           }
         }
       }
@@ -17294,6 +17479,16 @@
         }
       }
     },
+    "trận đấu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "matches"
+          }
+        }
+      }
+    },
     "Trận đấu" : {
       "localizations" : {
         "en" : {
@@ -17390,6 +17585,16 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Home"
+          }
+        }
+      }
+    },
+    "Trang giải đấu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tournament page"
           }
         }
       }
@@ -18490,6 +18695,9 @@
     "VIỆT NAM" : {
 
     },
+    "View results for %@" : {
+
+    },
     "VÔ ĐỊCH" : {
       "localizations" : {
         "en" : {
@@ -19042,6 +19250,12 @@
           }
         }
       }
+    },
+    "Xem kết quả %@" : {
+
+    },
+    "Xem kết quả Pickleball World Cup hôm nay" : {
+
     },
     "Xem lại" : {
       "localizations" : {
