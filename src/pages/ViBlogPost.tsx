@@ -1,3 +1,4 @@
+import { buildTitle, truncateForSeo } from "@/lib/seo-title";
 import { authorIdentity } from "@/content/authors";
 import { useEffect } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
@@ -127,18 +128,19 @@ const ViBlogPost = () => {
     { name: post.title, url: `https://www.thepicklehub.net/vi/blog/${post.slug}` },
   ];
 
+  const metaTitle = truncateForSeo(buildTitle(post.meta_title.replace(/ \| ThePickleHub$/, "")), 60);
   const faqItems = Array.isArray(post.faq_items) ? post.faq_items : [];
   const coverImage = cmsHeroImageSources(post.cover_image_url);
 
   return (
     <TheLineLayout
-      title={post.meta_title}
+      title={metaTitle}
       exactTitle
       description={post.meta_description}
       active="stories"
     >
       <DynamicMeta
-        title={post.meta_title}
+        title={metaTitle}
         exactTitle
         description={post.meta_description}
         image={normalizeImageUrl(post.cover_image_url) || undefined}

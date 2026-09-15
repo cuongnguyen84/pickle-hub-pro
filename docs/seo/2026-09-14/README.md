@@ -59,3 +59,9 @@ Không thêm credential vào repo. Rollback nội dung dùng backup ngoài repo 
 - [Challonge pricing](https://challonge.com/pricing): giới hạn và điều kiện của gói; tránh gán tính năng thiếu khi chưa kiểm chứng.
 - [UTR Sports providers](https://www.utrsports.net/pages/providers): thông tin do nhà cung cấp công bố; không coi là thử nghiệm độc lập.
 - [Google: dynamic rendering](https://developers.google.com/search/docs/crawling-indexing/javascript/dynamic-rendering): phương án xử lý JavaScript và khuyến nghị render phía máy chủ.
+
+## Kết quả phát hành
+
+PR [#777](https://github.com/cuongnguyen84/pickle-hub-pro/pull/777) đã merge và deploy lên production (commit `8cbc3fe5`); hai bản vá VI đã áp dụng và xác minh. `deployment-verification.json` lưu 16 lượt kiểm tra cho 8 URL với UA Googlebot/người đọc: nội dung mới, canonical, hreflang và JSON-LD hợp lệ. IndexNow nhận 8 URL với HTTP 200; đây là xác nhận nhận yêu cầu, không phải bảo đảm URL đã được lập chỉ mục. Chưa gửi Google Request Indexing thủ công vì phiên chỉ có URL Inspection đọc dữ liệu, không có GSC UI đã đăng nhập.
+
+Baseline theo mục tiêu (`target-baseline.json`, 15/08–11/09): lịch giải EN **76 click / 1.172 impression / vị trí 6,8**; so sánh EN **1 / 27 / 16,4**; toàn cụm URL chứa `/tools` **58 / 1.141 / 11,3**. Cụm công cụ bao gồm nhiều URL và ngôn ngữ; không đọc 58 click như số riêng của trang `/tools`. Mẫu bài so sánh còn rất nhỏ nên chưa dùng để kết luận CTR hay mức tăng trưởng.
