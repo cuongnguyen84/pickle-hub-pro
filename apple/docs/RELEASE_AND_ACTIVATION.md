@@ -7,12 +7,15 @@ không bật OTP và không đổi production setting nếu chưa có phê duy�
 
 | Configuration | Bundle ID | Version | Environment | Native registration | FCM push |
 |---|---|---|---|---|---|
-| Debug | `net.thepicklehub.app` | `2.1.7 (15)` | development | ON | OFF |
-| Release | `net.thepicklehub.app` | `2.1.7 (15)` | production | ON | ON |
+| Debug | `net.thepicklehub.app` | `2.1.8 (16)` | development | ON | OFF |
+| Release | `net.thepicklehub.app` | `2.1.8 (16)` | production | ON | ON |
 
-`2.1.7 (15)` là candidate hiện tại: Pro Tour results + nút thoát cho màn chấm
-điểm trọng tài. Các bản đã lên TestFlight trước đó: `2.1.6 (11)` và `(12)`
-ngày 08/09/2026. Nếu App Store Connect
+`2.1.8 (16)` là candidate hiện tại: Pro Tour results, nút thoát cho màn chấm
+điểm trọng tài, thẻ giải pro tour tự rụng sau 1 ngày. 🔴 **2.1.7 đã được Apple
+duyệt** nên tuyến đó ĐÓNG: upload build mang `CFBundleShortVersionString`
+2.1.7 bị Validation chặn hai lỗi ("Invalid Pre-Release Train" + "must contain a
+higher version than the previously approved version"). Mỗi lần ship sau khi
+Apple duyệt phải tăng MARKETING_VERSION, không chỉ build number. Nếu App Store Connect
 đã có build/version mới hơn bảng này, tăng cả `MARKETING_VERSION` và
 `CURRENT_PROJECT_VERSION` trong `Config/Debug.xcconfig` + `Config/Release.xcconfig`
 trước khi archive.
@@ -243,11 +246,12 @@ riêng, không nằm trong script này.
 
 ## 6. Rollout và rollback
 
-Trạng thái ngày 13/09/2026: App Store đang sống ở `2.0.3 (8)`; `2.1.6 (12)` đã
-lên TestFlight ngày 08/09; `2.1.7 (15)` đã archive và qua gate `--release-source`
-nhưng **chưa export ký và chưa upload** — Xcode trên máy build không còn Apple ID
-nào đăng nhập (`DVTDeveloperAccountManagerAppleIDLists` rỗng) nên cloud signing
-trả `No Accounts`, và máy không có certificate Apple Distribution local. Rollout Shop dùng phased release của App Store và cohort
+Trạng thái ngày 15/09/2026: `2.1.7` đã được Apple duyệt; `2.1.8 (16)` là
+candidate kế tiếp, đã archive và qua gate `--release-source`. Ký + upload phải
+chạy từ terminal của Cuong: tiến trình agent không đọc được token tài khoản
+Xcode 26 (`xcodebuild -exportArchive` trả `No Accounts` dù Settings → Apple
+Accounts có hai tài khoản), còn máy không có certificate Apple Distribution
+local nên phải dựa vào cloud signing. Rollout Shop dùng phased release của App Store và cohort
 validation được mời có chủ đích; không bật `SHOP_PUBLIC_INDEXING` trong giai đoạn
 validation.
 
