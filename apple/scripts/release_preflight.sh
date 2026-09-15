@@ -213,10 +213,10 @@ debug_shop_pilot_normalized="$(printf '%s' "$debug_shop_pilot_flag" | tr '[:uppe
 [[ "$shop_built_in_normalized" =~ ^(yes|true|1)$ ]] || fail "Release candidate must compile the native Shop surface"
 [[ "$shop_pilot_normalized" =~ ^(yes|true|1)$ ]] || fail "Release candidate must enable the controlled Shop pilot"
 [[ "$debug_shop_built_in_normalized" =~ ^(yes|true|1)$ ]] || fail "Debug must compile the native Shop surface for QA parity"
-[[ ! "$debug_shop_pilot_normalized" =~ ^(yes|true|1)$ ]] || fail "Debug Shop pilot must fail closed by default"
+[[ "$debug_shop_pilot_normalized" =~ ^(yes|true|1)$ ]] || fail "Debug must enable Shop as well — QA has to see the tab bar real buyers see"
 version_at_least "$marketing_version" "2.1.0" || fail "Shop MVP requires marketing version 2.1.0 or later"
 [[ "$build_number" -ge 9 ]] || fail "Shop MVP requires build number 9 or later"
-pass "Shop MVP is built in, Release pilot is enabled and Debug remains fail closed"
+pass "Shop is built in and enabled in both Debug and Release"
 
 firebase_config_is_valid() {
   [[ "$firebase_google_app_id" =~ ^1:[0-9]{6,}:ios:[A-Fa-f0-9]{8,}$ ]] &&
