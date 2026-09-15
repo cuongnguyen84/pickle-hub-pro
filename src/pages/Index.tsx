@@ -649,7 +649,7 @@ const Index = () => {
             key: "protour",
             node: (
               <section className="tl-shell">
-                <ProTourEventsStrip language={language} />
+                <ProTourEventsStrip language={language} surface="home" />
               </section>
             ),
           },
