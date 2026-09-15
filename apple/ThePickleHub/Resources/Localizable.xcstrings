@@ -1,589 +1,6 @@
 {
   "sourceLanguage" : "vi",
   "strings" : {
-    "-%lld%%" : {
-
-    },
-    "%@ × %lld" : {
-      "localizations" : {
-        "vi" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ × %2$lld"
-          }
-        }
-      }
-    },
-    "%lld LIVE" : {
-
-    },
-    "%lld/%lld trận" : {
-      "localizations" : {
-        "vi" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld/%2$lld trận"
-          }
-        }
-      }
-    },
-    "×%lld" : {
-
-    },
-    "● %lld TRẬN ĐANG ĐẤU" : {
-
-    },
-    "99+" : {
-
-    },
-    "Ảnh %lld trên %lld" : {
-      "localizations" : {
-        "vi" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Ảnh %1$lld trên %2$lld"
-          }
-        }
-      }
-    },
-    "Anh/chị đã báo chuyển khoản; đang chờ shop đối soát." : {
-
-    },
-    "BẢNG %@" : {
-
-    },
-    "Bỏ" : {
-
-    },
-    "Bỏ bộ lọc %@" : {
-
-    },
-    "Bỏ lưu %@" : {
-
-    },
-    "Cập nhật tự động" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Updates automatically"
-          }
-        }
-      }
-    },
-    "Chất lượng video" : {
-
-    },
-    "Chỉ kênh liên hệ đã được duyệt mới được hiển thị" : {
-
-    },
-    "Chỉ sản phẩm mới" : {
-
-    },
-    "Chi tiết" : {
-
-    },
-    "Chợ" : {
-
-    },
-    "Chợ đồ pickleball" : {
-
-    },
-    "Chọn phiên bản" : {
-
-    },
-    "Chọn phiên bản sản phẩm rồi thêm vào giỏ để tiếp tục." : {
-
-    },
-    "Chưa có đơn mua" : {
-
-    },
-    "Chưa có kết quả" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No results yet"
-          }
-        }
-      }
-    },
-    "Chưa có sản phẩm nào đang bán" : {
-
-    },
-    "Chưa có trận đấu ở nội dung này." : {
-
-    },
-    "Chưa lưu" : {
-
-    },
-    "Chưa lưu sản phẩm" : {
-
-    },
-    "Chưa tải được đơn" : {
-
-    },
-    "Chưa thể cập nhật" : {
-
-    },
-    "Chưa thể đặt đơn" : {
-
-    },
-    "Còn hàng" : {
-
-    },
-    "Cửa hàng" : {
-
-    },
-    "Đã lưu %@" : {
-
-    },
-    "Đã qua sử dụng ·" : {
-
-    },
-    "Đang giao bóng" : {
-
-    },
-    "Đang hiển thị dữ liệu công khai đã lưu gần đây" : {
-
-    },
-    "Đang tải danh mục" : {
-
-    },
-    "Đang tải kết quả World Cup" : {
-
-    },
-    "Đang tải mã thanh toán…" : {
-
-    },
-    "Đang tải sản phẩm" : {
-
-    },
-    "Đang tải tỷ số World Cup" : {
-
-    },
-    "Đang thi đấu" : {
-
-    },
-    "Danh mục" : {
-
-    },
-    "Danh mục %@" : {
-
-    },
-    "Danh sách đã lưu chưa khả dụng" : {
-
-    },
-    "Đặt đơn tại %@" : {
-
-    },
-    "Đặt hàng" : {
-
-    },
-    "Đặt riêng từng shop" : {
-
-    },
-    "Đồ pickleball từ người bán trong nước" : {
-
-    },
-    "Đổi lại %@" : {
-
-    },
-    "Đổi nickname" : {
-
-    },
-    "Đơn đã đặt sẽ xuất hiện tại đây." : {
-
-    },
-    "Đơn đã huỷ; không chuyển khoản cho đơn này." : {
-
-    },
-    "Đơn không tồn tại hoặc không thuộc tài khoản này." : {
-
-    },
-    "Đơn mua" : {
-
-    },
-    "Ghi chú cho shop (không bắt buộc)" : {
-
-    },
-    "Giá gốc %@" : {
-
-    },
-    "GIẢI CHUYÊN NGHIỆP" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PRO TOURS"
-          }
-        }
-      }
-    },
-    "Giảm %lld phần trăm" : {
-
-    },
-    "Giao đến" : {
-
-    },
-    "Giỏ" : {
-
-    },
-    "Giỏ hàng" : {
-
-    },
-    "Giỏ hàng của shop này có thể đã thay đổi." : {
-
-    },
-    "Giỏ hàng đang trống" : {
-
-    },
-    "Giỏ hàng, %lld món" : {
-
-    },
-    "Giữ nguyên số tiền và nội dung để SePay tự động xác nhận đúng đơn." : {
-
-    },
-    "Hệ thống đang kiểm tra nếu anh/chị vừa thanh toán." : {
-
-    },
-    "Hết hàng" : {
-
-    },
-    "Họ tên" : {
-
-    },
-    "Huy hiệu xác minh xác nhận trạng thái hồ sơ; không bảo đảm chất lượng từng sản phẩm." : {
-
-    },
-    "Kết quả giải đấu" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tournament results"
-          }
-        }
-      }
-    },
-    "KẾT QUẢ HÔM NAY" : {
-
-    },
-    "Kết quả sẽ xuất hiện khi các trận đấu bắt đầu." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Results will appear once matches begin."
-          }
-        }
-      }
-    },
-    "Không có ảnh" : {
-
-    },
-    "Không còn sản phẩm để đặt" : {
-
-    },
-    "Không thể đổi nickname. Vui lòng thử lại." : {
-
-    },
-    "Không tìm thấy đơn" : {
-
-    },
-    "Không tìm thấy giải đấu" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tournament not found"
-          }
-        }
-      }
-    },
-    "Không tìm thấy sản phẩm" : {
-
-    },
-    "Không tìm thấy vận động viên" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No player found"
-          }
-        }
-      }
-    },
-    "Không tìm thấy vận động viên." : {
-
-    },
-    "Livescore" : {
-
-    },
-    "LIVESCORE" : {
-
-    },
-    "Lọc & sắp xếp" : {
-
-    },
-    "Lưu %@" : {
-
-    },
-    "Mã đơn %@ · %@" : {
-      "localizations" : {
-        "vi" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Mã đơn %1$@ · %2$@"
-          }
-        }
-      }
-    },
-    "Mã QR thanh toán SePay" : {
-
-    },
-    "Mã VietQR thanh toán" : {
-
-    },
-    "Miễn phí vận chuyển" : {
-
-    },
-    "Mở Shop ThePickleHub" : {
-
-    },
-    "Mới đăng" : {
-
-    },
-    "Ngoại tuyến. Đang hiển thị dữ liệu công khai đã lưu gần đây" : {
-
-    },
-    "Người nhận" : {
-
-    },
-    "NGUỒN CHÍNH THỨC" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OFFICIAL SOURCES"
-          }
-        }
-      }
-    },
-    "Nguồn: ban tổ chức · cập nhật gần thời gian thực" : {
-
-    },
-    "Nhấn biểu tượng trái tim để xem lại sản phẩm tại đây." : {
-
-    },
-    "Nhập nickname" : {
-
-    },
-    "Nickname phải có từ 2 đến 30 ký tự." : {
-
-    },
-    "Nickname:" : {
-
-    },
-    "Nội dung chuyển khoản phải đúng mã đơn để shop đối soát thủ công." : {
-
-    },
-    "Phí vận chuyển" : {
-
-    },
-    "Phí vận chuyển: %@" : {
-
-    },
-    "PHIÊN BẢN" : {
-
-    },
-    "PICKLEBALL WORLD CUP 2026" : {
-
-    },
-    "PICKLEBALL WORLD CUP 2026 · ĐÀ NẴNG" : {
-
-    },
-    "Quét mã bằng ứng dụng ngân hàng. Số tiền và nội dung chuyển khoản đã được điền sẵn." : {
-
-    },
-    "Sản phẩm" : {
-
-    },
-    "Sản phẩm có thể đã được gỡ hoặc chưa được duyệt." : {
-
-    },
-    "Sản phẩm được duyệt sẽ xuất hiện tại đây." : {
-
-    },
-    "Sản phẩm không còn hiển thị" : {
-
-    },
-    "Sao chép %@" : {
-
-    },
-    "Sắp xếp" : {
-
-    },
-    "Sau khi đặt đơn, ứng dụng hiển thị mã thanh toán SePay với số tiền và nội dung đã điền sẵn. Hệ thống tự động xác nhận khi nhận được tiền." : {
-
-    },
-    "SePay tự động đối soát giao dịch" : {
-
-    },
-    "SHOP / PILOT" : {
-
-    },
-    "Shop chưa có sản phẩm" : {
-
-    },
-    "Shop chưa công bố kênh liên hệ" : {
-
-    },
-    "Shop chưa cung cấp tài khoản nhận tiền. Anh/chị chưa nên chuyển khoản và hãy liên hệ shop." : {
-
-    },
-    "Shop chưa được mở" : {
-
-    },
-    "Shop có thể đang tạm ngưng hoặc không còn công khai." : {
-
-    },
-    "Shop đã xác minh" : {
-
-    },
-    "Shop đã xác nhận nhận được tiền" : {
-
-    },
-    "Shop đang thử nghiệm với những người bán đầu tiên. Anh/chị quay lại sau nhé." : {
-
-    },
-    "Shop không khả dụng" : {
-
-    },
-    "Số điện thoại 10 số" : {
-
-    },
-    "Sơ đồ thi đấu" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Draws and results"
-          }
-        }
-      }
-    },
-    "Số lượng" : {
-
-    },
-    "Số lượng %lld" : {
-
-    },
-    "Số nhà, đường, phường, quận, tỉnh" : {
-
-    },
-    "Tải lại mã SePay" : {
-
-    },
-    "Tạm tính" : {
-
-    },
-    "Tạm tính sản phẩm, chưa gồm phí vận chuyển" : {
-
-    },
-    "TẤT CẢ KẾT QUẢ" : {
-
-    },
-    "Thanh toán" : {
-
-    },
-    "Thanh toán chuyển khoản" : {
-
-    },
-    "Thanh toán ngay" : {
-
-    },
-    "Thanh toán trực tiếp khi nhận hàng." : {
-
-    },
-    "Thoát toàn màn hình" : {
-
-    },
-    "Thông số" : {
-
-    },
-    "Thông tin sản phẩm và thông số do người bán cung cấp." : {
-
-    },
-    "Thông tin shop" : {
-
-    },
-    "Thử nhập tên khác hoặc chọn nội dung thi đấu khác." : {
-
-    },
-    "Thử từ khóa ngắn hơn hoặc bỏ danh mục đang chọn." : {
-
-    },
-    "Tìm sản phẩm trong Shop" : {
-
-    },
-    "Tìm tên vận động viên" : {
-
-    },
-    "Tìm vận động viên" : {
-
-    },
-    "Tìm vợt, giày, bóng…" : {
-
-    },
-    "Tính năng đang trong giai đoạn thử nghiệm giới hạn." : {
-
-    },
-    "Tính năng đồng bộ sẽ được mở sau khi hoàn tất bảo vệ tài khoản." : {
-
-    },
-    "Tình trạng" : {
-
-    },
-    "Toàn màn hình" : {
-
-    },
-    "Tổng cộng" : {
-
-    },
-    "Tổng đơn" : {
-
-    },
-    "Trang giải đấu" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tournament page"
-          }
-        }
-      }
-    },
-    "trận đấu" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "matches"
-          }
-        }
-      }
-    },
-    "Thử một tên khác hoặc bỏ dấu tiếng Việt." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Try another name or search without diacritics."
-          }
-        }
-      }
-    },
     "" : {
       "localizations" : {
         "en" : {
@@ -701,6 +118,9 @@
           }
         }
       }
+    },
+    "-%lld%%" : {
+
     },
     "–" : {
       "localizations" : {
@@ -952,6 +372,26 @@
         }
       }
     },
+    "%@  %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@  %2$@"
+          }
+        }
+      }
+    },
+    "%@  %@, %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@  %2$@, %3$@"
+          }
+        }
+      }
+    },
     "%@  VS  %@" : {
       "localizations" : {
         "en" : {
@@ -964,6 +404,16 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@  VS  %2$@"
+          }
+        }
+      }
+    },
+    "%@ — %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ — %2$@"
           }
         }
       }
@@ -1164,6 +614,16 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@ → %2$lld suất vào playoff"
+          }
+        }
+      }
+    },
+    "%@ × %lld" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ × %2$lld"
           }
         }
       }
@@ -1620,6 +1080,9 @@
         }
       }
     },
+    "%lld đội vào playoff — kiểm tra, chạm 2 đội để đổi chỗ trước khi xác nhận." : {
+
+    },
     "%lld game%@" : {
       "localizations" : {
         "en" : {
@@ -1635,6 +1098,9 @@
           }
         }
       }
+    },
+    "%lld LIVE" : {
+
     },
     "%lld nam / %lld nữ (cần %lld/%lld)" : {
       "localizations" : {
@@ -1980,6 +1446,16 @@
         }
       }
     },
+    "%lld/%lld trận" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld/%2$lld trận"
+          }
+        }
+      }
+    },
     "%llds" : {
       "localizations" : {
         "en" : {
@@ -2009,6 +1485,9 @@
           }
         }
       }
+    },
+    "→ Xem tất cả %lld VĐV Việt / gốc Việt" : {
+
     },
     "+" : {
       "localizations" : {
@@ -2095,6 +1574,9 @@
           }
         }
       }
+    },
+    "×%lld" : {
+
     },
     "−%lld%% · %@ đ" : {
       "localizations" : {
@@ -2228,6 +1710,9 @@
         }
       }
     },
+    "● %lld TRẬN ĐANG ĐẤU" : {
+
+    },
     "⚠️ Đội này đã báo/đã xác nhận đóng tiền. Xóa đội là xóa luôn bằng chứng đóng tiền — hệ thống KHÔNG hoàn tiền." : {
       "localizations" : {
         "en" : {
@@ -2237,6 +1722,9 @@
           }
         }
       }
+    },
+    "🇻🇳" : {
+
     },
     "🎾 HÔM NAY!" : {
       "localizations" : {
@@ -2388,6 +1876,9 @@
         }
       }
     },
+    "99+" : {
+
+    },
     "action.remove" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -2475,6 +1966,16 @@
         }
       }
     },
+    "Ảnh %lld trên %lld" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Ảnh %1$lld trên %2$lld"
+          }
+        }
+      }
+    },
     "Ảnh chụp %@" : {
       "localizations" : {
         "en" : {
@@ -2494,6 +1995,9 @@
           }
         }
       }
+    },
+    "Anh/chị đã báo chuyển khoản; đang chờ shop đối soát." : {
+
     },
     "Apple không trả về mã xác thực." : {
       "localizations" : {
@@ -2927,6 +2431,9 @@
           }
         }
       }
+    },
+    "BẢNG %@" : {
+
     },
     "Bảng %@ · %lld VĐV" : {
       "localizations" : {
@@ -3435,6 +2942,12 @@
         }
       }
     },
+    "Bỏ" : {
+
+    },
+    "Bỏ bộ lọc %@" : {
+
+    },
     "Bỏ check-in" : {
       "localizations" : {
         "en" : {
@@ -3474,6 +2987,9 @@
           }
         }
       }
+    },
+    "Bỏ lưu %@" : {
+
     },
     "Bỏ qua" : {
       "localizations" : {
@@ -3754,6 +3270,9 @@
           }
         }
       }
+    },
+    "Các shop đang cập nhật sản phẩm. Anh/chị quay lại sau nhé." : {
+
     },
     "Các trận đã phát sẽ được lưu lại ở đây." : {
       "localizations" : {
@@ -4049,6 +3568,16 @@
         }
       }
     },
+    "Cập nhật tự động" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Updates automatically"
+          }
+        }
+      }
+    },
     "Cấu hình vừa thay đổi trên thiết bị khác. Hãy tải lại." : {
       "localizations" : {
         "en" : {
@@ -4119,6 +3648,12 @@
         }
       }
     },
+    "Chạm đội thứ hai ở trận khác để đổi chỗ" : {
+
+    },
+    "Chạm đội thứ nhất" : {
+
+    },
     "CHẤM TRỰC TIẾP" : {
       "localizations" : {
         "en" : {
@@ -4148,6 +3683,9 @@
           }
         }
       }
+    },
+    "Chất lượng video" : {
+
     },
     "Châu Á" : {
       "localizations" : {
@@ -4229,6 +3767,9 @@
         }
       }
     },
+    "Chỉ kênh liên hệ đã được duyệt mới được hiển thị" : {
+
+    },
     "Chỉ khả dụng với ≥32 người" : {
       "localizations" : {
         "en" : {
@@ -4238,6 +3779,12 @@
           }
         }
       }
+    },
+    "Chỉ sản phẩm mới" : {
+
+    },
+    "Chi tiết" : {
+
     },
     "Chi tiết từng ván" : {
       "localizations" : {
@@ -4392,6 +3939,9 @@
         }
       }
     },
+    "Chợ" : {
+
+    },
     "Chờ %@ xác nhận" : {
       "localizations" : {
         "en" : {
@@ -4431,6 +3981,9 @@
           }
         }
       }
+    },
+    "Chợ đồ pickleball" : {
+
     },
     "Chờ đội trưởng duyệt" : {
       "localizations" : {
@@ -4583,6 +4136,7 @@
       }
     },
     "Chọn %lld đội từ các hạng 3 để vào playoff." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "variations" : {
@@ -4739,6 +4293,12 @@
         }
       }
     },
+    "Chọn phiên bản" : {
+
+    },
+    "Chọn phiên bản sản phẩm rồi thêm vào giỏ để tiếp tục." : {
+
+    },
     "Chọn sân, giờ và trình độ" : {
       "localizations" : {
         "en" : {
@@ -4780,6 +4340,7 @@
       }
     },
     "Chọn Wildcard" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5039,6 +4600,9 @@
         }
       }
     },
+    "Chưa có đơn mua" : {
+
+    },
     "Chưa có đồng đội" : {
       "localizations" : {
         "en" : {
@@ -5109,6 +4673,16 @@
         }
       }
     },
+    "Chưa có kết quả" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No results yet"
+          }
+        }
+      }
+    },
     "Chưa có kết quả vòng tròn." : {
       "localizations" : {
         "en" : {
@@ -5168,6 +4742,9 @@
           }
         }
       }
+    },
+    "Chưa có sản phẩm nào đang bán" : {
+
     },
     "Chưa có sự kiện sắp tới" : {
       "localizations" : {
@@ -5251,6 +4828,9 @@
           }
         }
       }
+    },
+    "Chưa có trận đấu ở nội dung này." : {
+
     },
     "Chưa có trận nào." : {
       "localizations" : {
@@ -5402,6 +4982,9 @@
         }
       }
     },
+    "Chưa lưu" : {
+
+    },
     "Chưa lưu bản nháp" : {
       "localizations" : {
         "en" : {
@@ -5411,6 +4994,9 @@
           }
         }
       }
+    },
+    "Chưa lưu sản phẩm" : {
+
     },
     "Chưa nộp lệ phí" : {
       "localizations" : {
@@ -5442,6 +5028,9 @@
         }
       }
     },
+    "Chưa tải được đơn" : {
+
+    },
     "Chưa tải được hồ sơ của bạn." : {
       "localizations" : {
         "en" : {
@@ -5461,6 +5050,12 @@
           }
         }
       }
+    },
+    "Chưa thể cập nhật" : {
+
+    },
+    "Chưa thể đặt đơn" : {
+
     },
     "Chưa trả" : {
       "localizations" : {
@@ -5584,6 +5179,9 @@
           }
         }
       }
+    },
+    "Có cặp đấu cùng bảng — đổi chỗ trước khi xác nhận." : {
+
     },
     "Có giới hạn thời gian không?" : {
       "localizations" : {
@@ -5735,6 +5333,9 @@
         }
       }
     },
+    "Còn hàng" : {
+
+    },
     "Công cụ" : {
       "localizations" : {
         "en" : {
@@ -5804,6 +5405,9 @@
           }
         }
       }
+    },
+    "Cửa hàng" : {
+
     },
     "Của tôi" : {
       "localizations" : {
@@ -6171,6 +5775,9 @@
         }
       }
     },
+    "ĐÃ KẾT THÚC" : {
+
+    },
     "Đã khôi phục bản nháp trên thiết bị này" : {
       "localizations" : {
         "en" : {
@@ -6210,6 +5817,9 @@
           }
         }
       }
+    },
+    "Đã lưu %@" : {
+
     },
     "Đã lưu lịch — mở Điều hành trực tiếp để chạy buổi chơi." : {
       "localizations" : {
@@ -6290,6 +5900,9 @@
           }
         }
       }
+    },
+    "Đã qua sử dụng ·" : {
+
     },
     "Đã sao chép mã PIN." : {
       "localizations" : {
@@ -6595,6 +6208,9 @@
         }
       }
     },
+    "Đang giao bóng" : {
+
+    },
     "đang giao: %@" : {
       "localizations" : {
         "en" : {
@@ -6614,6 +6230,9 @@
           }
         }
       }
+    },
+    "Đang hiển thị dữ liệu công khai đã lưu gần đây" : {
+
     },
     "Đang kiểm tra DUPR…" : {
       "localizations" : {
@@ -7081,6 +6700,9 @@
         }
       }
     },
+    "Đang tải danh mục" : {
+
+    },
     "Đang tải điểm DUPR" : {
       "localizations" : {
         "en" : {
@@ -7090,6 +6712,18 @@
           }
         }
       }
+    },
+    "Đang tải kết quả World Cup" : {
+
+    },
+    "Đang tải mã thanh toán…" : {
+
+    },
+    "Đang tải sản phẩm" : {
+
+    },
+    "Đang tải tỷ số World Cup" : {
+
     },
     "Đang tải…" : {
       "localizations" : {
@@ -7130,6 +6764,9 @@
           }
         }
       }
+    },
+    "Đang thi đấu" : {
+
     },
     "ĐANG THI ĐẤU" : {
       "localizations" : {
@@ -7261,6 +6898,12 @@
         }
       }
     },
+    "Danh mục" : {
+
+    },
+    "Danh mục %@" : {
+
+    },
     "Danh sách có %lld đội nhưng bước thiết lập khai báo %lld đội." : {
       "localizations" : {
         "en" : {
@@ -7286,6 +6929,9 @@
           }
         }
       }
+    },
+    "Danh sách đã lưu chưa khả dụng" : {
+
     },
     "Danh sách đăng ký" : {
       "localizations" : {
@@ -7337,6 +6983,12 @@
         }
       }
     },
+    "Đặt đơn tại %@" : {
+
+    },
+    "Đặt hàng" : {
+
+    },
     "Đặt lại" : {
       "localizations" : {
         "en" : {
@@ -7366,6 +7018,9 @@
           }
         }
       }
+    },
+    "Đặt riêng từng shop" : {
+
     },
     "Đặt username + trình độ" : {
       "localizations" : {
@@ -7438,6 +7093,7 @@
       }
     },
     "ĐỀ XUẤT" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7688,7 +7344,11 @@
         }
       }
     },
+    "Đồ pickleball từ người bán trong nước" : {
+
+    },
     "Đọc bài gốc" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7709,6 +7369,7 @@
       }
     },
     "Đọc toàn bộ tại %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7827,6 +7488,9 @@
           }
         }
       }
+    },
+    "Đổi cặp" : {
+
     },
     "Đội chính thức tham gia" : {
       "localizations" : {
@@ -7990,6 +7654,9 @@
         }
       }
     },
+    "Đổi lại %@" : {
+
+    },
     "Đôi nam" : {
       "localizations" : {
         "en" : {
@@ -8079,6 +7746,9 @@
           }
         }
       }
+    },
+    "Đổi nickname" : {
+
     },
     "Đôi nữ" : {
       "localizations" : {
@@ -8249,6 +7919,18 @@
           }
         }
       }
+    },
+    "Đơn đã đặt sẽ xuất hiện tại đây." : {
+
+    },
+    "Đơn đã huỷ; không chuyển khoản cho đơn này." : {
+
+    },
+    "Đơn không tồn tại hoặc không thuộc tài khoản này." : {
+
+    },
+    "Đơn mua" : {
+
     },
     "Đơn nam" : {
       "localizations" : {
@@ -8733,6 +8415,9 @@
         }
       }
     },
+    "Ghi chú cho shop (không bắt buộc)" : {
+
+    },
     "Ghi chú nội bộ" : {
       "localizations" : {
         "en" : {
@@ -8803,6 +8488,9 @@
         }
       }
     },
+    "Giá gốc %@" : {
+
+    },
     "Giá vé (VNĐ, 0 = miễn phí)" : {
       "localizations" : {
         "en" : {
@@ -8819,6 +8507,16 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "This tournament has no game template yet."
+          }
+        }
+      }
+    },
+    "GIẢI CHUYÊN NGHIỆP" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PRO TOURS"
           }
         }
       }
@@ -9105,6 +8803,9 @@
         }
       }
     },
+    "Giảm %lld phần trăm" : {
+
+    },
     "Giảm điểm %@" : {
       "localizations" : {
         "en" : {
@@ -9134,6 +8835,9 @@
           }
         }
       }
+    },
+    "Giao đến" : {
+
     },
     "Giao diện" : {
       "localizations" : {
@@ -9181,6 +8885,9 @@
         }
       }
     },
+    "Giỏ" : {
+
+    },
     "GIỜ" : {
       "localizations" : {
         "en" : {
@@ -9210,6 +8917,18 @@
           }
         }
       }
+    },
+    "Giỏ hàng" : {
+
+    },
+    "Giỏ hàng của shop này có thể đã thay đổi." : {
+
+    },
+    "Giỏ hàng đang trống" : {
+
+    },
+    "Giỏ hàng, %lld món" : {
+
     },
     "GIỜ MỞ CỬA" : {
       "localizations" : {
@@ -9300,6 +9019,9 @@
           }
         }
       }
+    },
+    "Giữ nguyên số tiền và nội dung để hệ thống xác nhận đúng đơn." : {
+
     },
     "GLOBAL STANDARD · 2018 → 2026" : {
       "localizations" : {
@@ -9600,6 +9322,9 @@
         }
       }
     },
+    "Hệ thống đang kiểm tra giao dịch nếu anh/chị vừa thanh toán." : {
+
+    },
     "Hệ thống đang tạm dừng gửi tin tự động. Hãy liên hệ ban tổ chức." : {
       "localizations" : {
         "en" : {
@@ -9660,6 +9385,9 @@
         }
       }
     },
+    "Hết hàng" : {
+
+    },
     "Hiện chưa có trận trực tiếp" : {
       "localizations" : {
         "en" : {
@@ -9690,16 +9418,6 @@
         }
       }
     },
-    "Hoàn tất & mở đăng ký" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Finish & open registration"
-          }
-        }
-      }
-    },
     "Hồ sơ" : {
       "localizations" : {
         "en" : {
@@ -9710,12 +9428,22 @@
         }
       }
     },
-    "Hồ sơ công khai" : {
+    "Hoặc tham gia một đội đã có" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "Public profile"
+            "value" : "Or join an existing team"
+          }
+        }
+      }
+    },
+    "Hoàn tất hồ sơ để bạn bè tìm thấy bạn và xếp cặp đúng trình." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Complete your profile so friends can find you and get matched at the right level."
           }
         }
       }
@@ -9730,15 +9458,8 @@
         }
       }
     },
-    "Hoặc tham gia một đội đã có" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Or join an existing team"
-          }
-        }
-      }
+    "Họ tên" : {
+
     },
     "HOÀN TÁC" : {
       "localizations" : {
@@ -9760,6 +9481,16 @@
         }
       }
     },
+    "Hoàn tất & mở đăng ký" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Finish & open registration"
+          }
+        }
+      }
+    },
     "Hoàn tất hồ sơ" : {
       "localizations" : {
         "en" : {
@@ -9770,12 +9501,15 @@
         }
       }
     },
-    "Hoàn tất hồ sơ để bạn bè tìm thấy bạn và xếp cặp đúng trình." : {
+    "Hoàn tiền" : {
+
+    },
+    "Hồ sơ công khai" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "Complete your profile so friends can find you and get matched at the right level."
+            "value" : "Public profile"
           }
         }
       }
@@ -9869,6 +9603,9 @@
           }
         }
       }
+    },
+    "Huy hiệu xác minh xác nhận trạng thái hồ sơ; không bảo đảm chất lượng từng sản phẩm." : {
+
     },
     "Hủy sự kiện" : {
       "localizations" : {
@@ -9986,6 +9723,29 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "RESULTS"
+          }
+        }
+      }
+    },
+    "Kết quả giải đấu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tournament results"
+          }
+        }
+      }
+    },
+    "KẾT QUẢ HÔM NAY" : {
+
+    },
+    "Kết quả sẽ xuất hiện khi các trận đấu bắt đầu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Results will appear once matches begin."
           }
         }
       }
@@ -10190,6 +9950,9 @@
         }
       }
     },
+    "Không có ảnh" : {
+
+    },
     "Không có cấu hình bảng phù hợp cho %lld người. Thử số người khác." : {
       "localizations" : {
         "en" : {
@@ -10229,6 +9992,9 @@
           }
         }
       }
+    },
+    "Không còn sản phẩm để đặt" : {
+
     },
     "Không còn trận nào trong hàng đợi." : {
       "localizations" : {
@@ -10270,6 +10036,9 @@
         }
       }
     },
+    "Không đổi được cặp." : {
+
+    },
     "Không đổi được loại đối tượng." : {
       "localizations" : {
         "en" : {
@@ -10307,6 +10076,7 @@
       }
     },
     "Không đủ người để sinh playoff." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -10869,6 +10639,9 @@
         }
       }
     },
+    "Không thể đổi nickname. Vui lòng thử lại." : {
+
+    },
     "Không thể đưa trận đã hoàn tất về trạng thái đang đấu." : {
       "localizations" : {
         "en" : {
@@ -11169,11 +10942,24 @@
         }
       }
     },
+    "Không tìm thấy đơn" : {
+
+    },
     "Không tìm thấy giải" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "needs_review",
+            "value" : "Tournament not found"
+          }
+        }
+      }
+    },
+    "Không tìm thấy giải đấu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Tournament not found"
           }
         }
@@ -11249,6 +11035,9 @@
         }
       }
     },
+    "Không tìm thấy sản phẩm" : {
+
+    },
     "Không tìm thấy sự kiện" : {
       "localizations" : {
         "en" : {
@@ -11288,6 +11077,19 @@
           }
         }
       }
+    },
+    "Không tìm thấy vận động viên" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No player found"
+          }
+        }
+      }
+    },
+    "Không tìm thấy vận động viên." : {
+
     },
     "Không tìm thấy VĐV này." : {
       "localizations" : {
@@ -11730,6 +11532,12 @@
         }
       }
     },
+    "Livescore" : {
+
+    },
+    "LIVESCORE" : {
+
+    },
     "Loại" : {
       "localizations" : {
         "en" : {
@@ -11799,6 +11607,9 @@
           }
         }
       }
+    },
+    "Lọc & sắp xếp" : {
+
     },
     "Lọc theo khu vực (VD: Hà Nội)" : {
       "localizations" : {
@@ -11925,6 +11736,9 @@
           }
         }
       }
+    },
+    "Lưu %@" : {
+
     },
     "Lưu nháp" : {
       "localizations" : {
@@ -12056,6 +11870,16 @@
         }
       }
     },
+    "Mã đơn %@ · %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Mã đơn %1$@ · %2$@"
+          }
+        }
+      }
+    },
     "Mã hiện tại sẽ ngừng hoạt động ngay. Những trọng tài đã tham gia vẫn giữ quyền chấm điểm." : {
       "localizations" : {
         "en" : {
@@ -12134,6 +11958,12 @@
           }
         }
       }
+    },
+    "Mã QR thanh toán" : {
+
+    },
+    "Mã VietQR thanh toán" : {
+
     },
     "MAI" : {
       "localizations" : {
@@ -12254,6 +12084,9 @@
         }
       }
     },
+    "Miễn phí vận chuyển" : {
+
+    },
     "Min" : {
       "localizations" : {
         "en" : {
@@ -12344,6 +12177,9 @@
         }
       }
     },
+    "Mở Shop ThePickleHub" : {
+
+    },
     "Mô tả" : {
       "localizations" : {
         "en" : {
@@ -12373,6 +12209,12 @@
           }
         }
       }
+    },
+    "Mở tab Trực tiếp" : {
+
+    },
+    "Mở trang kết quả giải đấu" : {
+
     },
     "Mở trên web" : {
       "localizations" : {
@@ -12449,6 +12291,9 @@
           }
         }
       }
+    },
+    "Mới đăng" : {
+
     },
     "Mỗi đội" : {
       "localizations" : {
@@ -12717,22 +12562,25 @@
         }
       }
     },
-    "Ngồi ngoài: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Sitting out: %@"
-          }
-        }
-      }
-    },
     "Ngoài trời" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Outdoor"
+          }
+        }
+      }
+    },
+    "Ngoại tuyến. Đang hiển thị dữ liệu công khai đã lưu gần đây" : {
+
+    },
+    "Ngồi ngoài: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Sitting out: %@"
           }
         }
       }
@@ -12897,6 +12745,19 @@
         }
       }
     },
+    "Người nhận" : {
+
+    },
+    "NGUỒN CHÍNH THỨC" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OFFICIAL SOURCES"
+          }
+        }
+      }
+    },
     "Nguồn rating" : {
       "localizations" : {
         "en" : {
@@ -12907,6 +12768,9 @@
         }
       }
     },
+    "Nguồn: ban tổ chức · cập nhật gần thời gian thực" : {
+
+    },
     "Nguồn: DUPR.com" : {
       "localizations" : {
         "en" : {
@@ -12916,6 +12780,12 @@
           }
         }
       }
+    },
+    "Nguồn: PPA Tour · WPR" : {
+
+    },
+    "NHÀ NGHỀ PPA TOUR" : {
+
     },
     "NHÀ VÔ ĐỊCH" : {
       "localizations" : {
@@ -12936,6 +12806,9 @@
           }
         }
       }
+    },
+    "Nhấn biểu tượng trái tim để xem lại sản phẩm tại đây." : {
+
     },
     "Nhận lời và tham gia đội" : {
       "localizations" : {
@@ -13091,6 +12964,9 @@
         }
       }
     },
+    "Nhập nickname" : {
+
+    },
     "Nhập rồi Enter" : {
       "localizations" : {
         "en" : {
@@ -13192,6 +13068,7 @@
       }
     },
     "nhất bảng" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13261,6 +13138,12 @@
         }
       }
     },
+    "Nickname phải có từ 2 đến 30 ký tự." : {
+
+    },
+    "Nickname:" : {
+
+    },
     "Nội dung" : {
       "localizations" : {
         "en" : {
@@ -13270,6 +13153,9 @@
           }
         }
       }
+    },
+    "Nội dung chuyển khoản phải đúng mã đơn để shop đối soát thủ công." : {
+
     },
     "Nội dung CK:" : {
       "localizations" : {
@@ -13381,6 +13267,9 @@
         }
       }
     },
+    "Opens tournament results" : {
+
+    },
     "option.none" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -13475,6 +13364,15 @@
         }
       }
     },
+    "Phí vận chuyển" : {
+
+    },
+    "Phí vận chuyển: %@" : {
+
+    },
+    "PHIÊN BẢN" : {
+
+    },
     "Phiên đăng nhập Apple đã hết hạn. Vui lòng thử lại." : {
       "localizations" : {
         "en" : {
@@ -13555,6 +13453,12 @@
         }
       }
     },
+    "PICKLEBALL WORLD CUP 2026" : {
+
+    },
+    "PICKLEBALL WORLD CUP 2026 · ĐÀ NẴNG" : {
+
+    },
     "Pickleball xứng đáng có sự chăm sóc " : {
       "localizations" : {
         "en" : {
@@ -13621,6 +13525,9 @@
           }
         }
       }
+    },
+    "ppatour.com/rankings ↗" : {
+
     },
     "Quận 1" : {
       "localizations" : {
@@ -13785,6 +13692,9 @@
         }
       }
     },
+    "Quét mã bằng ứng dụng ngân hàng. Số tiền và nội dung chuyển khoản đã được điền sẵn." : {
+
+    },
     "Quét mã để chuyển %@ đ" : {
       "localizations" : {
         "en" : {
@@ -13822,6 +13732,9 @@
         }
       }
     },
+    "Quy tắc chọn: mọi VĐV mang cờ Việt Nam trên bảng WPR + 3 VĐV Mỹ gốc Việt nổi bật · Số liệu lấy ngày %@" : {
+
+    },
     "Quyền lợi miễn phí" : {
       "localizations" : {
         "en" : {
@@ -13841,6 +13754,9 @@
           }
         }
       }
+    },
+    "RATING CÁ NHÂN" : {
+
     },
     "Reset" : {
       "localizations" : {
@@ -14039,6 +13955,18 @@
         }
       }
     },
+    "Sản phẩm" : {
+
+    },
+    "Sản phẩm có thể đã được gỡ hoặc chưa được duyệt." : {
+
+    },
+    "Sản phẩm được duyệt sẽ xuất hiện tại đây." : {
+
+    },
+    "Sản phẩm không còn hiển thị" : {
+
+    },
     "SẴN SÀNG GỬI" : {
       "localizations" : {
         "en" : {
@@ -14098,6 +14026,9 @@
           }
         }
       }
+    },
+    "Sao chép %@" : {
+
     },
     "Sao chép link" : {
       "localizations" : {
@@ -14241,6 +14172,12 @@
         }
       }
     },
+    "Sắp xếp" : {
+
+    },
+    "Sau khi đặt đơn, ứng dụng sẽ hiển thị cổng SePay hoặc VietQR mà shop đang sử dụng, cùng trạng thái đối soát." : {
+
+    },
     "Sau khi tạo, BTC chọn cách ghép đội: bốc thăm ngẫu nhiên hoặc xếp thủ công ngay trong app." : {
       "localizations" : {
         "en" : {
@@ -14359,6 +14296,39 @@
           }
         }
       }
+    },
+    "SHOP" : {
+
+    },
+    "Shop chưa có sản phẩm" : {
+
+    },
+    "Shop chưa công bố kênh liên hệ" : {
+
+    },
+    "Shop chưa cung cấp tài khoản nhận tiền. Anh/chị chưa nên chuyển khoản và hãy liên hệ shop." : {
+
+    },
+    "Shop chưa được mở" : {
+
+    },
+    "Shop có thể đang tạm ngưng hoặc không còn công khai." : {
+
+    },
+    "Shop đã chuyển trả %@. Kiểm tra tài khoản của anh/chị." : {
+
+    },
+    "Shop đã xác minh" : {
+
+    },
+    "Shop đã xác nhận nhận được tiền" : {
+
+    },
+    "Shop không khả dụng" : {
+
+    },
+    "Shop sẽ chuyển trả %@ về tài khoản anh/chị đã dùng để thanh toán." : {
+
     },
     "Sideout %lld" : {
       "localizations" : {
@@ -14532,6 +14502,9 @@
         }
       }
     },
+    "Số điện thoại 10 số" : {
+
+    },
     "Số điện thoại không hợp lệ." : {
       "localizations" : {
         "en" : {
@@ -14568,6 +14541,16 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Playoff bracket"
+          }
+        }
+      }
+    },
+    "Sơ đồ thi đấu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Draws and results"
           }
         }
       }
@@ -14702,6 +14685,12 @@
         }
       }
     },
+    "Số lượng" : {
+
+    },
+    "Số lượng %lld" : {
+
+    },
     "Số người không chia hết cho 4 — sẽ có người ngồi ngoài luân phiên." : {
       "localizations" : {
         "en" : {
@@ -14713,6 +14702,7 @@
       }
     },
     "Số người vào Playoff" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -14731,6 +14721,9 @@
           }
         }
       }
+    },
+    "Số nhà, đường, phường, quận, tỉnh" : {
+
     },
     "Số sân" : {
       "localizations" : {
@@ -15112,6 +15105,9 @@
         }
       }
     },
+    "Tải lại mã thanh toán" : {
+
+    },
     "Tải lên" : {
       "localizations" : {
         "en" : {
@@ -15131,6 +15127,12 @@
           }
         }
       }
+    },
+    "Tạm tính" : {
+
+    },
+    "Tạm tính sản phẩm, chưa gồm phí vận chuyển" : {
+
     },
     "Tăng điểm %@" : {
       "localizations" : {
@@ -15494,6 +15496,9 @@
           }
         }
       }
+    },
+    "TẤT CẢ KẾT QUẢ" : {
+
     },
     "Tất cả thể thức" : {
       "localizations" : {
@@ -15993,6 +15998,7 @@
       }
     },
     "Thắng %lld · HS %@%lld" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "variations" : {
@@ -16030,6 +16036,9 @@
         }
       }
     },
+    "Thanh toán" : {
+
+    },
     "THANH TOÁN" : {
       "localizations" : {
         "en" : {
@@ -16049,6 +16058,15 @@
           }
         }
       }
+    },
+    "Thanh toán chuyển khoản" : {
+
+    },
+    "Thanh toán ngay" : {
+
+    },
+    "Thanh toán trực tiếp khi nhận hàng." : {
+
     },
     "Thành viên" : {
       "localizations" : {
@@ -16599,6 +16617,9 @@
         }
       }
     },
+    "Thoát toàn màn hình" : {
+
+    },
     "Thôi" : {
       "localizations" : {
         "en" : {
@@ -16648,6 +16669,9 @@
           }
         }
       }
+    },
+    "Thông số" : {
+
     },
     "Thông tin" : {
       "localizations" : {
@@ -16709,6 +16733,12 @@
         }
       }
     },
+    "Thông tin sản phẩm và thông số do người bán cung cấp." : {
+
+    },
+    "Thông tin shop" : {
+
+    },
     "Thủ công" : {
       "localizations" : {
         "en" : {
@@ -16729,6 +16759,19 @@
         }
       }
     },
+    "Thử một tên khác hoặc bỏ dấu tiếng Việt." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try another name or search without diacritics."
+          }
+        }
+      }
+    },
+    "Thử nhập tên khác hoặc chọn nội dung thi đấu khác." : {
+
+    },
     "Thử từ khoá khác hoặc thêm sân mới." : {
       "localizations" : {
         "en" : {
@@ -16738,6 +16781,9 @@
           }
         }
       }
+    },
+    "Thử từ khóa ngắn hơn hoặc bỏ danh mục đang chọn." : {
+
     },
     "Thứ tự ra sân ngẫu nhiên" : {
       "localizations" : {
@@ -16788,6 +16834,9 @@
           }
         }
       }
+    },
+    "Tiện ích" : {
+
     },
     "TIỆN ÍCH" : {
       "localizations" : {
@@ -16965,6 +17014,9 @@
         }
       }
     },
+    "Tìm sản phẩm trong Shop" : {
+
+    },
     "TÌM SÂN THEO KHU VỰC" : {
       "localizations" : {
         "en" : {
@@ -16985,6 +17037,9 @@
         }
       }
     },
+    "Tìm tên vận động viên" : {
+
+    },
     "Tìm theo tên" : {
       "localizations" : {
         "en" : {
@@ -17004,6 +17059,12 @@
           }
         }
       }
+    },
+    "Tìm vận động viên" : {
+
+    },
+    "Tìm vợt, giày, bóng…" : {
+
     },
     "Timeout thường, còn %lld" : {
       "localizations" : {
@@ -17095,6 +17156,12 @@
         }
       }
     },
+    "Tính năng đang trong giai đoạn thử nghiệm giới hạn." : {
+
+    },
+    "Tính năng đồng bộ sẽ được mở sau khi hoàn tất bảo vệ tài khoản." : {
+
+    },
     "Tính theo tổng điểm" : {
       "localizations" : {
         "en" : {
@@ -17114,6 +17181,9 @@
           }
         }
       }
+    },
+    "Tình trạng" : {
+
     },
     "Tính vào bảng xếp hạng" : {
       "localizations" : {
@@ -17144,6 +17214,9 @@
           }
         }
       }
+    },
+    "Toàn màn hình" : {
+
     },
     "Tối" : {
       "localizations" : {
@@ -17282,6 +17355,12 @@
         }
       }
     },
+    "Tổng cộng" : {
+
+    },
+    "Tổng đơn" : {
+
+    },
     "Tổng quan" : {
       "localizations" : {
         "en" : {
@@ -17293,6 +17372,7 @@
       }
     },
     "top-2 mỗi bảng" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -17392,6 +17472,9 @@
         }
       }
     },
+    "TRẬN %lld" : {
+
+    },
     "Trận cha không thuộc giải này." : {
       "localizations" : {
         "en" : {
@@ -17458,6 +17541,16 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "MATCHES IN PROGRESS"
+          }
+        }
+      }
+    },
+    "trận đấu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "matches"
           }
         }
       }
@@ -17558,6 +17651,16 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Home"
+          }
+        }
+      }
+    },
+    "Trang giải đấu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tournament page"
           }
         }
       }
@@ -18575,6 +18678,9 @@
         }
       }
     },
+    "Về dữ liệu này" : {
+
+    },
     "VERIFIED" : {
       "localizations" : {
         "en" : {
@@ -18656,6 +18762,12 @@
       }
     },
     "VIỆT NAM" : {
+
+    },
+    "Việt Nam & gốc Việt trên bảng WPR" : {
+
+    },
+    "View results for %@" : {
 
     },
     "VÔ ĐỊCH" : {
@@ -19022,6 +19134,9 @@
         }
       }
     },
+    "WPR là bảng tổng hợp: đôi 50%%, đôi nam nữ 35%%, đơn 15%%, tính trên điểm 52 tuần gần nhất — mỗi VĐV một hạng duy nhất. ThePickleHub trích top 25 mỗi bảng + các VĐV Việt làm tư liệu tham khảo (số liệu lấy ngày %@) và không phải kênh chính thức hay đối tác của PPA Tour. Xem bảng đầy đủ hơn 2.000 VĐV tại trang gốc." : {
+
+    },
     "Xác minh bảo mật" : {
       "localizations" : {
         "en" : {
@@ -19043,6 +19158,7 @@
       }
     },
     "Xác nhận (%lld/%lld)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -19211,6 +19327,12 @@
         }
       }
     },
+    "Xem kết quả %@" : {
+
+    },
+    "Xem kết quả Pickleball World Cup hôm nay" : {
+
+    },
     "Xem lại" : {
       "localizations" : {
         "en" : {
@@ -19374,6 +19496,9 @@
           }
         }
       }
+    },
+    "Xem trước nhánh" : {
+
     },
     "XEM TRƯỚC VIETQR" : {
 
