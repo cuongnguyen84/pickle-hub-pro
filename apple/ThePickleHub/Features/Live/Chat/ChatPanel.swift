@@ -10,6 +10,8 @@ struct ChatPanel: View {
     @State private var showLeaderboard = false
     @State private var showSettings = false
     @State private var showLogin = false
+    @State private var isEditingNickname = false
+    @State private var nicknameDraft = ""
     @FocusState private var inputFocused: Bool
 
     init(livestreamID: String) {
@@ -135,6 +137,7 @@ struct ChatPanel: View {
         } else if model.isMuted {
             disabledBar(String(localized: "Bạn đang bị tắt tiếng"), icon: "speaker.slash")
         } else {
+            nicknameBar
             // TimelineView drives the 1s slow-mode countdown without a manual timer.
             TimelineView(.periodic(from: .now, by: 1)) { _ in
                 let remaining = model.slowModeRemaining
@@ -166,6 +169,69 @@ struct ChatPanel: View {
                 }
                 .padding(.horizontal, 14).padding(.vertical, 10)
             }
+        }
+    }
+
+    @ViewBuilder
+    private var nicknameBar: some View {
+        if isEditingNickname {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    TextField("Nhập nickname", text: $nicknameDraft)
+                        .font(TLFont.sans(13))
+                        .textInputAutocapitalization(.words)
+                        .autocorrectionDisabled()
+                        .submitLabel(.done)
+                        .onSubmit(saveNickname)
+                        .padding(.horizontal, 10).padding(.vertical, 7)
+                        .background(TLColor.surface2, in: RoundedRectangle(cornerRadius: 9))
+                    Button(action: saveNickname) {
+                        Group {
+                            if model.isSavingNickname { ProgressView().controlSize(.small) }
+                            else { Image(systemName: "checkmark").foregroundStyle(.green) }
+                        }.frame(width: 32, height: 32)
+                    }
+                    .disabled(model.isSavingNickname || nicknameDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    Button {
+                        nicknameDraft = model.currentNickname
+                        isEditingNickname = false
+                        model.nicknameErrorText = nil
+                    } label: {
+                        Image(systemName: "xmark").foregroundStyle(TLColor.live).frame(width: 32, height: 32)
+                    }
+                    .disabled(model.isSavingNickname)
+                }
+                if let error = model.nicknameErrorText {
+                    Text(error).font(TLFont.sans(11)).foregroundStyle(TLColor.live)
+                }
+            }
+            .padding(.horizontal, 14).padding(.vertical, 7)
+        } else {
+            HStack(spacing: 6) {
+                Text("Nickname:").font(TLFont.sans(11)).foregroundStyle(TLColor.fg3)
+                Text(model.currentNickname).font(TLFont.sans(12, .semibold)).foregroundStyle(TLColor.fg).lineLimit(1)
+                Spacer()
+                if model.canEditNickname {
+                    Button {
+                        nicknameDraft = model.currentNickname
+                        isEditingNickname = true
+                    } label: {
+                        Image(systemName: "pencil").font(.system(size: 13))
+                            .foregroundStyle(TLColor.fg2).frame(width: 36, height: 32)
+                    }
+                    .accessibilityLabel("Đổi nickname")
+                } else if let next = model.nextNicknameEditDate {
+                    Text("Đổi lại \(next.formatted(date: .numeric, time: .omitted))")
+                        .font(TLFont.sans(10)).foregroundStyle(TLColor.fg3)
+                }
+            }
+            .padding(.horizontal, 14).padding(.vertical, 5)
+        }
+    }
+
+    private func saveNickname() {
+        Task {
+            if await model.updateNickname(nicknameDraft) { isEditingNickname = false }
         }
     }
 

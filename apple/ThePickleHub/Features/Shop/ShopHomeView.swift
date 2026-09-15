@@ -62,9 +62,14 @@ struct ShopHomeView: View {
             }
             .padding(.horizontal, TLSpacing.lg)
             .padding(.top, TLSpacing.sm)
-            .padding(.bottom, 44)
+            .padding(.bottom, 104)
         }
         .background(TLColor.bg)
+        .overlay(alignment: .bottomTrailing) {
+            ShopFloatingActions()
+                .padding(.trailing, TLSpacing.lg)
+                .padding(.bottom, TLSpacing.md)
+        }
         .navigationTitle("Chợ đồ pickleball")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(for: ShopRoute.self) { route in
@@ -81,6 +86,8 @@ struct ShopHomeView: View {
                 AuthenticationRequiredView { ShopWishlistView() }
             case .cart:
                 AuthenticationRequiredView { ShopCartView() }
+            case .orders:
+                AuthenticationRequiredView { ShopOrdersView() }
             case .checkout(let shopSlug):
                 AuthenticationRequiredView { ShopCheckoutView(shopSlug: shopSlug) }
             case .order(let code):
@@ -182,7 +189,9 @@ struct ShopHomeView: View {
                     ForEach(model.products) { product in
                         NavigationLink(value: ShopRoute.product(product.slug)) {
                             ShopProductCard(product: product)
+                                .frame(maxHeight: .infinity, alignment: .top)
                         }
+                        .frame(maxHeight: .infinity)
                         .buttonStyle(.plain)
                     }
                 }
@@ -216,6 +225,16 @@ struct ShopProductCard: View {
                 }
 
             VStack(alignment: .leading, spacing: TLSpacing.sm) {
+                Group {
+                    if let percent = product.discountPercentMax, percent >= 1 {
+                        ShopDiscountBadge(percent: percent)
+                    } else {
+                        Color.clear
+                            .frame(width: 1, height: 20)
+                            .accessibilityHidden(true)
+                    }
+                }
+
                 Text(product.title)
                     .font(TLType.titleSans(15))
                     .foregroundStyle(TLColor.fg)
@@ -245,10 +264,34 @@ struct ShopProductCard: View {
                 }
             }
             .padding(TLSpacing.md)
+            .frame(maxHeight: .infinity, alignment: .top)
         }
+        .frame(maxHeight: .infinity, alignment: .top)
         .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(TLColor.border, lineWidth: 1))
         .accessibilityElement(children: .combine)
+    }
+}
+
+/* Hallmark · component: discount badge · genre: editorial · theme: Sport
+ * states: static display · contrast: token-backed ink/paper
+ * critique: P5 H5 E5 S5 R5 V4
+ */
+private struct ShopDiscountBadge: View {
+    let percent: Int
+
+    var body: some View {
+        Text("-\(percent)%")
+            .font(TLType.dataMono(9))
+            .fontWeight(.bold)
+            .monospacedDigit()
+        .foregroundStyle(TLColor.bg)
+        .padding(.horizontal, 8)
+        .frame(height: 20)
+        .background(TLColor.fg, in: Capsule())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Giảm \(percent) phần trăm")
     }
 }
 
@@ -256,14 +299,15 @@ private struct ShopProductArtwork: View {
     let product: ShopProductCardSummary
 
     var body: some View {
-        ZStack {
-            TLColor.surface2
-            Image(systemName: product.category.symbol)
-                .font(.system(size: 48, weight: .light))
-                .foregroundStyle(TLColor.fg3)
-            ShopRemoteImage(url: product.coverURL, contentMode: .fill) { Color.clear }
+        ShopRemoteImage(url: product.coverURL, contentMode: .fit) {
+            ZStack {
+                TLColor.surface2
+                Image(systemName: product.category.symbol)
+                    .font(.system(size: 48, weight: .light))
+                    .foregroundStyle(TLColor.fg3)
+            }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .padding(TLSpacing.sm)
         .accessibilityLabel(product.coverLabel)
     }
 }
@@ -274,16 +318,33 @@ struct ShopCardPriceText: View {
     var size: CGFloat = 12
 
     var body: some View {
-        Text(label)
-            .font(TLType.dataMono(size))
-            .fontWeight(.bold)
-            .foregroundStyle(TLColor.fg)
+        VStack(alignment: .leading, spacing: 2) {
+            if let originalPrice {
+                Text(ShopMoney.vnd(originalPrice))
+                    .font(TLType.dataMono(max(9, size - 2)))
+                    .foregroundStyle(TLColor.fg3)
+                    .strikethrough()
+                    .accessibilityLabel("Giá gốc \(ShopMoney.vnd(originalPrice))")
+            }
+            Text(label)
+                .font(TLType.dataMono(size))
+                .fontWeight(.bold)
+                .foregroundStyle(TLColor.fg)
+        }
     }
 
     var label: String {
         guard let minimum = product.priceMinVND else { return "Chưa có giá" }
         guard product.hasPriceRange, let maximum = product.priceMaxVND else { return ShopMoney.vnd(minimum) }
         return showsFromPrefix ? "Từ \(ShopMoney.vnd(minimum))" : "\(ShopMoney.vnd(minimum)) – \(ShopMoney.vnd(maximum))"
+    }
+
+    private var originalPrice: Int? {
+        guard !product.hasPriceRange,
+              let original = product.compareAtMinVND,
+              let current = product.priceMinVND,
+              original > current else { return nil }
+        return original
     }
 }
 

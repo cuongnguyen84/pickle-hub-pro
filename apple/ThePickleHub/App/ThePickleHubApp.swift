@@ -65,6 +65,9 @@ enum OrientationLock {
     // or flat — the "screen keeps rotating" bug. A single mask rotates once and
     // stays put.
     static func lockLandscape() { apply(.landscapeRight) }
+    /// Let media fullscreen follow the device orientation while keeping the
+    /// rest of the app portrait-only.
+    static func allowMediaRotation() { apply(.allButUpsideDown) }
     static func unlock() { apply(.portrait) }
     private static func apply(_ mask: UIInterfaceOrientationMask) {
         AppDelegate.orientationLock = mask

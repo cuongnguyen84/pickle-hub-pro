@@ -79,6 +79,8 @@ struct ShopPublicProductCardDTO: Codable, Equatable, Identifiable, Sendable {
     let shop: Shop
     let priceMin: Int?
     let priceMax: Int?
+    let discountPercentMax: Int?
+    let compareAtMin: Int?
     let availability: ShopPublicAvailability?
     let cover: ShopPublicMediaDTO?
 
@@ -87,6 +89,8 @@ struct ShopPublicProductCardDTO: Codable, Equatable, Identifiable, Sendable {
         case createdAt = "created_at"
         case priceMin = "price_min"
         case priceMax = "price_max"
+        case discountPercentMax = "discount_pct_max"
+        case compareAtMin = "compare_at_min"
     }
 }
 
@@ -145,6 +149,7 @@ struct ShopPublicProductDTO: Codable, Equatable, Identifiable, Sendable {
         let optionKey: String?
         let sku: String?
         let priceVND: Int
+        let compareAtPriceVND: Int?
         let availability: ShopPublicAvailability
         let stockOnHand: Int?
         let mediaID: UUID?
@@ -153,6 +158,7 @@ struct ShopPublicProductDTO: Codable, Equatable, Identifiable, Sendable {
             case optionValues = "option_values"
             case optionKey = "option_key"
             case priceVND = "price_vnd"
+            case compareAtPriceVND = "compare_at_price_vnd"
             case stockOnHand = "stock_on_hand"
             case mediaID = "media_id"
         }

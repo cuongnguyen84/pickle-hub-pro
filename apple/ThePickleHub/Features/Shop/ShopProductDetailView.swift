@@ -143,13 +143,18 @@ struct ShopProductDetailView: View {
 
     private func artworkPage(product: ShopProduct, media: ShopProductMedia?, index: Int) -> some View {
         ZStack {
-            TLColor.surface2
-            Circle().fill(TLColor.accent.opacity(0.10 + Double(index) * 0.04)).padding(54)
-            Image(systemName: product.category.symbol)
-                .font(.system(size: 96, weight: .ultraLight))
-                .foregroundStyle(TLColor.fg2)
-                .rotationEffect(.degrees(Double(index) * -6))
-            ShopRemoteImage(url: media?.publicURL, contentMode: .fill) { Color.clear }
+            TLColor.surface
+            ShopRemoteImage(url: media?.publicURL, contentMode: .fit) {
+                ZStack {
+                    TLColor.surface2
+                    Circle().fill(TLColor.accent.opacity(0.10 + Double(index) * 0.04)).padding(54)
+                    Image(systemName: product.category.symbol)
+                        .font(.system(size: 96, weight: .ultraLight))
+                        .foregroundStyle(TLColor.fg2)
+                        .rotationEffect(.degrees(Double(index) * -6))
+                }
+            }
+            .padding(TLSpacing.md)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(media?.label ?? product.title)
@@ -162,7 +167,7 @@ struct ShopProductDetailView: View {
                 .font(TLType.eyebrowMono(9)).tracking(1).foregroundStyle(TLColor.accentText)
             Text(product.title)
                 .font(TLType.titleSans(25)).foregroundStyle(TLColor.fg)
-            ShopPriceText(product: product, size: 20)
+            ShopPriceText(product: product, variant: variantSelection.selectedVariant(in: product), size: 20)
             Text("Tạm tính sản phẩm, chưa gồm phí vận chuyển")
                 .font(TLType.bodySans(11)).foregroundStyle(TLColor.fg3)
         }

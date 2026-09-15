@@ -55,4 +55,23 @@ struct ShopPhase4PaymentContractTests {
         #expect(checkout.amountVND == 125000)
         #expect(checkout.memo == "PH-2608-A1B2")
     }
+
+    @Test("Order RPC keeps the nullable delivery-note argument")
+    func createOrderEncodesEmptyDeliveryNoteAsNull() throws {
+        let input = ShopOrderCreateInput(
+            clientToken: UUID(), paymentMethod: .bankTransfer,
+            recipientName: "Nguyen Van A", recipientPhone: "0945689588",
+            shippingAddress: "129 Khanh Hoi, Quan 4", deliveryNote: nil,
+            expectedShippingFeeVND: 30_000,
+            items: [.init(variantID: UUID(), quantity: 2, expectedUnitPriceVND: 2_500_000)]
+        )
+
+        let data = try JSONEncoder().encode(SupabaseShopOrderRepository.CreateParams(input))
+        let payload = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+
+        #expect(payload.keys.contains("_delivery_note"))
+        #expect(payload["_delivery_note"] is NSNull)
+        #expect(payload["_payment_method"] as? String == "bank_transfer")
+        #expect(payload.keys.count == 8)
+    }
 }
