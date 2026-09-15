@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.picklehub.opssweep</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/python3</string>
+    <string>/Users/cm10/pickle-hub-pro/scripts/ops/ops_sweep.py</string>
+    <string>--once</string>
+  </array>
+  <key>StartInterval</key><integer>3600</integer>
+  <key>RunAtLoad</key><false/>
+  <key>WorkingDirectory</key><string>/Users/cm10/pickle-hub-pro</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>SECRETS_FILE</key><string>/Users/cm10/pickle-hub-pro/.claude/secrets.local.md</string>
+    <key>PICKLEHUB_REPO</key><string>/Users/cm10/pickle-hub-pro</string>
+  </dict>
+  <key>StandardOutPath</key><string>/Users/cm10/Library/Logs/PickleHub/opssweep-launchd.log</string>
+  <key>StandardErrorPath</key><string>/Users/cm10/Library/Logs/PickleHub/opssweep-launchd.log</string>
+  <key>ProcessType</key><string>Background</string>
+</dict>
+</plist>

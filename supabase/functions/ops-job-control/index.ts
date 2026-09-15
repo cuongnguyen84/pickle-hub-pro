@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { requireCronRequest } from "../_shared/cron-auth.ts";
+import { isProgressCommand, parseSnapshot, progressTarget, renderProgress, renderContentCalendar } from "./progress.ts";
 
 type Job = {
   job_key: string;
@@ -316,7 +317,7 @@ async function agentFixWatchdog(supabase: ReturnType<typeof createClient>): Prom
 // này" — người nhận không biết phải làm gì tiếp, đó là ngõ cụt chứ không phải
 // câu trả lời.
 // ---------------------------------------------------------------------------
-const TASK_COMMAND_RE = /^\/(xuly|lam|viec|idea|bo)(?:@\w+)?(?:\s|$)/i;
+const TASK_COMMAND_RE = /^\/(xuly|lam|viec|idea|bo|tien_do|lamngay|lich_content)(?:@\w+)?(?:\s|$)/i;
 
 async function handleTaskCommand(
   supabase: ReturnType<typeof createClient>,
@@ -334,6 +335,32 @@ async function handleTaskCommand(
       .update({ status: "done", processed_at: new Date().toISOString(), result: result.slice(0, 2000) })
       .eq("id", rowId);
   };
+
+  if (isProgressCommand(trimmed) || cmd === "/lamngay") {
+    const { data: saved, error } = await supabase.from("telegram_commands")
+      .select("result").eq("chat_id", Number(chatId)).eq("text", "/team_snapshot")
+      .eq("status", "done").order("id", { ascending: false }).limit(1).maybeSingle();
+    const snapshot = error ? null : parseSnapshot(saved?.result);
+    if (cmd === "/lamngay") {
+      const target = progressTarget(body);
+      const task = target && snapshot?.tasks.find((t) => target === `T${t.id}` || target === `XL${t.telegram_id}`);
+      if (!task || !snapshot || Date.now() - Date.parse(snapshot.heartbeat_at) > 20 * 60_000) {
+        await close("priority_not_queued");
+        await sendTelegram(chatId, "Chưa xác nhận được việc hoặc agent đang mất kết nối. Không tạo việc trùng. Xem /tien_do T47 rồi thử lại /lamngay T47 khi trạng thái cập nhật.");
+        return { ok: true, priority_requested: false };
+      }
+      const { error: updateError } = await supabase.from("telegram_commands")
+        .update({ text: `/xuly team priority T${task.id}`, result: "priority_requested_not_executed" })
+        .eq("id", rowId).eq("status", "pending");
+      if (updateError) throw updateError;
+      await sendTelegram(chatId, `Đã yêu cầu ưu tiên T${task.id}; chưa phải đã chạy hoặc xuất bản. Bộ điều phối sẽ xác nhận riêng. Kiểm tra: /tien_do T${task.id}`);
+      return { ok: true, priority_requested: true };
+    }
+    const target = cmd === "/tien_do" || cmd === "/viec" ? body : undefined;
+    await close("progress_replied");
+    await sendTelegram(chatId, cmd === "/lich_content" ? renderContentCalendar(snapshot) : renderProgress(snapshot, target));
+    return { ok: true, progress_replied: true };
+  }
 
   // /viec — hàng đợi việc đang chờ agent
   if (cmd === "/viec") {
@@ -543,6 +570,9 @@ async function installWebhook(): Promise<Record<string, unknown>> {
       { command: "xuly", description: "Giao việc cho agent" },
       { command: "idea", description: "Gửi ý tưởng cho agent" },
       { command: "viec", description: "Việc đang chờ agent xử lý" },
+      { command: "tien_do", description: "Tiến độ: /tien_do T47 hoặc /tien_do XL136" },
+      { command: "lich_content", description: "Lịch nội dung tuần này và trạng thái đăng" },
+      { command: "lamngay", description: "Ưu tiên việc đã giao: /lamngay T47" },
       { command: "bo", description: "Huỷ một việc đang chờ" },
     ] }),
   });
