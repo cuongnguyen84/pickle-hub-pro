@@ -39,6 +39,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import ssl
 import re
 import sqlite3
 import sys
@@ -156,6 +157,19 @@ class Fetched:
         return sha256(self.body.encode("utf-8", "replace")).hexdigest()[:16]
 
 
+# Python installed from python.org ships without a populated system trust
+# store on macOS, so every urlopen here failed with CERTIFICATE_VERIFY_FAILED
+# and this whole gate reported the SITE as broken (see _TLS_CONTEXT note in
+# check_bot). certifi carries the CA bundle; use it when it is importable and
+# fall back to the default context otherwise.
+try:  # pragma: no cover - depends on the interpreter's environment
+    import certifi
+
+    _TLS_CONTEXT = ssl.create_default_context(cafile=certifi.where())
+except Exception:  # certifi absent: keep the previous behaviour
+    _TLS_CONTEXT = ssl.create_default_context()
+
+
 def fetch(url: str, ua: str, timeout: int) -> Fetched:
     req = Request(url, headers={
         "User-Agent": ua,
@@ -163,7 +177,7 @@ def fetch(url: str, ua: str, timeout: int) -> Fetched:
         "Cache-Control": "no-cache",
     })
     try:
-        with urlopen(req, timeout=timeout) as r:
+        with urlopen(req, timeout=timeout, context=_TLS_CONTEXT) as r:
             body = r.read().decode("utf-8", "replace")
             return Fetched(url, r.status, r.geturl(), body)
     except HTTPError as e:
@@ -218,8 +232,22 @@ def check_bot(urls, ua, timeout):
     for u in urls:
         f = fetch(u, ua, timeout)
         problems = []
+        # A transport failure is not a content failure. Reporting "empty
+        # <title>" and "prerender likely incomplete" for a URL we never
+        # reached blames production for a local problem — which is exactly
+        # what a stale CA store used to make this gate do, on every URL, in
+        # language that reads like the site is broken.
+        if f.status == 0:
+            results.append({
+                "url": u, "pass": False, "status": 0, "title": None,
+                "canonical": None, "hreflang_count": 0,
+                "problems": [f"could not reach url: {f.error}"],
+                "error": f.error,
+            })
+            ok = False
+            continue
         if f.status != 200:
-            problems.append(f"status {f.status or 'ERR'}")
+            problems.append(f"status {f.status}")
         title = f.meta.title
         if not title:
             problems.append("empty <title>")
@@ -369,8 +397,16 @@ def _snap(f: Fetched) -> dict:
 def drift_baseline(urls, ua, timeout, path):
     con = _db(path)
     out = []
+    skipped = []
     for u in urls:
         f = fetch(u, ua, timeout)
+        # Storing an unreachable fetch writes the hash of an empty string as
+        # the baseline, and every later compare then reports a huge "change"
+        # the moment the fetch works again. Refuse instead of recording a
+        # snapshot that is quietly wrong.
+        if f.status == 0:
+            skipped.append({"url": u, "error": f.error})
+            continue
         s = _snap(f)
         con.execute(
             """INSERT INTO snapshots(url,ts,status,title,canonical,robots,h1,hreflang,schema_types,og_count,html_hash)
@@ -381,7 +417,7 @@ def drift_baseline(urls, ua, timeout, path):
         out.append({"url": u, "status": s["status"], "title": s["title"], "html_hash": s["html_hash"]})
     con.commit()
     con.close()
-    return True, {"saved": out, "db": path}
+    return not skipped, {"saved": out, "skipped": skipped, "db": path}
 
 
 def drift_compare(urls, ua, timeout, path):

@@ -1,2 +1,7 @@
 google-auth>=2.0
 requests>=2.28
+# seo_verify.py builds its TLS context from this bundle. Python installed from
+# python.org ships without a populated system trust store on macOS, and without
+# certifi every fetch fails with CERTIFICATE_VERIFY_FAILED — which the gate
+# used to report as a production content defect rather than a local one.
+certifi>=2024.2.2
