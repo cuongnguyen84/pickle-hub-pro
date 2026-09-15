@@ -1,3 +1,4 @@
+import { truncateForSeo } from "../../src/lib/seo-title";
 /**
  * HTML page builder for SSR prerendering.
  */
@@ -105,44 +106,6 @@ function getFooterHtml(lang: Lang, siteUrl: string): string {
 // reserved up front.
 const SEO_TITLE_MAX_BYTES = 60;
 const SEO_DESCRIPTION_MAX_BYTES = 160;
-const ELLIPSIS_BYTES = 3; // "\u2026" in UTF-8
-
-const TEXT_ENCODER = new TextEncoder();
-
-function utf8ByteLength(s: string): number {
-  return TEXT_ENCODER.encode(s).length;
-}
-
-function truncateForSeo(text: string, byteLimit: number): string {
-  if (!text) return text;
-  if (utf8ByteLength(text) <= byteLimit) return text;
-
-  // Walk the source one Unicode code point at a time, summing the
-  // UTF-8 byte cost. Use Array.from() to iterate full code points so
-  // surrogate-pair emoji or rare CJK glyphs aren't sliced in half.
-  const target = byteLimit - ELLIPSIS_BYTES;
-  const chars = Array.from(text);
-  let bytes = 0;
-  let charIndex = 0;
-  for (let i = 0; i < chars.length; i++) {
-    const cost = utf8ByteLength(chars[i]);
-    if (bytes + cost > target) break;
-    bytes += cost;
-    charIndex = i + 1;
-  }
-  const sliced = chars.slice(0, charIndex).join("");
-
-  // Prefer breaking at the last whitespace within the budget so SERP
-  // previews don't slice mid-word. minKept guards against the case
-  // where a single early word would leave a useless stub like "PPA…"
-  // — for empirical Vietnamese news titles 0.6 of the prefix is the
-  // sweet spot.
-  const lastSpace = sliced.lastIndexOf(" ");
-  const minKept = Math.floor(sliced.length * 0.6);
-  const base = lastSpace >= minKept ? sliced.slice(0, lastSpace) : sliced;
-  return base.replace(/[\s.,;:\-—–]+$/, "") + "\u2026";
-}
-
 export function buildHtml(opts: BuildHtmlOptions): string {
   const {
     title: rawTitle,
