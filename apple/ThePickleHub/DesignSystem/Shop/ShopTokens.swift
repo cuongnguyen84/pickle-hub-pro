@@ -9,6 +9,8 @@ enum ShopTokens {
     static let primaryActionText = TLColor.accentInk
     static let verified = TLColor.accentText
     static let unavailable = Color.red
+    static let discount = TLColor.live
+    static let discountText = Color.white
 
     static let cardRadius = TLRadius.xl
     static let controlRadius = TLRadius.lg

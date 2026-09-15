@@ -70,22 +70,75 @@ struct NewsDetailView: View {
     let news: FeedNews
     let publishedAt: Date?
 
+    @State private var detail: NewsArticleDetail?
+    @State private var phase: Phase = .loading
+
+    private let repo = FeedRepository()
+    private enum Phase: Equatable { case loading, loaded, failed(String) }
+
     var body: some View {
-        // Full editorial content lives on ThePickleHub's canonical news page.
-        // Source attribution remains plain text in the eyebrow; the private
-        // origin URL is never requested by the native client.
-        ArticleDetailView(
-            imageURL: news.imageURL,
-            eyebrow: .init(
-                kicker: "TIN",
-                meta: [FeedDate.relative(publishedAt), news.source?.nonEmpty]
-                    .compactMap { $0 }.filter { !$0.isEmpty },
-                aiTranslated: news.aiTranslated
-            ),
-            title: news.title,
-            bodyText: news.summary,
-            readURL: WebRoutes.news(slug: news.slug, language: news.language),
-            readLabel: "Đọc bài viết"
-        )
+        Group {
+            switch phase {
+            case .loading:
+                ProgressView().tint(TLColor.accentText)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            case .failed(let message):
+                VStack(spacing: 10) {
+                    Text("Không tải được bài viết")
+                        .font(TLFont.sans(16, .semibold))
+                        .foregroundStyle(TLColor.fg)
+                    Text(message)
+                        .font(TLFont.sans(12))
+                        .foregroundStyle(TLColor.fg3)
+                        .multilineTextAlignment(.center)
+                    Button("Thử lại") { Task { await load() } }
+                        .foregroundStyle(TLColor.accentText)
+                }
+                .padding(32)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            case .loaded:
+                if let detail {
+                    ArticleWebView(bodyHTML: bodyHTML(detail))
+                        .ignoresSafeArea(edges: .bottom)
+                }
+            }
+        }
+        .background(TLColor.bg)
+        .navigationTitle(news.title)
+        .navigationBarTitleDisplayMode(.inline)
+        .task { await load() }
+    }
+
+    private func bodyHTML(_ detail: NewsArticleDetail) -> String {
+        var html = ""
+        if let image = detail.imageURL?.nonEmpty,
+           let url = WebRoutes.asset(image),
+           url.scheme?.lowercased() == "https" {
+            html += "<img src=\"\(ArticleHTML.escapeText(url.absoluteString))\" alt=\"\">"
+        }
+
+        let source = detail.source?.nonEmpty ?? news.source?.nonEmpty
+        let meta = [source, detail.category?.nonEmpty].compactMap { $0 }
+        if !meta.isEmpty {
+            html += "<p style=\"color:#bdee5c;font-size:12px;letter-spacing:.06em;text-transform:uppercase;margin:8px 0 0\">\(ArticleHTML.escapeText(meta.joined(separator: " · ")))</p>"
+        }
+        html += "<h1>\(ArticleHTML.escapeText(detail.title))</h1>"
+
+        if let content = detail.contentHTML?.nonEmpty {
+            html += content
+        } else {
+            html += "<p>\(ArticleHTML.escapeText(detail.summary))</p>"
+        }
+        return html
+    }
+
+    private func load() async {
+        phase = .loading
+        do {
+            detail = try await repo.newsArticle(slug: news.slug, language: news.language)
+            phase = detail == nil ? .failed("Không tìm thấy bài viết.") : .loaded
+        } catch {
+            phase = .failed(error.localizedDescription)
+        }
     }
 }

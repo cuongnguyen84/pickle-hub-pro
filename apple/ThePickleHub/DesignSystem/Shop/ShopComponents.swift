@@ -36,9 +36,26 @@ struct ShopPriceText: View {
     var size: CGFloat = 13
 
     var body: some View {
-        Text(label)
-            .font(TLType.dataMono(size))
-            .foregroundStyle(TLColor.fg)
+        VStack(alignment: .leading, spacing: 3) {
+            if let originalPrice {
+                Text(ShopMoney.vnd(originalPrice))
+                    .font(TLType.dataMono(max(9, size - 3)))
+                    .foregroundStyle(TLColor.fg3)
+                    .strikethrough()
+                    .accessibilityLabel("Giá gốc \(ShopMoney.vnd(originalPrice))")
+            }
+            HStack(spacing: 7) {
+                Text(label)
+                    .font(TLType.dataMono(size))
+                    .foregroundStyle(TLColor.fg)
+                if let discountPercent {
+                    Text("-\(discountPercent)%")
+                        .font(TLType.eyebrowMono(max(9, size - 4)))
+                        .foregroundStyle(ShopTokens.unavailable)
+                        .accessibilityLabel("Giảm \(discountPercent) phần trăm")
+                }
+            }
+        }
     }
 
     var label: String {
@@ -49,6 +66,15 @@ struct ShopPriceText: View {
                 : "\(ShopMoney.vnd(product.minimumPriceVND)) – \(ShopMoney.vnd(product.maximumPriceVND))"
         }
         return ShopMoney.vnd(product.minimumPriceVND)
+    }
+
+    private var originalPrice: Int? {
+        guard let variant, variant.discountPercent != nil else { return nil }
+        return variant.compareAtPriceVND
+    }
+
+    private var discountPercent: Int? {
+        variant?.discountPercent ?? product.maximumDiscountPercent
     }
 }
 
@@ -200,7 +226,22 @@ struct ShopQuantityControl: View {
 
     var body: some View {
         Stepper(value: $quantity, in: 1...max(1, maximum)) {
-            Text("Số lượng: \(quantity)").font(TLType.titleSans(13))
+            HStack(spacing: TLSpacing.sm) {
+                Text("Số lượng")
+                    .foregroundStyle(TLColor.fg2)
+                Text("\(quantity)")
+                    .font(TLType.dataMono(13))
+                    .foregroundStyle(TLColor.fg)
+                    .frame(minWidth: 24)
+            }
+            .font(TLType.titleSans(13))
+        }
+        .padding(.horizontal, TLSpacing.md)
+        .frame(minHeight: ShopTokens.minimumTouchTarget)
+        .background(TLColor.surface2, in: RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous)
+                .strokeBorder(TLColor.border2)
         }
         .accessibilityLabel("Số lượng")
         .accessibilityValue("\(quantity)")

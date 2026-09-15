@@ -101,7 +101,8 @@ struct LiveView: View {
                     didAutoSelect = true
                     // Live OR a scheduled broadcast keeps the Live segment front;
                     // fall back to replays only on a fully quiet day.
-                    segment = (model.hasLive || !model.upcoming.isEmpty) ? .live : .replays
+                    let worldCupIsActive = Date() < WorldCupLiveBoard.retirementDate
+                    segment = (worldCupIsActive || model.hasLive || !model.upcoming.isEmpty) ? .live : .replays
                 }
             }
             .task(id: segment) {
@@ -177,6 +178,7 @@ struct LiveView: View {
         let live = model.liveStreams
         let upcoming = model.upcoming
         VStack(alignment: .leading, spacing: 26) {
+            WorldCupLiveBoard()
             ProTourEventsStrip()
                 .padding(.horizontal, 22)
             if live.isEmpty && upcoming.isEmpty {
