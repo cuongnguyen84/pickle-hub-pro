@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.picklehub.content</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/python3</string>
+    <string>/Users/cm10/pickle-hub-pro/scripts/ops/content_agent.py</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key><integer>8</integer>
+    <key>Minute</key><integer>30</integer>
+  </dict>
+  <key>RunAtLoad</key><false/>
+  <key>WorkingDirectory</key><string>/Users/cm10/pickle-hub-pro</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>SECRETS_FILE</key><string>/Users/cm10/pickle-hub-pro/.claude/secrets.local.md</string>
+    <key>PICKLEHUB_REPO</key><string>/Users/cm10/pickle-hub-pro</string>
+    <key>CLAUDE_BIN</key><string>/Users/cm10/.local/bin/claude</string>
+    <key>GOOGLE_SA_JSON</key><string>/Users/cm10/pickle-hub-pro/.claude/secrets.local.gsc-ga4-sa.json</string>
+  </dict>
+  <key>StandardOutPath</key><string>/Users/cm10/Library/Logs/PickleHub/content-launchd.log</string>
+  <key>StandardErrorPath</key><string>/Users/cm10/Library/Logs/PickleHub/content-launchd.log</string>
+  <key>ProcessType</key><string>Background</string>
+</dict>
+</plist>
