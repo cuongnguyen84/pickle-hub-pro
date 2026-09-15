@@ -168,6 +168,31 @@ When verifying edge function deployments:
 - Hotfix: can merge directly via CLI if needed
 - DUPR integration PRs (PR1-PR7, #114-#122) are intentionally held out of main pending design review — do not auto-merge
 
+### 🔴 No long-lived branches — the lesson of `feat/shop-production-phase-1`
+
+That branch forked on 2026-08-11 and ran five weeks. By 15/09 each side held
+half the product: main had 438 web commits and most of the native app the
+branch never saw, while the branch held Shop screens, the World Cup board and
+the wildcard sheet main never saw. A TestFlight build from either side shipped
+a *worse* app than the one before it, and reuniting `apple/` alone took 66
+hand-resolved conflicts.
+
+Rules that follow from it:
+
+1. **A branch that cannot merge this week is too big.** Split it. `apple/` and
+   web can ship separately — they have no build-time dependency.
+2. **Merge main into the branch daily**, not at the end. The 66 conflicts were
+   five weeks of drift, not five weeks of work.
+3. **Never build a release off a feature branch.** `release_preflight.sh
+   --release-source` fails when HEAD omits `origin/main`; that gate exists
+   because 2.1.4 and 2.1.5 shipped from a branch and main kept saying 2.1.0.
+4. **A squash commit hides divergence.** `7c6fd802` ("ship native shop") is 310
+   files; nothing in it tells you which halves already existed on main. Prefer
+   a merge that keeps history, or land the work in reviewable PRs.
+5. Before any native release, run `git log origin/main..<branch> -- apple` and
+   `git log <branch>..origin/main -- apple`. **Both** directions. If the second
+   is non-empty you are about to ship a regression.
+
 ## Environment Variables
 
 Required in `.env`:
