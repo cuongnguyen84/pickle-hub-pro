@@ -1305,7 +1305,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // prerendered body, not only as FAQPage JSON-LD. Every cached VI blog
   // page is missing that section and has to be re-rendered.
   // v125: refreshed calendar/access copy, author identities and related links.
-  const cacheKey = `pr:v125:${url.pathname}`;
+  // v126 (2026-09-16): /live and /vi/live no longer list replays — the
+  // "Xem lại" section, its ItemList entries and the copy pointing at it are
+  // gone. Every cached live hub still carries them.
+  const cacheKey = `pr:v126:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

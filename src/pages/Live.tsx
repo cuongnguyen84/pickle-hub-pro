@@ -12,7 +12,9 @@ import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { WorldCupLiveBoard } from "@/components/live/WorldCupLiveBoard";
 import { ProTourEventsStrip } from "@/components/live/ProTourEventsStrip";
 
-type Filter = "all" | "live" | "scheduled" | "ended";
+// Replays are hidden from the hub on purpose (16/09) — the ended streams
+// still play at /live/<id>, they are just no longer listed or counted here.
+type Filter = "all" | "live" | "scheduled";
 
 interface MatchCardProps {
   stream: Livestream;
@@ -102,21 +104,18 @@ const Live = () => {
 
   const liveQuery = useLivestreams("live");
   const schedQuery = useLivestreams("scheduled");
-  const endedQuery = useLivestreams("ended");
 
   const { data: live = [], isLoading: liveLoading } = liveQuery;
   const { data: scheduled = [], isLoading: schedLoading } = schedQuery;
-  const { data: ended = [], isLoading: endedLoading } = endedQuery;
 
   // Any of the three failing means the counts and the list are wrong, not
   // empty. Without this the `= []` defaults render "no matches in this view"
   // during an outage — telling the viewer nothing is on when the truth is we
   // could not ask (DS-04; the PGRST002 outages made this concrete).
-  const isError = liveQuery.isError || schedQuery.isError || endedQuery.isError;
+  const isError = liveQuery.isError || schedQuery.isError;
   const refetchAll = () => {
     void liveQuery.refetch();
     void schedQuery.refetch();
-    void endedQuery.refetch();
   };
 
   const queryClient = useQueryClient();
@@ -125,22 +124,20 @@ const Live = () => {
   });
 
   const counts = {
-    all: live.length + scheduled.length + ended.length,
+    all: live.length + scheduled.length,
     live: live.length,
     scheduled: scheduled.length,
-    ended: ended.length,
   };
 
-  const isLoading = liveLoading || schedLoading || endedLoading;
+  const isLoading = liveLoading || schedLoading;
 
   const items = useMemo(() => {
     switch (filter) {
       case "live": return live;
       case "scheduled": return scheduled;
-      case "ended": return ended;
-      default: return [...live, ...scheduled, ...ended.slice(0, 12)];
+      default: return [...live, ...scheduled];
     }
-  }, [filter, live, scheduled, ended]);
+  }, [filter, live, scheduled]);
 
   // Match head + thumbnail rendering moved into <MatchCard /> at top of file.
 
@@ -148,8 +145,8 @@ const Live = () => {
     <TheLineLayout
       title={language === "vi" ? "Sân trực tiếp" : "Live courts"}
       description={language === "vi"
-        ? "Trận đấu pickleball đang phát sóng, lịch sắp tới và replay tuần qua."
-        : "Pickleball matches streaming right now, upcoming within 24 hours, and replays from the past week."}
+        ? "Trận đấu pickleball đang phát sóng và lịch sắp tới."
+        : "Pickleball matches streaming right now and upcoming within 24 hours."}
       active="live"
     >
       <PullToRefreshIndicator state={ptrState} />
@@ -179,8 +176,8 @@ const Live = () => {
           </h1>
           <p>
             {language === "vi"
-              ? "Trận đang phát sóng, sắp diễn ra trong 24h tới, và replay tuần qua. Pull thẳng từ DB — không cache."
-              : "Matches streaming right now, upcoming within the next 24 hours, and replays from the past week. Pulled live from the database — no cache."}
+              ? "Trận đang phát sóng và sắp diễn ra trong 24h tới. Pull thẳng từ DB — không cache."
+              : "Matches streaming right now and upcoming within the next 24 hours. Pulled live from the database — no cache."}
           </p>
         </header>
 
@@ -208,7 +205,6 @@ const Live = () => {
             { key: "all", labelEn: "All", labelVi: "Tất cả" },
             { key: "live", labelEn: "Live", labelVi: "Trực tiếp" },
             { key: "scheduled", labelEn: "Upcoming", labelVi: "Sắp tới" },
-            { key: "ended", labelEn: "Replays", labelVi: "Replay" },
           ] as const).map((f) => (
             <button
               key={f.key}

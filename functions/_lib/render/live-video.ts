@@ -429,7 +429,9 @@ export async function renderLivestreamList(
   // Upcoming is ordered by when it AIRS, not by when the row was created. A
   // stream entered later but starting in December must not sit above one
   // starting tomorrow, which is what created_at ordering did.
-  const [liveRes, scheduledRes, endedRes] = await Promise.all([
+  // Replays are hidden from the hub on purpose (16/09) — /live/<id> still
+  // renders and still plays, the ended streams are simply not listed here.
+  const [liveRes, scheduledRes] = await Promise.all([
     supabase
       .from("public_livestreams")
       .select(COLUMNS)
@@ -442,17 +444,10 @@ export async function renderLivestreamList(
       .eq("status", "scheduled")
       .order("scheduled_start_at", { ascending: true, nullsFirst: false })
       .limit(10),
-    supabase
-      .from("public_livestreams")
-      .select(COLUMNS)
-      .eq("status", "ended")
-      .order("created_at", { ascending: false })
-      .limit(10),
   ]);
 
   const liveNow = ((liveRes?.data ?? []) as Stream[]).filter((s) => s.status === "live");
   const upcoming = ((scheduledRes?.data ?? []) as Stream[]).filter((s) => s.status === "scheduled");
-  const replays = ((endedRes?.data ?? []) as Stream[]).filter((s) => s.status === "ended");
 
   // /live/:id is single-canonical — /vi/live/:id 301s to it (_middleware.ts
   // rule 1d). Linking to the /vi form from the VI hub sent every crawler and
@@ -477,7 +472,7 @@ export async function renderLivestreamList(
           .join("")}</ul>`;
 
   // ItemList covers whatever is actually on the page, in the order shown.
-  const listItems = [...liveNow, ...upcoming, ...replays].map((s) => ({
+  const listItems = [...liveNow, ...upcoming].map((s) => ({
     url: `${siteUrl}/live/${s.id}`,
     name: s.title,
   }));
@@ -518,22 +513,22 @@ export async function renderLivestreamList(
             ? `${liveNow.length} stream${liveNow.length > 1 ? "s are" : " is"} live right now.`
             : upcoming.length > 0
               ? `Nothing is live at this moment; ${upcoming.length} stream${upcoming.length > 1 ? "s are" : " is"} scheduled.`
-              : "Nothing is live at this moment — past broadcasts stay watchable as replays below."
+              : "Nothing is live at this moment; the next broadcasts are listed on the tournament calendar."
         }`
       : `ThePickleHub phát livestream pickleball Việt Nam và PPA Tour Asia miễn phí, không cần đăng ký, không tường phí. ${
           liveNow.length > 0
             ? `Hiện có ${liveNow.length} trận đang phát trực tiếp.`
             : upcoming.length > 0
               ? `Hiện chưa có trận nào đang phát; ${upcoming.length} trận đã lên lịch.`
-              : "Hiện chưa có trận nào đang phát — các trận đã phát vẫn xem lại được bên dưới."
+              : "Hiện chưa có trận nào đang phát; lịch phát sóng tiếp theo xem ở lịch giải."
         }`;
 
   // Standing copy: true on a quiet day as well as a busy one, so the page is
   // never reduced to its empty state.
   const about =
     lang === "en"
-      ? `<h2>What you can watch here</h2><p>Coverage centres on Vietnamese tournaments — club opens, provincial championships and national events — alongside PPA Tour Asia stops relevant to players in the region. Streams open in the browser on phone and desktop; no account, app or subscription is needed to watch.</p><p>Every broadcast stays on the site after it ends, so a match you missed is still there as a replay with the same link.</p>`
-      : `<h2>Xem được gì ở đây</h2><p>Nội dung tập trung vào giải đấu tại Việt Nam — giải câu lạc bộ, giải tỉnh thành và giải quốc gia — cùng các chặng PPA Tour Asia liên quan tới người chơi trong khu vực. Livestream mở thẳng trên trình duyệt điện thoại và máy tính; không cần tài khoản, không cần cài app, không cần đăng ký gói.</p><p>Mọi trận đã phát đều được giữ lại trên site, nên trận bạn bỏ lỡ vẫn xem lại được ở đúng đường dẫn cũ.</p>`;
+      ? `<h2>What you can watch here</h2><p>Coverage centres on Vietnamese tournaments — club opens, provincial championships and national events — alongside PPA Tour Asia stops relevant to players in the region. Streams open in the browser on phone and desktop; no account, app or subscription is needed to watch.</p><p>Every broadcast keeps its own page after it ends, so a link you already have still opens the match it points to.</p>`
+      : `<h2>Xem được gì ở đây</h2><p>Nội dung tập trung vào giải đấu tại Việt Nam — giải câu lạc bộ, giải tỉnh thành và giải quốc gia — cùng các chặng PPA Tour Asia liên quan tới người chơi trong khu vực. Livestream mở thẳng trên trình duyệt điện thoại và máy tính; không cần tài khoản, không cần cài app, không cần đăng ký gói.</p><p>Mỗi buổi phát đều có trang riêng, nên đường dẫn bạn đã có vẫn mở đúng trận đó.</p>`;
 
   const nav =
     lang === "en"
@@ -557,7 +552,6 @@ export async function renderLivestreamList(
     section(lang === "en" ? "Scheduled" : "Sắp diễn ra", upcoming, (s) =>
       dateLabel(s.scheduled_start_at),
     ) +
-    section(lang === "en" ? "Replays" : "Xem lại", replays, (s) => dateLabel(s.ended_at)) +
     about +
     nav;
 
