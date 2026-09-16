@@ -11,6 +11,7 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { WorldCupLiveBoard } from "@/components/live/WorldCupLiveBoard";
 import { ProTourEventsStrip } from "@/components/live/ProTourEventsStrip";
+import { wcResultsPath, wcResultsLabel } from "@/lib/wc-results";
 
 // Replays are hidden from the hub on purpose (16/09) — the ended streams
 // still play at /live/<id>, they are just no longer listed or counted here.
@@ -190,6 +191,14 @@ const Live = () => {
         {/* Pro-tour tournaments in season (registry-driven, zero requests) —
             cards linking to /live/pro/<slug>. Self-hides out of season. */}
         <ProTourEventsStrip language={language} />
+
+        {/* Kết quả World Cup 2026 — giải đã xong nhưng đây vẫn là trang kết quả
+            chính, nên link sống tiếp sau khi WorldCupLiveBoard tự rút lui. */}
+        <p style={{ margin: "0 0 24px" }}>
+          <Link to={wcResultsPath(language)} className="tl-btn">
+            {wcResultsLabel(language)} →
+          </Link>
+        </p>
 
         {/* Counts come from the same `= []` defaults the body no longer trusts:
             rendering "Live 0 · Replays 0" directly above a network error is the

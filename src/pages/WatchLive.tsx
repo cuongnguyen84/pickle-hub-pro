@@ -13,9 +13,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useIntervalViewCounter } from "@/hooks/useIntervalViewCounter";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState, useCallback } from "react";
-import { ArrowLeft, Radio, Calendar, Users, AlertCircle, MessageCircle, ChevronDown, ChevronUp, BadgeCheck, Eye } from "lucide-react";
+import { ArrowLeft, Radio, Calendar, Users, AlertCircle, MessageCircle, ChevronDown, ChevronUp, BadgeCheck, Eye, Trophy } from "lucide-react";
 import { format } from "date-fns";
 import { vi as viLocale, enUS } from "date-fns/locale";
+import { wcResultsPath, wcResultsLabel } from "@/lib/wc-results";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ShareDialog } from "@/components/share";
@@ -42,8 +43,6 @@ const WatchLive = () => {
   const { data: livestream, isLoading } = useLivestream(id!);
   const { data: viewCount = 0 } = useViewCount("livestream", id!);
   const { data: otherLivestreams = [] } = useLivestreams("live");
-  // For ended streams, also fetch ended streams for related content
-  const { data: endedLivestreams = [] } = useLivestreams("ended");
   
   // System settings for livestream gate
   const { data: systemSettings } = useSystemSettings();
@@ -210,23 +209,6 @@ const WatchLive = () => {
     : (livestream.description 
         ? `${livestream.description.slice(0, 150)}...` 
         : `Xem livestream ${livestream.title} trên ThePickleHub. ${livestream.organization?.name ? `Được phát bởi ${livestream.organization.name}.` : ''} Theo dõi trực tiếp các giải đấu pickleball hấp dẫn.`);
-
-  // Related livestreams for ended streams (same org or tournament)
-  const relatedStreams = isEnded
-    ? endedLivestreams
-        .filter((s) =>
-          s.id &&
-          s.id !== livestream.id &&
-          (s.organization_id === livestream.organization_id || s.tournament_id === livestream.tournament_id)
-        )
-        .slice(0, 4)
-        .map((s) => ({
-          id: s.id ?? "",
-          title: s.title ?? "Livestream",
-          status: s.status ?? "ended",
-          thumbnail_url: s.thumbnail_url,
-        }))
-    : [];
 
   const scheduledPoster = livestream.thumbnail_url ? (
     <div className="relative w-full h-full bg-muted">
@@ -568,11 +550,12 @@ const WatchLive = () => {
               </div>
 
               {/* Enhanced SEO Section for Ended Livestreams */}
+              {/* relatedLivestreams không còn được truyền: danh sách replay
+                  khác đã bị ẩn khỏi trang này (16/09). */}
               {isEnded && (
                 <EndedLivestreamSEO
                   livestream={livestream}
                   viewCount={viewCount}
-                  relatedLivestreams={relatedStreams}
                   tournamentSlug={null}
                 />
               )}
@@ -609,6 +592,16 @@ const WatchLive = () => {
                   ))}
               </div>
             </div>
+
+            {/* Kết quả World Cup 2026 — trang đích cho người xem tìm tỉ số sau
+                khi giải kết thúc; bài vẫn được cập nhật nên không tự rút lui. */}
+            <Link
+              to={wcResultsPath(language)}
+              className="flex items-center gap-2 rounded-lg border border-border bg-surface-elevated p-3 text-sm font-medium text-primary hover:underline"
+            >
+              <Trophy className="h-4 w-4 shrink-0" aria-hidden="true" />
+              {wcResultsLabel(language)} →
+            </Link>
           </div>
         </div>
       </div>

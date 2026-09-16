@@ -11,9 +11,9 @@ describe("layout-stable public content surfaces", () => {
     const news = source("src/components/home/HomeNewsFeed.tsx");
     const live = source("src/components/home/LiveSection.tsx");
 
-    expect(home).toContain(
-      "hasLiveData || scheduledStreams.length > 0 || recentEnded.length > 0",
-    );
+    // Replays left the home page on 16/09, and the seven-day replay window
+    // that used to keep this slot occupied went with them.
+    expect(home).toContain("hasLiveData || scheduledStreams.length > 0");
     expect(home).toContain("const liveNode = liveQueriesLoading");
     expect(home).toContain("priority");
     expect(home).toContain("viPostsLoading");

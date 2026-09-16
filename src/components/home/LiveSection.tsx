@@ -11,8 +11,6 @@ const HomeLivePlayer = lazy(() => import("./HomeLivePlayer"));
 interface LiveSectionProps {
   liveStreams: Livestream[];
   scheduledStreams?: Livestream[];
-  /** Luồng vừa kết thúc (Index đã lọc ≤7 ngày) — hiện dạng replay rows. */
-  endedStreams?: Livestream[];
   language: "en" | "vi";
   /** True when live/upcoming makes this the first feed section. */
   priority?: boolean;
@@ -130,7 +128,7 @@ export function LiveSectionSkeleton() {
   );
 }
 
-export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams = [], language, priority = false }: LiveSectionProps) {
+export function LiveSection({ liveStreams, scheduledStreams = [], language, priority = false }: LiveSectionProps) {
   const [inlinePlaybackRequested, setInlinePlaybackRequested] = useState(false);
   const isLive = liveStreams.length > 0;
   // Live courts first, then the schedule soonest-first — one merged lineup
@@ -141,7 +139,9 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
     return aT - bT;
   });
   const streams = [...liveStreams, ...upcoming];
-  if (streams.length === 0 && endedStreams.length === 0) return null;
+  // Replays no longer appear on the home page (16/09), so a week with nothing
+  // live or scheduled has no section at all.
+  if (streams.length === 0) return null;
 
   const [main, ...restAll] = streams;
   const rest = restAll.slice(0, MAX_ROWS);
@@ -159,11 +159,11 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
   const mainTitle = main?.title ?? fallbackTitle;
   const broadcastLabel = language === "vi" ? "Phát sóng" : "Broadcast";
   const upcomingBadge = language === "vi" ? "SẮP PHÁT" : "UPCOMING";
+  // Nothing else can reach here: the section returns null when `streams` is
+  // empty, so the old "Vừa phát sóng" (replay-only) heading is gone with it.
   const headTitle = isLive
     ? (language === "vi" ? "Đang trực tiếp" : "Live now")
-    : streams.length > 0
-      ? (language === "vi" ? "Sắp phát sóng" : "Upcoming broadcast")
-      : (language === "vi" ? "Vừa phát sóng" : "Recently live");
+    : (language === "vi" ? "Sắp phát sóng" : "Upcoming broadcast");
 
   return (
     <section className="tl-section tl-live-sec tl-deferred-section" aria-labelledby="home-live-heading">
@@ -272,7 +272,7 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
           </Link>
         ))}
 
-        {(rest.length > 0 || endedStreams.length > 0) && (
+        {rest.length > 0 && (
           <div
             className="tl-live-list"
             role="list"
@@ -324,56 +324,6 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
                         />
                       </>
                     )}
-                  </div>
-                </Link>
-              );
-            })}
-            {/* Vừa kết thúc (≤7 ngày) — chung list, nhận diện bằng chip
-                "XEM LẠI" highlight thay vì heading riêng chiếm chỗ. */}
-            {endedStreams.map((stream) => {
-              const thumb = streamThumb(stream, { width: 224, height: 126 });
-              const title = stream.title ?? (language === "vi" ? "Buổi phát sóng" : "Broadcast");
-              return (
-                <Link
-                  key={stream.id}
-                  to={`/live/${stream.id}`}
-                  className="tl-live-row"
-                  role="listitem"
-                >
-                  <div className="tl-live-row-thumb">
-                    {thumb ? (
-                      <img
-                        src={thumb}
-                        alt=""
-                        width={224}
-                        height={126}
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    ) : (
-                      <div className="tl-live-thumb-ph" aria-hidden="true" />
-                    )}
-                  </div>
-                  <div className="tl-live-row-body">
-                    <div className="tl-live-row-name">{title}</div>
-                    <div className="tl-live-row-meta">
-                      {stream.organization?.name ?? broadcastLabel}
-                    </div>
-                  </div>
-                  <div className="tl-live-row-when">
-                    <span className="t">{rowTime(stream.ended_at)}</span>
-                    <span
-                      className="cd"
-                      style={{
-                        color: "var(--tl-bg)",
-                        background: "var(--tl-green)",
-                        borderRadius: 4,
-                        padding: "2px 6px",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {language === "vi" ? "XEM LẠI" : "REPLAY"}
-                    </span>
                   </div>
                 </Link>
               );
