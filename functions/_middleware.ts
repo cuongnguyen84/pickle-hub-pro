@@ -1308,7 +1308,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v126 (2026-09-16): /live and /vi/live no longer list replays — the
   // "Xem lại" section, its ItemList entries and the copy pointing at it are
   // gone. Every cached live hub still carries them.
-  const cacheKey = `pr:v126:${url.pathname}`;
+  // v127 (2026-09-16): /live/<id> stops listing ended siblings too, and the
+  // World Cup 2026 results article is linked from both homes, the live hub
+  // and every stream page.
+  const cacheKey = `pr:v127:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

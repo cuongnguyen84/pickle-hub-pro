@@ -17,6 +17,7 @@ import {
   type Lang,
 } from "../utils";
 import { buildListJsonLd } from "./shared";
+import { wcResultsPath } from "../../../src/lib/wc-results";
 import { render404 } from "./static-pages";
 
 // ─── Livestream ────────────────────────────��──────────────
@@ -245,7 +246,9 @@ export async function renderLive(supabase: SupabaseClient, id: string, siteUrl: 
     supabase.from("public_livestreams")
       .select("id, title, status")
       .neq("id", id)
-      .in("status", ["live", "scheduled", "ended"])
+      // Replays are hidden site-wide (16/09) — a page that lists them here
+      // would be the one surface still handing crawlers the links.
+      .in("status", ["live", "scheduled"])
       .order("created_at", { ascending: false })
       .limit(5),
     supabase.from("news_items")
@@ -290,6 +293,7 @@ ${ls.description ? `<p>${escapeHtml(ls.description)}</p>` : ""}
 <nav><h2>Xem thêm</h2><ul>
 ${orgSlug ? `<li><a href="${siteUrl}/org/${escapeHtml(orgSlug)}">${escapeHtml(orgName)} - Tất cả livestream</a></li>` : ""}
 <li><a href="${siteUrl}/live">Tất cả livestream pickleball</a></li>
+<li><a href="${siteUrl}${wcResultsPath("vi")}">Kết quả Pickleball World Cup 2026 Đà Nẵng</a></li>
 <li><a href="${siteUrl}/videos">Video pickleball</a></li>
 <li><a href="${siteUrl}/tournaments">Giải đấu pickleball</a></li>
 </ul></nav>${liveRelatedHtml}`,
@@ -537,12 +541,14 @@ export async function renderLivestreamList(
         `<li><a href="${siteUrl}/news">Latest pickleball news</a></li>` +
         `<li><a href="${siteUrl}/rankings">Vietnam DUPR rankings</a></li>` +
         `<li><a href="${siteUrl}/videos">Match videos and highlights</a></li>` +
+        `<li><a href="${siteUrl}${wcResultsPath("en")}">Pickleball World Cup 2026 Da Nang results</a></li>` +
         `</ul></nav>`
       : `<nav><h2>Khác trên ThePickleHub</h2><ul>` +
         `<li><a href="${siteUrl}/vi/tournaments">Lịch giải pickleball</a></li>` +
         `<li><a href="${siteUrl}/vi/news">Tin tức pickleball mới nhất</a></li>` +
         `<li><a href="${siteUrl}/vi/rankings">Bảng xếp hạng DUPR Việt Nam</a></li>` +
         `<li><a href="${siteUrl}/vi/videos">Video trận đấu & highlight</a></li>` +
+        `<li><a href="${siteUrl}${wcResultsPath("vi")}">Kết quả Pickleball World Cup 2026 Đà Nẵng</a></li>` +
         `</ul></nav>`;
 
   const body =
