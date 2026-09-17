@@ -804,8 +804,9 @@ const currentDiscountPct = (row: SellerProductRow): number | null => {
 
 /**
  * Ô "% giảm" ngay trên danh sách — sản phẩm đang bán không phải gỡ xuống để
- * đặt giảm giá (PO 29/08). Server tính giá gốc từ giá đang công khai; gõ 0
- * (hoặc xoá trắng) là bỏ giảm. Lưu khi blur hoặc Enter.
+ * đặt giảm giá (PO 29/08). Server TRỪ THẲNG vào giá bán: giá gốc là neo, giá
+ * bán mới = neo × (100 − %); gõ 0 (hoặc xoá trắng) là bỏ giảm, giá về đúng
+ * neo. Lưu khi blur hoặc Enter.
  */
 function DiscountCell({ row, canWrite }: { row: SellerProductRow; canWrite: boolean }) {
   const current = currentDiscountPct(row);
