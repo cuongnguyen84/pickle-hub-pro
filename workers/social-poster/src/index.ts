@@ -40,6 +40,7 @@
 import { handleXRun, xHealth, type XRunBody } from './x';
 import { handleXDraft, type XDraftBody } from './x-draft';
 import { isPromotionalSource } from './promo-filter';
+import { recordPromoShadow } from './promo-shadow';
 import { notifyPosted } from './notify';
 
 export interface Env {
@@ -70,6 +71,10 @@ export interface Env {
   // Facebook pipeline is untouched.
   X_CLIENT_ID?: string;
   X_CLIENT_SECRET?: string;
+  // TypeSafe shadow mode — see src/promo-shadow.ts. Absent => no shadow
+  // logging and both pipelines behave exactly as they did before.
+  TYPESAFE_API_KEY?: string;
+  TYPESAFE_MODEL?: string;
 }
 
 interface NewsItem {
@@ -622,6 +627,22 @@ async function pickNextNewsItem(env: Env, page: FacebookPage): Promise<NewsItem 
     category: string | null;
   }>;
   const done = new Set(postedIds);
+
+  // Shadow mode (2026-09-21): record what Jev would have said about these
+  // same candidates. Observational only — the `nextId` below is still the
+  // regex's call, and a failure in here returns 0 rather than throwing.
+  //
+  // ponytail: this sits inside the per-page picker, so two configured pages
+  // ask about their overlapping queues twice. The unique key on
+  // promo_filter_shadow drops the second write, and the duplicate model call
+  // costs a fraction of a cent. Hoist it out of the page loop if the trial
+  // ever runs on more than two pages.
+  await recordPromoShadow(
+    env,
+    'facebook',
+    rows.filter((r) => !done.has(r.id)).map((r) => ({ ...r, language: 'vi' })),
+  );
+
   // Adverts are excluded here rather than in checkEligible on purpose. A
   // checkEligible rejection writes no fb_post_log row, so the item stays
   // unposted and gets picked again on the next tick — one paddle release at the

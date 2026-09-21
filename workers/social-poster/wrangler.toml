@@ -38,6 +38,13 @@
 #                                   tokens themselves live in Postgres, never here,
 #                                   because X rotates the refresh token on use and
 #                                   a wrangler secret cannot be rewritten at runtime.
+#     TYPESAFE_API_KEY              Optional, TRIAL ONLY (started 2026-09-21).
+#                                   Turns on shadow logging in src/promo-shadow.ts:
+#                                   every run also asks TypeSafe's Jev whether the
+#                                   candidates are adverts and writes both verdicts
+#                                   to promo_filter_shadow. It changes no decision.
+#                                   Delete the secret to turn the trial off — the
+#                                   pipelines then run exactly as they did before.
 #
 # Why a Worker and not a Supabase Edge Function?
 #   - Graph API is sometimes flaky from Supabase's Tokyo region; Cloudflare
@@ -85,6 +92,11 @@ X_POST_MIN_GAP_MINUTES = "0"
 # the post has been distributed, short enough that early readers still see it.
 X_LINK_COMMENT_DELAY_SECONDS = "90"
 X_MAX_ATTEMPTS = "3"
+# Shadow-mode model. An alias moves when TypeSafe ships a release, so pin a
+# version here ("jev-1.13.0") if two weeks of rows need to come from one model.
+# The response reports which version actually answered and that is what gets
+# logged, so an unnoticed move shows up in the data rather than hiding in it.
+TYPESAFE_MODEL = "jev-latest"
 
 [observability]
 enabled = true
