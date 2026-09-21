@@ -152,6 +152,8 @@ describe('isPromotionalSource', () => {
 
   // The one that actually reached the queue on 2026-08-17 and had to be
   // deleted by hand. It matched none of the original sponsorship patterns.
+  // The category argument no longer does any work, so this now proves what it
+  // was always supposed to: the keyword layer catches it on its own.
   it('blocks the paddle release that got through the first version', () => {
     expect(
       isPromotionalSource(
@@ -161,8 +163,6 @@ describe('isPromotionalSource', () => {
         'equipment',
       ),
     ).toBe(true);
-    // ...and still blocks it with the category stripped, via the gear patterns,
-    // because 256 of 392 rows in the feed carry no category at all.
     expect(
       isPromotionalSource(
         'Six Zero Expands Gemstone Paddle Line With Boulder Opal Release',
@@ -171,7 +171,9 @@ describe('isPromotionalSource', () => {
     ).toBe(true);
   });
 
-  it('blocks the business-category brand tour', () => {
+  // Brand marketing shaped as an event. It used to be stopped by the `business`
+  // category; that category is gone, so it has to be stopped by a pattern.
+  it('blocks the brand tour without help from the category', () => {
     expect(
       isPromotionalSource(
         'PB5star Launches Cross-Country Road Trip to Promote Pickleball Brand',
@@ -180,6 +182,27 @@ describe('isPromotionalSource', () => {
         'business',
       ),
     ).toBe(true);
+    expect(
+      isPromotionalSource(
+        'PB5star Launches Cross-Country Road Trip to Promote Pickleball Brand',
+        null,
+      ),
+    ).toBe(true);
+  });
+
+  // The regression this whole change exists for. Every one of these was blocked
+  // in production purely by its category, and promo_filter_shadow scored them
+  // 0.03-0.08 — coaching and league news, not adverts.
+  it.each([
+    ['Pickleball Elbow Recovery Strategies According to Connor Derrickson', 'equipment'],
+    ['How to Read a Lob in Pickleball: Four Key Signs to Spot Early', 'equipment'],
+    ['Zane Navratil Breaks Down Pickleball Stacking Methods', 'equipment'],
+    ['Protect Your Pickleball Shoulder From Serve Injuries', 'equipment'],
+    ['Samin Odhwani rời ghế ủy viên Major League Pickleball', 'business'],
+    ['Kỹ thuật tăng tốc bóng pickleball hiệu quả', 'equipment'],
+    ['Cải thiện độ ổn định cú dink trong pickleball', 'equipment'],
+  ])('no longer blocks the coaching piece: %s', (title, category) => {
+    expect(isPromotionalSource(title, null, null, category)).toBe(false);
   });
 
   it('keeps the categories that are instructional rather than commercial', () => {
@@ -204,6 +227,9 @@ describe('isPromotionalSource', () => {
   });
 
   it.each([
+    // The one real advert in the first 21 shadow rows (noul 0.82). It was
+    // blocked by category before; check the keyword layer holds it now.
+    'CURREX ra mắt lót giày SUPPORTSTP phục vụ sinh hoạt hàng ngày',
     'Joola trình làng bộ sưu tập giày mới',
     'Selkirk mở bán vợt Luxx tại Việt Nam',
     'Giảm giá 30% toàn bộ vợt Six Zero',
