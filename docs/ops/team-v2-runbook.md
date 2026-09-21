@@ -13,7 +13,9 @@ gọi thực tế trả `You're out of usage credits`, 0 input/output token, cos
 ## Những gì v2 thực thi
 
 - Một supervisor, lịch kiểm tra mỗi phút; phép đo site/job/shop/live/dịch/recovery
-  mỗi 5 phút. Quét đầy đủ thêm security, CI, nội dung, moderation, GSC và GA4 mỗi ngày.
+  mỗi 5 phút. Quét đầy đủ thêm security, CI, nội dung, moderation, GSC, GA4,
+  crawl mẫu sitemap, trích dẫn AI search và watchtower tụt traffic mỗi ngày
+  (xem mục bộ đo SEO bên dưới).
 - Chín vai trò trong `scripts/ops/team_roles.json`, mỗi vai trò phân tích một lần
   mỗi ngày, rải tối đa một lượt AI định kỳ mỗi tick. Editorial có nguồn tin và
   bản VI; Growth có GA4 segment Vietnam và GSC; thiếu nguồn được báo là unknown.
@@ -35,6 +37,55 @@ gọi thực tế trả `You're out of usage credits`, 0 input/output token, cos
   **Chưa tự chạy mã/test do model sinh, chưa tự commit/push/merge/deploy.**
 - Báo cáo tổng hợp 08:00 và 21:00 ICT; cảnh báo thay đổi site/shop; phản hồi từng
   yêu cầu và bộ giám sát heartbeat riêng. Model phân tích không được nói đã sửa.
+
+## Ba bộ đo SEO (`scripts/ops/team_seo.py`, thuộc vai trò growth)
+
+Chạy trong lượt quét đầy đủ mỗi ngày, không nằm trong nhóm 5 phút.
+
+- **`crawl`** — đọc `/sitemap.xml`, lấy mẫu **xoay vòng theo ngày** vài URL mỗi
+  segment (mặc định 3, `SEO_CRAWL_PER_SEGMENT`), gọi từng trang bằng UA Googlebot
+  **không kèm `?nocache=1`** vì cần thấy đúng bản KV mà bot đang nhận. Mỗi trang
+  kiểm: HTTP 200 · có canonical và canonical tự trỏ · có `<title>` · số từ trên
+  sàn theo loại trang (`WORD_FLOORS`: blog 250, news 180, static 120, venues/shop 100,
+  còn lại 60) · tập hreflang của TRANG khớp tập hreflang **sitemap đã khai cho
+  chính URL đó** · hreflang không trỏ ra URL ngoài sitemap. Thêm hai chữ ký sự cố
+  cũ: nhiều URL cùng một canonical, và nhiều URL cùng một `<title>`.
+  Không hardcode bảng "segment nào có hreflang" — bảng đó đã trôi (CLAUDE.md ghi
+  27 URL events, thực tế 9; matches đã delist 07/09; shop là segment mới) nên bộ
+  đo so trang với sitemap thay vì so với tài liệu.
+  ~3000 URL trong sitemap, mỗi ngày ~40 request; sau vài tuần mọi URL đều được chạm.
+  URL từng lỗi được ghi vào `crawl-recheck.json` và đo lại ở MỌI lượt sau, nên một
+  phát hiện chỉ đóng khi đúng URL đó đã đạt — không phải vì hôm sau bốc trúng trang lành.
+  **Mẫu hôm nay đạt không chứng minh phần còn lại đạt** — câu này nằm trong `note`
+  của bộ đo và trong mission của growth.
+- **`citation`** — hỏi 6 câu tiếng Việt qua OpenAI Responses + `web_search`, đếm
+  xem câu trả lời có **dẫn nguồn** `thepicklehub.net` không, và ghi lại domain nào
+  được dẫn thay. Đây là đo GEO/AEO thật, thứ Ahrefs Brand Radar chặn theo gói.
+  Tốn tiền nên tự giới hạn **một lượt mỗi 7 ngày** qua cache
+  `~/Library/Application Support/PickleHub/team-v2/citation-week.json`.
+  Cần `OPENAI_API_KEY` trong `.claude/secrets.local.md`; thiếu key thì bộ đo NÉM
+  LỖI để đội ghi "chưa đo được", không ghi 0 lần trích dẫn.
+  Bấm "đã sửa → kiểm tra lại" trên một việc citation sẽ trả lại KẾT QUẢ CŨ
+  cho tới khi hết 7 ngày (`from_cache: true` trong bằng chứng) — AI search
+  không đổi trong vài phút, và mỗi lượt đo lại là tiền thật.
+- **`decline`** (watchtower, chạy bên trong check `growth`) — đọc báo cáo
+  `scripts/seo/gsc_report.py` vốn đã tính sẵn WoW và `pages_losing_clicks`, rồi
+  trả lời câu hỏi thật sự khó: **tụt vì hết sự kiện hay vì mình làm hỏng?**
+  Phép thử là sức khoẻ của chính trang mất click — fetch lại 8 trang tụt nặng
+  nhất và xem còn 200, còn canonical, còn đủ chữ không.
+  - trang tụt **và** hỏng → `decline_broken`, mở việc, nêu đích danh URL.
+  - tụt ≥30% mà **trải đều** (5 trang đầu chiếm <60% cú tụt) → `decline_sitewide`.
+  - tụt ≥30% nhưng dồn vào vài trang **vẫn khoẻ** → KHÔNG mở việc, chỉ ghi
+    verdict "cầu theo sự kiện hết".
+  - nền tuần trước <50 click → không kết luận xu hướng.
+
+  Vì sao phải vòng vo thế: ngày 21/09 clicks −92,2% (3803→297) mà 94% cú tụt nằm
+  ở 5 trang World Cup Đà Nẵng đã đấu xong, cả 5 vẫn trả 200 đủ nội dung. Một
+  ngưỡng phần trăm trần trụi sẽ báo động đỏ vào đúng cái ngày không có gì hỏng —
+  và alert réo sai vài lần thì không ai đọc nữa.
+
+Chạy tay: `python3 scripts/ops/team_seo.py crawl` / `... citation --cache <file>`.
+Kiểm thử: `python3 -m unittest test_team_seo` trong `scripts/ops` (không chạm mạng).
 
 ## Hạ tầng đã giữ lại và đã thay
 
