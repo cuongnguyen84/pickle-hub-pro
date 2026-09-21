@@ -175,6 +175,11 @@ def collect(name):
         except (ValueError, json.JSONDecodeError):
             ga4 = None
         problems = {f"surface:{p}": f"SEO {p} HTTP {code}" for p, code in seo.get("surfaces", {}).items() if code != 200}
+        # Watchtower: gsc_report.py đã tính sẵn WoW và trang mất click; việc còn lại
+        # là phân biệt hết sự kiện với site hỏng, làm bằng cách đo lại chính trang đó.
+        import team_seo
+        decline, seo["decline"] = team_seo.decline_observation(seo.get("gsc"))
+        problems.update(decline)
         if not seo.get("gsc"):
             problems["gsc"] = "GSC chưa đọc được — không kết luận traffic bằng 0"
         if ga4 is None:
@@ -183,6 +188,13 @@ def collect(name):
         for date, milestone in re.findall(r"(20\d\d-\d\d-\d\d) ([A-Z][A-Z0-9-]+) —", due):
             problems["milestone:" + milestone] = f"Mốc {milestone} đến hạn {date}; cần làm theo predicate và ghi bằng chứng"
         return {"problems": problems, "seo": seo, "ga4": ga4, "milestones": due}
+    if name in {"crawl", "citation"}:
+        # Đo ngoài site, không chạm DB. Chỉ chạy trong lượt quét đầy đủ mỗi ngày
+        # (không nằm trong FAST); citation tự giới hạn mỗi tuần một lượt qua cache.
+        import team_seo
+        if name == "crawl":
+            return team_seo.crawl_observation(recheck=ROOT / "crawl-recheck.json")
+        return team_seo.citation_observation(secret("OPENAI_API_KEY"), cache=ROOT / "citation-week.json")
     if name == "security":
         rc, out, _ = command(["/usr/bin/env", "node", "scripts/check-edge-auth-registry.mjs", "--strict"])
         audit = REPO / "docs/audits/2026-09-09-project-review.md"
