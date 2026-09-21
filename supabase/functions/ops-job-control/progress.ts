@@ -86,6 +86,9 @@ export function progressCallback(data: string): string | undefined {
   if (task) return `${{ progress: "/tien_do", report: "/xuly team report", priority: "/lamngay", verify: "/xuly team verify", ownerdone: "/xuly team owner_done", tokenhelp: "/xuly team token_help" }[task[1]]} ${task[2]}`;
   const page = /^progress\|(page|done):([1-9]\d{0,5})$/.exec(data);
   if (page) return `/tien_do ${page[1] === "done" ? "xong " : ""}${page[2]}`;
+  // Callback lạ thì không sinh ra lệnh nào — trả undefined tường minh để
+  // noImplicitReturns không phải đoán (TS7030).
+  return undefined;
 }
 
 export function progressKeyboard(snapshot: TeamSnapshot | null, target?: string, now = Date.now()) {
