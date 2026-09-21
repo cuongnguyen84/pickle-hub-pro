@@ -30,6 +30,8 @@ def draft(store, role, request, task_id):
     import team_supervisor as team
     if store.get("paused", False) or (team.REPO / ".claude/AGENTS_PAUSED").exists() or not team.provider_available(store):
         return None
+    source = store.db.execute("SELECT evidence FROM tasks WHERE id=?", (task_id,)).fetchone()
+    source_evidence = json.loads(source[0]) if source else {}
     run = store.begin(role, "isolated-draft", team.LIMIT, team.DAILY_LIMIT, team.CALLS,
                       enforce_limits=store.get("internal_budget_enabled", True))
     if run is None:
@@ -113,7 +115,7 @@ def draft(store, role, request, task_id):
         store.finish(run, "draft_ready", evidence, float(response.get("total_cost_usd", 0) or 0))
         with store.db:
             store.db.execute("UPDATE tasks SET status='awaiting_review',evidence=?,updated=? WHERE id=?",
-                             (json.dumps(evidence), time.time(), task_id))
+                             (json.dumps({**source_evidence, **evidence}), time.time(), task_id))
         return {"run": run, "result": report, **evidence}
     except Exception as exc:
         # Retry as a Codex report only when quota was explicit AND the isolated
@@ -130,5 +132,5 @@ def draft(store, role, request, task_id):
         store.finish(run, "failed", evidence)
         with store.db:
             store.db.execute("UPDATE tasks SET status='needs_review',evidence=?,updated=? WHERE id=?",
-                             (json.dumps(evidence), time.time(), task_id))
+                             (json.dumps({**source_evidence, **evidence}), time.time(), task_id))
         return {"run": run, "error": evidence["detail"]}

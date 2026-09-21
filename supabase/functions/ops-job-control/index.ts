@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { requireCronRequest } from "../_shared/cron-auth.ts";
-import { isProgressCommand, parseSnapshot, progressTarget, renderProgress, renderContentCalendar } from "./progress.ts";
+import { isProgressCommand, parseSnapshot, progressTarget, renderProgress, renderContentCalendar, progressKeyboard, progressCallback } from "./progress.ts";
 
 type Job = {
   job_key: string;
@@ -28,7 +28,7 @@ async function sendTelegram(chatId: string, text: string, replyMarkup?: Record<s
   const response = await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true, reply_markup: replyMarkup }),
+    body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true, reply_markup: replyMarkup ?? progressKeyboard(null) }),
   });
   if (!response.ok) throw new Error(`telegram_http_${response.status}`);
 }
@@ -317,7 +317,7 @@ async function agentFixWatchdog(supabase: ReturnType<typeof createClient>): Prom
 // này" — người nhận không biết phải làm gì tiếp, đó là ngõ cụt chứ không phải
 // câu trả lời.
 // ---------------------------------------------------------------------------
-const TASK_COMMAND_RE = /^\/(xuly|lam|viec|idea|bo|tien_do|lamngay|lich_content)(?:@\w+)?(?:\s|$)/i;
+const TASK_COMMAND_RE = /^\/(xuly|lam|viec|idea|bo|tien_do|tien-do|lamngay|lich_content)(?:@\w+)?(?:\s|$)/i;
 
 async function handleTaskCommand(
   supabase: ReturnType<typeof createClient>,
@@ -327,7 +327,7 @@ async function handleTaskCommand(
 ): Promise<Record<string, unknown>> {
   const trimmed = text.trim();
   const [rawCmd, ...rest] = trimmed.split(/\s+/);
-  const cmd = rawCmd.toLowerCase().replace(/@\w+$/, "");
+  const cmd = rawCmd.toLowerCase().replace(/@\w+$/, "").replace("/tien-do", "/tien_do");
   const body = rest.join(" ").trim();
 
   const close = async (result: string) => {
@@ -344,9 +344,9 @@ async function handleTaskCommand(
     if (cmd === "/lamngay") {
       const target = progressTarget(body);
       const task = target && snapshot?.tasks.find((t) => target === `T${t.id}` || target === `XL${t.telegram_id}`);
-      if (!task || !snapshot || Date.now() - Date.parse(snapshot.heartbeat_at) > 20 * 60_000) {
+      if (!task || task.status !== "queued" || !snapshot || Date.now() - Math.min(Date.parse(snapshot.heartbeat_at), Date.parse(snapshot.updated_at)) > 20 * 60_000) {
         await close("priority_not_queued");
-        await sendTelegram(chatId, "Chưa xác nhận được việc hoặc agent đang mất kết nối. Không tạo việc trùng. Xem /tien_do T47 rồi thử lại /lamngay T47 khi trạng thái cập nhật.");
+        await sendTelegram(chatId, "Việc không ở hàng chờ hoặc dữ liệu đã cũ. Chưa yêu cầu ưu tiên. Bấm Tiến độ toàn đội để xem trạng thái và bước còn thiếu.");
         return { ok: true, priority_requested: false };
       }
       const { error: updateError } = await supabase.from("telegram_commands")
@@ -358,7 +358,7 @@ async function handleTaskCommand(
     }
     const target = cmd === "/tien_do" || cmd === "/viec" ? body : undefined;
     await close("progress_replied");
-    await sendTelegram(chatId, cmd === "/lich_content" ? renderContentCalendar(snapshot) : renderProgress(snapshot, target));
+    await sendTelegram(chatId, cmd === "/lich_content" ? renderContentCalendar(snapshot) : renderProgress(snapshot, target), progressKeyboard(snapshot, target));
     return { ok: true, progress_replied: true };
   }
 
@@ -411,17 +411,28 @@ async function handleTaskCommand(
     return { ok: true, task_command: cmd };
   }
 
+  // Controls are consumed without a model; ACK is not task completion.
+  if (cmd === "/xuly" && /^team(?:\s|$)/i.test(body)) {
+    const code = /\b((?:T|XL)[1-9]\d*)$/i.exec(body)?.[1].toUpperCase();
+    await sendTelegram(chatId, "Đã chuyển lệnh cho bộ điều phối. Kết quả sẽ được trả riêng sau khi xử lý lệnh; đây chưa phải xác nhận đã thực hiện.", code ? {
+      inline_keyboard: [[{ text: `Xem tiến độ ${code}`, callback_data: `progress|${code}` }],
+        [{ text: "Tiến độ toàn đội", callback_data: "progress|page:1" }]],
+    } : progressKeyboard(null));
+    return { ok: true, control_queued: rowId };
+  }
+
   // Có nội dung → GIỮ NGUYÊN status pending để agent trực rút, và xác nhận ngay.
   const label = cmd === "/idea" ? "💡 ĐÃ GHI Ý TƯỞNG" : "📥 ĐÃ NHẬN VIỆC";
   await sendTelegram(chatId, [
     `${label} · XL-${rowId}`,
     `“${body.slice(0, 120)}${body.length > 120 ? "…" : ""}”`,
     "",
-    "Agent trực rút hàng đợi mỗi đầu giờ, làm xong sẽ báo lại ngay trong chat này kèm bằng chứng (URL, số từ, mã PR).",
-    "Việc thuộc vùng cần duyệt thì agent dừng trước production và hỏi lại anh.",
+    "Đã lưu yêu cầu; CHƯA bắt đầu. Bộ điều phối kiểm tra hàng chờ theo lịch khoảng mỗi phút khi máy hoạt động.",
+    "Kết quả có thể là bản nháp hoặc lỗi cần đội xử lý tiếp; chưa phải cam kết đã triển khai hay hoàn thành.",
     "",
     "Xem hàng đợi: /viec · Huỷ: /bo XL-" + rowId,
-  ].join("\n"));
+  ].join("\n"), { inline_keyboard: [[{ text: `Theo dõi XL${rowId}`, callback_data: `progress|XL${rowId}` }],
+    [{ text: "Tiến độ toàn đội", callback_data: "progress|page:1" }]] });
   return { ok: true, task_queued: rowId };
 }
 
@@ -594,7 +605,7 @@ async function handleTelegramWebhook(req: Request, supabase: ReturnType<typeof c
   const callbackParts = callback?.data?.split("|", 2);
   const callbackText = callbackParts?.[0] === "diagnose" ? `/diagnose ${callbackParts[1]}`
     : callbackParts?.[0] === "fix" ? `/fix ${callbackParts[1]}`
-    : callback?.data === "probe" ? "/probe" : undefined;
+    : callback?.data === "probe" ? "/probe" : progressCallback(callback?.data || "");
   const message = update.message ?? (callbackText ? {
     date: callback?.message?.date, text: callbackText, chat: callback?.message?.chat, from: callback?.from,
   } : undefined);
