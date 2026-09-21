@@ -62,13 +62,40 @@ class Store:
         return self.db.execute("SELECT id FROM tasks WHERE dedupe=?", (key,)).fetchone()[0]
 
     def findings(self, check, role, problems, evidence):
-        """Only call on a successful measurement, never on collection failure."""
+        """Reconcile one successful observation; preserve stable IDs and real transitions."""
+        if not isinstance(problems, dict):
+            raise ValueError("invalid_problems")
         prefix = f"finding:{check}:"
+        now = time.time()
+        encoded = json.dumps(evidence, ensure_ascii=False)
+        transitions = []
         with self.db:
-            self.db.execute("UPDATE tasks SET status='resolved',updated=? WHERE substr(dedupe,1,?)=? AND status='open'",
-                            (time.time(), len(prefix), prefix))
-        for key, title in problems.items():
-            self.task(prefix + key, role, title, evidence=evidence)
+            prior = {r["dedupe"][len(prefix):]: r for r in self.db.execute(
+                "SELECT * FROM tasks WHERE substr(dedupe,1,?)=?", (len(prefix), prefix))}
+            for key, row in prior.items():
+                if key not in problems and row["status"] not in {"resolved", "cancelled"}:
+                    self.db.execute("UPDATE tasks SET status='resolved',evidence=?,updated=? WHERE id=?",
+                                    (encoded, now, row["id"]))
+                    transitions.append({"id": row["id"], "from": row["status"], "to": "resolved"})
+                elif key not in problems and row["status"] == "resolved":
+                    self.db.execute("UPDATE tasks SET evidence=? WHERE id=?", (encoded, row["id"]))
+            for key, title in problems.items():
+                row = prior.get(key)
+                if row is None:
+                    cur = self.db.execute("INSERT INTO tasks(dedupe,role,title,status,evidence,created,updated) VALUES (?,?,?,'open',?,?,?)",
+                                          (prefix + key, role, title, encoded, now, now))
+                    transitions.append({"id": cur.lastrowid, "from": None, "to": "open"})
+                else:
+                    status = "open" if row["status"] in {"resolved", "cancelled"} else row["status"]
+                    changed = status != row["status"]
+                    self.db.execute("UPDATE tasks SET role=?,title=?,status=?,evidence=?,updated=? WHERE id=?",
+                                    (role, title, status, encoded, now if changed or title != row["title"] else row["updated"], row["id"]))
+                    if changed:
+                        transitions.append({"id": row["id"], "from": row["status"], "to": status})
+            for change in transitions:
+                self.db.execute("INSERT INTO meta VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                                (f"finding_transition:{change['id']}", json.dumps(change)))
+        return transitions
 
     def begin(self, role, kind, reserve=0.0, daily_limit=10.0, max_calls=12, enforce_limits=True):
         """Reserve budget atomically BEFORE starting the model (rolling 24 h)."""

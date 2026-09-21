@@ -37,15 +37,24 @@ def snapshot(store):
                 reason = "Provider đang bị chặn/hết hạn mức; chưa bắt đầu."
             elif store.get("internal_budget_enabled", True) and (calls >= team.CALLS or used + team.LIMIT > team.DAILY_LIMIT):
                 reason = "Đang chạm trần 12 lượt/24 giờ của bộ điều phối; chưa bắt đầu."
-        tasks.append({"id": row["id"], "telegram_id": ev.get("telegram_id"),
-                      "title": row["title"], "status": status, "reason": str(reason)[:1400],
+        remote = re.fullmatch(r"telegram:([1-9]\d*)", row["dedupe"])
+        tasks.append({"id": row["id"], "telegram_id": ev.get("telegram_id") or (int(remote[1]) if remote else None),
+                      "title": store.get(f"owner_title:{row['id']}", row["title"]), "status": status,
+                      "owner": row["role"], "has_report": bool(ev.get("path")),
+                      "decision": note.get("decision"), "note_updated_at": note.get("updated_at"),
+                      "can_verify": row["dedupe"].startswith("finding:") and row["dedupe"].split(":", 2)[1] in team.CHECK_ROLES,
+                      "verification": {key: value for key, value in note.get("verification", {}).items()
+                                       if key in {"phase", "acceptance", "checked_at", "automatic", "cadence"}}, "reason": str(reason)[:1400],
                       "next_step": note.get("next_step", ""), "updated_at": iso(row["updated"]),
                       "attempts": row["attempts"], "priority": bool(store.get(f"priority:{row['id']}", False)),
                       "related_task_id": note.get("related_task_id")})
     tasks.sort(key=lambda task: (not task["priority"], task["telegram_id"] is None, task["id"]))
     from team_content import render_calendar
     return team.scrub({"schema": "team-v2.snapshot.v1", "updated_at": iso(now), "content_calendar": render_calendar(store),
-                       "heartbeat_at": iso(store.get("heartbeat", now)), "tasks": tasks})
+                       "heartbeat_at": iso(store.get("heartbeat", 0)),
+                       "controller": {"paused": store.get("paused", False) or (team.REPO / ".claude/AGENTS_PAUSED").exists(),
+                                      "provider": store.get("provider", "claude"),
+                                      "execution_mode": "draft_only"}, "tasks": tasks})
 
 
 def publish(store):
@@ -66,3 +75,30 @@ def publish(store):
     if not result:
         raise RuntimeError("snapshot_not_written")
     store.put("snapshot_published_at", time.time())
+
+
+def reply_keyboard(body, store=None):
+    """Use actual ledger capabilities; no approval inferred from model prose."""
+    ids = list(dict.fromkeys(re.findall(r"\bT([1-9]\d*)\b", body)))[:4]
+    rows = []
+    for tid in ids:
+        task = target(store, f'T{tid}') if store else None
+        row = [{"text": f"Xem T{tid}", "callback_data": f"progress|T{tid}"}]
+        if not store or (task and json.loads(task['evidence']).get('path')):
+            row.append({"text": f"Báo cáo T{tid}", "callback_data": f"report|T{tid}"})
+        rows.append(row)
+        if task and task['dedupe'].startswith('finding:'):
+            note = store.get(f'progress:{tid}', {})
+            action = (note.get('decision') or {}).get('action')
+            if action == 'reports':
+                rows.append([{'text':'Mở báo cáo để quyết định', 'url':'https://www.thepicklehub.net/admin/reports'}])
+            if action == 'instagram_token':
+                rows += [[{'text':'1. Lấy token Meta', 'url':'https://developers.facebook.com/tools/explorer/'}],
+                         [{'text':'2. Lưu token vào Supabase', 'url':'https://supabase.com/dashboard/project/ajvlcamxemgbxduhiqrl/functions/secrets'}],
+                         [{'text':'Cần hỗ trợ lấy token', 'callback_data':f'tokenhelp|T{tid}'}]]
+            if task['status'] != 'resolved':
+                rows.append([{'text':f'Đã sửa → kiểm tra lại T{tid}', 'callback_data':f'ownerdone|T{tid}'}])
+            rows.append([{'text':f'Kiểm tra mới T{tid}', 'callback_data':f'verify|T{tid}'}])
+    rows.append([{"text": "Tiến độ toàn đội", "callback_data": "progress|page:1"},
+                 {"text": "Lịch nội dung", "callback_data": "calendar"}])
+    return {"inline_keyboard": rows}

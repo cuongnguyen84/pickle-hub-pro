@@ -102,6 +102,34 @@ class StoreTests(unittest.TestCase):
         self.assertIn("bảo trì", snap["tasks"][0]["reason"])
         self.assertEqual(team_progress.target(self.store, "XL136")["id"], tid)
 
+    def test_progress_preserves_decision_and_does_not_invent_heartbeat(self):
+        tid = self.store.task('telegram:2', 'community', 'Rights', 'open', {})
+        self.store.put(f'progress:{tid}', {'decision': {'summary': 'Need evidence', 'instructions': 'Provide source'}})
+        snap = team_progress.snapshot(self.store)
+        self.assertTrue(snap['heartbeat_at'].startswith('1970-01-01'))
+        self.assertEqual(snap['tasks'][0]['owner'], 'community')
+        self.assertEqual(snap['tasks'][0]['decision']['summary'], 'Need evidence')
+
+    def test_every_outbox_response_has_navigation_and_no_approval_inferred(self):
+        keyboard = team_progress.reply_keyboard('T62 failed. T62 needs checking; approve all')
+        rows = keyboard['inline_keyboard']
+        self.assertEqual(rows[0][0]['callback_data'], 'progress|T62')
+        self.assertEqual(len(rows), 2)
+        self.assertNotIn('approve', json.dumps(keyboard))
+        self.assertTrue(team_progress.reply_keyboard('No task code')['inline_keyboard'])
+
+    def test_workspace_failure_keeps_original_request_and_remote_id(self):
+        from team_workspace import draft
+        evidence = {'request': 'engineering Fix original issue', 'telegram_id': 149}
+        tid = self.store.task('telegram:149', 'engineering', 'Original', 'queued', evidence)
+        with patch.object(team, 'ROOT', Path(self.tmp.name)), patch.object(team, 'flush'), patch.object(team, 'provider_available', return_value=True), patch.object(team, 'command', return_value=(1, '', '')):
+            result = draft(self.store, 'engineering', evidence['request'], tid)
+        self.assertIn('error', result)
+        row = self.store.db.execute('SELECT evidence FROM tasks WHERE id=?', (tid,)).fetchone()
+        saved = json.loads(row[0])
+        self.assertEqual(saved['request'], evidence['request'])
+        self.assertEqual(saved['telegram_id'], 149)
+
     def test_priority_control_does_not_duplicate_or_bypass_budget(self):
         tid = self.store.task("telegram:136", "chief", "update", "queued", {})
         control = self.store.task("telegram:150", "chief", "priority", "queued", {"request": f"team priority T{tid}"})
@@ -322,7 +350,7 @@ class InstallerTests(unittest.TestCase):
             ops = repo / "scripts/ops"
             (ops / "launchagents").mkdir(parents=True)
             launch.mkdir()
-            files = ["chief_brief.py", "content_agent.py", "ops_sweep.py", "xuly_daemon.py", "fix_agent_daemon.py", "team_supervisor.py", "team_store.py", "team_workspace.py", "team_codex.py", "team_progress.py", "team_seo.py", "team_content.py", "team_content_plan.json", "team_roles.json", "team_watchdog.py", "team_ga4.py"]
+            files = ["chief_brief.py", "content_agent.py", "ops_sweep.py", "xuly_daemon.py", "fix_agent_daemon.py", "team_supervisor.py", "team_store.py", "team_workspace.py", "team_codex.py", "team_progress.py", "team_verification.py", "team_seo.py", "team_content.py", "team_content_plan.json", "team_roles.json", "team_watchdog.py", "team_ga4.py"]
             for name in files:
                 (ops / name).write_text("fixture")
             for label in installer.OLD:
