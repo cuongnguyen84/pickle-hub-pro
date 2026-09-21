@@ -1,6 +1,7 @@
 """Kiểm ba bộ đo SEO bằng HTML/JSON dựng sẵn — không chạm mạng, không tốn token."""
 import importlib.util
 import json
+import re
 import sys
 import tempfile
 import time
@@ -335,3 +336,31 @@ class TelegramReachTests(unittest.TestCase):
     def test_growth_decline_finding_reaches_telegram_too(self):
         self.observe("growth", {"decline_broken": "Trang mất click VÀ không còn phục vụ được: https://x (404)"})
         self.assertIn("404", "\n".join(self.outbox()))
+
+
+class ReleaseManifestTests(unittest.TestCase):
+    """Bản chạy thật KHÔNG phải repo: team_install.py chép một danh sách file cố định
+    sang releases/<stamp>/. Module nào supervisor import mà thiếu trong danh sách đó
+    thì cả bộ đo lẫn check chứa nó chết ImportError trên máy, dù test ở repo vẫn xanh."""
+
+    def manifest(self):
+        """Danh sách file được chép sang runtime — dòng tuple có team_supervisor.py.
+
+        team_install.py còn một vòng `for name in (...)` khác cho đám daemon cũ;
+        bám vào cái đầu tiên là bắt nhầm danh sách.
+        """
+        source = (Path(__file__).parent / "team_install.py").read_text()
+        line = next(l for l in source.splitlines() if "for name in (" in l and "team_supervisor.py" in l)
+        return set(re.findall(r'"([^"]+\.(?:py|json))"', line))
+
+    def test_team_seo_is_published_to_the_runtime(self):
+        self.assertIn("team_seo.py", self.manifest())
+
+    def test_every_local_module_the_supervisor_imports_is_published(self):
+        here = Path(__file__).parent
+        source = (here / "team_supervisor.py").read_text()
+        imported = {m for m in re.findall(r"(?m)^\s*(?:import|from)\s+(team_\w+|ops_sweep|chief_brief)", source)}
+        published = self.manifest()
+        for module in sorted(imported):
+            if (here / f"{module}.py").exists():  # module chưa vào cây mã thì bỏ qua
+                self.assertIn(f"{module}.py", published, f"{module}.py chưa được phát hành ra runtime")
