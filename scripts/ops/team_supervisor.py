@@ -208,9 +208,11 @@ def collect(name):
         from urllib.parse import quote
 
         import requests
-        import team_measure
         import team_seo
-        gsc = team_measure.adapter("gsc_report")
+        # Cùng cách team_ga4.py nạp ga4_report: adapter SEO nằm ngoài scripts/ops.
+        sys.path.insert(0, str(REPO / "scripts/seo"))
+        os.environ.setdefault("GOOGLE_SA_JSON", str(REPO / ".claude/secrets.local.gsc-ga4-sa.json"))
+        import gsc_report as gsc
         end = datetime.now(ICT).date() - timedelta(days=3)
         start = end - timedelta(days=team_seo.KEYWORD_DAYS)
         response = requests.post(

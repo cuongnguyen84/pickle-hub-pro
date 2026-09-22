@@ -361,6 +361,18 @@ class ReleaseManifestTests(unittest.TestCase):
             if (here / f"{module}.py").exists():  # module chưa vào cây mã thì bỏ qua
                 self.assertIn(f"{module}.py", published, f"{module}.py chưa được phát hành ra runtime")
 
+    def test_supervisor_never_imports_a_module_this_branch_does_not_have(self):
+        """Nhánh khác tạo module mới là chuyện thường; import nó từ đây thì check chết khi merge trước.
+
+        Bản cũ của test trên bỏ qua module chưa có mặt, nên nó xanh cả khi
+        supervisor import một file chỉ tồn tại trên nhánh chưa merge.
+        """
+        here = Path(__file__).parent
+        source = (here / "team_supervisor.py").read_text()
+        for module in sorted(set(re.findall(r"(?m)^\s*(?:import|from)\s+(team_\w+)", source))):
+            self.assertTrue((here / f"{module}.py").exists(),
+                            f"team_supervisor.py import {module} nhưng nhánh này không có {module}.py")
+
 
 def krow(query, page, impressions, clicks, position):
     return {"keys": [query, f"{SITE}{page}"], "impressions": impressions,
