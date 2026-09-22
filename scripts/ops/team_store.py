@@ -126,6 +126,15 @@ class Store:
             self.db.execute("UPDATE runs SET status='interrupted',ended=? WHERE status='running'", (time.time(),))
             self.db.execute("UPDATE tasks SET status='needs_review',updated=? WHERE status='running'", (time.time(),))
             self.db.execute("UPDATE outbox SET status='uncertain',updated=? WHERE status='sending'", (time.time(),))
+            for row in self.db.execute("SELECT key,value FROM meta WHERE key LIKE 'action:%'").fetchall():
+                action = json.loads(row['value'])
+                if action.get('phase') == 'running':
+                    tid = row['key'].split(':')[1]
+                    action.update(phase='blocked', reason='Lượt xử lý bị gián đoạn. Đội cần đối chiếu phần đã làm trước khi chạy tiếp.',
+                                  next_step='Bấm Xử lý ngay để yêu cầu đối chiếu trên cùng mã việc.')
+                    self.db.execute('UPDATE meta SET value=? WHERE key=?', (json.dumps(action, ensure_ascii=False), row['key']))
+                    self.db.execute('INSERT OR IGNORE INTO outbox(dedupe,body,created,updated) VALUES (?,?,?,?)',
+                                    (f'action-interrupted:{tid}:{action.get("attempt")}', f'T{tid}: lượt xử lý bị gián đoạn; chưa xác nhận hoàn tất. Đã giữ bằng chứng để đội đối chiếu.', time.time(), time.time()))
 
     def enqueue(self, key, body):
         # Bound one message to Telegram's limit; no multi-part replay ambiguity.

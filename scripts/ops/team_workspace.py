@@ -82,6 +82,8 @@ def draft(store, role, request, task_id):
         rc, out, _ = team.command(argv, cwd=worktree, timeout=600, env=team.clean_env())
         response = json.loads(out)
         if rc or response.get("is_error") or not response.get("result") or team.claude_quota_exhausted(response):
+            diagnostic = team.scrub({key: response.get(key) for key in ('subtype', 'is_error', 'errors', 'result', 'num_turns')})
+            store.artifact(f'run-{run}-failure.json', json.dumps({'exit': rc, 'response': diagnostic}, ensure_ascii=False))
             team.provider_failure(store, response)
             raise RuntimeError("draft_model_failed")
         _, tracked, _ = team.command(["git", "diff", "--name-only", "-z", "HEAD"], cwd=worktree)

@@ -1,10 +1,45 @@
 import { describe, it, expect } from "vitest";
-import { isProgressCommand, parseSnapshot, progressTarget, renderProgress, renderContentCalendar, progressKeyboard, progressCallback } from "../../../supabase/functions/ops-job-control/progress";
+import { isProgressCommand, parseSnapshot, progressTarget, renderProgress, renderContentCalendar, progressKeyboard, progressCallback, executionReceipt, withPendingExecutions } from "../../../supabase/functions/ops-job-control/progress";
 
 describe("Telegram progress", () => {
+  it('routes execution and binds deployment to a revision', () => {
+    expect(progressCallback('execute|T28')).toBe('/xuly team execute T28');
+    expect(progressCallback('deploy|T28|abcdef123456')).toBe('/xuly team deploy T28 abcdef123456');
+    for (const value of ['deploy|T28', 'deploy|T28|latest', 'execute|T28;rm', 'deploy|T0|abcdef123456']) {
+      expect(progressCallback(value)).toBeUndefined();
+    }
+  });
   const now = "2026-09-13T05:00:00Z";
   const snapshot = { schema: "team-v2.snapshot.v1" as const, updated_at: now, heartbeat_at: now,
     tasks: [{ id: 47, telegram_id: 136, title: "Update article", status: "queued", attempts: 0, reason: "quota" }] };
+  it("shows a durable pending request immediately without changing the saved snapshot", () => {
+    const saved = { ...snapshot, tasks: [{ ...snapshot.tasks[0], status: "open" }] };
+    const pending = withPendingExecutions(saved, [{ text: "/xuly team execute XL136,T28" }])!;
+    expect(saved.tasks[0].status).toBe("open");
+    expect(pending.tasks[0].status).toBe("queued");
+    expect(renderProgress(pending, "T47", Date.parse(now))).toContain("máy điều phối chưa nhận lượt này");
+    expect(JSON.stringify(progressKeyboard(pending, "T47", Date.parse(now)))).not.toContain("execute|T47");
+    expect(executionReceipt(["T47"])).toContain("CHỜ BẮT ĐẦU");
+    expect(withPendingExecutions(null, [{ text: "/xuly team execute T47" }])).toBeNull();
+  });
+  it("does not overwrite running or closed work with an old pending request", () => {
+    for (const status of ["running", "resolved", "cancelled"]) {
+      const saved = { ...snapshot, tasks: [{ ...snapshot.tasks[0], status }] };
+      expect(withPendingExecutions(saved, [{ text: "/xuly team execute T47" }])).toEqual(saved);
+    }
+    for (const phase of ["running", "awaiting_ci", "deploying"]) {
+      const saved = { ...snapshot, tasks: [{ ...snapshot.tasks[0], status: "open", action: { phase } }] };
+      expect(withPendingExecutions(saved, [{ text: "/xuly team execute T47" }])).toEqual(saved);
+    }
+    expect(withPendingExecutions(snapshot, [{ text: "/xuly team execute T47 do something else" }])).toEqual(snapshot);
+  });
+  it("only asks the owner to confirm a fix when an owner decision is required", () => {
+    const data = { ...snapshot, tasks: [{ ...snapshot.tasks[0], status: "open", can_verify: true,
+      action: { phase: "waiting_followup", followup_at: Date.parse(now) / 1000 + 86400 } }] };
+    expect(JSON.stringify(progressKeyboard(data, "T47"))).not.toContain("ownerdone|");
+    expect(renderProgress(data, "T47", Date.parse(now))).toContain("đã đo, đã hẹn lượt đo tiếp");
+    expect(renderProgress(data, "T47", Date.parse(now))).toContain("Lượt đo tiếp:");
+  });
   it("shows the stored calendar without inventing one or calling AI", () => {
     expect(isProgressCommand('/lich_content')).toBe(true);
     expect(renderContentCalendar({ ...snapshot, content_calendar: '15/09 Kuala Lumpur' }, Date.parse(now))).toContain('15/09 Kuala Lumpur');

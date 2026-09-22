@@ -400,13 +400,18 @@ def digest(store):
         "SELECT * FROM tasks WHERE status NOT IN ('resolved','cancelled') ORDER BY "
         "CASE status WHEN 'running' THEN 0 WHEN 'queued' THEN 1 ELSE 2 END,id")
         if not re.match(r"^team(?:\s|$)", json.loads(r['evidence']).get('request', ''), re.I)]
+    from team_actions import state
+    for task in tasks:
+        phase = state(store, task['id']).get('phase')
+        if phase in {'queued', 'running', 'awaiting_ci', 'deploying'}:
+            task['status'] = 'queued' if phase == 'queued' else 'running'
     labels = {"running": "đang làm", "queued": "chưa bắt đầu", "open": "còn tồn đọng",
               "awaiting_review": "cần đội kiểm chứng kết quả", "needs_review": "đội cần xử lý vướng mắc"}
     lines = ["THEPICKLEHUB · BÁO CÁO NGẮN", now.strftime("%H:%M %d/%m/%Y"),
              "Đội đang tạm dừng." if store.get('paused', False) else "Lịch điều phối đang bật; không đồng nghĩa mọi việc đã xong.",
              f"\nCÒN {len(tasks)} VIỆC",
              f"Đang xử lý: {sum(t['status'] == 'running' for t in tasks)} · Chờ chạy: {sum(t['status'] == 'queued' for t in tasks)}",
-             "Các cảnh báo, bản nháp và việc bị lỗi chưa được bộ điều phối tự tiếp tục; chưa có lịch hoàn tất."]
+             "Bấm Xử lý ngay dưới báo cáo để đội thực hiện đúng mã việc; bot báo kết quả hoặc chỗ bị chặn."]
     for task in tasks[:5]:
         title = store.get(f"owner_title:{task['id']}", task['title'])
         lines.append(f"• T{task['id']}: {' '.join(title.split())[:95]} — {labels.get(task['status'], 'cần kiểm tra')}.")
@@ -417,6 +422,7 @@ def digest(store):
               render_calendar(store),
               "\nQUYỀN TRIỂN KHAI",
               "Content trong lịch đã được anh cho phép tự đăng sau kiểm chứng. Các báo cáo kỹ thuật khác không phải bài sẵn sàng đăng.",
+              "Sửa code thông thường: đội tự kiểm tra, tạo PR, chờ CI, triển khai và xác nhận production." if store.get('ordinary_code_autodeploy', False) else "Sửa code: kiểm tra xong sẽ có nút duyệt đúng phiên bản trước triển khai.",
               "\nLỆNH DÙNG NGAY",
               "• /tien_do — xem ai đang làm, việc đang kẹt và bước tiếp theo; bấm nút mã việc bên dưới.",
               "• /xuly editorial <yêu cầu cụ thể> — giao việc soạn nháp, chưa tự đăng."]
@@ -478,6 +484,10 @@ def telegram(store):
         text = re.sub(r"^/(?:xuly|lam|idea)(?:@\w+)?\s*", "", row["text"], flags=re.I).strip()
         if not text:
             continue
+        from team_actions import references
+        codes = references(text)
+        if codes:
+            text = 'team execute ' + ','.join(codes)
         tid = store.task(key, "chief", text[:160], "queued", {"telegram_id": row["id"], "request": text})
         acknowledged = rest(f"telegram_commands?id=eq.{row['id']}&status=eq.pending", "PATCH",
                             {"status": "done", "result": f"team-v2: accepted as T{tid}; not yet executed"})
@@ -497,6 +507,13 @@ def handle_control(store, task, text):
     if action in {"pause", "resume"}:
         store.put("paused", action == "pause")
         reply = "Đã tạm dừng đội v2; lệnh status/resume vẫn hoạt động." if action == "pause" else "Đã tiếp tục đội v2."
+    elif action == 'execute':
+        from team_actions import references, request
+        codes = references(' '.join(parts[2:]))
+        reply = request(store, codes, task['id']) if codes else 'Dùng /xuly T28,T29 hoặc bấm Xử lý ngay dưới báo cáo.'
+    elif action == 'deploy' and len(parts) == 4 and re.fullmatch(r'[0-9a-f]{12}', parts[3]):
+        from team_actions import approve
+        reply = approve(store, parts[2], parts[3])
     elif action == "provider" and len(parts) == 3 and parts[2].lower() in {"codex", "claude"}:
         provider = parts[2].lower()
         store.put("provider_policy", "manual")
@@ -509,7 +526,14 @@ def handle_control(store, task, text):
         reply = render_calendar(store)
     elif action in {"verify", "owner_done"} and len(parts) == 3:
         from team_verification import verify_task
-        reply = verify_task(store, parts[2], owner_done=action == "owner_done", action_id=task["id"])
+        from team_progress import target
+        from team_actions import state, ACTIVE
+        selected = target(store, parts[2])
+        current = state(store, selected['id']) if selected else {}
+        if current.get('phase') in ACTIVE:
+            reply = f"{parts[2]}: đã có lượt xử lý ({current['phase']}). {current.get('reason', '')}\nBot sẽ báo kết quả; anh không cần bấm thêm hoặc xác nhận đã sửa."
+        else:
+            reply = verify_task(store, parts[2], owner_done=action == "owner_done", action_id=task["id"])
     elif action == "token_help" and len(parts) == 3:
         from team_progress import target
         row = target(store, parts[2])
@@ -535,8 +559,12 @@ def handle_control(store, task, text):
             run_id = int(parts[2])
         run = store.db.execute("SELECT evidence FROM runs WHERE id=?", (run_id,)).fetchone()
         ev = json.loads(run[0]) if run else (json.loads(row['evidence']) if row else {})
-        path = Path(ev.get("path", ""))
+        from team_actions import state
+        action_report = state(store, row['id']).get('report', {}) if row else {}
+        path = Path(action_report.get('path') or ev.get("path", ""))
         reply = path.read_text()[:3500] if path.is_file() and ROOT.resolve() in path.resolve().parents else "Chưa có báo cáo lưu cho mã này. Xem /tien_do T<mã việc> để biết tiến độ."
+        if row:
+            reply = f"BÁO CÁO · T{row['id']}\n" + reply
     elif action == "priority" and len(parts) == 3:
         from team_progress import target
         row = target(store, parts[2])
@@ -574,6 +602,9 @@ def work_queue(store, allow_ai):
             handle_control(store, task, text)
     queued = sorted(queued, key=lambda task: (not store.get(f"priority:{task['id']}", False), task["id"]))
     if not allow_ai or store.get("paused", False) or (REPO / ".claude/AGENTS_PAUSED").exists():
+        return
+    from team_actions import run_one
+    if run_one(store):
         return
     for task in queued:
         if store.db.execute('SELECT status FROM tasks WHERE id=?', (task['id'],)).fetchone()[0] != 'queued':
