@@ -10,11 +10,41 @@ import team_supervisor as team
 from team_store import Store
 
 
+# Mục cố định của riêng bộ kiểm thử. Trước đây các test này lấy plan()[0], nên
+# mỗi lần lịch nội dung đổi là chúng vỡ vì ngày và vì mục mới không có
+# champions_faq — lịch là dữ liệu vận hành, không phải fixture.
+FIXTURE = {
+    "key": "fixture-kiem-thu", "at": "2026-09-15T08:00:00+07:00",
+    "id": "00000000-0000-4000-8000-000000000000", "slug": "bai-kiem-thu",
+    "title": "Bài kiểm thử", "keyword": "kiểm thử", "sources": ["https://www.ppatour-asia.com/"],
+    "section": (
+        "<h2>Mục kiểm thử cho quy trình cập nhật nội dung</h2>"
+        "<p>Đoạn này chỉ tồn tại trong bộ kiểm thử và không bao giờ được đăng lên trang thật. "
+        "Nó đủ dài để vượt sàn một trăm từ mà hàm prepare yêu cầu, dùng đúng những thẻ được "
+        "phép, và không chứa liên kết ra ngoài miền cho phép. Nhờ vậy bộ kiểm thử đo được "
+        "hành vi của quy trình chuẩn bị, ghi và đối chiếu mà không phụ thuộc vào lịch nội "
+        "dung thật đang chạy trên sản phẩm. Khi lịch đổi theo tuần, các phép thử dưới đây "
+        "vẫn đứng yên, còn phép thử duyệt toàn bộ lịch thật thì vẫn chạy trên dữ liệu thật "
+        "để bắt đoạn nội dung không an toàn hoặc quá mỏng.</p>"
+        "<ul><li>Thẻ được phép gồm tiêu đề, đoạn văn, danh sách và nhấn mạnh.</li>"
+        "<li>Liên kết chỉ trỏ nội bộ hoặc tới miền đối tác được khai báo.</li>"
+        "<li>Không có chỗ trống chờ nguồn nào còn sót lại trong đoạn.</li></ul>"),
+    "excerpt": "Đoạn kiểm thử nội bộ, không đăng lên trang thật bao giờ cả.",
+    "champions_faq": "Tama Shimabukuro thắng đơn nam.",
+}
+
+
 class ContentTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.store = Store(Path(self.tmp.name))
-        self.item = content.plan()[0]
+        # Lịch thật vẫn phải đọc được (xem test duyệt toàn bộ lịch), nhưng quy
+        # trình ghi thì chạy trên mục cố định, không trên lịch đang vận hành.
+        self.real_plan = content.plan()
+        plan_patch = patch.object(content, 'plan', return_value=[FIXTURE])
+        plan_patch.start()
+        self.addCleanup(plan_patch.stop)
+        self.item = FIXTURE
         self.row = {'id': self.item['id'], 'slug': self.item['slug'], 'status': 'published',
                     'updated_at': '2026-09-13T00:00:00+00:00', 'content_html': '<p>old</p>',
                     'faq_items': [{'question': 'Ai vô địch?', 'answer': 'chưa rõ'}]}
@@ -32,7 +62,8 @@ class ContentTests(unittest.TestCase):
         self.tmp.cleanup()
 
     def test_all_sections_are_safe_and_substantial(self):
-        for item in content.plan():
+        """Vòng lặp này CỐ Ý chạy trên lịch thật — đó là chỗ đoạn nội dung nguy hiểm sẽ xuất hiện."""
+        for item in self.real_plan:
             result = content.prepare(item, {**self.row, 'id': item['id'], 'slug': item['slug']})
             self.assertTrue(result['content_html'].endswith(self.row['content_html']))
         self.assertNotIn('published_at', self.patch)
