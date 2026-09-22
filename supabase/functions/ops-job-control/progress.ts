@@ -19,6 +19,19 @@ export function progressTarget(value: string): string | null {
   return match ? `${match[1].toUpperCase()}${match[2]}` : null;
 }
 
+export function taskReferences(value: string): string[] | null {
+  const codes: string[] = [];
+  for (const group of value.trim().split(/[,;]/)) {
+    if (!group.trim()) return null;
+    for (const token of group.trim().split(/\s+/)) {
+      const code = progressTarget(token);
+      if (!code) return null;
+      if (!codes.includes(code)) codes.push(code);
+    }
+  }
+  return codes.length ? codes : null;
+}
+
 export function executionReceipt(codes: string[]): string {
   return `⏳ ĐÃ NHẬN ${codes.join(', ')} · CHỜ BẮT ĐẦU\nYêu cầu đã được lưu. Khi máy bắt đầu thực hiện, bot sẽ gửi “ĐANG XỬ LÝ”; khi kết thúc sẽ gửi kết quả hoặc lý do bị chặn.\nAnh không cần bấm lại. Bấm Theo dõi bên dưới để xem trạng thái.`;
 }

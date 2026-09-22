@@ -1,7 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { isProgressCommand, parseSnapshot, progressTarget, renderProgress, renderContentCalendar, progressKeyboard, progressCallback, executionReceipt, withPendingExecutions } from "../../../supabase/functions/ops-job-control/progress";
+import { isProgressCommand, parseSnapshot, progressTarget, renderProgress, renderContentCalendar, progressKeyboard, progressCallback, executionReceipt, withPendingExecutions, taskReferences } from "../../../supabase/functions/ops-job-control/progress";
 
 describe("Telegram progress", () => {
+  it("parses task batches without ambiguous whitespace backtracking", () => {
+    expect(taskReferences("t28, T29; XL-171 T28")).toEqual(["T28", "T29", "XL171"]);
+    for (const value of ["", "T0", "T28 deploy", "T28,", "T28,,T29", ",T28", "hello"]) {
+      expect(taskReferences(value)).toBeNull();
+    }
+    expect(taskReferences("t1" + "\t\tt1".repeat(1000) + "!")).toBeNull();
+    expect(taskReferences(Array.from({ length: 21 }, (_, i) => `T${i + 1}`).join(","))).toHaveLength(21);
+  });
   it('routes execution and binds deployment to a revision', () => {
     expect(progressCallback('execute|T28')).toBe('/xuly team execute T28');
     expect(progressCallback('deploy|T28|abcdef123456')).toBe('/xuly team deploy T28 abcdef123456');

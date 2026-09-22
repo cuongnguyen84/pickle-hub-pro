@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { requireCronRequest } from "../_shared/cron-auth.ts";
-import { isProgressCommand, parseSnapshot, progressTarget, renderProgress, renderContentCalendar, progressKeyboard, progressCallback, executionReceipt, withPendingExecutions } from "./progress.ts";
+import { isProgressCommand, parseSnapshot, progressTarget, renderProgress, renderContentCalendar, progressKeyboard, progressCallback, executionReceipt, withPendingExecutions, taskReferences } from "./progress.ts";
 
 type Job = {
   job_key: string;
@@ -414,8 +414,8 @@ async function handleTaskCommand(
   }
 
   // A list of stable IDs selects existing work, never creates an engineering prompt.
-  if (["/xuly", "/lam"].includes(cmd) && /^(?:T|XL)-?[1-9]\d*(?:\s*[,;\s]\s*(?:T|XL)-?[1-9]\d*)*$/i.test(body)) {
-    const codes = [...new Set((body.match(/(?:T|XL)-?[1-9]\d*/gi) || []).map(code => code.toUpperCase().replace('-', '')))];
+  const codes = ["/xuly", "/lam"].includes(cmd) ? taskReferences(body) : null;
+  if (codes) {
     if (codes.length > 20) {
       await close('too_many_task_references');
       await sendTelegram(chatId, 'Mỗi lượt xử lý tối đa 20 mã việc. Chưa nhận batch này.');
