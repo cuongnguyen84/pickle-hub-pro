@@ -12,3 +12,4 @@
 |---|---|---|---|---|---|
 | 2026-07-31 | 93 | 7543 | 7.8 | +4.5% | Baseline TRƯỚC PR #533 (chạy tay 03/08) |
 | 2026-09-10 | 100 | 7144 | 8.0 | -23.1% | Đọc 13/09, kỳ 04–10/09; tuần trước 130 clicks/7792 impressions. Đã cảnh báo Telegram receipt 3991. Chưa quy nguyên nhân cho PR #533 hoặc noindex; cần kiểm tra riêng. |
+| 2026-09-20 | 102 | 7558 | 7.7 | +13.3% | Đọc 23/09 (daily-growth), kỳ 14–20/09; tuần trước 90 clicks/7088 impr. Hồi lại sau cú -23% kỳ 04–10/09 → không có dấu hiệu sự cố noindex. Top page: /vi/san/hnmu-pickleball-ha-noi 4 click. |
