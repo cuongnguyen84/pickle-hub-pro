@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { requireCronRequest } from "../_shared/cron-auth.ts";
-import { isProgressCommand, parseSnapshot, progressTarget, renderProgress, renderContentCalendar, progressKeyboard, progressCallback } from "./progress.ts";
+import { isProgressCommand, parseSnapshot, progressTarget, renderProgress, renderContentCalendar, progressKeyboard, progressCallback, executionReceipt, withPendingExecutions, taskReferences } from "./progress.ts";
 
 type Job = {
   job_key: string;
@@ -340,7 +340,9 @@ async function handleTaskCommand(
     const { data: saved, error } = await supabase.from("telegram_commands")
       .select("result").eq("chat_id", Number(chatId)).eq("text", "/team_snapshot")
       .eq("status", "done").order("id", { ascending: false }).limit(1).maybeSingle();
-    const snapshot = error ? null : parseSnapshot(saved?.result);
+    const { data: pending } = await supabase.from('telegram_commands').select('text')
+      .eq('chat_id', Number(chatId)).eq('status', 'pending').ilike('text', '/xuly team execute %').limit(100);
+    const snapshot = withPendingExecutions(error ? null : parseSnapshot(saved?.result), pending || []);
     if (cmd === "/lamngay") {
       const target = progressTarget(body);
       const task = target && snapshot?.tasks.find((t) => target === `T${t.id}` || target === `XL${t.telegram_id}`);
@@ -411,10 +413,28 @@ async function handleTaskCommand(
     return { ok: true, task_command: cmd };
   }
 
+  // A list of stable IDs selects existing work, never creates an engineering prompt.
+  const codes = ["/xuly", "/lam"].includes(cmd) ? taskReferences(body) : null;
+  if (codes) {
+    if (codes.length > 20) {
+      await close('too_many_task_references');
+      await sendTelegram(chatId, 'Mỗi lượt xử lý tối đa 20 mã việc. Chưa nhận batch này.');
+      return { ok: true, task_batch_rejected: true };
+    }
+    const { error } = await supabase.from('telegram_commands')
+      .update({ text: `/xuly team execute ${codes.join(',')}` }).eq('id', rowId).eq('status', 'pending');
+    if (error) throw error;
+    await sendTelegram(chatId, executionReceipt(codes), {
+      inline_keyboard: codes.slice(0, 5).map(code => [{ text: `Theo dõi ${code}`, callback_data: `progress|${code}` }]),
+    });
+    return { ok: true, execution_requested: codes };
+  }
+
   // Controls are consumed without a model; ACK is not task completion.
   if (cmd === "/xuly" && /^team(?:\s|$)/i.test(body)) {
     const code = /\b((?:T|XL)[1-9]\d*)$/i.exec(body)?.[1].toUpperCase();
-    await sendTelegram(chatId, "Đã chuyển lệnh cho bộ điều phối. Kết quả sẽ được trả riêng sau khi xử lý lệnh; đây chưa phải xác nhận đã thực hiện.", code ? {
+    const execution = /^team\s+execute\s+((?:T|XL)[1-9]\d*(?:,(?:T|XL)[1-9]\d*)*)$/i.exec(body);
+    await sendTelegram(chatId, execution ? executionReceipt(execution[1].toUpperCase().split(',')) : "Đã chuyển lệnh cho bộ điều phối. Kết quả sẽ được trả riêng sau khi xử lý lệnh; đây chưa phải xác nhận đã thực hiện.", code ? {
       inline_keyboard: [[{ text: `Xem tiến độ ${code}`, callback_data: `progress|${code}` }],
         [{ text: "Tiến độ toàn đội", callback_data: "progress|page:1" }]],
     } : progressKeyboard(null));
@@ -599,7 +619,7 @@ async function handleTelegramWebhook(req: Request, supabase: ReturnType<typeof c
   const update = await req.json() as {
     update_id?: number;
     message?: { message_id?: number; date?: number; text?: string; chat?: { id?: number }; from?: { id?: number; username?: string } };
-    callback_query?: { id?: string; data?: string; from?: { id?: number; username?: string }; message?: { date?: number; chat?: { id?: number } } };
+    callback_query?: { id?: string; data?: string; from?: { id?: number; username?: string }; message?: { message_id?: number; date?: number; chat?: { id?: number }; reply_markup?: { inline_keyboard: { text: string; callback_data?: string; url?: string }[][] } } };
   };
   const callback = update.callback_query;
   const callbackParts = callback?.data?.split("|", 2);
@@ -634,7 +654,18 @@ async function handleTelegramWebhook(req: Request, supabase: ReturnType<typeof c
   if (!inserted) return { ok: true, duplicate: true };
 
   if (TASK_COMMAND_RE.test(message.text.trim())) {
-    return await handleTaskCommand(supabase, chatId, inserted.id, message.text);
+    const result = await handleTaskCommand(supabase, chatId, inserted.id, message.text);
+    const selected = /^execute\|(T[1-9]\d*)$/.exec(callback?.data || '');
+    if (selected && callback?.message?.message_id && callback.message.reply_markup) {
+      const inline_keyboard = callback.message.reply_markup.inline_keyboard.map(row => row.map(button =>
+        button.callback_data === callback.data ? { text: `⏳ Đã nhận ${selected[1]} · Theo dõi`, callback_data: `progress|${selected[1]}` } : button));
+      // The durable request and receipt must not depend on this cosmetic edit.
+      await fetch(`https://api.telegram.org/bot${tgToken}/editMessageReplyMarkup`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, message_id: callback.message.message_id, reply_markup: { inline_keyboard } }),
+      }).catch(() => undefined);
+    }
+    return result;
   }
 
   if (/^\/(start|help|jobs|retry|diagnose|functions|probe|fix)(?:@\w+)?(?:\s|$)/i.test(message.text.trim())) {

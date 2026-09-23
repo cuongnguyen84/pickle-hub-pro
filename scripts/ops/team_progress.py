@@ -28,8 +28,14 @@ def snapshot(store):
         if re.match(r"^team(?:\s|$)", ev.get("request", ""), re.I):
             continue
         note = store.get(f"progress:{row['id']}", {})
+        from team_actions import state
+        action = state(store, row['id'])
+        if action:
+            note = {**note, 'reason': action.get('reason'), 'next_step': action.get('next_step')}
         reason = note.get("reason", ev.get("detail", ""))
         status = row["status"]
+        if status not in {'resolved', 'cancelled'} and action.get('phase') in {'queued', 'running', 'awaiting_ci', 'deploying'}:
+            status = 'queued' if action['phase'] == 'queued' else 'running'
         if status == "queued":
             if store.get("paused", False):
                 reason = "Bộ điều phối đang tạm dừng để bảo trì."
@@ -40,7 +46,8 @@ def snapshot(store):
         remote = re.fullmatch(r"telegram:([1-9]\d*)", row["dedupe"])
         tasks.append({"id": row["id"], "telegram_id": ev.get("telegram_id") or (int(remote[1]) if remote else None),
                       "title": store.get(f"owner_title:{row['id']}", row["title"]), "status": status,
-                      "owner": row["role"], "has_report": bool(ev.get("path")),
+                      "owner": row["role"], "has_report": bool(ev.get("path") or action.get('report')),
+                      "action": {key: action[key] for key in ('phase', 'pr', 'head', 'followup_at') if key in action},
                       "decision": note.get("decision"), "note_updated_at": note.get("updated_at"),
                       "can_verify": row["dedupe"].startswith("finding:") and row["dedupe"].split(":", 2)[1] in team.CHECK_ROLES,
                       "verification": {key: value for key, value in note.get("verification", {}).items()
@@ -54,7 +61,7 @@ def snapshot(store):
                        "heartbeat_at": iso(store.get("heartbeat", 0)),
                        "controller": {"paused": store.get("paused", False) or (team.REPO / ".claude/AGENTS_PAUSED").exists(),
                                       "provider": store.get("provider", "claude"),
-                                      "execution_mode": "draft_only"}, "tasks": tasks})
+                                      "execution_mode": "owner_requested"}, "tasks": tasks})
 
 
 def publish(store):
@@ -79,14 +86,23 @@ def publish(store):
 
 def reply_keyboard(body, store=None):
     """Use actual ledger capabilities; no approval inferred from model prose."""
-    ids = list(dict.fromkeys(re.findall(r"\bT([1-9]\d*)\b", body)))[:4]
+    ids = list(dict.fromkeys(re.findall(r"\bT([1-9]\d*)\b", body)))[:5]
     rows = []
     for tid in ids:
         task = target(store, f'T{tid}') if store else None
         row = [{"text": f"Xem T{tid}", "callback_data": f"progress|T{tid}"}]
-        if not store or (task and json.loads(task['evidence']).get('path')):
+        if not store or (task and (json.loads(task['evidence']).get('path') or store.get(f'action:{tid}', {}).get('report'))):
             row.append({"text": f"Báo cáo T{tid}", "callback_data": f"report|T{tid}"})
         rows.append(row)
+        if task and task['status'] not in {'resolved', 'cancelled'}:
+            from team_actions import state
+            action_state = state(store, int(tid))
+            if action_state.get('phase') == 'awaiting_deploy':
+                rows.append([{'text': f'Duyệt triển khai T{tid}',
+                              'callback_data': f'deploy|T{tid}|{action_state["head"][:12]}'}])
+                rows.append([{'text': 'Xem thay đổi đã kiểm tra', 'url': action_state['pr']}])
+            elif action_state.get('phase') not in {'queued', 'running', 'awaiting_ci', 'deploying'}:
+                rows.append([{'text': f'Xử lý ngay T{tid}', 'callback_data': f'execute|T{tid}'}])
         if task and task['dedupe'].startswith('finding:'):
             note = store.get(f'progress:{tid}', {})
             action = (note.get('decision') or {}).get('action')
@@ -96,7 +112,7 @@ def reply_keyboard(body, store=None):
                 rows += [[{'text':'1. Lấy token Meta', 'url':'https://developers.facebook.com/tools/explorer/'}],
                          [{'text':'2. Lưu token vào Supabase', 'url':'https://supabase.com/dashboard/project/ajvlcamxemgbxduhiqrl/functions/secrets'}],
                          [{'text':'Cần hỗ trợ lấy token', 'callback_data':f'tokenhelp|T{tid}'}]]
-            if task['status'] != 'resolved':
+            if task['status'] != 'resolved' and note.get('decision'):
                 rows.append([{'text':f'Đã sửa → kiểm tra lại T{tid}', 'callback_data':f'ownerdone|T{tid}'}])
             rows.append([{'text':f'Kiểm tra mới T{tid}', 'callback_data':f'verify|T{tid}'}])
     rows.append([{"text": "Tiến độ toàn đội", "callback_data": "progress|page:1"},

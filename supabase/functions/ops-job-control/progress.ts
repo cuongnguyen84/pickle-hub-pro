@@ -5,6 +5,7 @@ export type TaskProgress = {
   owner?: string; has_report?: boolean; note_updated_at?: string;
   decision?: { summary: string; instructions: string; action?: "reports" | "embeds" | "instagram_token" };
   can_verify?: boolean;
+  action?: { phase?: string; pr?: string; head?: string; followup_at?: number };
   verification?: { phase?: string; acceptance?: string; checked_at?: string; automatic?: boolean; cadence?: string };
   attempts?: number; priority?: boolean; related_task_id?: number | null;
 };
@@ -16,6 +17,39 @@ export type TeamSnapshot = {
 export function progressTarget(value: string): string | null {
   const match = /^(T|XL)-?([1-9]\d*)$/i.exec(value.trim());
   return match ? `${match[1].toUpperCase()}${match[2]}` : null;
+}
+
+export function taskReferences(value: string): string[] | null {
+  const codes: string[] = [];
+  for (const group of value.trim().split(/[,;]/)) {
+    if (!group.trim()) return null;
+    for (const token of group.trim().split(/\s+/)) {
+      const code = progressTarget(token);
+      if (!code) return null;
+      if (!codes.includes(code)) codes.push(code);
+    }
+  }
+  return codes.length ? codes : null;
+}
+
+export function executionReceipt(codes: string[]): string {
+  return `⏳ ĐÃ NHẬN ${codes.join(', ')} · CHỜ BẮT ĐẦU\nYêu cầu đã được lưu. Khi máy bắt đầu thực hiện, bot sẽ gửi “ĐANG XỬ LÝ”; khi kết thúc sẽ gửi kết quả hoặc lý do bị chặn.\nAnh không cần bấm lại. Bấm Theo dõi bên dưới để xem trạng thái.`;
+}
+
+export function withPendingExecutions(snapshot: TeamSnapshot | null, pending: { text: string }[]): TeamSnapshot | null {
+  if (!snapshot) return null;
+  const codes = new Set(pending.flatMap(row => {
+    const match = /^\/xuly\s+team\s+execute\s+((?:T|XL)[1-9]\d*(?:,(?:T|XL)[1-9]\d*)*)$/i.exec(row.text.trim());
+    return match ? match[1].toUpperCase().split(',') : [];
+  }));
+  return { ...snapshot, tasks: snapshot.tasks.map(task => {
+    if ((!codes.has(`T${task.id}`) && !codes.has(`XL${task.telegram_id}`)) ||
+        ['resolved', 'cancelled', 'running'].includes(task.status) ||
+        ['running', 'awaiting_ci', 'deploying'].includes(task.action?.phase || '')) return task;
+    return { ...task, status: 'queued', action: { ...task.action, phase: 'queued' },
+      reason: 'Telegram đã nhận yêu cầu xử lý; máy điều phối chưa nhận lượt này.',
+      next_step: 'Chờ bot báo ĐANG XỬ LÝ. Anh không cần bấm lại.' };
+  }) };
 }
 
 export function isProgressCommand(text: string): boolean {
@@ -82,8 +116,10 @@ function selection(snapshot: TeamSnapshot, target?: string) {
 
 export function progressCallback(data: string): string | undefined {
   if (data === "calendar") return "/lich_content";
-  const task = /^(progress|report|priority|verify|ownerdone|tokenhelp)\|((?:T|XL)[1-9]\d*)$/.exec(data);
-  if (task) return `${{ progress: "/tien_do", report: "/xuly team report", priority: "/lamngay", verify: "/xuly team verify", ownerdone: "/xuly team owner_done", tokenhelp: "/xuly team token_help" }[task[1]]} ${task[2]}`;
+  const deploy = /^deploy\|(T[1-9]\d*)\|([0-9a-f]{12})$/.exec(data);
+  if (deploy) return `/xuly team deploy ${deploy[1]} ${deploy[2]}`;
+  const task = /^(progress|report|priority|verify|ownerdone|tokenhelp|execute)\|((?:T|XL)[1-9]\d*)$/.exec(data);
+  if (task) return `${{ progress: "/tien_do", report: "/xuly team report", priority: "/lamngay", verify: "/xuly team verify", ownerdone: "/xuly team owner_done", tokenhelp: "/xuly team token_help", execute: "/xuly team execute" }[task[1]]} ${task[2]}`;
   const page = /^progress\|(page|done):([1-9]\d{0,5})$/.exec(data);
   if (page) return `/tien_do ${page[1] === "done" ? "xong " : ""}${page[2]}`;
   // Callback lạ thì không sinh ra lệnh nào — trả undefined tường minh để
@@ -95,6 +131,15 @@ export function progressKeyboard(snapshot: TeamSnapshot | null, target?: string,
   const selected = snapshot && selection(snapshot, target);
   const rows: ({ text: string; callback_data: string } | { text: string; url: string })[][] = [];
   for (const task of selected?.tasks || []) {
+    if (!closed(task) && snapshot && !isStale(snapshot, now)) {
+      if (task.action?.phase === 'awaiting_deploy' && /^[0-9a-f]{40}$/.test(task.action.head || '') &&
+          /^https:\/\/github.com\/cuongnguyen84\/pickle-hub-pro\/pull\/\d+$/.test(task.action.pr || '')) {
+        rows.push([{ text: `Duyệt triển khai T${task.id}`, callback_data: `deploy|T${task.id}|${task.action.head!.slice(0, 12)}` },
+          { text: 'Xem thay đổi', url: task.action.pr! }]);
+      } else if (!['queued', 'running', 'awaiting_ci', 'deploying'].includes(task.action?.phase || '') && task.status !== 'running') {
+        rows.push([{ text: `Xử lý ngay T${task.id}`, callback_data: `execute|T${task.id}` }]);
+      }
+    }
     if (!selected?.detail) rows.push([{ text: `${task.decision ? "Cần anh: " : "Chi tiết "}T${task.id}`, callback_data: `progress|T${task.id}` }]);
     else {
       if (task.decision?.action === "reports") rows.push([{ text: "Mở báo cáo để quyết định", url: "https://www.thepicklehub.net/admin/reports" }]);
@@ -105,7 +150,7 @@ export function progressKeyboard(snapshot: TeamSnapshot | null, target?: string,
         rows.push([{ text: "Cần hỗ trợ lấy token", callback_data: `tokenhelp|T${task.id}` }]);
       }
       if (task.can_verify) {
-        if (!closed(task)) rows.push([{ text: `Đã sửa → kiểm tra lại T${task.id}`, callback_data: `ownerdone|T${task.id}` }]);
+        if (!closed(task) && task.decision) rows.push([{ text: `Đã sửa → kiểm tra lại T${task.id}`, callback_data: `ownerdone|T${task.id}` }]);
         rows.push([{ text: `Kiểm tra mới T${task.id}`, callback_data: `verify|T${task.id}` }]);
       }
       if (task.has_report) rows.push([{ text: `Đọc báo cáo T${task.id}`, callback_data: `report|T${task.id}` }]);
@@ -146,8 +191,11 @@ export function renderProgress(snapshot: TeamSnapshot | null, target?: string, n
     `T${task.id}${task.telegram_id ? ` / XL${task.telegram_id}` : ""} · ${STATUS[task.status] || "Chưa rõ trạng thái"}`,
     short(task.title, 200),
     `Phụ trách: ${roles[task.owner || ""] || task.owner || "Chưa ghi người phụ trách"}`,
+    ...(task.action?.phase ? [`Lượt xử lý: ${{ queued: 'đã xếp hàng', running: 'đang thực hiện', awaiting_ci: 'đang chờ CI để tự triển khai', blocked: 'bị chặn — xem lý do', awaiting_deploy: 'đã kiểm tra, chờ duyệt triển khai', deploying: 'đã duyệt, chờ kiểm chứng production', complete: 'đã hoàn tất', waiting_followup: 'đã đo, đã hẹn lượt đo tiếp', measured: 'đã đo, cần đối chiếu kết luận' }[task.action.phase] || task.action.phase}`] : []),
     `Đã biết: ${short(task.reason || task.detail || "Chưa ghi kết quả có bằng chứng.", 550)}`,
     `Tiếp theo: ${short(nextStep(task), 300)}`,
+    ...(task.action?.phase === "waiting_followup" && Number.isFinite(task.action.followup_at) ?
+      [`Lượt đo tiếp: ${stamp(new Date(task.action.followup_at! * 1000).toISOString())} (giờ Việt Nam). Anh không cần bấm lại.`] : []),
     task.decision ? `CẦN ANH: ${short(task.decision.summary, 200)}\n${short(task.decision.instructions, 1000)}` : closed(task) ? "Anh không cần thao tác thêm; agent tiếp tục theo dõi." : "Anh cần làm gì: Chưa ghi nhận quyết định cần anh. Đội phải xử lý bước tiếp theo; không cần giao lại việc.",
     ...(task.verification?.acceptance ? [`Điều kiện đóng: ${short(task.verification.acceptance, 220)}`,
       `Kiểm chứng: ${task.verification.checked_at ? stamp(task.verification.checked_at) : "chưa có"} · ${task.verification.cadence || "chưa có lịch"}`,
