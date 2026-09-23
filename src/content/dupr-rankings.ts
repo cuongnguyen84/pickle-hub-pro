@@ -1,5 +1,5 @@
 /**
- * DUPR rankings snapshot — parsed from www.dupr.com on 2026-07-20.
+ * DUPR rankings snapshot — parsed from www.dupr.com on 2026-08-04.
  *
  * Source pages:
  *   - https://www.dupr.com/rankings (Open + Junior)
@@ -4357,4 +4357,4 @@ export function defaultFormatForScope(scope: DuprScope): DuprFormat {
   return scope === "vietnam" ? "doubles" : "mens-doubles";
 }
 
-export const DUPR_LAST_UPDATED = "2026-07-20";
+export const DUPR_LAST_UPDATED = "2026-08-04";
