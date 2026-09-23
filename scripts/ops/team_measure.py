@@ -107,7 +107,13 @@ def execute(store, task):
         if rc:
             raise RuntimeError('gsc_san_measurement_failed')
         data = json.loads(out)
-        lines = ['Đã đọc GSC riêng cụm /san/.', json.dumps(data.get('totals', data.get('current', {})), ensure_ascii=False)]
+        window = data.get('window', {})
+        change = data.get('wow', {}).get('clicks_pct')
+        lines = [f"GSC cụm /san/ · {window.get('start', 'chưa rõ')} → {window.get('end', 'chưa rõ')}",
+                 f"• Lượt nhấp: {data.get('clicks', 'chưa có dữ liệu')}; lượt hiển thị: {data.get('impressions', 'chưa có dữ liệu')}.",
+                 f"• Vị trí trung bình: {data.get('position', 'chưa có dữ liệu')}.",
+                 f"• Lượt nhấp so với tuần trước: {str(change) + '%' if change is not None else 'chưa có dữ liệu'}."
+                 ]
         next_step = 'Đội cập nhật tracker tuần và đối chiếu nguyên nhân biến động; đọc lại sau 7 ngày.'
         due, phase = time.time() + 7 * 86400, 'waiting_followup'
     else:
