@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Hai bộ đo SEO mà đội chưa có: crawl mẫu theo sitemap, và trích dẫn AI search.
+"""Ba bộ đo SEO mà đội chưa có: crawl mẫu theo sitemap, trích dẫn AI search, và
+từ khoá trong tầm với (GSC).
 
 Cả hai chỉ ĐỌC. Không bộ đo nào kết luận một con số nó chưa đo được: nguồn
 không đọc được thì ném lỗi để supervisor ghi "chưa đo được", đúng luật của
@@ -17,6 +18,9 @@ Vì sao cần:
 Chạy tay:
     python3 scripts/ops/team_seo.py crawl
     python3 scripts/ops/team_seo.py citation      # tốn tiền OpenAI, xem GIỚI HẠN
+
+`keywords` không có ở đây vì nó cần OAuth của GSC; chạy tay qua supervisor:
+    python3 -c "import team_supervisor as t, json; print(json.dumps(t.collect('keywords'), ensure_ascii=False))"
 """
 from __future__ import annotations
 
@@ -25,7 +29,9 @@ import os
 import re
 import socket
 import time
+import unicodedata
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -217,6 +223,143 @@ def crawl_observation(get=fetch, day=None, per_segment=PER_SEGMENT, recheck=None
             "corpus_size": len(corpus), "day_index": day,
             "word_floors": {**WORD_FLOORS, "*": DEFAULT_WORD_FLOOR},
             "note": "Mẫu xoay vòng theo ngày; trang không nằm trong mẫu hôm nay chưa được kiểm tra, không kết luận là đạt."}
+
+
+# ─── Từ khoá trong tầm với ─────────────────────────────────────────────────
+# Đội đo được sức khoẻ kỹ thuật nhưng không có gì trả lời "làm gì tiếp theo".
+# Nguồn từ khoá không tốn tiền và không bịa được là chính GSC: truy vấn site ĐÃ
+# có impression. Điểm mù của nó có chủ ý — nó không thấy thị trường chưa chạm,
+# nên không bao giờ đề xuất loại từ khoá mình không có dữ liệu để phục vụ (22/09
+# một tool ngoài xếp lịch 7 bài "pickleball courts near me" trong khi bảng sân có
+# 0 dòng ngoài Việt Nam). Ahrefs chặn theo gói và Semrush hết unit, nên đây cũng
+# là nguồn duy nhất đang đọc được.
+KEYWORD_DAYS = 90
+KEYWORD_MIN_IMPRESSIONS = 80   # dưới mức này một cú CTR lẻ đã làm lệch kết luận
+KEYWORD_POS_LO, KEYWORD_POS_HI = 4.0, 20.0  # đã ở trang 1-2: sửa được, chưa cần trang mới
+BRAND_MIN_IMPRESSIONS = 500
+BRAND_CTR_FLOOR = 0.25   # gõ đúng tên mình mà dưới mức này là đang rò rỉ
+WEAK_CTR, WEAK_POS = 0.05, 10.0
+# Từ nền, bỏ khi so truy vấn với slug — có mặt ở gần như mọi URL nên không
+# chứng minh trang nói đúng chủ đề.
+# Ngoài từ nền còn bỏ từ bổ nghĩa thời gian: "lịch ... hôm nay" không đòi một
+# trang khác "lịch ...", nó đòi trang đó được cập nhật.
+KEYWORD_STOPWORDS = {"pickleball", "pickle", "ball", "san", "cua", "nao", "bao", "thi", "the", "for", "and",
+                     "hom", "nay", "moi", "nhat", "hien", "tai", "today", "now", "latest"}
+
+
+def fold(text):
+    """Bỏ dấu + hạ chữ, để so truy vấn tiếng Việt với slug ASCII."""
+    text = unicodedata.normalize("NFD", text.lower()).replace("đ", "d")
+    text = "".join(c for c in text if unicodedata.category(c) != "Mn")
+    return re.sub(r"[^a-z0-9]+", " ", text).strip()
+
+
+def keyword_group(query, path):
+    """brand / venue / content. Ba nhóm này cần ba cách xử lý khác hẳn nhau."""
+    if "picklehub" in fold(query).replace(" ", ""):
+        return "brand"
+    if path.startswith("/san/") or path.startswith("/vi/san/"):
+        return "venue"
+    return "content"
+
+
+def keyword_observation(rows, window=None, get=fetch, max_gap_checks=8):
+    """Truy vấn ở vị trí 4–20 đang mất click, tách theo nhóm.
+
+    ``rows`` đúng dạng Search Analytics API với dimensions ["query", "page"].
+    Danh sách rỗng là NÉM LỖI, không phải "không có cơ hội": GSC im lặng thường
+    là hỏng credential, và luật của role growth cấm coi thiếu dữ liệu là số 0.
+    """
+    if not rows:
+        raise RuntimeError("empty_keyword_rows")
+
+    totals = {}
+    for row in rows:
+        query, page = row["keys"]
+        bucket = totals.setdefault(query, {"impressions": 0.0, "clicks": 0.0, "weighted": 0.0, "pages": {}})
+        bucket["impressions"] += row["impressions"]
+        bucket["clicks"] += row["clicks"]
+        bucket["weighted"] += row["position"] * row["impressions"]
+        bucket["pages"][page] = bucket["pages"].get(page, 0) + row["impressions"]
+
+    groups = {name: [] for name in ("brand", "venue", "content")}
+    for query, bucket in totals.items():
+        impressions = bucket["impressions"]
+        if impressions < KEYWORD_MIN_IMPRESSIONS:
+            continue
+        position = bucket["weighted"] / impressions
+        if not KEYWORD_POS_LO <= position <= KEYWORD_POS_HI:
+            continue
+        page = max(bucket["pages"].items(), key=lambda kv: kv[1])[0]
+        path = urllib.parse.urlsplit(page).path or "/"
+        words = [w for w in fold(query).split() if len(w) > 2 and w not in KEYWORD_STOPWORDS]
+        candidate = {
+            "query": query, "impressions": int(impressions), "clicks": int(bucket["clicks"]),
+            "ctr": round(bucket["clicks"] / impressions, 4), "position": round(position, 1),
+            "page": path, "pages": len(bucket["pages"]),
+            # Trang đích có nói đúng chủ đề truy vấn không. Sai = có thể thiếu trang.
+            "covered": bool(words) and sum(w in fold(path) for w in words) / len(words) >= 0.6,
+        }
+        groups[keyword_group(query, path)].append(candidate)
+
+    for items in groups.values():
+        items.sort(key=lambda c: -(c["impressions"] - c["clicks"]))
+
+    summary = {name: {"queries": len(items),
+                      "impressions": sum(c["impressions"] for c in items),
+                      "clicks": sum(c["clicks"] for c in items)}
+               for name, items in groups.items()}
+    for stat in summary.values():
+        stat["ctr"] = round(stat["clicks"] / stat["impressions"], 4) if stat["impressions"] else None
+
+    problems = {}
+    brand = summary["brand"]
+    if brand["impressions"] >= BRAND_MIN_IMPRESSIONS and (brand["ctr"] or 0) < BRAND_CTR_FLOOR:
+        problems["brand_ctr"] = (
+            f"Truy vấn thương hiệu: {brand['impressions']} hiển thị nhưng chỉ {brand['clicks']} click "
+            f"(CTR {brand['ctr'] * 100:.1f}%) — người tìm đúng tên mình mà không tới được trang: "
+            + "; ".join(f"{c['query']} (vị trí {c['position']})" for c in groups["brand"][:3]))
+
+    weak = [c for c in groups["content"] if c["position"] <= WEAK_POS and c["ctr"] < WEAK_CTR]
+    if weak:
+        problems["content_ctr"] = (
+            f"{len(weak)} truy vấn nội dung nằm trang 1 mà gần như không ai bấm: "
+            + "; ".join(f"{c['query']} ({c['impressions']} hiển thị, {c['clicks']} click, vị trí {c['position']})"
+                        for c in weak[:3]))
+
+    # Slug không khớp CHƯA phải thiếu trang: /tools phục vụ "pickleball bracket
+    # generator" mà đường dẫn không chứa chữ nào của truy vấn. Đọc title trang
+    # đích rồi mới kết luận; không đọc được thì không kết tội, lượt sau đo lại.
+    gaps = []
+    for candidate in [c for c in groups["content"] if not c["covered"]][:max_gap_checks]:
+        words = [w for w in fold(candidate["query"]).split() if len(w) > 2 and w not in KEYWORD_STOPWORDS]
+        try:
+            status, html = get(SITE + candidate["page"])
+            title = fold(TITLE_RE.search(html).group(1)) if status == 200 and TITLE_RE.search(html) else None
+        except Exception:
+            title = None
+        if title is None or (words and sum(w in title for w in words) / len(words) >= 0.6):
+            candidate["covered_by_title"] = title is not None
+            continue
+        gaps.append(candidate)
+    if gaps:
+        problems["keyword_gap"] = (
+            f"{len(gaps)} truy vấn chưa có trang nói đúng chủ đề, Google đang phải chọn tạm: "
+            + "; ".join(f"{c['query']} → {c['page']}" for c in gaps[:3]))
+
+    return {
+        "problems": problems, "window": window, "rows_read": len(rows),
+        "thresholds": {"days": KEYWORD_DAYS, "min_impressions": KEYWORD_MIN_IMPRESSIONS,
+                       "positions": [KEYWORD_POS_LO, KEYWORD_POS_HI]},
+        "summary": summary,
+        "brand": groups["brand"][:10], "content": groups["content"][:10], "venue": groups["venue"][:5],
+        "note": ("Nhóm venue KHÔNG mở việc dù CTR gần 0 (22/09: 10.012 hiển thị, 43 click). Đó là truy vấn "
+                 "tìm đúng tên một sân, và Google Business Profile của chính sân trả lời giờ mở cửa lẫn chỉ "
+                 "đường ngay trên trang kết quả — title trang sân đã có địa chỉ và số đặt sân rồi. Báo động "
+                 "hàng ngày ở đây chỉ tạo một việc không ai đóng được; thứ GBP không có là GIÁ THEO GIỜ. "
+                 "Hiệu số hiển thị trừ click là thứ chưa thành click, không phải click sẽ lấy được. "
+                 "Bộ đo này chỉ thấy truy vấn site đã có impression, không thấy thị trường chưa chạm."),
+    }
 
 
 # ─── Trích dẫn AI search ───────────────────────────────────────────────────

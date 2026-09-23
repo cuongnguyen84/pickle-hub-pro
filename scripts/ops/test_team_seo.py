@@ -206,10 +206,6 @@ class CitationTests(unittest.TestCase):
         self.assertEqual(result["cited"], 0)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 def gsc(clicks_prev=3803, clicks_now=297, losers=(), position_delta=1.9):
     pct = round((clicks_now - clicks_prev) / clicks_prev * 100, 1) if clicks_prev else None
     return {"window": {"current": ["2026-09-12", "2026-09-18"], "previous": ["2026-09-05", "2026-09-11"]},
@@ -364,3 +360,114 @@ class ReleaseManifestTests(unittest.TestCase):
         for module in sorted(imported):
             if (here / f"{module}.py").exists():  # module chưa vào cây mã thì bỏ qua
                 self.assertIn(f"{module}.py", published, f"{module}.py chưa được phát hành ra runtime")
+
+    def test_supervisor_never_imports_a_module_this_branch_does_not_have(self):
+        """Nhánh khác tạo module mới là chuyện thường; import nó từ đây thì check chết khi merge trước.
+
+        Bản cũ của test trên bỏ qua module chưa có mặt, nên nó xanh cả khi
+        supervisor import một file chỉ tồn tại trên nhánh chưa merge.
+        """
+        here = Path(__file__).parent
+        source = (here / "team_supervisor.py").read_text()
+        for module in sorted(set(re.findall(r"(?m)^\s*(?:import|from)\s+(team_\w+)", source))):
+            self.assertTrue((here / f"{module}.py").exists(),
+                            f"team_supervisor.py import {module} nhưng nhánh này không có {module}.py")
+
+
+def krow(query, page, impressions, clicks, position):
+    return {"keys": [query, f"{SITE}{page}"], "impressions": impressions,
+            "clicks": clicks, "position": position}
+
+
+# Số liệu thật 22/09, cửa sổ 21/06–19/09.
+BRAND_ROWS = [krow("the pickle hub", "/", 2219, 52, 7.4),
+              krow("picklehub", "/", 895, 67, 7.3),
+              krow("pickle hub", "/", 777, 16, 6.6)]
+VENUE_ROWS = [krow("msc mystery sport complex", "/san/msc-mystery-sports-complex-tp-hcm", 439, 0, 6.9),
+              krow("đảo sen pickleball", "/vi/san/dao-sen-pickleball-ha-noi", 298, 0, 9.1),
+              krow("sân môi trường", "/vi/san/san-pickleball-moi-truong-ha-noi", 280, 0, 6.2)]
+HEALTHY_CONTENT = [krow("pickleball world cup 2026 results",
+                        "/blog/pickleball-world-cup-2026-da-nang-results", 2194, 626, 4.2)]
+
+
+class KeywordTests(unittest.TestCase):
+    def test_no_rows_raises_instead_of_reporting_no_opportunity(self):
+        """GSC im lặng gần như luôn là hỏng credential, không phải site hết cơ hội."""
+        with self.assertRaises(RuntimeError):
+            seo.keyword_observation([])
+
+    def test_brand_queries_leaking_clicks_open_a_task(self):
+        result = seo.keyword_observation(BRAND_ROWS + HEALTHY_CONTENT)
+        self.assertIn("brand_ctr", result["problems"])
+        self.assertIn("the pickle hub", result["problems"]["brand_ctr"])
+        self.assertEqual(result["summary"]["brand"]["queries"], 3)
+
+    def test_brand_queries_that_convert_are_left_alone(self):
+        rows = [krow("picklehub", "/", 2000, 900, 1.2)]
+        self.assertNotIn("brand_ctr", seo.keyword_observation(rows)["problems"])
+
+    def test_venue_queries_with_zero_clicks_never_open_a_task(self):
+        """GBP của chính sân trả lời ngay trên SERP; báo động ở đây không ai đóng được."""
+        result = seo.keyword_observation(VENUE_ROWS)
+        self.assertEqual(result["problems"], {})
+        self.assertEqual(result["summary"]["venue"]["clicks"], 0)
+        self.assertTrue(result["venue"], "vẫn phải giữ lại để đọc, chỉ là không mở việc")
+
+    def test_content_stuck_on_page_one_without_clicks_opens_a_task(self):
+        rows = [krow("pickleball world cup 2026", "/blog/pickleball-world-cup-2026-da-nang-results", 1223, 38, 9.4)]
+        result = seo.keyword_observation(rows)
+        self.assertIn("content_ctr", result["problems"])
+
+    @staticmethod
+    def titled(text):
+        return lambda url, **kwargs: (200, f"<html><head><title>{text}</title></head></html>")
+
+    def test_query_whose_landing_page_is_off_topic_is_reported_as_a_gap(self):
+        rows = [krow("sporttora", "/blog/pickleball-world-cup-2026-da-nang-how-to-watch", 256, 0, 6.6)]
+        result = seo.keyword_observation(rows, get=self.titled("Xem Pickleball World Cup 2026 ở đâu"))
+        self.assertIn("keyword_gap", result["problems"])
+
+    def test_short_slug_is_not_a_gap_when_the_title_answers_the_query(self):
+        """/tools phục vụ 'pickleball bracket generator' mà slug không chứa chữ nào của truy vấn."""
+        rows = [krow("pickleball bracket generator", "/tools", 300, 5, 5.0)]
+        result = seo.keyword_observation(rows, get=self.titled("Free Pickleball Bracket Generator"))
+        self.assertNotIn("keyword_gap", result["problems"])
+
+    def test_unreadable_page_is_not_accused_of_missing_content(self):
+        def boom(url, **kwargs):
+            raise OSError("mạng chập")
+        rows = [krow("sporttora", "/blog/x", 256, 0, 6.6)]
+        self.assertNotIn("keyword_gap", seo.keyword_observation(rows, get=boom)["problems"])
+
+    def test_page_that_matches_the_query_is_not_a_gap(self):
+        """Slug đã khớp thì không tốn một request nào để xác nhận."""
+        def never(url, **kwargs):
+            raise AssertionError("không được gọi mạng khi slug đã khớp")
+        self.assertNotIn("keyword_gap", seo.keyword_observation(HEALTHY_CONTENT, get=never)["problems"])
+
+    def test_thin_and_out_of_reach_queries_are_dropped(self):
+        rows = HEALTHY_CONTENT + [
+            krow("từ khoá quá ít hiển thị", "/blog/x", seo.KEYWORD_MIN_IMPRESSIONS - 1, 0, 6.0),
+            krow("đã đứng nhất rồi", "/blog/y", 900, 700, 1.1),
+            krow("nằm quá sâu chưa với tới", "/blog/z", 900, 0, 44.0)]
+        counted = sum(g["queries"] for g in seo.keyword_observation(rows)["summary"].values())
+        self.assertEqual(counted, 1)
+
+    def test_positions_are_weighted_by_impressions_across_pages(self):
+        """Một truy vấn rơi vào nhiều trang: vị trí phải theo trọng số, trang đích là trang nhiều hiển thị nhất."""
+        rows = [krow("lịch pickleball world cup", "/vi/blog/lich-thi-dau-pickleball-world-cup-2026", 1400, 150, 4.0),
+                krow("lịch pickleball world cup", "/vi/blog/cu", 100, 0, 30.0)]
+        item = seo.keyword_observation(rows)["content"][0]
+        self.assertEqual(item["pages"], 2)
+        self.assertEqual(item["page"], "/vi/blog/lich-thi-dau-pickleball-world-cup-2026")
+        self.assertAlmostEqual(item["position"], 5.7, places=1)
+
+    def test_the_check_is_registered_to_growth_so_findings_reach_telegram(self):
+        """Nằm ngoài CHECK_ROLES thì bộ đo chạy xong mà không ai nhận được việc."""
+        import team_supervisor
+        self.assertEqual(team_supervisor.CHECK_ROLES.get("keywords"), "growth")
+        self.assertNotIn("keywords", team_supervisor.FAST, "đi mạng ngoài, chỉ chạy ở lượt quét đầy đủ")
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -201,6 +201,30 @@ def collect(name):
         for date, milestone in re.findall(r"(20\d\d-\d\d-\d\d) ([A-Z][A-Z0-9-]+) —", due):
             problems["milestone:" + milestone] = f"Mốc {milestone} đến hạn {date}; cần làm theo predicate và ghi bằng chứng"
         return {"problems": problems, "seo": seo, "ga4": ga4, "milestones": due}
+    if name == "keywords":
+        # Nguồn từ khoá duy nhất đọc được: GSC. Gọi thẳng bằng requests chứ không
+        # qua gsc_report.query() — hàm đó sys.exit(4) khi API lỗi, tức là một cú
+        # 503 của Google sẽ giết cả lượt quét thay vì chỉ hỏng một check.
+        from urllib.parse import quote
+
+        import requests
+        import team_seo
+        # Cùng cách team_ga4.py nạp ga4_report: adapter SEO nằm ngoài scripts/ops.
+        sys.path.insert(0, str(REPO / "scripts/seo"))
+        os.environ.setdefault("GOOGLE_SA_JSON", str(REPO / ".claude/secrets.local.gsc-ga4-sa.json"))
+        import gsc_report as gsc
+        end = datetime.now(ICT).date() - timedelta(days=3)
+        start = end - timedelta(days=team_seo.KEYWORD_DAYS)
+        response = requests.post(
+            f'https://searchconsole.googleapis.com/webmasters/v3/sites/{quote(gsc.SITE, safe="")}/searchAnalytics/query',
+            headers={"Authorization": f"Bearer {gsc.token()}"},
+            json={"startDate": str(start), "endDate": str(end), "dimensions": ["query", "page"],
+                  "dataState": "final", "rowLimit": 25000}, timeout=60)
+        response.raise_for_status()
+        rows = response.json().get("rows", [])
+        if len(rows) >= 25000:
+            raise RuntimeError("gsc_response_truncated")
+        return team_seo.keyword_observation(rows, window=[str(start), str(end)])
     if name in {"crawl", "citation"}:
         # Đo ngoài site, không chạm DB. Chỉ chạy trong lượt quét đầy đủ mỗi ngày
         # (không nằm trong FAST); citation tự giới hạn mỗi tuần một lượt qua cache.
