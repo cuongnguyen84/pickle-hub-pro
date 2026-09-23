@@ -1,0 +1,14 @@
+{
+  "agent": "ui-ux-critic",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Trình tự ARCH-02: extraction increment 1 (cancel/reactivate → handler.ts) trước, hay bắt buộc characterization test + i18n hoá copy VI TRƯỚC MỌI lát tách?",
+      "myRound1Position": "Blocker: 0 test parity → cam kết 'không đổi hành vi' không kiểm chứng được; bắt buộc characterization test + i18n byte-for-byte TRƯỚC mọi lát tách.",
+      "move": "REFINE",
+      "evidence": "supabase/functions/cancel-registration/index.ts:8 (serve /dang-ky/:magic_token, KHÔNG phải RegistrationModal), :41-43 + :109/:132/:138 (trả error CODE thuần: already_cancelled/event_completed/event_started — 0 chuỗi VI, 0 JSX); reactivate-registration/index.ts cùng dạng 161 dòng edge-only. Gate UI/i18n của tôi vốn nhắm increment 2 ('kéo 7 call inline RegistrationModal' — slot count/order/claim, KHÔNG gồm cancel/reactivate).",
+      "note": "Blocker của tôi (i18n-first + parity trước khi tách) áp cho lát CHẠM UI = increment 2-3, KHÔNG áp increment 1: đó là backend handler emit code ổn định, 0 component/0 VI. Thu hẹp 'MỌI lát' → 'mọi lát chạm UI'. Điều kiện duy nhất giữ lại trên increment 1: vitest QA-08 phải PIN đúng chuỗi error-code (already_cancelled/event_started/event_completed/not_found), vì đó chính là khoá mà i18n map frontend key vào — đổi tên code = rơi hết về networkError. Architect đúng 'increment 1 = 0 rủi ro UI'; Blocker của tôi vẫn nguyên vẹn ở increment 2 trở đi."
+    }
+  ],
+  "newDisagreements": []
+}

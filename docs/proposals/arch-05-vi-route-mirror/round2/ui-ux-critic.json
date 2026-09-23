@@ -1,0 +1,22 @@
+{
+  "agent": "ui-ux-critic",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Route shape: config-array double-map (per-route ViLanguageWrapper) vs parent /vi layout route (wrapper renders <Outlet/>)",
+      "myRound1Position": "Route cha /vi giữ mount là bắt buộc để vá bug ngôn-ngữ-sai (3 route bỏ wrapper) + bug /vi/<sai> ra NotFound tiếng Anh.",
+      "move": "CONCEDE",
+      "evidence": "src/components/layout/ViLanguageWrapper.tsx:15,29,31 — useEffect deps rỗng [] (keyed theo mount/unmount, KHÔNG theo pathname); cleanup restore 'en'; return <>{children}</> (chưa render <Outlet/>). Kết hợp risk-auditor #4 (nested Routes thiếu inner *, /vi/<sai> bypass App.tsx:789 top-level path='*').",
+      "note": "Mở code thật: mọi bug UX em muốn vá đạt được TRONG Option A mà KHÔNG cần route cha, không đổi mount semantics. (a) Ngôn-ngữ-sai: chỉ cần bọc ViLanguageWrapper cho 3 route ngoại lệ (App.tsx:585/658/661) — mount sẽ set 'vi', đúng như 60 route còn lại đang chạy. (b) VI-404: thêm một route /vi/* -> <ViLanguageWrapper><NotFound/></ViLanguageWrapper> (v6 rank static > wildcard nên /vi/feed vẫn thắng). Route cha ĐỔI mount semantics + mang 3 bẫy trắng-trang của risk-auditor #4 mà không mua thêm gì ngoài việc bỏ 'en flash' cosmetic (đã defer sang UrlLanguageSync backlog ở vòng 1). Nhượng vehicle cho Option A; giữ nguyên yêu cầu là các bản vá phải THỰC SỰ ship (xem D2)."
+    },
+    {
+      "id": "D2",
+      "topic": "Scope: byte-identical (giữ 3 ngoại lệ viSkipWrapper, chuẩn hoá ở PR khác) vs vá 3 route + VI-404 cùng PR",
+      "myRound1Position": "Vá 3 route ngoại lệ + 404-VI trong cùng PR gần như free và là giá trị UX thật cho 95% user VI.",
+      "move": "REFINE",
+      "evidence": "git log -L App.tsx: rankings a5cd6ec2, feed 6c8c3b79, social/:slug/live ab9e2a35 — cả 3 thêm KHÔNG wrapper ngay tại commit feature, không comment/không lý do kỹ thuật; App.tsx:577 xác nhận đây là bất nhất, không phải chủ đích. Không có ràng buộc 'giữ state khi toggle' (toggle EN<->VI điều hướng sang route khác -> page remount bất kể wrapper).",
+      "note": "Verify chi phí thật: KHÔNG có lý do chính đáng cho việc bỏ wrapper -> 'free' đúng cho Feed + Rankings + VI-404 (chỉ là flip viSkipWrapper + 1 route NotFound). NHƯNG 'free' bị nói quá cho SocialEventLive: đó là trang chấm điểm court-side, bọc wrapper đổi i18n context nên phải chạy audit socket/SSE của em ở vòng 1 (#5) trước — nếu chưa audit trong PR này thì DEFER riêng SocialEventLive, vẫn ship Feed/Rankings/VI-404 ngay. Lập trường lõi giữ: đây là bug thật cho 95% VI, không nên đẩy sang 'PR khác' vô thời hạn; nhưng đây là should-fix (vòng 1 em xếp #4/#6 'Nên sửa', không phải Blocker), nên quyết định same-PR-hay-follow-up là sequencing của Cuong — miễn bản vá không bị bỏ rơi. Blocker thật của em (#1/#2/#3: đừng flatten blog/news, đừng lộ 66 route, URL byte-identical) Option A đã xử đủ, không đổi ở vòng 2."
+    }
+  ],
+  "newDisagreements": []
+}

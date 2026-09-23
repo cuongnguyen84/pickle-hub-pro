@@ -1,0 +1,10 @@
+{
+  "provider": "openai",
+  "model": "gpt-5.6",
+  "requestedAt": "2026-07-17T11:17:25.858Z",
+  "latencyMs": 87292,
+  "promptChars": 4088,
+  "replyChars": 13337,
+  "promptFile": "/private/tmp/claude-501/-Users-cm10-pickle-hub-pro/5425ea59-3d93-477f-ae17-d64baca75677/scratchpad/arch05-brief.md",
+  "systemPrompt": "You are a senior product designer and front-end architect reviewing a mobile-first bilingual (Vietnamese-primary) sports web app. Be specific and concrete. Name the exact element and the exact fix. No generic design platitudes."
+}

@@ -1,0 +1,22 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Alert #24 safeRedirect.ts:35 — bug sống phải fix #1, hay char-class thừa vô hại?",
+      "myRound1Position": "Char-class thừa nhưng behavior đúng (chỉ reject whitespace+control); xếp vào mẻ dismiss cuối, không ưu tiên.",
+      "move": "CONCEDE",
+      "evidence": "src/lib/auth/safeRedirect.ts:35 — `/[ -\\s]/` ; runtime `node -e` xác nhận `/[ -\\s]/.test(\"-\") === true` và `.test(\"/tournament/abc-def\") === true`. Trace caller: src/pages/FindPlayers.tsx:83 gọi buildLoginRedirect(\"/tim-ban-choi\") và src/pages/Messages.tsx:109 gọi buildLoginRedirect(\"/tin-nhan\") — cả hai path hardcode chứa hyphen → isValidInternalPath=false → buildLoginRedirect trả \"/login\" KHÔNG kèm redirect → sau login user về \"/\" thay vì trang đích.",
+      "note": "Tôi đã tự chạy regex và trace caller thật: đây là defect SỐNG hôm nay, không phải char-class vô hại. Rớt hyphen làm hỏng mọi slug có gạch nối (route VI hardcode + club/event slug). Fix ưu tiên #1, đứng riêng PR, kèm test: hyphen-path PASS, //evil.com + /\\evil + /%2F + javascript: vẫn BLOCK. Round-1 của tôi sai vì tôi suy từ ý đồ comment mà không chạy regex."
+    },
+    {
+      "id": "D2",
+      "topic": "Alert #14/15/16 xss-through-dom (AdminViBlogEditor, EditLivestreamDialog): fix validate URL scheme hay dismiss?",
+      "myRound1Position": "Fix bằng validate URL scheme (http/https-only) trước khi bind — vừa clear alert vừa là a11y/UX hợp lý.",
+      "move": "CONCEDE",
+      "evidence": "src/pages/admin/AdminViBlogEditor.tsx:282-283 (admin gõ tay coverImageUrl) + :83 (load từ existingPost.cover_image_url, DB admin-only) → bind vào <img src={normalizeImageUrl(coverImageUrl)}> tại :295. src/pages/admin/AdminViBlogEditor.tsx:400 <a href={`/vi/blog/${slug}`}> — href luôn prefix `/vi/blog/`, slug không thể phá scheme. src/components/admin/EditLivestreamDialog.tsx:108-109 (admin gõ tay thumbnailUrl) → <img src={thumbnailUrl}> tại :115.",
+      "note": "Mở 2 file xác nhận: giá trị bind đều từ chính admin gõ hoặc field DB admin-viết; sink là <img src> (React set property, javascript: URL bất hoạt, không exec) và <a href> đã prefix path cứng. Không có nguồn không tin cậy. risk-auditor đúng: self-XSS, dismiss-with-reason là phân loại trung thực; thêm scheme-validation chỉ để tắt scanner là rewrite hành vi thừa. Ghi reason dismiss, không fix code."
+    }
+  ],
+  "newDisagreements": []
+}

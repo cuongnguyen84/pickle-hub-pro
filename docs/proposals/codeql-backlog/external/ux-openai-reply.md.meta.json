@@ -1,0 +1,10 @@
+{
+  "provider": "openai",
+  "model": "gpt-5.6",
+  "requestedAt": "2026-07-17T10:57:21.099Z",
+  "latencyMs": 78279,
+  "promptChars": 3855,
+  "replyChars": 10681,
+  "promptFile": "docs/proposals/codeql-backlog/external/ux-brief-sent.md",
+  "systemPrompt": "You are a senior product designer reviewing a mobile-first bilingual (Vietnamese-primary) sports web app. Be specific and concrete. Name the exact element and the exact fix. No generic design platitudes."
+}

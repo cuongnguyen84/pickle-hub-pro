@@ -1,0 +1,26 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Hình dạng route: config-array double-map (giữ per-route ViLanguageWrapper) vs route cha /vi + <Outlet/> (shared mount).",
+      "myRound1Position": "Option A — config array MIRRORED double-map, byte-identical; bác nested /vi parent (Option C) vì không đạt mục tiêu one-place và đổi mount semantics.",
+      "move": "HOLD",
+      "note": "Mở lại code: mọi lợi ích critic gán cho route cha đều đạt được TRONG config-array phẳng, không cần đổi mount tree. (a) Bug ngôn ngữ 3 route ngoại lệ: fix bằng cách bọc chúng qua config (bỏ viSkipWrapper cho Feed/Rankings) — xem D2. (b) VI NotFound: thêm ĐÚNG MỘT route `<Route path=\"/vi/*\" element={<ViLanguageWrapper><NotFound/></ViLanguageWrapper>}/>`; v6 rank theo specificity (react-router-dom ^6.30.1) nên `/vi/*` xếp dưới mọi route /vi cụ thể — không cần parent. Ngược lại route cha KHÔNG giải quyết mục tiêu thật của ARCH-05 (double-edit → quên → 404): vẫn phải khai báo mỗi VI child một lần, y hệt double-edit hôm nay; chỉ config-array mới sinh cả cặp từ 1 entry. Và route cha KÉO SocialEventLive vào dưới wrapper — chính là mối lo #5 của critic (court-side live scoring re-render theo i18n context) — cộng bẫy #4 của risk-auditor (ViLanguageWrapper.tsx:31 hiện `return <>{children}</>`, chưa có Outlet; nested-* dễ trắng trang). Config-array phẳng cho phép cô lập đúng route rủi ro qua viSkipWrapper. Không có file mới nào lật kết luận này; parent-route là chi phí + rủi ro cao hơn cho 0 lợi ích trên mục tiêu chính."
+    },
+    {
+      "id": "D2",
+      "topic": "Scope hành vi: byte-identical (giữ nguyên 3 route bỏ wrapper) vs vá 3 bug ngôn ngữ + VI NotFound cùng đợt.",
+      "myRound1Position": "Byte-identical — refactor không đổi hành vi; 3 ngoại lệ giữ nguyên, chuẩn hoá là việc khác.",
+      "move": "REFINE",
+      "note": "Vòng 1 em ghi ở 'Điều em không chắc' rằng chưa xác minh 3 route ngoại lệ có bug thật. Vòng 2 em trace code và XÁC NHẬN bug có thật: ViLanguageWrapper.tsx:15-29 dùng effect dep rỗng, cleanup gọi setLanguageFromUrl('en'); i18n/index.tsx:111-120 ref-guard chỉ chặn flash cho nav wrapped→wrapped, KHÔNG restore 'vi' cho route không-wrapper; App.tsx:661 (/vi/feed) và :658 (/vi/rankings) không có wrapper → SPA-nav từ trang /vi khác sẽ kẹt tiếng Anh. grep xác nhận KHÔNG có UrlLanguageSync — wrapper là cơ chế flip duy nhất. Nên REFINE phạm vi: vá Feed + Rankings (chỉ là bỏ viSkipWrapper trong config — 1-dòng mỗi cái) + thêm route /vi/* → ViLanguageWrapper NotFound, LÀM TRONG cùng PR. NHƯNG SocialEventLive (App.tsx:585) là trang chấm điểm court-side; bọc wrapper đổi i18n context có thể re-render/đá socket (critic #5) — em KHÔNG verify được an toàn nếu không test trình duyệt live, nên nó ở LẠI ngoài scope (giữ viSkipWrapper) cho tới khi audit socket xong. Lập trường lõi 'không đổi hành vi mù quáng, phải verify' sống sót — em vẫn từ chối wrap route rủi ro chưa audit; chỉ nới scope cho 2 route an toàn + NotFound. Gate characterization-test của risk-auditor vẫn bắt buộc land trước để chứng minh 2 thay đổi này là cố ý, không phải rơi route."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Blocker #2 của critic ('prefix mọi route đẻ ra /vi/admin, /vi/creator') critique một hình dạng em không đề xuất: config-array chỉ mirror tập 63 route được-localize, không bao giờ map toàn bộ mảng route. Rủi ro lộ 66 route admin/creator dưới /vi không tồn tại trong Option A.",
+      "with": "ui-ux-critic",
+      "myPosition": "Blocker #2 là finding hợp lệ CHỐNG LẠI hình dạng 'prefix-everything', nhưng không áp cho config-array double-map giới hạn ở localizedRoutes; nó không phải lý do chọn parent-route."
+    }
+  ]
+}

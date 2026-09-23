@@ -1,0 +1,49 @@
+{
+  "slug": "arch-02-03-refactor",
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "Trình tự ARCH-02: bắt đầu bằng extraction hay characterization tests + i18n TRƯỚC mọi lát tách?",
+      "positions": {
+        "solution-architect": "Increments: (1) cancel/reactivate → handler.ts + vitest ngay ('0 rủi ro UI'); (2) kéo 7 call inline về hook; (3) capacity math → lib. Không đặt gate test-parity trước toàn bộ.",
+        "ui-ux-critic": "Blocker: 0 test parity → 'không đổi hành vi' không kiểm chứng được. Characterization test xanh trước → i18n hoá ~20 chuỗi VI màn tiền → rồi mới tách."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "REFINE",
+          "evidence": "src/pages/PlayerRegistration.tsx:155-186 — caller duy nhất của cancel-registration chỉ đọc HTTP status + field code → increment 1 contract-only, 0 rủi ro UI đứng vững. Nhưng nâng characterization test thành gate cứng TRƯỚC increment 2 (regress vô hình {data,error} không throw).",
+          "note": "Mandate i18n-trước của critic nhắm TeamMatch Step 5 (Flow B đã defer), không reorder increment 1-3."
+        },
+        "ui-ux-critic": {
+          "move": "REFINE",
+          "evidence": "supabase/functions/cancel-registration/index.ts:8,41-43,109 — edge-only, emit error-code ổn định, 0 component, 0 chuỗi VI → gate của tôi thu hẹp về 'mọi lát CHẠM UI' (increment 2-3).",
+          "note": "Blocker giữ hiệu lực từ increment 2; điều kiện: vitest increment 1 phải pin đúng chuỗi error-code."
+        }
+      },
+      "status": "OPEN_FOR_CUONG",
+      "resolution": null
+    },
+    {
+      "id": "D2",
+      "topic": "Bug sống member-path overbooking (register_event_as_member không advisory lock): vá trong cụm này hay ngoài scope?",
+      "positions": {
+        "solution-architect": "Không trong increments Option A — scope ARCH-02 là layering, không phải vá race DB.",
+        "risk-auditor": "Rủi ro Cao độc lập, DB-01 vá sót member path, db-race.mjs không test path này → PHẢI vá trước theo mẫu DB-01."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "CONCEDE",
+          "evidence": "supabase/migrations/20260522180000_authed_user_skip_otp.sql:76-81 — member path COUNT→check→INSERT trần, không advisory lock; DB-01 (20260716090000) chỉ vá 2 path kia; scripts/qa/db-race.mjs:156,182 không có member case.",
+          "note": "Vòng 1 giả định sai DB-01 phủ hết. Bug sống thật. Vá bằng 1 migration standalone theo mẫu DB-01, PR riêng, prod-first — không gộp vào increments layering."
+        },
+        "risk-auditor": {
+          "move": "REFINE",
+          "evidence": "supabase/migrations/20260522190000 (def mới nhất của function, L77-106 zero lock) + grep register_event_as_member trong DB-01 = 0 + caller thật src/components/social-events/RegistrationModal.tsx:594",
+          "note": "Giữ 'bug sống', refine cách ship: tách thành task migration riêng 'DB-01c' prod-first (~30 phút), không block ARCH-02 nhưng phải track."
+        }
+      },
+      "status": "RESOLVED_EVIDENCE",
+      "resolution": "Bug overbooking member-path CONFIRMED sống (2 nguồn độc lập verify migration + caller). Vá = migration DB-01c riêng theo mẫu DB-01 (pg_advisory_xact_lock), ship prod-first ~30 phút, thêm member case vào db-race.mjs. Không gộp vào PR layering."
+    }
+  ]
+}
