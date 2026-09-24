@@ -180,6 +180,23 @@ class StoreTests(unittest.TestCase):
         self.store.db.close()
         self.tmp.cleanup()
 
+    def test_wriai_drafts_become_one_editorial_task_each(self):
+        rows = [{"id": "11111111-aaaa", "title": "Sân TP.HCM", "slug": "San-TPHCM!", "content_markdown": "x" * 20000}]
+        with patch.object(team, "rest", return_value=rows) as rest:
+            team.queue_wriai(self.store)
+            self.store.put("wriai_poll", 0)
+            team.queue_wriai(self.store)
+            team.queue_wriai(self.store)  # throttled: no third read
+        self.assertEqual(rest.call_count, 2)
+        self.assertNotIn("POST", str(rest.call_args_list))
+        tasks = self.store.db.execute("SELECT * FROM tasks WHERE dedupe LIKE 'schedule:wriai:%'").fetchall()
+        self.assertEqual(len(tasks), 1)
+        request = json.loads(tasks[0]["evidence"])["request"]
+        self.assertTrue(request.startswith("editorial "))
+        self.assertIn("docs/agent-drafts/wriai-san-tphcm.md", request)
+        self.assertLess(len(request), 20000)
+        self.assertTrue(permitted("docs/agent-drafts/wriai-san-tphcm.md", "editorial"))
+
     def test_dedup_and_reopen(self):
         self.store.findings("site", "platform", {"down": "Site down"}, {})
         row = self.store.db.execute("SELECT * FROM tasks").fetchone()
