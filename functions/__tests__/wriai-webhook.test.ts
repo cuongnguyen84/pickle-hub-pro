@@ -15,12 +15,12 @@ const env = (secret: string | undefined = SECRET) => ({
   SUPABASE_SERVICE_ROLE_KEY: "service",
 });
 
-async function call(body: unknown, opts: { secret?: string; sign?: string } = {}) {
+async function call(body: unknown, opts: { secret?: string; sign?: string; headers?: Record<string, string> } = {}) {
   const raw = JSON.stringify(body);
   const sig = opts.sign ?? (await signBody(SECRET, raw));
   const request = new Request("https://x/api/wriai-webhook", {
     method: "POST",
-    headers: { "x-wriai-signature": sig },
+    headers: opts.headers ?? { "x-wriai-signature": sig },
     body: raw,
   });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,6 +40,15 @@ describe("wriai-webhook", () => {
     const res = await call({ event: "article.publish", article: { title: "x" } }, { sign: "sha256=00" });
     expect(res.status).toBe(401);
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("accepts an unprefixed HMAC, a Bearer secret, and a secret stored with a newline", async () => {
+    const raw = JSON.stringify({ event: "ping" });
+    const bare = (await signBody(SECRET, raw)).replace("sha256=", "");
+    expect((await call({ event: "ping" }, { sign: bare })).status).toBe(200);
+    expect((await call({ event: "ping" }, { headers: { authorization: `Bearer ${SECRET}` } })).status).toBe(200);
+    expect((await call({ event: "ping" }, { secret: SECRET + "\n" })).status).toBe(200);
+    expect((await call({ event: "ping" }, { headers: { authorization: "Bearer nope" } })).status).toBe(401);
   });
 
   it("answers a signed ping", async () => {

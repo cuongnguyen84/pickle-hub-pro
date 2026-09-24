@@ -90,15 +90,25 @@ async function rest(env: Env, path: string, init: RequestInit): Promise<Response
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
-  const secret = env.WRIAI_WEBHOOK_SECRET;
+  // Trimmed: a secret piped in via `pbpaste | wrangler secret put` may carry a newline.
+  const secret = env.WRIAI_WEBHOOK_SECRET?.trim();
   // Fail closed: no secret configured means nobody may write the inbox.
   if (!secret) return json({ error: "Webhook not configured" }, 503);
 
   const rawBody = await request.text();
   if (rawBody.length > MAX_BODY_BYTES) return json({ error: "Payload too large" }, 413);
 
-  const signature = request.headers.get("x-wriai-signature") ?? "";
-  if (!timingSafeEqual(signature, await signBody(secret, rawBody))) {
+  // Wriai documents both: an HMAC in X-Wriai-Signature (with or without the
+  // "sha256=" prefix) and the secret itself as a Bearer token.
+  const expected = await signBody(secret, rawBody);
+  const signature = (request.headers.get("x-wriai-signature") ?? "").trim();
+  const bearer = (request.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+  const ok =
+    timingSafeEqual(signature, expected) ||
+    timingSafeEqual("sha256=" + signature, expected) ||
+    timingSafeEqual(bearer, secret);
+  if (!ok) {
+    console.warn("[wriai-webhook] auth failed", { hasSignature: !!signature, hasBearer: !!bearer, sigLen: signature.length });
     return json({ error: "Invalid signature" }, 401);
   }
 
