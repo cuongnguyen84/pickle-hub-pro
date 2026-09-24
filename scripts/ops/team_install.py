@@ -53,7 +53,7 @@ def install():
     logs.mkdir(parents=True, exist_ok=True)
     runtime = ROOT / "releases" / backup.name / "scripts/ops"
     runtime.mkdir(parents=True, mode=0o700)
-    for name in ("team_supervisor.py", "team_store.py", "team_workspace.py", "team_codex.py", "team_progress.py", "team_actions.py", "team_measure.py", "team_verification.py", "team_seo.py", "team_content.py", "team_content_plan.json", "team_roles.json", "team_watchdog.py", "team_ga4.py", "ops_sweep.py", "chief_brief.py"):
+    for name in ("team_supervisor.py", "team_store.py", "team_workspace.py", "team_codex.py", "team_progress.py", "team_actions.py", "team_measure.py", "team_verification.py", "team_seo.py", "team_content.py", "team_wriai.py", "team_content_plan.json", "team_roles.json", "team_watchdog.py", "team_ga4.py", "ops_sweep.py", "chief_brief.py"):
         shutil.copy2(REPO / "scripts/ops" / name, runtime / name)
     config = {
         "Label": LABEL,

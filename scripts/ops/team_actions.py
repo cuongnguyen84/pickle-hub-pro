@@ -177,7 +177,8 @@ def deploy(store, task):
     if not checks or any(c.get('conclusion', c.get('state')) not in {'SUCCESS', 'NEUTRAL', 'SKIPPED'} for c in checks):
         raise RuntimeError('ci_not_successful')
     base = json.loads(checked(['gh', 'api', 'repos/cuongnguyen84/pickle-hub-pro/commits/main']))['sha']
-    if base != current['base']:
+    # A content-only post only adds files; CLEAN merge state + green CI is enough when main moved.
+    if base != current['base'] and current.get('kind') != 'wriai':
         raise RuntimeError('main_changed_since_validation')
     # Persist before the external write. An interruption is never replayed as a merge.
     save(store, tid, phase='deploying', merge_requested_at=time.time())
@@ -241,6 +242,13 @@ def verify_deployment(store, task):
     if deployment:
         if not production_smoke():
             raise RuntimeError('production_smoke_failed')
+        if current.get('kind') == 'wriai':
+            from team_wriai import after_deploy
+            published = after_deploy(store, task)
+            save(store, task['id'], phase='complete', reason='Bài đã lên production, bản VI đã ghi.', next_step='Xin index trên GSC.')
+            with store.db:
+                store.db.execute("UPDATE tasks SET status='resolved',updated=? WHERE id=?", (time.time(), task['id']))
+            return published
         save(store, task['id'], phase='complete', reason=f'Deployment production {sha[:12]} thành công; kiểm tra trang chủ đạt.',
              next_step='Anh không cần thao tác thêm.', deployment_id=deployment['id'])
         if not task['dedupe'].startswith('finding:'):
@@ -266,7 +274,8 @@ def production_smoke():
 
 def await_ci(store, task):
     current = state(store, task['id'])
-    if not current.get('autodeploy') or not store.get('ordinary_code_autodeploy', False):
+    # An approved Wriai post was approved as content; only ordinary code waits for a second click.
+    if not current.get('autodeploy') or (current.get('kind') != 'wriai' and not store.get('ordinary_code_autodeploy', False)):
         save(store, task['id'], phase='awaiting_deploy', next_step='Bấm Duyệt triển khai sau khi đọc PR.')
         return f'T{task["id"]}: tự triển khai đã tắt; chờ duyệt PR {current["pr"]}.'
     pr = json.loads(checked(['gh', 'pr', 'view', current['pr'], '--json', 'headRefOid,statusCheckRollup']))
@@ -289,6 +298,8 @@ ERRORS = {
     'ci_not_successful': 'CI chưa đạt trên đúng phiên bản đã duyệt. Cần sửa hoặc đợi CI rồi bấm xử lý lại.',
     'pr_changed_or_not_mergeable': 'PR đã thay đổi hoặc chưa merge được. Phải kiểm chứng phiên bản mới trước khi duyệt lại.',
     'missing_reviewable_patch': 'Chưa có patch thực tế để kiểm tra/triển khai.',
+    'wriai_package_no_longer_valid': 'Gói bài Wriai không còn hợp lệ trên main mới (slug trùng hoặc thiếu dữ kiện). Không đăng.',
+    'wriai_public_check_failed': 'Đã merge và ghi bản VI nhưng trang public chưa kiểm được. Cần mở thử 2 URL.',
 }
 
 
@@ -324,7 +335,10 @@ def run_one(store):
                 publish(store)
             except Exception as exc:
                 store.put('snapshot_error', {'error': team.clean_error(exc), 'at': time.time()})
-            if current.get('approval'):
+            if current.get('approval') and current.get('kind') == 'wriai' and not current.get('pr'):
+                from team_wriai import publish
+                reply = publish(store, task)
+            elif current.get('approval'):
                 reply = deploy(store, task)
             elif ':milestone:' in task['dedupe']:
                 from team_measure import execute

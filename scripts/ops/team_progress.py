@@ -98,9 +98,11 @@ def reply_keyboard(body, store=None):
             from team_actions import state
             action_state = state(store, int(tid))
             if action_state.get('phase') == 'awaiting_deploy':
-                rows.append([{'text': f'Duyệt triển khai T{tid}',
+                wriai = action_state.get('kind') == 'wriai' and not action_state.get('pr')
+                rows.append([{'text': f'✅ Duyệt đăng bài T{tid}' if wriai else f'Duyệt triển khai T{tid}',
                               'callback_data': f'deploy|T{tid}|{action_state["head"][:12]}'}])
-                rows.append([{'text': 'Xem thay đổi đã kiểm tra', 'url': action_state['pr']}])
+                if action_state.get('pr'):
+                    rows.append([{'text': 'Xem thay đổi đã kiểm tra', 'url': action_state['pr']}])
             elif action_state.get('phase') not in {'queued', 'running', 'awaiting_ci', 'deploying'}:
                 rows.append([{'text': f'Xử lý ngay T{tid}', 'callback_data': f'execute|T{tid}'}])
         if task and task['dedupe'].startswith('finding:'):

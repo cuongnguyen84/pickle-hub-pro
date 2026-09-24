@@ -639,7 +639,14 @@ def work_queue(store, allow_ai):
                 store.db.execute("UPDATE tasks SET status='needs_review',updated=? WHERE id=?", (time.time(), task["id"]))
             store.enqueue(f"request:{task['id']}", f"T{task['id']}: chưa hoàn thành; lỗi {result['error']}. Không tự chạy lại tác vụ đã làm dở.")
         else:
-            store.enqueue(f"request:{task['id']}", f"T{task['id']}: đã có kết quả để đội kiểm chứng; CHƯA triển khai, chưa xác nhận bài đủ điều kiện đăng.\n{result['result'][:2600]}\nXem: /xuly team report T{task['id']}")
+            gate = ""
+            if str(task["dedupe"]).startswith("schedule:wriai:"):
+                from team_wriai import review_ready
+                try:
+                    gate = review_ready(store, task, result) + "\n\n"
+                except Exception as exc:
+                    gate = f"Không kiểm được gói xuất bản: {clean_error(exc)}\n\n"
+            store.enqueue(f"request:{task['id']}", f"T{task['id']}: đã có kết quả để đội kiểm chứng; CHƯA triển khai, chưa xác nhận bài đủ điều kiện đăng.\n{gate}{result['result'][:2600 - len(gate)]}\nXem: /xuly team report T{task['id']}")
         break  # one expensive request per tick; controls remain responsive
 
 
@@ -659,6 +666,14 @@ WRIAI_BRIEF = (
     "Bài dạng danh sách/lịch phải có dòng \"Last updated: <ngày>\". H2/H3 rõ ràng, 3–5 FAQ, link nội bộ CHỈ tới đường "
     "dẫn có thật trong repo. Chữ \"The Pickle Hub\" có dấu cách là sai. Dữ kiện chưa kiểm chứng: bỏ hoặc đánh dấu "
     "[VERIFY: ...], tuyệt đối không bịa thêm. Không đăng, không sửa bài public.\n"
+    "BƯỚC 3 — cuối file, MỘT khối ```json wriai-package ... ``` (JSON hợp lệ) để máy đăng nếu chủ duyệt: "
+    "{{\"verdict\": \"NEW\"|\"MERGE:<slug>\"|\"DROP\", \"seo_score\": 0-10, \"unverified\": [dữ kiện còn thiếu nguồn], "
+    "\"slug\": \"en-slug-khong-dau\", \"tags\": [3-10], \"ctaPath\": \"/…\", \"ctaLabel\": {{\"en\": \"…\", \"vi\": \"…\"}}, "
+    "\"en\": {{\"title\", \"metaTitle\" (≤60 byte), \"metaDescription\" (≤160 byte), \"sections\": [{{\"heading\", \"content\" "
+    "(văn bản thuần, đoạn cách nhau bằng dòng trống, KHÔNG markdown/link), \"listItems\"?, \"table\"?: {{\"caption\", \"headers\", \"rows\"}}, "
+    "\"internalLinks\"?: [{{\"text\", \"path\": \"/…\"}}]}}] (≥4 mục, mục đầu là đoạn mở đầu GEO), \"faqItems\": [{{\"question\", \"answer\"}}] (3-6)}}, "
+    "\"vi\": {{cùng cấu trúc + \"slug\" (slug VI không dấu, khác slug EN nếu hợp lý), \"excerpt\", \"focusKeyword\"}}}}. "
+    "Bản VI là bản Wriai đã sửa sạch dữ kiện bịa. Chỉ đặt verdict NEW khi unverified rỗng; còn dữ kiện chưa kiểm chứng thì không được NEW.\n"
     "--- BÀI WRIAI: {title} ---\n{body}"
 )
 
