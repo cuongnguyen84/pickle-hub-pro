@@ -367,7 +367,7 @@ class InstallerTests(unittest.TestCase):
             ops = repo / "scripts/ops"
             (ops / "launchagents").mkdir(parents=True)
             launch.mkdir()
-            files = ["team_actions.py", "team_measure.py", "chief_brief.py", "content_agent.py", "ops_sweep.py", "xuly_daemon.py", "fix_agent_daemon.py", "team_supervisor.py", "team_store.py", "team_workspace.py", "team_codex.py", "team_progress.py", "team_verification.py", "team_seo.py", "team_content.py", "team_content_plan.json", "team_roles.json", "team_watchdog.py", "team_ga4.py"]
+            files = ["team_actions.py", "team_measure.py", "chief_brief.py", "content_agent.py", "ops_sweep.py", "xuly_daemon.py", "fix_agent_daemon.py", "team_supervisor.py", "team_store.py", "team_workspace.py", "team_codex.py", "team_progress.py", "team_verification.py", "team_seo.py", "team_content.py", "team_wriai.py", "team_content_plan.json", "team_roles.json", "team_watchdog.py", "team_ga4.py"]
             for name in files:
                 (ops / name).write_text("fixture")
             for label in installer.OLD:
