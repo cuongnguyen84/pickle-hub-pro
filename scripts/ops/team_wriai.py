@@ -59,12 +59,14 @@ def _words(lang):
                for s in lang.get("sections") or [])
 
 
-def problems(pkg, en_slugs, vi_slugs):
-    """Every reason this package must not be published. Empty list = publishable."""
+def problems(pkg, en_slugs, vi_slugs, override=False):
+    """Every reason this package must not be published. Empty list = publishable.
+    override: owner ordered publication as-is, so verdict and fact checks are waived;
+    the structural checks stay because the site cannot render a package without them."""
     out = []
-    if pkg.get("verdict") != "NEW":
+    if pkg.get("verdict") != "NEW" and not override:
         out.append(f"kết luận là {pkg.get('verdict')!r}, không phải NEW")
-    if pkg.get("unverified"):
+    if pkg.get("unverified") and not override:
         out.append(f"còn {len(pkg['unverified'])} dữ kiện chưa kiểm chứng")
     en, vi = pkg.get("en") or {}, pkg.get("vi") or {}
     slug, vi_slug = str(pkg.get("slug", "")), str(vi.get("slug", ""))
@@ -156,7 +158,7 @@ def _existing(team, metadata_text):
 def review_ready(store, task, result):
     """After the editorial draft: gate the package and, if clean, arm the approval button."""
     import team_supervisor as team
-    from team_actions import save
+    from team_actions import save, state
     files = [Path(result["worktree"]) / p for p in result.get("paths", []) if p.startswith("docs/agent-drafts/wriai-")]
     if not files:
         return "Chưa có file wriai-*.md trong bản nháp; không có gì để duyệt."
@@ -166,10 +168,22 @@ def review_ready(store, task, result):
     except (ValueError, json.JSONDecodeError) as exc:
         return f"Bản nháp thiếu gói xuất bản hợp lệ ({type(exc).__name__}); chưa thể duyệt đăng."
     en_slugs, vi_slugs = _existing(team, (team.REPO / "src/content/blog/metadata.ts").read_text())
-    issues = problems(pkg, en_slugs, vi_slugs)
+    override = bool(store.get(f"wriai_override:{task['id']}"))
+    issues = problems(pkg, en_slugs, vi_slugs, override)
     if issues:
-        return "CHƯA ĐỦ ĐIỀU KIỆN ĐĂNG:\n• " + "\n• ".join(issues[:8])
+        retry = f"\nSửa xong bản nháp bằng: /xuly dang T{task['id']}" if override else ""
+        return "CHƯA ĐỦ ĐIỀU KIỆN ĐĂNG:\n• " + "\n• ".join(issues[:8]) + retry
     artifact = store.artifact(f"wriai-T{task['id']}-package.json", json.dumps(pkg, ensure_ascii=False))
+    if override:
+        # The owner's /xuly dang command is the approval; queue publish exactly as the button would.
+        h = artifact["sha256"]
+        save(store, task["id"], phase="queued", kind="wriai", head=h[:40], package=artifact, approval=h[:12],
+             attempt=state(store, task["id"]).get("attempt", 0) + 1,
+             reason="Anh ra lệnh đăng không kiểm chứng; gói đã qua kiểm tra cấu trúc.",
+             next_step="Đội mở PR, CI xanh thì tự merge, rồi ghi bản VI và báo link.")
+        return (f"ĐĂNG THEO LỆNH ANH (bỏ qua kiểm chứng {len(pkg.get('unverified') or [])} dữ kiện)\n"
+                f"EN: {SITE}/blog/{pkg['slug']}\nVI: {SITE}/vi/blog/{pkg['vi']['slug']}\n"
+                "Đội tự mở PR, CI xanh thì merge và báo link.")
     # head carries the package hash so the existing deploy|T|<12 hex> button binds approval to these bytes.
     save(store, task["id"], phase="awaiting_deploy", kind="wriai", head=artifact["sha256"][:40],
          package=artifact, reason="Gói bài EN+VI đã qua kiểm tra tự động; chờ anh duyệt đăng.",
@@ -206,11 +220,14 @@ def publish(store, task):
     checked(["git", "worktree", "add", "-b", branch, str(tree), base])
     meta_path = tree / "src/content/blog/metadata.ts"
     meta = meta_path.read_text(encoding="utf-8")
-    issues = problems(pkg, *_existing(team, meta))
+    override = bool(store.get(f"wriai_override:{tid}"))
+    issues = problems(pkg, *_existing(team, meta), override)
     if issues:
         raise RuntimeError("wriai_package_no_longer_valid")
     today = datetime.now(team.ICT).date().isoformat()
-    note = f"Wriai draft {inbox_id(task)} -> team task T{tid}, reviewed by the editorial team and approved by the owner {today}."
+    note = (f"Wriai draft {inbox_id(task)} -> team task T{tid}, published on the owner's explicit order {today} "
+            f"WITHOUT fact verification ({len(pkg.get('unverified') or [])} unverified facts)." if override else
+            f"Wriai draft {inbox_id(task)} -> team task T{tid}, reviewed by the editorial team and approved by the owner {today}.")
     (tree / f"src/content/blog/posts/{pkg['slug']}.ts").write_text(post_ts(pkg, today, note), encoding="utf-8")
     anchor = "export const blogMetadata: BlogPostMetadata[] = [\n"
     if meta.count(anchor) != 1:
@@ -268,6 +285,40 @@ def _public(url, needle):
     with urllib.request.urlopen(req, timeout=30) as response:
         page = response.read(2_000_000).decode("utf-8", "replace")
     return response.status == 200 and needle in page and len(re.sub("<[^>]+>", " ", page).split()) >= 300
+
+
+OVERRIDE_BRIEF = (
+    "\n\nLỆNH CHỦ SỞ HỮU (ghi đè BƯỚC 1–3 ở trên chỗ mâu thuẫn): anh Cuong đã quyết định ĐĂNG bài này theo ý mình, "
+    "KHÔNG cần kiểm chứng. Không được kết luận BỎ/GỘP. verdict phải là \"NEW\". Giữ nguyên dữ kiện của Wriai "
+    "(địa chỉ, giá, SĐT, số sân), KHÔNG gắn [VERIFY], KHÔNG xoá vì chưa có nguồn; vẫn liệt kê chúng trong \"unverified\" "
+    "để lưu vết. Chỉ sửa lỗi hiển nhiên: tên thương hiệu viết đúng \"ThePickleHub\", bỏ nhân vật/chức danh bịa, "
+    "không hứa tính năng site không có. Bắt buộc viết đủ gói en + vi đúng cấu trúc BƯỚC 3."
+)
+
+
+def owner_publish(store, code):
+    """/xuly dang T<id>: owner orders a Wriai post published without fact verification."""
+    from team_progress import target
+    from team_actions import state, ACTIVE
+    task = target(store, code)
+    if not task or not is_wriai(task):
+        return f"{code}: không phải bài Wriai; lệnh dang chỉ dùng cho việc Wriai."
+    tid = task["id"]
+    if task["status"] in {"resolved", "cancelled"}:
+        return f"T{tid}: đã đóng; không đăng lại."
+    current = state(store, tid)
+    if current.get("phase") in ACTIVE or task["status"] == "running":
+        return f"T{tid}: đang trong lượt xử lý ({current.get('phase') or task['status']}); bot sẽ báo kết quả."
+    ev = json.loads(task["evidence"])
+    request = ev.get("request", "")
+    if OVERRIDE_BRIEF not in request:
+        ev["request"] = request + OVERRIDE_BRIEF
+    store.put(f"wriai_override:{tid}", True)
+    with store.db:
+        store.db.execute("UPDATE tasks SET status='queued',evidence=?,updated=? WHERE id=?",
+                         (json.dumps(ev, ensure_ascii=False), time.time(), tid))
+    return (f"T{tid}: đã nhận lệnh ĐĂNG KHÔNG KIỂM CHỨNG. Đội viết lại gói EN+VI giữ nguyên dữ kiện Wriai; "
+            "đạt cấu trúc thì tự mở PR → CI xanh → merge → báo link, anh không cần bấm thêm.")
 
 
 def after_deploy(store, task):
