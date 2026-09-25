@@ -10,6 +10,30 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-courts-can-tho-2026",
+    "publishedDate": "2026-09-25",
+    "updatedDate": "2026-09-25",
+    "author": "The PickleHub Team",
+    "tags": [
+      "can tho",
+      "pickleball courts",
+      "court rental prices",
+      "vietnam",
+      "venue guide"
+    ],
+    "ctaPath": "/san/khu-vuc/can-tho",
+    "ctaLabel": {
+      "en": "See all Can Tho courts",
+      "vi": "Xem các sân pickleball Cần Thơ"
+    },
+    "titleEn": "Pickleball Courts in Can Tho 2026: 7 Venues, Prices and How to Book",
+    "titleVi": "Sân Pickleball Cần Thơ 2026: 7 địa điểm, giá thuê và cách đặt sân",
+    "metaTitleEn": "Pickleball Courts in Can Tho 2026: 7 Venues & Prices",
+    "metaTitleVi": "Sân pickleball Cần Thơ 2026: 7 sân, giá thuê",
+    "metaDescriptionEn": "Seven pickleball venues in Can Tho, Vietnam for 2026: addresses, hours, phone numbers and rental prices (80,000-150,000 VND/hour), plus how to book.",
+    "metaDescriptionVi": "Sân pickleball Cần Thơ 2026: địa chỉ, SĐT, giá thuê 7 sân ở Ninh Kiều, Cái Răng, Bình Thủy và cách đặt sân."
+  },
+  {
     slug: "ppa-tour-europe-2026-27-schedule",
     publishedDate: "2026-09-10",
     updatedDate: "2026-09-10",
