@@ -59,7 +59,7 @@ def install():
         "Label": LABEL,
         "ProgramArguments": [sys.executable, str(runtime / "team_supervisor.py"), "tick"],
         "StartInterval": 60, "RunAtLoad": True,
-        "WorkingDirectory": str(REPO), "ProcessType": "Background",
+        "WorkingDirectory": str(REPO), "ProcessType": "Standard",
         "EnvironmentVariables": {"SECRETS_FILE": str(REPO / ".claude/secrets.local.md"),
             "PICKLEHUB_REPO": str(REPO), "USER": os.environ.get("USER", "cm10"), "LOGNAME": os.environ.get("LOGNAME", "cm10"),
             "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin",
