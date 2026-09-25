@@ -492,6 +492,9 @@ def telegram(store):
         codes = references(text)
         if codes:
             text = 'team execute ' + ','.join(codes)
+        owner = re.fullmatch(r"(?:dang|đăng)\s+((?:T|XL)-?[1-9]\d*)", text, re.I)
+        if owner:
+            text = f"team publish {owner.group(1).upper()}"
         tid = store.task(key, "chief", text[:160], "queued", {"telegram_id": row["id"], "request": text})
         acknowledged = rest(f"telegram_commands?id=eq.{row['id']}&status=eq.pending", "PATCH",
                             {"status": "done", "result": f"team-v2: accepted as T{tid}; not yet executed"})
@@ -515,6 +518,9 @@ def handle_control(store, task, text):
         from team_actions import references, request
         codes = references(' '.join(parts[2:]))
         reply = request(store, codes, task['id']) if codes else 'Dùng /xuly T28,T29 hoặc bấm Xử lý ngay dưới báo cáo.'
+    elif action == 'publish' and len(parts) == 3:
+        from team_wriai import owner_publish
+        reply = owner_publish(store, parts[2])
     elif action == 'deploy' and len(parts) == 4 and re.fullmatch(r'[0-9a-f]{12}', parts[3]):
         from team_actions import approve
         reply = approve(store, parts[2], parts[3])

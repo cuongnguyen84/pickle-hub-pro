@@ -144,6 +144,10 @@ def reconcile(store, check, entry, transitions=(), notify=True, silent_task_id=N
     transitioned = {t['id']: t for t in transitions}
     tasks = store.db.execute('SELECT * FROM tasks WHERE substr(dedupe,1,?)=? AND status!=?',
                              (len(prefix), prefix, 'cancelled')).fetchall()
+    if not entry['ok']:
+        # A failed read says nothing about the findings; the collector task itself tracks the outage.
+        # Flipping every finding to 'unverified' and back spammed "chưa kiểm tra được" after each close.
+        return
     for task in tasks:
         key = f'progress:{task["id"]}'
         note = store.get(key, {})

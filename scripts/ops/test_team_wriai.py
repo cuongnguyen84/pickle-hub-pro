@@ -109,6 +109,27 @@ class FlowTests(unittest.TestCase):
         self.assertIn("CHƯA ĐỦ ĐIỀU KIỆN", self.ready())
         self.assertNotEqual(state(self.store, self.task["id"]).get("phase"), "awaiting_deploy")
 
+    def test_owner_override_waives_facts_and_queues_publish_without_button(self):
+        draft = Path(self.result["worktree"]) / "docs/agent-drafts/wriai-x.md"
+        draft.write_text("```json wriai-package\n" + json.dumps(package(verdict="DROP", unverified=["giá"])) + "\n```")
+        self.assertIn("CHƯA ĐỦ ĐIỀU KIỆN", self.ready())
+        self.assertIn("ĐĂNG KHÔNG KIỂM CHỨNG", w.owner_publish(self.store, f"T{self.task['id']}"))
+        row = self.store.db.execute("SELECT * FROM tasks WHERE id=?", (self.task["id"],)).fetchone()
+        self.assertEqual(row["status"], "queued")
+        self.assertIn("LỆNH CHỦ SỞ HỮU", json.loads(row["evidence"])["request"])
+        self.assertIn("ĐĂNG THEO LỆNH ANH", self.ready())
+        current = state(self.store, self.task["id"])
+        self.assertEqual((current["phase"], current["kind"]), ("queued", "wriai"))
+        self.assertEqual(w.load_package(self.store, self.task)["verdict"], "DROP")
+
+    def test_owner_override_keeps_structural_checks(self):
+        pkg = package(verdict="DROP", unverified=["giá"], en=lang("Can Tho has courts."))
+        self.assertTrue(w.problems(pkg, set(), set(), override=True))
+
+    def test_owner_publish_rejects_non_wriai_tasks(self):
+        tid = self.store.task("telegram:1", "chief", "x", "awaiting_review", {"request": "x"})
+        self.assertIn("không phải bài Wriai", w.owner_publish(self.store, f"T{tid}"))
+
     def test_stale_approval_is_rejected(self):
         self.ready()
         self.assertIn("đã cũ", approve(self.store, f"T{self.task['id']}", "0" * 12))
