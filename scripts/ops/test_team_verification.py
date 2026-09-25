@@ -82,11 +82,14 @@ class VerificationTests(unittest.TestCase):
     def test_collection_failure_does_not_close_or_invent_success(self):
         self.observe('community', self.community(['r1']))
         task = self.task('finding:community:reports')
+        before = self.note(task)
+        sent = self.store.db.execute('SELECT COUNT(*) FROM outbox').fetchone()[0]
         entry = {'ok':False, 'measured_at':self.now + 300, 'error':'TimeoutError'}
         verify.reconcile(self.store, 'community', entry)
         self.assertEqual(self.task(task['dedupe'])['status'], 'open')
-        self.assertEqual(self.note(task)['verification']['phase'], 'unverified')
-        self.assertIn('Không đọc được', self.note(task)['reason'])
+        # A failed read keeps the last verified state and sends nothing (T26 spam 25/09).
+        self.assertEqual(self.note(task), before)
+        self.assertEqual(self.store.db.execute('SELECT COUNT(*) FROM outbox').fetchone()[0], sent)
 
     def test_expired_token_gets_exact_secret_handoff_not_eight_reauthorizations(self):
         self.observe('jobs', self.ig('Error validating access token: Session has expired'))
