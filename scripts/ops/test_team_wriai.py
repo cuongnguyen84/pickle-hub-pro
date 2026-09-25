@@ -53,6 +53,13 @@ class GateTests(unittest.TestCase):
             with self.subTest(name):
                 self.assertTrue(w.problems(pkg, {"pickleball-la-gi"}, set()))
 
+    def test_table_rows_do_not_trip_the_banned_string_check(self):
+        en = lang("ThePickleHub lists courts.")
+        en["sections"][1]["table"] = {"caption": "c", "headers": ["a", "b"], "rows": [["x", "y"], ["z", "w"]]}
+        self.assertEqual(w.problems(package(en=en), set(), set()), [])
+        en["sections"][1]["table"]["rows"][0][0] = "[[VERIFY]]"
+        self.assertTrue(w.problems(package(en=en), set(), set()))
+
     def test_generated_files_carry_the_package(self):
         ts = w.post_ts(package(), "2026-09-24", "note")
         obj = json.loads(ts.split("const post: BlogPost = ", 1)[1].rsplit(";\n\nexport default post;", 1)[0])

@@ -59,6 +59,17 @@ def _words(lang):
                for s in lang.get("sections") or [])
 
 
+def _strings(value):
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for v in value.values():
+            yield from _strings(v)
+    elif isinstance(value, list):
+        for v in value:
+            yield from _strings(v)
+
+
 def problems(pkg, en_slugs, vi_slugs, override=False):
     """Every reason this package must not be published. Empty list = publishable.
     override: owner ordered publication as-is, so verdict and fact checks are waived;
@@ -91,7 +102,8 @@ def problems(pkg, en_slugs, vi_slugs, override=False):
             out.append(f"{code} cần 3–6 FAQ")
     if en and _words(en) < 600:
         out.append(f"bản EN chỉ {_words(en)} từ (< 600)")
-    blob = json.dumps(pkg, ensure_ascii=False)
+    # Scan string values only: json.dumps of any table (list of lists) contains "[[" by itself.
+    blob = "\n".join(_strings(pkg))
     out += [f"còn chuỗi cấm {b!r}" for b in BANNED if b in blob]
     links = [l.get("path", "") for lang in (en, vi) for s in lang.get("sections") or [] for l in s.get("internalLinks") or []]
     if any(not str(p).startswith("/") or str(p).startswith("//") for p in links + [pkg.get("ctaPath", "")]):
