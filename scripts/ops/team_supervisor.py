@@ -643,7 +643,7 @@ def work_queue(store, allow_ai):
         if result.get("error"):
             with store.db:
                 store.db.execute("UPDATE tasks SET status='needs_review',updated=? WHERE id=?", (time.time(), task["id"]))
-            store.enqueue(f"request:{task['id']}", f"T{task['id']}: chưa hoàn thành; lỗi {result['error']}. Không tự chạy lại tác vụ đã làm dở.")
+            store.enqueue(f"request:{task['id']}:{result.get('run', '')}", f"T{task['id']}: chưa hoàn thành; lỗi {result['error']}. Không tự chạy lại tác vụ đã làm dở.")
         else:
             gate = ""
             if str(task["dedupe"]).startswith("schedule:wriai:"):
@@ -652,7 +652,7 @@ def work_queue(store, allow_ai):
                     gate = review_ready(store, task, result) + "\n\n"
                 except Exception as exc:
                     gate = f"Không kiểm được gói xuất bản: {clean_error(exc)}\n\n"
-            store.enqueue(f"request:{task['id']}", f"T{task['id']}: đã có kết quả để đội kiểm chứng; CHƯA triển khai, chưa xác nhận bài đủ điều kiện đăng.\n{gate}{result['result'][:2600 - len(gate)]}\nXem: /xuly team report T{task['id']}")
+            store.enqueue(f"request:{task['id']}:{result.get('run', '')}", f"T{task['id']}: đã có kết quả để đội kiểm chứng; CHƯA triển khai, chưa xác nhận bài đủ điều kiện đăng.\n{gate}{result['result'][:2600 - len(gate)]}\nXem: /xuly team report T{task['id']}")
         break  # one expensive request per tick; controls remain responsive
 
 
