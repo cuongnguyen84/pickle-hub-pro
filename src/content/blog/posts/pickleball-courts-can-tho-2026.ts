@@ -20,6 +20,7 @@ const post: BlogPost = {
     "en": "See all Can Tho courts",
     "vi": "Xem các sân pickleball Cần Thơ"
   },
+  "heroImage": {"src": "/images/blog/pickleball-courts-can-tho-2026-hero.webp", "alt": "Pickleball Courts in Can Tho 2026: 7 Venues & Prices"},
   "content": {
     "en": {
       "title": "Pickleball Courts in Can Tho 2026: 7 Venues, Prices and How to Book",

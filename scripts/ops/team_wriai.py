@@ -126,7 +126,34 @@ def _post_obj(pkg, today):
     return {"slug": pkg["slug"], "publishedDate": today, "updatedDate": today, "author": "The PickleHub Team",
             "tags": pkg["tags"], "ctaPath": pkg.get("ctaPath") or "/tools",
             "ctaLabel": pkg.get("ctaLabel") or {"en": "Explore ThePickleHub tools", "vi": "Khám phá công cụ ThePickleHub"},
+            **({"heroImage": pkg["heroImage"]} if pkg.get("heroImage") else {}),
             "content": {"en": lang(pkg["en"]), "vi": lang(pkg["vi"])}}
+
+
+def hero_path(slug):
+    return f"/images/blog/{slug}-hero.webp"
+
+
+def fetch_hero(team, task, pkg, tree):
+    """Wriai's featured image -> public/images/blog/<slug>-hero.webp (1200px WebP, self-hosted
+    like every other hero). Returns the heroImage dict, or None when Wriai sent no usable image."""
+    import io
+    from PIL import Image
+    rows = team.rest(f"wriai_inbox?select=featured_image&id=eq.{inbox_id(task)}")
+    image = (rows[0].get("featured_image") if rows else None) or {}
+    url = str(image.get("url", ""))
+    if not url.startswith("https://"):
+        return None
+    req = urllib.request.Request(url, headers={"User-Agent": "ThePickleHub-team/1"})
+    with urllib.request.urlopen(req, timeout=30) as response:
+        raw = response.read(15_000_000)
+    img = Image.open(io.BytesIO(raw)).convert("RGB")
+    if img.width > 1200:
+        img = img.resize((1200, round(img.height * 1200 / img.width)), Image.LANCZOS)
+    dest = tree / "public" / hero_path(pkg["slug"]).lstrip("/")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    img.save(dest, "WEBP", quality=80, method=6)
+    return {"src": hero_path(pkg["slug"]), "alt": pkg["en"]["title"]}
 
 
 def post_ts(pkg, today, note):
@@ -138,7 +165,7 @@ def post_ts(pkg, today, note):
 def metadata_entry(pkg, today):
     p = _post_obj(pkg, today)
     en, vi = p["content"]["en"], p["content"]["vi"]
-    meta = {k: p[k] for k in ("slug", "publishedDate", "updatedDate", "author", "tags", "ctaPath", "ctaLabel")}
+    meta = {k: p[k] for k in ("slug", "publishedDate", "updatedDate", "author", "tags", "ctaPath", "ctaLabel", "heroImage") if k in p}
     meta.update(titleEn=en["title"], titleVi=vi["title"], metaTitleEn=en["metaTitle"], metaTitleVi=vi["metaTitle"],
                 metaDescriptionEn=en["metaDescription"], metaDescriptionVi=vi["metaDescription"])
     return "  " + json.dumps(meta, ensure_ascii=False, indent=2).replace("\n", "\n  ") + ",\n"
@@ -243,6 +270,12 @@ def publish(store, task):
     note = (f"Wriai draft {inbox_id(task)} -> team task T{tid}, published on the owner's explicit order {today} "
             f"WITHOUT fact verification ({len(pkg.get('unverified') or [])} unverified facts)." if override else
             f"Wriai draft {inbox_id(task)} -> team task T{tid}, reviewed by the editorial team and approved by the owner {today}.")
+    try:
+        hero = fetch_hero(team, task, pkg, tree)
+    except Exception:
+        hero = None  # ponytail: a broken Wriai image never blocks the post; it ships without a hero.
+    if hero:
+        pkg = {**pkg, "heroImage": hero}
     (tree / f"src/content/blog/posts/{pkg['slug']}.ts").write_text(post_ts(pkg, today, note), encoding="utf-8")
     anchor = "export const blogMetadata: BlogPostMetadata[] = [\n"
     if meta.count(anchor) != 1:
@@ -253,9 +286,13 @@ def publish(store, task):
     scratch.mkdir(parents=True, exist_ok=True)
     env.update(HOME=str(scratch), CI="true")
     checked(["node", "scripts/gen-blog-barrel.mjs"], cwd=tree, env=env)
+    expected = {f"src/content/blog/posts/{pkg['slug']}.ts", "src/content/blog/metadata.ts", "src/content/blog/posts/all.ts"}
+    if hero:
+        checked(["node", "scripts/gen-blog-image-dims.mjs"], cwd=tree, env=env)
+        checked(["git", "add", "-A", "public/images/blog"], cwd=tree)
+        expected |= {"public" + hero["src"], "src/content/blog/image-dims.ts"}
     checked(["git", "add", "-A", "src/content/blog"], cwd=tree)
     paths = checked(["git", "diff", "--cached", "--name-only"], cwd=tree).splitlines()
-    expected = {f"src/content/blog/posts/{pkg['slug']}.ts", "src/content/blog/metadata.ts", "src/content/blog/posts/all.ts"}
     if set(paths) != expected:
         raise RuntimeError("patch_manifest_mismatch")
     checked(["npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund"], cwd=tree, env=env, timeout=300)
@@ -347,6 +384,7 @@ def insert_vi(team, pkg):
         "slug": vi["slug"], "title": vi["title"], "meta_title": vi["metaTitle"],
         "meta_description": vi["metaDescription"], "excerpt": vi.get("excerpt") or vi["metaDescription"],
         "content_html": vi_html(vi), "author_name": "ThePickleHub", "category": "hướng dẫn",
+        "cover_image_url": (pkg.get("heroImage") or {}).get("src"),
         "tags": pkg["tags"], "focus_keyword": vi.get("focusKeyword") or pkg["tags"][0],
         "faq_items": [{"question": f["question"], "answer": f["answer"]} for f in vi["faqItems"]],
         "alternate_en_slug": pkg["slug"], "status": "published",
