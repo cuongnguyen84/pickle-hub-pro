@@ -278,9 +278,11 @@ def await_ci(store, task):
     if not current.get('autodeploy') or (current.get('kind') != 'wriai' and not store.get('ordinary_code_autodeploy', False)):
         save(store, task['id'], phase='awaiting_deploy', next_step='Bấm Duyệt triển khai sau khi đọc PR.')
         return f'T{task["id"]}: tự triển khai đã tắt; chờ duyệt PR {current["pr"]}.'
-    pr = json.loads(checked(['gh', 'pr', 'view', current['pr'], '--json', 'headRefOid,statusCheckRollup']))
+    pr = json.loads(checked(['gh', 'pr', 'view', current['pr'], '--json', 'headRefOid,statusCheckRollup,mergeStateStatus']))
     if pr['headRefOid'] != current['head']:
         raise RuntimeError('pr_changed_or_not_mergeable')
+    if pr.get('mergeStateStatus') == 'UNKNOWN':
+        return None  # GitHub recomputes after main moves or checks rerun; deploy() would reject it as not CLEAN.
     checks = pr.get('statusCheckRollup') or []
     if any(c.get('conclusion', c.get('state')) in {'FAILURE', 'ERROR', 'CANCELLED', 'TIMED_OUT', 'ACTION_REQUIRED'} for c in checks):
         raise RuntimeError('ci_not_successful')

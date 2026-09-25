@@ -139,6 +139,15 @@ class ActionTests(unittest.TestCase):
             self.assertEqual(actions.await_ci(self.store, self.task(self.b)), 'merged')
             deploy.assert_called_once()
 
+    def test_unknown_merge_state_waits_instead_of_blocking(self):
+        self.store.put('ordinary_code_autodeploy', True)
+        actions.save(self.store, self.b, phase='awaiting_ci', pr='url', head='a' * 40,
+                     autodeploy=True, ci_requested_at=time.time())
+        with patch.object(actions, 'checked', return_value=json.dumps({'headRefOid': 'a' * 40, 'mergeStateStatus': 'UNKNOWN',
+                  'statusCheckRollup': [{'conclusion': 'SUCCESS'}]})), patch.object(actions, 'deploy') as deploy:
+            self.assertIsNone(actions.await_ci(self.store, self.task(self.b)))
+            deploy.assert_not_called()
+
     def test_revoked_autodeploy_requires_revision_bound_approval(self):
         actions.save(self.store, self.b, phase='awaiting_ci', pr='url', head='a' * 40, autodeploy=True)
         with patch.object(actions, 'deploy') as deploy:
