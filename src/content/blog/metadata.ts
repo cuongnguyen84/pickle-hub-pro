@@ -26,6 +26,7 @@ export const blogMetadata: BlogPostMetadata[] = [
       "en": "See all Can Tho courts",
       "vi": "Xem các sân pickleball Cần Thơ"
     },
+    "heroImage": {"src": "/images/blog/pickleball-courts-can-tho-2026-hero.webp", "alt": "Pickleball Courts in Can Tho 2026: 7 Venues & Prices"},
     "titleEn": "Pickleball Courts in Can Tho 2026: 7 Venues, Prices and How to Book",
     "titleVi": "Sân Pickleball Cần Thơ 2026: 7 địa điểm, giá thuê và cách đặt sân",
     "metaTitleEn": "Pickleball Courts in Can Tho 2026: 7 Venues & Prices",

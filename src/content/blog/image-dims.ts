@@ -59,6 +59,7 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/pickleball-club-management-software-comparison-hero.webp": [1731, 909],
   "/images/blog/pickleball-cost-vietnam-2026-hero-768.webp": [768, 512],
   "/images/blog/pickleball-cost-vietnam-2026-hero.webp": [1536, 1024],
+  "/images/blog/pickleball-courts-can-tho-2026-hero.webp": [1200, 686],
   "/images/blog/pickleball-dink-technique-mastery-hero-768.webp": [768, 432],
   "/images/blog/pickleball-dink-technique-mastery-hero.webp": [1672, 941],
   "/images/blog/pickleball-doubles-stacking-strategy-hero-768.webp": [768, 403],

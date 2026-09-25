@@ -69,6 +69,35 @@ class GateTests(unittest.TestCase):
         self.assertEqual(meta["metaTitleEn"], obj["content"]["en"]["metaTitle"])
         self.assertEqual(meta["metaDescriptionVi"], obj["content"]["vi"]["metaDescription"])
 
+    def test_hero_image_flows_to_post_metadata_and_vi_cover(self):
+        pkg = package(heroImage={"src": w.hero_path("x"), "alt": "a"})
+        ts = w.post_ts(pkg, "2026-09-25", "n")
+        self.assertIn('"heroImage"', ts)
+        self.assertEqual(json.loads(w.metadata_entry(pkg, "2026-09-25").strip().rstrip(","))["heroImage"]["src"],
+                         "/images/blog/x-hero.webp")
+        self.assertNotIn("heroImage", w.metadata_entry(package(), "2026-09-25"))
+        class Team:
+            ICT = None
+            def rest(self, path): return []
+        with patch.object(w, "_write") as write, patch.object(w, "datetime"):
+            w.insert_vi(Team(), pkg)
+        self.assertEqual(write.call_args[0][3]["cover_image_url"], "/images/blog/x-hero.webp")
+
+    def test_fetch_hero_writes_a_1200px_webp(self):
+        import io
+        from PIL import Image
+        buf = io.BytesIO(); Image.new("RGB", (1792, 1024), "blue").save(buf, "PNG")
+        class Resp(io.BytesIO):
+            def __enter__(self): return self
+            def __exit__(self, *a): pass
+        class Team:
+            def rest(self, path): return [{"featured_image": {"url": "https://cdn.wriai.com/a.webp"}}]
+        task = {"dedupe": f"schedule:wriai:{INBOX}"}
+        with tempfile.TemporaryDirectory() as tmp, patch.object(w.urllib.request, "urlopen", return_value=Resp(buf.getvalue())):
+            hero = w.fetch_hero(Team(), task, package(), Path(tmp))
+            out = Image.open(Path(tmp) / "public" / hero["src"].lstrip("/"))
+            self.assertEqual((out.format, out.width), ("WEBP", 1200))
+
     def test_vi_html_escapes_model_text(self):
         self.assertIn("&lt;b&gt;", w.vi_html(package()["vi"]))
         self.assertNotIn("<b>", w.vi_html(package()["vi"]))
