@@ -73,6 +73,20 @@ class GateTests(unittest.TestCase):
         self.assertIn("&lt;b&gt;", w.vi_html(package()["vi"]))
         self.assertNotIn("<b>", w.vi_html(package()["vi"]))
 
+    def test_insert_vi_is_idempotent(self):
+        class Team:
+            ICT = None
+            def __init__(self, rows): self.rows = rows
+            def rest(self, path): return self.rows
+        with patch.object(w, "_write") as write:
+            w.insert_vi(Team([{"slug": "san-pickleball-can-tho"}]), package())
+            write.assert_not_called()
+            with patch.object(w, "datetime") as dt:
+                dt.now.return_value.isoformat.return_value = "2026-09-25"
+                w.insert_vi(Team([]), package())
+            self.assertEqual(write.call_args[0][1:3], ("POST", "vi_blog_posts"))
+            self.assertEqual(write.call_args[0][3]["alternate_en_slug"], package()["slug"])
+
     def test_db_writes_are_limited_to_two_shapes(self):
         for method, path in (("POST", "news_items"), ("PATCH", "wriai_inbox?id=eq.x"), ("DELETE", "vi_blog_posts")):
             with self.subTest(path), self.assertRaises(ValueError):

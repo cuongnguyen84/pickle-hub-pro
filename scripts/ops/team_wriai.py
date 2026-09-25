@@ -9,8 +9,11 @@ Stage 2 (publish): on approval, write the EN post + metadata entry, regenerate
 the barrel, typecheck/test/build in an isolated worktree, open a PR. The owner
 already approved the content, so the PR merges itself once CI is green.
 
-Stage 3 (after_deploy): once production serves the merge, insert the VI row
-(vi_blog_posts, alternate_en_slug -> EN slug) and mark the inbox row converted.
+The VI row (vi_blog_posts, alternate_en_slug -> EN slug) is inserted as soon as
+the PR opens: CI smoke follows /vi/blog/<en-slug>, which only resolves through it.
+
+Stage 3 (after_deploy): once production serves the merge, re-ensure the VI row
+and mark the inbox row converted.
 These two writes are the only DB writes this module can make.
 """
 from __future__ import annotations
@@ -271,6 +274,7 @@ def publish(store, task):
                    f"content(blog): {pkg['slug']}", "--body-file", body["path"]], cwd=tree)
     if not re.fullmatch(r"https://github.com/cuongnguyen84/pickle-hub-pro/pull/\d+", url):
         raise RuntimeError("unexpected_pull_request_url")
+    insert_vi(team, pkg)
     # Owner approved the content itself; the merge waits only for CI.
     save(store, tid, phase="awaiting_ci", pr=url, head=head, base=base, autodeploy=True, ci_requested_at=time.time(),
          reason="Bài đã qua typecheck, test và build; chờ CI để tự merge.",
@@ -333,11 +337,12 @@ def owner_publish(store, code):
             "đạt cấu trúc thì tự mở PR → CI xanh → merge → báo link, anh không cần bấm thêm.")
 
 
-def after_deploy(store, task):
-    """Production serves the EN post: add the VI twin, close the inbox row, check both pages."""
-    import team_supervisor as team
-    pkg = load_package(store, task)
+def insert_vi(team, pkg):
+    """Idempotent. Runs when the PR opens: CI smoke follows /vi/blog/<en-slug>, which prod
+    resolves through vi_blog_posts.alternate_en_slug - without the row the PR can never go green."""
     vi = pkg["vi"]
+    if team.rest(f"vi_blog_posts?select=slug&slug=eq.{vi['slug']}&limit=1"):
+        return
     _write(team, "POST", "vi_blog_posts", {
         "slug": vi["slug"], "title": vi["title"], "meta_title": vi["metaTitle"],
         "meta_description": vi["metaDescription"], "excerpt": vi.get("excerpt") or vi["metaDescription"],
@@ -346,6 +351,14 @@ def after_deploy(store, task):
         "faq_items": [{"question": f["question"], "answer": f["answer"]} for f in vi["faqItems"]],
         "alternate_en_slug": pkg["slug"], "status": "published",
         "published_at": datetime.now(team.ICT).isoformat(), "skip_email_blast": True})
+
+
+def after_deploy(store, task):
+    """Production serves the EN post: ensure the VI twin, close the inbox row, check both pages."""
+    import team_supervisor as team
+    pkg = load_package(store, task)
+    vi = pkg["vi"]
+    insert_vi(team, pkg)
     _write(team, "PATCH", f"wriai_inbox?id=eq.{inbox_id(task)}&status=eq.new",
            {"status": "converted", "converted_slug": pkg["slug"], "updated_at": datetime.now(team.ICT).isoformat()})
     # The canonical link carries the slug verbatim, unlike titles that may be entity-encoded.
