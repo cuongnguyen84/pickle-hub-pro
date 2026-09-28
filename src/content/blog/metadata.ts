@@ -10,6 +10,36 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "graphite-vs-carbon-pickleball-paddle",
+    "publishedDate": "2026-09-28",
+    "updatedDate": "2026-09-28",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball paddles",
+      "graphite paddle",
+      "carbon fiber paddle",
+      "raw carbon",
+      "paddle buying guide",
+      "pickleball equipment",
+      "spin"
+    ],
+    "ctaPath": "/san",
+    "ctaLabel": {
+      "en": "Find a pickleball court near you",
+      "vi": "Tìm sân pickleball gần bạn"
+    },
+    "heroImage": {
+      "src": "/images/blog/graphite-vs-carbon-pickleball-paddle-hero.webp",
+      "alt": "Graphite vs Carbon Fiber Pickleball Paddles in 2026: Which Should You Choose?"
+    },
+    "titleEn": "Graphite vs Carbon Fiber Pickleball Paddles in 2026: Which Should You Choose?",
+    "titleVi": "Vợt pickleball graphite hay carbon: Khác biệt nào đáng chọn?",
+    "metaTitleEn": "Graphite vs Carbon Pickleball Paddles (2026): Which to Buy",
+    "metaTitleVi": "Vợt pickleball graphite hay carbon: chọn loại nào?",
+    "metaDescriptionEn": "Graphite vs carbon fiber pickleball paddles in 2026: spin, power, control, durability and price ($80–150 vs $150–250+), plus who should buy each.",
+    "metaDescriptionVi": "So sánh vợt pickleball graphite và carbon: lực, xoáy, kiểm soát, độ bền, giá 2026 và cách chọn theo trình độ."
+  },
+  {
     "slug": "pickleball-courts-nha-trang-2026",
     "publishedDate": "2026-09-28",
     "updatedDate": "2026-09-28",
