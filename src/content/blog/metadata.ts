@@ -10,6 +10,37 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-courts-dong-nai-2026",
+    "publishedDate": "2026-09-28",
+    "updatedDate": "2026-09-28",
+    "author": "The PickleHub Team",
+    "tags": [
+      "dong nai",
+      "bien hoa",
+      "pickleball courts",
+      "court directory",
+      "vietnam pickleball",
+      "pickleball clubs",
+      "bracket lab",
+      "dupr"
+    ],
+    "ctaPath": "/san/khu-vuc/bien-hoa",
+    "ctaLabel": {
+      "en": "See Bien Hoa courts",
+      "vi": "Xem sân pickleball Biên Hòa"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-courts-dong-nai-2026-hero.webp",
+      "alt": "Pickleball Courts in Dong Nai 2026: How to Find a Court and Connect With Local Players"
+    },
+    "titleEn": "Pickleball Courts in Dong Nai 2026: How to Find a Court and Connect With Local Players",
+    "titleVi": "Sân pickleball Đồng Nai: Cách tìm sân và kết nối cộng đồng",
+    "metaTitleEn": "Pickleball Courts in Dong Nai 2026: Find & Confirm One",
+    "metaTitleVi": "Sân pickleball Đồng Nai 2026: cách tìm sân",
+    "metaDescriptionEn": "Find pickleball courts in Dong Nai and Bien Hoa with ThePickleHub's directory, then confirm hours by phone, join clubs and log matches in 2026.",
+    "metaDescriptionVi": "Tìm sân pickleball Đồng Nai, Biên Hòa trên ThePickleHub, gọi sân xác nhận giờ chơi, tìm câu lạc bộ và ghi trận."
+  },
+  {
     "slug": "graphite-vs-carbon-pickleball-paddle",
     "publishedDate": "2026-09-28",
     "updatedDate": "2026-09-28",
