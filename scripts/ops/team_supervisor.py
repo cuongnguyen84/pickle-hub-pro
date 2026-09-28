@@ -688,7 +688,7 @@ def queue_wriai(store):
     if time.time() - store.get("wriai_poll", 0) < 900:
         return
     store.put("wriai_poll", time.time())
-    rows = rest("wriai_inbox?select=id,title,slug,content_markdown&status=eq.new&order=received_at&limit=5")
+    rows = rest("wriai_inbox?select=id,title,slug,content_markdown&status=eq.new&order=received_at&limit=50")
     for row in rows:
         key = f"schedule:wriai:{row['id']}"
         if store.db.execute("SELECT 1 FROM tasks WHERE dedupe=?", (key,)).fetchone():
