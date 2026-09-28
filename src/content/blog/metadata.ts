@@ -10,6 +10,36 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-courts-nha-trang-2026",
+    "publishedDate": "2026-09-28",
+    "updatedDate": "2026-09-28",
+    "author": "The PickleHub Team",
+    "tags": [
+      "nha trang",
+      "khanh hoa",
+      "pickleball courts",
+      "court finder",
+      "vietnam pickleball",
+      "pickleball clubs",
+      "travel pickleball"
+    ],
+    "ctaPath": "/san/khu-vuc/nha-trang",
+    "ctaLabel": {
+      "en": "Browse Nha Trang courts",
+      "vi": "Xem sân pickleball Nha Trang"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-courts-nha-trang-2026-hero.webp",
+      "alt": "Pickleball Courts in Nha Trang (2026): How to Find a Court You Can Trust"
+    },
+    "titleEn": "Pickleball Courts in Nha Trang (2026): How to Find a Court You Can Trust",
+    "titleVi": "Sân pickleball Nha Trang: Cách tìm sân đáng tin cậy",
+    "metaTitleEn": "Pickleball Courts in Nha Trang 2026: How to Find One",
+    "metaTitleVi": "Sân pickleball Nha Trang 2026: cách tìm sân",
+    "metaDescriptionEn": "Find pickleball courts in Nha Trang, Khanh Hoa: use the ThePickleHub directory, then confirm address, price, hours and booking with the venue.",
+    "metaDescriptionVi": "Sân pickleball Nha Trang: cách tra cứu sân, câu lạc bộ, sự kiện và thông tin cần xác minh trước khi đến chơi cùng ThePickleHub."
+  },
+  {
     "slug": "pickleball-courts-binh-duong-2026",
     "publishedDate": "2026-09-28",
     "updatedDate": "2026-09-28",
