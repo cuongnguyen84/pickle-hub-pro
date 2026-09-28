@@ -10,6 +10,36 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-courts-hai-phong-2026",
+    "publishedDate": "2026-09-28",
+    "updatedDate": "2026-09-28",
+    "author": "The PickleHub Team",
+    "tags": [
+      "hai phong",
+      "pickleball courts",
+      "vietnam",
+      "venue guide",
+      "find players",
+      "community events",
+      "bracket lab"
+    ],
+    "ctaPath": "/san/khu-vuc/hai-phong",
+    "ctaLabel": {
+      "en": "See Hai Phong courts",
+      "vi": "Xem các sân pickleball Hải Phòng"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-courts-hai-phong-2026-hero.webp",
+      "alt": "Pickleball Courts in Hai Phong 2026: How to Find Courts and Join the Community"
+    },
+    "titleEn": "Pickleball Courts in Hai Phong 2026: How to Find Courts and Join the Community",
+    "titleVi": "Sân pickleball Hải Phòng: Cách tìm sân và tham gia cộng đồng",
+    "metaTitleEn": "Pickleball Courts in Hai Phong 2026: Find Courts & Players",
+    "metaTitleVi": "Sân pickleball Hải Phòng 2026: Cách tìm sân",
+    "metaDescriptionEn": "How to find pickleball courts in Hai Phong in 2026 on ThePickleHub: HHP Pickleball, TPK Pickleball, what to check before you go, and where to find players.",
+    "metaDescriptionVi": "Tìm sân pickleball Hải Phòng trên ThePickleHub: HHP, TPK Pickleball, việc cần kiểm tra trước khi đến sân và cách tìm bạn chơi."
+  },
+  {
     "slug": "pickleball-courts-can-tho-2026",
     "publishedDate": "2026-09-25",
     "updatedDate": "2026-09-25",
