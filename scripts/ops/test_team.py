@@ -181,7 +181,8 @@ class StoreTests(unittest.TestCase):
         self.tmp.cleanup()
 
     def test_wriai_drafts_become_one_editorial_task_each(self):
-        rows = [{"id": "11111111-aaaa", "title": "Sân TP.HCM", "slug": "San-TPHCM!", "content_markdown": "x" * 20000}]
+        rows = [{"id": "11111111-aaaa", "title": "Sân TP.HCM", "slug": "San-TPHCM!", "content_markdown": "x" * 20000},
+                {"id": "22222222-bbbb", "title": "Sân TP.HCM", "slug": "san-tphcm", "content_markdown": "resent"}]
         with patch.object(team, "rest", return_value=rows) as rest:
             team.queue_wriai(self.store)
             self.store.put("wriai_poll", 0)
@@ -196,6 +197,8 @@ class StoreTests(unittest.TestCase):
         self.assertIn("docs/agent-drafts/wriai-san-tphcm.md", request)
         self.assertLess(len(request), 20000)
         self.assertTrue(permitted("docs/agent-drafts/wriai-san-tphcm.md", "editorial"))
+        self.assertIn("KHÔNG qua kiểm duyệt", request.split("--- BÀI WRIAI")[0])  # policy precedes the Wriai body
+        self.assertTrue(self.store.get(f"wriai_override:{tasks[0]['id']}"))
 
     def test_dedup_and_reopen(self):
         self.store.findings("site", "platform", {"down": "Site down"}, {})
