@@ -153,6 +153,9 @@ def fetch_hero(team, task, pkg, tree):
     dest = tree / "public" / hero_path(pkg["slug"]).lstrip("/")
     dest.parent.mkdir(parents=True, exist_ok=True)
     img.save(dest, "WEBP", quality=80, method=6)
+    # Blog list cards load the -768 sibling (blogHeroSrcSet); without it the card hides the image.
+    small = img.resize((768, round(img.height * 768 / img.width)), Image.LANCZOS)
+    small.save(dest.with_name(dest.stem + "-768.webp"), "WEBP", quality=80, method=6)
     return {"src": hero_path(pkg["slug"]), "alt": pkg["en"]["title"]}
 
 
@@ -290,7 +293,8 @@ def publish(store, task):
     if hero:
         checked(["node", "scripts/gen-blog-image-dims.mjs"], cwd=tree, env=env)
         checked(["git", "add", "-A", "public/images/blog"], cwd=tree)
-        expected |= {"public" + hero["src"], "src/content/blog/image-dims.ts"}
+        expected |= {"public" + hero["src"], "public" + hero["src"].replace(".webp", "-768.webp"),
+                     "src/content/blog/image-dims.ts"}
     checked(["git", "add", "-A", "src/content/blog"], cwd=tree)
     paths = checked(["git", "diff", "--cached", "--name-only"], cwd=tree).splitlines()
     if set(paths) != expected:

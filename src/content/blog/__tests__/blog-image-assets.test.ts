@@ -21,8 +21,10 @@ function blogImageRefs(source: string): string[] {
   );
 }
 
+const metadataSrc = readFileSync(resolve(__dirname, "../metadata.ts"), "utf8");
+
 const sources: Array<[string, string]> = [
-  ["metadata.ts", readFileSync(resolve(__dirname, "../metadata.ts"), "utf8")],
+  ["metadata.ts", metadataSrc],
   ...readdirSync(POSTS_DIR)
     .filter((f) => f.endsWith(".ts"))
     .map((f): [string, string] => [
@@ -41,6 +43,19 @@ describe("blog image assets exist in public/", () => {
       expect(missing).toEqual([]);
     },
   );
+
+  // Blog list cards request the -768 sibling (blogHeroSrcSet); a hero without it
+  // renders as an empty card (Wriai posts, 2026-09-28).
+  it("every metadata hero has its -768 card variant", () => {
+    const heroes = [...metadataSrc.matchAll(/"?src"?:\s*"(\/images\/blog\/[\w.-]+\.webp)"/g)]
+      .map((m) => m[1])
+      .filter((p) => !p.endsWith("-768.webp"));
+    expect(heroes.length).toBeGreaterThan(50);
+    const missing = heroes.filter(
+      (p) => !existsSync(join(ROOT, "public", p.replace(/\.webp$/, "-768.webp"))),
+    );
+    expect(missing).toEqual([]);
+  });
 
   it("sanity: the scan actually finds refs (guards against a regex rot)", () => {
     const total = sources.reduce(
