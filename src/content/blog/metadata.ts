@@ -40,6 +40,65 @@ export const blogMetadata: BlogPostMetadata[] = [
     "metaDescriptionVi": "Sân pickleball Nha Trang: cách tra cứu sân, câu lạc bộ, sự kiện và thông tin cần xác minh trước khi đến chơi cùng ThePickleHub."
   },
   {
+    "slug": "pickleball-courts-binh-duong-2026",
+    "publishedDate": "2026-09-28",
+    "updatedDate": "2026-09-28",
+    "author": "The PickleHub Team",
+    "tags": [
+      "binh duong",
+      "pickleball courts",
+      "court directory",
+      "di an",
+      "vietnam",
+      "venue guide"
+    ],
+    "ctaPath": "/san/khu-vuc/binh-duong",
+    "ctaLabel": {
+      "en": "See Binh Duong courts",
+      "vi": "Xem sân pickleball Bình Dương"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-courts-binh-duong-2026-hero.webp",
+      "alt": "Pickleball Courts in Binh Duong 2026: How to Find and Choose a Court"
+    },
+    "titleEn": "Pickleball Courts in Binh Duong 2026: How to Find and Choose a Court",
+    "titleVi": "Sân pickleball Bình Dương: Cách tra cứu và chọn sân",
+    "metaTitleEn": "Pickleball Courts in Binh Duong 2026: How to Find One",
+    "metaTitleVi": "Sân pickleball Bình Dương 2026: cách tra cứu sân",
+    "metaDescriptionEn": "Find pickleball courts in Binh Duong, Vietnam in 2026 with ThePickleHub's court directory: Di An listing, other areas to check, and how to confirm prices.",
+    "metaDescriptionVi": "Tra cứu sân pickleball Bình Dương trên ThePickleHub: sân ở Dĩ An, khu vực nên tìm và cách xác nhận giá, giờ chơi."
+  },
+  {
+    "slug": "pickleball-courts-hai-phong-2026",
+    "publishedDate": "2026-09-28",
+    "updatedDate": "2026-09-28",
+    "author": "The PickleHub Team",
+    "tags": [
+      "hai phong",
+      "pickleball courts",
+      "vietnam",
+      "venue guide",
+      "find players",
+      "community events",
+      "bracket lab"
+    ],
+    "ctaPath": "/san/khu-vuc/hai-phong",
+    "ctaLabel": {
+      "en": "See Hai Phong courts",
+      "vi": "Xem các sân pickleball Hải Phòng"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-courts-hai-phong-2026-hero.webp",
+      "alt": "Pickleball Courts in Hai Phong 2026: How to Find Courts and Join the Community"
+    },
+    "titleEn": "Pickleball Courts in Hai Phong 2026: How to Find Courts and Join the Community",
+    "titleVi": "Sân pickleball Hải Phòng: Cách tìm sân và tham gia cộng đồng",
+    "metaTitleEn": "Pickleball Courts in Hai Phong 2026: Find Courts & Players",
+    "metaTitleVi": "Sân pickleball Hải Phòng 2026: Cách tìm sân",
+    "metaDescriptionEn": "How to find pickleball courts in Hai Phong in 2026 on ThePickleHub: HHP Pickleball, TPK Pickleball, what to check before you go, and where to find players.",
+    "metaDescriptionVi": "Tìm sân pickleball Hải Phòng trên ThePickleHub: HHP, TPK Pickleball, việc cần kiểm tra trước khi đến sân và cách tìm bạn chơi."
+  },
+  {
     "slug": "pickleball-courts-can-tho-2026",
     "publishedDate": "2026-09-25",
     "updatedDate": "2026-09-25",
