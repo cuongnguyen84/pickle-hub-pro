@@ -148,6 +148,22 @@ class ActionTests(unittest.TestCase):
             self.assertIsNone(actions.await_ci(self.store, self.task(self.b)))
             deploy.assert_not_called()
 
+    def test_conflicted_wriai_pr_is_rebuilt_from_new_main(self):
+        actions.save(self.store, self.b, phase='awaiting_ci', kind='wriai', pr='url', head='a' * 40,
+                     autodeploy=True, ci_requested_at=time.time(), attempt=1, approval='a' * 12)
+        pr = json.dumps({'headRefOid': 'a' * 40, 'mergeStateStatus': 'DIRTY', 'statusCheckRollup': [{'conclusion': 'SUCCESS'}]})
+        with patch.object(actions, 'checked', side_effect=[pr, '']) as command, patch.object(actions, 'deploy') as deploy:
+            self.assertIn('dựng lại', actions.await_ci(self.store, self.task(self.b)))
+            deploy.assert_not_called()
+        self.assertEqual(command.call_args_list[1].args[0][:3], ['gh', 'pr', 'close'])
+        current = actions.state(self.store, self.b)
+        # queued + approval + no pr => run_one calls team_wriai.publish again on a fresh branch
+        self.assertEqual((current['phase'], current['pr'], current['attempt'], current['approval']), ('queued', None, 2, 'a' * 12))
+        actions.save(self.store, self.b, phase='awaiting_ci', pr='url2', rebuilds=3)
+        with patch.object(actions, 'checked', return_value=pr):
+            with self.assertRaisesRegex(RuntimeError, 'pr_changed'):
+                actions.await_ci(self.store, self.task(self.b))
+
     def test_revoked_autodeploy_requires_revision_bound_approval(self):
         actions.save(self.store, self.b, phase='awaiting_ci', pr='url', head='a' * 40, autodeploy=True)
         with patch.object(actions, 'deploy') as deploy:
