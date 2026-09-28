@@ -283,6 +283,8 @@ def await_ci(store, task):
         raise RuntimeError('pr_changed_or_not_mergeable')
     if pr.get('mergeStateStatus') == 'UNKNOWN':
         return None  # GitHub recomputes after main moves or checks rerun; deploy() would reject it as not CLEAN.
+    if pr.get('mergeStateStatus') == 'DIRTY' and current.get('kind') == 'wriai':
+        return rebuild_wriai(store, task, current)
     checks = pr.get('statusCheckRollup') or []
     if any(c.get('conclusion', c.get('state')) in {'FAILURE', 'ERROR', 'CANCELLED', 'TIMED_OUT', 'ACTION_REQUIRED'} for c in checks):
         raise RuntimeError('ci_not_successful')
@@ -291,6 +293,22 @@ def await_ci(store, task):
     if time.time() - current['ci_requested_at'] > 1800:
         raise RuntimeError('ci_not_verified_after_30_minutes')
     return None
+
+
+def rebuild_wriai(store, task, current):
+    """Another post merged first, so the generated blog files (metadata, barrel, image-dims)
+    conflict. They are all regenerated from the approved package, so the fix is to drop the
+    PR and publish again from the new main - never to hand-merge (T115/#808, 28/09)."""
+    tid = task['id']
+    rebuilds = current.get('rebuilds', 0) + 1
+    if rebuilds > 3:
+        raise RuntimeError('pr_changed_or_not_mergeable')
+    checked(['gh', 'pr', 'close', current['pr'], '--delete-branch', '--comment',
+             'Conflicts with a post merged first; the team republishes this package from the new main.'])
+    save(store, tid, phase='queued', pr=None, head=current['head'], rebuilds=rebuilds,
+         attempt=current.get('attempt', 0) + 1, reason='PR xung đột với bài vừa merge; đội dựng lại từ main mới.',
+         next_step='Đội tự mở PR mới, CI xanh thì merge.')
+    return f'T{tid}: PR {current["pr"]} xung đột với bài vừa đăng; đã đóng và dựng lại từ main mới (lần {rebuilds}/3).'
 
 
 ERRORS = {
