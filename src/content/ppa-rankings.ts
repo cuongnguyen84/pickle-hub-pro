@@ -33,7 +33,7 @@ export interface PpaRankingEntry {
 }
 
 /** Ngày ThePickleHub lấy số liệu từ trang nguồn (không phải ngày PPA cập nhật). */
-export const PPA_WPR_FETCHED_AT = "2026-09-24";
+export const PPA_WPR_FETCHED_AT = "2026-09-28";
 
 export const PPA_WPR_SOURCE_URL = "https://www.ppatour.com/rankings/";
 
@@ -121,6 +121,7 @@ export const PPA_WPR_VIET_HIGHLIGHTS: PpaVietHighlight[] = [
   { board: "men", rank: 30, name: "Hien Truong", countryCode: "vn", points: 2121.25 },
   { board: "men", rank: 36, name: "Luc Pham", countryCode: "us", points: 1746.75 },
   { board: "women", rank: 50, name: "Sophia Nhi Huynh", countryCode: "vn", points: 1263.75 },
+  { board: "men", rank: 53, name: "Quan Do", countryCode: "vn", points: 1307.5 },
   { board: "women", rank: 54, name: "Ho Tam", countryCode: "vn", points: 1196.25 },
   { board: "women", rank: 69, name: "Sophia Phuong Anh Tran", countryCode: "vn", points: 873.5 },
   { board: "men", rank: 70, name: "Hoang Nam Ly", countryCode: "vn", points: 950 },
@@ -132,7 +133,7 @@ export const PPA_WPR_VIET_HIGHLIGHTS: PpaVietHighlight[] = [
   { board: "men", rank: 229, name: "HO Hoan", countryCode: "vn", points: 108.1 },
   { board: "men", rank: 235, name: "Hoang Nguyen Anh", countryCode: "vn", points: 105 },
   { board: "men", rank: 238, name: "Tiến Đạt Lê", countryCode: "vn", points: 100 },
-  { board: "men", rank: 239, name: "Khuong Huynh", countryCode: "vn", points: 100 },
+  { board: "men", rank: 240, name: "Khuong Huynh", countryCode: "vn", points: 100 },
   { board: "women", rank: 263, name: "Tran Tue Ngoc", countryCode: "vn", points: 50 },
   { board: "women", rank: 264, name: "Jolie Lam", countryCode: "vn", points: 50 },
   { board: "women", rank: 265, name: "LOI TRAN", countryCode: "vn", points: 50 },
@@ -143,22 +144,22 @@ export const PPA_WPR_VIET_HIGHLIGHTS: PpaVietHighlight[] = [
   { board: "men", rank: 287, name: "Andrew Anh Pham", countryCode: "vn", points: 62.5 },
   { board: "men", rank: 292, name: "Pham XuanVu", countryCode: "vn", points: 58.75 },
   { board: "men", rank: 294, name: "Anh Pham", countryCode: "vn", points: 57.5 },
-  { board: "men", rank: 312, name: "Carlos Rubio", countryCode: "vn", points: 50 },
-  { board: "men", rank: 313, name: "Ngoc Trieu Tran", countryCode: "vn", points: 50 },
-  { board: "women", rank: 346, name: "Thuy Pham", countryCode: "vn", points: 25 },
-  { board: "women", rank: 353, name: "Thilehang Tra", countryCode: "vn", points: 25 },
+  { board: "men", rank: 312, name: "Ngoc Trieu Tran", countryCode: "vn", points: 50 },
+  { board: "men", rank: 313, name: "Carlos Rubio", countryCode: "vn", points: 50 },
+  { board: "women", rank: 347, name: "Phan Quynh", countryCode: "vn", points: 25 },
   { board: "men", rank: 354, name: "Nhật Minh T", countryCode: "vn", points: 38.4 },
-  { board: "women", rank: 355, name: "Phan Quynh", countryCode: "vn", points: 25 },
-  { board: "men", rank: 362, name: "Khoa Vo", countryCode: "vn", points: 37.5 },
-  { board: "women", rank: 368, name: "Bich Hua", countryCode: "vn", points: 25 },
+  { board: "women", rank: 356, name: "Thilehang Tra", countryCode: "vn", points: 25 },
+  { board: "women", rank: 358, name: "Bich Hua", countryCode: "vn", points: 25 },
+  { board: "women", rank: 360, name: "Thuy Pham", countryCode: "vn", points: 25 },
+  { board: "men", rank: 361, name: "Khoa Vo", countryCode: "vn", points: 37.5 },
   { board: "men", rank: 442, name: "Nguyễn Hoàng", countryCode: "vn", points: 22.5 },
   { board: "men", rank: 486, name: "Minh Nhật", countryCode: "vn", points: 17.5 },
   { board: "men", rank: 500, name: "Nguyen Tien", countryCode: "vn", points: 16.25 },
   { board: "men", rank: 501, name: "Nguyen Tien", countryCode: "vn", points: 16.25 },
-  { board: "men", rank: 556, name: "Hoang Bao Long", countryCode: "vn", points: 12.5 },
-  { board: "men", rank: 562, name: "Phong Tran", countryCode: "vn", points: 12.5 },
-  { board: "men", rank: 568, name: "quang tran", countryCode: "vn", points: 12.5 },
-  { board: "men", rank: 577, name: "Tran Tuan Minh", countryCode: "vn", points: 12.5 },
-  { board: "men", rank: 578, name: "Minh Nguyễn Hoàng", countryCode: "vn", points: 12.5 },
-  { board: "men", rank: 582, name: "Nam Vu", countryCode: "vn", points: 12.5 },
+  { board: "men", rank: 551, name: "Minh Nguyễn Hoàng", countryCode: "vn", points: 12.5 },
+  { board: "men", rank: 553, name: "Tran Tuan Minh", countryCode: "vn", points: 12.5 },
+  { board: "men", rank: 557, name: "Nam Vu", countryCode: "vn", points: 12.5 },
+  { board: "men", rank: 564, name: "Hoang Bao Long", countryCode: "vn", points: 12.5 },
+  { board: "men", rank: 569, name: "quang tran", countryCode: "vn", points: 12.5 },
+  { board: "men", rank: 580, name: "Phong Tran", countryCode: "vn", points: 12.5 },
 ];
