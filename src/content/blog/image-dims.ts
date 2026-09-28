@@ -26,6 +26,7 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/dupr-ta-picklehub-partnership-hero.webp": [1536, 1024],
   "/images/blog/dupr-thepicklehub-user-guide-hero-768.webp": [768, 432],
   "/images/blog/dupr-thepicklehub-user-guide-hero.webp": [1672, 941],
+  "/images/blog/graphite-vs-carbon-pickleball-paddle-hero.webp": [1200, 686],
   "/images/blog/hcmc-open-2026-preview-hero-768.webp": [768, 404],
   "/images/blog/hcmc-open-2026-preview-hero.webp": [1729, 910],
   "/images/blog/hcmc-open-2026-recap-hero-768.webp": [768, 403],
