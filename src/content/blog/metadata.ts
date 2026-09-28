@@ -10,6 +10,35 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-courts-binh-duong-2026",
+    "publishedDate": "2026-09-28",
+    "updatedDate": "2026-09-28",
+    "author": "The PickleHub Team",
+    "tags": [
+      "binh duong",
+      "pickleball courts",
+      "court directory",
+      "di an",
+      "vietnam",
+      "venue guide"
+    ],
+    "ctaPath": "/san/khu-vuc/binh-duong",
+    "ctaLabel": {
+      "en": "See Binh Duong courts",
+      "vi": "Xem sân pickleball Bình Dương"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-courts-binh-duong-2026-hero.webp",
+      "alt": "Pickleball Courts in Binh Duong 2026: How to Find and Choose a Court"
+    },
+    "titleEn": "Pickleball Courts in Binh Duong 2026: How to Find and Choose a Court",
+    "titleVi": "Sân pickleball Bình Dương: Cách tra cứu và chọn sân",
+    "metaTitleEn": "Pickleball Courts in Binh Duong 2026: How to Find One",
+    "metaTitleVi": "Sân pickleball Bình Dương 2026: cách tra cứu sân",
+    "metaDescriptionEn": "Find pickleball courts in Binh Duong, Vietnam in 2026 with ThePickleHub's court directory: Di An listing, other areas to check, and how to confirm prices.",
+    "metaDescriptionVi": "Tra cứu sân pickleball Bình Dương trên ThePickleHub: sân ở Dĩ An, khu vực nên tìm và cách xác nhận giá, giờ chơi."
+  },
+  {
     "slug": "pickleball-courts-hai-phong-2026",
     "publishedDate": "2026-09-28",
     "updatedDate": "2026-09-28",
