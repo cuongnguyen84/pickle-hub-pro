@@ -10,6 +10,34 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-courts-vietnam-guide-2026",
+    "publishedDate": "2026-09-29",
+    "updatedDate": "2026-09-29",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball courts",
+      "vietnam pickleball",
+      "court directory",
+      "pickleball clubs",
+      "community events",
+      "bracket lab",
+      "dupr",
+      "hanoi",
+      "quang ngai"
+    ],
+    "ctaPath": "/san",
+    "ctaLabel": {
+      "en": "Browse the court directory",
+      "vi": "Xem danh bạ sân pickleball"
+    },
+    "titleEn": "Pickleball Courts in Vietnam 2026: How to Find, Choose and Connect",
+    "titleVi": "Sân pickleball tại Việt Nam: Cách tìm, chọn và kết nối",
+    "metaTitleEn": "Pickleball Courts in Vietnam 2026: Find, Choose, Connect",
+    "metaTitleVi": "Sân pickleball Việt Nam 2026: cách tìm sân",
+    "metaDescriptionEn": "Find pickleball courts in Vietnam in ThePickleHub's 690+ venue directory by city, confirm by phone, then join clubs, events and Bracket Lab.",
+    "metaDescriptionVi": "Tìm hơn 690 sân pickleball Việt Nam theo thành phố trên ThePickleHub, gọi sân xác nhận trước khi đến."
+  },
+  {
     "slug": "pickleball-courts-dong-nai-2026",
     "publishedDate": "2026-09-28",
     "updatedDate": "2026-09-28",
