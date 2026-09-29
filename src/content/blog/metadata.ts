@@ -10,6 +10,37 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-courts-vung-tau-2026",
+    "publishedDate": "2026-09-29",
+    "updatedDate": "2026-09-29",
+    "author": "The PickleHub Team",
+    "tags": [
+      "vung tau",
+      "ba ria vung tau",
+      "pickleball courts",
+      "court finder",
+      "vietnam pickleball",
+      "pickleball clubs",
+      "travel pickleball",
+      "bracket lab"
+    ],
+    "ctaPath": "/san/khu-vuc/vung-tau",
+    "ctaLabel": {
+      "en": "Browse Vung Tau courts",
+      "vi": "Xem sân pickleball Vũng Tàu"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-courts-vung-tau-2026-hero.webp",
+      "alt": "Pickleball Courts in Vung Tau (2026): How to Find, Choose and Connect"
+    },
+    "titleEn": "Pickleball Courts in Vung Tau (2026): How to Find, Choose and Connect",
+    "titleVi": "Sân pickleball Vũng Tàu: Cách tìm, chọn và kết nối",
+    "metaTitleEn": "Pickleball Courts in Vung Tau 2026: Find, Choose, Connect",
+    "metaTitleVi": "Sân pickleball Vũng Tàu 2026: cách tìm sân",
+    "metaDescriptionEn": "Find pickleball courts in Vung Tau: browse the ThePickleHub directory by city, then confirm hours, fees and open play directly with the venue or club.",
+    "metaDescriptionVi": "Tìm sân pickleball Vũng Tàu trên ThePickleHub: tra cứu theo thành phố, rồi hỏi sân về giờ chơi và chi phí."
+  },
+  {
     "slug": "pickleball-courts-vietnam-guide-2026",
     "publishedDate": "2026-09-29",
     "updatedDate": "2026-09-29",
