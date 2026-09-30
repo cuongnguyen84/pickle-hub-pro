@@ -10,6 +10,35 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "hong-kong-slam-2026-schedule",
+    "publishedDate": "2026-09-30",
+    "updatedDate": "2026-09-30",
+    "author": "The PickleHub Team",
+    "tags": [
+      "hong kong slam",
+      "ppa tour asia",
+      "schedule",
+      "kai tak arena",
+      "vietnam",
+      "2026"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/hong-kong-slam-2026-preview-hero.webp",
+      "alt": "Hong Kong Slam 2026 schedule at Kai Tak Arena"
+    },
+    "titleEn": "Hong Kong Slam 2026 Schedule: Every Round, Hong Kong and Vietnam Time",
+    "titleVi": "Lịch thi đấu Hong Kong Slam 2026: từng vòng, giờ Việt Nam",
+    "metaTitleEn": "Hong Kong Slam 2026 Schedule (Oct 19–25): Day by Day",
+    "metaTitleVi": "Lịch thi đấu Hong Kong Slam 2026 (19–25/10), giờ VN",
+    "metaDescriptionEn": "Hong Kong Slam 2026 schedule at Kai Tak Arena, October 19–25: every round by day in Hong Kong and Vietnam time, confirmed stars and Vietnamese players.",
+    "metaDescriptionVi": "Lịch thi đấu Hong Kong Slam 2026 tại Kai Tak Arena 19–25/10: từng vòng theo ngày, giờ Việt Nam, sao thế giới và VĐV Việt Nam."
+  },
+  {
     "slug": "pickleball-courts-vung-tau-2026",
     "publishedDate": "2026-09-29",
     "updatedDate": "2026-09-29",
