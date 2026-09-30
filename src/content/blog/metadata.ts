@@ -10,6 +10,36 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-lob-technique",
+    "publishedDate": "2026-09-30",
+    "updatedDate": "2026-09-30",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball lob",
+      "lob technique",
+      "pickleball technique",
+      "kitchen",
+      "doubles strategy",
+      "shot selection",
+      "pickleball drills"
+    ],
+    "ctaPath": "/tim-ban-choi",
+    "ctaLabel": {
+      "en": "Find a partner to practise lobs",
+      "vi": "Tìm bạn tập cú lob"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-lob-technique-hero.webp",
+      "alt": "Pickleball Lob Technique: When, How High and Where to Aim"
+    },
+    "titleEn": "Pickleball Lob Technique: When, How High and Where to Aim",
+    "titleVi": "Kỹ thuật đánh bóng bổng pickleball: chọn thời điểm, độ cao và hướng",
+    "metaTitleEn": "Pickleball Lob Technique: Timing, Height and Direction",
+    "metaTitleVi": "Kỹ thuật đánh bóng bổng pickleball (lob)",
+    "metaDescriptionEn": "Learn when to hit a pickleball lob, how deep and high to aim, which direction to choose, and the common mistakes that set up an overhead smash.",
+    "metaDescriptionVi": "Cách đánh lob pickleball: chọn thời điểm, độ cao, độ sâu, hướng bóng và tránh bị đập trả."
+  },
+  {
     "slug": "pickleball-courts-vung-tau-2026",
     "publishedDate": "2026-09-29",
     "updatedDate": "2026-09-29",
