@@ -10,6 +10,31 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "rate-las-vegas-open-2026-schedule",
+    "publishedDate": "2026-09-30",
+    "updatedDate": "2026-09-30",
+    "author": "The PickleHub Team",
+    "tags": [
+      "ppa tour",
+      "las vegas open",
+      "schedule",
+      "anna leigh waters",
+      "quang duong",
+      "2026"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi trực tiếp trên ThePickleHub"
+    },
+    "titleEn": "Rate Las Vegas Open 2026: Schedule in Vietnam Time, How to Watch, Storylines",
+    "titleVi": "Rate Las Vegas Open 2026: lịch thi đấu giờ Việt Nam, kênh xem và VĐV gốc Việt",
+    "metaTitleEn": "Rate Las Vegas Open 2026: Schedule & How to Watch",
+    "metaTitleVi": "Lịch thi đấu PPA Las Vegas Open 2026 theo giờ VN",
+    "metaDescriptionEn": "Rate Las Vegas Open 2026 (Sept 28–Oct 4, Darling Tennis Center): every round in Las Vegas and Vietnam time, TV, Anna Leigh Waters' 200th title chase.",
+    "metaDescriptionVi": "Lịch thi đấu Rate Las Vegas Open 2026 (28/9–4/10) theo giờ Việt Nam, kênh xem, Anna Leigh Waters săn danh hiệu 200 và tin Quang Dương."
+  },
+  {
     "slug": "hong-kong-slam-2026-schedule",
     "publishedDate": "2026-09-30",
     "updatedDate": "2026-09-30",
