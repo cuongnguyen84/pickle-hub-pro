@@ -27,6 +27,10 @@ export const blogMetadata: BlogPostMetadata[] = [
       "en": "Follow live scores on ThePickleHub",
       "vi": "Theo dõi trực tiếp trên ThePickleHub"
     },
+    "heroImage": {
+      "src": "/images/blog/rate-las-vegas-open-2026-schedule-hero.webp",
+      "alt": "Rate Las Vegas Open 2026 pro women's doubles at Darling Tennis Center"
+    },
     "titleEn": "Rate Las Vegas Open 2026: Schedule in Vietnam Time, How to Watch, Storylines",
     "titleVi": "Rate Las Vegas Open 2026: lịch thi đấu giờ Việt Nam, kênh xem và VĐV gốc Việt",
     "metaTitleEn": "Rate Las Vegas Open 2026: Schedule & How to Watch",
