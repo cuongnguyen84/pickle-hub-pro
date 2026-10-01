@@ -28,7 +28,7 @@ export const blogMetadata: BlogPostMetadata[] = [
       "vi": "Theo dõi trực tiếp trên ThePickleHub"
     },
     "heroImage": {
-      "src": "/images/blog/rate-las-vegas-open-2026-schedule-hero.webp",
+      "src": "/images/blog/rate-las-vegas-open-2026-results-hero.webp",
       "alt": "Rate Las Vegas Open 2026 results at Darling Tennis Center"
     },
     "titleEn": "Rate Las Vegas Open 2026 Results: Live Results, Vietnamese Players",

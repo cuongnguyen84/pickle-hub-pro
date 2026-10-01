@@ -22,7 +22,7 @@ const post: BlogPost = {
     "vi": "Theo dõi trực tiếp trên ThePickleHub"
   },
   "heroImage": {
-    "src": "/images/blog/rate-las-vegas-open-2026-schedule-hero.webp",
+    "src": "/images/blog/rate-las-vegas-open-2026-results-hero.webp",
     "alt": "Rate Las Vegas Open 2026 results at Darling Tennis Center"
   },
   "content": {
@@ -33,7 +33,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Rate Las Vegas Open 2026 results: where every draw stands",
-          "content": "Last updated: October 1, 2026, 09:49 Vietnam time.\n\nThe Rate Las Vegas Open 2026 runs September 28 – October 4, 2026 at the Darling Tennis Center, Las Vegas, a PPA Tour Open worth 1,000 ranking points per title. This ThePickleHub results page is updated every day from the official PPA Tour scores: Men's Singles: Round 32 complete, Round 16 next; Women's Singles: Round 32 complete, Round 16 next; Men's Doubles: Round 64 complete, Round 32 next; Women's Doubles: first round underway; Mixed Doubles: Round 32 complete, Round 16 next.\n\nScores are listed game by game from the side of the player or team named first. Seeds are in brackets. Match times and the remaining schedule in Vietnam time are in our schedule guide, and Vietnamese and Vietnamese-origin players are tracked in their own section below.",
+          "content": "Last updated: October 1, 2026, 10:38 Vietnam time.\n\nThe Rate Las Vegas Open 2026 runs September 28 – October 4, 2026 at the Darling Tennis Center, Las Vegas, a PPA Tour Open worth 1,000 ranking points per title. This ThePickleHub results page is updated every day from the official PPA Tour scores: Men's Singles: Round 32 complete, Round 16 next; Women's Singles: Round 32 complete, Round 16 next; Men's Doubles: Round 64 complete, Round 32 next; Women's Doubles: first round underway; Mixed Doubles: Round 32 complete, Round 16 next.\n\nScores are listed game by game from the side of the player or team named first. Seeds are in brackets. Match times and the remaining schedule in Vietnam time are in our schedule guide, and Vietnamese and Vietnamese-origin players are tracked in their own section below.",
           "internalLinks": [
             {
               "text": "Rate Las Vegas Open 2026 schedule in Vietnam time",
@@ -53,7 +53,7 @@ const post: BlogPost = {
             "Men's Doubles, Round 64: Hien Truong / Quan Do [41] lost to Clayton Powell / Rafa Hewett [17] (11-6, 5-11, 3-11).",
             "Men's Doubles, Round 32: Mohaned Alhouni / Luc Pham [16] next faces Collin Johns / Hunter Johnson [9].",
             "Women's Doubles, Round 32: Sophia Nhi Huynh / Aiko Yoshitomi [26] next faces Kaitlyn Christian / Allyce Jones [9].",
-            "Women's Doubles, Round 32: Layne Sleeth / Alix Truong [7] next faces Carlota Trevino / Cc Eleven Sacca [25].",
+            "Women's Doubles, Round 32: Layne Sleeth / Alix Truong [7] beat Carlota Trevino / Cc Eleven Sacca [25] (11-2, 11-1).",
             "Mixed Doubles, Round 64: Hien Truong / Sophia Nhi Huynh [45] lost to Len Yang / Allyce Jones [11] (9-11, 9-11).",
             "Mixed Doubles, Round 64: Dylan Frazier / Alix Truong [8] beat Ryan Torresin / Ava Cavataio [48] (11-8, 11-2).",
             "Mixed Doubles, Round 64: Jalina Ingram / Luc Pham [23] lost to Elliott Schupp / Kiora Kunimoto [31] (11-7, 6-11, 2-11).",
@@ -104,7 +104,7 @@ const post: BlogPost = {
         },
         {
           "heading": "Men's Doubles: results and what's next",
-          "content": "Round 64 is complete. Next: Round 32."
+          "content": "Round 64 is complete. Next: Round 32.\n\nUpsets: Round 32: Casey Diamond / Max Freeman [29] beat James Delgado / Tyson McGuffin [8]."
         },
         {
           "heading": "Women's Doubles: results and what's next",
@@ -147,7 +147,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Rate Las Vegas Open 2026: tình hình từng nội dung",
-          "content": "Cập nhật: 09:49 ngày 1/10/2026 (giờ Việt Nam).\n\nRate Las Vegas Open 2026 diễn ra 28/9–4/10/2026 tại Darling Tennis Center, Las Vegas, giải PPA Tour hạng Open, mỗi nhà vô địch nhận 1.000 điểm xếp hạng. Trang kết quả này của ThePickleHub được cập nhật hằng ngày theo bảng điểm chính thức của PPA Tour: Đơn nam: xong vòng 32, tiếp theo vòng 16; Đơn nữ: xong vòng 32, tiếp theo vòng 16; Đôi nam: xong vòng 64, tiếp theo vòng 32; Đôi nữ: đang đấu vòng 32; Đôi nam nữ: xong vòng 32, tiếp theo vòng 16.\n\nTỷ số ghi theo từng ván, tính từ phía tay vợt hoặc cặp được nêu trước; số trong ngoặc là hạt giống. Giờ thi đấu các vòng còn lại theo giờ Việt Nam có trong bài lịch thi đấu, còn các tay vợt Việt Nam và gốc Việt được theo dõi riêng ở mục ngay dưới đây.",
+          "content": "Cập nhật: 10:38 ngày 1/10/2026 (giờ Việt Nam).\n\nRate Las Vegas Open 2026 diễn ra 28/9–4/10/2026 tại Darling Tennis Center, Las Vegas, giải PPA Tour hạng Open, mỗi nhà vô địch nhận 1.000 điểm xếp hạng. Trang kết quả này của ThePickleHub được cập nhật hằng ngày theo bảng điểm chính thức của PPA Tour: Đơn nam: xong vòng 32, tiếp theo vòng 16; Đơn nữ: xong vòng 32, tiếp theo vòng 16; Đôi nam: xong vòng 64, tiếp theo vòng 32; Đôi nữ: đang đấu vòng 32; Đôi nam nữ: xong vòng 32, tiếp theo vòng 16.\n\nTỷ số ghi theo từng ván, tính từ phía tay vợt hoặc cặp được nêu trước; số trong ngoặc là hạt giống. Giờ thi đấu các vòng còn lại theo giờ Việt Nam có trong bài lịch thi đấu, còn các tay vợt Việt Nam và gốc Việt được theo dõi riêng ở mục ngay dưới đây.",
           "internalLinks": [
             {
               "text": "Lịch thi đấu Rate Las Vegas Open 2026 theo giờ Việt Nam",
@@ -167,7 +167,7 @@ const post: BlogPost = {
             "Đôi nam, vòng 64: Trương Vinh Hiển / Đỗ Minh Quân [41] thua Clayton Powell / Rafa Hewett [17] (11-6, 5-11, 3-11).",
             "Đôi nam, vòng 32: Mohaned Alhouni / Luc Phạm [16] gặp Collin Johns / Hunter Johnson [9].",
             "Đôi nữ, vòng 32: Sophia Huỳnh Trần Ngọc Nhi / Aiko Yoshitomi [26] gặp Kaitlyn Christian / Allyce Jones [9].",
-            "Đôi nữ, vòng 32: Layne Sleeth / Alix Trương [7] gặp Carlota Trevino / Cc Eleven Sacca [25].",
+            "Đôi nữ, vòng 32: Layne Sleeth / Alix Trương [7] thắng Carlota Trevino / Cc Eleven Sacca [25] (11-2, 11-1).",
             "Đôi nam nữ, vòng 64: Trương Vinh Hiển / Sophia Huỳnh Trần Ngọc Nhi [45] thua Len Yang / Allyce Jones [11] (9-11, 9-11).",
             "Đôi nam nữ, vòng 64: Dylan Frazier / Alix Trương [8] thắng Ryan Torresin / Ava Cavataio [48] (11-8, 11-2).",
             "Đôi nam nữ, vòng 64: Jalina Ingram / Luc Phạm [23] thua Elliott Schupp / Kiora Kunimoto [31] (11-7, 6-11, 2-11).",
@@ -218,7 +218,7 @@ const post: BlogPost = {
         },
         {
           "heading": "Đôi nam: kết quả và vòng tiếp theo",
-          "content": "Đã xong vòng 64. Vòng tiếp theo: vòng 32."
+          "content": "Đã xong vòng 64. Vòng tiếp theo: vòng 32.\n\nKết quả bất ngờ: vòng 32: Casey Diamond / Max Freeman [29] thắng James Delgado / Tyson McGuffin [8]."
         },
         {
           "heading": "Đôi nữ: kết quả và vòng tiếp theo",
