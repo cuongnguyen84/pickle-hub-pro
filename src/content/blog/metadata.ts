@@ -10,6 +10,35 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "rate-las-vegas-open-2026-results",
+    "publishedDate": "2026-10-01",
+    "updatedDate": "2026-10-01",
+    "author": "The PickleHub Team",
+    "tags": [
+      "ppa tour",
+      "las vegas open",
+      "results",
+      "anna leigh waters",
+      "vietnam",
+      "2026"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/rate-las-vegas-open-2026-schedule-hero.webp",
+      "alt": "Rate Las Vegas Open 2026 results at Darling Tennis Center"
+    },
+    "titleEn": "Rate Las Vegas Open 2026 Results: Live Results, Vietnamese Players",
+    "titleVi": "Kết quả Rate Las Vegas Open 2026: kết quả từng ngày, tay vợt Việt Nam",
+    "metaTitleEn": "Rate Las Vegas Open 2026 Results (Daily)",
+    "metaTitleVi": "Kết quả PPA Las Vegas Open 2026 mỗi ngày",
+    "metaDescriptionEn": "Rate Las Vegas Open 2026 results, updated daily: every draw's stage, upsets, Anna Leigh Waters' title 200 and the Vietnamese players.",
+    "metaDescriptionVi": "Kết quả Rate Las Vegas Open 2026 cập nhật hằng ngày: từng nội dung, kết quả bất ngờ, Anna Leigh Waters và tay vợt Việt Nam."
+  },
+  {
     "slug": "pickleball-lob-technique",
     "publishedDate": "2026-10-01",
     "updatedDate": "2026-10-01",
@@ -42,7 +71,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     "slug": "rate-las-vegas-open-2026-schedule",
     "publishedDate": "2026-09-30",
-    "updatedDate": "2026-09-30",
+    "updatedDate": "2026-10-01",
     "author": "The PickleHub Team",
     "tags": [
       "ppa tour",
