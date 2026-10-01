@@ -303,7 +303,9 @@ def rebuild_wriai(store, task, current):
     rebuilds = current.get('rebuilds', 0) + 1
     if rebuilds > 3:
         raise RuntimeError('pr_changed_or_not_mergeable')
-    checked(['gh', 'pr', 'close', current['pr'], '--delete-branch', '--comment',
+    # No --delete-branch: gh exits 1 on the branch step after closing (T123, 01/10), which
+    # left the task blocked with its PR already closed. ponytail: stale agent/* branches stay.
+    checked(['gh', 'pr', 'close', current['pr'], '--comment',
              'Conflicts with a post merged first; the team republishes this package from the new main.'])
     save(store, tid, phase='queued', pr=None, head=current['head'], rebuilds=rebuilds,
          attempt=current.get('attempt', 0) + 1, reason='PR xung đột với bài vừa merge; đội dựng lại từ main mới.',

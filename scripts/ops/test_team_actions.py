@@ -156,6 +156,7 @@ class ActionTests(unittest.TestCase):
             self.assertIn('dựng lại', actions.await_ci(self.store, self.task(self.b)))
             deploy.assert_not_called()
         self.assertEqual(command.call_args_list[1].args[0][:3], ['gh', 'pr', 'close'])
+        self.assertNotIn('--delete-branch', command.call_args_list[1].args[0])
         current = actions.state(self.store, self.b)
         # queued + approval + no pr => run_one calls team_wriai.publish again on a fresh branch
         self.assertEqual((current['phase'], current['pr'], current['attempt'], current['approval']), ('queued', None, 2, 'a' * 12))
