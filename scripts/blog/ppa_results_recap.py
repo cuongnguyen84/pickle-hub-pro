@@ -37,7 +37,7 @@ EVENT = {
     "vi_slug": "ket-qua-ppa-las-vegas-open-2026",
     "schedule_en": "/blog/rate-las-vegas-open-2026-schedule",
     "schedule_vi": "/vi/blog/lich-thi-dau-ppa-las-vegas-open-2026",
-    "hero": {"src": "/images/blog/rate-las-vegas-open-2026-schedule-hero.webp",
+    "hero": {"src": "/images/blog/rate-las-vegas-open-2026-results-hero.webp",
              "alt": "Rate Las Vegas Open 2026 results at Darling Tennis Center"},
     "published": "2026-10-01",
     "tracker": "Anna Leigh Waters",
