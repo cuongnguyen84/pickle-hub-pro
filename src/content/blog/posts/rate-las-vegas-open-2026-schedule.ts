@@ -6,7 +6,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   "slug": "rate-las-vegas-open-2026-schedule",
   "publishedDate": "2026-09-30",
-  "updatedDate": "2026-09-30",
+  "updatedDate": "2026-10-01",
   "author": "The PickleHub Team",
   "tags": [
     "ppa tour",
@@ -33,7 +33,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Rate Las Vegas Open 2026 at a glance",
-          "content": "Last updated: September 30, 2026.\n\nThe Rate Las Vegas Open 2026 runs September 28 – October 4, 2026 at the Darling Tennis Center in Las Vegas, a PPA Tour Open worth 1,000 ranking points per division title and a total payout of US$1,063,327. The finals on Championship Sunday, October 4, start at 10:00 am Las Vegas time, which is midnight on October 5 in Vietnam. This ThePickleHub guide lists every round in Las Vegas and Vietnam time, where to watch, the storylines and where the Vietnamese and Vietnamese-American players stand.\n\nLas Vegas is 14 hours behind Vietnam in early October, so every afternoon session in Nevada lands in the early morning in Hanoi and Ho Chi Minh City. It is the second Open of the 2026-27 PPA Tour season and year seven of the event at Darling Tennis Center, with best-of-three finals in every draw."
+          "content": "Last updated: October 1, 2026.\n\nThe Rate Las Vegas Open 2026 runs September 28 – October 4, 2026 at the Darling Tennis Center in Las Vegas, a PPA Tour Open worth 1,000 ranking points per division title and a total payout of US$1,063,327. The finals on Championship Sunday, October 4, start at 10:00 am Las Vegas time, which is midnight on October 5 in Vietnam. This ThePickleHub guide lists every round in Las Vegas and Vietnam time, where to watch, the storylines and where the Vietnamese and Vietnamese-American players stand.\n\nLas Vegas is 14 hours behind Vietnam in early October, so every afternoon session in Nevada lands in the early morning in Hanoi and Ho Chi Minh City. It is the second Open of the 2026-27 PPA Tour season and year seven of the event at Darling Tennis Center, with best-of-three finals in every draw."
         },
         {
           "heading": "Day-by-day schedule (Las Vegas and Vietnam time)",
@@ -119,8 +119,12 @@ const post: BlogPost = {
         },
         {
           "heading": "Vietnamese and Vietnamese-American players",
-          "content": "The PPA Tour lists Vietnamese-American Quang Duong as the defending men's singles champion. His situation has changed since: Duong was released by the PPA Tour in July 2025 and signed a multi-year, non-exclusive deal with the APP Tour in early 2026, covering four APP events in the US and four D Joy Tour events in Vietnam each year. None of the previews and draw announcements ThePickleHub checked on September 30 mention him in this year's draw.\n\nNo Vietnam-based pro was named in the published previews either. Vietnam's top players are concentrating on Asia, where the next big target is the Hong Kong Slam on October 19–25. On the World Pickleball Rankings snapshot ThePickleHub took on September 28, 2026, Truong Vinh Hien is the highest-ranked Vietnamese man at No. 30, and Vietnamese-American Alix Truong is No. 12 on the women's board; her Las Vegas entry was not listed in the sources we checked.",
+          "content": "The PPA Tour lists Vietnamese-American Quang Duong as the defending men's singles champion. His situation has changed since: Duong was released by the PPA Tour in July 2025 and signed a multi-year, non-exclusive deal with the APP Tour in early 2026, covering four APP events in the US and four D Joy Tour events in Vietnam each year. None of the previews and draw announcements ThePickleHub checked on September 30 mention him in this year's draw.\n\nUpdate, October 1: the official draws show Vietnam is represented after all. Truong Vinh Hien and Do Minh Quan played men's doubles, Hien partnered Sophia Huynh Tran Ngoc Nhi in mixed doubles, and Nhi also entered women's singles and women's doubles. Vietnamese-American Alix Truong is in mixed doubles with Dylan Frazier and women's doubles with Layne Sleeth, and Luc Pham reached the men's singles round of 16. Every result is tracked in our daily Rate Las Vegas Open 2026 results page.",
           "internalLinks": [
+            {
+              "text": "Rate Las Vegas Open 2026 results, updated daily",
+              "path": "/blog/rate-las-vegas-open-2026-results"
+            },
             {
               "text": "APP Tour vs PPA Tour contracts, and Quang Duong's APP deal",
               "path": "/blog/app-tour-vs-ppa-tour-contracts-2026"
@@ -166,7 +170,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Rate Las Vegas Open 2026 tóm tắt",
-          "content": "Cập nhật: 30/9/2026.\n\nRate Las Vegas Open 2026 diễn ra từ 28/9 đến 4/10/2026 tại Darling Tennis Center, Las Vegas (Mỹ). Đây là giải PPA Tour hạng Open, mỗi nhà vô địch nhận 1.000 điểm xếp hạng, tổng tiền thưởng 1.063.327 USD. Chung kết vào Chủ nhật 4/10 lúc 10:00 sáng giờ Las Vegas, tức 0:00 rạng sáng thứ Hai 5/10 giờ Việt Nam. Hướng dẫn của ThePickleHub dưới đây ghi từng vòng theo cả giờ Las Vegas và giờ Việt Nam, kênh xem, các câu chuyện đáng chú ý và tình hình các tay vợt Việt Nam, gốc Việt.\n\nĐầu tháng 10, Las Vegas chậm hơn Việt Nam 14 tiếng, nên các phiên đấu buổi chiều ở Mỹ rơi vào sáng sớm ở Hà Nội và TP.HCM. Đây là giải Open thứ hai của mùa 2026-27 và là năm thứ bảy giải diễn ra tại Darling Tennis Center, mọi trận chung kết đều đánh ba ván thắng hai."
+          "content": "Cập nhật: 1/10/2026.\n\nRate Las Vegas Open 2026 diễn ra từ 28/9 đến 4/10/2026 tại Darling Tennis Center, Las Vegas (Mỹ). Đây là giải PPA Tour hạng Open, mỗi nhà vô địch nhận 1.000 điểm xếp hạng, tổng tiền thưởng 1.063.327 USD. Chung kết vào Chủ nhật 4/10 lúc 10:00 sáng giờ Las Vegas, tức 0:00 rạng sáng thứ Hai 5/10 giờ Việt Nam. Hướng dẫn của ThePickleHub dưới đây ghi từng vòng theo cả giờ Las Vegas và giờ Việt Nam, kênh xem, các câu chuyện đáng chú ý và tình hình các tay vợt Việt Nam, gốc Việt.\n\nĐầu tháng 10, Las Vegas chậm hơn Việt Nam 14 tiếng, nên các phiên đấu buổi chiều ở Mỹ rơi vào sáng sớm ở Hà Nội và TP.HCM. Đây là giải Open thứ hai của mùa 2026-27 và là năm thứ bảy giải diễn ra tại Darling Tennis Center, mọi trận chung kết đều đánh ba ván thắng hai."
         },
         {
           "heading": "Lịch từng ngày (giờ Las Vegas và giờ Việt Nam)",
@@ -252,8 +256,12 @@ const post: BlogPost = {
         },
         {
           "heading": "VĐV Việt Nam và gốc Việt",
-          "content": "PPA Tour ghi tay vợt Mỹ gốc Việt Quang Dương là đương kim vô địch đơn nam của giải. Hoàn cảnh của anh đã thay đổi: Quang Dương bị PPA Tour cho thôi từ tháng 7/2025 và ký hợp đồng nhiều năm, không độc quyền với APP Tour đầu năm 2026, gồm 4 giải APP ở Mỹ và 4 chặng D Joy Tour tại Việt Nam mỗi năm. Các bài giới thiệu và công bố nhánh đấu mà ThePickleHub kiểm tra ngày 30/9 không nhắc tên anh trong nhánh đấu năm nay.\n\nCác bài giới thiệu cũng không nêu tên tay vợt Pro nào đang thi đấu cho Việt Nam. Các tay vợt hàng đầu Việt Nam đang dồn sức cho châu Á, mục tiêu lớn kế tiếp là Hong Kong Slam ngày 19–25/10. Theo bảng xếp hạng thế giới WPR mà ThePickleHub lấy ngày 28/9/2026, Trương Vinh Hiển là tay vợt nam Việt Nam xếp cao nhất (hạng 30), còn Alix Trương (Mỹ gốc Việt) đứng hạng 12 ở bảng nữ; các nguồn chúng tôi kiểm tra chưa ghi cô có dự Las Vegas hay không.",
+          "content": "PPA Tour ghi tay vợt Mỹ gốc Việt Quang Dương là đương kim vô địch đơn nam của giải. Hoàn cảnh của anh đã thay đổi: Quang Dương bị PPA Tour cho thôi từ tháng 7/2025 và ký hợp đồng nhiều năm, không độc quyền với APP Tour đầu năm 2026, gồm 4 giải APP ở Mỹ và 4 chặng D Joy Tour tại Việt Nam mỗi năm. Các bài giới thiệu và công bố nhánh đấu mà ThePickleHub kiểm tra ngày 30/9 không nhắc tên anh trong nhánh đấu năm nay.\n\nCập nhật 1/10: nhánh đấu chính thức cho thấy Việt Nam có tay vợt dự giải. Trương Vinh Hiển và Đỗ Minh Quân đánh đôi nam, Vinh Hiển đánh đôi nam nữ cùng Sophia Huỳnh Trần Ngọc Nhi, còn Ngọc Nhi dự cả đơn nữ và đôi nữ. Tay vợt Mỹ gốc Việt Alix Trương đánh đôi nam nữ cùng Dylan Frazier và đôi nữ cùng Layne Sleeth, còn Luc Phạm vào tới vòng 16 đơn nam. Toàn bộ kết quả được theo dõi trong trang kết quả Rate Las Vegas Open 2026 cập nhật hằng ngày.",
           "internalLinks": [
+            {
+              "text": "Kết quả Rate Las Vegas Open 2026, cập nhật hằng ngày",
+              "path": "/vi/blog/ket-qua-ppa-las-vegas-open-2026"
+            },
             {
               "text": "Hợp đồng APP Tour và PPA Tour, trường hợp Quang Dương",
               "path": "/vi/blog/hop-dong-app-tour-vs-ppa-tour-2026"
