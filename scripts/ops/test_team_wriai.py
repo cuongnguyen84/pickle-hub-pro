@@ -122,6 +122,20 @@ class GateTests(unittest.TestCase):
                 w._write(None, method, path, {})
 
 
+class TakenSlugTests(unittest.TestCase):
+    def test_rebuild_reuses_its_own_vi_row_but_not_someone_elses(self):
+        pkg = package()
+        own = pkg["vi"]["slug"]
+        class Team:
+            def __init__(self, mine): self.mine = mine
+            def rest(self, path):
+                if path.startswith("vi_blog_posts?select=slug&limit"):
+                    return [{"slug": own}]
+                return [{"slug": own}] if self.mine else []
+        self.assertNotIn(own, w._taken(Team(True), pkg, "")[1])
+        self.assertIn(own, w._taken(Team(False), pkg, "")[1])
+
+
 class FlowTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
