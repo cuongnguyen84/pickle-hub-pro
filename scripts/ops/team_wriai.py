@@ -200,6 +200,17 @@ def _existing(team, metadata_text):
     return en, vi
 
 
+def _taken(team, pkg, metadata_text):
+    """Slugs this package must not reuse. A rebuild (conflicted PR, #815) finds the VI row its
+    first attempt inserted at PR open; that row is this post, not a clash, while it points back
+    at this EN slug (T123, 01/10)."""
+    en, vi = _existing(team, metadata_text)
+    own = pkg.get("vi", {}).get("slug", "")
+    if own in vi and team.rest(f"vi_blog_posts?select=slug&slug=eq.{own}&alternate_en_slug=eq.{pkg.get('slug', '')}&limit=1"):
+        vi = vi - {own}
+    return en, vi
+
+
 def review_ready(store, task, result):
     """After the editorial draft: gate the package and, if clean, arm the approval button."""
     import team_supervisor as team
@@ -266,7 +277,7 @@ def publish(store, task):
     meta_path = tree / "src/content/blog/metadata.ts"
     meta = meta_path.read_text(encoding="utf-8")
     override = bool(store.get(f"wriai_override:{tid}"))
-    issues = problems(pkg, *_existing(team, meta), override)
+    issues = problems(pkg, *_taken(team, pkg, meta), override)
     if issues:
         raise RuntimeError("wriai_package_no_longer_valid")
     today = datetime.now(team.ICT).date().isoformat()
