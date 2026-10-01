@@ -244,7 +244,13 @@ def verify_deployment(store, task):
             raise RuntimeError('production_smoke_failed')
         if current.get('kind') == 'wriai':
             from team_wriai import after_deploy
-            published = after_deploy(store, task)
+            try:
+                published = after_deploy(store, task)
+            except RuntimeError as exc:
+                # GitHub reports the deployment before every edge serves it; retry next tick.
+                if str(exc) == 'wriai_public_check_failed' and time.time() - current['merge_requested_at'] < 1800:
+                    return None
+                raise
             save(store, task['id'], phase='complete', reason='Bài đã lên production, bản VI đã ghi.', next_step='Xin index trên GSC.')
             with store.db:
                 store.db.execute("UPDATE tasks SET status='resolved',updated=? WHERE id=?", (time.time(), task['id']))
