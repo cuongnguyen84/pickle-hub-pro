@@ -172,6 +172,18 @@ class ActionTests(unittest.TestCase):
             deploy.assert_not_called()
         self.assertEqual(actions.state(self.store, self.b)['phase'], 'awaiting_deploy')
 
+    def test_wriai_public_check_retries_while_edge_propagates(self):
+        actions.save(self.store, self.b, phase='deploying', kind='wriai', merge_commit='a' * 40, merge_requested_at=time.time())
+        import team_wriai
+        with patch.object(actions, 'production_deployment', return_value={'id': 1}), \
+             patch.object(actions, 'production_smoke', return_value=True), \
+             patch.object(team_wriai, 'after_deploy', side_effect=RuntimeError('wriai_public_check_failed')):
+            self.assertIsNone(actions.verify_deployment(self.store, self.task(self.b)))
+            actions.save(self.store, self.b, merge_requested_at=time.time() - 3600)
+            with self.assertRaisesRegex(RuntimeError, 'wriai_public_check_failed'):
+                actions.verify_deployment(self.store, self.task(self.b))
+        self.assertEqual(actions.state(self.store, self.b)['phase'], 'deploying')
+
     def test_production_pending_does_not_mark_complete(self):
         actions.save(self.store, self.b, phase='deploying', merge_commit='a' * 40, merge_requested_at=time.time())
         with patch.object(actions, 'production_deployment', return_value=None):

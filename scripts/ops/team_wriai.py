@@ -350,8 +350,11 @@ def _write(team, method, path, data):
 
 def _public(url, needle):
     req = urllib.request.Request(url + "?nocache=1", headers={"User-Agent": "Googlebot"})
-    with urllib.request.urlopen(req, timeout=30) as response:
-        page = response.read(2_000_000).decode("utf-8", "replace")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            page = response.read(2_000_000).decode("utf-8", "replace")
+    except urllib.error.HTTPError:
+        return False  # 404 while the edge still serves the pre-merge build (T123, 01/10)
     return response.status == 200 and needle in page and len(re.sub("<[^>]+>", " ", page).split()) >= 300
 
 
