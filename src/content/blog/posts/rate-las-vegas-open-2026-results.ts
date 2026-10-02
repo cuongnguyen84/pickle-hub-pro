@@ -6,7 +6,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   "slug": "rate-las-vegas-open-2026-results",
   "publishedDate": "2026-10-01",
-  "updatedDate": "2026-10-01",
+  "updatedDate": "2026-10-02",
   "author": "The PickleHub Team",
   "tags": [
     "ppa tour",
@@ -33,7 +33,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Rate Las Vegas Open 2026 results: where every draw stands",
-          "content": "Last updated: October 1, 2026, 10:38 Vietnam time.\n\nThe Rate Las Vegas Open 2026 runs September 28 – October 4, 2026 at the Darling Tennis Center, Las Vegas, a PPA Tour Open worth 1,000 ranking points per title. This ThePickleHub results page is updated every day from the official PPA Tour scores: Men's Singles: Round 32 complete, Round 16 next; Women's Singles: Round 32 complete, Round 16 next; Men's Doubles: Round 64 complete, Round 32 next; Women's Doubles: first round underway; Mixed Doubles: Round 32 complete, Round 16 next.\n\nScores are listed game by game from the side of the player or team named first. Seeds are in brackets. Match times and the remaining schedule in Vietnam time are in our schedule guide, and Vietnamese and Vietnamese-origin players are tracked in their own section below.",
+          "content": "Last updated: October 2, 2026, 13:37 Vietnam time.\n\nThe Rate Las Vegas Open 2026 runs September 28 – October 4, 2026 at the Darling Tennis Center, Las Vegas, a PPA Tour Open worth 1,000 ranking points per title. This ThePickleHub results page is updated every day from the official PPA Tour scores: Men's Singles: Round 16 complete, Quarter Finals next; Women's Singles: Round 16 complete, Quarter Finals next; Men's Doubles: Round 16 complete, Quarter Finals next; Women's Doubles: Round 16 complete, Quarter Finals next; Mixed Doubles: Round 16 complete, Quarter Finals next.\n\nScores are listed game by game from the side of the player or team named first. Seeds are in brackets. Match times and the remaining schedule in Vietnam time are in our schedule guide, and Vietnamese and Vietnamese-origin players are tracked in their own section below.",
           "internalLinks": [
             {
               "text": "Rate Las Vegas Open 2026 schedule in Vietnam time",
@@ -47,18 +47,22 @@ const post: BlogPost = {
           "listItems": [
             "Men's Singles, Round 64: Luc Pham [14] beat Troy Akin [38] (7-11, 11-8, 11-6).",
             "Men's Singles, Round 32: Luc Pham [14] beat Aanik Lohani [32] (11-1, 11-7).",
-            "Men's Singles, Round 16: Luc Pham [14] next faces Christopher Haworth [1].",
+            "Men's Singles, Round 16: Luc Pham [14] beat Christopher Haworth [1] (4-11, 11-7, 11-8).",
+            "Men's Singles, Quarter Finals: Luc Pham [14] next faces John Lucian Goins [8].",
             "Women's Singles, Round 64: Sophia Nhi Huynh [38] lost to Naomi De Hart [25] (5-11, 7-11).",
             "Men's Doubles, Round 64: Mohaned Alhouni / Luc Pham [16] beat Austin Bricker / Ryan Torresin [36] (11-7, 11-5).",
             "Men's Doubles, Round 64: Hien Truong / Quan Do [41] lost to Clayton Powell / Rafa Hewett [17] (11-6, 5-11, 3-11).",
-            "Men's Doubles, Round 32: Mohaned Alhouni / Luc Pham [16] next faces Collin Johns / Hunter Johnson [9].",
-            "Women's Doubles, Round 32: Sophia Nhi Huynh / Aiko Yoshitomi [26] next faces Kaitlyn Christian / Allyce Jones [9].",
-            "Women's Doubles, Round 32: Layne Sleeth / Alix Truong [7] beat Carlota Trevino / Cc Eleven Sacca [25] (11-2, 11-1).",
+            "Men's Doubles, Round 32: Mohaned Alhouni / Luc Pham [16] beat Collin Johns / Hunter Johnson [9] (5-11, 11-2, 11-6).",
+            "Men's Doubles, Round 16: Mohaned Alhouni / Luc Pham [16] lost to Elliott Schupp / John Lucian Goins [27] (2-11, 7-11).",
+            "Women's Doubles, Round 32: Layne Sleeth / Alix Truong [7] beat Carlota Trevino / CC Eleven Sacca [25] (11-2, 11-1).",
+            "Women's Doubles, Round 32: Sophia Nhi Huynh / Aiko Yoshitomi [26] lost to Kaitlyn Christian / Allyce Jones [9] (12-10, 1-11, 3-11).",
+            "Women's Doubles, Round 16: Layne Sleeth / Alix Truong [7] beat Lucy Kovalova / Mari Humberg [10] (11-7, 7-11, 11-9).",
+            "Women's Doubles, Quarter Finals: Layne Sleeth / Alix Truong [7] next faces Anna Leigh Waters / Anna Bright [1].",
+            "Mixed Doubles, Round 64: Jalina Ingram / Luc Pham [23] lost to Elliott Schupp / Kiora Kunimoto [31] (11-7, 6-11, 2-11).",
             "Mixed Doubles, Round 64: Hien Truong / Sophia Nhi Huynh [45] lost to Len Yang / Allyce Jones [11] (9-11, 9-11).",
             "Mixed Doubles, Round 64: Dylan Frazier / Alix Truong [8] beat Ryan Torresin / Ava Cavataio [48] (11-8, 11-2).",
-            "Mixed Doubles, Round 64: Jalina Ingram / Luc Pham [23] lost to Elliott Schupp / Kiora Kunimoto [31] (11-7, 6-11, 2-11).",
             "Mixed Doubles, Round 32: Dylan Frazier / Alix Truong [8] beat Anouar Braham / Genie Erokhina [26] (1-11, 11-2, 11-7).",
-            "Mixed Doubles, Round 16: Dylan Frazier / Alix Truong [8] next faces Will Howells / Meghan Dizon [17]."
+            "Mixed Doubles, Round 16: Dylan Frazier / Alix Truong [8] lost to Will Howells / Meghan Dizon [17] (6-11, 12-10, 9-11)."
           ],
           "internalLinks": [
             {
@@ -71,57 +75,60 @@ const post: BlogPost = {
           "heading": "Anna Leigh Waters and title No. 200",
           "content": "Anna Leigh Waters arrived two doubles titles away from career title No. 200 on the PPA Tour and is not playing singles, so she needs both women's doubles and mixed doubles. Her matches so far:",
           "listItems": [
-            "Mixed Doubles, Round 16: Anna Leigh Waters / Ben Johns [1] next faces Jack Sock / Lea Jansen [19]."
+            "Women's Doubles, Round 16: Anna Leigh Waters / Anna Bright [1] beat Abbigal Hatton / Jalina Ingram [13] (11-3, 11-0).",
+            "Women's Doubles, Quarter Finals: Anna Leigh Waters / Anna Bright [1] next faces Layne Sleeth / Alix Truong [7].",
+            "Mixed Doubles, Round 16: Anna Leigh Waters / Ben Johns [1] beat Jack Sock / Lea Jansen [19] (11-2, 11-5).",
+            "Mixed Doubles, Quarter Finals: Anna Leigh Waters / Ben Johns [1] next faces Nicolas Acevedo / Isabella Dunlap [16]."
           ]
         },
         {
           "heading": "Men's Singles: results and what's next",
-          "content": "Round 32 is complete. Next: Round 16.\n\nUpsets: Round 32: Yates Johnson [23] beat Connor Garnett [6].",
+          "content": "Round 16 is complete. Next: Quarter Finals.\n\nUpsets: Round 16: Luc Pham [14] beat Christopher Haworth [1]; Round 32: Yates Johnson [23] beat Connor Garnett [6].",
           "listItems": [
-            "Christopher Haworth [1] vs Luc Pham [14]",
-            "Christian Alshon [4] vs Jaume Martinez Vich [10]",
-            "Ben Johns [19] vs Dylan Frazier [11]",
-            "Zane Ford [7] vs Gabriel Joseph [9]",
-            "Federico Staksrud [2] vs Rafael Lenhard [13]",
-            "Roscoe Bellamy [5] vs Cason Campbell [22]",
-            "Hunter Johnson [3] vs Eric Oncins [20]",
-            "Yates Johnson [23] vs John Lucian Goins [8]"
+            "Federico Staksrud [2] vs Gabriel Joseph [9]",
+            "Luc Pham [14] vs John Lucian Goins [8]",
+            "Christian Alshon [4] vs Ben Johns [19]",
+            "Hunter Johnson [3] vs Roscoe Bellamy [5]"
           ]
         },
         {
           "heading": "Women's Singles: results and what's next",
-          "content": "Round 32 is complete. Next: Round 16.\n\nUpsets: Round 32: Daria Walczak [31] beat Judit Castillo [6].",
+          "content": "Round 16 is complete. Next: Quarter Finals.\n\nUpsets: Round 32: Daria Walczak [31] beat Judit Castillo [6].",
           "listItems": [
-            "Lea Jansen [3] vs Lacy Schneemann [16]",
-            "Chao Yi Wang [4] vs Zoey Weil [15]",
-            "Genie Bouchard [7] vs Mary Brascia [12]",
-            "Daria Walczak [31] vs Milan Rane [11]",
-            "Isabella Dunlap [8] vs Cailyn Campbell [10]",
-            "Kaitlyn Christian [2] vs Sofia Sewing [22]",
-            "Kiora Kunimoto [5] vs Jalina Ingram [9]",
-            "Kate Fahey [1] vs Aiko Yoshitomi [18]"
+            "Lea Jansen [3] vs Genie Bouchard [7]",
+            "Chao Yi Wang [4] vs Cailyn Campbell [10]",
+            "Kaitlyn Christian [2] vs Milan Rane [11]",
+            "Kate Fahey [1] vs Kiora Kunimoto [5]"
           ]
         },
         {
           "heading": "Men's Doubles: results and what's next",
-          "content": "Round 64 is complete. Next: Round 32.\n\nUpsets: Round 32: Casey Diamond / Max Freeman [29] beat James Delgado / Tyson McGuffin [8]."
+          "content": "Round 16 is complete. Next: Quarter Finals.\n\nUpsets: Round 32: Casey Diamond / Max Freeman [29] beat James Delgado / Tyson McGuffin [8]; Round 32: Elliott Schupp / John Lucian Goins [27] beat Roscoe Bellamy / Connor Garnett [6].",
+          "listItems": [
+            "Jaume Martinez Vich / Nicolas Acevedo [10] vs Dylan Frazier / Len Yang [5]",
+            "Hayden Patriquin / Federico Staksrud [3] vs Elliott Schupp / John Lucian Goins [27]",
+            "Christian Alshon / Andrei Daescu [2] vs Augustus Ge / Jack Sock [7]",
+            "Gabriel Tardio / Ben Johns [1] vs Will Howells / Pablo Tellez [11]"
+          ]
         },
         {
           "heading": "Women's Doubles: results and what's next",
-          "content": "Round 32 is underway."
+          "content": "Round 16 is complete. Next: Quarter Finals.",
+          "listItems": [
+            "Anna Leigh Waters / Anna Bright [1] vs Layne Sleeth / Alix Truong [7]",
+            "Lacy Schneemann / Kate Fahey [3] vs Kiora Kunimoto / Judit Castillo [12]",
+            "Ting Chieh Wei / Meghan Dizon [4] vs Isabella Dunlap / Genie Erokhina [11]",
+            "Tyra Hurricane Black / Catherine Parenteau [2] vs Sofia Sewing / Tina Pisnik [8]"
+          ]
         },
         {
           "heading": "Mixed Doubles: results and what's next",
-          "content": "Round 32 is complete. Next: Round 16.",
+          "content": "Round 16 is complete. Next: Quarter Finals.\n\nUpsets: Round 16: Nicolas Acevedo / Isabella Dunlap [16] beat Eric Oncins / Catherine Parenteau [7]; Round 16: Will Howells / Meghan Dizon [17] beat Dylan Frazier / Alix Truong [8].",
           "listItems": [
-            "Tina Pisnik / Christian Alshon [3] vs Christopher Haworth / Daria Walczak [42]",
-            "Tyra Hurricane Black / Gabriel Tardio [4] vs Ting Chieh Wei / CJ Klinger [14]",
-            "Anna Leigh Waters / Ben Johns [1] vs Jack Sock / Lea Jansen [19]",
-            "Eric Oncins / Catherine Parenteau [7] vs Nicolas Acevedo / Isabella Dunlap [16]",
-            "Dylan Frazier / Alix Truong [8] vs Will Howells / Meghan Dizon [17]",
-            "Hayden Patriquin / Anna Bright [2] vs Judit Castillo / Hunter Johnson [15]",
-            "Jessie Irvine / Andrei Daescu [5] vs Lacy Schneemann / Clayton Powell [24]",
-            "Federico Staksrud / Kate Fahey [6] vs Connor Garnett / Kaitlyn Christian [9]"
+            "Tina Pisnik / Christian Alshon [3] vs Jessie Irvine / Andrei Daescu [5]",
+            "Anna Leigh Waters / Ben Johns [1] vs Nicolas Acevedo / Isabella Dunlap [16]",
+            "Tyra Hurricane Black / Gabriel Tardio [4] vs Will Howells / Meghan Dizon [17]",
+            "Hayden Patriquin / Anna Bright [2] vs Federico Staksrud / Kate Fahey [6]"
           ]
         }
       ],
@@ -147,7 +154,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Rate Las Vegas Open 2026: tình hình từng nội dung",
-          "content": "Cập nhật: 10:38 ngày 1/10/2026 (giờ Việt Nam).\n\nRate Las Vegas Open 2026 diễn ra 28/9–4/10/2026 tại Darling Tennis Center, Las Vegas, giải PPA Tour hạng Open, mỗi nhà vô địch nhận 1.000 điểm xếp hạng. Trang kết quả này của ThePickleHub được cập nhật hằng ngày theo bảng điểm chính thức của PPA Tour: Đơn nam: xong vòng 32, tiếp theo vòng 16; Đơn nữ: xong vòng 32, tiếp theo vòng 16; Đôi nam: xong vòng 64, tiếp theo vòng 32; Đôi nữ: đang đấu vòng 32; Đôi nam nữ: xong vòng 32, tiếp theo vòng 16.\n\nTỷ số ghi theo từng ván, tính từ phía tay vợt hoặc cặp được nêu trước; số trong ngoặc là hạt giống. Giờ thi đấu các vòng còn lại theo giờ Việt Nam có trong bài lịch thi đấu, còn các tay vợt Việt Nam và gốc Việt được theo dõi riêng ở mục ngay dưới đây.",
+          "content": "Cập nhật: 13:37 ngày 2/10/2026 (giờ Việt Nam).\n\nRate Las Vegas Open 2026 diễn ra 28/9–4/10/2026 tại Darling Tennis Center, Las Vegas, giải PPA Tour hạng Open, mỗi nhà vô địch nhận 1.000 điểm xếp hạng. Trang kết quả này của ThePickleHub được cập nhật hằng ngày theo bảng điểm chính thức của PPA Tour: Đơn nam: xong vòng 16, tiếp theo tứ kết; Đơn nữ: xong vòng 16, tiếp theo tứ kết; Đôi nam: xong vòng 16, tiếp theo tứ kết; Đôi nữ: xong vòng 16, tiếp theo tứ kết; Đôi nam nữ: xong vòng 16, tiếp theo tứ kết.\n\nTỷ số ghi theo từng ván, tính từ phía tay vợt hoặc cặp được nêu trước; số trong ngoặc là hạt giống. Giờ thi đấu các vòng còn lại theo giờ Việt Nam có trong bài lịch thi đấu, còn các tay vợt Việt Nam và gốc Việt được theo dõi riêng ở mục ngay dưới đây.",
           "internalLinks": [
             {
               "text": "Lịch thi đấu Rate Las Vegas Open 2026 theo giờ Việt Nam",
@@ -161,18 +168,22 @@ const post: BlogPost = {
           "listItems": [
             "Đơn nam, vòng 64: Luc Phạm [14] thắng Troy Akin [38] (7-11, 11-8, 11-6).",
             "Đơn nam, vòng 32: Luc Phạm [14] thắng Aanik Lohani [32] (11-1, 11-7).",
-            "Đơn nam, vòng 16: Luc Phạm [14] gặp Christopher Haworth [1].",
+            "Đơn nam, vòng 16: Luc Phạm [14] thắng Christopher Haworth [1] (4-11, 11-7, 11-8).",
+            "Đơn nam, tứ kết: Luc Phạm [14] gặp John Lucian Goins [8].",
             "Đơn nữ, vòng 64: Sophia Huỳnh Trần Ngọc Nhi [38] thua Naomi De Hart [25] (5-11, 7-11).",
             "Đôi nam, vòng 64: Mohaned Alhouni / Luc Phạm [16] thắng Austin Bricker / Ryan Torresin [36] (11-7, 11-5).",
             "Đôi nam, vòng 64: Trương Vinh Hiển / Đỗ Minh Quân [41] thua Clayton Powell / Rafa Hewett [17] (11-6, 5-11, 3-11).",
-            "Đôi nam, vòng 32: Mohaned Alhouni / Luc Phạm [16] gặp Collin Johns / Hunter Johnson [9].",
-            "Đôi nữ, vòng 32: Sophia Huỳnh Trần Ngọc Nhi / Aiko Yoshitomi [26] gặp Kaitlyn Christian / Allyce Jones [9].",
-            "Đôi nữ, vòng 32: Layne Sleeth / Alix Trương [7] thắng Carlota Trevino / Cc Eleven Sacca [25] (11-2, 11-1).",
+            "Đôi nam, vòng 32: Mohaned Alhouni / Luc Phạm [16] thắng Collin Johns / Hunter Johnson [9] (5-11, 11-2, 11-6).",
+            "Đôi nam, vòng 16: Mohaned Alhouni / Luc Phạm [16] thua Elliott Schupp / John Lucian Goins [27] (2-11, 7-11).",
+            "Đôi nữ, vòng 32: Layne Sleeth / Alix Trương [7] thắng Carlota Trevino / CC Eleven Sacca [25] (11-2, 11-1).",
+            "Đôi nữ, vòng 32: Sophia Huỳnh Trần Ngọc Nhi / Aiko Yoshitomi [26] thua Kaitlyn Christian / Allyce Jones [9] (12-10, 1-11, 3-11).",
+            "Đôi nữ, vòng 16: Layne Sleeth / Alix Trương [7] thắng Lucy Kovalova / Mari Humberg [10] (11-7, 7-11, 11-9).",
+            "Đôi nữ, tứ kết: Layne Sleeth / Alix Trương [7] gặp Anna Leigh Waters / Anna Bright [1].",
+            "Đôi nam nữ, vòng 64: Jalina Ingram / Luc Phạm [23] thua Elliott Schupp / Kiora Kunimoto [31] (11-7, 6-11, 2-11).",
             "Đôi nam nữ, vòng 64: Trương Vinh Hiển / Sophia Huỳnh Trần Ngọc Nhi [45] thua Len Yang / Allyce Jones [11] (9-11, 9-11).",
             "Đôi nam nữ, vòng 64: Dylan Frazier / Alix Trương [8] thắng Ryan Torresin / Ava Cavataio [48] (11-8, 11-2).",
-            "Đôi nam nữ, vòng 64: Jalina Ingram / Luc Phạm [23] thua Elliott Schupp / Kiora Kunimoto [31] (11-7, 6-11, 2-11).",
             "Đôi nam nữ, vòng 32: Dylan Frazier / Alix Trương [8] thắng Anouar Braham / Genie Erokhina [26] (1-11, 11-2, 11-7).",
-            "Đôi nam nữ, vòng 16: Dylan Frazier / Alix Trương [8] gặp Will Howells / Meghan Dizon [17]."
+            "Đôi nam nữ, vòng 16: Dylan Frazier / Alix Trương [8] thua Will Howells / Meghan Dizon [17] (6-11, 12-10, 9-11)."
           ],
           "internalLinks": [
             {
@@ -185,57 +196,60 @@ const post: BlogPost = {
           "heading": "Anna Leigh Waters và danh hiệu thứ 200",
           "content": "Anna Leigh Waters đến Las Vegas khi chỉ còn thiếu hai danh hiệu đôi để cán mốc danh hiệu thứ 200 trên PPA Tour, và cô không đánh đơn, nên phải vô địch cả đôi nữ lẫn đôi nam nữ. Các trận của cô tới lúc này:",
           "listItems": [
-            "Đôi nam nữ, vòng 16: Anna Leigh Waters / Ben Johns [1] gặp Jack Sock / Lea Jansen [19]."
+            "Đôi nữ, vòng 16: Anna Leigh Waters / Anna Bright [1] thắng Abbigal Hatton / Jalina Ingram [13] (11-3, 11-0).",
+            "Đôi nữ, tứ kết: Anna Leigh Waters / Anna Bright [1] gặp Layne Sleeth / Alix Trương [7].",
+            "Đôi nam nữ, vòng 16: Anna Leigh Waters / Ben Johns [1] thắng Jack Sock / Lea Jansen [19] (11-2, 11-5).",
+            "Đôi nam nữ, tứ kết: Anna Leigh Waters / Ben Johns [1] gặp Nicolas Acevedo / Isabella Dunlap [16]."
           ]
         },
         {
           "heading": "Đơn nam: kết quả và vòng tiếp theo",
-          "content": "Đã xong vòng 32. Vòng tiếp theo: vòng 16.\n\nKết quả bất ngờ: vòng 32: Yates Johnson [23] thắng Connor Garnett [6].",
+          "content": "Đã xong vòng 16. Vòng tiếp theo: tứ kết.\n\nKết quả bất ngờ: vòng 16: Luc Phạm [14] thắng Christopher Haworth [1]; vòng 32: Yates Johnson [23] thắng Connor Garnett [6].",
           "listItems": [
-            "Christopher Haworth [1] vs Luc Phạm [14]",
-            "Christian Alshon [4] vs Jaume Martinez Vich [10]",
-            "Ben Johns [19] vs Dylan Frazier [11]",
-            "Zane Ford [7] vs Gabriel Joseph [9]",
-            "Federico Staksrud [2] vs Rafael Lenhard [13]",
-            "Roscoe Bellamy [5] vs Cason Campbell [22]",
-            "Hunter Johnson [3] vs Eric Oncins [20]",
-            "Yates Johnson [23] vs John Lucian Goins [8]"
+            "Federico Staksrud [2] vs Gabriel Joseph [9]",
+            "Luc Phạm [14] vs John Lucian Goins [8]",
+            "Christian Alshon [4] vs Ben Johns [19]",
+            "Hunter Johnson [3] vs Roscoe Bellamy [5]"
           ]
         },
         {
           "heading": "Đơn nữ: kết quả và vòng tiếp theo",
-          "content": "Đã xong vòng 32. Vòng tiếp theo: vòng 16.\n\nKết quả bất ngờ: vòng 32: Daria Walczak [31] thắng Judit Castillo [6].",
+          "content": "Đã xong vòng 16. Vòng tiếp theo: tứ kết.\n\nKết quả bất ngờ: vòng 32: Daria Walczak [31] thắng Judit Castillo [6].",
           "listItems": [
-            "Lea Jansen [3] vs Lacy Schneemann [16]",
-            "Chao Yi Wang [4] vs Zoey Weil [15]",
-            "Genie Bouchard [7] vs Mary Brascia [12]",
-            "Daria Walczak [31] vs Milan Rane [11]",
-            "Isabella Dunlap [8] vs Cailyn Campbell [10]",
-            "Kaitlyn Christian [2] vs Sofia Sewing [22]",
-            "Kiora Kunimoto [5] vs Jalina Ingram [9]",
-            "Kate Fahey [1] vs Aiko Yoshitomi [18]"
+            "Lea Jansen [3] vs Genie Bouchard [7]",
+            "Chao Yi Wang [4] vs Cailyn Campbell [10]",
+            "Kaitlyn Christian [2] vs Milan Rane [11]",
+            "Kate Fahey [1] vs Kiora Kunimoto [5]"
           ]
         },
         {
           "heading": "Đôi nam: kết quả và vòng tiếp theo",
-          "content": "Đã xong vòng 64. Vòng tiếp theo: vòng 32.\n\nKết quả bất ngờ: vòng 32: Casey Diamond / Max Freeman [29] thắng James Delgado / Tyson McGuffin [8]."
+          "content": "Đã xong vòng 16. Vòng tiếp theo: tứ kết.\n\nKết quả bất ngờ: vòng 32: Casey Diamond / Max Freeman [29] thắng James Delgado / Tyson McGuffin [8]; vòng 32: Elliott Schupp / John Lucian Goins [27] thắng Roscoe Bellamy / Connor Garnett [6].",
+          "listItems": [
+            "Jaume Martinez Vich / Nicolas Acevedo [10] vs Dylan Frazier / Len Yang [5]",
+            "Hayden Patriquin / Federico Staksrud [3] vs Elliott Schupp / John Lucian Goins [27]",
+            "Christian Alshon / Andrei Daescu [2] vs Augustus Ge / Jack Sock [7]",
+            "Gabriel Tardio / Ben Johns [1] vs Will Howells / Pablo Tellez [11]"
+          ]
         },
         {
           "heading": "Đôi nữ: kết quả và vòng tiếp theo",
-          "content": "Vòng 32 đang diễn ra."
+          "content": "Đã xong vòng 16. Vòng tiếp theo: tứ kết.",
+          "listItems": [
+            "Anna Leigh Waters / Anna Bright [1] vs Layne Sleeth / Alix Trương [7]",
+            "Lacy Schneemann / Kate Fahey [3] vs Kiora Kunimoto / Judit Castillo [12]",
+            "Ting Chieh Wei / Meghan Dizon [4] vs Isabella Dunlap / Genie Erokhina [11]",
+            "Tyra Hurricane Black / Catherine Parenteau [2] vs Sofia Sewing / Tina Pisnik [8]"
+          ]
         },
         {
           "heading": "Đôi nam nữ: kết quả và vòng tiếp theo",
-          "content": "Đã xong vòng 32. Vòng tiếp theo: vòng 16.",
+          "content": "Đã xong vòng 16. Vòng tiếp theo: tứ kết.\n\nKết quả bất ngờ: vòng 16: Nicolas Acevedo / Isabella Dunlap [16] thắng Eric Oncins / Catherine Parenteau [7]; vòng 16: Will Howells / Meghan Dizon [17] thắng Dylan Frazier / Alix Trương [8].",
           "listItems": [
-            "Tina Pisnik / Christian Alshon [3] vs Christopher Haworth / Daria Walczak [42]",
-            "Tyra Hurricane Black / Gabriel Tardio [4] vs Ting Chieh Wei / CJ Klinger [14]",
-            "Anna Leigh Waters / Ben Johns [1] vs Jack Sock / Lea Jansen [19]",
-            "Eric Oncins / Catherine Parenteau [7] vs Nicolas Acevedo / Isabella Dunlap [16]",
-            "Dylan Frazier / Alix Trương [8] vs Will Howells / Meghan Dizon [17]",
-            "Hayden Patriquin / Anna Bright [2] vs Judit Castillo / Hunter Johnson [15]",
-            "Jessie Irvine / Andrei Daescu [5] vs Lacy Schneemann / Clayton Powell [24]",
-            "Federico Staksrud / Kate Fahey [6] vs Connor Garnett / Kaitlyn Christian [9]"
+            "Tina Pisnik / Christian Alshon [3] vs Jessie Irvine / Andrei Daescu [5]",
+            "Anna Leigh Waters / Ben Johns [1] vs Nicolas Acevedo / Isabella Dunlap [16]",
+            "Tyra Hurricane Black / Gabriel Tardio [4] vs Will Howells / Meghan Dizon [17]",
+            "Hayden Patriquin / Anna Bright [2] vs Federico Staksrud / Kate Fahey [6]"
           ]
         }
       ],

@@ -12,7 +12,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     "slug": "rate-las-vegas-open-2026-results",
     "publishedDate": "2026-10-01",
-    "updatedDate": "2026-10-01",
+    "updatedDate": "2026-10-02",
     "author": "The PickleHub Team",
     "tags": [
       "ppa tour",
