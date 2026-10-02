@@ -39,7 +39,10 @@ export interface MatchDetail {
   duration_minutes: number | null;
   team_a_score: number[];
   team_b_score: number[];
-  winning_team: "a" | "b";
+  /** NULL until the match is resolved. Pro-tour ingest publishes rows for
+   *  in-progress matches and one-sided TBD slots with no winner yet, so
+   *  every consumer has to handle the third state. */
+  winning_team: "a" | "b" | null;
   scoring_format: string;
   verification_status: VerificationStatus;
   verified_at: string | null;
@@ -129,7 +132,10 @@ export function useMatch(slug: string | undefined) {
         duration_minutes: (match.duration_minutes as number) ?? null,
         team_a_score: match.team_a_score as number[],
         team_b_score: match.team_b_score as number[],
-        winning_team: match.winning_team as "a" | "b",
+        winning_team:
+          match.winning_team === "a" || match.winning_team === "b"
+            ? match.winning_team
+            : null,
         scoring_format: match.scoring_format as string,
         verification_status: match.verification_status as VerificationStatus,
         verified_at: (match.verified_at as string) ?? null,
