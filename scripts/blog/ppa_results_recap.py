@@ -57,7 +57,7 @@ DIV_VI = {"Men's Singles": "Đơn nam", "Women's Singles": "Đơn nữ", "Men's 
 DIV_ORDER = ["Men's Singles", "Women's Singles", "Men's Doubles", "Women's Doubles", "Mixed Doubles"]
 ROUND_VI = {"Round 64": "vòng 64", "Round 32": "vòng 32", "Round 16": "vòng 16", "Quarterfinals": "tứ kết",
             "Quarterfinal": "tứ kết", "Quarter Finals": "tứ kết", "Semifinals": "bán kết", "Semifinal": "bán kết",
-            "Semi Finals": "bán kết", "Finals": "chung kết", "Final": "chung kết", "Gold Medal Match": "tranh HCV",
+            "Semi Finals": "bán kết", "Semi-Finals": "bán kết", "Quarter-Finals": "tứ kết", "Finals": "chung kết", "Final": "chung kết", "Gold Medal Match": "tranh HCV",
             "Bronze Medal Match": "tranh HCĐ"}
 
 
