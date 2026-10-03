@@ -10,6 +10,36 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-volley-technique",
+    "publishedDate": "2026-10-03",
+    "updatedDate": "2026-10-03",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball volley",
+      "volley technique",
+      "kitchen",
+      "non-volley zone",
+      "pickleball technique",
+      "dink",
+      "pickleball drills"
+    ],
+    "ctaPath": "/tim-ban-choi",
+    "ctaLabel": {
+      "en": "Find a partner to practise volleys",
+      "vi": "Tìm bạn tập volley"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-volley-technique-hero.webp",
+      "alt": "Pickleball Volley Technique: Hold Your Position and Handle Fast Balls"
+    },
+    "titleEn": "Pickleball Volley Technique: Hold Your Position and Handle Fast Balls",
+    "titleVi": "Kỹ thuật volley pickleball: giữ vị trí, xử lý bóng nhanh",
+    "metaTitleEn": "Pickleball Volley Technique: Ready Position & Fast Hands",
+    "metaTitleVi": "Kỹ thuật volley pickleball gần lưới",
+    "metaDescriptionEn": "Learn the pickleball volley: ready position, compact contact, paddle-face control, block vs dink volley, a 4-step drill plan and the 7-ft kitchen rule.",
+    "metaDescriptionVi": "Cách volley pickleball: tư thế sẵn sàng, chạm bóng gọn, kiểm soát mặt vợt, chặn hay bỏ nhỏ và luật Kitchen 7 feet."
+  },
+  {
     "slug": "rate-las-vegas-open-2026-results",
     "publishedDate": "2026-10-01",
     "updatedDate": "2026-10-03",

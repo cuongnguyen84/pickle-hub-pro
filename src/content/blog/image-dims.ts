@@ -98,6 +98,8 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/pickleball-tour-wars-2023-money.webp": [1672, 941],
   "/images/blog/pickleball-tournament-budget-calculator-guide-hero-768.webp": [768, 403],
   "/images/blog/pickleball-tournament-budget-calculator-guide-hero.webp": [1731, 909],
+  "/images/blog/pickleball-volley-technique-hero-768.webp": [768, 439],
+  "/images/blog/pickleball-volley-technique-hero.webp": [1200, 686],
   "/images/blog/pickleball-vs-padel-vs-paddle-tennis-hero-768.webp": [768, 512],
   "/images/blog/pickleball-vs-padel-vs-paddle-tennis-hero.webp": [1536, 1024],
   "/images/blog/pickleball-world-cup-2026-da-nang-hero-768.webp": [768, 512],
