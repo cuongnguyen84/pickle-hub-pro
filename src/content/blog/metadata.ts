@@ -10,6 +10,31 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-footwork-backhand-drills",
+    "publishedDate": "2026-10-04",
+    "updatedDate": "2026-10-04",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball footwork",
+      "pickleball backhand",
+      "pickleball drills",
+      "split-step",
+      "partner drills",
+      "beginner technique"
+    ],
+    "ctaPath": "/tim-ban-choi",
+    "ctaLabel": {
+      "en": "Find a practice partner",
+      "vi": "Tìm bạn tập cùng"
+    },
+    "titleEn": "Pickleball Footwork and Backhand Drills: A Simple Step-by-Step Plan",
+    "titleVi": "Cải thiện bước chân và trái tay pickleball: bài tập dễ áp dụng",
+    "metaTitleEn": "Pickleball Footwork and Backhand Drills: Step-by-Step",
+    "metaTitleVi": "Bài tập bước chân và trái tay pickleball",
+    "metaDescriptionEn": "Simple pickleball footwork and backhand drills: split-step, side shuffle, one- vs two-handed backhand, partner feeds and fixes for common errors.",
+    "metaDescriptionVi": "Bước nhún tách, di chuyển ngang, trái tay một hay hai tay, bài tập theo cặp và cách sửa lỗi thường gặp."
+  },
+  {
     "slug": "veolia-chicago-cup-2026-results",
     "publishedDate": "2026-10-05",
     "updatedDate": "2026-10-04",
