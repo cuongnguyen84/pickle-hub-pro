@@ -174,7 +174,8 @@ def queue_due(store, now=None, config=None, fetcher=fetch_source):
             # durable evidence for the team; it never becomes a partial post.
             try:
                 import sys
-                blog_dir = str(Path(__file__).resolve().parents[2] / 'scripts' / 'blog')
+                repo_root = Path(os.environ.get('PICKLEHUB_REPO', str(Path(__file__).resolve().parents[2])))
+                blog_dir = str(repo_root / 'scripts' / 'blog')
                 if blog_dir not in sys.path:
                     sys.path.insert(0, blog_dir)
                 from tournament_results_autopublish import publish_event
