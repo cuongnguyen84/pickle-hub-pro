@@ -53,7 +53,7 @@ Manifest: `scripts/ops/team_tournament_coverage.json`. Queue: `scripts/ops/team_
 - Tối đa hai nhiệm vụ mới mỗi tick; dedupe theo giải/mốc; tôn trọng trạng thái pause.
 - Fetch lỗi/nguồn động không có score: ghi thiếu nguồn, không suy diễn kết quả. Thời điểm snapshot không chứng minh nội dung nguồn đã mới.
 
-**Ranh giới hiện tại:** cadence tự lấy nguồn và tạo nhiệm vụ/bản nháp. Team hiện vẫn có bước kiểm chứng và triển khai riêng; cấu hình này chưa tự xuất bản kết quả lên website. Không tuyên bố đã có live-score hoặc auto-publish. Runtime chạy trên máy Mac; máy ngủ/offline thì chờ tick khi hoạt động lại.
+**Publish policy (owner order 04/10):** Chicago và Virginia Beach có `auto_publish: true`. Khi feed điểm số chính thức đổi, gate deterministic kiểm event ID, schema, trạng thái và đúng một cờ winner; sau đó tạo/cập nhật EN + VI, ghi `vi_blog_posts`, regenerate barrel, typecheck/build, commit và push `main`. Snapshot không đổi là no-op. Checkout bẩn, feed thiếu/mâu thuẫn hoặc build lỗi sẽ chặn và để bằng chứng cho team; không đăng một phần. Các giải chưa có score feed (Hong Kong/Nanjing/Worlds/Daytona/Tokyo/Johor) vẫn chỉ chuẩn bị dữ liệu cho tới khi có feed được cấu hình. Runtime chạy trên máy Mac; máy ngủ/offline thì lần tick kế tiếp tiếp tục.
 
 ## Các điểm cần kiểm chứng gần ngày đấu
 
@@ -70,7 +70,7 @@ Growth đọc GSC theo cohort URL lịch/kết quả từng giải vào D+3 và 
 
 - T86: Hong Kong, đã tiếp tục cùng mã và đang chạy; lưu nguyên bằng chứng bản cũ.
 - T135: Sports chuẩn bị hồ sơ nguồn sáu giải Oct–Nov, queued.
-- T136: Engineering chuẩn bị tích hợp xuất bản theo từng giải, queued; chưa có auto-publish.
+- T136: Engineering chuẩn bị handoff kiểm tra tích hợp; publish gate tự động đã bật riêng cho Chicago/Virginia, không dùng UUID Las Vegas cho giải khác.
 - T137: Chicago, queued và được ưu tiên; snapshot event guide + score feed đều lấy thành công.
 - T138: Virginia Beach, queued; snapshot event guide + score feed đều lấy thành công.
 
