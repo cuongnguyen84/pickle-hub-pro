@@ -18,6 +18,10 @@ const post: BlogPost = {
     "en": "Follow live scores on ThePickleHub",
     "vi": "Theo dõi điểm số trên ThePickleHub"
   },
+  "heroImage": {
+    "src": "/images/blog/veolia-chicago-cup-2026-results-hero.webp",
+    "alt": "Veolia Chicago Cup 2026 pickleball tournament court at golden hour with the Chicago skyline"
+  },
   "content": {
     "en": {
       "title": "Veolia Chicago Cup 2026 Results: Daily Scores and Confirmed Winners",

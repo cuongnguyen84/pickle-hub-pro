@@ -107,7 +107,11 @@ def package(event: dict, feed: dict, now: datetime) -> dict:
     ]
     faq_en = [{"question": "Where do these results come from?", "answer": f"The official PPA scores feed: {source}."}, {"question": "Are scheduled matches final results?", "answer": "No. Only an official final or completed status with one winner is presented as a result."}, {"question": "When is this page updated?", "answer": "When the verified official score snapshot changes."}]
     faq_vi = [{"question": "Kết quả lấy từ đâu?", "answer": f"Từ feed điểm số PPA chính thức: {source}."}, {"question": "Trận scheduled có phải kết quả không?", "answer": "Không. Chỉ bản ghi final hoặc completed có đúng một người thắng mới được trình bày là kết quả."}, {"question": "Trang cập nhật khi nào?", "answer": "Khi snapshot điểm số chính thức đã kiểm chứng thay đổi."}]
-    return {"verdict": "NEW", "unverified": [], "slug": event["slug"], "tags": event.get("tags", ["pickleball", "results", "2026"]), "ctaPath": "/live", "ctaLabel": {"en": "Follow live scores on ThePickleHub", "vi": "Theo dõi điểm số trên ThePickleHub"}, "en": {"title": f"{name} Results: Daily Scores and Confirmed Winners", "metaTitle": f"{name} Results 2026 | Daily Scores", "metaDescription": f"{name} results and daily scores from the official PPA feed, checked by ThePickleHub.", "sections": en_sections, "faqItems": faq_en}, "vi": {"slug": event["vi_slug"], "title": f"Kết quả {name} 2026: cập nhật hằng ngày", "metaTitle": f"Kết quả {name} 2026 mỗi ngày", "metaDescription": f"Kết quả {name} 2026 từ feed PPA chính thức, được ThePickleHub kiểm chứng.", "excerpt": f"Kết quả {name} 2026 cập nhật từ nguồn điểm số PPA chính thức.", "focusKeyword": f"kết quả {name.lower()} 2026", "sections": vi_sections, "faqItems": faq_vi}}
+    package = {"verdict": "NEW", "unverified": [], "slug": event["slug"], "tags": event.get("tags", ["pickleball", "results", "2026"]), "ctaPath": "/live", "ctaLabel": {"en": "Follow live scores on ThePickleHub", "vi": "Theo dõi điểm số trên ThePickleHub"}, "en": {"title": f"{name} Results: Daily Scores and Confirmed Winners", "metaTitle": f"{name} Results 2026 | Daily Scores", "metaDescription": f"{name} results and daily scores from the official PPA feed, checked by ThePickleHub.", "sections": en_sections, "faqItems": faq_en}, "vi": {"slug": event["vi_slug"], "title": f"Kết quả {name} 2026: cập nhật hằng ngày", "metaTitle": f"Kết quả {name} 2026 mỗi ngày", "metaDescription": f"Kết quả {name} 2026 từ feed PPA chính thức, được ThePickleHub kiểm chứng.", "excerpt": f"Kết quả {name} 2026 cập nhật từ nguồn điểm số PPA chính thức.", "focusKeyword": f"kết quả {name.lower()} 2026", "sections": vi_sections, "faqItems": faq_vi}}
+    # Keep the editorial hero attached to every future source-driven refresh.
+    if event.get("hero_image"):
+        package["heroImage"] = event["hero_image"]
+    return package
 
 
 def write_source(pkg: dict, event: dict, today: str) -> None:
@@ -160,6 +164,8 @@ def _upsert_vi(pkg: dict) -> None:
            "category": "giải đấu", "focus_keyword": vi["focusKeyword"], "faq_items": vi["faqItems"],
            "alternate_en_slug": pkg["slug"], "status": "published", "skip_email_blast": True,
            "updated_at": datetime.now(timezone.utc).isoformat()}
+    if pkg.get("heroImage"):
+        row["cover_image_url"] = "https://www.thepicklehub.net" + pkg["heroImage"]["src"]
     if not exists:
         row.update(slug=vi["slug"], published_at=datetime.now(timezone.utc).isoformat())
     method = "PATCH" if exists else "POST"
