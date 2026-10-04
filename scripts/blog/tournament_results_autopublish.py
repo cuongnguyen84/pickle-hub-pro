@@ -131,7 +131,8 @@ def write_source(pkg: dict, event: dict, today: str) -> None:
 
 
 def fingerprint_path(event: dict) -> Path:
-    return REPO / ".claude" / "tournament-fingerprints" / f"{event['key']}.sha256"
+    state_root = Path(os.environ.get("PICKLEHUB_TEAM_HOME", str(Path.home() / "Library" / "Application Support" / "PickleHub" / "team-v2")))
+    return state_root / "tournament-fingerprints" / f"{event['key']}.sha256"
 
 
 def should_publish(event: dict, fingerprint: str) -> bool:
