@@ -10,6 +10,28 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "veolia-chicago-cup-2026-results",
+    "publishedDate": "2026-10-05",
+    "updatedDate": "2026-10-04",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball",
+      "results",
+      "2026"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "titleEn": "Veolia Chicago Cup 2026 Results: Daily Scores and Confirmed Winners",
+    "titleVi": "Kết quả Veolia Chicago Cup 2026 2026: cập nhật hằng ngày",
+    "metaTitleEn": "Veolia Chicago Cup 2026 Results 2026 | Daily Scores",
+    "metaTitleVi": "Kết quả Veolia Chicago Cup 2026 2026 mỗi ngày",
+    "metaDescriptionEn": "Veolia Chicago Cup 2026 results and daily scores from the official PPA feed, checked by ThePickleHub.",
+    "metaDescriptionVi": "Kết quả Veolia Chicago Cup 2026 2026 từ feed PPA chính thức, được ThePickleHub kiểm chứng."
+  },
+  {
     "slug": "pickleball-volley-technique",
     "publishedDate": "2026-10-03",
     "updatedDate": "2026-10-03",
