@@ -168,7 +168,9 @@ def queue_due(store, now=None, config=None, fetcher=fetch_source):
                 sources.append({'url': url, 'checked_at': now.isoformat(), 'text': fetcher(url)[:1700]})
             except Exception as exc:
                 sources.append({'url': url, 'checked_at': now.isoformat(), 'missing': type(exc).__name__})
-        if event.get('auto_publish') and event.get('result_source') and event.get('event_id'):
+        local_today = now.astimezone(ZoneInfo(event.get('event_timezone', config.get('timezone', 'Asia/Ho_Chi_Minh')))).date()
+        event_started = local_today >= date.fromisoformat(event['start_date'])
+        if event.get('auto_publish') and event_started and event.get('result_source') and event.get('event_id'):
             # This path is source-driven and does not ask an LLM to invent a
             # recap.  A dirty checkout, invalid feed, or failed deploy gate is
             # durable evidence for the team; it never becomes a partial post.

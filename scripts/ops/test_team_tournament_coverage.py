@@ -91,6 +91,16 @@ class CoverageTests(unittest.TestCase):
         parser.feed('<p>Schedule</p><script>evil()</script><style>hidden</style><p>10 AM</p>')
         self.assertEqual(' '.join(parser.parts), 'Schedule 10 AM')
 
+    def test_future_auto_publish_waits_until_local_event_start(self):
+        self.event.update(auto_publish=True, event_id='event-1', result_source='https://example.org/scores')
+        calls = []
+        import sys
+        sys.path.insert(0, str(Path(coverage.__file__).parents[1] / 'blog'))
+        import tournament_results_autopublish
+        with patch.object(tournament_results_autopublish, 'publish_event', side_effect=lambda *a, **k: calls.append(1)):
+            self.queue('2026-10-04T12:00:00+07:00', fetcher=lambda url: 'Official text')
+        self.assertEqual(calls, [])
+
     def test_score_snapshot_keeps_raw_facts_and_bounds_sample(self):
         match = {'id': 'a', 'division': 'Singles', 'roundLabel': 'Final', 'dateLabel': 'Date TBA',
                  'status': 'scheduled', 'teams': [{'players': ['A'], 'winner': False, 'games': [None]}]}
