@@ -1,0 +1,9 @@
+{
+  "activated_at": "2026-10-04T20:30:02.791123",
+  "backup": "/Users/cm10/Library/Application Support/PickleHub/team-v2/backups/tournament-coverage-20261004-203002",
+  "files": {
+    "team_supervisor.py": "ba0016fde869d392e01b61339be2f4372a248958a3ba1d0abcc8e53c687db05d",
+    "team_tournament_coverage.py": "f43673a223c7bf2698d0a3ee1fe19c651462c99f556eb957db422418642807ce",
+    "team_tournament_coverage.json": "94c26a654a8c2678ff9d3cf025d28d3eb3d416146832d4f47bf06a16c9e21745"
+  }
+}

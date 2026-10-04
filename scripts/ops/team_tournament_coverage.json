@@ -1,0 +1,129 @@
+{
+  "enabled": true,
+  "timezone": "Asia/Ho_Chi_Minh",
+  "daily_time": "07:30",
+  "verified_at": "2026-10-04",
+  "events": [
+    {
+      "key": "hong-kong-slam-2026",
+      "title": "Hang Seng Bank Hong Kong Slam 2026",
+      "start_date": "2026-10-19",
+      "end_date": "2026-10-25",
+      "event_timezone": "Asia/Hong_Kong",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour-asia.com/tournament/2026/hong-kong-slam/",
+        "https://pickleballtournaments.com/tournaments/C7E4FD72-D159-4211-82A2-21ADBB21DEFE"
+      ],
+      "notes": "P0. Kai Tak Arena. Giờ VN: 19/10 qualifying 08–20h; 20 R64,21 R32,22 R16,23 QF,24 SF 08–18h;25 finals12–17h. Đây là khung phiên, không phải giờ từng trận. Giữ /blog/hong-kong-slam-2026-preview; sửa thông tin đăng ký đã đóng. Tách lịch và kết quả khi có dữ liệu, giữ URL ổn định. Draw: https://pickleballtournaments.com/tournaments/C7E4FD72-D159-4211-82A2-21ADBB21DEFE . Finale main tour, không phải giải châu Á cuối cùng năm.",
+      "existing_task_id": 86,
+      "initial_prep_at": "2026-10-04T00:00:00+07:00"
+    },
+    {
+      "key": "veolia-chicago-cup-2026",
+      "title": "Veolia Chicago Cup 2026",
+      "start_date": "2026-10-05",
+      "end_date": "2026-10-11",
+      "event_timezone": "America/Chicago",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour.com/events/2026/veolia-chicago-cup/",
+        "https://www.ppatour.com/api/scores/?event=203e1164-b4f9-47e9-bacf-ff81f8748025"
+      ],
+      "notes": "P0 gấp. Life Time North Shore, Northbrook. Draw https://www.ppatour.com/brackets/?event=203e1164-b4f9-47e9-bacf-ff81f8748025 . Daily schedule và broadcast có mâu thuẫn về vòng ngày6/10 và giờ finals: CHƯA công bố giờ trận chắc chắn, cần order of play. Giờ local tháng10 +12h = VN, có thể sang ngày hôm sau.",
+      "auto_publish": true,
+      "event_id": "203e1164-b4f9-47e9-bacf-ff81f8748025",
+      "result_source": "https://www.ppatour.com/api/scores/?event=203e1164-b4f9-47e9-bacf-ff81f8748025",
+      "source": "https://www.ppatour.com/events/2026/veolia-chicago-cup/",
+      "slug": "veolia-chicago-cup-2026-results",
+      "vi_slug": "ket-qua-veolia-chicago-cup-2026",
+      "dates_en": "October 5–11, 2026",
+      "dates_vi": "5–11/10/2026",
+      "venue": "Life Time North Shore Sport & Racquetball, Northbrook, Illinois",
+      "initial_prep_at": "2026-10-04T00:00:00+07:00"
+    },
+    {
+      "key": "virginia-beach-open-2026",
+      "title": "Virginia Beach Open 2026",
+      "start_date": "2026-10-12",
+      "end_date": "2026-10-18",
+      "event_timezone": "America/New_York",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour.com/events/2026/virginia-beach-open/",
+        "https://www.ppatour.com/api/scores/?event=429c7980-e1b9-4800-805f-dfb160781cd9"
+      ],
+      "notes": "P1. Pickleball Virginia Beach. Draw https://www.ppatour.com/brackets/?event=429c7980-e1b9-4800-805f-dfb160781cd9 . Phân biệt first serve với TV window, đang có khác biệt. Tháng10 local+11h=VN.",
+      "auto_publish": true,
+      "event_id": "429c7980-e1b9-4800-805f-dfb160781cd9",
+      "result_source": "https://www.ppatour.com/api/scores/?event=429c7980-e1b9-4800-805f-dfb160781cd9",
+      "source": "https://www.ppatour.com/events/2026/virginia-beach-open/",
+      "slug": "virginia-beach-open-2026-results",
+      "vi_slug": "ket-qua-virginia-beach-open-2026",
+      "dates_en": "October 12–18, 2026",
+      "dates_vi": "12–18/10/2026",
+      "venue": "Pickleball Virginia Beach, Virginia",
+      "initial_prep_at": "2026-10-04T00:00:00+07:00"
+    },
+    {
+      "key": "nanjing-2026",
+      "title": "Skechers Nanjing 2026 — PPA Asia 125",
+      "start_date": "2026-10-28",
+      "end_date": "2026-10-31",
+      "event_timezone": "Asia/Shanghai",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour-asia.com/tournament/2026/ppa-asia-125-chn-nanjing-2026/"
+      ],
+      "notes": "P2. Nanjing, venue cụ thể/draw/giờ trận CHƯA xác minh; pre-registration tại ngày4/10. Không tạo kết quả hoặc hứa live. Asia125 vẫn diễn ra sau Hong Kong main tour finale."
+    },
+    {
+      "key": "world-championships-2026",
+      "title": "Opendoor Pickleball World Championships 2026",
+      "start_date": "2026-11-02",
+      "end_date": "2026-11-08",
+      "event_timezone": "America/Chicago",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour.com/events/2026/pickleball-world-championships/"
+      ],
+      "notes": "P1. Brookhaven Country Club, Farmers Branch TX. 2/11 qualifying,3 R64,4 R32,5 R16,6 QF,7 SF,8 finals; giờ pro TBD. Sau đổi DST: local+13h=VN. https://pickleballtournaments.com/tournaments/2026-pickleball-world-championships chưa fetch được ngày4/10. Không nhầm World Cup Đà Nẵng."
+    },
+    {
+      "key": "daytona-beach-open-2026",
+      "title": "Proton Daytona Beach Open 2026",
+      "start_date": "2026-11-16",
+      "end_date": "2026-11-22",
+      "event_timezone": "America/New_York",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour.com/events/2026/proton-daytona-beach-open/"
+      ],
+      "notes": "P1. Pictona at Holly Hill Florida. Draw URL và giờ trận chưa xác minh ngày4/10. Local+12h=VN trong tháng11."
+    },
+    {
+      "key": "pj-tokyo-challenger-2026",
+      "title": "PJ Tokyo Challenger 2026",
+      "start_date": "2026-12-07",
+      "end_date": "2026-12-09",
+      "event_timezone": "Asia/Tokyo",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour-asia.com/tournament/2026/pj-tokyo-challenger-2026/"
+      ],
+      "notes": "P2 watchlist. Ariake Tennis Park. Local-2h=VN. https://pickleballtournaments.com/tournaments/ppa-asia-125-pj-tokyo-challenger-2026 fetch timeout ngày4/10; chưa xác nhận draw."
+    },
+    {
+      "key": "johor-2026",
+      "title": "PPA Asia 125 MAS Johor 2026",
+      "start_date": "2026-12-17",
+      "end_date": "2026-12-20",
+      "event_timezone": "Asia/Kuala_Lumpur",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour-asia.com/tournament/2026/ppa-asia-125-mas-johor-2026/"
+      ],
+      "notes": "P2 watchlist. Johor; venue/draw/giờ trận chưa công bố ngày4/10, pre-registration. Local-1h=VN."
+    }
+  ]
+}

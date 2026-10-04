@@ -725,6 +725,11 @@ def tick(store, full=False, allow_ai=True):
         store.task("wriai", "editorial", "Hộp chờ Wriai đọc được", "resolved")
     except Exception as exc:
         store.task("wriai", "editorial", "Không đọc được hộp chờ Wriai", evidence={"error": clean_error(exc)})
+    from team_tournament_coverage import queue_due
+    try:
+        queue_due(store, now)
+    except Exception as exc:
+        store.task("tournament-coverage", "editorial", "Lịch theo dõi giải cần kiểm tra", evidence={"error": clean_error(exc)})
     work_queue(store, allow_ai)
     publish_due(store, now)
     if not store.get("paused", False) and not (REPO / ".claude/AGENTS_PAUSED").exists():
