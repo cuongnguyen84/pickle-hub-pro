@@ -689,7 +689,7 @@ def queue_wriai(store):
     if time.time() - store.get("wriai_poll", 0) < 900:
         return
     store.put("wriai_poll", time.time())
-    rows = rest("wriai_inbox?select=id,title,slug,content_markdown&status=eq.new&order=received_at&limit=50")
+    rows = rest("wriai_inbox?select=id,title,slug,content_markdown,content_html&status=eq.new&order=received_at&limit=50")
     for row in rows:
         key = f"schedule:wriai:{row['id']}"
         if store.db.execute("SELECT 1 FROM tasks WHERE dedupe=?", (key,)).fetchone():
@@ -700,8 +700,12 @@ def queue_wriai(store):
             continue
         slug = re.sub(r"[^a-z0-9-]", "", str(row.get("slug") or "").lower())[:80] or str(row["id"])[:8]
         # ponytail: body capped so the whole draft prompt stays under team_workspace's 30k slice.
+        # WriAI currently sends converted articles in content_html and leaves
+        # content_markdown empty. Keep both fields supported so a valid article
+        # is not queued as a title-only draft.
+        body = row.get("content_markdown") or row.get("content_html") or ""
         request = WRIAI_BRIEF.format(id=row["id"], slug=slug, title=str(row.get("title"))[:200],
-                                     body=str(row.get("content_markdown") or "")[:16000])
+                                     body=str(body)[:16000])
         tid = store.task(key, "editorial", title, "queued", {"request": request})
         store.put(f"wriai_override:{tid}", True)
 
