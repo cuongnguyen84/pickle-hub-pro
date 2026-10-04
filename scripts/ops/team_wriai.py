@@ -288,6 +288,13 @@ def publish(store, task):
         hero = fetch_hero(team, task, pkg, tree)
     except Exception:
         hero = None  # ponytail: a broken Wriai image never blocks the post; it ships without a hero.
+    # Editorial assets supplied for a known WriAI article are already committed
+    # in the checkout; keep them even when the WriAI CDN image is unavailable.
+    if not hero and pkg.get("slug") == "pickleball-footwork-backhand-drills":
+        hero = {
+            "src": "/images/blog/pickleball-footwork-backhand-drills-hero.webp",
+            "alt": "Pickleball player practicing footwork and a two-handed backhand drill on an outdoor court"
+        }
     if hero:
         pkg = {**pkg, "heroImage": hero}
     (tree / f"src/content/blog/posts/{pkg['slug']}.ts").write_text(post_ts(pkg, today, note), encoding="utf-8")
