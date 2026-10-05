@@ -25,6 +25,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSystemSettings } from "@/hooks/useSystemSettings";
 import { useLivestreamGate } from "@/hooks/useLivestreamGate";
+import { useCanSeeViewCounts } from "@/hooks/useCanSeeViewCounts";
 import { PreviewCountdown } from "@/components/video/PreviewCountdown";
 import { LivestreamGateOverlay } from "@/components/video/LivestreamGateOverlay";
 import { useGeoBlock } from "@/hooks/useGeoBlock";
@@ -42,6 +43,7 @@ const WatchLive = () => {
 
   const { data: livestream, isLoading } = useLivestream(id!);
   const { data: viewCount = 0 } = useViewCount("livestream", id!);
+  const canSeeViews = useCanSeeViewCounts();
   const { data: otherLivestreams = [] } = useLivestreams("live");
   
   // System settings for livestream gate
@@ -438,7 +440,9 @@ const WatchLive = () => {
                     })}
                   </span>
                 ) : null}
-                {/* View counts with context-aware labels and tooltips */}
+                {/* View counts with context-aware labels and tooltips —
+                    chỉ creator/admin thấy. */}
+                {canSeeViews && (
                 <TooltipProvider>
                   {isLive ? (
                     <>
@@ -483,6 +487,7 @@ const WatchLive = () => {
                     </Tooltip>
                   )}
                 </TooltipProvider>
+                )}
               </div>
 
               {/* Like & Share Buttons */}
@@ -555,7 +560,7 @@ const WatchLive = () => {
               {isEnded && (
                 <EndedLivestreamSEO
                   livestream={livestream}
-                  viewCount={viewCount}
+                  viewCount={canSeeViews ? viewCount : undefined}
                   tournamentSlug={null}
                 />
               )}
