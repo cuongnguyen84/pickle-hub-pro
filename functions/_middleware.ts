@@ -1311,7 +1311,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v127 (2026-09-16): /live/<id> stops listing ended siblings too, and the
   // World Cup 2026 results article is linked from both homes, the live hub
   // and every stream page.
-  const cacheKey = `pr:v127:${url.pathname}`;
+  // v128 (2026-10-05): refresh the VI footwork article after its cover image
+  // was added to the published CMS row.
+  const cacheKey = `pr:v128:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
