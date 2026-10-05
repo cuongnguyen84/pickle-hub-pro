@@ -10,6 +10,32 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-singles-strategy",
+    "publishedDate": "2026-10-05",
+    "updatedDate": "2026-10-05",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball singles",
+      "singles strategy",
+      "footwork",
+      "court coverage",
+      "shot placement",
+      "pickleball technique",
+      "pickleball drills"
+    ],
+    "ctaPath": "/san",
+    "ctaLabel": {
+      "en": "Find a court to practise singles",
+      "vi": "Tìm sân để tập đánh đơn"
+    },
+    "titleEn": "Pickleball Singles Strategy: Movement and Attack",
+    "titleVi": "Chiến thuật đánh đơn pickleball: Di chuyển và tấn công",
+    "metaTitleEn": "Pickleball Singles Strategy: Movement and Attack",
+    "metaTitleVi": "Chiến thuật đánh đơn pickleball hiệu quả",
+    "metaDescriptionEn": "Pickleball singles strategy for doubles players: recovery positioning, shot placement, when to speed up, a decision table and a 3-step practice plan.",
+    "metaDescriptionVi": "Đánh đơn pickleball: hồi vị đúng chỗ, điều bóng theo vị trí đối thủ, chọn lúc tăng tốc và giữ sức bền."
+  },
+  {
     "slug": "veolia-chicago-cup-2026-results",
     "publishedDate": "2026-10-05",
     "updatedDate": "2026-10-04",
