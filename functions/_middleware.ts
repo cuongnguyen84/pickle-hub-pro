@@ -1313,7 +1313,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // and every stream page.
   // v128 (2026-10-05): refresh the VI footwork article after its cover image
   // was added to the published CMS row.
-  const cacheKey = `pr:v128:${url.pathname}`;
+  // v129 (2026-10-05): refresh the VI singles strategy cover image.
+  const cacheKey = `pr:v129:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

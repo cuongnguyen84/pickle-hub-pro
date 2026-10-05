@@ -92,6 +92,8 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/pickleball-lob-technique-hero.webp": [1200, 675],
   "/images/blog/pickleball-rules-complete-guide-hero-768.webp": [768, 432],
   "/images/blog/pickleball-rules-complete-guide-hero.webp": [1600, 900],
+  "/images/blog/pickleball-singles-strategy-hero-768.webp": [768, 432],
+  "/images/blog/pickleball-singles-strategy-hero.webp": [1672, 941],
   "/images/blog/pickleball-third-shot-drop-vs-drive-hero-768.webp": [768, 432],
   "/images/blog/pickleball-third-shot-drop-vs-drive-hero.webp": [1600, 900],
   "/images/blog/pickleball-tour-wars-2023-hero-768.webp": [768, 512],
