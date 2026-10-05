@@ -1,4 +1,5 @@
 import { Eye } from "lucide-react";
+import { useCanSeeViewCounts } from "@/hooks/useCanSeeViewCounts";
 
 interface ViewCountBadgeProps {
   count: number | undefined;
@@ -11,7 +12,8 @@ function formatCount(n: number): string {
 }
 
 export function ViewCountBadge({ count, className }: ViewCountBadgeProps) {
-  if (count === undefined || count === null) return null;
+  const canSee = useCanSeeViewCounts();
+  if (!canSee || count === undefined || count === null) return null;
 
   return (
     <span className={`inline-flex items-center gap-1 text-muted-foreground ${className ?? ""}`}>

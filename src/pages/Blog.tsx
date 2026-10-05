@@ -5,6 +5,7 @@ import { blogMetadata } from "@/content/blog";
 import { usePublishedViBlogPosts } from "@/hooks/useViBlogPosts";
 import { useBlogPostViewCountsBatch, pairKey } from "@/hooks/useBlogPostViewCountsBatch";
 import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
+import { useCanSeeViewCounts } from "@/hooks/useCanSeeViewCounts";
 import { normalizeImageUrl } from "@/lib/url-utils";
 import { blogHeroSrcSet } from "@/lib/image-utils";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
@@ -97,9 +98,12 @@ const Blog = () => {
   const rest = visiblePosts.slice(1);
 
   // Batch fetch view counts for all visible posts in one query
-  const viewCounts = useBlogPostViewCountsBatch(
+  const allViewCounts = useBlogPostViewCountsBatch(
     visiblePosts.map((p) => ({ lang: p.lang, slug: p.slug })),
   );
+  // Lượt xem chỉ hiện cho creator/admin — map rỗng để ẩn luôn dấu "·" đi kèm.
+  const canSeeViews = useCanSeeViewCounts();
+  const viewCounts: typeof allViewCounts = canSeeViews ? allViewCounts : {};
 
   return (
     <TheLineLayout
