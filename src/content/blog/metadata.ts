@@ -10,6 +10,32 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-recovery-rest-hydration",
+    "publishedDate": "2026-10-06",
+    "updatedDate": "2026-10-06",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball recovery",
+      "pickleball hydration",
+      "pickleball injury prevention",
+      "pickleball for beginners",
+      "pickleball tournament scheduling",
+      "bracket lab",
+      "pickleball vietnam"
+    ],
+    "ctaPath": "/tools",
+    "ctaLabel": {
+      "en": "Build your draw in Bracket Lab",
+      "vi": "Tạo bảng đấu với Bracket Lab"
+    },
+    "titleEn": "Pickleball Recovery: Rest, Hydration and Listening to Your Body",
+    "titleVi": "Phục hồi sau khi chơi pickleball: nghỉ ngơi, bù nước và theo dõi cơ thể",
+    "metaTitleEn": "Pickleball Recovery: Rest, Hydration & Body Checks",
+    "metaTitleVi": "Phục hồi sau khi chơi pickleball đúng cách",
+    "metaDescriptionEn": "How to recover after pickleball: cool down, rest, drink to need, track symptoms, and know when to stop and see a doctor. A ThePickleHub guide.",
+    "metaDescriptionVi": "Cách phục hồi sau pickleball: giảm cường độ, nghỉ, uống nước, theo dõi cơ thể và biết khi nào cần tìm tư vấn y tế."
+  },
+  {
     "slug": "pickleball-singles-strategy",
     "publishedDate": "2026-10-05",
     "updatedDate": "2026-10-05",
