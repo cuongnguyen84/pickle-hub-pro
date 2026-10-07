@@ -10,6 +10,31 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-elbow-pain-causes-safe-steps",
+    "publishedDate": "2026-10-07",
+    "updatedDate": "2026-10-07",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball elbow",
+      "pickleball elbow pain",
+      "pickleball injury prevention",
+      "pickleball paddle",
+      "pickleball technique",
+      "pickleball for beginners"
+    ],
+    "ctaPath": "/clubs",
+    "ctaLabel": {
+      "en": "Find a club where a coach can watch your stroke",
+      "vi": "Tìm câu lạc bộ để được quan sát kỹ thuật"
+    },
+    "titleEn": "Pickleball Elbow Pain: Causes, What to Check and When to Stop",
+    "titleVi": "Đau khuỷu tay khi chơi pickleball: nguyên nhân, xử lý an toàn",
+    "metaTitleEn": "Pickleball Elbow Pain: Causes and Safe First Steps",
+    "metaTitleVi": "Đau khuỷu tay khi chơi pickleball: xử lý an toàn",
+    "metaDescriptionEn": "Pickleball elbow pain can stem from technique, paddle choice or playing more too fast. What to review, how to ease off and when to see a clinician.",
+    "metaDescriptionVi": "Đau khuỷu tay khi chơi pickleball: yếu tố cần rà soát, cách giảm tải an toàn và khi nào nên đi khám."
+  },
+  {
     "slug": "pickleball-recovery-rest-hydration",
     "publishedDate": "2026-10-06",
     "updatedDate": "2026-10-06",
