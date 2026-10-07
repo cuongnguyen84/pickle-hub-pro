@@ -38,7 +38,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     "slug": "veolia-chicago-cup-2026-results",
     "publishedDate": "2026-10-05",
-    "updatedDate": "2026-10-06",
+    "updatedDate": "2026-10-07",
     "author": "The PickleHub Team",
     "tags": [
       "pickleball",
