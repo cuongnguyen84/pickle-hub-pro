@@ -77,9 +77,9 @@ def draft(store, role, request, task_id):
                 "--tools", "Read,Glob,Grep,Edit,Write", "--allowedTools", ",".join(allowed + ["Read", "Glob", "Grep"]),
                 "--disallowedTools", ",".join(deny), "--permission-mode", "dontAsk",
                 "--permission-prompts", "none", "--strict-mcp-config", "--mcp-config", '{"mcpServers":{}}',
-                "--disable-slash-commands", "--no-session-persistence", "--max-turns", "16",
+                "--disable-slash-commands", "--no-session-persistence", "--max-turns", "40",  # 16 cut every engineering draft mid-edit (T147/T149, 07/10)
                 "--output-format", "json"]
-        rc, out, _ = team.command(argv, cwd=worktree, timeout=600, env=team.clean_env())
+        rc, out, _ = team.command(argv, cwd=worktree, timeout=1500, env=team.clean_env())
         response = json.loads(out)
         if rc or response.get("is_error") or not response.get("result") or team.claude_quota_exhausted(response):
             diagnostic = team.scrub({key: response.get(key) for key in ('subtype', 'is_error', 'errors', 'result', 'num_turns')})

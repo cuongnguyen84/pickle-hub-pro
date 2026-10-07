@@ -137,6 +137,9 @@ def render_result(task, note):
     return '\n'.join(lines)[:3600]
 
 
+NOTIFY_COOLDOWN = 6 * 3600
+
+
 def reconcile(store, check, entry, transitions=(), notify=True, silent_task_id=None):
     """Recoverable across crashes: transition state + outbox insert share a transaction."""
     now = entry['measured_at']
@@ -177,7 +180,16 @@ def reconcile(store, check, entry, transitions=(), notify=True, silent_task_id=N
             transition = transitioned.get(task['id']) or store.get(f'finding_transition:{task["id"]}')
             first_resolution = current['phase'] == 'resolved' and (transition or (not previous and had_decision))
             should_notify = changed and (bool(previous) or bool(first_resolution) or bool(transition))
-            if notify and should_notify and task['id'] != silent_task_id:
+            # Intermittent jobs (T40/T41/T59) flipped open/closed ~20×/day. Swallow the flap pair: a reopen
+            # within NOTIFY_COOLDOWN of an announced close, and the close that follows an unannounced reopen.
+            # ponytail: time window only; hysteresis on consecutive reads if a real reopen ever gets missed.
+            row = store.db.execute('SELECT value FROM meta WHERE key=?', (f'notified:{task["id"]}',)).fetchone()
+            last = json.loads(row[0]) if row else None
+            resolved = current['phase'] == 'resolved'
+            flap = last is not None and last['resolved'] and (resolved or now - last['at'] < NOTIFY_COOLDOWN)
+            if notify and should_notify and task['id'] != silent_task_id and not flap:
+                store.db.execute('INSERT INTO meta VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
+                                 (f'notified:{task["id"]}', json.dumps({'at': now, 'resolved': resolved})))
                 body = render_result(task, note)
                 if previous.get('phase') == 'resolved' and current['phase'] not in {'resolved','unverified'}:
                     body = '🔁 LỖI TÁI DIỄN — MỞ LẠI CÙNG MÃ\n' + body
