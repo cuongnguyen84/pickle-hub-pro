@@ -59,9 +59,20 @@ class VerificationTests(unittest.TestCase):
         count = len(self.messages())
         self.observe('community', self.community([]), self.now + 600)
         self.assertEqual(len(self.messages()), count)
-        self.observe('community', self.community(['r2']), self.now + 900)
+        self.observe('community', self.community(['r2']), self.now + 300 + verify.NOTIFY_COOLDOWN + 1)
         self.assertEqual(self.task(task['dedupe'])['id'], task['id'])
         self.assertEqual(self.task(task['dedupe'])['status'], 'open')
+        self.assertIn('TÁI DIỄN', self.messages()[-1][0])
+
+    def test_flapping_finding_is_silent_inside_cooldown(self):
+        self.observe('site', {'problems': {'down':'Site down'}})
+        self.observe('site', {'problems': {}}, self.now + 300)
+        count = len(self.messages())  # open + close announced
+        for i in range(1, 5):  # reopen/close every 30' — what T40/T41 did on 07/10
+            self.observe('site', {'problems': {'down':'Site down'}}, self.now + 300 + i * 3600)
+            self.observe('site', {'problems': {}}, self.now + 300 + i * 3600 + 1800)
+        self.assertEqual(len(self.messages()), count)
+        self.observe('site', {'problems': {'down':'Site down'}}, self.now + 300 + verify.NOTIFY_COOLDOWN + 1)
         self.assertIn('TÁI DIỄN', self.messages()[-1][0])
 
     def test_reviewed_is_not_terminal_even_with_resolved_timestamp(self):
