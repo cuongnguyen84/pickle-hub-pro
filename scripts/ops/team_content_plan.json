@@ -1,83 +1,162 @@
 {
-  "week": "2026-09-14",
-  "scope": "Refresh existing Vietnamese articles; retain URLs, original publication dates and English alternates. No new pages, broadcasts or business-data writes.",
   "items": [
     {
-      "key": "2026-09-15-kl-finals",
-      "at": "2026-09-15T08:00:00+07:00",
-      "id": "870d0383-9c23-4dec-ae73-eb624b525418",
-      "slug": "ket-qua-kuala-lumpur-cup-2026",
-      "title": "Kuala Lumpur Cup: kết quả 5 chung kết Pro",
-      "keyword": "kết quả Kuala Lumpur Cup 2026",
+      "key": "2026-09-23-lich-giai-trang-thai",
+      "at": "2026-09-23T08:00:00+07:00",
+      "id": "c1a13d21-aab3-4168-97bb-8ebe3d703428",
+      "slug": "lich-giai-pickleball-viet-nam-2026",
+      "title": "Lịch giải Việt Nam: trạng thái sau 23/9 và chặng kế tiếp",
+      "keyword": "lịch thi đấu pickleball",
       "sources": [
-        "https://www.ppatour-asia.com/partners-in-gold-irvine-and-tardio-clean-up-in-kl/"
-      ],
-      "section": "<h2>Kết quả chung kết Pro ngày 13/9/2026</h2><p>Cập nhật ngày 15/9/2026: giải đã kết thúc. Theo bản tin tổng kết chính thức PPA Tour Asia ngày 13/9, năm danh hiệu Pro được xác định như sau; tỷ số dưới đây ghi theo thứ tự của bên vô địch.</p><ul><li>Đơn nam: Tama Shimabukuro thắng Noe Khlif 11–8, 11–5.</li><li>Đơn nữ: Kaitlyn Christian thắng Brooke Buckner 9–11, 11–4, 11–5.</li><li>Đôi nam: Gabriel Tardio / Noe Khlif thắng Augustus Ge / Len Yang 11–9, 11–4.</li><li>Đôi nữ: Jessie Irvine / Alix Truong thắng Sahra Dennehy / Danni-Elle Townsend 5–11, 11–5, 11–6.</li><li>Đôi nam nữ: Jessie Irvine / Gabriel Tardio thắng Danni-Elle Townsend / Joey Wild 5–11, 11–3, 12–10.</li></ul><p>Nguồn: <a href=\"https://www.ppatour-asia.com/partners-in-gold-irvine-and-tardio-clean-up-in-kl/\">bản tin tổng kết PPA Tour Asia ngày 13/9</a>.</p><h2>Lưu trữ diễn biến trước chung kết</h2><p>Các phần bên dưới là bản ghi ở thời điểm trước chung kết. Những câu mô tả đang chờ kết quả hoặc chưa xác minh nhà vô địch không còn đại diện cho tình trạng hiện tại. Dùng bảng kết quả ở đầu bài để tra cứu kết quả cuối giải.</p>",
-      "excerpt": "Kết quả 5 chung kết Pro Kuala Lumpur Cup 2026 ngày 13/9, kèm tỷ số từng game và nguồn PPA Tour Asia chính thức.",
-      "champions_faq": "Đơn nam: Tama Shimabukuro; đơn nữ: Kaitlyn Christian; đôi nam: Gabriel Tardio / Noe Khlif; đôi nữ: Jessie Irvine / Alix Truong; đôi nam nữ: Jessie Irvine / Gabriel Tardio. Nguồn: bản tin tổng kết PPA Tour Asia ngày 13/9/2026."
-    },
-    {
-      "key": "2026-09-16-world-cup-navigation",
-      "at": "2026-09-16T08:00:00+07:00",
-      "id": "a21e33cf-e9a2-452c-a6ee-418dc85930f6",
-      "slug": "lich-thi-dau-pickleball-world-cup-2026-da-nang",
-      "title": "World Cup Đà Nẵng: lịch lưu trữ và link tra kết quả",
-      "keyword": "lịch thi đấu pickleball world cup",
-      "sources": [
-        "https://www.thepicklehub.net/vi/blog/lich-thi-dau-pickleball-world-cup-2026-da-nang",
+        "https://www.thepicklehub.net/vi/blog/hong-kong-slam-2026",
         "https://www.thepicklehub.net/vi/blog/ket-qua-pickleball-world-cup-2026-da-nang"
       ],
-      "section": "<h2>Lịch World Cup 2026 Đà Nẵng: bản lưu trữ sau giải</h2><p>World Cup Pickleball 2026 tại Đà Nẵng đã khép lại ngày 6/9. Lịch bên dưới được giữ để tra cứu các ngày thi đấu của giải, không phải lịch trực tiếp hôm nay. Nếu bạn đến từ kết quả tìm kiếm có chữ ‘hôm nay’, hãy chọn đúng nhu cầu trước khi đọc tiếp.</p><ul><li>Muốn biết ai thắng hoặc tỷ số chung kết: mở <a href=\"/vi/blog/ket-qua-pickleball-world-cup-2026-da-nang\">bài kết quả World Cup Đà Nẵng</a>.</li><li>Muốn xác định trận thuộc ngày nào: dùng lịch lưu trữ trong bài này và phân biệt Giải Đồng đội Quốc gia với Giải Cá nhân.</li><li>Muốn tìm các giải khác để theo dõi: mở <a href=\"/live\">trang trực tiếp và giải đấu</a>, kiểm tra tên giải cùng ngày thi đấu; không suy ra giải đang phát chỉ vì có một trang giới thiệu.</li></ul><h3>Ba bước tránh nhầm kết quả</h3><ol><li>Đối chiếu tên nội dung: đơn, đôi, đôi nam nữ hay đồng đội. Kết quả một trận đôi không phải kết quả cả cuộc đối đầu đồng đội.</li><li>Đối chiếu vòng đấu: bảng, tứ kết, bán kết hay chung kết. Một trận thắng vòng bảng không xác nhận danh hiệu vô địch.</li><li>Đối chiếu thời điểm cập nhật và nguồn được dẫn trong bài kết quả. Nếu chưa có tỷ số được xác minh, không dùng dự đoán trước giải làm kết quả.</li></ol><p>Phần lịch nguyên bản được giữ bên dưới để các liên kết cũ vẫn có giá trị tra cứu. Những hướng dẫn theo dõi trực tiếp trong bản lưu trữ cần được hiểu trong bối cảnh thời gian diễn ra giải.</p>"
+      "section": "<h2>Lịch thi đấu pickleball: trạng thái ngày 23/9/2026</h2><p>Cập nhật 23/9/2026 — lịch giải do ThePickleHub theo dõi. Ba giải lớn trên sân nhà và trong khu vực đã khép lại: Ho Chi Minh City Open 2026 (6–9/8/2026), Heineken Pickleball World Cup 2026 tại Đà Nẵng (30/8–6/9/2026) và Kuala Lumpur Cup 2026 (9–13/9/2026). Chặng kế tiếp là Hang Seng Bank Hong Kong Slam 2026, thi đấu 19–25/10/2026 tại Kai Tak Arena, Hong Kong.</p><p>Nếu bạn tìm lịch vì muốn xem trận <strong>hôm nay</strong>, hãy chọn đúng việc cần làm:</p><ul><li>Xem chặng sắp diễn ra và cách theo dõi: <a href=\"/vi/blog/hong-kong-slam-2026\">Hong Kong Slam 2026, 19–25/10</a>.</li><li>Tra kết quả và tỷ số chung kết World Cup Đà Nẵng: <a href=\"/vi/blog/ket-qua-pickleball-world-cup-2026-da-nang\">kết quả World Cup 2026</a>.</li><li>Kiểm tra giải nào đang phát trực tiếp: <a href=\"/live\">trang trực tiếp</a>; đừng suy ra một giải đang diễn ra chỉ vì có bài giới thiệu.</li><li>Tìm sân để tự tổ chức trận: <a href=\"/san\">danh mục sân pickleball</a>.</li></ul><p>Phần dưới giữ nguyên lịch chi tiết từng giải trong năm 2026 kèm ngày kiểm tra nguồn.</p>",
+      "excerpt": "Lịch giải pickleball 2026: ba giải lớn đã kết thúc, chặng kế Hong Kong Slam 19–25/10 tại Kai Tak Arena."
     },
     {
-      "key": "2026-09-17-eight-teams",
-      "at": "2026-09-17T08:00:00+07:00",
-      "id": "93d9a6cf-3a4a-4222-9fb5-2d01fabbad02",
-      "slug": "cach-chia-bang-xep-lich-thi-dau-pickleball",
-      "title": "Chia 8 đội trên 2 sân: ví dụ lịch và số trận",
-      "keyword": "chia bảng pickleball 8 đội 2 sân",
+      "key": "2026-09-24-mlp-la-gi",
+      "at": "2026-09-24T08:00:00+07:00",
+      "id": "e377c10c-3792-4a8c-b5a0-135fc7b65c14",
+      "slug": "the-thuc-mlp-la-gi",
+      "title": "MLP là gì — trả lời thẳng trong hai câu đầu",
+      "keyword": "mlp pickleball là gì",
       "sources": [
-        "https://www.thepicklehub.net/vi/tools"
+        "https://www.thepicklehub.net/vi/blog/cac-the-thuc-giai-pickleball"
       ],
-      "section": "<h2>Ví dụ thực hành: 8 đội pickleball, 2 sân</h2><p>Trước khi bốc thăm, hãy chọn giữa hai mục tiêu: mọi đội đều gặp nhau, hay giữ số trận vừa với thời gian thuê sân. Hai phương án dưới đây chỉ là ví dụ tổ chức, không phải quy định bắt buộc của môn pickleball.</p><h3>Phương án A: một bảng vòng tròn</h3><p>Tám đội gặp nhau một lần tạo 8 × 7 ÷ 2 = 28 trận. Với hai sân, riêng tổng tải thi đấu tương đương ít nhất 14 lượt, mỗi lượt có hai trận diễn ra đồng thời trên hai sân; thời gian thực tế còn phụ thuộc nghỉ giữa trận, trận kéo dài và đội sẵn sàng. Không lấy 14 lượt này làm lịch đảm bảo khi chưa xếp từng cặp.</p><p>Ví dụ giả định mỗi lượt cần 20 phút gồm thi đấu và chuyển sân, 14 lượt tương đương 280 phút (4 giờ 40 phút), chưa cộng nghỉ bổ sung và trận kéo dài. Đây là cách ước tính tải sân, không phải dự báo thời lượng thực tế; cần thay bằng thời lượng và quy định nghỉ của giải mình.</p><h3>Phương án B: hai bảng bốn đội, lấy hai đội mỗi bảng</h3><p>Mỗi bảng có 4 × 3 ÷ 2 = 6 trận. Hai bảng có 12 trận vòng bảng, thêm hai bán kết và một chung kết thành 15 trận; có tranh hạng ba thì là 16. Mỗi đội được chơi ba trận vòng bảng. Số trận ít hơn phương án A nhưng các đội không gặp đủ mọi đối thủ.</p><h3>Lịch vòng bảng mẫu</h3><p>Gán bảng A gồm A1–A4 và bảng B gồm B1–B4. Mỗi lượt dưới đây dùng sân 1 cho bảng A, sân 2 cho bảng B:</p><ol><li>A1–A4; B1–B4.</li><li>A2–A3; B2–B3.</li><li>A1–A3; B1–B3.</li><li>A4–A2; B4–B2.</li><li>A1–A2; B1–B2.</li><li>A3–A4; B3–B4.</li></ol><p>Mỗi cặp trong một bảng xuất hiện đúng một lần. Một số đội có trận ở hai lượt liên tiếp, nên ban tổ chức phải chèn thời gian nghỉ phù hợp hoặc điều chỉnh thứ tự trước khi công bố. Sau vòng bảng, chốt bảng xếp hạng theo tiêu chí đã thông báo, rồi xếp nhất A gặp nhì B và nhất B gặp nhì A.</p><p>Dùng <a href=\"/vi/tools\">công cụ tạo bảng đấu</a> để dựng bản nháp, kiểm lại trùng cặp và thời gian nghỉ; xem <a href=\"/vi/blog/cong-cu-tao-vong-tron-pickleball\">hướng dẫn vòng tròn</a> nếu cần hiểu cách tính số trận trước khi chọn thể thức.</p>"
+      "section": "<h2>MLP trong pickleball là gì?</h2><p>MLP là viết tắt của Major League Pickleball, thể thức thi đấu <strong>đồng đội</strong> trong đó mỗi cuộc đọ sức gồm bốn trận đôi: một trận đôi nữ, một trận đôi nam và hai trận đôi nam nữ. Đội thắng nhiều trận hơn thắng chung cuộc; nếu hoà 2–2 thì phân định bằng Dreambreaker — trận đơn luân phiên giữa bốn thành viên hai đội. ThePickleHub dùng đúng thể thức này trong công cụ tạo giải đồng đội.</p><p>Ba điểm khiến MLP khác giải cá nhân thông thường:</p><ul><li><strong>Đội là đơn vị tính</strong>: một tay vợt thua vẫn có thể nằm trong đội thắng, nên xếp lineup là quyết định chiến thuật.</li><li><strong>Bốn trận cố định</strong>: mỗi thành viên đều ra sân, không ai ngồi ngoài cả buổi.</li><li><strong>Dreambreaker</strong>: trận quyết định chạy theo lượt điểm luân phiên, nên đội yếu hơn trên giấy vẫn có cửa.</li></ul><p>So sánh MLP với vòng tròn, loại trực tiếp và loại kép: <a href=\"/vi/blog/cac-the-thuc-giai-pickleball\">các thể thức giải pickleball</a>. Muốn dựng một giải MLP của riêng bạn, dùng <a href=\"/tools\">công cụ tạo giải</a>.</p>",
+      "excerpt": "MLP là thể thức đồng đội gồm bốn trận đôi, hoà 2–2 thì phân định bằng Dreambreaker."
     },
     {
-      "key": "2026-09-18-venue-checklist",
-      "at": "2026-09-18T08:00:00+07:00",
-      "id": "a322b2ca-85d7-4b52-a505-bc9758bd88ef",
-      "slug": "san-pickleball-tphcm",
-      "title": "Tìm sân TP.HCM: checklist xác nhận trước khi đặt",
-      "keyword": "sân pickleball tphcm",
+      "key": "2026-09-25-round-robin-la-gi",
+      "at": "2026-09-25T08:00:00+07:00",
+      "id": "36ec16ee-2b5b-4857-968e-da852aa4501e",
+      "slug": "cong-cu-tao-vong-tron-pickleball",
+      "title": "Round robin là gì và cần bao nhiêu trận",
+      "keyword": "round robin pickleball là gì",
       "sources": [
-        "https://www.thepicklehub.net/san",
-        "https://www.thepicklehub.net/vi/blog/san-pickleball-tphcm"
+        "https://www.thepicklehub.net/tools"
       ],
-      "section": "<h2>Checklist đặt sân TP.HCM cho nhóm chơi cuối tuần</h2><p>Danh bạ giúp tìm địa điểm, nhưng thông tin xuất hiện trên một trang không xác nhận sân còn trống hay mức giá áp dụng cho giờ bạn chọn. Trước khi chuyển tiền, hãy chốt các mục sau trực tiếp với đơn vị vận hành sân.</p><ol><li><strong>Đúng địa điểm:</strong> xin ghim bản đồ và tên cơ sở; kiểm tra lối vào, khu gửi xe và thời gian di chuyển của cả nhóm.</li><li><strong>Đúng khung giờ:</strong> ghi rõ ngày, giờ bắt đầu, giờ kết thúc và số sân. Hỏi sân có được giữ liền mạch hay phải đổi giữa buổi.</li><li><strong>Đúng tổng tiền:</strong> hỏi giá theo sân hay theo người; đã gồm đèn, thuế và các phụ phí chưa. Giá tham khảo trong bài không phải báo giá đặt sân.</li><li><strong>Đúng điều kiện chơi:</strong> xác nhận sân có mái che hay ngoài trời, mặt sân có khô khi mưa và phương án nếu thời tiết không phù hợp.</li><li><strong>Đúng dụng cụ:</strong> hỏi có thuê vợt, bóng và chi phí riêng không; đừng mặc định mọi sân đều cung cấp.</li><li><strong>Đúng điều kiện đổi huỷ:</strong> chốt thời hạn đổi lịch, điều kiện hoàn cọc và cách xác nhận thanh toán bằng văn bản.</li></ol><h3>Mẫu tin nhắn hỏi sân</h3><p>‘Nhóm mình muốn đặt [số sân] ngày [ngày], từ [giờ] đến [giờ]. Nhờ sân xác nhận còn chỗ, tổng phí đã gồm đèn/phụ phí, điều kiện đổi huỷ và gửi vị trí cơ sở. Nhóm cần thuê [số vợt] nếu có.’</p><p>Bắt đầu từ <a href=\"/san\">danh bạ sân pickleball</a>, chọn vài địa điểm phù hợp rồi xác nhận trực tiếp. Nếu nhóm có nhiều đội muốn giao lưu, xem <a href=\"/vi/blog/cach-chia-bang-xep-lich-thi-dau-pickleball\">cách chia bảng và xếp lịch</a> để ước tính số sân cần thuê. Các mức giá cũ bên dưới chỉ có ý nghĩa tham khảo, không phải xác nhận giá hiện hành.</p>"
+      "section": "<h2>Round robin pickleball là gì?</h2><p>Round robin, tiếng Việt gọi là vòng tròn, là thể thức mà mỗi đội đấu với <strong>tất cả</strong> các đội còn lại trong bảng, không ai bị loại sau một trận thua. Số trận tính bằng công thức n×(n−1)/2: 4 đội cần 6 trận, 5 đội cần 10 trận, 6 đội cần 15 trận, 8 đội cần 28 trận. ThePickleHub xếp lịch vòng tròn tự động theo số sân bạn có, nên biết trước buổi đấu kéo dài bao lâu.</p><p>Chọn vòng tròn khi bạn muốn:</p><ul><li>Mọi người chơi đủ số trận, hợp với giải nội bộ câu lạc bộ và buổi giao lưu.</li><li>Xếp hạng theo thành tích cả bảng thay vì một trận knock-out may rủi.</li><li>Lấy 2 đội đầu bảng đi tiếp vào vòng loại trực tiếp, cách làm phổ biến nhất ở giải phong trào Việt Nam.</li></ul><p>Số lẻ đội thì mỗi vòng có một đội được <strong>bye</strong> — nghỉ một lượt. Xếp lịch cho 5 đội, 7 đội hay bất kỳ số nào bằng <a href=\"/tools\">công cụ tạo vòng tròn</a>.</p>",
+      "excerpt": "Vòng tròn là thể thức mọi đội gặp nhau; số trận bằng n×(n−1)/2, 5 đội là 10 trận."
     },
     {
-      "key": "2026-09-19-first-session",
-      "at": "2026-09-19T08:00:00+07:00",
-      "id": "44a46664-5ff8-4ae7-9229-b8303c4df17a",
-      "slug": "cach-choi-pickleball-cho-nguoi-moi",
-      "title": "Người mới: mục tiêu và phiếu tự kiểm buổi đầu",
-      "keyword": "cách chơi pickleball cho người mới",
+      "key": "2026-09-26-loi-thuong-gap",
+      "at": "2026-09-26T08:00:00+07:00",
+      "id": "a985dca7-d389-40c0-8126-280f90d17e82",
+      "slug": "loi-thuong-gap-khi-choi-pickleball",
+      "title": "10 lỗi thường gặp — danh sách nhanh ngay đầu bài",
+      "keyword": "lỗi thường gặp khi chơi pickleball",
       "sources": [
-        "https://www.thepicklehub.net/vi/blog/cach-choi-pickleball-cho-nguoi-moi",
-        "https://www.thepicklehub.net/vi/blog/cach-tinh-diem-pickleball"
+        "https://www.thepicklehub.net/vi/blog/luat-pickleball-co-ban"
       ],
-      "section": "<h2>Buổi đầu nên học gì để không bị quá tải?</h2><p>Mục tiêu của buổi đầu không phải thắng một ván hay đánh được mọi kỹ thuật. Hãy ưu tiên hiểu cách bắt đầu một pha bóng, đưa bóng qua lưới có kiểm soát và biết mình cần hỏi gì khi vào sân. Đây là gợi ý tổ chức buổi làm quen, không phải cam kết đạt một trình độ sau số ngày cố định.</p><h3>Ba việc nên thống nhất với bạn tập</h3><ul><li><strong>Mục tiêu pha bóng:</strong> chọn một việc mỗi lượt, chẳng hạn hướng bóng vào vùng sân đã chọn; không vừa thay cách cầm vợt vừa cố tăng lực đánh.</li><li><strong>Cách phản hồi:</strong> sau vài pha, chỉ ghi một điểm làm được và một điểm cần thử lại. Tránh sửa quá nhiều chi tiết cùng lúc.</li><li><strong>Cách tính điểm:</strong> trước khi chơi thử, nhờ người hướng dẫn giải thích thể thức đang dùng và làm mẫu cách đọc điểm. Không trộn hướng dẫn của hai thể thức khác nhau.</li></ul><h3>Phiếu tự kiểm sau buổi chơi</h3><ol><li>Tôi có thể chỉ đúng các khu vực sân khi người hướng dẫn hỏi không?</li><li>Tôi có biết bên nào giao bóng và ai đọc điểm trước pha bóng không?</li><li>Tôi có đưa bóng đến vùng mục tiêu một cách chủ động, hay chỉ cố đánh mạnh?</li><li>Tôi có một câu hỏi cụ thể để nhờ người có kinh nghiệm hướng dẫn ở buổi sau không?</li></ol><p>Đánh dấu ‘chưa rõ’ cũng hữu ích: đó là danh sách việc cần học, không phải điểm đánh giá năng lực. Nếu phần khó nhất là nhớ điểm, đọc <a href=\"/vi/blog/cach-tinh-diem-pickleball\">hướng dẫn chấm điểm</a> trước buổi tiếp theo. Nếu chưa có chỗ tập, dùng <a href=\"/san\">danh bạ sân</a> và hỏi địa điểm có buổi làm quen phù hợp hay không. Phần hướng dẫn kỹ thuật chi tiết nằm bên dưới; bạn không cần học hết trong một lần.</p>"
+      "section": "<h2>10 lỗi thường gặp khi chơi pickleball</h2><p>Người chơi Việt Nam thường chững lại ở mức 3.0–3.5 vì mười thói quen dưới đây, không phải vì thiếu năng khiếu. ThePickleHub liệt kê nguyên danh sách ngay đầu bài để bạn tìm đúng lỗi của mình rồi đọc phần sửa bên dưới.</p><ol><li>Giao bóng phạm luật mà không biết — tay vợt cao hơn cổ tay lúc chạm bóng.</li><li>Chạm khu bếp (kitchen) khi vô-lê, kể cả khi đà kéo chân vào sau cú đánh.</li><li>Đập mạnh mọi quả, bỏ qua cú thả bóng (drop) từ cuối sân.</li><li>Đứng lì ở cuối sân, không tiến lên vạch non-volley.</li><li>Cầm vợt quá chặt và sai kiểu cầm.</li><li>Thiếu kiên nhẫn trong màn dink, đánh hỏng trước đối thủ.</li><li>Đứng sai vị trí, không di chuyển cùng đồng đội theo một khối.</li><li>Bỏ quên cú thứ ba, đánh thẳng vào người chắn lưới.</li><li>Không gọi bóng với đồng đội, hai người cùng nhường quả giữa sân.</li><li>Chơi khi chưa khởi động, dễ chấn thương cổ chân và vai.</li></ol><p>Luật giao bóng và khu bếp chi tiết: <a href=\"/vi/blog/luat-pickleball-co-ban\">luật pickleball cơ bản</a>.</p>",
+      "excerpt": "Mười lỗi khiến người chơi chững ở mức 3.0–3.5, kèm cách sửa nhanh từng lỗi."
     },
     {
-      "key": "2026-09-20-budget-scenarios",
-      "at": "2026-09-20T08:00:00+07:00",
-      "id": "bef58fac-339c-4270-ac3b-b9a0a7391879",
-      "slug": "du-toan-ngan-sach-giai-pickleball",
-      "title": "Ngân sách giải CLB: bảng giả định khi thiếu người",
-      "keyword": "dự toán ngân sách giải pickleball",
+      "key": "2026-09-30-bracket-so-doi",
+      "at": "2026-09-30T08:00:00+07:00",
+      "id": "2bb1dfa9-e81e-4110-a905-dd6c887d0f81",
+      "slug": "cach-tao-bracket-pickleball",
+      "title": "Bracket pickleball: số đội quyết định số vòng",
+      "keyword": "pickleball bracket",
       "sources": [
-        "https://www.thepicklehub.net/vi/blog/du-toan-ngan-sach-giai-pickleball"
+        "https://www.thepicklehub.net/tools"
       ],
-      "section": "<h2>Đừng chỉ lập ngân sách cho kịch bản đủ người</h2><p>Một bảng dự toán hữu ích phải trả lời: nếu số người tham gia thấp hơn dự kiến, khoản nào vẫn phải trả? Ví dụ dưới đây là phép tính minh hoạ tự xây dựng, không phải báo giá sân, mức lệ phí khuyến nghị hay dữ liệu của một giải đã diễn ra.</p><h3>Tách chi phí cố định và chi phí theo người</h3><p>Giả sử chi phí cố định là 4.800.000 đồng, chi phí biến đổi là 50.000 đồng/người, và khoản thu đăng ký giả định là 200.000 đồng/người. Trong ví dụ, một người là một người chơi đăng ký, không phải một đội/cặp. Chưa tính tài trợ, hoàn tiền hay khoản khác:</p><ul><li>32 người: thu 6.400.000 đồng; chi 4.800.000 + 1.600.000 = 6.400.000 đồng; chênh lệch bằng 0.</li><li>24 người: thu 4.800.000 đồng; chi 4.800.000 + 1.200.000 = 6.000.000 đồng; thiếu 1.200.000 đồng.</li><li>40 người: thu 8.000.000 đồng; chi 4.800.000 + 2.000.000 = 6.800.000 đồng; còn 1.200.000 đồng trước các khoản chưa tính.</li></ul><p>Trong mô hình này, số người hoà vốn là 4.800.000 ÷ (200.000 − 50.000) = 32. Công thức chỉ dùng được khi khoản thu mỗi người lớn hơn chi phí biến đổi mỗi người. Nếu bằng hoặc thấp hơn, thêm người không giúp bù phần chi phí cố định theo mô hình đó.</p><h3>Ba cột cần thêm vào bảng thực tế</h3><ol><li><strong>Đã cam kết:</strong> khoản không thể huỷ hoặc giảm khi ít người tham gia.</li><li><strong>Chưa xác nhận:</strong> tài trợ, giá thuê và các khoản thu dự kiến; không coi là tiền chắc chắn có.</li><li><strong>Điều kiện thay đổi:</strong> mốc chốt người, thời hạn huỷ sân và chi phí tăng khi thêm sân hoặc kéo dài thời gian.</li></ol><p>Thay toàn bộ số giả định bằng báo giá và điều kiện của giải mình trước khi quyết định. Đối chiếu <a href=\"/vi/blog/cach-chia-bang-xep-lich-thi-dau-pickleball\">số trận và lịch sân</a> rồi mới chốt số giờ thuê. Có thể dùng <a href=\"/vi/tools\">công cụ chia bảng</a> để kiểm tra phương án thi đấu; công cụ không thay thế báo giá của nhà cung cấp.</p>"
+      "section": "<h2>Bracket pickleball là gì và cần bao nhiêu vòng?</h2><p>Bracket là sơ đồ xác định ai gặp ai và giải tiến triển thế nào tới trận chung kết. Với loại trực tiếp, số vòng phụ thuộc số đội: 4 đội đấu 2 vòng và 3 trận, 8 đội đấu 3 vòng và 7 trận, 16 đội đấu 4 vòng và 15 trận, 32 đội đấu 5 vòng và 31 trận. ThePickleHub sinh bracket theo đúng các con số này, kèm vị trí <strong>bye</strong> khi số đội không phải luỹ thừa của 2.</p><p>Ba loại bracket dùng nhiều nhất ở giải phong trào:</p><ul><li><strong>Loại trực tiếp</strong>: nhanh nhất, thua một trận là dừng — hợp khi ít sân và ít thời gian.</li><li><strong>Loại kép</strong>: mỗi đội được thua một lần, số trận khoảng gấp đôi nhưng công bằng hơn.</li><li><strong>Vòng tròn rồi cắt</strong>: đấu bảng trước, lấy 2 đội đầu vào bracket — phổ biến nhất cho giải câu lạc bộ.</li></ul><p>Tạo bracket cho số đội bất kỳ, in ra hoặc chấm điểm trực tiếp: <a href=\"/tools\">công cụ tạo bracket</a>.</p>",
+      "excerpt": "Bracket loại trực tiếp: 8 đội là 3 vòng 7 trận, 16 đội là 4 vòng 15 trận."
+    },
+    {
+      "key": "2026-10-01-wpr-ppa-ranking",
+      "at": "2026-10-01T08:00:00+07:00",
+      "id": "6a2bf7f1-f876-4d9a-bc9c-8c8459c1c3de",
+      "slug": "bang-xep-hang-pickleball-the-gioi-wpr",
+      "title": "WPR và PPA ranking: xem bảng xếp hạng ở đâu",
+      "keyword": "ppa ranking",
+      "sources": [
+        "https://www.thepicklehub.net/rankings/ppa-tour"
+      ],
+      "section": "<h2>Bảng xếp hạng PPA và WPR: tra ở đâu, tính thế nào</h2><p>Ngày 5/8/2026, Carvana PPA Tour công bố World Pickleball Rankings (WPR), thay cho cách xếp hạng cũ của tour. ThePickleHub cập nhật bảng WPR theo tuần tại <a href=\"/rankings/ppa-tour\">trang bảng xếp hạng PPA Tour</a>, tách riêng từng nội dung đơn nam, đơn nữ, đôi nam, đôi nữ và đôi nam nữ.</p><p>Ba điều cần nắm trước khi đọc một con số thứ hạng:</p><ul><li><strong>WPR gom mọi giải PPA trên thế giới</strong>, gồm cả chặng châu Á, nên thứ hạng phản ánh cả mùa chứ không phải một giải.</li><li><strong>WPR khác DUPR</strong>: WPR xếp hạng vận động viên chuyên nghiệp theo thành tích giải, DUPR đo trình độ mọi người chơi theo từng trận.</li><li><strong>Thứ hạng đổi theo tuần</strong>, nên luôn đối chiếu ngày cập nhật ghi trên bảng thay vì trích lại số cũ.</li></ul><p>Trình độ cá nhân của bạn được đo bằng DUPR: <a href=\"/vi/blog/dupr-la-gi-huong-dan-cho-nguoi-choi-viet-nam\">DUPR là gì</a>.</p>",
+      "excerpt": "WPR do PPA Tour công bố 5/8/2026 gom mọi giải toàn cầu; DUPR đo trình độ từng người chơi."
+    },
+    {
+      "key": "2026-10-02-hong-kong-slam-truoc-giai",
+      "at": "2026-10-02T08:00:00+07:00",
+      "id": "645ceffc-9938-4690-b9d2-c3ad7cbe9d53",
+      "slug": "hong-kong-slam-2026",
+      "title": "Hong Kong Slam 2026: còn hai tuần, ngày và địa điểm",
+      "keyword": "hong kong slam 2026",
+      "sources": [
+        "https://www.thepicklehub.net/vi/blog/ppa-tour-asia-2026-lich-thi-dau-tien-thuong"
+      ],
+      "section": "<h2>Hong Kong Slam 2026 thi đấu ngày nào, ở đâu</h2><p>Cập nhật 2/10/2026 — Hang Seng Bank Hong Kong Slam 2026 thi đấu từ <strong>19 đến 25/10/2026</strong> tại Kai Tak Arena, Hong Kong, là chặng PPA Asia 1500 và cũng là giải Slam pickleball đầu tiên của châu Á. Còn khoảng hai tuần tính từ hôm nay. ThePickleHub theo dõi lịch từng ngày cùng cách xem trực tiếp cho người ở Việt Nam.</p><p>Vì sao chặng này đáng chú ý hơn một chặng PPA Asia thông thường:</p><ul><li><strong>Mức 1500</strong> là bậc điểm cao nhất của hệ PPA Asia, nên kết quả tác động mạnh tới bảng xếp hạng cuối mùa.</li><li><strong>Kai Tak Arena</strong> là nhà thi đấu trong nhà, lịch không phụ thuộc thời tiết như các chặng ngoài trời.</li><li>Đây là chặng gần Việt Nam nhất còn lại trong năm 2026 sau khi World Cup Đà Nẵng và Kuala Lumpur Cup đã kết thúc.</li></ul><p>Toàn bộ lịch PPA Tour Asia 2026 và mức tiền thưởng từng chặng: <a href=\"/vi/blog/ppa-tour-asia-2026-lich-thi-dau-tien-thuong\">lịch PPA Tour Asia 2026</a>.</p>",
+      "excerpt": "Hong Kong Slam 2026 diễn ra 19–25/10 tại Kai Tak Arena, chặng PPA Asia 1500 đầu tiên của châu Á."
+    },
+    {
+      "key": "2026-10-06-lich-ppa-2026-2027",
+      "at": "2026-10-06T08:00:00+07:00",
+      "id": "57670b55-078f-4877-a42f-b7f300182f41",
+      "slug": "cac-giai-pickleball-chuyen-nghiep-2026-toan-canh",
+      "title": "Lịch PPA Tour 2026-2027: các chặng lớn và ngày thi đấu",
+      "keyword": "lịch ppa tour 2026 2027",
+      "sources": [
+        "https://www.ppatour.com/schedule/",
+        "https://www.ppatour.com/carvana-ppa-tour-announces-2026-2027-schedule/"
+      ],
+      "section": "<h2>Lịch PPA Tour mùa 2026-2027: các chặng lớn</h2><p>Cập nhật 6/10/2026 — Carvana PPA Tour công bố lịch mùa 2026-2027 ngày 24/2/2026, gồm 20 giải từ 1000 điểm trở lên tại Mỹ cùng hơn 25 sự kiện quốc tế. ThePickleHub tra lịch theo trang chính thức của giải; các mốc lớn từ nay tới hết mùa như sau.</p><ul><li><strong>Opendoor Pickleball World Championships</strong> — 2–8/11/2026, Brookhaven Country Club, Farmers Branch, Texas.</li><li><strong>Veolia Malibu Showcase</strong> — 14–20/12/2026, Malibu, California, chặng mới của mùa này.</li><li><strong>Carvana Pickleball Masters</strong> — 11–17/1/2027, Rancho Mirage, California.</li><li><strong>Carvana Mesa Cup</strong> — 15–21/2/2027, Mesa, Arizona.</li><li><strong>Pickleball Players Championships</strong> — 26/4–2/5/2027, Atlanta, Georgia.</li><li><strong>PPA Finals</strong> — 10–16/5/2027, San Clemente, California, khép lại mùa giải.</li></ul><p>Mùa này cũng đánh dấu lần đầu có PPA Canada và PPA Italy. Riêng Major League Pickleball, lịch mùa 2027 <strong>chưa được công bố</strong> tính tới ngày cập nhật này; mùa 2026 đã kết thúc ngày 30/8/2026. Lịch các chặng châu Á: <a href=\"/vi/blog/ppa-tour-asia-2026-lich-thi-dau-tien-thuong\">PPA Tour Asia 2026</a>.</p>",
+      "excerpt": "Lịch PPA Tour 2026-2027: Worlds 2–8/11 tại Texas, PPA Finals 10–16/5/2027 ở San Clemente."
+    },
+    {
+      "key": "2026-10-07-chon-the-thuc",
+      "at": "2026-10-07T08:00:00+07:00",
+      "id": "3e69ffb5-f454-49ea-ba40-3b07b5a7a19e",
+      "slug": "cac-the-thuc-giai-pickleball",
+      "title": "Chọn thể thức giải theo số đội và số sân",
+      "keyword": "thể thức thi đấu pickleball",
+      "sources": [
+        "https://www.thepicklehub.net/tools"
+      ],
+      "section": "<h2>Chọn thể thức giải pickleball theo số đội và số sân</h2><p>Thể thức quyết định giải kéo dài bao lâu và mỗi người được đánh mấy trận. ThePickleHub gợi ý theo quy mô thực tế của giải phong trào Việt Nam: dưới 6 đội thì đánh vòng tròn một lượt; 6–12 đội thì chia bảng vòng tròn rồi lấy 2 đội đầu mỗi bảng vào loại trực tiếp; trên 16 đội và chỉ có một buổi thì loại trực tiếp là lựa chọn khả thi duy nhất.</p><p>Đối chiếu nhanh năm thể thức:</p><ul><li><strong>Vòng tròn</strong> — nhiều trận nhất cho mỗi đội, cần nhiều thời gian nhất.</li><li><strong>Loại trực tiếp</strong> — ít trận nhất, thua một trận là dừng.</li><li><strong>Loại kép</strong> — mỗi đội được thua một lần, số trận khoảng gấp đôi loại trực tiếp.</li><li><strong>MLP đồng đội</strong> — bốn trận đôi mỗi cuộc đọ sức, hoà 2–2 đá Dreambreaker.</li><li><strong>Flex</strong> — tuỳ chỉnh khi giải không khớp bốn khuôn trên.</li></ul><p>Tạo lịch cho thể thức đã chọn: <a href=\"/tools\">công cụ tổ chức giải</a>.</p>",
+      "excerpt": "Dưới 6 đội đánh vòng tròn, 6–12 đội chia bảng rồi cắt, trên 16 đội dùng loại trực tiếp."
+    },
+    {
+      "key": "2026-10-08-app-vs-ppa",
+      "at": "2026-10-08T08:00:00+07:00",
+      "id": "ab3069aa-8893-4791-b2c3-2b7683c414a2",
+      "slug": "hop-dong-app-tour-vs-ppa-tour-2026",
+      "title": "APP và PPA khác nhau thế nào — khác biệt cốt lõi",
+      "keyword": "app và ppa khác nhau như thế nào",
+      "sources": [
+        "https://www.thepicklehub.net/vi/blog/hop-dong-ppa-tour-2026"
+      ],
+      "section": "<h2>APP Tour và PPA Tour khác nhau thế nào?</h2><p>Pickleball chuyên nghiệp 2026 chạy trên hai hệ thống song song và khác biệt lớn nhất nằm ở <strong>độc quyền</strong>: PPA Tour ký hợp đồng ràng buộc vận động viên thi đấu cho riêng mình, còn APP Tour vận hành như giải mở, ai đăng ký cũng đánh được. ThePickleHub theo dõi cả hai vì tay vợt Việt Nam chủ yếu tiếp cận qua các chặng APP và PPA Asia.</p><p>Bốn khác biệt đáng nhớ:</p><ul><li><strong>Hợp đồng</strong>: PPA trả lương nền theo năm; APP không ký độc quyền cho tới đầu 2026.</li><li><strong>Tiền thưởng</strong>: phần lớn tiền thật của môn này nằm ở hệ PPA.</li><li><strong>Cửa vào</strong>: giải APP dễ đăng ký hơn với vận động viên chưa có tên tuổi.</li><li><strong>Xếp hạng</strong>: chỉ thành tích PPA tính vào WPR.</li></ul><p>Chi tiết cấu trúc hợp đồng PPA: <a href=\"/vi/blog/hop-dong-ppa-tour-2026\">hợp đồng PPA Tour 2026</a>. Bảng xếp hạng WPR: <a href=\"/rankings/ppa-tour\">trang xếp hạng</a>.</p>",
+      "excerpt": "PPA ký độc quyền và trả lương nền, APP là giải mở dễ đăng ký; chỉ điểm PPA tính vào WPR."
+    },
+    {
+      "key": "2026-10-09-cach-tinh-diem",
+      "at": "2026-10-09T08:00:00+07:00",
+      "id": "888112ce-4fc1-44a8-8bb2-6ce1dde6f183",
+      "slug": "cach-tinh-diem-pickleball",
+      "title": "Cách tính điểm pickleball: side-out và rally",
+      "keyword": "cách tính điểm pickleball",
+      "sources": [
+        "https://www.thepicklehub.net/vi/blog/luat-pickleball-co-ban"
+      ],
+      "section": "<h2>Cách tính điểm pickleball</h2><p>Pickleball dùng hai hệ tính điểm. <strong>Side-out</strong> là hệ truyền thống: chỉ bên giao bóng mới được ghi điểm, đánh tới 11 và phải hơn 2 điểm. <strong>Rally</strong> là hệ rút ngắn: mỗi pha bóng đều ra điểm bất kể ai giao, thường đánh tới 21. ThePickleHub hỗ trợ cả hai hệ khi chấm điểm trực tiếp, nên ban tổ chức chọn hệ nào cũng lên bảng đúng.</p><p>Ba điểm hay nhầm:</p><ul><li>Đánh đôi gọi ba số — điểm bên giao, điểm bên nhận, rồi số thứ tự người giao (1 hoặc 2); đánh đơn chỉ gọi hai số.</li><li>Đầu ván, đội giao trước chỉ có một lượt giao, nên gọi là 0–0–2.</li><li>Tới 11 mà hoà 10–10 thì đánh tiếp cho tới khi cách 2 điểm, không dừng ở 11.</li></ul><p>Luật giao bóng, khu bếp và các lỗi cơ bản: <a href=\"/vi/blog/luat-pickleball-co-ban\">luật pickleball cơ bản</a>.</p>",
+      "excerpt": "Side-out đánh tới 11 chỉ bên giao ghi điểm; rally tới 21 mỗi pha đều ra điểm."
+    },
+    {
+      "key": "2026-10-13-ppa-asia-con-lai",
+      "at": "2026-10-13T08:00:00+07:00",
+      "id": "aeb48282-fd2a-4bff-b517-c7ffbb6fad9a",
+      "slug": "ppa-tour-asia-2026-lich-thi-dau-tien-thuong",
+      "title": "PPA Tour Asia: các chặng còn lại của năm 2026",
+      "keyword": "ppa tour asia lịch thi đấu",
+      "sources": [
+        "https://www.ppatour.com/schedule/"
+      ],
+      "section": "<h2>PPA Tour Asia: những chặng còn lại năm 2026</h2><p>Cập nhật 13/10/2026 — sau khi Ho Chi Minh City Open (6–9/8/2026) và Kuala Lumpur Cup (9–13/9/2026) khép lại, hệ PPA Asia còn ba chặng trong năm 2026. ThePickleHub đối chiếu ngày theo lịch chính thức của Carvana PPA Tour.</p><ul><li><strong>PPA Asia 125 Shandong Challenger 2026</strong> — 4/10/2026, Jinan, Trung Quốc.</li><li><strong>PPA Asia 1500 Hang Seng Bank Hong Kong Slam 2026</strong> — 19–25/10/2026, Kai Tak Arena, Hong Kong. Đây là chặng điểm cao nhất của PPA Asia trong năm.</li><li><strong>PPA Asia 125 PJ Tokyo Challenger 2026</strong> — 7–9/12/2026, Koto-ku, Tokyo, Nhật Bản.</li></ul><p>Mọi điểm kiếm được ở bất kỳ giải nào thuộc hệ PPA đều cộng vào một bảng xếp hạng toàn cầu duy nhất, nên một chặng châu Á vẫn ảnh hưởng tới thứ hạng thế giới. Xem bảng xếp hạng: <a href=\"/rankings/ppa-tour\">World Pickleball Rankings</a>. Chi tiết chặng Hong Kong: <a href=\"/vi/blog/hong-kong-slam-2026\">Hong Kong Slam 2026</a>.</p>",
+      "excerpt": "PPA Asia còn ba chặng năm 2026: Shandong 4/10, Hong Kong Slam 19–25/10, Tokyo 7–9/12."
     }
   ]
 }
