@@ -10,6 +10,32 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-for-older-adults-safe-start",
+    "publishedDate": "2026-10-08",
+    "updatedDate": "2026-10-08",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball for seniors",
+      "older adults",
+      "beginner pickleball",
+      "injury prevention",
+      "court directory",
+      "pickleball clubs",
+      "vietnam pickleball"
+    ],
+    "ctaPath": "/san",
+    "ctaLabel": {
+      "en": "Browse the court directory",
+      "vi": "Xem danh bạ sân pickleball"
+    },
+    "titleEn": "Pickleball for Older Adults: A Safe, Steady Start in 2026",
+    "titleVi": "Pickleball cho người lớn tuổi: Bắt đầu an toàn, đúng nhịp",
+    "metaTitleEn": "Pickleball for Older Adults: A Safe, Steady Start",
+    "metaTitleVi": "Pickleball người lớn tuổi: bắt đầu an toàn",
+    "metaDescriptionEn": "How older adults can start pickleball safely in 2026: set your own pace, warm up, rest early, and confirm courts and groups before the first session.",
+    "metaDescriptionVi": "Cách người lớn tuổi bắt đầu pickleball an toàn: chơi vừa sức, khởi động, nghỉ đúng lúc."
+  },
+  {
     "slug": "pickleball-elbow-pain-causes-safe-steps",
     "publishedDate": "2026-10-07",
     "updatedDate": "2026-10-07",
