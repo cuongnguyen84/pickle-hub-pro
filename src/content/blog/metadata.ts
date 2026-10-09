@@ -10,6 +10,32 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-for-kids-drills-gear-session-length",
+    "publishedDate": "2026-10-09",
+    "updatedDate": "2026-10-09",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball for kids",
+      "junior pickleball",
+      "pickleball for beginners",
+      "pickleball paddles",
+      "pickleball drills",
+      "pickleball safety",
+      "pickleball vietnam"
+    ],
+    "ctaPath": "/san",
+    "ctaLabel": {
+      "en": "Find a pickleball court near you",
+      "vi": "Tìm sân pickleball gần bạn"
+    },
+    "titleEn": "Pickleball for Kids: Choosing Drills, Gear and Session Length",
+    "titleVi": "Cho trẻ làm quen với pickleball: Chọn bài tập, dụng cụ và thời lượng phù hợp",
+    "metaTitleEn": "Pickleball for Kids: Drills, Gear and Session Length",
+    "metaTitleVi": "Cho trẻ làm quen pickleball: bài tập, dụng cụ",
+    "metaDescriptionEn": "Introduce kids to pickleball with light 190-215 g paddles, small grips, soft balls, 45-60 minute sessions and four steps from wall drills to round robins.",
+    "metaDescriptionVi": "Cho trẻ làm quen pickleball: vợt nhẹ 190-215g, cán nhỏ, bóng mềm, buổi tập 45-60 phút và 4 bước ra sân an toàn, vui vẻ."
+  },
+  {
     "slug": "pickleball-for-older-adults-safe-start",
     "publishedDate": "2026-10-08",
     "updatedDate": "2026-10-08",
