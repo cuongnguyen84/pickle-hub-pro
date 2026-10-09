@@ -6,7 +6,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   "slug": "veolia-chicago-cup-2026-results",
   "publishedDate": "2026-10-05",
-  "updatedDate": "2026-10-08",
+  "updatedDate": "2026-10-09",
   "author": "The PickleHub Team",
   "tags": [
     "pickleball",
@@ -26,7 +26,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Veolia Chicago Cup 2026 results and daily scores",
-          "content": "Last updated: October 8, 2026, 07:30 Vietnam time. ThePickleHub publishes this Veolia Chicago Cup 2026 results page from the official PPA scores feed for October 5–11, 2026 at Life Time North Shore Sport & Racquetball, Northbrook, Illinois. The feed currently contains 182 matches, including 129 completed or final records and 4 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: October 9, 2026, 07:30 Vietnam time. ThePickleHub publishes this Veolia Chicago Cup 2026 results page from the official PPA scores feed for October 5–11, 2026 at Life Time North Shore Sport & Racquetball, Northbrook, Illinois. The feed currently contains 210 matches, including 184 completed or final records and 3 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -38,42 +38,42 @@ const post: BlogPost = {
           "heading": "Latest confirmed results",
           "content": "These are the latest completed records returned by the official feed. They are a summary, not a copy of the full draw.",
           "listItems": [
-            "Women's Doubles, Round 32: Sofia Sewing / Jorja Johnson beat Janet Liu / Chrissie Cruz (11-0, 11-1, 0-0).",
-            "Mixed Doubles, Round 32: Jaume Martinez Vich / Milan Rane beat Bruno Faletto / Carlota Trevino (12-10, 11-7, 0-0).",
-            "Mixed Doubles, Round 32: Layne Sleeth / Roscoe Bellamy beat Mari Humberg / Augustus Ge (11-1, 11-5, 0-0).",
-            "Mixed Doubles, Round 32: CJ Klinger / Kiora Kunimoto beat Judit Castillo / Tyson McGuffin (11-2, 11-5, 0-0).",
-            "Mixed Doubles, Round 32: Anouar Braham / Mya Bui beat Tina Pisnik / Noe Khlif (11-6, 3-11, 11-9).",
-            "Women's Doubles, Round 32: Mari Humberg / Cailyn Campbell beat Lauren Stratman / Lindsey Newman (final).",
-            "Women's Doubles, Round 32: Anna Bright / Anna Leigh Waters beat Keilly Ulery / Isabella Nelson (11-0, 11-0, 0-0).",
-            "Mixed Doubles, Round 32: Eric Oncins / Tyra Hurricane Black beat Callie Smith / Christopher Haworth (11-4, 11-2, 0-0).",
-            "Mixed Doubles, Round 32: Anna Bright / Hayden Patriquin beat Zane Navratil / Elsie Hendershot (11-1, 11-2, 0-0).",
-            "Mixed Doubles, Round 32: Rachel Rohrabacher / Andrei Daescu beat Brooke Buckner / Camden Chaffin (11-7, 11-5, 0-0).",
-            "Mixed Doubles, Round 32: Tama Shimabukuro / Jackie Kawamoto beat Jade Kawamoto / Dylan Frazier (11-7, 11-3, 0-0).",
-            "Mixed Doubles, Round 32: Lea Jansen / AJ Koller beat Dekel Bar / Jessie Irvine (11-9, 11-5, 0-0).",
-            "Mixed Doubles, Round 32: Jonathan Truong / Meghan Dizon beat Lacy Schneemann / Jack Sock (3-11, 11-6, 11-7).",
-            "Mixed Doubles, Round 32: Will Howells / Alix Truong beat Ting Chieh Wei / Hunter Johnson (11-8, 9-11, 11-4).",
-            "Mixed Doubles, Round 32: Chao Yi Wang / Armaan Bhatia beat John Lucian Goins / Victoria Dimuzio (11-8, 11-7, 0-0).",
-            "Mixed Doubles, Round 32: Max Freeman / Cailyn Campbell beat Catherine Parenteau / Riley Newman (1-11, 11-8, 12-10).",
-            "Mixed Doubles, Round 32: Kate Fahey / Federico Staksrud beat Luc Pham / Genie Erokhina (11-1, 11-4, 0-0).",
-            "Mixed Doubles, Round 32: Ben Johns / Anna Leigh Waters beat Anderson Scarpa / Liz Truluck (11-3, 11-3, 0-0).",
-            "Mixed Doubles, Round 32: Jorja Johnson / JW Johnson beat Zoey Weil / Michael Loyd (11-4, 11-1, 0-0).",
-            "Women's Singles, Round 32: Mya Bui beat Cailyn Campbell (11-8, 13-11, 0-0)."
+            "Men's Doubles, Round 16: Augustus Ge / Dekel Bar beat Jace Morris / Michael Loyd (11-6, 11-4, 0-0).",
+            "Men's Doubles, Round 16: Riley Newman / Noe Khlif beat Tyson McGuffin / James Delgado (5-11, 11-3, 11-5).",
+            "Mixed Doubles, Round 16: CJ Klinger / Kiora Kunimoto beat Rachel Rohrabacher / Andrei Daescu (11-13, 11-3, 11-7).",
+            "Mixed Doubles, Round 16: Jonathan Truong / Meghan Dizon beat Lea Jansen / AJ Koller (11-5, 11-2, 0-0).",
+            "Mixed Doubles, Round 16: Chao Yi Wang / Armaan Bhatia beat Anouar Braham / Mya Bui (11-8, 11-4, 0-0).",
+            "Mixed Doubles, Round 16: Kate Fahey / Federico Staksrud beat Will Howells / Alix Truong (11-7, 11-2, 0-0).",
+            "Mixed Doubles, Round 16: Ben Johns / Anna Leigh Waters beat Tama Shimabukuro / Jackie Kawamoto (11-1, 11-4, 0-0).",
+            "Mixed Doubles, Round 16: Jorja Johnson / JW Johnson beat Layne Sleeth / Roscoe Bellamy (11-7, 11-1, 0-0).",
+            "Mixed Doubles, Round 16: Anna Bright / Hayden Patriquin beat Jaume Martinez Vich / Milan Rane (11-9, 11-4, 0-0).",
+            "Mixed Doubles, Round 16: Eric Oncins / Tyra Hurricane Black beat Max Freeman / Cailyn Campbell (11-3, 11-3, 0-0).",
+            "Women's Singles, Round 16: Kaitlyn Christian beat Mari Humberg (13-11, 11-9, 0-0).",
+            "Women's Singles, Round 16: Brooke Buckner beat Hannah Blatt (11-3, 11-2, 0-0).",
+            "Women's Singles, Round 16: Anna Leigh Waters beat Keilly Ulery (11-1, 11-1, 0-0).",
+            "Women's Singles, Round 16: Isabella Dunlap beat Lea Jansen (11-4, 6-11, 11-7).",
+            "Women's Singles, Round 16: Judit Castillo beat Kiora Kunimoto (12-10, 11-0, 0-0).",
+            "Women's Singles, Round 16: Liz Truluck beat Allyce Jones (11-6, 11-1, 0-0).",
+            "Women's Singles, Round 16: Kate Fahey beat Mya Bui (11-7, 11-2, 0-0).",
+            "Women's Singles, Round 16: Catherine Parenteau beat Maria Ford (12-10, 7-11, 11-3).",
+            "Men's Singles, Round 16: Emilien Burnel beat JW Johnson (11-9, 5-11, 11-7).",
+            "Men's Singles, Round 16: Noe Khlif beat Jaume Martinez Vich (2-11, 11-1, 11-7)."
           ]
         },
         {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Women's Doubles, Round 32: Angie Walker / Alex Walker vs Ella Yeh / Andrea Koop — status live.",
-            "Women's Doubles, Round 32: Chao Yi Wang / Lea Jansen vs Elsie Hendershot / Kelly Goodnow — status live.",
-            "Women's Doubles, Round 32: Allyce Jones / Callie Smith vs Hannah Blatt / Jalina Ingram — status live.",
-            "Men's Doubles, Round 32: Zane Navratil / Will Mackinnon vs Rafa Hewett / Yates Johnson — status live.",
-            "Women's Doubles, Round 32: Rachel Rohrabacher / Tina Pisnik vs Aibika Kalsarieva / Alexa Quintanilla — status scheduled.",
-            "Women's Doubles, Round 32: Ting Chieh Wei / Meghan Dizon vs Allison Phillips / Samantha Parker — status scheduled.",
-            "Women's Doubles, Round 32: Genie Erokhina / Liz Truluck vs Victoria Dimuzio / Zoey Weil — status scheduled.",
-            "Women's Doubles, Round 32: Lacy Schneemann / Jessie Irvine vs Jaeda Minniefield / Giovanna Morelli — status scheduled.",
-            "Women's Doubles, Round 32: Aiko Yoshitomi / Judit Castillo vs Christa Gecheva / Naomi Nguyen — status scheduled.",
-            "Women's Doubles, Round 32: Kate Fahey / Milan Rane vs Estee Widdershoven / Kiora Kunimoto — status scheduled."
+            "Women's Doubles, Round 16: Jade Kawamoto / Jackie Kawamoto vs Brooke Buckner / Kaitlyn Christian — status live.",
+            "Women's Doubles, Round 16: Lacy Schneemann / Jessie Irvine vs Alix Truong / Layne Sleeth — status live.",
+            "Men's Doubles, Round 16: Tama Shimabukuro / JW Johnson vs Jaume Martinez Vich / Nicolas Acevedo — status live.",
+            "Women's Doubles, Round 16: Anna Bright / Anna Leigh Waters vs Victoria Dimuzio / Zoey Weil — status scheduled.",
+            "Women's Doubles, Round 16: Rachel Rohrabacher / Tina Pisnik vs Ella Yeh / Andrea Koop — status scheduled.",
+            "Women's Doubles, Round 16: Catherine Parenteau / Tyra Hurricane Black vs Mari Humberg / Cailyn Campbell — status scheduled.",
+            "Women's Doubles, Round 16: Sofia Sewing / Jorja Johnson vs Aiko Yoshitomi / Judit Castillo — status scheduled.",
+            "Women's Doubles, Round 16: Ting Chieh Wei / Meghan Dizon vs Allyce Jones / Callie Smith — status scheduled.",
+            "Women's Doubles, Round 16: Chao Yi Wang / Lea Jansen vs Kate Fahey / Milan Rane — status scheduled.",
+            "Men's Doubles, Round 16: Will Howells / Andrei Daescu vs John Lucian Goins / Mohaned Alhouni — status scheduled."
           ]
         },
         {
@@ -103,7 +103,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Veolia Chicago Cup 2026",
-          "content": "Cập nhật: 07:30 ngày 8/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Veolia Chicago Cup 2026 từ feed điểm số chính thức của PPA cho thời gian 5–11/10/2026 tại Life Time North Shore Sport & Racquetball, Northbrook, Illinois. Feed hiện có 182 trận, gồm 129 bản ghi đã kết thúc/chung cuộc và 4 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 07:30 ngày 9/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Veolia Chicago Cup 2026 từ feed điểm số chính thức của PPA cho thời gian 5–11/10/2026 tại Life Time North Shore Sport & Racquetball, Northbrook, Illinois. Feed hiện có 210 trận, gồm 184 bản ghi đã kết thúc/chung cuộc và 3 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -115,42 +115,42 @@ const post: BlogPost = {
           "heading": "Kết quả đã xác nhận gần nhất",
           "content": "Danh sách dưới đây là tóm tắt các bản ghi đã kết thúc từ feed chính thức, không sao chép toàn bộ nhánh đấu.",
           "listItems": [
-            "Đôi nữ, Round 32: Sofia Sewing / Jorja Johnson thắng Janet Liu / Chrissie Cruz (11-0, 11-1, 0-0).",
-            "Đôi nam nữ, Round 32: Jaume Martinez Vich / Milan Rane thắng Bruno Faletto / Carlota Trevino (12-10, 11-7, 0-0).",
-            "Đôi nam nữ, Round 32: Layne Sleeth / Roscoe Bellamy thắng Mari Humberg / Augustus Ge (11-1, 11-5, 0-0).",
-            "Đôi nam nữ, Round 32: CJ Klinger / Kiora Kunimoto thắng Judit Castillo / Tyson McGuffin (11-2, 11-5, 0-0).",
-            "Đôi nam nữ, Round 32: Anouar Braham / Mya Bui thắng Tina Pisnik / Noe Khlif (11-6, 3-11, 11-9).",
-            "Đôi nữ, Round 32: Mari Humberg / Cailyn Campbell thắng Lauren Stratman / Lindsey Newman (final).",
-            "Đôi nữ, Round 32: Anna Bright / Anna Leigh Waters thắng Keilly Ulery / Isabella Nelson (11-0, 11-0, 0-0).",
-            "Đôi nam nữ, Round 32: Eric Oncins / Tyra Hurricane Black thắng Callie Smith / Christopher Haworth (11-4, 11-2, 0-0).",
-            "Đôi nam nữ, Round 32: Anna Bright / Hayden Patriquin thắng Zane Navratil / Elsie Hendershot (11-1, 11-2, 0-0).",
-            "Đôi nam nữ, Round 32: Rachel Rohrabacher / Andrei Daescu thắng Brooke Buckner / Camden Chaffin (11-7, 11-5, 0-0).",
-            "Đôi nam nữ, Round 32: Tama Shimabukuro / Jackie Kawamoto thắng Jade Kawamoto / Dylan Frazier (11-7, 11-3, 0-0).",
-            "Đôi nam nữ, Round 32: Lea Jansen / AJ Koller thắng Dekel Bar / Jessie Irvine (11-9, 11-5, 0-0).",
-            "Đôi nam nữ, Round 32: Jonathan Truong / Meghan Dizon thắng Lacy Schneemann / Jack Sock (3-11, 11-6, 11-7).",
-            "Đôi nam nữ, Round 32: Will Howells / Alix Truong thắng Ting Chieh Wei / Hunter Johnson (11-8, 9-11, 11-4).",
-            "Đôi nam nữ, Round 32: Chao Yi Wang / Armaan Bhatia thắng John Lucian Goins / Victoria Dimuzio (11-8, 11-7, 0-0).",
-            "Đôi nam nữ, Round 32: Max Freeman / Cailyn Campbell thắng Catherine Parenteau / Riley Newman (1-11, 11-8, 12-10).",
-            "Đôi nam nữ, Round 32: Kate Fahey / Federico Staksrud thắng Luc Pham / Genie Erokhina (11-1, 11-4, 0-0).",
-            "Đôi nam nữ, Round 32: Ben Johns / Anna Leigh Waters thắng Anderson Scarpa / Liz Truluck (11-3, 11-3, 0-0).",
-            "Đôi nam nữ, Round 32: Jorja Johnson / JW Johnson thắng Zoey Weil / Michael Loyd (11-4, 11-1, 0-0).",
-            "Đơn nữ, Round 32: Mya Bui thắng Cailyn Campbell (11-8, 13-11, 0-0)."
+            "Đôi nam, Round 16: Augustus Ge / Dekel Bar thắng Jace Morris / Michael Loyd (11-6, 11-4, 0-0).",
+            "Đôi nam, Round 16: Riley Newman / Noe Khlif thắng Tyson McGuffin / James Delgado (5-11, 11-3, 11-5).",
+            "Đôi nam nữ, Round 16: CJ Klinger / Kiora Kunimoto thắng Rachel Rohrabacher / Andrei Daescu (11-13, 11-3, 11-7).",
+            "Đôi nam nữ, Round 16: Jonathan Truong / Meghan Dizon thắng Lea Jansen / AJ Koller (11-5, 11-2, 0-0).",
+            "Đôi nam nữ, Round 16: Chao Yi Wang / Armaan Bhatia thắng Anouar Braham / Mya Bui (11-8, 11-4, 0-0).",
+            "Đôi nam nữ, Round 16: Kate Fahey / Federico Staksrud thắng Will Howells / Alix Truong (11-7, 11-2, 0-0).",
+            "Đôi nam nữ, Round 16: Ben Johns / Anna Leigh Waters thắng Tama Shimabukuro / Jackie Kawamoto (11-1, 11-4, 0-0).",
+            "Đôi nam nữ, Round 16: Jorja Johnson / JW Johnson thắng Layne Sleeth / Roscoe Bellamy (11-7, 11-1, 0-0).",
+            "Đôi nam nữ, Round 16: Anna Bright / Hayden Patriquin thắng Jaume Martinez Vich / Milan Rane (11-9, 11-4, 0-0).",
+            "Đôi nam nữ, Round 16: Eric Oncins / Tyra Hurricane Black thắng Max Freeman / Cailyn Campbell (11-3, 11-3, 0-0).",
+            "Đơn nữ, Round 16: Kaitlyn Christian thắng Mari Humberg (13-11, 11-9, 0-0).",
+            "Đơn nữ, Round 16: Brooke Buckner thắng Hannah Blatt (11-3, 11-2, 0-0).",
+            "Đơn nữ, Round 16: Anna Leigh Waters thắng Keilly Ulery (11-1, 11-1, 0-0).",
+            "Đơn nữ, Round 16: Isabella Dunlap thắng Lea Jansen (11-4, 6-11, 11-7).",
+            "Đơn nữ, Round 16: Judit Castillo thắng Kiora Kunimoto (12-10, 11-0, 0-0).",
+            "Đơn nữ, Round 16: Liz Truluck thắng Allyce Jones (11-6, 11-1, 0-0).",
+            "Đơn nữ, Round 16: Kate Fahey thắng Mya Bui (11-7, 11-2, 0-0).",
+            "Đơn nữ, Round 16: Catherine Parenteau thắng Maria Ford (12-10, 7-11, 11-3).",
+            "Đơn nam, Round 16: Emilien Burnel thắng JW Johnson (11-9, 5-11, 11-7).",
+            "Đơn nam, Round 16: Noe Khlif thắng Jaume Martinez Vich (2-11, 11-1, 11-7)."
           ]
         },
         {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đôi nữ, Round 32: Angie Walker / Alex Walker gặp Ella Yeh / Andrea Koop — trạng thái live.",
-            "Đôi nữ, Round 32: Chao Yi Wang / Lea Jansen gặp Elsie Hendershot / Kelly Goodnow — trạng thái live.",
-            "Đôi nữ, Round 32: Allyce Jones / Callie Smith gặp Hannah Blatt / Jalina Ingram — trạng thái live.",
-            "Đôi nam, Round 32: Zane Navratil / Will Mackinnon gặp Rafa Hewett / Yates Johnson — trạng thái live.",
-            "Đôi nữ, Round 32: Rachel Rohrabacher / Tina Pisnik gặp Aibika Kalsarieva / Alexa Quintanilla — trạng thái scheduled.",
-            "Đôi nữ, Round 32: Ting Chieh Wei / Meghan Dizon gặp Allison Phillips / Samantha Parker — trạng thái scheduled.",
-            "Đôi nữ, Round 32: Genie Erokhina / Liz Truluck gặp Victoria Dimuzio / Zoey Weil — trạng thái scheduled.",
-            "Đôi nữ, Round 32: Lacy Schneemann / Jessie Irvine gặp Jaeda Minniefield / Giovanna Morelli — trạng thái scheduled.",
-            "Đôi nữ, Round 32: Aiko Yoshitomi / Judit Castillo gặp Christa Gecheva / Naomi Nguyen — trạng thái scheduled.",
-            "Đôi nữ, Round 32: Kate Fahey / Milan Rane gặp Estee Widdershoven / Kiora Kunimoto — trạng thái scheduled."
+            "Đôi nữ, Round 16: Jade Kawamoto / Jackie Kawamoto gặp Brooke Buckner / Kaitlyn Christian — trạng thái live.",
+            "Đôi nữ, Round 16: Lacy Schneemann / Jessie Irvine gặp Alix Truong / Layne Sleeth — trạng thái live.",
+            "Đôi nam, Round 16: Tama Shimabukuro / JW Johnson gặp Jaume Martinez Vich / Nicolas Acevedo — trạng thái live.",
+            "Đôi nữ, Round 16: Anna Bright / Anna Leigh Waters gặp Victoria Dimuzio / Zoey Weil — trạng thái scheduled.",
+            "Đôi nữ, Round 16: Rachel Rohrabacher / Tina Pisnik gặp Ella Yeh / Andrea Koop — trạng thái scheduled.",
+            "Đôi nữ, Round 16: Catherine Parenteau / Tyra Hurricane Black gặp Mari Humberg / Cailyn Campbell — trạng thái scheduled.",
+            "Đôi nữ, Round 16: Sofia Sewing / Jorja Johnson gặp Aiko Yoshitomi / Judit Castillo — trạng thái scheduled.",
+            "Đôi nữ, Round 16: Ting Chieh Wei / Meghan Dizon gặp Allyce Jones / Callie Smith — trạng thái scheduled.",
+            "Đôi nữ, Round 16: Chao Yi Wang / Lea Jansen gặp Kate Fahey / Milan Rane — trạng thái scheduled.",
+            "Đôi nam, Round 16: Will Howells / Andrei Daescu gặp John Lucian Goins / Mohaned Alhouni — trạng thái scheduled."
           ]
         },
         {
