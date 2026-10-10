@@ -10,6 +10,32 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-line-calls-in-or-out",
+    "publishedDate": "2026-10-10",
+    "updatedDate": "2026-10-10",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball rules",
+      "line calls",
+      "in or out",
+      "sportsmanship",
+      "doubles",
+      "recreational play",
+      "self-officiating"
+    ],
+    "ctaPath": "/forum",
+    "ctaLabel": {
+      "en": "Discuss tricky line calls in the forum",
+      "vi": "Thảo luận tình huống gọi bóng trên diễn đàn"
+    },
+    "titleEn": "Pickleball Line Calls: How to Call In or Out Fairly",
+    "titleVi": "Luật gọi bóng trong hay ngoài pickleball: Cách gọi đường biên công bằng",
+    "metaTitleEn": "Pickleball Line Calls: In or Out Rules for Fair Play",
+    "metaTitleVi": "Luật gọi bóng trong ngoài pickleball",
+    "metaDescriptionEn": "A ball touching any part of the line is in. Learn who calls lines in pickleball, when to call out, and a 4-step process for fair line calls.",
+    "metaDescriptionVi": "Bóng chạm vạch là trong. Ai gọi đường biên, khi nào gọi ngoài và 4 bước gọi bóng công bằng trong pickleball."
+  },
+  {
     "slug": "pickleball-for-kids-drills-gear-session-length",
     "publishedDate": "2026-10-09",
     "updatedDate": "2026-10-09",
