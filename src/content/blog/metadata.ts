@@ -10,6 +10,33 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "vietnam-pickleball-community-guide-2026",
+    "publishedDate": "2026-10-11",
+    "updatedDate": "2026-10-11",
+    "author": "The PickleHub Team",
+    "tags": [
+      "vietnam pickleball",
+      "pickleball community",
+      "pickleball clubs",
+      "community events",
+      "court directory",
+      "find pickleball players",
+      "bracket lab",
+      "grassroots tournaments"
+    ],
+    "ctaPath": "/clubs",
+    "ctaLabel": {
+      "en": "Find a pickleball club",
+      "vi": "Tìm câu lạc bộ pickleball"
+    },
+    "titleEn": "Vietnam Pickleball Community 2026: How to Find Groups, Clubs and Local Tournaments",
+    "titleVi": "Cộng đồng pickleball Việt Nam: Tìm nhóm, CLB và giải",
+    "metaTitleEn": "Vietnam Pickleball Community 2026: Groups, Clubs, Events",
+    "metaTitleVi": "Cộng đồng pickleball Việt Nam: nhóm, CLB, giải",
+    "metaDescriptionEn": "Find pickleball groups, clubs and community events in Vietnam with ThePickleHub's 690+ court directory, then run local tournaments in Bracket Lab.",
+    "metaDescriptionVi": "Tìm nhóm chơi, CLB và sự kiện pickleball Việt Nam trên ThePickleHub: hơn 690 sân, lịch sinh hoạt và Bracket Lab."
+  },
+  {
     "slug": "pickleball-line-calls-in-or-out",
     "publishedDate": "2026-10-10",
     "updatedDate": "2026-10-10",
