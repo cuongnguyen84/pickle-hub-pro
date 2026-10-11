@@ -10,6 +10,33 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-kitchen-foot-fault",
+    "publishedDate": "2026-10-11",
+    "updatedDate": "2026-10-11",
+    "author": "The PickleHub Team",
+    "tags": [
+      "kitchen rule",
+      "non-volley zone",
+      "foot fault",
+      "pickleball rules",
+      "pickleball volley",
+      "line calls",
+      "pickleball footwork",
+      "tournament officiating"
+    ],
+    "ctaPath": "/tim-ban-choi",
+    "ctaLabel": {
+      "en": "Find a partner to drill kitchen volleys",
+      "vi": "Tìm bạn tập volley gần bếp"
+    },
+    "titleEn": "Pickleball Kitchen Foot Faults: The Situations Players Often Miss",
+    "titleVi": "Lỗi chân khu vực bếp pickleball: Những tình huống dễ bị bỏ sót",
+    "metaTitleEn": "Pickleball Kitchen Foot Faults Players Often Miss",
+    "metaTitleVi": "Lỗi chân khu vực bếp pickleball dễ bỏ sót",
+    "metaDescriptionEn": "Kitchen (NVZ) foot faults explained: line touches, volley momentum, hands, dropped hats or paddles, plus a 6-step check for self-called games.",
+    "metaDescriptionVi": "Lỗi chân khu vực bếp pickleball: chạm vạch, đà sau volley, chống tay, rơi vật dụng và 6 bước tự rà soát."
+  },
+  {
     "slug": "vietnam-pickleball-community-guide-2026",
     "publishedDate": "2026-10-11",
     "updatedDate": "2026-10-11",
