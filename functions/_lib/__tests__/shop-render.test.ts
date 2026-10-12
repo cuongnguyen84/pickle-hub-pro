@@ -307,6 +307,7 @@ describe("renderShopCategory", () => {
     ).text();
     expect(html).toContain("<h1>Vợt pickleball</h1>");
     expect(html).not.toMatch(/<h1>vot<\/h1>/);
+    expect(html).toContain("chứng nhận USA Pickleball (USAP)");
   });
 
   it("does not say 'pickleball' twice when the category name already has it", async () => {
@@ -426,6 +427,19 @@ describe("shop SSR — 2026-08-29 audit fixes", () => {
     expect(title).not.toContain("…");
     expect(title).not.toContain("₫");
     expect(new TextEncoder().encode(title).length).toBeLessThanOrEqual(60);
+  });
+
+  it("VI title and description lead with the category keyword, the way people search", async () => {
+    const html = await product({ title: "Selkirk Vanguard" });
+    expect(html).toContain("<title>Vợt pickleball Selkirk Vanguard | ThePickleHub</title>");
+    expect(html).toMatch(/<meta name="description" content="Vợt pickleball Selkirk Vanguard giá/);
+  });
+
+  it("does not prefix the keyword when the product name already carries it, nor on EN", async () => {
+    const vi = await product({ title: "Giày Pickleball Eopaia", category: { slug: "giay", name: "Giày" } });
+    expect(vi).toMatch(/<title>Giày Pickleball Eopaia —/);
+    const en = await product({ title: "Selkirk Vanguard" }, "en");
+    expect(en).toMatch(/<title>Selkirk Vanguard —/);
   });
 
   it("x-default points at the Vietnamese URL on both the page and the alternates", async () => {
