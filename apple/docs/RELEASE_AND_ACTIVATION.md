@@ -7,8 +7,8 @@ không bật OTP và không đổi production setting nếu chưa có phê duy�
 
 | Configuration | Bundle ID | Version | Environment | Native registration | FCM push |
 |---|---|---|---|---|---|
-| Debug | `net.thepicklehub.app` | `2.1.8 (16)` | development | ON | OFF |
-| Release | `net.thepicklehub.app` | `2.1.8 (16)` | production | ON | ON |
+| Debug | `net.thepicklehub.app` | `2.1.8 (17)` | development | ON | OFF |
+| Release | `net.thepicklehub.app` | `2.1.8 (17)` | production | ON | ON |
 
 `2.1.8 (16)` là candidate hiện tại: Pro Tour results, nút thoát cho màn chấm
 điểm trọng tài, thẻ giải pro tour tự rụng sau 1 ngày. 🔴 **2.1.7 đã được Apple
