@@ -10,6 +10,32 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-club-vs-open-play",
+    "publishedDate": "2026-10-12",
+    "updatedDate": "2026-10-12",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball clubs",
+      "open play",
+      "pickleball for beginners",
+      "pickleball community",
+      "court booking",
+      "pickleball cost",
+      "vietnam pickleball"
+    ],
+    "ctaPath": "/clubs",
+    "ctaLabel": {
+      "en": "Find a pickleball club",
+      "vi": "Tìm câu lạc bộ pickleball"
+    },
+    "titleEn": "Pickleball Club vs Open Play: Which One Fits You in 2026?",
+    "titleVi": "Tham gia câu lạc bộ hay chơi pickleball tự do: Lựa chọn nào hợp với bạn?",
+    "metaTitleEn": "Pickleball Club vs Open Play: Which Fits You in 2026?",
+    "metaTitleVi": "CLB hay chơi pickleball tự do: chọn thế nào?",
+    "metaDescriptionEn": "Club or open play? Compare commitment, cost, learning and flexibility for Vietnam pickleball in 2026, then try one session of each before you commit.",
+    "metaDescriptionVi": "So sánh CLB và chơi pickleball tự do: cam kết, chi phí, học hỏi, độ linh hoạt và cách chọn năm 2026."
+  },
+  {
     "slug": "pickleball-kitchen-foot-fault",
     "publishedDate": "2026-10-11",
     "updatedDate": "2026-10-11",
