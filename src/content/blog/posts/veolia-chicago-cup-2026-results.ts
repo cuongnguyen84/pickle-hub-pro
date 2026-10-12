@@ -6,7 +6,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   "slug": "veolia-chicago-cup-2026-results",
   "publishedDate": "2026-10-05",
-  "updatedDate": "2026-10-11",
+  "updatedDate": "2026-10-12",
   "author": "The PickleHub Team",
   "tags": [
     "pickleball",
@@ -26,7 +26,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Veolia Chicago Cup 2026 results and daily scores",
-          "content": "Last updated: October 11, 2026, 07:30 Vietnam time. ThePickleHub publishes this Veolia Chicago Cup 2026 results page from the official PPA scores feed for October 5–11, 2026 at Life Time North Shore Sport & Racquetball, Northbrook, Illinois. The feed currently contains 231 matches, including 226 completed or final records and 1 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: October 12, 2026, 07:30 Vietnam time. ThePickleHub publishes this Veolia Chicago Cup 2026 results page from the official PPA scores feed for October 5–11, 2026 at Life Time North Shore Sport & Racquetball, Northbrook, Illinois. The feed currently contains 233 matches, including 233 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -38,6 +38,13 @@ const post: BlogPost = {
           "heading": "Latest confirmed results",
           "content": "These are the latest completed records returned by the official feed. They are a summary, not a copy of the full draw.",
           "listItems": [
+            "Women's Doubles, Finals: Anna Bright / Anna Leigh Waters beat Catherine Parenteau / Tyra Hurricane Black (2-11, 11-3, 11-4).",
+            "Men's Doubles, Finals: Federico Staksrud / Hayden Patriquin beat Jaume Martinez Vich / Nicolas Acevedo (11-1, 11-6, 0-0).",
+            "Mixed Doubles, Finals: Ben Johns / Anna Leigh Waters beat Jorja Johnson / JW Johnson (11-4, 11-4, 0-0).",
+            "Women's Singles, Finals: Anna Leigh Waters beat Kate Fahey (11-1, 11-7, 0-0).",
+            "Men's Singles, Finals: Roscoe Bellamy beat Christopher Haworth (11-4, 11-5, 0-0).",
+            "Women's Doubles, Semi-Finals: Anna Bright / Anna Leigh Waters beat Rachel Rohrabacher / Tina Pisnik (12-10, 11-3, 0-0).",
+            "Men's Doubles, Semi-Finals: Jaume Martinez Vich / Nicolas Acevedo beat Anouar Braham / Bruno Faletto (11-9, 12-10, 0-0).",
             "Men's Doubles, Semi-Finals: Federico Staksrud / Hayden Patriquin beat CJ Klinger / Eric Oncins (11-8, 7-11, 11-3).",
             "Women's Doubles, Semi-Finals: Catherine Parenteau / Tyra Hurricane Black beat Kate Fahey / Milan Rane (11-5, 11-3, 0-0).",
             "Mixed Doubles, Semi-Finals: Jorja Johnson / JW Johnson beat Anna Bright / Hayden Patriquin (11-1, 11-5, 0-0).",
@@ -50,25 +57,14 @@ const post: BlogPost = {
             "Women's Doubles, Quarter Finals: Catherine Parenteau / Tyra Hurricane Black beat Lacy Schneemann / Jessie Irvine (11-2, 11-7, 0-0).",
             "Women's Doubles, Quarter Finals: Rachel Rohrabacher / Tina Pisnik beat Ting Chieh Wei / Meghan Dizon (11-6, 11-2, 0-0).",
             "Women's Doubles, Quarter Finals: Anna Bright / Anna Leigh Waters beat Jade Kawamoto / Jackie Kawamoto (11-5, 11-1, 0-0).",
-            "Men's Doubles, Quarter Finals: CJ Klinger / Eric Oncins beat Augustus Ge / Dekel Bar (12-10, 11-8, 0-0).",
-            "Men's Doubles, Quarter Finals: Jaume Martinez Vich / Nicolas Acevedo beat Dylan Frazier / Armaan Bhatia (11-3, 11-2, 0-0).",
-            "Men's Doubles, Quarter Finals: Anouar Braham / Bruno Faletto beat John Lucian Goins / Mohaned Alhouni (6-11, 11-9, 11-2).",
-            "Mixed Doubles, Quarter Finals: Eric Oncins / Tyra Hurricane Black beat CJ Klinger / Kiora Kunimoto (11-5, 11-4, 0-0).",
-            "Men's Doubles, Quarter Finals: Federico Staksrud / Hayden Patriquin beat Riley Newman / Noe Khlif (final).",
-            "Mixed Doubles, Quarter Finals: Jorja Johnson / JW Johnson beat Chao Yi Wang / Armaan Bhatia (11-3, 11-3, 0-0).",
-            "Mixed Doubles, Quarter Finals: Ben Johns / Anna Leigh Waters beat Kate Fahey / Federico Staksrud (11-3, 11-6, 0-0).",
-            "Mixed Doubles, Quarter Finals: Anna Bright / Hayden Patriquin beat Jonathan Truong / Meghan Dizon (11-2, 11-3, 0-0)."
+            "Men's Doubles, Quarter Finals: CJ Klinger / Eric Oncins beat Augustus Ge / Dekel Bar (12-10, 11-8, 0-0)."
           ]
         },
         {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Women's Doubles, Semi-Finals: Anna Bright / Anna Leigh Waters vs Rachel Rohrabacher / Tina Pisnik — status live.",
-            "Men's Doubles, Semi-Finals: Anouar Braham / Bruno Faletto vs Jaume Martinez Vich / Nicolas Acevedo — status scheduled.",
-            "Mixed Doubles, Finals: Ben Johns / Anna Leigh Waters vs Jorja Johnson / JW Johnson — status scheduled.",
-            "Women's Singles, Finals: Anna Leigh Waters vs Kate Fahey — status scheduled.",
-            "Men's Singles, Finals: Christopher Haworth vs Roscoe Bellamy — status scheduled."
+            "No match is currently marked live or scheduled in the official feed."
           ]
         },
         {
@@ -98,7 +94,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Veolia Chicago Cup 2026",
-          "content": "Cập nhật: 07:30 ngày 11/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Veolia Chicago Cup 2026 từ feed điểm số chính thức của PPA cho thời gian 5–11/10/2026 tại Life Time North Shore Sport & Racquetball, Northbrook, Illinois. Feed hiện có 231 trận, gồm 226 bản ghi đã kết thúc/chung cuộc và 1 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 07:30 ngày 12/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Veolia Chicago Cup 2026 từ feed điểm số chính thức của PPA cho thời gian 5–11/10/2026 tại Life Time North Shore Sport & Racquetball, Northbrook, Illinois. Feed hiện có 233 trận, gồm 233 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -110,6 +106,13 @@ const post: BlogPost = {
           "heading": "Kết quả đã xác nhận gần nhất",
           "content": "Danh sách dưới đây là tóm tắt các bản ghi đã kết thúc từ feed chính thức, không sao chép toàn bộ nhánh đấu.",
           "listItems": [
+            "Đôi nữ, Finals: Anna Bright / Anna Leigh Waters thắng Catherine Parenteau / Tyra Hurricane Black (2-11, 11-3, 11-4).",
+            "Đôi nam, Finals: Federico Staksrud / Hayden Patriquin thắng Jaume Martinez Vich / Nicolas Acevedo (11-1, 11-6, 0-0).",
+            "Đôi nam nữ, Finals: Ben Johns / Anna Leigh Waters thắng Jorja Johnson / JW Johnson (11-4, 11-4, 0-0).",
+            "Đơn nữ, Finals: Anna Leigh Waters thắng Kate Fahey (11-1, 11-7, 0-0).",
+            "Đơn nam, Finals: Roscoe Bellamy thắng Christopher Haworth (11-4, 11-5, 0-0).",
+            "Đôi nữ, Semi-Finals: Anna Bright / Anna Leigh Waters thắng Rachel Rohrabacher / Tina Pisnik (12-10, 11-3, 0-0).",
+            "Đôi nam, Semi-Finals: Jaume Martinez Vich / Nicolas Acevedo thắng Anouar Braham / Bruno Faletto (11-9, 12-10, 0-0).",
             "Đôi nam, Semi-Finals: Federico Staksrud / Hayden Patriquin thắng CJ Klinger / Eric Oncins (11-8, 7-11, 11-3).",
             "Đôi nữ, Semi-Finals: Catherine Parenteau / Tyra Hurricane Black thắng Kate Fahey / Milan Rane (11-5, 11-3, 0-0).",
             "Đôi nam nữ, Semi-Finals: Jorja Johnson / JW Johnson thắng Anna Bright / Hayden Patriquin (11-1, 11-5, 0-0).",
@@ -122,25 +125,14 @@ const post: BlogPost = {
             "Đôi nữ, Quarter Finals: Catherine Parenteau / Tyra Hurricane Black thắng Lacy Schneemann / Jessie Irvine (11-2, 11-7, 0-0).",
             "Đôi nữ, Quarter Finals: Rachel Rohrabacher / Tina Pisnik thắng Ting Chieh Wei / Meghan Dizon (11-6, 11-2, 0-0).",
             "Đôi nữ, Quarter Finals: Anna Bright / Anna Leigh Waters thắng Jade Kawamoto / Jackie Kawamoto (11-5, 11-1, 0-0).",
-            "Đôi nam, Quarter Finals: CJ Klinger / Eric Oncins thắng Augustus Ge / Dekel Bar (12-10, 11-8, 0-0).",
-            "Đôi nam, Quarter Finals: Jaume Martinez Vich / Nicolas Acevedo thắng Dylan Frazier / Armaan Bhatia (11-3, 11-2, 0-0).",
-            "Đôi nam, Quarter Finals: Anouar Braham / Bruno Faletto thắng John Lucian Goins / Mohaned Alhouni (6-11, 11-9, 11-2).",
-            "Đôi nam nữ, Quarter Finals: Eric Oncins / Tyra Hurricane Black thắng CJ Klinger / Kiora Kunimoto (11-5, 11-4, 0-0).",
-            "Đôi nam, Quarter Finals: Federico Staksrud / Hayden Patriquin thắng Riley Newman / Noe Khlif (final).",
-            "Đôi nam nữ, Quarter Finals: Jorja Johnson / JW Johnson thắng Chao Yi Wang / Armaan Bhatia (11-3, 11-3, 0-0).",
-            "Đôi nam nữ, Quarter Finals: Ben Johns / Anna Leigh Waters thắng Kate Fahey / Federico Staksrud (11-3, 11-6, 0-0).",
-            "Đôi nam nữ, Quarter Finals: Anna Bright / Hayden Patriquin thắng Jonathan Truong / Meghan Dizon (11-2, 11-3, 0-0)."
+            "Đôi nam, Quarter Finals: CJ Klinger / Eric Oncins thắng Augustus Ge / Dekel Bar (12-10, 11-8, 0-0)."
           ]
         },
         {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đôi nữ, Semi-Finals: Anna Bright / Anna Leigh Waters gặp Rachel Rohrabacher / Tina Pisnik — trạng thái live.",
-            "Đôi nam, Semi-Finals: Anouar Braham / Bruno Faletto gặp Jaume Martinez Vich / Nicolas Acevedo — trạng thái scheduled.",
-            "Đôi nam nữ, Finals: Ben Johns / Anna Leigh Waters gặp Jorja Johnson / JW Johnson — trạng thái scheduled.",
-            "Đơn nữ, Finals: Anna Leigh Waters gặp Kate Fahey — trạng thái scheduled.",
-            "Đơn nam, Finals: Christopher Haworth gặp Roscoe Bellamy — trạng thái scheduled."
+            "Nguồn chính thức hiện không đánh dấu trận nào đang diễn ra hoặc sắp đấu."
           ]
         },
         {
