@@ -54,7 +54,11 @@
       "dates_vi": "12–18/10/2026",
       "venue": "Pickleball Virginia Beach, Virginia",
       "initial_prep_at": "2026-10-04T00:00:00+07:00",
-      "search_name": "PPA Virginia Beach"
+      "search_name": "PPA Virginia Beach",
+      "hero_image": {
+        "src": "/images/blog/virginia-beach-open-2026-results-hero.webp",
+        "alt": "Mojo Energy Pouches Virginia Beach Open 2026 pickleball court on the oceanfront at sunset"
+      }
     },
     {
       "key": "ppa-brisbane-2026",
