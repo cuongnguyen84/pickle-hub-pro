@@ -192,6 +192,9 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(team.own_venues("Sân pickleball Vĩnh Long", venues), "")  # 'Vinh' is another city
         self.assertIn("Sân B | chưa có | chưa có | chưa có | /san/san-b", team.own_venues("Sân pickleball Vinh", venues))  # placeholder price hidden
         self.assertEqual(team.own_venues("Kỹ thuật volley", venues), "")
+        hoa = [{"name": "Sân C", "slug": "san-c", "city": "Thanh Hóa", "price_source": None}]
+        for spelling in ("Thanh Hóa", "Thanh Hoá", "THANH HOÁ"):  # both tone placements name the same city
+            self.assertIn("1 sân ở Thanh Hóa", team.own_venues(f"Sân pickleball {spelling}: danh sách", hoa))
 
     def test_wriai_drafts_become_one_editorial_task_each(self):
         rows = [{"id": "11111111-aaaa", "title": "Sân TP.HCM", "slug": "San-TPHCM!", "content_markdown": "x" * 20000},

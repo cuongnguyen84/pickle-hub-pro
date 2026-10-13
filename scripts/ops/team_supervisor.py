@@ -18,6 +18,7 @@ import socket
 import subprocess
 import sys
 import time
+import unicodedata
 import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -691,8 +692,13 @@ WRIAI_BRIEF = (
 def own_venues(title, venues):
     """Our own court rows for the city a Wriai title names: the part of the post
     no other site has. Accents are kept on purpose so 'Vinh' never matches 'Vĩnh Long'."""
-    low = str(title).lower()
-    rows = [v for v in venues if v.get("city") and re.search(rf"(?<!\w){re.escape(v['city'].lower())}(?!\w)", low)]
+    # Vietnamese has two spellings for the tone on oa/oe/uy ('Thanh Hóa' / 'Thanh Hoá'):
+    # move it to the second vowel on both sides so either spelling finds the city.
+    fold = lambda s: unicodedata.normalize("NFC", re.sub(
+        "(o)([\u0300\u0301\u0303\u0309\u0323])([ae])|(u)([\u0300\u0301\u0303\u0309\u0323])(y)",
+        lambda m: (m[1] + m[3] + m[2]) if m[1] else (m[4] + m[6] + m[5]), unicodedata.normalize("NFD", str(s).lower())))
+    low = fold(title)
+    rows = [v for v in venues if v.get("city") and re.search(rf"(?<!\w){re.escape(fold(v['city']))}(?!\w)", low)]
     if not rows:
         return ""
     # price_source 'default' is a placeholder range, not something anyone measured: never print it.
