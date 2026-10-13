@@ -180,6 +180,19 @@ class StoreTests(unittest.TestCase):
         self.store.db.close()
         self.tmp.cleanup()
 
+    def test_wriai_court_post_carries_our_own_venue_rows(self):
+        venues = [{"name": "Sân A", "slug": "san-a", "city": "Hải Phòng", "district": "Lê Chân", "num_courts": 4,
+                   "price_min_vnd": 120000, "price_max_vnd": 180000, "price_source": "partner"},
+                  {"name": "Sân B", "slug": "san-b", "city": "Vinh", "district": None, "num_courts": None,
+                   "price_min_vnd": 80000, "price_max_vnd": 200000, "price_source": "default"}]
+        own = team.own_venues("Sân pickleball Hải Phòng 2026", venues)
+        self.assertIn("1 sân ở Hải Phòng", own)
+        self.assertIn("Sân A | Lê Chân | 4 | 120,000–180,000đ/giờ | /san/san-a", own)
+        self.assertNotIn("Sân B", own)
+        self.assertEqual(team.own_venues("Sân pickleball Vĩnh Long", venues), "")  # 'Vinh' is another city
+        self.assertIn("Sân B | chưa có | chưa có | chưa có | /san/san-b", team.own_venues("Sân pickleball Vinh", venues))  # placeholder price hidden
+        self.assertEqual(team.own_venues("Kỹ thuật volley", venues), "")
+
     def test_wriai_drafts_become_one_editorial_task_each(self):
         rows = [{"id": "11111111-aaaa", "title": "Sân TP.HCM", "slug": "San-TPHCM!", "content_markdown": "x" * 20000},
                 {"id": "22222222-bbbb", "title": "Sân TP.HCM", "slug": "san-tphcm", "content_markdown": "resent"}]
@@ -188,7 +201,7 @@ class StoreTests(unittest.TestCase):
             self.store.put("wriai_poll", 0)
             team.queue_wriai(self.store)
             team.queue_wriai(self.store)  # throttled: no third read
-        self.assertEqual(rest.call_count, 2)
+        self.assertEqual(rest.call_count, 3)  # inbox, venues for the one new post, inbox again
         self.assertNotIn("POST", str(rest.call_args_list))
         tasks = self.store.db.execute("SELECT * FROM tasks WHERE dedupe LIKE 'schedule:wriai:%'").fetchall()
         self.assertEqual(len(tasks), 1)
