@@ -63,7 +63,8 @@ def _names(team):
 
 def _match_line(match, vi=False):
     a, b = match["teams"]
-    division = DIV_VI.get(match.get("division"), match.get("division", "Nội dung")) if vi else match.get("division", "Division")
+    division = str(match.get("division") or "").removeprefix("Pro ")  # Asia feed says "Pro Men's Singles"
+    division = DIV_VI.get(division, division or "Nội dung") if vi else division or "Division"
     label = match.get("roundLabel") or "Vòng chưa ghi nhãn"
     status = match["status"]
     if status in {"final", "completed", "finished", "walkover", "retired"}:
@@ -89,25 +90,38 @@ def package(event: dict, feed: dict, now: datetime) -> dict:
     stamp_vi = now.strftime("%H:%M ngày %-d/%-m/%Y (giờ Việt Nam)")
     name, venue = event.get("name") or event["title"], event.get("venue", "the official tournament venue")
     source = event["source"]
+    # `name` usually already ends in the year; appending it again shipped "… 2026 Results 2026".
+    year = str(event.get("start_date") or now.year)[:4]
+    base = name.removesuffix(f" {year}")
+    # search_name = how people actually query the event (GSC 10/2026: "ppa chicago results"
+    # had 4x the impressions of the sponsor-name query), so it leads the title when set.
+    alias = event.get("search_name")
+    en_meta = f"{alias} Results {year}: {base} Scores" if alias else f"{base} Results {year} | Daily Scores"
+    vi_meta = f"Kết quả {alias} {year}: {base}" if alias else f"Kết quả {base} {year} mỗi ngày"
+    en_h = f"{alias} results: {name} daily scores" if alias else f"{name} results and daily scores"
+    en_desc = (f"{alias} results: " if alias else "") + f"{name} results and daily scores from the official PPA feed, checked by ThePickleHub."
+    related = event.get("related") or []
+    en_links = [{"text": "Official event scores", "path": source}] + [{"text": r["en"], "path": r["path"]} for r in related]
+    vi_links = [{"text": "Nguồn điểm số chính thức", "path": source}] + [{"text": r["vi"], "path": r["vi_path"]} for r in related]
     en_results = [_match_line(m) for m in recent] or ["No final result has been published in the official feed yet."]
     vi_results = [_match_line(m, True) for m in recent] or ["Nguồn chính thức chưa công bố kết quả chung cuộc nào."]
     en_live = [_match_line(m) for m in (live + upcoming)[:10]] or ["No match is currently marked live or scheduled in the official feed."]
     vi_live = [_match_line(m, True) for m in (live + upcoming)[:10]] or ["Nguồn chính thức hiện không đánh dấu trận nào đang diễn ra hoặc sắp đấu."]
     en_sections = [
-        {"heading": f"{name} results and daily scores", "content": f"Last updated: {stamp_en}. ThePickleHub publishes this {name} results page from the official PPA scores feed for {event['dates_en']} at {venue}. The feed currently contains {len(matches)} matches, including {len(finals)} completed or final records and {len(live)} live records. A missing score remains unconfirmed until the official feed supplies it.", "internalLinks": [{"text": "Official event scores", "path": source}]},
+        {"heading": en_h, "content": f"Last updated: {stamp_en}. ThePickleHub publishes this {name} results page from the official PPA scores feed for {event['dates_en']} at {venue}. The feed currently contains {len(matches)} matches, including {len(finals)} completed or final records and {len(live)} live records. A missing score remains unconfirmed until the official feed supplies it.", "internalLinks": en_links},
         {"heading": "Latest confirmed results", "content": "These are the latest completed records returned by the official feed. They are a summary, not a copy of the full draw.", "listItems": en_results},
         {"heading": "Live and upcoming status", "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.", "listItems": en_live},
         {"heading": "How to read this update", "content": f"ThePickleHub checks the event id, match status, two-team structure and unique winner flag before updating this page. The page is refreshed when the source snapshot changes. Event dates: {event['dates_en']}. Venue: {venue}. Official source: {source}."},
     ]
     vi_sections = [
-        {"heading": f"Kết quả {name}", "content": f"Cập nhật: {stamp_vi}. ThePickleHub đăng trang kết quả {name} từ feed điểm số chính thức của PPA cho thời gian {event['dates_vi']} tại {venue}. Feed hiện có {len(matches)} trận, gồm {len(finals)} bản ghi đã kết thúc/chung cuộc và {len(live)} bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.", "internalLinks": [{"text": "Nguồn điểm số chính thức", "path": source}]},
+        {"heading": f"Kết quả {base} {year}", "content": f"Cập nhật: {stamp_vi}. ThePickleHub đăng trang kết quả {base} {year} từ feed điểm số chính thức của PPA cho thời gian {event['dates_vi']} tại {venue}. Feed hiện có {len(matches)} trận, gồm {len(finals)} bản ghi đã kết thúc/chung cuộc và {len(live)} bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.", "internalLinks": vi_links},
         {"heading": "Kết quả đã xác nhận gần nhất", "content": "Danh sách dưới đây là tóm tắt các bản ghi đã kết thúc từ feed chính thức, không sao chép toàn bộ nhánh đấu.", "listItems": vi_results},
         {"heading": "Trận đang đấu và sắp đấu", "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.", "listItems": vi_live},
         {"heading": "Cách kiểm chứng cập nhật", "content": f"ThePickleHub kiểm tra event id, trạng thái trận, cấu trúc hai đội và cờ người thắng duy nhất trước khi cập nhật. Trang chỉ đổi khi snapshot nguồn thay đổi. Thời gian giải: {event['dates_vi']}. Địa điểm: {venue}. Nguồn chính thức: {source}."},
     ]
     faq_en = [{"question": "Where do these results come from?", "answer": f"The official PPA scores feed: {source}."}, {"question": "Are scheduled matches final results?", "answer": "No. Only an official final or completed status with one winner is presented as a result."}, {"question": "When is this page updated?", "answer": "When the verified official score snapshot changes."}]
     faq_vi = [{"question": "Kết quả lấy từ đâu?", "answer": f"Từ feed điểm số PPA chính thức: {source}."}, {"question": "Trận scheduled có phải kết quả không?", "answer": "Không. Chỉ bản ghi final hoặc completed có đúng một người thắng mới được trình bày là kết quả."}, {"question": "Trang cập nhật khi nào?", "answer": "Khi snapshot điểm số chính thức đã kiểm chứng thay đổi."}]
-    package = {"verdict": "NEW", "unverified": [], "slug": event["slug"], "tags": event.get("tags", ["pickleball", "results", "2026"]), "ctaPath": "/live", "ctaLabel": {"en": "Follow live scores on ThePickleHub", "vi": "Theo dõi điểm số trên ThePickleHub"}, "en": {"title": f"{name} Results: Daily Scores and Confirmed Winners", "metaTitle": f"{name} Results 2026 | Daily Scores", "metaDescription": f"{name} results and daily scores from the official PPA feed, checked by ThePickleHub.", "sections": en_sections, "faqItems": faq_en}, "vi": {"slug": event["vi_slug"], "title": f"Kết quả {name} 2026: cập nhật hằng ngày", "metaTitle": f"Kết quả {name} 2026 mỗi ngày", "metaDescription": f"Kết quả {name} 2026 từ feed PPA chính thức, được ThePickleHub kiểm chứng.", "excerpt": f"Kết quả {name} 2026 cập nhật từ nguồn điểm số PPA chính thức.", "focusKeyword": f"kết quả {name.lower()} 2026", "sections": vi_sections, "faqItems": faq_vi}}
+    package = {"verdict": "NEW", "unverified": [], "slug": event["slug"], "tags": event.get("tags", ["pickleball", "results", "2026"]), "ctaPath": "/live", "ctaLabel": {"en": "Follow live scores on ThePickleHub", "vi": "Theo dõi điểm số trên ThePickleHub"}, "en": {"title": f"{name} Results: Daily Scores and Confirmed Winners", "metaTitle": en_meta, "metaDescription": en_desc, "sections": en_sections, "faqItems": faq_en}, "vi": {"slug": event["vi_slug"], "title": f"Kết quả {base} {year}: cập nhật hằng ngày", "metaTitle": vi_meta, "metaDescription": f"Kết quả {base} {year} từ feed PPA chính thức, được ThePickleHub kiểm chứng.", "excerpt": f"Kết quả {base} {year} cập nhật từ nguồn điểm số PPA chính thức.", "focusKeyword": f"kết quả {base.lower()} {year}", "sections": vi_sections, "faqItems": faq_vi}}
     # Keep the editorial hero attached to every future source-driven refresh.
     if event.get("hero_image"):
         package["heroImage"] = event["hero_image"]

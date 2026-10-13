@@ -36,6 +36,24 @@ class TournamentAutopublishTests(unittest.TestCase):
         self.assertNotIn("beat B", body)
         self.assertIn("ThePickleHub", pkg["en"]["sections"][0]["content"])
 
+    def test_titles_do_not_repeat_the_year_and_lead_with_search_name(self):
+        event = {"title": "Test Open 2026", "start_date": "2026-10-01", "dates_en": "October 1–3, 2026",
+                 "dates_vi": "1–3/10/2026", "source": "/official", "slug": "test-open-2026-results",
+                 "vi_slug": "ket-qua-test-open-2026"}
+        now = datetime(2026, 10, 1, tzinfo=timezone.utc)
+        pkg = autopublish.package(event, feed(), now)
+        self.assertEqual(pkg["en"]["metaTitle"], "Test Open Results 2026 | Daily Scores")
+        self.assertEqual(pkg["vi"]["title"], "Kết quả Test Open 2026: cập nhật hằng ngày")
+        pkg = autopublish.package({**event, "search_name": "PPA Test", "related": [
+            {"en": "Schedule", "vi": "Lịch", "path": "/blog/s", "vi_path": "/vi/blog/l"}]}, feed(), now)
+        self.assertEqual(pkg["en"]["metaTitle"], "PPA Test Results 2026: Test Open Scores")
+        self.assertEqual(pkg["vi"]["sections"][0]["internalLinks"][1]["path"], "/vi/blog/l")
+        self.assertNotIn("2026 2026", str(pkg))
+
+    def test_pro_prefixed_division_is_translated(self):
+        match = feed()["matches"][0] | {"division": "Pro Men's Singles"}
+        self.assertTrue(autopublish._match_line(match, vi=True).startswith("Đơn nam,"))
+
 
 if __name__ == "__main__":
     unittest.main()
