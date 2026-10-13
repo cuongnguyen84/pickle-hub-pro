@@ -6,7 +6,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   "slug": "veolia-chicago-cup-2026-results",
   "publishedDate": "2026-10-05",
-  "updatedDate": "2026-10-12",
+  "updatedDate": "2026-10-13",
   "author": "The PickleHub Team",
   "tags": [
     "pickleball",
@@ -26,7 +26,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Veolia Chicago Cup 2026 results and daily scores",
-          "content": "Last updated: October 12, 2026, 07:30 Vietnam time. ThePickleHub publishes this Veolia Chicago Cup 2026 results page from the official PPA scores feed for October 5–11, 2026 at Life Time North Shore Sport & Racquetball, Northbrook, Illinois. The feed currently contains 233 matches, including 233 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: October 13, 2026, 07:30 Vietnam time. ThePickleHub publishes this Veolia Chicago Cup 2026 results page from the official PPA scores feed for October 5–11, 2026 at Life Time North Shore Sport & Racquetball, Northbrook, Illinois. The feed currently contains 233 matches, including 233 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -94,7 +94,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Veolia Chicago Cup 2026",
-          "content": "Cập nhật: 07:30 ngày 12/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Veolia Chicago Cup 2026 từ feed điểm số chính thức của PPA cho thời gian 5–11/10/2026 tại Life Time North Shore Sport & Racquetball, Northbrook, Illinois. Feed hiện có 233 trận, gồm 233 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 07:30 ngày 13/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Veolia Chicago Cup 2026 từ feed điểm số chính thức của PPA cho thời gian 5–11/10/2026 tại Life Time North Shore Sport & Racquetball, Northbrook, Illinois. Feed hiện có 233 trận, gồm 233 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
