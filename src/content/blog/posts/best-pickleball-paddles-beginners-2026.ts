@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "best-pickleball-paddles-beginners-2026",
   publishedDate: "2026-05-24",
-  updatedDate: "2026-05-24",
+  updatedDate: "2026-10-13",
   author: "Cuong Nguyen",
   tags: [
     "best pickleball paddles",
@@ -54,6 +54,9 @@ const post: BlogPost = {
             "Face material. Graphite or carbon fiber gives a softer feel with better touch and costs more — recommended if budget allows. Composite or fiberglass gives more power, more spin grit, and a more forgiving sweet spot — the best default for most beginners. Wood paddles should be skipped entirely; heavy, dead, and only acceptable for a single borrowed session.",
             "Core thickness (13–16 mm polypropylene honeycomb). A 13 mm thinner core gives more power and less control. A 16 mm thicker core gives more control, slightly less power, and is far more forgiving on off-center hits — the better beginner default.",
             "Grip size (4.0–4.5 inch circumference). Smaller grips (4.0–4.125\") allow more wrist flick and easier spin. Larger grips (4.25–4.5\") give stability and reduce strain. Rule of thumb: if your index finger fits exactly between fingertips and palm when you grip the paddle, the size is correct. Vietnam note: overgrip wraps add roughly 0.125 inch, so size down one step if you plan to overgrip immediately.",
+          ],
+          internalLinks: [
+            { text: "Full guide: how to choose a pickleball paddle (weight, core, face, grip, shape)", path: "/blog/how-to-choose-a-pickleball-paddle" },
           ],
         },
         {
@@ -188,6 +191,9 @@ const post: BlogPost = {
             "Chất liệu mặt vợt. Graphite hoặc carbon fiber cứng hơn, êm hơn, cho touch tốt hơn trên dink và reset — thường giá cao hơn. Composite hoặc sợi thủy tinh có lực mạnh hơn chút, độ nhám tốt cho spin, sweet spot rộng hơn cho lỗi — default tốt nhất cho đa số người mới. Vợt gỗ thì bỏ hoàn toàn; nặng, chết, chỉ chấp nhận được nếu mượn 1 buổi.",
             "Độ dày lõi (13-16 mm tổ ong polypropylene). Lõi 13 mm mỏng cho lực mạnh, ít kiểm soát. Lõi 16 mm dày cho kiểm soát tốt, lực hơi giảm, nhưng tha thứ lỗi rất nhiều với cú đánh lệch tâm — default tốt hơn cho người mới.",
             "Kích thước cán (4.0-4.5 inch chu vi). Cán nhỏ hơn (4.0-4.125\") cho cổ tay flick linh hoạt, dễ tạo spin. Cán lớn hơn (4.25-4.5\") cho độ ổn định và giảm căng cơ. Quy tắc nhanh: nếu ngón trỏ vừa khít giữa đầu ngón và lòng bàn tay khi cầm vợt — là vừa. Lưu ý VN: overgrip thêm khoảng 0.125 inch, nên chọn nhỏ hơn 1 size nếu định quấn overgrip ngay.",
+          ],
+          internalLinks: [
+            { text: "Hướng dẫn đầy đủ: cách chọn vợt pickleball (trọng lượng, lõi, mặt, size cán, dáng)", path: "/vi/blog/cach-chon-vot-pickleball" },
           ],
         },
         {

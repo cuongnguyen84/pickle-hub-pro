@@ -10,6 +10,35 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "how-to-choose-a-pickleball-paddle",
+    "publishedDate": "2026-10-13",
+    "updatedDate": "2026-10-13",
+    "heroImage": {
+      "src": "/images/blog/how-to-choose-a-pickleball-paddle-hero.webp",
+      "alt": "Four pickleball paddles with different shapes and face materials on a wooden table, with a measuring tape, a digital scale and a yellow ball"
+    },
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball",
+      "paddles",
+      "buying guide",
+      "grip size",
+      "paddle core",
+      "beginners"
+    ],
+    "ctaPath": "/shop/category/vot",
+    "ctaLabel": {
+      "en": "Browse pickleball paddles",
+      "vi": "Xem vợt pickleball trên ThePickleHub"
+    },
+    "titleEn": "How to Choose a Pickleball Paddle: Weight, Core, Face, Grip and Shape",
+    "titleVi": "Cách chọn vợt pickleball: trọng lượng, lõi, mặt vợt, size cán và hình dáng",
+    "metaTitleEn": "How to Choose a Pickleball Paddle: Weight, Core, Grip",
+    "metaTitleVi": "Cách chọn vợt pickleball: trọng lượng, lõi, cán",
+    "metaDescriptionEn": "How to choose a pickleball paddle: weight, core thickness and face material first, then grip size and shape. Spec table of paddles on ThePickleHub.",
+    "metaDescriptionVi": "Cách chọn vợt pickleball: trọng lượng, độ dày lõi, chất liệu mặt, size cán, dáng vợt; kèm bảng thông số trên ThePickleHub."
+  },
+  {
     "slug": "ppa-brisbane-2026-results",
     "publishedDate": "2026-10-13",
     "updatedDate": "2026-10-13",
@@ -2061,7 +2090,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "best-pickleball-paddles-beginners-2026",
     publishedDate: "2026-05-24",
-    updatedDate: "2026-05-24",
+    updatedDate: "2026-10-13",
     author: "Cuong Nguyen",
     tags: [
       "best pickleball paddles",
