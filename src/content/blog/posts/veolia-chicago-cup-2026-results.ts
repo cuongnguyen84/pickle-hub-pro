@@ -18,15 +18,19 @@ const post: BlogPost = {
     "en": "Follow live scores on ThePickleHub",
     "vi": "Theo dõi điểm số trên ThePickleHub"
   },
+  "heroImage": {
+    "src": "/images/blog/veolia-chicago-cup-2026-results-hero.webp",
+    "alt": "Veolia Chicago Cup 2026 pickleball tournament court at golden hour with the Chicago skyline"
+  },
   "content": {
     "en": {
       "title": "Veolia Chicago Cup 2026 Results: Daily Scores and Confirmed Winners",
-      "metaTitle": "Veolia Chicago Cup 2026 Results 2026 | Daily Scores",
-      "metaDescription": "Veolia Chicago Cup 2026 results and daily scores from the official PPA feed, checked by ThePickleHub.",
+      "metaTitle": "PPA Chicago Results 2026: Veolia Chicago Cup Scores",
+      "metaDescription": "PPA Chicago results: Veolia Chicago Cup 2026 results and daily scores from the official PPA feed, checked by ThePickleHub.",
       "sections": [
         {
-          "heading": "Veolia Chicago Cup 2026 results and daily scores",
-          "content": "Last updated: October 13, 2026, 07:30 Vietnam time. ThePickleHub publishes this Veolia Chicago Cup 2026 results page from the official PPA scores feed for October 5–11, 2026 at Life Time North Shore Sport & Racquetball, Northbrook, Illinois. The feed currently contains 233 matches, including 233 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "heading": "PPA Chicago results: Veolia Chicago Cup 2026 daily scores",
+          "content": "Last updated: October 13, 2026, 01:25 Vietnam time. ThePickleHub publishes this Veolia Chicago Cup 2026 results page from the official PPA scores feed for October 5–11, 2026 at Life Time North Shore Sport & Racquetball, Northbrook, Illinois. The feed currently contains 233 matches, including 233 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -88,13 +92,13 @@ const post: BlogPost = {
       ]
     },
     "vi": {
-      "title": "Kết quả Veolia Chicago Cup 2026 2026: cập nhật hằng ngày",
-      "metaTitle": "Kết quả Veolia Chicago Cup 2026 2026 mỗi ngày",
-      "metaDescription": "Kết quả Veolia Chicago Cup 2026 2026 từ feed PPA chính thức, được ThePickleHub kiểm chứng.",
+      "title": "Kết quả Veolia Chicago Cup 2026: cập nhật hằng ngày",
+      "metaTitle": "Kết quả PPA Chicago 2026: Veolia Chicago Cup",
+      "metaDescription": "Kết quả Veolia Chicago Cup 2026 từ feed PPA chính thức, được ThePickleHub kiểm chứng.",
       "sections": [
         {
           "heading": "Kết quả Veolia Chicago Cup 2026",
-          "content": "Cập nhật: 07:30 ngày 13/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Veolia Chicago Cup 2026 từ feed điểm số chính thức của PPA cho thời gian 5–11/10/2026 tại Life Time North Shore Sport & Racquetball, Northbrook, Illinois. Feed hiện có 233 trận, gồm 233 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 01:25 ngày 13/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Veolia Chicago Cup 2026 từ feed điểm số chính thức của PPA cho thời gian 5–11/10/2026 tại Life Time North Shore Sport & Racquetball, Northbrook, Illinois. Feed hiện có 233 trận, gồm 233 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",

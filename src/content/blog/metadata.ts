@@ -25,11 +25,11 @@ export const blogMetadata: BlogPostMetadata[] = [
       "vi": "Theo dõi điểm số trên ThePickleHub"
     },
     "titleEn": "Virginia Beach Open 2026 Results: Daily Scores and Confirmed Winners",
-    "titleVi": "Kết quả Virginia Beach Open 2026 2026: cập nhật hằng ngày",
-    "metaTitleEn": "Virginia Beach Open 2026 Results 2026 | Daily Scores",
-    "metaTitleVi": "Kết quả Virginia Beach Open 2026 2026 mỗi ngày",
-    "metaDescriptionEn": "Virginia Beach Open 2026 results and daily scores from the official PPA feed, checked by ThePickleHub.",
-    "metaDescriptionVi": "Kết quả Virginia Beach Open 2026 2026 từ feed PPA chính thức, được ThePickleHub kiểm chứng."
+    "titleVi": "Kết quả Virginia Beach Open 2026: cập nhật hằng ngày",
+    "metaTitleEn": "PPA Virginia Beach Results 2026: Virginia Beach Open Scores",
+    "metaTitleVi": "Kết quả PPA Virginia Beach 2026: Virginia Beach Open",
+    "metaDescriptionEn": "PPA Virginia Beach results: Virginia Beach Open 2026 results and daily scores from the official PPA feed, checked by ThePickleHub.",
+    "metaDescriptionVi": "Kết quả Virginia Beach Open 2026 từ feed PPA chính thức, được ThePickleHub kiểm chứng."
   },
   {
     "slug": "pickleball-kitchen-foot-fault",
@@ -255,12 +255,16 @@ export const blogMetadata: BlogPostMetadata[] = [
       "en": "Follow live scores on ThePickleHub",
       "vi": "Theo dõi điểm số trên ThePickleHub"
     },
+    "heroImage": {
+      "src": "/images/blog/veolia-chicago-cup-2026-results-hero.webp",
+      "alt": "Veolia Chicago Cup 2026 pickleball tournament court at golden hour with the Chicago skyline"
+    },
     "titleEn": "Veolia Chicago Cup 2026 Results: Daily Scores and Confirmed Winners",
-    "titleVi": "Kết quả Veolia Chicago Cup 2026 2026: cập nhật hằng ngày",
-    "metaTitleEn": "Veolia Chicago Cup 2026 Results 2026 | Daily Scores",
-    "metaTitleVi": "Kết quả Veolia Chicago Cup 2026 2026 mỗi ngày",
-    "metaDescriptionEn": "Veolia Chicago Cup 2026 results and daily scores from the official PPA feed, checked by ThePickleHub.",
-    "metaDescriptionVi": "Kết quả Veolia Chicago Cup 2026 2026 từ feed PPA chính thức, được ThePickleHub kiểm chứng."
+    "titleVi": "Kết quả Veolia Chicago Cup 2026: cập nhật hằng ngày",
+    "metaTitleEn": "PPA Chicago Results 2026: Veolia Chicago Cup Scores",
+    "metaTitleVi": "Kết quả PPA Chicago 2026: Veolia Chicago Cup",
+    "metaDescriptionEn": "PPA Chicago results: Veolia Chicago Cup 2026 results and daily scores from the official PPA feed, checked by ThePickleHub.",
+    "metaDescriptionVi": "Kết quả Veolia Chicago Cup 2026 từ feed PPA chính thức, được ThePickleHub kiểm chứng."
   },
   {
     "slug": "pickleball-volley-technique",

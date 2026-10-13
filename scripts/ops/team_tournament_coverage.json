@@ -2,7 +2,7 @@
   "enabled": true,
   "timezone": "Asia/Ho_Chi_Minh",
   "daily_time": "07:30",
-  "verified_at": "2026-10-04",
+  "verified_at": "2026-10-13",
   "events": [
     {
       "key": "hong-kong-slam-2026",
@@ -13,11 +13,48 @@
       "enabled": true,
       "sources": [
         "https://www.ppatour-asia.com/tournament/2026/hong-kong-slam/",
-        "https://pickleballtournaments.com/tournaments/C7E4FD72-D159-4211-82A2-21ADBB21DEFE"
+        "https://pickleballtournaments.com/tournaments/C7E4FD72-D159-4211-82A2-21ADBB21DEFE",
+        "https://www.ppatour.com/api/scores/?event=c7e4fd72-d159-4211-82a2-21adbb21defe"
       ],
       "notes": "P0. Kai Tak Arena. Giờ VN: 19/10 qualifying 08–20h; 20 R64,21 R32,22 R16,23 QF,24 SF 08–18h;25 finals12–17h. Đây là khung phiên, không phải giờ từng trận. Giữ /blog/hong-kong-slam-2026-preview; sửa thông tin đăng ký đã đóng. Tách lịch và kết quả khi có dữ liệu, giữ URL ổn định. Draw: https://pickleballtournaments.com/tournaments/C7E4FD72-D159-4211-82A2-21ADBB21DEFE . Finale main tour, không phải giải châu Á cuối cùng năm.",
       "existing_task_id": 86,
-      "initial_prep_at": "2026-10-04T00:00:00+07:00"
+      "initial_prep_at": "2026-10-04T00:00:00+07:00",
+      "name": "Hong Kong Slam 2026",
+      "auto_publish": true,
+      "publish_from": "2026-10-13",
+      "event_id": "c7e4fd72-d159-4211-82a2-21adbb21defe",
+      "result_source": "https://www.ppatour.com/api/scores/?event=c7e4fd72-d159-4211-82a2-21adbb21defe",
+      "source": "https://www.ppatour-asia.com/tournament/2026/hong-kong-slam/",
+      "slug": "hong-kong-slam-2026-results",
+      "vi_slug": "ket-qua-hong-kong-slam-2026",
+      "hero_image": {
+        "src": "/images/blog/hong-kong-slam-2026-preview-hero.webp",
+        "alt": "Hong Kong Slam 2026 results at Kai Tak Arena"
+      },
+      "dates_en": "October 19–25, 2026",
+      "dates_vi": "19–25/10/2026",
+      "venue": "Kai Tak Arena, Hong Kong",
+      "tags": [
+        "pickleball",
+        "results",
+        "hong kong slam",
+        "ppa tour asia",
+        "2026"
+      ],
+      "related": [
+        {
+          "en": "Hong Kong Slam 2026 schedule in Hong Kong and Vietnam time",
+          "path": "/blog/hong-kong-slam-2026-schedule",
+          "vi": "Lịch thi đấu Hong Kong Slam 2026 theo giờ Việt Nam",
+          "vi_path": "/vi/blog/lich-thi-dau-hong-kong-slam-2026"
+        },
+        {
+          "en": "Hong Kong Slam 2026 preview",
+          "path": "/blog/hong-kong-slam-2026-preview",
+          "vi": "Hong Kong Slam 2026: Slam đầu tiên châu Á",
+          "vi_path": "/vi/blog/hong-kong-slam-2026"
+        }
+      ]
     },
     {
       "key": "veolia-chicago-cup-2026",
@@ -44,7 +81,8 @@
       "dates_en": "October 5–11, 2026",
       "dates_vi": "5–11/10/2026",
       "venue": "Life Time North Shore Sport & Racquetball, Northbrook, Illinois",
-      "initial_prep_at": "2026-10-04T00:00:00+07:00"
+      "initial_prep_at": "2026-10-04T00:00:00+07:00",
+      "search_name": "PPA Chicago"
     },
     {
       "key": "virginia-beach-open-2026",
@@ -67,7 +105,8 @@
       "dates_en": "October 12–18, 2026",
       "dates_vi": "12–18/10/2026",
       "venue": "Pickleball Virginia Beach, Virginia",
-      "initial_prep_at": "2026-10-04T00:00:00+07:00"
+      "initial_prep_at": "2026-10-04T00:00:00+07:00",
+      "search_name": "PPA Virginia Beach"
     },
     {
       "key": "nanjing-2026",

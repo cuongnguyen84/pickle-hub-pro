@@ -169,7 +169,9 @@ def queue_due(store, now=None, config=None, fetcher=fetch_source):
             except Exception as exc:
                 sources.append({'url': url, 'checked_at': now.isoformat(), 'missing': type(exc).__name__})
         local_today = now.astimezone(ZoneInfo(event.get('event_timezone', config.get('timezone', 'Asia/Ho_Chi_Minh')))).date()
-        event_started = local_today >= date.fromisoformat(event['start_date'])
+        # publish_from lets the results URL go live (draw, scheduled matchups) before day one;
+        # an empty feed still fails validation, so nothing is published without matches.
+        event_started = local_today >= date.fromisoformat(event.get('publish_from', event['start_date']))
         if event.get('auto_publish') and event_started and event.get('result_source') and event.get('event_id'):
             # This path is source-driven and does not ask an LLM to invent a
             # recap.  A dirty checkout, invalid feed, or failed deploy gate is
