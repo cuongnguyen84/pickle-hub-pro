@@ -13,6 +13,10 @@ export const blogMetadata: BlogPostMetadata[] = [
     "slug": "how-to-choose-a-pickleball-paddle",
     "publishedDate": "2026-10-13",
     "updatedDate": "2026-10-13",
+    "heroImage": {
+      "src": "/images/blog/how-to-choose-a-pickleball-paddle-hero.webp",
+      "alt": "Four pickleball paddles with different shapes and face materials on a wooden table, with a measuring tape, a digital scale and a yellow ball"
+    },
     "author": "The PickleHub Team",
     "tags": [
       "pickleball",
