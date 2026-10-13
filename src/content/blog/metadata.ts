@@ -10,6 +10,30 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "ppa-brisbane-2026-results",
+    "publishedDate": "2026-10-13",
+    "updatedDate": "2026-10-13",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball",
+      "results",
+      "ppa brisbane",
+      "ppa tour australia",
+      "2026"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "titleEn": "Australia Pickleball Cup 2026 Results: Daily Scores and Confirmed Winners",
+    "titleVi": "Kết quả Australia Pickleball Cup 2026: cập nhật hằng ngày",
+    "metaTitleEn": "PPA Brisbane Results 2026: Australia Pickleball Cup Scores",
+    "metaTitleVi": "Kết quả PPA Brisbane 2026: Australia Pickleball Cup",
+    "metaDescriptionEn": "PPA Brisbane results: Australia Pickleball Cup 2026 results and daily scores from the official PPA feed, checked by ThePickleHub.",
+    "metaDescriptionVi": "Kết quả Australia Pickleball Cup 2026 từ feed PPA chính thức, được ThePickleHub kiểm chứng."
+  },
+  {
     "slug": "virginia-beach-open-2026-results",
     "publishedDate": "2026-10-12",
     "updatedDate": "2026-10-13",

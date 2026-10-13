@@ -5,58 +5,6 @@
   "verified_at": "2026-10-13",
   "events": [
     {
-      "key": "hong-kong-slam-2026",
-      "title": "Hang Seng Bank Hong Kong Slam 2026",
-      "start_date": "2026-10-19",
-      "end_date": "2026-10-25",
-      "event_timezone": "Asia/Hong_Kong",
-      "enabled": true,
-      "sources": [
-        "https://www.ppatour-asia.com/tournament/2026/hong-kong-slam/",
-        "https://pickleballtournaments.com/tournaments/C7E4FD72-D159-4211-82A2-21ADBB21DEFE",
-        "https://www.ppatour.com/api/scores/?event=c7e4fd72-d159-4211-82a2-21adbb21defe"
-      ],
-      "notes": "P0. Kai Tak Arena. Giờ VN: 19/10 qualifying 08–20h; 20 R64,21 R32,22 R16,23 QF,24 SF 08–18h;25 finals12–17h. Đây là khung phiên, không phải giờ từng trận. Giữ /blog/hong-kong-slam-2026-preview; sửa thông tin đăng ký đã đóng. Tách lịch và kết quả khi có dữ liệu, giữ URL ổn định. Draw: https://pickleballtournaments.com/tournaments/C7E4FD72-D159-4211-82A2-21ADBB21DEFE . Finale main tour, không phải giải châu Á cuối cùng năm.",
-      "existing_task_id": 86,
-      "initial_prep_at": "2026-10-04T00:00:00+07:00",
-      "name": "Hong Kong Slam 2026",
-      "auto_publish": true,
-      "publish_from": "2026-10-13",
-      "event_id": "c7e4fd72-d159-4211-82a2-21adbb21defe",
-      "result_source": "https://www.ppatour.com/api/scores/?event=c7e4fd72-d159-4211-82a2-21adbb21defe",
-      "source": "https://www.ppatour-asia.com/tournament/2026/hong-kong-slam/",
-      "slug": "hong-kong-slam-2026-results",
-      "vi_slug": "ket-qua-hong-kong-slam-2026",
-      "hero_image": {
-        "src": "/images/blog/hong-kong-slam-2026-preview-hero.webp",
-        "alt": "Hong Kong Slam 2026 results at Kai Tak Arena"
-      },
-      "dates_en": "October 19–25, 2026",
-      "dates_vi": "19–25/10/2026",
-      "venue": "Kai Tak Arena, Hong Kong",
-      "tags": [
-        "pickleball",
-        "results",
-        "hong kong slam",
-        "ppa tour asia",
-        "2026"
-      ],
-      "related": [
-        {
-          "en": "Hong Kong Slam 2026 schedule in Hong Kong and Vietnam time",
-          "path": "/blog/hong-kong-slam-2026-schedule",
-          "vi": "Lịch thi đấu Hong Kong Slam 2026 theo giờ Việt Nam",
-          "vi_path": "/vi/blog/lich-thi-dau-hong-kong-slam-2026"
-        },
-        {
-          "en": "Hong Kong Slam 2026 preview",
-          "path": "/blog/hong-kong-slam-2026-preview",
-          "vi": "Hong Kong Slam 2026: Slam đầu tiên châu Á",
-          "vi_path": "/vi/blog/hong-kong-slam-2026"
-        }
-      ]
-    },
-    {
       "key": "veolia-chicago-cup-2026",
       "title": "Veolia Chicago Cup 2026",
       "start_date": "2026-10-05",
@@ -109,6 +57,89 @@
       "search_name": "PPA Virginia Beach"
     },
     {
+      "key": "ppa-brisbane-2026",
+      "title": "WALKER Australia Pickleball Cup 2026 (PPA 1500 Brisbane)",
+      "name": "Australia Pickleball Cup 2026",
+      "search_name": "PPA Brisbane",
+      "start_date": "2026-10-13",
+      "end_date": "2026-10-18",
+      "event_timezone": "Australia/Brisbane",
+      "enabled": true,
+      "sources": [
+        "https://ppatour.com.au/tournaments/ppa-1500-australia/",
+        "https://www.ppatour.com/api/scores/?event=7d0583f0-2e25-4042-b369-07f8e21e8508"
+      ],
+      "notes": "P0 đang diễn ra (Cuong yêu cầu 13/10). PPA Tour Australia, PPA1500, 500.000 USD. ppatour.com ghi 14–18/10, ppatour.com.au ghi 13–18/10 (đã có trận final từ 10–12/10 trong feed). Brisbane +3h so với VN. Draw: https://pickleballtournaments.com/tournaments/ppa1500-australia-pickleball-cup . Nhãn nội dung trong feed viết hoa kèm ' - MAIN DRAW'.",
+      "auto_publish": true,
+      "event_id": "7d0583f0-2e25-4042-b369-07f8e21e8508",
+      "result_source": "https://www.ppatour.com/api/scores/?event=7d0583f0-2e25-4042-b369-07f8e21e8508",
+      "source": "https://ppatour.com.au/tournaments/ppa-1500-australia/",
+      "slug": "ppa-brisbane-2026-results",
+      "vi_slug": "ket-qua-ppa-brisbane-2026",
+      "dates_en": "October 13–18, 2026",
+      "dates_vi": "13–18/10/2026",
+      "venue": "Queensland Tennis Centre (Pat Rafter Arena), Brisbane, Australia",
+      "tags": [
+        "pickleball",
+        "results",
+        "ppa brisbane",
+        "ppa tour australia",
+        "2026"
+      ]
+    },
+    {
+      "key": "hong-kong-slam-2026",
+      "title": "Hang Seng Bank Hong Kong Slam 2026",
+      "start_date": "2026-10-19",
+      "end_date": "2026-10-25",
+      "event_timezone": "Asia/Hong_Kong",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour-asia.com/tournament/2026/hong-kong-slam/",
+        "https://pickleballtournaments.com/tournaments/C7E4FD72-D159-4211-82A2-21ADBB21DEFE",
+        "https://www.ppatour.com/api/scores/?event=c7e4fd72-d159-4211-82a2-21adbb21defe"
+      ],
+      "notes": "P0. Kai Tak Arena. Giờ VN: 19/10 qualifying 08–20h; 20 R64,21 R32,22 R16,23 QF,24 SF 08–18h;25 finals12–17h. Đây là khung phiên, không phải giờ từng trận. Giữ /blog/hong-kong-slam-2026-preview; sửa thông tin đăng ký đã đóng. Tách lịch và kết quả khi có dữ liệu, giữ URL ổn định. Draw: https://pickleballtournaments.com/tournaments/C7E4FD72-D159-4211-82A2-21ADBB21DEFE . Finale main tour, không phải giải châu Á cuối cùng năm.",
+      "existing_task_id": 86,
+      "initial_prep_at": "2026-10-04T00:00:00+07:00",
+      "name": "Hong Kong Slam 2026",
+      "auto_publish": true,
+      "publish_from": "2026-10-13",
+      "event_id": "c7e4fd72-d159-4211-82a2-21adbb21defe",
+      "result_source": "https://www.ppatour.com/api/scores/?event=c7e4fd72-d159-4211-82a2-21adbb21defe",
+      "source": "https://www.ppatour-asia.com/tournament/2026/hong-kong-slam/",
+      "slug": "hong-kong-slam-2026-results",
+      "vi_slug": "ket-qua-hong-kong-slam-2026",
+      "hero_image": {
+        "src": "/images/blog/hong-kong-slam-2026-preview-hero.webp",
+        "alt": "Hong Kong Slam 2026 results at Kai Tak Arena"
+      },
+      "dates_en": "October 19–25, 2026",
+      "dates_vi": "19–25/10/2026",
+      "venue": "Kai Tak Arena, Hong Kong",
+      "tags": [
+        "pickleball",
+        "results",
+        "hong kong slam",
+        "ppa tour asia",
+        "2026"
+      ],
+      "related": [
+        {
+          "en": "Hong Kong Slam 2026 schedule in Hong Kong and Vietnam time",
+          "path": "/blog/hong-kong-slam-2026-schedule",
+          "vi": "Lịch thi đấu Hong Kong Slam 2026 theo giờ Việt Nam",
+          "vi_path": "/vi/blog/lich-thi-dau-hong-kong-slam-2026"
+        },
+        {
+          "en": "Hong Kong Slam 2026 preview",
+          "path": "/blog/hong-kong-slam-2026-preview",
+          "vi": "Hong Kong Slam 2026: Slam đầu tiên châu Á",
+          "vi_path": "/vi/blog/hong-kong-slam-2026"
+        }
+      ]
+    },
+    {
       "key": "nanjing-2026",
       "title": "Skechers Nanjing 2026 — PPA Asia 125",
       "start_date": "2026-10-28",
@@ -133,6 +164,18 @@
       "notes": "P1. Brookhaven Country Club, Farmers Branch TX. 2/11 qualifying,3 R64,4 R32,5 R16,6 QF,7 SF,8 finals; giờ pro TBD. Sau đổi DST: local+13h=VN. https://pickleballtournaments.com/tournaments/2026-pickleball-world-championships chưa fetch được ngày4/10. Không nhầm World Cup Đà Nẵng."
     },
     {
+      "key": "app-bangkok-open-2026",
+      "title": "APP Asia Bangkok Open 2026",
+      "start_date": "2026-11-02",
+      "end_date": "2026-11-07",
+      "event_timezone": "Asia/Bangkok",
+      "enabled": true,
+      "sources": [
+        "https://www.theapp.global/tour-schedule/2026-app-bangkok-open"
+      ],
+      "notes": "P1 châu Á. APP không có feed điểm số công khai như PPA — chỉ nháp, không tự đăng. Lịch xác minh 13/10 từ theapp.global."
+    },
+    {
       "key": "daytona-beach-open-2026",
       "title": "Proton Daytona Beach Open 2026",
       "start_date": "2026-11-16",
@@ -143,6 +186,18 @@
         "https://www.ppatour.com/events/2026/proton-daytona-beach-open/"
       ],
       "notes": "P1. Pictona at Holly Hill Florida. Draw URL và giờ trận chưa xác minh ngày4/10. Local+12h=VN trong tháng11."
+    },
+    {
+      "key": "app-tour-championships-2026",
+      "title": "APP Tour Championships 2026",
+      "start_date": "2026-12-03",
+      "end_date": "2026-12-06",
+      "event_timezone": "America/New_York",
+      "enabled": true,
+      "sources": [
+        "https://www.theapp.global/tour-schedule/2026-app-tour-championships"
+      ],
+      "notes": "P2. The Fort, Fort Lauderdale. APP không có feed điểm số công khai — chỉ nháp. Lịch xác minh 13/10 từ theapp.global."
     },
     {
       "key": "pj-tokyo-challenger-2026",
@@ -157,6 +212,18 @@
       "notes": "P2 watchlist. Ariake Tennis Park. Local-2h=VN. https://pickleballtournaments.com/tournaments/ppa-asia-125-pj-tokyo-challenger-2026 fetch timeout ngày4/10; chưa xác nhận draw."
     },
     {
+      "key": "veolia-malibu-showcase-2026",
+      "title": "Veolia Malibu Showcase 2026",
+      "start_date": "2026-12-14",
+      "end_date": "2026-12-20",
+      "event_timezone": "America/Los_Angeles",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour.com/events/2026/veolia-malibu-cup/"
+      ],
+      "notes": "P1. Open 500, Malibu CA. Lịch xác minh 13/10 từ ppatour.com/events. Chưa có eventId/feed điểm số — tra lại theo mốc RESULTS-ENABLE trước ngày đấu rồi bật auto_publish."
+    },
+    {
       "key": "johor-2026",
       "title": "PPA Asia 125 MAS Johor 2026",
       "start_date": "2026-12-17",
@@ -167,6 +234,126 @@
         "https://www.ppatour-asia.com/tournament/2026/ppa-asia-125-mas-johor-2026/"
       ],
       "notes": "P2 watchlist. Johor; venue/draw/giờ trận chưa công bố ngày4/10, pre-registration. Local-1h=VN."
+    },
+    {
+      "key": "carvana-pickleball-masters-2027",
+      "title": "Carvana Pickleball Masters 2027",
+      "start_date": "2027-01-11",
+      "end_date": "2027-01-17",
+      "event_timezone": "America/Los_Angeles",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour.com/events/2027/carvana-pickleball-masters/"
+      ],
+      "notes": "P1. Major 2000, Rancho Mirage CA. Lịch xác minh 13/10 từ ppatour.com/events. Chưa có eventId/feed điểm số — tra lại theo mốc RESULTS-ENABLE trước ngày đấu rồi bật auto_publish."
+    },
+    {
+      "key": "minneapolis-indoor-open-2027",
+      "title": "Minneapolis Indoor Open 2027",
+      "start_date": "2027-01-18",
+      "end_date": "2027-01-24",
+      "event_timezone": "America/Chicago",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour.com/events/2027/minneapolis-indoor-open/"
+      ],
+      "notes": "P2. Open 500, Lakeville MN. Lịch xác minh 13/10 từ ppatour.com/events. Chưa có eventId/feed điểm số — tra lại theo mốc RESULTS-ENABLE trước ngày đấu rồi bật auto_publish."
+    },
+    {
+      "key": "cape-coral-open-2027",
+      "title": "Cape Coral Open 2027",
+      "start_date": "2027-02-01",
+      "end_date": "2027-02-07",
+      "event_timezone": "America/New_York",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour.com/events/2027/cape-coral-open/"
+      ],
+      "notes": "P1. Open 1000, Cape Coral FL. Lịch xác minh 13/10 từ ppatour.com/events. Chưa có eventId/feed điểm số — tra lại theo mốc RESULTS-ENABLE trước ngày đấu rồi bật auto_publish."
+    },
+    {
+      "key": "carvana-mesa-cup-2027",
+      "title": "Carvana Mesa Cup 2027",
+      "start_date": "2027-02-15",
+      "end_date": "2027-02-21",
+      "event_timezone": "America/Phoenix",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour.com/events/2027/carvana-mesa-cup/"
+      ],
+      "notes": "P1. Cup 1500, Mesa AZ. Lịch xác minh 13/10 từ ppatour.com/events. Chưa có eventId/feed điểm số — tra lại theo mốc RESULTS-ENABLE trước ngày đấu rồi bật auto_publish."
+    },
+    {
+      "key": "newport-beach-open-2027",
+      "title": "Newport Beach Open 2027",
+      "start_date": "2027-03-01",
+      "end_date": "2027-03-07",
+      "event_timezone": "America/Los_Angeles",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour.com/events/2027/newport-beach-open/"
+      ],
+      "notes": "P1. Open 1000, Newport Beach CA. Lịch xác minh 13/10 từ ppatour.com/events. Chưa có eventId/feed điểm số — tra lại theo mốc RESULTS-ENABLE trước ngày đấu rồi bật auto_publish."
+    },
+    {
+      "key": "greater-zion-cup-2027",
+      "title": "Greater Zion Cup 2027",
+      "start_date": "2027-03-22",
+      "end_date": "2027-03-28",
+      "event_timezone": "America/Denver",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour.com/events/2027/greater-zion-cup-at-black-desert-resort/"
+      ],
+      "notes": "P1. Cup 1500, St. George UT. Lịch xác minh 13/10 từ ppatour.com/events. Chưa có eventId/feed điểm số — tra lại theo mốc RESULTS-ENABLE trước ngày đấu rồi bật auto_publish."
+    },
+    {
+      "key": "sacramento-open-2027",
+      "title": "Sacramento Open 2027",
+      "start_date": "2027-04-05",
+      "end_date": "2027-04-11",
+      "event_timezone": "America/Los_Angeles",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour.com/events/2027/sacramento-open/"
+      ],
+      "notes": "P1. Open 1000, Sacramento CA. Cùng tuần có Texas Open (địa điểm TBD, chưa có trang event) — chưa thêm. Lịch xác minh 13/10 từ ppatour.com/events. Chưa có eventId/feed điểm số — tra lại theo mốc RESULTS-ENABLE trước ngày đấu rồi bật auto_publish."
+    },
+    {
+      "key": "cincinnati-open-2027",
+      "title": "Cincinnati Open 2027",
+      "start_date": "2027-04-12",
+      "end_date": "2027-04-18",
+      "event_timezone": "America/New_York",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour.com/events/2027/cincinnati-open/"
+      ],
+      "notes": "P2. Open 500, Cincinnati OH. Lịch xác minh 13/10 từ ppatour.com/events. Chưa có eventId/feed điểm số — tra lại theo mốc RESULTS-ENABLE trước ngày đấu rồi bật auto_publish."
+    },
+    {
+      "key": "pickleball-players-championships-2027",
+      "title": "Pickleball Players Championships 2027",
+      "start_date": "2027-04-26",
+      "end_date": "2027-05-02",
+      "event_timezone": "America/New_York",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour.com/events/2027/atlanta-pickleball-championships/"
+      ],
+      "notes": "P1. Major 2000, Atlanta GA. Lịch xác minh 13/10 từ ppatour.com/events. Chưa có eventId/feed điểm số — tra lại theo mốc RESULTS-ENABLE trước ngày đấu rồi bật auto_publish."
+    },
+    {
+      "key": "ppa-finals-2027",
+      "title": "PPA Finals 2027",
+      "start_date": "2027-05-10",
+      "end_date": "2027-05-16",
+      "event_timezone": "America/Los_Angeles",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour.com/events/2027/ppa-finals/"
+      ],
+      "notes": "P0. Championship 2000, San Clemente CA. Lịch xác minh 13/10 từ ppatour.com/events. Chưa có eventId/feed điểm số — tra lại theo mốc RESULTS-ENABLE trước ngày đấu rồi bật auto_publish."
     }
   ]
 }

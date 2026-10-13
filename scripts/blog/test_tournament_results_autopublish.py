@@ -49,10 +49,14 @@ class TournamentAutopublishTests(unittest.TestCase):
         self.assertEqual(pkg["en"]["metaTitle"], "PPA Test Results 2026: Test Open Scores")
         self.assertEqual(pkg["vi"]["sections"][0]["internalLinks"][1]["path"], "/vi/blog/l")
         self.assertNotIn("2026 2026", str(pkg))
+        self.assertIn("07:00 Vietnam time", pkg["en"]["sections"][0]["content"])  # 00:00 UTC
 
     def test_pro_prefixed_division_is_translated(self):
         match = feed()["matches"][0] | {"division": "Pro Men's Singles"}
         self.assertTrue(autopublish._match_line(match, vi=True).startswith("Đơn nam,"))
+        match["division"] = "PRO MIXED DOUBLES - MAIN DRAW"
+        self.assertTrue(autopublish._match_line(match, vi=True).startswith("Đôi nam nữ,"))
+        self.assertTrue(autopublish._match_line(match).startswith("Mixed Doubles,"))
 
 
 if __name__ == "__main__":

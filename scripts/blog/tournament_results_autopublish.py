@@ -11,6 +11,8 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
+import string
 import subprocess
 import sys
 import urllib.request
@@ -18,6 +20,7 @@ import urllib.parse
 import ssl
 from datetime import datetime, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "scripts" / "ops"))
@@ -63,7 +66,9 @@ def _names(team):
 
 def _match_line(match, vi=False):
     a, b = match["teams"]
-    division = str(match.get("division") or "").removeprefix("Pro ")  # Asia feed says "Pro Men's Singles"
+    # Regional feeds decorate the label: "Pro Men's Singles" (Asia), "PRO MEN'S SINGLES - MAIN DRAW" (Australia).
+    division = re.sub(r"(?i)^pro\s+|\s+-\s+main draw$", "", str(match.get("division") or ""))
+    division = string.capwords(division) if division.isupper() else division
     division = DIV_VI.get(division, division or "Nội dung") if vi else division or "Division"
     label = match.get("roundLabel") or "Vòng chưa ghi nhãn"
     status = match["status"]
@@ -86,6 +91,8 @@ def package(event: dict, feed: dict, now: datetime) -> dict:
     recent = sorted(finals, key=lambda m: (str(m.get("dateKey", "")), int(m.get("roundNumber", 0) or 0)), reverse=True)[:20]
     live = [m for m in matches if m["status"] == "live"]
     upcoming = [m for m in matches if m["status"] == "scheduled"]
+    # The stamp says "Vietnam time", so make it true whatever tz the caller's clock is in.
+    now = now.astimezone(ZoneInfo("Asia/Ho_Chi_Minh"))
     stamp_en = now.strftime("%B %-d, %Y, %H:%M Vietnam time")
     stamp_vi = now.strftime("%H:%M ngày %-d/%-m/%Y (giờ Việt Nam)")
     name, venue = event.get("name") or event["title"], event.get("venue", "the official tournament venue")
