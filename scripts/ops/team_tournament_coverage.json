@@ -89,7 +89,11 @@
         "ppa brisbane",
         "ppa tour australia",
         "2026"
-      ]
+      ],
+      "hero_image": {
+        "src": "/images/blog/ppa-brisbane-2026-results-hero.webp",
+        "alt": "PPA Tour Australia Pickleball Cup 2026 court in Brisbane with the city skyline at sunset"
+      }
     },
     {
       "key": "hong-kong-slam-2026",

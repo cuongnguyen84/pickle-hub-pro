@@ -7,6 +7,10 @@ const post: BlogPost = {
   "slug": "pickleball-line-calls-in-or-out",
   "publishedDate": "2026-10-10",
   "updatedDate": "2026-10-10",
+  "heroImage": {
+    "src": "/images/blog/pickleball-line-calls-in-or-out-hero.webp",
+    "alt": "Pickleball Line Calls: How to Call In or Out Fairly"
+  },
   "author": "The PickleHub Team",
   "tags": [
     "pickleball rules",

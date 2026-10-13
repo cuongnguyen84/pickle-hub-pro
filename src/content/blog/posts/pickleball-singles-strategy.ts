@@ -7,6 +7,10 @@ const post: BlogPost = {
   "slug": "pickleball-singles-strategy",
   "publishedDate": "2026-10-05",
   "updatedDate": "2026-10-05",
+  "heroImage": {
+    "src": "/images/blog/pickleball-singles-strategy-hero.webp",
+    "alt": "Pickleball Singles Strategy: Movement and Attack"
+  },
   "author": "The PickleHub Team",
   "tags": [
     "pickleball singles",

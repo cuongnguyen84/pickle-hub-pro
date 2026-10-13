@@ -7,6 +7,10 @@ const post: BlogPost = {
   "slug": "pickleball-kitchen-foot-fault",
   "publishedDate": "2026-10-11",
   "updatedDate": "2026-10-11",
+  "heroImage": {
+    "src": "/images/blog/pickleball-kitchen-foot-fault-hero.webp",
+    "alt": "Pickleball Kitchen Foot Faults: The Situations Players Often Miss"
+  },
   "author": "The PickleHub Team",
   "tags": [
     "kitchen rule",

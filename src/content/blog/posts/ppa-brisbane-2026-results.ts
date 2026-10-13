@@ -7,6 +7,10 @@ const post: BlogPost = {
   "slug": "ppa-brisbane-2026-results",
   "publishedDate": "2026-10-13",
   "updatedDate": "2026-10-13",
+  "heroImage": {
+    "src": "/images/blog/ppa-brisbane-2026-results-hero.webp",
+    "alt": "PPA Tour Australia Pickleball Cup 2026 court in Brisbane with the city skyline at sunset"
+  },
   "author": "The PickleHub Team",
   "tags": [
     "pickleball",

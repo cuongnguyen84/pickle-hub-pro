@@ -4,6 +4,10 @@ const post: BlogPost = {
   slug: "pickleball-rules-complete-guide",
   publishedDate: "2026-04-19",
   updatedDate: "2026-04-19",
+  heroImage: {
+    src: "/images/blog/pickleball-rules-complete-guide-hero.webp",
+    alt: "Pickleball rules infographic: a regulation 44x20 ft court with the 7-ft kitchen (non-volley zone), cross-court serve, the two-bounce rule and 0-0-2 scoring"
+  },
   author: "Cuong Nguyen",
   tags: ["pickleball rules", "beginner", "kitchen rule", "serving", "scoring", "ppa tour asia"],
   ctaPath: "/tools/quick-tables",

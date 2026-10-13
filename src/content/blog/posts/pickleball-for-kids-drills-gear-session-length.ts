@@ -7,6 +7,10 @@ const post: BlogPost = {
   "slug": "pickleball-for-kids-drills-gear-session-length",
   "publishedDate": "2026-10-09",
   "updatedDate": "2026-10-09",
+  "heroImage": {
+    "src": "/images/blog/pickleball-for-kids-drills-gear-session-length-hero.webp",
+    "alt": "Pickleball for Kids: Choosing Drills, Gear and Session Length"
+  },
   "author": "The PickleHub Team",
   "tags": [
     "pickleball for kids",

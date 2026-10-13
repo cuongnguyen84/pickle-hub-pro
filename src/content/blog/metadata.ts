@@ -13,6 +13,10 @@ export const blogMetadata: BlogPostMetadata[] = [
     "slug": "ppa-brisbane-2026-results",
     "publishedDate": "2026-10-13",
     "updatedDate": "2026-10-13",
+    "heroImage": {
+      "src": "/images/blog/ppa-brisbane-2026-results-hero.webp",
+      "alt": "PPA Tour Australia Pickleball Cup 2026 court in Brisbane with the city skyline at sunset"
+    },
     "author": "The PickleHub Team",
     "tags": [
       "pickleball",
@@ -63,6 +67,10 @@ export const blogMetadata: BlogPostMetadata[] = [
     "slug": "pickleball-kitchen-foot-fault",
     "publishedDate": "2026-10-11",
     "updatedDate": "2026-10-11",
+    "heroImage": {
+      "src": "/images/blog/pickleball-kitchen-foot-fault-hero.webp",
+      "alt": "Pickleball Kitchen Foot Faults: The Situations Players Often Miss"
+    },
     "author": "The PickleHub Team",
     "tags": [
       "kitchen rule",
@@ -117,6 +125,10 @@ export const blogMetadata: BlogPostMetadata[] = [
     "slug": "pickleball-line-calls-in-or-out",
     "publishedDate": "2026-10-10",
     "updatedDate": "2026-10-10",
+    "heroImage": {
+      "src": "/images/blog/pickleball-line-calls-in-or-out-hero.webp",
+      "alt": "Pickleball Line Calls: How to Call In or Out Fairly"
+    },
     "author": "The PickleHub Team",
     "tags": [
       "pickleball rules",
@@ -143,6 +155,10 @@ export const blogMetadata: BlogPostMetadata[] = [
     "slug": "pickleball-for-kids-drills-gear-session-length",
     "publishedDate": "2026-10-09",
     "updatedDate": "2026-10-09",
+    "heroImage": {
+      "src": "/images/blog/pickleball-for-kids-drills-gear-session-length-hero.webp",
+      "alt": "Pickleball for Kids: Choosing Drills, Gear and Session Length"
+    },
     "author": "The PickleHub Team",
     "tags": [
       "pickleball for kids",
@@ -169,6 +185,10 @@ export const blogMetadata: BlogPostMetadata[] = [
     "slug": "pickleball-for-older-adults-safe-start",
     "publishedDate": "2026-10-08",
     "updatedDate": "2026-10-08",
+    "heroImage": {
+      "src": "/images/blog/pickleball-for-older-adults-safe-start-hero.webp",
+      "alt": "Pickleball for Older Adults: A Safe, Steady Start in 2026"
+    },
     "author": "The PickleHub Team",
     "tags": [
       "pickleball for seniors",
@@ -195,6 +215,10 @@ export const blogMetadata: BlogPostMetadata[] = [
     "slug": "pickleball-elbow-pain-causes-safe-steps",
     "publishedDate": "2026-10-07",
     "updatedDate": "2026-10-07",
+    "heroImage": {
+      "src": "/images/blog/pickleball-elbow-pain-causes-safe-steps-hero.webp",
+      "alt": "Pickleball Elbow Pain: Causes, What to Check and When to Stop"
+    },
     "author": "The PickleHub Team",
     "tags": [
       "pickleball elbow",
@@ -246,6 +270,10 @@ export const blogMetadata: BlogPostMetadata[] = [
     "slug": "pickleball-singles-strategy",
     "publishedDate": "2026-10-05",
     "updatedDate": "2026-10-05",
+    "heroImage": {
+      "src": "/images/blog/pickleball-singles-strategy-hero.webp",
+      "alt": "Pickleball Singles Strategy: Movement and Attack"
+    },
     "author": "The PickleHub Team",
     "tags": [
       "pickleball singles",
