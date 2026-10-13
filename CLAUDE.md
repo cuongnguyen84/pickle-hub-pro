@@ -60,6 +60,11 @@ Every new blog post requires **4 simultaneous changes** in the same push, or bot
    - **Entity + year together**: "Ho Chi Minh City Open 2026 (6–9/8/2026)", not "(6–9/8)".
    - Calendar/list/living posts: add a visible **"last updated: <date>"** dateline in the opening AND bump `updatedDate` in the post + metadata.ts (feeds dateModified schema). Refresh stale statuses (completed events must say completed).
    - No pronoun-dependent openings ("chúng tôi", "công ty này") and no unverifiable superlatives without a number/source in the same passage.
+6. **Content effort** (owner rule since 2026-10-13, applies to every published post, whoever writes it). GSC 14/09→11/10: 18 generic guide posts × 2 languages earned 10 clicks; one PPA Chicago results post earned 241.
+   - The post must carry at least one thing a reader cannot easily get elsewhere: our own data (`venues`, results feed, calendars, rankings) or a sourced observation. Ask: with the site name removed, does the reader still get something hard to find on other pages? If not, add it or say so before publishing.
+   - No padding sections: platform intro, sign-in/privacy, history, outlook, anything restating common knowledge or drifting off the query.
+   - Never print a placeholder as a measurement. `venues.price_source = 'default'` / `hours_source = 'default'` are filler ranges, not checked figures — write "not confirmed" instead.
+   - The team's copy of this rule lives in the editorial mission (`scripts/ops/team_roles.json`) and `WRIAI_BRIEF` (`team_supervisor.py`); change all three together.
 
 After `git push main` and Cloudflare deploy succeeds, **immediately request indexing**:
 - Google: open GSC URL Inspection → paste EN URL + VI URL → "Request Indexing". No public Google Indexing API for blog posts (only JobPosting + BroadcastEvent).
