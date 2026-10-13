@@ -472,7 +472,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     "slug": "pickleball-courts-vung-tau-2026",
     "publishedDate": "2026-09-29",
-    "updatedDate": "2026-09-29",
+    "updatedDate": "2026-10-13",
     "author": "The PickleHub Team",
     "tags": [
       "vung tau",
@@ -491,19 +491,19 @@ export const blogMetadata: BlogPostMetadata[] = [
     },
     "heroImage": {
       "src": "/images/blog/pickleball-courts-vung-tau-2026-hero.webp",
-      "alt": "Pickleball Courts in Vung Tau (2026): How to Find, Choose and Connect"
+      "alt": "Pickleball Courts in Vung Tau 2026: 13 Venues, Addresses, Phone Numbers and Prices"
     },
-    "titleEn": "Pickleball Courts in Vung Tau (2026): How to Find, Choose and Connect",
-    "titleVi": "Sân pickleball Vũng Tàu: Cách tìm, chọn và kết nối",
-    "metaTitleEn": "Pickleball Courts in Vung Tau 2026: Find, Choose, Connect",
-    "metaTitleVi": "Sân pickleball Vũng Tàu 2026: cách tìm sân",
-    "metaDescriptionEn": "Find pickleball courts in Vung Tau: browse the ThePickleHub directory by city, then confirm hours, fees and open play directly with the venue or club.",
-    "metaDescriptionVi": "Tìm sân pickleball Vũng Tàu trên ThePickleHub: tra cứu theo thành phố, rồi hỏi sân về giờ chơi và chi phí."
+    "titleEn": "Pickleball Courts in Vung Tau 2026: 13 Venues, Addresses, Phone Numbers and Prices",
+    "titleVi": "Sân pickleball Vũng Tàu 2026: 13 sân, địa chỉ, điện thoại và giá thuê",
+    "metaTitleEn": "Pickleball Courts in Vung Tau 2026: 13 Venues & Prices",
+    "metaTitleVi": "Sân pickleball Vũng Tàu 2026: 13 sân và giá thuê",
+    "metaDescriptionEn": "ThePickleHub lists 13 pickleball venues in Vung Tau as of October 2026: addresses, phones and confirmed rates from 100,000 VND/hour.",
+    "metaDescriptionVi": "13 sân pickleball Vũng Tàu trên ThePickleHub (10/2026): địa chỉ, điện thoại, giá đã xác nhận từ 100.000đ/giờ."
   },
   {
     "slug": "pickleball-courts-vietnam-guide-2026",
     "publishedDate": "2026-09-29",
-    "updatedDate": "2026-09-29",
+    "updatedDate": "2026-10-13",
     "author": "The PickleHub Team",
     "tags": [
       "pickleball courts",
@@ -521,17 +521,17 @@ export const blogMetadata: BlogPostMetadata[] = [
       "en": "Browse the court directory",
       "vi": "Xem danh bạ sân pickleball"
     },
-    "titleEn": "Pickleball Courts in Vietnam 2026: How to Find, Choose and Connect",
-    "titleVi": "Sân pickleball tại Việt Nam: Cách tìm, chọn và kết nối",
-    "metaTitleEn": "Pickleball Courts in Vietnam 2026: Find, Choose, Connect",
-    "metaTitleVi": "Sân pickleball Việt Nam 2026: cách tìm sân",
-    "metaDescriptionEn": "Find pickleball courts in Vietnam in ThePickleHub's 690+ venue directory by city, confirm by phone, then join clubs, events and Bracket Lab.",
-    "metaDescriptionVi": "Tìm hơn 690 sân pickleball Việt Nam theo thành phố trên ThePickleHub, gọi sân xác nhận trước khi đến."
+    "titleEn": "Pickleball Courts in Vietnam 2026: 821 Venues in 84 Cities",
+    "titleVi": "Sân pickleball tại Việt Nam 2026: 821 sân ở 84 thành phố",
+    "metaTitleEn": "Pickleball Courts in Vietnam 2026: 821 Venues",
+    "metaTitleVi": "Sân pickleball Việt Nam 2026: 821 sân",
+    "metaDescriptionEn": "ThePickleHub lists 821 pickleball venues in 84 Vietnamese cities as of October 2026: venues per city and confirmed hourly rates.",
+    "metaDescriptionVi": "ThePickleHub ghi nhận 821 sân pickleball tại 84 thành phố (10/2026): số sân từng nơi, giá đã xác nhận."
   },
   {
     "slug": "pickleball-courts-dong-nai-2026",
     "publishedDate": "2026-09-28",
-    "updatedDate": "2026-09-28",
+    "updatedDate": "2026-10-13",
     "author": "The PickleHub Team",
     "tags": [
       "dong nai",
@@ -550,14 +550,14 @@ export const blogMetadata: BlogPostMetadata[] = [
     },
     "heroImage": {
       "src": "/images/blog/pickleball-courts-dong-nai-2026-hero.webp",
-      "alt": "Pickleball Courts in Dong Nai 2026: How to Find a Court and Connect With Local Players"
+      "alt": "Pickleball Courts in Dong Nai 2026: 8 Venues, Addresses, Phone Numbers and Prices"
     },
-    "titleEn": "Pickleball Courts in Dong Nai 2026: How to Find a Court and Connect With Local Players",
-    "titleVi": "Sân pickleball Đồng Nai: Cách tìm sân và kết nối cộng đồng",
-    "metaTitleEn": "Pickleball Courts in Dong Nai 2026: Find & Confirm One",
-    "metaTitleVi": "Sân pickleball Đồng Nai 2026: cách tìm sân",
-    "metaDescriptionEn": "Find pickleball courts in Dong Nai and Bien Hoa with ThePickleHub's directory, then confirm hours by phone, join clubs and log matches in 2026.",
-    "metaDescriptionVi": "Tìm sân pickleball Đồng Nai, Biên Hòa trên ThePickleHub, gọi sân xác nhận giờ chơi, tìm câu lạc bộ và ghi trận."
+    "titleEn": "Pickleball Courts in Dong Nai 2026: 8 Venues, Addresses, Phone Numbers and Prices",
+    "titleVi": "Sân pickleball Đồng Nai 2026: 8 sân, địa chỉ, điện thoại và giá thuê",
+    "metaTitleEn": "Pickleball Courts in Dong Nai 2026: 8 Venues & Prices",
+    "metaTitleVi": "Sân pickleball Đồng Nai 2026: 8 sân và giá thuê",
+    "metaDescriptionEn": "ThePickleHub lists 8 pickleball venues in Dong Nai as of October 2026: addresses, phones and confirmed rates from 100,000 VND/hour.",
+    "metaDescriptionVi": "8 sân pickleball Đồng Nai trên ThePickleHub (10/2026): địa chỉ, điện thoại, giá đã xác nhận từ 100.000đ/giờ."
   },
   {
     "slug": "graphite-vs-carbon-pickleball-paddle",
@@ -592,7 +592,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     "slug": "pickleball-courts-nha-trang-2026",
     "publishedDate": "2026-09-28",
-    "updatedDate": "2026-09-28",
+    "updatedDate": "2026-10-13",
     "author": "The PickleHub Team",
     "tags": [
       "nha trang",
@@ -610,19 +610,19 @@ export const blogMetadata: BlogPostMetadata[] = [
     },
     "heroImage": {
       "src": "/images/blog/pickleball-courts-nha-trang-2026-hero.webp",
-      "alt": "Pickleball Courts in Nha Trang (2026): How to Find a Court You Can Trust"
+      "alt": "Pickleball Courts in Nha Trang 2026: 9 Venues, Addresses, Phone Numbers and Prices"
     },
-    "titleEn": "Pickleball Courts in Nha Trang (2026): How to Find a Court You Can Trust",
-    "titleVi": "Sân pickleball Nha Trang: Cách tìm sân đáng tin cậy",
-    "metaTitleEn": "Pickleball Courts in Nha Trang 2026: How to Find One",
-    "metaTitleVi": "Sân pickleball Nha Trang 2026: cách tìm sân",
-    "metaDescriptionEn": "Find pickleball courts in Nha Trang, Khanh Hoa: use the ThePickleHub directory, then confirm address, price, hours and booking with the venue.",
-    "metaDescriptionVi": "Sân pickleball Nha Trang: cách tra cứu sân, câu lạc bộ, sự kiện và thông tin cần xác minh trước khi đến chơi cùng ThePickleHub."
+    "titleEn": "Pickleball Courts in Nha Trang 2026: 9 Venues, Addresses, Phone Numbers and Prices",
+    "titleVi": "Sân pickleball Nha Trang 2026: 9 sân, địa chỉ, điện thoại và giá thuê",
+    "metaTitleEn": "Pickleball Courts in Nha Trang 2026: 9 Venues & Prices",
+    "metaTitleVi": "Sân pickleball Nha Trang 2026: 9 sân và giá thuê",
+    "metaDescriptionEn": "ThePickleHub lists 9 pickleball venues in Nha Trang as of October 2026: addresses, phones and confirmed rates from 20,000 VND/hour.",
+    "metaDescriptionVi": "9 sân pickleball Nha Trang trên ThePickleHub (10/2026): địa chỉ, điện thoại, giá đã xác nhận từ 20.000đ/giờ."
   },
   {
     "slug": "pickleball-courts-binh-duong-2026",
     "publishedDate": "2026-09-28",
-    "updatedDate": "2026-09-28",
+    "updatedDate": "2026-10-13",
     "author": "The PickleHub Team",
     "tags": [
       "binh duong",
@@ -639,19 +639,19 @@ export const blogMetadata: BlogPostMetadata[] = [
     },
     "heroImage": {
       "src": "/images/blog/pickleball-courts-binh-duong-2026-hero.webp",
-      "alt": "Pickleball Courts in Binh Duong 2026: How to Find and Choose a Court"
+      "alt": "Pickleball Courts in Binh Duong 2026: 12 Venues, Addresses, Phone Numbers and Prices"
     },
-    "titleEn": "Pickleball Courts in Binh Duong 2026: How to Find and Choose a Court",
-    "titleVi": "Sân pickleball Bình Dương: Cách tra cứu và chọn sân",
-    "metaTitleEn": "Pickleball Courts in Binh Duong 2026: How to Find One",
-    "metaTitleVi": "Sân pickleball Bình Dương 2026: cách tra cứu sân",
-    "metaDescriptionEn": "Find pickleball courts in Binh Duong, Vietnam in 2026 with ThePickleHub's court directory: Di An listing, other areas to check, and how to confirm prices.",
-    "metaDescriptionVi": "Tra cứu sân pickleball Bình Dương trên ThePickleHub: sân ở Dĩ An, khu vực nên tìm và cách xác nhận giá, giờ chơi."
+    "titleEn": "Pickleball Courts in Binh Duong 2026: 12 Venues, Addresses, Phone Numbers and Prices",
+    "titleVi": "Sân pickleball Bình Dương 2026: 12 sân, địa chỉ, điện thoại và giá thuê",
+    "metaTitleEn": "Pickleball Courts in Binh Duong 2026: 12 Venues & Prices",
+    "metaTitleVi": "Sân pickleball Bình Dương 2026: 12 sân và giá thuê",
+    "metaDescriptionEn": "ThePickleHub lists 12 pickleball venues in Binh Duong as of October 2026: addresses, phones and confirmed rates from 100,000 VND/hour.",
+    "metaDescriptionVi": "12 sân pickleball Bình Dương trên ThePickleHub (10/2026): địa chỉ, điện thoại, giá đã xác nhận từ 100.000đ/giờ."
   },
   {
     "slug": "pickleball-courts-hai-phong-2026",
     "publishedDate": "2026-09-28",
-    "updatedDate": "2026-09-28",
+    "updatedDate": "2026-10-13",
     "author": "The PickleHub Team",
     "tags": [
       "hai phong",
@@ -669,19 +669,19 @@ export const blogMetadata: BlogPostMetadata[] = [
     },
     "heroImage": {
       "src": "/images/blog/pickleball-courts-hai-phong-2026-hero.webp",
-      "alt": "Pickleball Courts in Hai Phong 2026: How to Find Courts and Join the Community"
+      "alt": "Pickleball Courts in Hai Phong 2026: 10 Venues, Addresses, Phone Numbers and Prices"
     },
-    "titleEn": "Pickleball Courts in Hai Phong 2026: How to Find Courts and Join the Community",
-    "titleVi": "Sân pickleball Hải Phòng: Cách tìm sân và tham gia cộng đồng",
-    "metaTitleEn": "Pickleball Courts in Hai Phong 2026: Find Courts & Players",
-    "metaTitleVi": "Sân pickleball Hải Phòng 2026: Cách tìm sân",
-    "metaDescriptionEn": "How to find pickleball courts in Hai Phong in 2026 on ThePickleHub: HHP Pickleball, TPK Pickleball, what to check before you go, and where to find players.",
-    "metaDescriptionVi": "Tìm sân pickleball Hải Phòng trên ThePickleHub: HHP, TPK Pickleball, việc cần kiểm tra trước khi đến sân và cách tìm bạn chơi."
+    "titleEn": "Pickleball Courts in Hai Phong 2026: 10 Venues, Addresses, Phone Numbers and Prices",
+    "titleVi": "Sân pickleball Hải Phòng 2026: 10 sân, địa chỉ, điện thoại và giá thuê",
+    "metaTitleEn": "Pickleball Courts in Hai Phong 2026: 10 Venues & Prices",
+    "metaTitleVi": "Sân pickleball Hải Phòng 2026: 10 sân và giá thuê",
+    "metaDescriptionEn": "ThePickleHub lists 10 pickleball venues in Hai Phong as of October 2026: addresses, phones and confirmed rates from 60,000 VND/hour.",
+    "metaDescriptionVi": "10 sân pickleball Hải Phòng trên ThePickleHub (10/2026): địa chỉ, điện thoại, giá đã xác nhận từ 60.000đ/giờ."
   },
   {
     "slug": "pickleball-courts-can-tho-2026",
     "publishedDate": "2026-09-25",
-    "updatedDate": "2026-09-25",
+    "updatedDate": "2026-10-13",
     "author": "The PickleHub Team",
     "tags": [
       "can tho",
@@ -695,13 +695,16 @@ export const blogMetadata: BlogPostMetadata[] = [
       "en": "See all Can Tho courts",
       "vi": "Xem các sân pickleball Cần Thơ"
     },
-    "heroImage": {"src": "/images/blog/pickleball-courts-can-tho-2026-hero.webp", "alt": "Pickleball Courts in Can Tho 2026: 7 Venues & Prices"},
-    "titleEn": "Pickleball Courts in Can Tho 2026: 7 Venues, Prices and How to Book",
-    "titleVi": "Sân Pickleball Cần Thơ 2026: 7 địa điểm, giá thuê và cách đặt sân",
-    "metaTitleEn": "Pickleball Courts in Can Tho 2026: 7 Venues & Prices",
-    "metaTitleVi": "Sân pickleball Cần Thơ 2026: 7 sân, giá thuê",
-    "metaDescriptionEn": "Seven pickleball venues in Can Tho, Vietnam for 2026: addresses, hours, phone numbers and rental prices (80,000-150,000 VND/hour), plus how to book.",
-    "metaDescriptionVi": "Sân pickleball Cần Thơ 2026: địa chỉ, SĐT, giá thuê 7 sân ở Ninh Kiều, Cái Răng, Bình Thủy và cách đặt sân."
+    "heroImage": {
+      "src": "/images/blog/pickleball-courts-can-tho-2026-hero.webp",
+      "alt": "Pickleball Courts in Can Tho 2026: 10 Venues, Addresses, Phone Numbers and Prices"
+    },
+    "titleEn": "Pickleball Courts in Can Tho 2026: 10 Venues, Addresses, Phone Numbers and Prices",
+    "titleVi": "Sân pickleball Cần Thơ 2026: 10 sân, địa chỉ, điện thoại và giá thuê",
+    "metaTitleEn": "Pickleball Courts in Can Tho 2026: 10 Venues & Prices",
+    "metaTitleVi": "Sân pickleball Cần Thơ 2026: 10 sân và giá thuê",
+    "metaDescriptionEn": "ThePickleHub lists 10 pickleball venues in Can Tho as of October 2026: addresses, phones and confirmed rates from 90,000 VND/hour.",
+    "metaDescriptionVi": "10 sân pickleball Cần Thơ trên ThePickleHub (10/2026): địa chỉ, điện thoại, giá đã xác nhận từ 90.000đ/giờ."
   },
   {
     slug: "ppa-tour-europe-2026-27-schedule",

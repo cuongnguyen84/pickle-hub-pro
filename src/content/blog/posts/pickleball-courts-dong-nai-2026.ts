@@ -1,12 +1,12 @@
 import type { BlogPost } from "@/content/blog/types";
 
 /**
- * Wriai draft b7baf3f6-a01f-418b-a6ec-265cc4e37bd9 -> team task T119, published on the owner's explicit order 2026-09-28 WITHOUT fact verification (8 unverified facts).
+ * Rebuilt 2026-10-13 from the ThePickleHub venues directory (own data); replaces the Wriai draft published 2026-09-28.
  */
 const post: BlogPost = {
   "slug": "pickleball-courts-dong-nai-2026",
   "publishedDate": "2026-09-28",
-  "updatedDate": "2026-09-28",
+  "updatedDate": "2026-10-13",
   "author": "The PickleHub Team",
   "tags": [
     "dong nai",
@@ -25,346 +25,370 @@ const post: BlogPost = {
   },
   "heroImage": {
     "src": "/images/blog/pickleball-courts-dong-nai-2026-hero.webp",
-    "alt": "Pickleball Courts in Dong Nai 2026: How to Find a Court and Connect With Local Players"
+    "alt": "Pickleball Courts in Dong Nai 2026: 8 Venues, Addresses, Phone Numbers and Prices"
   },
   "content": {
     "en": {
-      "title": "Pickleball Courts in Dong Nai 2026: How to Find a Court and Connect With Local Players",
-      "metaTitle": "Pickleball Courts in Dong Nai 2026: Find & Confirm One",
-      "metaDescription": "Find pickleball courts in Dong Nai and Bien Hoa with ThePickleHub's directory, then confirm hours by phone, join clubs and log matches in 2026.",
+      "title": "Pickleball Courts in Dong Nai 2026: 8 Venues, Addresses, Phone Numbers and Prices",
+      "metaTitle": "Pickleball Courts in Dong Nai 2026: 8 Venues & Prices",
+      "metaDescription": "ThePickleHub lists 8 pickleball venues in Dong Nai as of October 2026: addresses, phones and confirmed rates from 100,000 VND/hour.",
       "sections": [
         {
-          "heading": "Pickleball courts in Dong Nai: the short answer",
-          "content": "Pickleball courts in Dong Nai can be looked up in 2026 through the ThePickleHub court directory, which lists more than 690 courts across Vietnam. The directory filters by city rather than by province, so players in Dong Nai should start with the Bien Hoa city page, check the listed address and opening hours, and call the venue before travelling.\n\nThe platform does not own or operate any court in Dong Nai. A listing is a starting point for contact, not a booking or a promise that a slot is free. Beyond finding a place to play, the same account lets you find clubs and community events, log match scores, follow DUPR data and set up local tournaments in Bracket Lab.\n\nLast updated: September 28, 2026",
-          "internalLinks": [
-            {
-              "text": "Bien Hoa pickleball courts",
-              "path": "/san/khu-vuc/bien-hoa"
-            },
-            {
-              "text": "Full court directory",
-              "path": "/san"
-            }
-          ]
+          "heading": "Pickleball courts in Dong Nai 2026: the short answer",
+          "content": "ThePickleHub lists 8 pickleball venues in Dong Nai (Đồng Nai), Vietnam, as of 13 October 2026. All of them are in Bien Hoa (Biên Hòa) city; the directory has no venue elsewhere in Dong Nai province yet. 3 of them have an hourly rate confirmed by the venue, from 100,000 to 200,000 VND per hour; 3 have a phone number on file and 5 have a confirmed court count (Sân Pickleball 234 Biên Hòa (6), Sân Pickleball 99 Biên Hòa (2), Sân Pickleball Biên Hòa Nguyễn Ái Quốc (6), Sân Pickleball Hiệp Hòa (3), Sân Pickleball Đỉnh Cao (4)).\n\nLast updated: 13 October 2026. Every row below comes from the ThePickleHub court directory; where the directory has no confirmed figure, the cell says so instead of guessing."
         },
         {
-          "heading": "How the court directory works, and what it does not do",
-          "content": "The court directory is an information layer for the pickleball community. Each listing shows the location, the posted schedule and the contact number that was submitted for that venue. For players around Bien Hoa and nearby areas of Dong Nai, this is faster than scrolling through scattered social media groups to piece together where people play.\n\nThe key distinction is between looking up a court and booking a court. The directory helps you identify venues and find contact details. It does not manage what happens at the venue, confirm open slots, or guarantee that the posted hours are updated in real time. Before you go, call the listed number and ask three things: is the court currently operating, is your preferred time available, and do you need to reserve in advance.\n\nSetting expectations this way avoids wasted trips. The platform connects information; the final confirmation belongs to you and the venue. If you want to compare how the same approach works in a neighbouring province, the Binh Duong court guide follows the same steps.",
-          "internalLinks": [
-            {
-              "text": "Pickleball courts in Binh Duong 2026",
-              "path": "/blog/pickleball-courts-binh-duong-2026"
-            }
-          ]
-        },
-        {
-          "heading": "What else the platform covers beyond courts",
-          "content": "Finding a court is only one step in a player's week. The platform is built so you can move from a venue to a group to play with, then to recording results and running events, without switching apps.",
-          "listItems": [
-            "Clubs and community events: browse local clubs and open social play sessions, then contact the organiser shown on the page.",
-            "Match logging and feed: enter a match score after you play and see recent results in the feed.",
-            "DUPR: follow your DUPR data when the matches you enter are eligible.",
-            "Bracket Lab: organisers can build brackets in Round Robin, single elimination, double elimination or MLP team format.",
-            "Pro pickleball: news from PPA, APP, MLP and the Asia Pacific Series, including live streams when a broadcast is available.",
-            "Shop: paddles, shoes and accessories from verified sellers in Vietnam."
-          ],
-          "internalLinks": [
-            {
-              "text": "Pickleball clubs",
-              "path": "/clubs"
-            },
-            {
-              "text": "Community events",
-              "path": "/social"
-            },
-            {
-              "text": "Bracket Lab",
-              "path": "/tools"
-            },
-            {
-              "text": "Pickleball news",
-              "path": "/news"
-            }
-          ]
-        },
-        {
-          "heading": "Feature comparison by player need",
-          "content": "The table below separates what the tools can do for you from what you still need to confirm yourself. Three kinds of information should never be treated as the same thing: directory data such as the posted address and schedule, community tools that help you find a group or event, and the real situation at the venue, which only the venue can confirm.",
+          "heading": "All 8 pickleball venues in Dong Nai: address, phone, price",
           "table": {
-            "caption": "What the platform helps with, and what to confirm directly",
+            "caption": "8 pickleball venues in Dong Nai in the ThePickleHub directory, updated 13 October 2026",
             "headers": [
-              "Need",
-              "Feature on the platform",
-              "What you still confirm yourself"
+              "Venue",
+              "Area",
+              "Address",
+              "Phone",
+              "Courts",
+              "Price per hour"
             ],
             "rows": [
               [
-                "Find a court in Dong Nai",
-                "City filter in the court directory; posted address and schedule",
-                "Whether the court is open, real playing hours, slot availability"
+                "D’LUCKY",
+                "—",
+                "49/11 đường Võ Thị Sáu, phường Thống Nhất, thành phố Biên Hoà, tỉnh Đồng Nai",
+                "0328666633",
+                "—",
+                "120,000–200,000 VND"
               ],
               [
-                "Find players or a group",
-                "Clubs and community events",
-                "Session schedule, suitable level, how to register"
+                "Khanh Pickleball",
+                "—",
+                "35 Tổ 11, KP3, Biên Hòa, Đồng Nai",
+                "0372621777",
+                "—",
+                "100,000–110,000 VND"
               ],
               [
-                "Track personal results",
-                "Enter scores after a match and follow DUPR data",
-                "Match details and scores must be entered accurately"
+                "Pickleball bờ kẻ Bửu Long (Nhật)",
+                "—",
+                "Khu Dân Cư, khu phố 4, Tp. Biên Hòa, Đồng Nai",
+                "0909770295",
+                "—",
+                "100,000–110,000 VND"
               ],
               [
-                "Run a tournament",
-                "Bracket Lab: Round Robin, single or double elimination, MLP",
-                "Rules, player list and schedule set by the organiser"
+                "Sân Pickleball 234 Biên Hòa",
+                "—",
+                "5 Lê Thoa, Tân Tiến, Biên Hòa, Đồng Nai",
+                "—",
+                "6",
+                "not confirmed"
               ],
               [
-                "Follow pro pickleball",
-                "News from PPA, APP, MLP and the Asia Pacific Series",
-                "Broadcast times and specific coverage vary by event"
+                "Sân Pickleball 99 Biên Hòa",
+                "—",
+                "1077 Nguyễn Ái Quốc, Tân Hiệp, Biên Hòa, Đồng Nai",
+                "—",
+                "2",
+                "not confirmed"
               ],
               [
-                "Buy equipment",
-                "Paddles, shoes and accessories from verified sellers in Vietnam",
-                "Model, stock, price and sale terms at the time of purchase"
+                "Sân Pickleball Biên Hòa Nguyễn Ái Quốc",
+                "—",
+                "05 Nguyễn Ái Quốc, Tân Phong, Biên Hòa, Đồng Nai",
+                "—",
+                "6",
+                "not confirmed"
+              ],
+              [
+                "Sân Pickleball Hiệp Hòa",
+                "—",
+                "86B Lý Văn Sâm, Tam Hiệp, Biên Hòa, Đồng Nai",
+                "—",
+                "3",
+                "not confirmed"
+              ],
+              [
+                "Sân Pickleball Đỉnh Cao",
+                "—",
+                "13/2 Huỳnh Văn Nghệ, Bửu Long, Biên Hòa, Đồng Nai",
+                "—",
+                "4",
+                "not confirmed"
               ]
             ]
-          }
-        },
-        {
-          "heading": "Step-by-step: finding a court in Dong Nai",
-          "content": "The efficient order is: filter locations first, verify with the venue second, and only then plan your session. These steps narrow your options but do not reserve anything.",
-          "listItems": [
-            "Sign in if you want a personalised account. Google Sign-In is supported and, according to the platform, collects only your name, email and profile photo for this flow.",
-            "Open the court directory and choose Bien Hoa to see venues recorded for the Dong Nai area.",
-            "Read each listing: address, posted schedule and phone number. If there are several options, compare them by distance and the times you can realistically get there.",
-            "Call the venue before you leave. Ask whether it is operating today, whether your time slot is available, and how bookings are confirmed.",
-            "Look for regular play: open Clubs or Community events to find local groups, then contact them using the details on the page to ask about schedules and joining."
+          },
+          "internalLinks": [
+            {
+              "text": "D’LUCKY",
+              "path": "/san/d-lucky"
+            },
+            {
+              "text": "Khanh Pickleball",
+              "path": "/san/khanh-pickleball"
+            },
+            {
+              "text": "Pickleball bờ kẻ Bửu Long (Nhật)",
+              "path": "/san/pickleball-bo-ke-buu-long-nhat"
+            },
+            {
+              "text": "Sân Pickleball 234 Biên Hòa",
+              "path": "/san/san-pickleball-234-bien-hoa"
+            },
+            {
+              "text": "Sân Pickleball 99 Biên Hòa",
+              "path": "/san/san-pickleball-99-bien-hoa"
+            },
+            {
+              "text": "Sân Pickleball Biên Hòa Nguyễn Ái Quốc",
+              "path": "/san/san-pickleball-bien-hoa-nguyen-ai-quoc-bien-hoa"
+            },
+            {
+              "text": "Sân Pickleball Hiệp Hòa",
+              "path": "/san/san-pickleball-hiep-hoa-bien-hoa"
+            },
+            {
+              "text": "Sân Pickleball Đỉnh Cao",
+              "path": "/san/san-pickleball-dinh-cao-bien-hoa"
+            }
           ],
-          "internalLinks": [
-            {
-              "text": "Sign in",
-              "path": "/login"
-            },
-            {
-              "text": "Find players",
-              "path": "/tim-ban-choi"
-            }
+          "content": "Venues with a confirmed rate come first, the rest are in alphabetical order. Prices are in Vietnamese dong (VND). Use the venue links under the table for the map and the full venue page."
+        },
+        {
+          "heading": "Confirmed prices and opening hours",
+          "content": "3 of the 8 venues have sent ThePickleHub their rates. A range is the lowest and highest hourly rate across the day. The lowest confirmed starting rate is Khanh Pickleball, from 100,000 VND per hour.\n\nThe other 5 have not confirmed a rate, so this page prints no number for them. Call the venue and ask for the price of the exact time slot you want.",
+          "listItems": [
+            "D’LUCKY: 120,000–200,000 VND per hour, open 05:00–24:00 daily, phone 0328666633",
+            "Khanh Pickleball: 100,000–110,000 VND per hour, open 05:00–22:00 daily, phone 0372621777",
+            "Pickleball bờ kẻ Bửu Long (Nhật): 100,000–110,000 VND per hour, open 05:00–22:00 daily, phone 0909770295"
           ]
         },
         {
-          "heading": "Logging matches and running a local tournament",
-          "content": "After you play, enter the score to record the result and follow your personal DUPR data. Enter the correct result and match details so your profile reflects what actually happened; the tool does not replace both sides agreeing on the real score.\n\nFor a club or social tournament, Bracket Lab lets the organiser pick a structure. Round Robin suits groups where every team or player meets the others in turn. Single or double elimination suits knockout brackets where a loss, or two losses, sends a team out. MLP is another team format the tool supports. Before building the bracket, agree on the player list, format, rules and match times.\n\nA digital bracket makes draws and results easier to read, but the quality of the event still depends on the data entered and on how the organiser applies the rules. Check the bracket carefully before sharing it with players.",
-          "internalLinks": [
-            {
-              "text": "Log a match",
-              "path": "/match/new"
-            },
-            {
-              "text": "Connect DUPR",
-              "path": "/dupr"
-            },
-            {
-              "text": "Match feed",
-              "path": "/feed"
-            }
+          "heading": "Before you go: what to ask",
+          "content": "A two-minute call saves a wasted trip. These are the things the directory cannot answer for you yet:",
+          "listItems": [
+            "The rate for your exact time slot, and whether it is charged per court or per player.",
+            "How many courts are free: only 5 of 8 venues in the directory have a court count on file.",
+            "Whether the courts are covered or outdoor, and the surface: the directory does not record this for Dong Nai venues yet.",
+            "Whether paddles can be rented, balls are sold, and there is parking.",
+            "5 venues have no phone number on file (Sân Pickleball 234 Biên Hòa; Sân Pickleball 99 Biên Hòa; Sân Pickleball Biên Hòa Nguyễn Ái Quốc; Sân Pickleball Hiệp Hòa; Sân Pickleball Đỉnh Cao): open the venue page for the map and go in person, or look for the venue's social page."
           ]
         },
         {
-          "heading": "Common mistakes, a practical example and the 2026 outlook",
-          "content": "The most common mistake is treating a directory listing as a guarantee. A player in Bien Hoa who finds a suitable court should still call first. If nobody answers, keep looking at other options or ask a local club instead of assuming the venue is open.\n\nAnother common case is wanting playing partners but only searching for court addresses. Clubs and Community events are the better fit here: a venue tells you where you can play, while clubs and events tell you when a group plays and who joins. An organiser running a social tournament in Dong Nai can build the bracket in Bracket Lab and then enter results so everyone can follow them.\n\nFrom an editorial point of view, the notable thing about 2026 is being able to connect three needs in one place: finding a venue, finding people to play with, and managing match data. That is a view on how the tools can be used, not a growth figure and not a claim that every court in Dong Nai is already listed. For developers, the platform publishes an OpenAPI 3.1 document for integrating court data. Personal data is handled under the platform privacy policy and is not shared with third parties beyond what is needed to run the service.",
+          "heading": "Missing court or outdated details?",
+          "content": "The directory grows from venue owners and players. If you know a Dong Nai venue that is not in the table, or a price or phone number has changed, send it in and ThePickleHub will update the listing.",
           "internalLinks": [
             {
-              "text": "Privacy policy",
-              "path": "/privacy"
+              "text": "Add a court to the directory",
+              "path": "/san/them"
+            },
+            {
+              "text": "See all Dong Nai venues on the map",
+              "path": "/san/khu-vuc/bien-hoa"
+            },
+            {
+              "text": "Pickleball courts across Vietnam",
+              "path": "/blog/pickleball-courts-vietnam-guide-2026"
             }
           ]
         }
       ],
       "faqItems": [
         {
-          "question": "Does ThePickleHub run or take bookings for courts in Dong Nai?",
-          "answer": "No. ThePickleHub provides a court directory and community tools; it does not operate any court. Use the phone number on the listing to ask the venue about playing hours and availability."
+          "question": "How many pickleball courts are there in Dong Nai?",
+          "answer": "The ThePickleHub directory lists 8 pickleball venues in Dong Nai as of 13 October 2026. All of them are in Bien Hoa (Biên Hòa) city; the directory has no venue elsewhere in Dong Nai province yet. Venues with a recorded court count: Sân Pickleball 234 Biên Hòa (6), Sân Pickleball 99 Biên Hòa (2), Sân Pickleball Biên Hòa Nguyễn Ái Quốc (6), Sân Pickleball Hiệp Hòa (3), Sân Pickleball Đỉnh Cao (4)."
         },
         {
-          "question": "How do I find pickleball courts in Dong Nai on the directory?",
-          "answer": "The directory filters by city, so open the court directory and choose Bien Hoa to see venues in the Dong Nai area. Call to confirm before you travel, because a listing does not replace confirmation from the venue."
+          "question": "How much does it cost to rent a pickleball court in Dong Nai?",
+          "answer": "3 venues have confirmed rates, from 100,000 to 200,000 VND per hour: D’LUCKY 120,000–200,000 VND; Khanh Pickleball 100,000–110,000 VND; Pickleball bờ kẻ Bửu Long (Nhật) 100,000–110,000 VND. The other 5 have not confirmed a rate."
         },
         {
-          "question": "Can I find a club or playing partners near me?",
-          "answer": "Yes. Browse Clubs or Community events to find local groups and open sessions, then check each group's contact details, schedule and joining conditions."
+          "question": "Which Dong Nai pickleball venues can I call to book?",
+          "answer": "3 venues have a phone number in the directory: D’LUCKY 0328666633; Khanh Pickleball 0372621777; Pickleball bờ kẻ Bửu Long (Nhật) 0909770295."
         },
         {
-          "question": "What are DUPR and Bracket Lab used for?",
-          "answer": "DUPR is a player skill rating; entering match scores lets you follow your DUPR data. Bracket Lab helps organisers create Round Robin, single elimination, double elimination or MLP brackets."
-        },
-        {
-          "question": "What does Google Sign-In collect?",
-          "answer": "According to the platform, Google Sign-In is used to personalise your account and collects only your name, email and profile photo. The privacy policy explains how that data is managed."
+          "question": "How do I add a court that is missing from the list?",
+          "answer": "Open the Add a court page on ThePickleHub (/san/them) and enter the venue's name, address and phone number."
         }
       ]
     },
     "vi": {
-      "title": "Sân pickleball Đồng Nai: Cách tìm sân và kết nối cộng đồng",
-      "metaTitle": "Sân pickleball Đồng Nai 2026: cách tìm sân",
-      "metaDescription": "Tìm sân pickleball Đồng Nai, Biên Hòa trên ThePickleHub, gọi sân xác nhận giờ chơi, tìm câu lạc bộ và ghi trận.",
+      "title": "Sân pickleball Đồng Nai 2026: 8 sân, địa chỉ, điện thoại và giá thuê",
+      "metaTitle": "Sân pickleball Đồng Nai 2026: 8 sân và giá thuê",
+      "metaDescription": "8 sân pickleball Đồng Nai trên ThePickleHub (10/2026): địa chỉ, điện thoại, giá đã xác nhận từ 100.000đ/giờ.",
       "sections": [
         {
-          "heading": "Sân pickleball Đồng Nai: trả lời nhanh",
-          "content": "Sân pickleball Đồng Nai có thể được tra cứu qua danh bạ sân của ThePickleHub, nơi người chơi xem thông tin địa điểm, kiểm tra lịch hoạt động và tìm cộng đồng địa phương. Nền tảng này không trực tiếp vận hành sân; vì vậy, hãy gọi xác nhận tình trạng sân trước khi di chuyển.\n\nDanh bạ lọc theo thành phố, nên với Đồng Nai bạn bắt đầu từ trang sân Biên Hòa. Ngoài việc tìm nơi chơi, bạn còn có thể ghi nhận trận đấu, theo dõi dữ liệu DUPR và tổ chức giải.",
-          "internalLinks": [
-            {
-              "text": "Sân pickleball Biên Hòa",
-              "path": "/san/khu-vuc/bien-hoa"
-            },
-            {
-              "text": "Danh bạ sân",
-              "path": "/san"
-            }
-          ]
+          "heading": "Sân pickleball Đồng Nai 2026: trả lời nhanh",
+          "content": "ThePickleHub ghi nhận 8 sân pickleball tại Đồng Nai tính đến ngày 13/10/2026. Tất cả đều ở TP Biên Hòa; danh mục chưa có sân nào ở các nơi khác của Đồng Nai. 3 sân đã được chủ sân xác nhận giá thuê, từ 100.000đ đến 200.000đ mỗi giờ; 3 sân có số điện thoại và 5 sân có số sân thi đấu cụ thể (Sân Pickleball 234 Biên Hòa (6), Sân Pickleball 99 Biên Hòa (2), Sân Pickleball Biên Hòa Nguyễn Ái Quốc (6), Sân Pickleball Hiệp Hòa (3), Sân Pickleball Đỉnh Cao (4)).\n\nCập nhật lần cuối: 13/10/2026. Mọi dòng bên dưới lấy từ danh mục sân của ThePickleHub; ô nào danh mục chưa có số liệu được xác nhận thì ghi rõ là chưa xác nhận, không ước lượng."
         },
         {
-          "heading": "Danh bạ sân hoạt động như thế nào?",
-          "content": "ThePickleHub là nền tảng thông tin và công cụ dành cho cộng đồng pickleball, không phải đơn vị sở hữu hay điều hành các sân ở Đồng Nai. Danh bạ ghi nhận hơn 690 sân trên toàn quốc, hỗ trợ người chơi tra cứu địa điểm và kết nối với hoạt động địa phương; thông tin từng sân vẫn cần được xác nhận trực tiếp.\n\nKhi tìm sân pickleball Đồng Nai, người dùng vào mục Sân, chọn thành phố Biên Hòa rồi xem danh sách địa điểm kèm địa chỉ và lịch hoạt động được đăng tải. Đây là điểm bắt đầu hữu ích để tìm lựa chọn quanh Biên Hòa hoặc khu vực lân cận, thay vì phải dò từng hội nhóm rời rạc.\n\nĐiều quan trọng là phân biệt tra cứu sân với đặt sân. Dữ liệu trên nền tảng giúp người chơi nhận diện địa điểm và tìm thông tin liên hệ; nền tảng không trực tiếp quản lý hoạt động tại sân, xác nhận chỗ trống hay đảm bảo lịch cập nhật theo thời gian thực. Trước khi đi, hãy gọi số điện thoại được niêm yết để hỏi sân có đang hoạt động không, khung giờ mong muốn còn sử dụng được không và có cần đặt trước hay không.\n\nCách hiểu này giúp đặt kỳ vọng chính xác: nền tảng làm nhiệm vụ kết nối thông tin, còn xác nhận cuối cùng thuộc về người chơi và đơn vị tại sân. Nếu cần tham khảo một địa phương khác, bạn có thể xem danh sách sân pickleball Bình Dương.",
-          "internalLinks": [
-            {
-              "text": "Sân pickleball Bình Dương",
-              "path": "/san/khu-vuc/binh-duong"
-            }
-          ]
-        },
-        {
-          "heading": "Ngoài tìm sân, nền tảng hỗ trợ những gì?",
-          "content": "Hệ sinh thái của nền tảng phục vụ nhiều bước trong hành trình chơi pickleball. Người chơi có thể tìm câu lạc bộ hoặc sự kiện cộng đồng, nhập tỷ số trận đấu và xem kết quả trên bảng tin, đồng thời theo dõi dữ liệu DUPR khi nhập tỷ số phù hợp.\n\nVới người tổ chức, Bracket Lab hỗ trợ thiết lập bảng đấu theo các thể thức Round Robin, loại trực tiếp đơn, loại trực tiếp đôi và MLP. Nền tảng cũng cập nhật tin tức từ các giải chuyên nghiệp như PPA, APP, MLP và Asia Pacific Series; người hâm mộ có thể theo dõi nội dung giải đấu, trong đó có các chương trình phát trực tiếp khi được cung cấp.\n\nNhư vậy, tra cứu sân chỉ là một phần của trải nghiệm. Người chơi có thể tiếp tục từ việc tìm địa điểm sang tìm nhóm chơi, ghi nhận trận đấu và theo dõi tiến bộ, còn câu lạc bộ có thêm công cụ để tổ chức hoạt động nội bộ.",
-          "internalLinks": [
-            {
-              "text": "Câu lạc bộ",
-              "path": "/clubs"
-            },
-            {
-              "text": "Sự kiện cộng đồng",
-              "path": "/social"
-            },
-            {
-              "text": "Bracket Lab",
-              "path": "/tools"
-            }
-          ]
-        },
-        {
-          "heading": "So sánh tính năng khi tìm sân pickleball Đồng Nai",
-          "content": "Bảng dưới đây phân biệt rõ việc công cụ có thể hỗ trợ với những thông tin người dùng vẫn cần xác nhận trực tiếp.\n\nBảng tính năng cho thấy ba loại thông tin không nên đánh đồng. Thứ nhất là dữ liệu danh bạ, chẳng hạn địa chỉ và lịch hoạt động được đăng tải. Thứ hai là công cụ cộng đồng, giúp tìm nhóm hoặc sự kiện. Thứ ba là tình trạng thực tế tại sân, vốn cần xác nhận trực tiếp vì nền tảng không phải bên vận hành.\n\nKhi so sánh các lựa chọn, hãy xác định trước khu vực muốn chơi, thời gian dự kiến và việc bạn cần sân để tập tự do hay tham gia nhóm. Sau đó đối chiếu thông tin niêm yết, gọi điện hỏi lại và chỉ chốt kế hoạch khi sân xác nhận. Đừng suy luận rằng một địa điểm có thể nhận khách hoặc còn chỗ chỉ vì trang thông tin vẫn hiển thị.\n\nCách tra cứu này hữu ích cả với người mới lẫn người đã chơi thường xuyên: người mới có thể tìm nhóm để làm quen, còn người chơi lâu hơn có thể ưu tiên lịch phù hợp và xem các sự kiện đang mở.",
+          "heading": "Danh sách 8 sân pickleball Đồng Nai: địa chỉ, điện thoại, giá",
           "table": {
-            "caption": "Tính năng theo nhu cầu sử dụng",
+            "caption": "8 sân pickleball Đồng Nai trong danh mục ThePickleHub, cập nhật 13/10/2026",
             "headers": [
-              "Nhu cầu",
-              "Tính năng trên nền tảng",
-              "Điều cần tự xác nhận"
+              "Sân",
+              "Khu vực",
+              "Địa chỉ",
+              "Điện thoại",
+              "Số sân",
+              "Giá/giờ"
             ],
             "rows": [
               [
-                "Tìm sân tại Đồng Nai",
-                "Lọc danh bạ theo thành phố (Biên Hòa); xem địa chỉ và lịch hoạt động được niêm yết",
-                "Sân còn hoạt động, giờ chơi thực tế, tình trạng chỗ"
+                "D’LUCKY",
+                "—",
+                "49/11 đường Võ Thị Sáu, phường Thống Nhất, thành phố Biên Hoà, tỉnh Đồng Nai",
+                "0328666633",
+                "—",
+                "120.000–200.000đ"
               ],
               [
-                "Tìm người chơi hoặc nhóm",
-                "Xem câu lạc bộ và sự kiện cộng đồng",
-                "Lịch sinh hoạt, trình độ phù hợp và cách đăng ký"
+                "Khanh Pickleball",
+                "—",
+                "35 Tổ 11, KP3, Biên Hòa, Đồng Nai",
+                "0372621777",
+                "—",
+                "100.000–110.000đ"
               ],
               [
-                "Theo dõi kết quả cá nhân",
-                "Nhập tỷ số trận đấu và theo dõi dữ liệu DUPR",
-                "Trận đấu và tỷ số cần được nhập chính xác"
+                "Pickleball bờ kẻ Bửu Long (Nhật)",
+                "—",
+                "Khu Dân Cư, khu phố 4, Tp. Biên Hòa, Đồng Nai",
+                "0909770295",
+                "—",
+                "100.000–110.000đ"
               ],
               [
-                "Tổ chức giải",
-                "Dùng Bracket Lab để tạo bảng theo Round Robin, loại trực tiếp đơn/đôi hoặc MLP",
-                "Thể lệ, danh sách vận động viên và lịch thi đấu do ban tổ chức chốt"
+                "Sân Pickleball 234 Biên Hòa",
+                "—",
+                "5 Lê Thoa, Tân Tiến, Biên Hòa, Đồng Nai",
+                "—",
+                "6",
+                "chưa xác nhận"
               ],
               [
-                "Theo dõi pickleball chuyên nghiệp",
-                "Cập nhật tin tức PPA, APP, MLP và Asia Pacific Series",
-                "Lịch phát sóng hoặc nội dung cụ thể tùy chương trình"
+                "Sân Pickleball 99 Biên Hòa",
+                "—",
+                "1077 Nguyễn Ái Quốc, Tân Hiệp, Biên Hòa, Đồng Nai",
+                "—",
+                "2",
+                "chưa xác nhận"
               ],
               [
-                "Tìm thiết bị",
-                "Mua vợt, giày và phụ kiện từ nhà cung cấp đã xác thực tại Việt Nam",
-                "Mẫu mã, tồn kho, giá và điều kiện bán hàng tại thời điểm mua"
+                "Sân Pickleball Biên Hòa Nguyễn Ái Quốc",
+                "—",
+                "05 Nguyễn Ái Quốc, Tân Phong, Biên Hòa, Đồng Nai",
+                "—",
+                "6",
+                "chưa xác nhận"
+              ],
+              [
+                "Sân Pickleball Hiệp Hòa",
+                "—",
+                "86B Lý Văn Sâm, Tam Hiệp, Biên Hòa, Đồng Nai",
+                "—",
+                "3",
+                "chưa xác nhận"
+              ],
+              [
+                "Sân Pickleball Đỉnh Cao",
+                "—",
+                "13/2 Huỳnh Văn Nghệ, Bửu Long, Biên Hòa, Đồng Nai",
+                "—",
+                "4",
+                "chưa xác nhận"
               ]
             ]
-          }
-        },
-        {
-          "heading": "Các bước tra cứu sân tại Đồng Nai",
-          "content": "Quy trình hiệu quả là lọc địa điểm trước, xác minh với sân sau, rồi mới lên kế hoạch chơi. Quy trình này giúp thu hẹp lựa chọn nhưng không đưa ra cam kết về chỗ trống; hãy xem thông tin trên nền tảng là cơ sở liên hệ, không phải xác nhận đặt sân.",
-          "listItems": [
-            "Đăng nhập nếu muốn cá nhân hóa tài khoản. Nền tảng hỗ trợ Google Sign-In và theo thông tin nền tảng, chỉ thu thập tên, email và ảnh đại diện cho quy trình này.",
-            "Mở mục Sân và chọn thành phố Biên Hòa để xem danh sách sân được ghi nhận trong khu vực Đồng Nai.",
-            "Đọc thông tin địa điểm: địa chỉ, lịch hoạt động và số điện thoại được niêm yết. Nếu có nhiều lựa chọn, so sánh theo khu vực và thời gian bạn có thể đến.",
-            "Gọi sân trước khi di chuyển. Hỏi tình trạng hoạt động hiện tại, khung giờ muốn chơi và cách xác nhận chỗ. Đây là bước không nên bỏ qua vì danh bạ không thay thế xác nhận từ đơn vị tại sân.",
-            "Tìm hoạt động phù hợp: vào mục Câu lạc bộ hoặc Sự kiện cộng đồng để xem các nhóm địa phương, rồi liên hệ theo hướng dẫn hiển thị để hỏi về lịch sinh hoạt hoặc khả năng tham gia."
+          },
+          "internalLinks": [
+            {
+              "text": "D’LUCKY",
+              "path": "/vi/san/d-lucky"
+            },
+            {
+              "text": "Khanh Pickleball",
+              "path": "/vi/san/khanh-pickleball"
+            },
+            {
+              "text": "Pickleball bờ kẻ Bửu Long (Nhật)",
+              "path": "/vi/san/pickleball-bo-ke-buu-long-nhat"
+            },
+            {
+              "text": "Sân Pickleball 234 Biên Hòa",
+              "path": "/vi/san/san-pickleball-234-bien-hoa"
+            },
+            {
+              "text": "Sân Pickleball 99 Biên Hòa",
+              "path": "/vi/san/san-pickleball-99-bien-hoa"
+            },
+            {
+              "text": "Sân Pickleball Biên Hòa Nguyễn Ái Quốc",
+              "path": "/vi/san/san-pickleball-bien-hoa-nguyen-ai-quoc-bien-hoa"
+            },
+            {
+              "text": "Sân Pickleball Hiệp Hòa",
+              "path": "/vi/san/san-pickleball-hiep-hoa-bien-hoa"
+            },
+            {
+              "text": "Sân Pickleball Đỉnh Cao",
+              "path": "/vi/san/san-pickleball-dinh-cao-bien-hoa"
+            }
           ],
-          "internalLinks": [
-            {
-              "text": "Đăng nhập",
-              "path": "/login"
-            },
-            {
-              "text": "Tìm bạn chơi",
-              "path": "/tim-ban-choi"
-            }
+          "content": "Sân có giá đã xác nhận xếp trước, còn lại xếp theo tên. Bấm vào tên sân bên dưới bảng để xem bản đồ và trang chi tiết của từng sân."
+        },
+        {
+          "heading": "Giá thuê và giờ mở cửa đã xác nhận",
+          "content": "3 trong 8 sân đã gửi giá thuê cho ThePickleHub. Khoảng giá là mức thấp nhất và cao nhất trong ngày. Mức khởi điểm thấp nhất là Khanh Pickleball, từ 100.000đ/giờ.\n\n5 sân còn lại chưa xác nhận giá, vì vậy bài này không ghi con số cho các sân đó. Hãy gọi sân để hỏi giá đúng khung giờ bạn định chơi.",
+          "listItems": [
+            "D’LUCKY: 120.000–200.000đ/giờ, mở cửa 05:00–24:00 hằng ngày, điện thoại 0328666633",
+            "Khanh Pickleball: 100.000–110.000đ/giờ, mở cửa 05:00–22:00 hằng ngày, điện thoại 0372621777",
+            "Pickleball bờ kẻ Bửu Long (Nhật): 100.000–110.000đ/giờ, mở cửa 05:00–22:00 hằng ngày, điện thoại 0909770295"
           ]
         },
         {
-          "heading": "Theo dõi trận đấu hoặc thiết lập giải phong trào",
-          "content": "Sau khi chơi, người dùng có thể nhập tỷ số để ghi nhận kết quả và theo dõi dữ liệu DUPR cá nhân. Hãy nhập đúng kết quả và thông tin trận đấu để hồ sơ phản ánh dữ liệu bạn cung cấp; công cụ không thay thế việc các bên thống nhất tỷ số thực tế.\n\nVới giải nội bộ, người tổ chức có thể dùng Bracket Lab để chọn cấu trúc phù hợp. Round Robin hữu ích khi muốn các đội hoặc người chơi lần lượt gặp nhau theo bảng; loại trực tiếp đơn hoặc đôi thích hợp với giải có nhánh đấu bị loại sau khi thua; MLP là một lựa chọn định dạng khác mà nền tảng hỗ trợ. Trước khi tạo bảng, ban tổ chức cần thống nhất danh sách người chơi, thể thức, luật và thời gian thi đấu.\n\nCách vận hành số hóa giúp trình bày bảng đấu và kết quả mạch lạc hơn, nhưng chất lượng giải vẫn phụ thuộc vào dữ liệu đầu vào và cách ban tổ chức áp dụng thể lệ. Hãy kiểm tra kỹ bảng trước khi công bố để hạn chế nhầm lẫn.",
-          "internalLinks": [
-            {
-              "text": "Ghi trận đấu",
-              "path": "/match/new"
-            },
-            {
-              "text": "Kết nối DUPR",
-              "path": "/dupr"
-            },
-            {
-              "text": "Bảng tin trận đấu",
-              "path": "/feed"
-            }
+          "heading": "Trước khi đến sân: cần hỏi gì",
+          "content": "Một cuộc gọi hai phút tránh được chuyến đi mất công. Đây là những điều danh mục chưa trả lời thay bạn được:",
+          "listItems": [
+            "Giá của đúng khung giờ bạn chơi, và giá đó tính theo sân hay theo người.",
+            "Số sân còn trống: mới 5/8 sân trong danh mục có số sân thi đấu.",
+            "Sân có mái che hay ngoài trời, mặt sân gì: danh mục chưa ghi nhận thông tin này cho các sân ở Đồng Nai.",
+            "Sân có cho thuê vợt, bán bóng và có chỗ gửi xe không.",
+            "5 sân chưa có số điện thoại trong danh mục (Sân Pickleball 234 Biên Hòa; Sân Pickleball 99 Biên Hòa; Sân Pickleball Biên Hòa Nguyễn Ái Quốc; Sân Pickleball Hiệp Hòa; Sân Pickleball Đỉnh Cao): mở trang sân để xem bản đồ và đến trực tiếp, hoặc tìm trang mạng xã hội của sân."
           ]
         },
         {
-          "heading": "Lưu ý thực tế, ví dụ áp dụng và triển vọng năm 2026",
-          "content": "Lỗi thường gặp nhất là xem thông tin danh bạ như xác nhận chắc chắn. Nếu người chơi ở Biên Hòa tìm được sân phù hợp trên nền tảng, bước tiếp theo vẫn là gọi điện kiểm tra. Nếu không liên hệ được, nên tiếp tục xem lựa chọn khác hoặc hỏi câu lạc bộ địa phương thay vì mặc định địa điểm còn hoạt động.\n\nMột tình huống khác là muốn tìm bạn chơi nhưng chỉ tìm địa chỉ sân. Khi đó, mục Câu lạc bộ hoặc Sự kiện cộng đồng có thể phù hợp hơn: địa điểm cho biết nơi có thể chơi, còn câu lạc bộ và sự kiện giúp bạn tìm hoạt động có lịch và nhóm tham gia. Với người tổ chức giải phong trào tại Đồng Nai, có thể thiết lập bảng bằng Bracket Lab, sau đó nhập kết quả để việc theo dõi rõ ràng hơn.\n\nĐiểm đáng chú ý trong năm 2026 là khả năng nối liền ba nhu cầu: tìm địa điểm, kết nối người chơi và quản lý dữ liệu thi đấu. Đây là góc nhìn về ứng dụng của công cụ, không phải số liệu tăng trưởng hay bảo đảm rằng mọi sân ở Đồng Nai đã được cập nhật đầy đủ. Nền tảng cũng cung cấp tài liệu OpenAPI 3.1 cho nhà phát triển muốn tích hợp dữ liệu sân; dữ liệu cá nhân của người dùng được quản lý theo chính sách bảo mật, không chia sẻ cho bên thứ ba ngoài mục đích vận hành hệ thống.",
+          "heading": "Sân bị thiếu hoặc thông tin đã cũ?",
+          "content": "Danh mục được bổ sung từ chủ sân và người chơi. Nếu bạn biết một sân ở Đồng Nai chưa có trong bảng, hoặc thấy giá, số điện thoại đã đổi, hãy gửi thông tin để ThePickleHub cập nhật.",
           "internalLinks": [
             {
-              "text": "Chính sách bảo mật",
-              "path": "/privacy"
+              "text": "Thêm sân vào danh mục",
+              "path": "/vi/san/them"
+            },
+            {
+              "text": "Xem tất cả sân Đồng Nai trên bản đồ",
+              "path": "/vi/san/khu-vuc/bien-hoa"
+            },
+            {
+              "text": "Sân pickleball trên cả nước",
+              "path": "/vi/blog/san-pickleball-viet-nam-cach-tim-chon-ket-noi"
             }
           ]
         }
       ],
       "faqItems": [
         {
-          "question": "ThePickleHub có trực tiếp vận hành hoặc nhận đặt sân ở Đồng Nai không?",
-          "answer": "Không. ThePickleHub là nền tảng cung cấp danh bạ và công cụ cho cộng đồng, không trực tiếp vận hành sân. Hãy dùng số điện thoại được niêm yết để hỏi đơn vị tại sân về giờ chơi và tình trạng chỗ."
+          "question": "Đồng Nai có bao nhiêu sân pickleball?",
+          "answer": "Danh mục ThePickleHub ghi nhận 8 sân pickleball tại Đồng Nai tính đến 13/10/2026. Tất cả đều ở TP Biên Hòa; danh mục chưa có sân nào ở các nơi khác của Đồng Nai. Sân có số sân thi đấu được ghi nhận: Sân Pickleball 234 Biên Hòa (6), Sân Pickleball 99 Biên Hòa (2), Sân Pickleball Biên Hòa Nguyễn Ái Quốc (6), Sân Pickleball Hiệp Hòa (3), Sân Pickleball Đỉnh Cao (4)."
         },
         {
-          "question": "Làm thế nào để lọc sân pickleball Đồng Nai?",
-          "answer": "Danh bạ lọc theo thành phố: vào mục Sân, chọn Biên Hòa, sau đó xem danh sách địa điểm và thông tin liên hệ. Gọi xác nhận trước khi di chuyển vì dữ liệu hiển thị không thay thế xác nhận trực tiếp."
+          "question": "Thuê sân pickleball ở Đồng Nai giá bao nhiêu?",
+          "answer": "3 sân đã xác nhận giá, từ 100.000đ đến 200.000đ mỗi giờ: D’LUCKY 120.000–200.000đ; Khanh Pickleball 100.000–110.000đ; Pickleball bờ kẻ Bửu Long (Nhật) 100.000–110.000đ. 5 sân còn lại chưa xác nhận giá."
         },
         {
-          "question": "Tôi có thể tìm câu lạc bộ hoặc bạn chơi gần mình không?",
-          "answer": "Bạn có thể xem mục Câu lạc bộ hoặc Sự kiện cộng đồng để tìm câu lạc bộ và sự kiện. Hãy kiểm tra hướng dẫn liên hệ, lịch sinh hoạt và điều kiện tham gia của từng nhóm."
+          "question": "Gọi sân nào ở Đồng Nai để đặt lịch?",
+          "answer": "3 sân có số điện thoại trong danh mục: D’LUCKY 0328666633; Khanh Pickleball 0372621777; Pickleball bờ kẻ Bửu Long (Nhật) 0909770295."
         },
         {
-          "question": "DUPR và Bracket Lab dùng để làm gì?",
-          "answer": "DUPR là chỉ số xếp hạng trình độ người chơi; nhập tỷ số trận đấu giúp bạn theo dõi dữ liệu DUPR. Bracket Lab giúp người tổ chức tạo bảng theo các thể thức Round Robin, loại trực tiếp đơn/đôi hoặc MLP."
-        },
-        {
-          "question": "Đăng nhập Google thu thập những thông tin nào?",
-          "answer": "Theo thông tin nền tảng, Google Sign-In được dùng để cá nhân hóa tài khoản và chỉ thu thập tên, email cùng ảnh đại diện. Bạn có thể xem chính sách bảo mật để biết thêm cách dữ liệu được quản lý."
+          "question": "Làm sao thêm một sân chưa có trong danh sách?",
+          "answer": "Mở trang Thêm sân trên ThePickleHub (/vi/san/them), điền tên, địa chỉ và số điện thoại của sân."
         }
       ]
     }
