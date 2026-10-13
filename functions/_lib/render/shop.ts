@@ -150,6 +150,37 @@ function categoryName(cat: { slug: string; name: string } | null, lang: Lang): s
   return lang === "en" ? (CATEGORY_NAME_EN[cat.slug] ?? cat.name) : cat.name;
 }
 
+/**
+ * The taxonomy is Vietnamese and some names already carry the word — "Vợt
+ * pickleball" does, "Giày" does not. Appending it unconditionally produced
+ * "Vợt pickleball pickleball" on the live preview, so it is added only when
+ * absent.
+ */
+function withKeyword(catName: string, lang: Lang): string {
+  if (/pickleball/i.test(catName)) return catName;
+  return lang === "vi" ? `${catName} pickleball` : `Pickleball ${catName}`;
+}
+
+/**
+ * Hướng dẫn chọn hàng theo danh mục — kiến thức chung, không gắn sản phẩm
+ * nào. Trang danh mục trước đây chỉ có một câu đếm sản phẩm (giày EN = 94
+ * từ, dưới sàn thin-content của bộ crawl, 11/10/2026).
+ */
+const CATEGORY_INTRO: Record<string, Record<Lang, string>> = {
+  vot: {
+    vi: "Chọn vợt pickleball theo ba thông số: trọng lượng (vợt nhẹ dễ xoay trở ở lưới, vợt nặng cho cú đánh đầm hơn), độ dày lõi (lõi 16 mm êm và dễ kiểm soát, lõi 13–14 mm nảy và mạnh hơn) và chất liệu mặt vợt (carbon thô tạo xoáy tốt). Muốn thi đấu giải chính thức, chọn vợt có chứng nhận USA Pickleball (USAP). Mỗi trang sản phẩm ghi thông số do shop khai báo để so sánh.",
+    en: "Choose a pickleball paddle on three specs: weight (lighter paddles are quicker at the net, heavier ones hit with more drive), core thickness (a 16 mm core is softer and easier to control, 13–14 mm is livelier and more powerful) and face material (raw carbon grips the ball for spin). For sanctioned tournaments, pick a paddle approved by USA Pickleball (USAP). Each product page lists the specs the seller declared so paddles can be compared.",
+  },
+  giay: {
+    vi: "Giày pickleball cần đế bám tốt khi di chuyển ngang và giữ chắc cổ chân; giày chạy bộ đế dày, mềm dễ gây lật cổ chân khi đổi hướng. Sân ngoài trời mài đế nhanh hơn sân trong nhà, nên ưu tiên đế cao su bền nếu chơi ngoài trời. Khi chọn cỡ, thử với loại tất thể thao bạn thường mang ra sân.",
+    en: "Pickleball shoes need an outsole that grips on lateral movement and an upper that holds the ankle; running shoes with thick, soft soles make it easy to roll an ankle when changing direction. Outdoor courts wear soles down faster than indoor ones, so choose a durable rubber outsole if you play outside. When sizing, try them with the sports socks you usually wear on court.",
+  },
+  "tui-balo": {
+    vi: "Túi và balo pickleball có ngăn riêng bảo vệ mặt vợt, thường chứa từ 2 đến 4 vợt, kèm ngăn giày tách biệt và ngăn đựng bóng, nước. Chọn theo số vợt bạn mang ra sân và cách bạn di chuyển: balo gọn cho xe máy, túi lớn cho người mang nhiều đồ.",
+    en: "Pickleball bags and backpacks have a dedicated sleeve that protects paddle faces, usually holding 2 to 4 paddles, plus a separate shoe compartment and pockets for balls and water. Choose by how many paddles you bring and how you get to the court: a compact backpack for a motorbike, a larger bag if you carry more gear.",
+  },
+};
+
 const utf8Bytes = (s: string) => new TextEncoder().encode(s).length;
 
 /**
@@ -356,14 +387,8 @@ export async function renderShopCategory(
     console.error("renderShopCategory: categories fatal", err);
   }
 
-  // The taxonomy is Vietnamese and some names already carry the word — "Vợt
-  // pickleball" does, "Giày" does not. Appending it unconditionally produced
-  // "Vợt pickleball pickleball" and "Pickleball Vợt pickleball" on the live
-  // preview. The keyword is worth having when it is absent and is noise when
-  // it is not, so it is added conditionally rather than dropped.
-  const hasKeyword = /pickleball/i.test(catName);
-  const catVi = hasKeyword ? catName : `${catName} pickleball`;
-  const catEn = hasKeyword ? catName : `Pickleball ${catName}`;
+  const catVi = withKeyword(catName, "vi");
+  const catEn = withKeyword(catName, "en");
 
   const title = fitTitle(
     lang === "vi"
@@ -397,6 +422,7 @@ export async function renderShopCategory(
   ])}
 <h1>${escapeHtml(catName)}</h1>
 ${lead}
+${CATEGORY_INTRO[slug] ? `<p>${escapeHtml(CATEGORY_INTRO[slug][lang])}</p>` : ""}
 <section>
 ${rows.length > 0 ? `<ul>${cardsHtml(rows, siteUrl, lang, mediaBase)}</ul>` : `<p>${escapeHtml(lang === "vi" ? "Chưa có sản phẩm nào." : "No products yet.")}</p>`}
 </section>
@@ -555,7 +581,15 @@ export async function renderShopProduct(
   const soldOut = product.in_stock === false;
   const orderingOff = product.shop?.ordering_enabled === false;
 
+  // Người Việt gõ "vợt pickleball selkirk vanguard", không gõ "selkirk
+  // vanguard — vợt pickleball": cụm danh mục đứng TRƯỚC tên ở bản VI, trừ
+  // khi tên đã có chữ pickleball ("Giày Pickleball Eopaia").
+  const viHead = lang === "vi" && catName && !/pickleball/i.test(product.title)
+    ? `${withKeyword(catName, "vi")} ${product.title}`
+    : null;
+
   const title = fitTitle([
+    ...(viHead ? [`${viHead} — giá, thông số | ThePickleHub`, `${viHead} | ThePickleHub`] : []),
     `${product.title}${catName ? ` — ${catName}` : ""} | ThePickleHub`,
     `${product.title} | ThePickleHub`,
     product.title,
@@ -567,7 +601,7 @@ export async function renderShopProduct(
   // Budget is 160 BYTES; the old sentence ("…thanh toán khi nhận hoặc chuyển
   // khoản") was cut mid-clause on most VI pages. Say less, finish the sentence.
   const description = lang === "vi"
-    ? `${product.title} giá ${priceLabel} tại ${shopName}.${shippingLabel ? ` Ship ${shippingLabel}.` : ""} ${soldOut ? "Tạm hết hàng." : "Đặt online, COD hoặc chuyển khoản."}`
+    ? `${viHead ?? product.title} giá ${priceLabel} tại ${shopName}.${shippingLabel ? ` Ship ${shippingLabel}.` : ""} ${soldOut ? "Tạm hết hàng." : "Đặt online, COD hoặc chuyển khoản."}`
     : `${product.title} at ${priceLabel} from ${shopName}.${shippingLabel ? ` Shipping ${shippingLabel}.` : ""} ${soldOut ? "Sold out." : "Order online, COD or bank transfer."}`;
 
   // Thông số kỹ thuật, theo thứ tự từ điển. Đây là phần một câu trả lời AI có
