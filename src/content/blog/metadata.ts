@@ -48,6 +48,10 @@ export const blogMetadata: BlogPostMetadata[] = [
       "en": "Follow live scores on ThePickleHub",
       "vi": "Theo dõi điểm số trên ThePickleHub"
     },
+    "heroImage": {
+      "src": "/images/blog/virginia-beach-open-2026-results-hero.webp",
+      "alt": "Mojo Energy Pouches Virginia Beach Open 2026 pickleball court on the oceanfront at sunset"
+    },
     "titleEn": "Virginia Beach Open 2026 Results: Daily Scores and Confirmed Winners",
     "titleVi": "Kết quả Virginia Beach Open 2026: cập nhật hằng ngày",
     "metaTitleEn": "PPA Virginia Beach Results 2026: Virginia Beach Open Scores",

@@ -18,6 +18,10 @@ const post: BlogPost = {
     "en": "Follow live scores on ThePickleHub",
     "vi": "Theo dõi điểm số trên ThePickleHub"
   },
+  "heroImage": {
+    "src": "/images/blog/virginia-beach-open-2026-results-hero.webp",
+    "alt": "Mojo Energy Pouches Virginia Beach Open 2026 pickleball court on the oceanfront at sunset"
+  },
   "content": {
     "en": {
       "title": "Virginia Beach Open 2026 Results: Daily Scores and Confirmed Winners",
@@ -26,7 +30,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA Virginia Beach results: Virginia Beach Open 2026 daily scores",
-          "content": "Last updated: October 13, 2026, 08:35 Vietnam time. ThePickleHub publishes this Virginia Beach Open 2026 results page from the official PPA scores feed for October 12–18, 2026 at Pickleball Virginia Beach, Virginia. The feed currently contains 72 matches, including 0 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: October 13, 2026, 09:11 Vietnam time. ThePickleHub publishes this Virginia Beach Open 2026 results page from the official PPA scores feed for October 12–18, 2026 at Pickleball Virginia Beach, Virginia. The feed currently contains 72 matches, including 0 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -84,7 +88,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Virginia Beach Open 2026",
-          "content": "Cập nhật: 08:35 ngày 13/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Virginia Beach Open 2026 từ feed điểm số chính thức của PPA cho thời gian 12–18/10/2026 tại Pickleball Virginia Beach, Virginia. Feed hiện có 72 trận, gồm 0 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 09:11 ngày 13/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Virginia Beach Open 2026 từ feed điểm số chính thức của PPA cho thời gian 12–18/10/2026 tại Pickleball Virginia Beach, Virginia. Feed hiện có 72 trận, gồm 0 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
