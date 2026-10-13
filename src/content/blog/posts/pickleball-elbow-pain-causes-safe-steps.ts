@@ -7,6 +7,10 @@ const post: BlogPost = {
   "slug": "pickleball-elbow-pain-causes-safe-steps",
   "publishedDate": "2026-10-07",
   "updatedDate": "2026-10-07",
+  "heroImage": {
+    "src": "/images/blog/pickleball-elbow-pain-causes-safe-steps-hero.webp",
+    "alt": "Pickleball Elbow Pain: Causes, What to Check and When to Stop"
+  },
   "author": "The PickleHub Team",
   "tags": [
     "pickleball elbow",

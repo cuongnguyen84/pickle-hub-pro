@@ -7,6 +7,10 @@ const post: BlogPost = {
   "slug": "pickleball-for-older-adults-safe-start",
   "publishedDate": "2026-10-08",
   "updatedDate": "2026-10-08",
+  "heroImage": {
+    "src": "/images/blog/pickleball-for-older-adults-safe-start-hero.webp",
+    "alt": "Pickleball for Older Adults: A Safe, Steady Start in 2026"
+  },
   "author": "The PickleHub Team",
   "tags": [
     "pickleball for seniors",
