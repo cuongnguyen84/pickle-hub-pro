@@ -41,11 +41,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     "slug": "ppa-brisbane-2026-results",
     "publishedDate": "2026-10-13",
-    "updatedDate": "2026-10-13",
-    "heroImage": {
-      "src": "/images/blog/ppa-brisbane-2026-results-hero.webp",
-      "alt": "PPA Tour Australia Pickleball Cup 2026 court in Brisbane with the city skyline at sunset"
-    },
+    "updatedDate": "2026-10-14",
     "author": "The PickleHub Team",
     "tags": [
       "pickleball",
@@ -58,6 +54,10 @@ export const blogMetadata: BlogPostMetadata[] = [
     "ctaLabel": {
       "en": "Follow live scores on ThePickleHub",
       "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/ppa-brisbane-2026-results-hero.webp",
+      "alt": "PPA Tour Australia Pickleball Cup 2026 court in Brisbane with the city skyline at sunset"
     },
     "titleEn": "Australia Pickleball Cup 2026 Results: Daily Scores and Confirmed Winners",
     "titleVi": "Kết quả Australia Pickleball Cup 2026: cập nhật hằng ngày",
