@@ -6,7 +6,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   "slug": "virginia-beach-open-2026-results",
   "publishedDate": "2026-10-12",
-  "updatedDate": "2026-10-14",
+  "updatedDate": "2026-10-15",
   "author": "The PickleHub Team",
   "tags": [
     "pickleball",
@@ -30,7 +30,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA Virginia Beach results: Virginia Beach Open 2026 daily scores",
-          "content": "Last updated: October 14, 2026, 07:31 Vietnam time. ThePickleHub publishes this Virginia Beach Open 2026 results page from the official PPA scores feed for October 12–18, 2026 at Pickleball Virginia Beach, Virginia. The feed currently contains 111 matches, including 55 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: October 15, 2026, 07:30 Vietnam time. ThePickleHub publishes this Virginia Beach Open 2026 results page from the official PPA scores feed for October 12–18, 2026 at Pickleball Virginia Beach, Virginia. The feed currently contains 149 matches, including 109 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -42,42 +42,42 @@ const post: BlogPost = {
           "heading": "Latest confirmed results",
           "content": "These are the latest completed records returned by the official feed. They are a summary, not a copy of the full draw.",
           "listItems": [
-            "Mixed Doubles, Round 32: John Lucian Goins / Victoria Dimuzio beat Jonathan Truong / Lea Jansen (final).",
-            "Women's Singles, Round 32: Paula Rives beat Keilly Ulery (final).",
-            "Women's Doubles, Round 32: Giovanna Morelli / Emma Nelson beat Ashley Griffith / Keilly Ulery (final).",
-            "Men's Doubles, Round 64: Joshua Giannelli / Braylon Ohrel beat Connor Mogle / Christopher Crouch (11-5, 6-11, 11-7).",
-            "Men's Doubles, Round 64: Rio Newcombe / Armaan Jiwa Mawji beat Luke Wasson / Chuck Taylor (11-3, 11-3, 0-0).",
-            "Men's Doubles, Round 64: Bruno Faletto / Mohaned Alhouni beat Mike Radermacher / Matt Burkhardt (11-5, 2-11, 11-4).",
-            "Men's Doubles, Round 64: Joel Poland / Maverick Messinger beat George Rangelov / Aryaan Bhatia (12-10, 11-8, 0-0).",
-            "Men's Doubles, Round 64: Gregory Dow / Anderson Scarpa beat Sanil Jagtiani / Oscar Serra (11-1, 11-7, 0-0).",
-            "Men's Doubles, Round 64: Zach Gonnering / Jarryd Woog beat Edward Perez / Alexander Crum (8-11, 11-6, 11-6).",
-            "Men's Doubles, Round 64: Braden Jacobson / Travis Rettenmaier beat Ethan Bakalinsky / Ross Whittaker (11-4, 9-11, 11-8).",
-            "Men's Doubles, Round 64: Eric Roddy / Donald Young beat Kyle Koszuta / Jace Morris (3-11, 11-6, 11-7).",
-            "Mixed Doubles, Round 64: Anderson Scarpa / Alex Walker beat Edward Perez / Valerie R Simon (11-4, 11-6, 0-0).",
-            "Mixed Doubles, Round 64: Mya Bui / Luca Mack beat Estee Widdershoven / Martin Emmrich (16-14, 11-4, 0-0).",
-            "Mixed Doubles, Round 64: Bruno Faletto / Carlota Trevino beat Ashley Griffith / George Rangelov (11-2, 11-9, 0-0).",
-            "Mixed Doubles, Round 64: Jack Sock / Milan Rane beat Alexander Crum / Victoria Simon (11-1, 11-1, 0-0).",
-            "Mixed Doubles, Round 64: Layne Sleeth / Nicolas Acevedo beat Brie Aldridge / Jake Anderson (11-3, 11-2, 0-0).",
-            "Mixed Doubles, Round 64: Zoey Weil / Wyatt Stone beat Audrey Adele Brown / Connor Mogle (11-8, 13-11, 0-0).",
-            "Mixed Doubles, Round 64: Sofia Sewing / Casey Diamond beat Genie Erokhina / Michael Loyd (11-7, 11-9, 0-0).",
-            "Mixed Doubles, Round 64: Pablo Tellez / Giovanna Morelli beat Garrison Eaby / Madalina Grigoriu (11-4, 11-4, 0-0).",
-            "Mixed Doubles, Round 64: Will Howells / Alix Truong beat Mary McGowan / Braylon Ohrel (11-5, 9-11, 11-3)."
+            "Women's Doubles, Round 32: Victoria Dimuzio / Jalina Ingram beat Ava Cavataio / Alexa Schull (11-4, 11-9, 0-0).",
+            "Women's Singles, Round 16: Helena Jansen beat Lea Jansen (final).",
+            "Men's Doubles, Round 32: Nicolas Acevedo / Yuta Funemizu beat Joel Poland / Maverick Messinger (11-5, 11-5, 0-0).",
+            "Men's Doubles, Round 32: AJ Koller / Yates Johnson beat Adam Harvey / Cason Campbell (11-5, 11-5, 0-0).",
+            "Men's Doubles, Round 32: Clayton Powell / Rafael Lenhard beat Casey Diamond / Jack Sock (11-3, 11-9, 0-0).",
+            "Men's Doubles, Round 32: Luca Mack / Anouar Braham beat Andre Mercado / Darrian Young (12-14, 11-2, 11-8).",
+            "Men's Doubles, Round 32: Roscoe Bellamy / Matt Wright beat Zach Gonnering / Jarryd Woog (5-11, 11-2, 11-1).",
+            "Men's Doubles, Round 32: Wyatt Stone / Will Mackinnon beat Eric Roddy / Donald Young (11-8, 11-1, 0-0).",
+            "Men's Doubles, Round 32: Pablo Tellez / John Lucian Goins beat Braden Jacobson / Travis Rettenmaier (11-9, 11-4, 0-0).",
+            "Men's Doubles, Round 32: Max Freeman / Jonathan Truong beat Rio Newcombe / Armaan Jiwa Mawji (11-4, 11-3, 0-0).",
+            "Men's Doubles, Round 32: James Delgado / Brandon French beat Gregory Dow / Anderson Scarpa (11-4, 2-11, 11-2).",
+            "Men's Doubles, Round 32: Camden Chaffin / Christopher Haworth beat Caden Nemoff / Zane Ford (11-7, 11-9, 0-0).",
+            "Men's Doubles, Round 32: Michael Loyd / Martin Emmrich beat Joshua Giannelli / Braylon Ohrel (11-1, 11-2, 0-0).",
+            "Men's Doubles, Round 32: Elliott Schupp / Jaume Martinez Vich beat Bruno Faletto / Mohaned Alhouni (11-1, 11-7, 0-0).",
+            "Mixed Doubles, Round 32: Layne Sleeth / Nicolas Acevedo beat Pablo Tellez / Giovanna Morelli (15-13, 11-4, 0-0).",
+            "Mixed Doubles, Round 32: CJ Klinger / Kelly Goodnow beat Clayton Powell / Isabella Dunlap (11-9, 11-3, 0-0).",
+            "Mixed Doubles, Round 32: Max Freeman / Emma Nelson beat Jack Sock / Milan Rane (11-5, 3-11, 11-8).",
+            "Mixed Doubles, Round 32: Chao Yi Wang / Roscoe Bellamy beat Travis Rettenmaier / Paula Rives (11-9, 11-6, 0-0).",
+            "Mixed Doubles, Round 32: Mya Bui / Luca Mack beat Will Howells / Alix Truong (11-2, 11-7, 0-0).",
+            "Mixed Doubles, Round 32: Mari Humberg / Augustus Ge beat Jalina Ingram / Elliott Schupp (11-2, 12-10, 0-0)."
           ]
         },
         {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
+            "Women's Doubles, Round 16: Genie Erokhina / Isabella Dunlap vs Estee Widdershoven / Christa Gecheva — status scheduled.",
+            "Women's Doubles, Round 16: Cailyn Campbell / Meghan Dizon vs Kelly Goodnow / Naomi Nguyen — status scheduled.",
+            "Women's Doubles, Round 16: Tina Pisnik / Elsie Hendershot vs Carlota Trevino / Nicole Conard — status scheduled.",
+            "Women's Doubles, Round 16: Kate Fahey / Lea Jansen vs Alex Walker / Daria Walczak — status scheduled.",
+            "Women's Doubles, Round 16: Milan Rane / Brooke Buckner vs Mya Bui / Paula Rives — status scheduled.",
+            "Women's Doubles, Round 16: Mari Humberg / Zoey Weil vs Victoria Dimuzio / Jalina Ingram — status scheduled.",
+            "Women's Doubles, Round 16: Alix Truong / Layne Sleeth vs Lucy Kovalova / Chao Yi Wang — status scheduled.",
             "Women's Doubles, Round 16: Catherine Parenteau / Sofia Sewing vs Giovanna Morelli / Emma Nelson — status scheduled.",
-            "Women's Doubles, Round 32: Alex Walker / Daria Walczak vs Natalia Simson / Genie Bouchard — status scheduled.",
-            "Women's Doubles, Round 32: Estee Widdershoven / Christa Gecheva vs Victoria Simon / Valerie R Simon — status scheduled.",
-            "Women's Doubles, Round 32: Abbigal Hatton / Mehvish Safdar vs Kelly Goodnow / Naomi Nguyen — status scheduled.",
-            "Women's Doubles, Round 32: Mya Bui / Paula Rives vs Sophie Abrams / Mary McGowan — status scheduled.",
-            "Women's Doubles, Round 32: Carlota Trevino / Nicole Conard vs Audrey Adele Brown / Rachel Rettger — status scheduled.",
-            "Women's Doubles, Round 32: Victoria Dimuzio / Jalina Ingram vs Ava Cavataio / Alexa Schull — status scheduled.",
-            "Women's Doubles, Round 32: Lucy Kovalova / Chao Yi Wang vs Madalina Grigoriu / Anne-Sophie Courteau — status scheduled.",
-            "Men's Doubles, Round 32: James Delgado / Brandon French vs Gregory Dow / Anderson Scarpa — status scheduled.",
-            "Men's Doubles, Round 32: Nicolas Acevedo / Yuta Funemizu vs Joel Poland / Maverick Messinger — status scheduled."
+            "Men's Doubles, Round 16: Max Freeman / Jonathan Truong vs James Delgado / Brandon French — status scheduled.",
+            "Men's Doubles, Round 16: Nicolas Acevedo / Yuta Funemizu vs Michael Loyd / Martin Emmrich — status scheduled."
           ]
         },
         {
@@ -107,7 +107,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Virginia Beach Open 2026",
-          "content": "Cập nhật: 07:31 ngày 14/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Virginia Beach Open 2026 từ feed điểm số chính thức của PPA cho thời gian 12–18/10/2026 tại Pickleball Virginia Beach, Virginia. Feed hiện có 111 trận, gồm 55 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 07:30 ngày 15/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Virginia Beach Open 2026 từ feed điểm số chính thức của PPA cho thời gian 12–18/10/2026 tại Pickleball Virginia Beach, Virginia. Feed hiện có 149 trận, gồm 109 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -119,42 +119,42 @@ const post: BlogPost = {
           "heading": "Kết quả đã xác nhận gần nhất",
           "content": "Danh sách dưới đây là tóm tắt các bản ghi đã kết thúc từ feed chính thức, không sao chép toàn bộ nhánh đấu.",
           "listItems": [
-            "Đôi nam nữ, Round 32: John Lucian Goins / Victoria Dimuzio thắng Jonathan Truong / Lea Jansen (final).",
-            "Đơn nữ, Round 32: Paula Rives thắng Keilly Ulery (final).",
-            "Đôi nữ, Round 32: Giovanna Morelli / Emma Nelson thắng Ashley Griffith / Keilly Ulery (final).",
-            "Đôi nam, Round 64: Joshua Giannelli / Braylon Ohrel thắng Connor Mogle / Christopher Crouch (11-5, 6-11, 11-7).",
-            "Đôi nam, Round 64: Rio Newcombe / Armaan Jiwa Mawji thắng Luke Wasson / Chuck Taylor (11-3, 11-3, 0-0).",
-            "Đôi nam, Round 64: Bruno Faletto / Mohaned Alhouni thắng Mike Radermacher / Matt Burkhardt (11-5, 2-11, 11-4).",
-            "Đôi nam, Round 64: Joel Poland / Maverick Messinger thắng George Rangelov / Aryaan Bhatia (12-10, 11-8, 0-0).",
-            "Đôi nam, Round 64: Gregory Dow / Anderson Scarpa thắng Sanil Jagtiani / Oscar Serra (11-1, 11-7, 0-0).",
-            "Đôi nam, Round 64: Zach Gonnering / Jarryd Woog thắng Edward Perez / Alexander Crum (8-11, 11-6, 11-6).",
-            "Đôi nam, Round 64: Braden Jacobson / Travis Rettenmaier thắng Ethan Bakalinsky / Ross Whittaker (11-4, 9-11, 11-8).",
-            "Đôi nam, Round 64: Eric Roddy / Donald Young thắng Kyle Koszuta / Jace Morris (3-11, 11-6, 11-7).",
-            "Đôi nam nữ, Round 64: Anderson Scarpa / Alex Walker thắng Edward Perez / Valerie R Simon (11-4, 11-6, 0-0).",
-            "Đôi nam nữ, Round 64: Mya Bui / Luca Mack thắng Estee Widdershoven / Martin Emmrich (16-14, 11-4, 0-0).",
-            "Đôi nam nữ, Round 64: Bruno Faletto / Carlota Trevino thắng Ashley Griffith / George Rangelov (11-2, 11-9, 0-0).",
-            "Đôi nam nữ, Round 64: Jack Sock / Milan Rane thắng Alexander Crum / Victoria Simon (11-1, 11-1, 0-0).",
-            "Đôi nam nữ, Round 64: Layne Sleeth / Nicolas Acevedo thắng Brie Aldridge / Jake Anderson (11-3, 11-2, 0-0).",
-            "Đôi nam nữ, Round 64: Zoey Weil / Wyatt Stone thắng Audrey Adele Brown / Connor Mogle (11-8, 13-11, 0-0).",
-            "Đôi nam nữ, Round 64: Sofia Sewing / Casey Diamond thắng Genie Erokhina / Michael Loyd (11-7, 11-9, 0-0).",
-            "Đôi nam nữ, Round 64: Pablo Tellez / Giovanna Morelli thắng Garrison Eaby / Madalina Grigoriu (11-4, 11-4, 0-0).",
-            "Đôi nam nữ, Round 64: Will Howells / Alix Truong thắng Mary McGowan / Braylon Ohrel (11-5, 9-11, 11-3)."
+            "Đôi nữ, Round 32: Victoria Dimuzio / Jalina Ingram thắng Ava Cavataio / Alexa Schull (11-4, 11-9, 0-0).",
+            "Đơn nữ, Round 16: Helena Jansen thắng Lea Jansen (final).",
+            "Đôi nam, Round 32: Nicolas Acevedo / Yuta Funemizu thắng Joel Poland / Maverick Messinger (11-5, 11-5, 0-0).",
+            "Đôi nam, Round 32: AJ Koller / Yates Johnson thắng Adam Harvey / Cason Campbell (11-5, 11-5, 0-0).",
+            "Đôi nam, Round 32: Clayton Powell / Rafael Lenhard thắng Casey Diamond / Jack Sock (11-3, 11-9, 0-0).",
+            "Đôi nam, Round 32: Luca Mack / Anouar Braham thắng Andre Mercado / Darrian Young (12-14, 11-2, 11-8).",
+            "Đôi nam, Round 32: Roscoe Bellamy / Matt Wright thắng Zach Gonnering / Jarryd Woog (5-11, 11-2, 11-1).",
+            "Đôi nam, Round 32: Wyatt Stone / Will Mackinnon thắng Eric Roddy / Donald Young (11-8, 11-1, 0-0).",
+            "Đôi nam, Round 32: Pablo Tellez / John Lucian Goins thắng Braden Jacobson / Travis Rettenmaier (11-9, 11-4, 0-0).",
+            "Đôi nam, Round 32: Max Freeman / Jonathan Truong thắng Rio Newcombe / Armaan Jiwa Mawji (11-4, 11-3, 0-0).",
+            "Đôi nam, Round 32: James Delgado / Brandon French thắng Gregory Dow / Anderson Scarpa (11-4, 2-11, 11-2).",
+            "Đôi nam, Round 32: Camden Chaffin / Christopher Haworth thắng Caden Nemoff / Zane Ford (11-7, 11-9, 0-0).",
+            "Đôi nam, Round 32: Michael Loyd / Martin Emmrich thắng Joshua Giannelli / Braylon Ohrel (11-1, 11-2, 0-0).",
+            "Đôi nam, Round 32: Elliott Schupp / Jaume Martinez Vich thắng Bruno Faletto / Mohaned Alhouni (11-1, 11-7, 0-0).",
+            "Đôi nam nữ, Round 32: Layne Sleeth / Nicolas Acevedo thắng Pablo Tellez / Giovanna Morelli (15-13, 11-4, 0-0).",
+            "Đôi nam nữ, Round 32: CJ Klinger / Kelly Goodnow thắng Clayton Powell / Isabella Dunlap (11-9, 11-3, 0-0).",
+            "Đôi nam nữ, Round 32: Max Freeman / Emma Nelson thắng Jack Sock / Milan Rane (11-5, 3-11, 11-8).",
+            "Đôi nam nữ, Round 32: Chao Yi Wang / Roscoe Bellamy thắng Travis Rettenmaier / Paula Rives (11-9, 11-6, 0-0).",
+            "Đôi nam nữ, Round 32: Mya Bui / Luca Mack thắng Will Howells / Alix Truong (11-2, 11-7, 0-0).",
+            "Đôi nam nữ, Round 32: Mari Humberg / Augustus Ge thắng Jalina Ingram / Elliott Schupp (11-2, 12-10, 0-0)."
           ]
         },
         {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
+            "Đôi nữ, Round 16: Genie Erokhina / Isabella Dunlap gặp Estee Widdershoven / Christa Gecheva — trạng thái scheduled.",
+            "Đôi nữ, Round 16: Cailyn Campbell / Meghan Dizon gặp Kelly Goodnow / Naomi Nguyen — trạng thái scheduled.",
+            "Đôi nữ, Round 16: Tina Pisnik / Elsie Hendershot gặp Carlota Trevino / Nicole Conard — trạng thái scheduled.",
+            "Đôi nữ, Round 16: Kate Fahey / Lea Jansen gặp Alex Walker / Daria Walczak — trạng thái scheduled.",
+            "Đôi nữ, Round 16: Milan Rane / Brooke Buckner gặp Mya Bui / Paula Rives — trạng thái scheduled.",
+            "Đôi nữ, Round 16: Mari Humberg / Zoey Weil gặp Victoria Dimuzio / Jalina Ingram — trạng thái scheduled.",
+            "Đôi nữ, Round 16: Alix Truong / Layne Sleeth gặp Lucy Kovalova / Chao Yi Wang — trạng thái scheduled.",
             "Đôi nữ, Round 16: Catherine Parenteau / Sofia Sewing gặp Giovanna Morelli / Emma Nelson — trạng thái scheduled.",
-            "Đôi nữ, Round 32: Alex Walker / Daria Walczak gặp Natalia Simson / Genie Bouchard — trạng thái scheduled.",
-            "Đôi nữ, Round 32: Estee Widdershoven / Christa Gecheva gặp Victoria Simon / Valerie R Simon — trạng thái scheduled.",
-            "Đôi nữ, Round 32: Abbigal Hatton / Mehvish Safdar gặp Kelly Goodnow / Naomi Nguyen — trạng thái scheduled.",
-            "Đôi nữ, Round 32: Mya Bui / Paula Rives gặp Sophie Abrams / Mary McGowan — trạng thái scheduled.",
-            "Đôi nữ, Round 32: Carlota Trevino / Nicole Conard gặp Audrey Adele Brown / Rachel Rettger — trạng thái scheduled.",
-            "Đôi nữ, Round 32: Victoria Dimuzio / Jalina Ingram gặp Ava Cavataio / Alexa Schull — trạng thái scheduled.",
-            "Đôi nữ, Round 32: Lucy Kovalova / Chao Yi Wang gặp Madalina Grigoriu / Anne-Sophie Courteau — trạng thái scheduled.",
-            "Đôi nam, Round 32: James Delgado / Brandon French gặp Gregory Dow / Anderson Scarpa — trạng thái scheduled.",
-            "Đôi nam, Round 32: Nicolas Acevedo / Yuta Funemizu gặp Joel Poland / Maverick Messinger — trạng thái scheduled."
+            "Đôi nam, Round 16: Max Freeman / Jonathan Truong gặp James Delgado / Brandon French — trạng thái scheduled.",
+            "Đôi nam, Round 16: Nicolas Acevedo / Yuta Funemizu gặp Michael Loyd / Martin Emmrich — trạng thái scheduled."
           ]
         },
         {
