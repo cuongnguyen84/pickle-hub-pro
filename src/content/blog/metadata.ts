@@ -41,7 +41,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     "slug": "ppa-brisbane-2026-results",
     "publishedDate": "2026-10-13",
-    "updatedDate": "2026-10-14",
+    "updatedDate": "2026-10-15",
     "author": "The PickleHub Team",
     "tags": [
       "pickleball",

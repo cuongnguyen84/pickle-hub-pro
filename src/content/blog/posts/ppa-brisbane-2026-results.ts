@@ -6,7 +6,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   "slug": "ppa-brisbane-2026-results",
   "publishedDate": "2026-10-13",
-  "updatedDate": "2026-10-14",
+  "updatedDate": "2026-10-15",
   "author": "The PickleHub Team",
   "tags": [
     "pickleball",
@@ -32,7 +32,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA Brisbane results: Australia Pickleball Cup 2026 daily scores",
-          "content": "Last updated: October 14, 2026, 07:31 Vietnam time. ThePickleHub publishes this Australia Pickleball Cup 2026 results page from the official PPA scores feed for October 13–18, 2026 at Queensland Tennis Centre (Pat Rafter Arena), Brisbane, Australia. The feed currently contains 90 matches, including 22 completed or final records and 2 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: October 15, 2026, 07:30 Vietnam time. ThePickleHub publishes this Australia Pickleball Cup 2026 results page from the official PPA scores feed for October 13–18, 2026 at Queensland Tennis Centre (Pat Rafter Arena), Brisbane, Australia. The feed currently contains 127 matches, including 88 completed or final records and 2 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -44,42 +44,42 @@ const post: BlogPost = {
           "heading": "Latest confirmed results",
           "content": "These are the latest completed records returned by the official feed. They are a summary, not a copy of the full draw.",
           "listItems": [
-            "Mixed Doubles, Round 64: Jimmy Liong Kai Long / Pei-Yu Lai beat Mint Bhetraratana / Tama Skipper (11-7, 11-1, 0-0).",
-            "Mixed Doubles, Round 64: Gianni Martine / Jason Taylor beat Irie Heather-Pereira / Kepueli Fitikefu (11-3, 11-7, 0-0).",
-            "Mixed Doubles, Round 64: Quan Do / Sophia Phuong Anh Tran beat Tony Truong / Saleen Ahmed (11-4, 11-2, 0-0).",
-            "Mixed Doubles, Round 64: Nasa Hatakeyama / Rika Fujiwara beat Bruno Maurmann / Eliza Cook (11-0, 11-1, 0-0).",
-            "Mixed Doubles, Round 64: Daiki Tanabe / Katerina Valos beat Indiana Heather-Pereira / Luther Ferris (11-1, 11-2, 0-0).",
-            "Mixed Doubles, Round 64: Jose Farias / Katie Morris beat Liam Jesperson / Aria Henare (11-9, 11-7, 0-0).",
-            "Mixed Doubles, Round 64: Kenta Miyoshi / Talia Saunders beat Coco Lococo / John Myers (11-0, 11-0, 0-0).",
-            "Women's Singles, Round 32: Judit Castillo beat Jamie Haas (final).",
-            "Men's Singles, Round 64: Liam Jesperson beat Lachy Donnelly (12-10, 11-9, 0-0).",
-            "Men's Singles, Round 64: Andy Van der Vyver beat Kepueli Fitikefu (11-0, 11-1, 0-0).",
-            "Men's Singles, Round 64: Jason Taylor beat Rakesh Jampala (11-2, 11-6, 0-0).",
-            "Men's Singles, Round 64: Zane Navratil beat Kenneth Andutan (11-4, 11-4, 0-0).",
-            "Men's Singles, Round 64: Ryan Morris beat John Gaunt (11-2, 11-8, 0-0).",
-            "Men's Singles, Round 64: Liam Lamb beat Aaron Blitz (11-3, 11-6, 0-0).",
-            "Men's Singles, Round 64: Conor Robertshawe beat Phi Lam (8-11, 11-2, 11-4).",
-            "Men's Singles, Round 64: Paul Truong beat Kyle Anderson (11-1, 11-1, 0-0).",
-            "Men's Singles, Round 64: Brian Tran beat Sam Tarrant (11-1, 11-4, 0-0).",
-            "Men's Singles, Round 64: Ethan Chung beat Oliver Novic (11-5, 11-5, 0-0).",
-            "Men's Singles, Round 64: Joey Wild beat Zak Davidson (11-5, 11-4, 0-0).",
-            "Men's Singles, Round 64: Stefan Djordjic beat Joshua Lymberopoulos (11-1, 11-0, 0-0)."
+            "Men's Singles, Round 16: Grayson Goldin beat Liam Lamb (11-5, 11-8, 0-0).",
+            "Men's Doubles, Round 32: George Wall / Joey Wild beat Daiki Tanabe / Brian Tran (11-6, 11-4, 0-0).",
+            "Men's Doubles, Round 32: Mitchell Hargreaves / Collin Johns beat Oliver Novic / Rakesh Jampala (11-1, 11-6, 0-0).",
+            "Men's Doubles, Round 32: Kenta Miyoshi / Grayson Goldin beat Stefan Djordjic / Liam Lamb (11-5, 11-1, 0-0).",
+            "Men's Doubles, Round 32: Benjamin Bramblett / Christian Alshon beat Harry Tan / Dan Markworth (11-4, 11-2, 0-0).",
+            "Men's Doubles, Round 32: Jimmy Liong Kai Long / Nasa Hatakeyama beat Aaron Blitz / David Richardson (11-2, 11-7, 0-0).",
+            "Men's Doubles, Round 32: Ethan Chung / Daniel Fogl-Kulich beat Ryan Morris / Harrison Young (11-4, 11-3, 0-0).",
+            "Men's Doubles, Round 32: Liam Jesperson / Josh Barber beat Oliver Gray / Conor Robertshawe (11-4, 11-6, 0-0).",
+            "Men's Doubles, Round 32: Quan Do / Hien Truong beat Jason Smith / Adam Hameed (11-0, 0-0, 0-0).",
+            "Men's Doubles, Round 32: Tama Shimabukuro / JW Johnson beat David M / Kepueli Fitikefu (11-1, 11-2, 0-0).",
+            "Men's Doubles, Round 32: Jose Farias / Jason Taylor beat Kyle Anderson / Kyle Stoker (11-9, 11-9, 0-0).",
+            "Men's Doubles, Round 32: Eunggwon Kim / Hong Kit Wong beat Sam Gibbs / Ben Johns (11-6, 11-4, 0-0).",
+            "Men's Doubles, Round 32: Zane Navratil / Luc Pham beat Spencer Sandridge / Jordan Halliday (11-1, 11-1, 0-0).",
+            "Men's Doubles, Round 32: Hunter Johnson / Tyson McGuffin beat Joshua Ho / Phi Lam (11-0, 11-1, 0-0).",
+            "Men's Doubles, Round 32: Connor Garnett / Dylan Frazier beat Nathaniel Leith / Tama Skipper (11-2, 11-0, 0-0).",
+            "Men's Doubles, Round 32: Gabriel Tardio / Hayden Patriquin beat Nicholas Maleganeas / Kane Townsend (11-2, 11-2, 0-0).",
+            "Men's Doubles, Round 32: Harrison Brown / Lucas Pascoe beat Wesley Vine / Lachy Donnelly (11-1, 11-0, 0-0).",
+            "Mixed Doubles, Round 32: Parris Todd / Christian Alshon beat Daiki Tanabe / Katerina Valos (11-6, 11-1, 0-0).",
+            "Mixed Doubles, Round 32: Sahra Dennehy / Tama Shimabukuro beat Tayah Cross / Conor Robertshawe (11-0, 11-9, 0-0).",
+            "Mixed Doubles, Round 32: Aiko Yoshitomi / Lucas Pascoe beat Mitchell Hargreaves / Brittany Yang (11-4, 11-3, 0-0)."
           ]
         },
         {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Mixed Doubles, Round 64: Lachy Donnelly / Seina Shima vs Jessica Christie / Aaron Blitz — status live.",
-            "Mixed Doubles, Round 64: Tayah Cross / Conor Robertshawe vs Johnny Goldberg / Regina Goldberg — status live.",
+            "Men's Singles, Round 16: Luc Pham vs Mitchell Hargreaves — status live.",
+            "Men's Singles, Round 16: Hunter Johnson vs Daiki Tanabe — status live.",
             "Women's Doubles, Round 16: Regina Goldberg / Kaitlyn Christian vs Kaitlynn Hart / Katie Morris — status scheduled.",
+            "Women's Doubles, Round 16: Tyra Hurricane Black / Jorja Johnson vs Bernadette Massih / Talia Saunders — status scheduled.",
             "Women's Doubles, Round 16: Sahra Dennehy / Jessie Irvine vs Pei-Yu Lai / Seina Shima — status scheduled.",
             "Women's Doubles, Round 16: Jamie Haas / Kei Sawaki vs Sarah Burr / Rika Fujiwara — status scheduled.",
             "Women's Doubles, Round 16: Nok Yiu Tang / Yufei Long vs Tayah Cross / Mihae Kwon — status scheduled.",
             "Women's Doubles, Round 16: Judit Castillo / Kiora Kunimoto vs Albie Huang / Andie Dikosavljevic — status scheduled.",
             "Women's Doubles, Round 16: Aiko Yoshitomi / Sophia Nhi Huynh vs Hannah Blatt / Sophia Phuong Anh Tran — status scheduled.",
-            "Women's Doubles, Round 32: Katerina Valos / Brittany Yang vs Clare Butler / Chau Vo — status scheduled.",
-            "Women's Doubles, Round 32: Bernadette Massih / Talia Saunders vs Gianni Martine / Aria Henare — status scheduled."
+            "Women's Doubles, Round 16: Parris Todd / Danni-Elle Townsend vs Katerina Valos / Brittany Yang — status scheduled."
           ]
         },
         {
@@ -109,7 +109,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Australia Pickleball Cup 2026",
-          "content": "Cập nhật: 07:31 ngày 14/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Australia Pickleball Cup 2026 từ feed điểm số chính thức của PPA cho thời gian 13–18/10/2026 tại Queensland Tennis Centre (Pat Rafter Arena), Brisbane, Australia. Feed hiện có 90 trận, gồm 22 bản ghi đã kết thúc/chung cuộc và 2 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 07:30 ngày 15/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Australia Pickleball Cup 2026 từ feed điểm số chính thức của PPA cho thời gian 13–18/10/2026 tại Queensland Tennis Centre (Pat Rafter Arena), Brisbane, Australia. Feed hiện có 127 trận, gồm 88 bản ghi đã kết thúc/chung cuộc và 2 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -121,42 +121,42 @@ const post: BlogPost = {
           "heading": "Kết quả đã xác nhận gần nhất",
           "content": "Danh sách dưới đây là tóm tắt các bản ghi đã kết thúc từ feed chính thức, không sao chép toàn bộ nhánh đấu.",
           "listItems": [
-            "Đôi nam nữ, Round 64: Jimmy Liong Kai Long / Pei-Yu Lai thắng Mint Bhetraratana / Tama Skipper (11-7, 11-1, 0-0).",
-            "Đôi nam nữ, Round 64: Gianni Martine / Jason Taylor thắng Irie Heather-Pereira / Kepueli Fitikefu (11-3, 11-7, 0-0).",
-            "Đôi nam nữ, Round 64: Quan Do / Sophia Phuong Anh Tran thắng Tony Truong / Saleen Ahmed (11-4, 11-2, 0-0).",
-            "Đôi nam nữ, Round 64: Nasa Hatakeyama / Rika Fujiwara thắng Bruno Maurmann / Eliza Cook (11-0, 11-1, 0-0).",
-            "Đôi nam nữ, Round 64: Daiki Tanabe / Katerina Valos thắng Indiana Heather-Pereira / Luther Ferris (11-1, 11-2, 0-0).",
-            "Đôi nam nữ, Round 64: Jose Farias / Katie Morris thắng Liam Jesperson / Aria Henare (11-9, 11-7, 0-0).",
-            "Đôi nam nữ, Round 64: Kenta Miyoshi / Talia Saunders thắng Coco Lococo / John Myers (11-0, 11-0, 0-0).",
-            "Đơn nữ, Round 32: Judit Castillo thắng Jamie Haas (final).",
-            "Đơn nam, Round 64: Liam Jesperson thắng Lachy Donnelly (12-10, 11-9, 0-0).",
-            "Đơn nam, Round 64: Andy Van der Vyver thắng Kepueli Fitikefu (11-0, 11-1, 0-0).",
-            "Đơn nam, Round 64: Jason Taylor thắng Rakesh Jampala (11-2, 11-6, 0-0).",
-            "Đơn nam, Round 64: Zane Navratil thắng Kenneth Andutan (11-4, 11-4, 0-0).",
-            "Đơn nam, Round 64: Ryan Morris thắng John Gaunt (11-2, 11-8, 0-0).",
-            "Đơn nam, Round 64: Liam Lamb thắng Aaron Blitz (11-3, 11-6, 0-0).",
-            "Đơn nam, Round 64: Conor Robertshawe thắng Phi Lam (8-11, 11-2, 11-4).",
-            "Đơn nam, Round 64: Paul Truong thắng Kyle Anderson (11-1, 11-1, 0-0).",
-            "Đơn nam, Round 64: Brian Tran thắng Sam Tarrant (11-1, 11-4, 0-0).",
-            "Đơn nam, Round 64: Ethan Chung thắng Oliver Novic (11-5, 11-5, 0-0).",
-            "Đơn nam, Round 64: Joey Wild thắng Zak Davidson (11-5, 11-4, 0-0).",
-            "Đơn nam, Round 64: Stefan Djordjic thắng Joshua Lymberopoulos (11-1, 11-0, 0-0)."
+            "Đơn nam, Round 16: Grayson Goldin thắng Liam Lamb (11-5, 11-8, 0-0).",
+            "Đôi nam, Round 32: George Wall / Joey Wild thắng Daiki Tanabe / Brian Tran (11-6, 11-4, 0-0).",
+            "Đôi nam, Round 32: Mitchell Hargreaves / Collin Johns thắng Oliver Novic / Rakesh Jampala (11-1, 11-6, 0-0).",
+            "Đôi nam, Round 32: Kenta Miyoshi / Grayson Goldin thắng Stefan Djordjic / Liam Lamb (11-5, 11-1, 0-0).",
+            "Đôi nam, Round 32: Benjamin Bramblett / Christian Alshon thắng Harry Tan / Dan Markworth (11-4, 11-2, 0-0).",
+            "Đôi nam, Round 32: Jimmy Liong Kai Long / Nasa Hatakeyama thắng Aaron Blitz / David Richardson (11-2, 11-7, 0-0).",
+            "Đôi nam, Round 32: Ethan Chung / Daniel Fogl-Kulich thắng Ryan Morris / Harrison Young (11-4, 11-3, 0-0).",
+            "Đôi nam, Round 32: Liam Jesperson / Josh Barber thắng Oliver Gray / Conor Robertshawe (11-4, 11-6, 0-0).",
+            "Đôi nam, Round 32: Quan Do / Hien Truong thắng Jason Smith / Adam Hameed (11-0, 0-0, 0-0).",
+            "Đôi nam, Round 32: Tama Shimabukuro / JW Johnson thắng David M / Kepueli Fitikefu (11-1, 11-2, 0-0).",
+            "Đôi nam, Round 32: Jose Farias / Jason Taylor thắng Kyle Anderson / Kyle Stoker (11-9, 11-9, 0-0).",
+            "Đôi nam, Round 32: Eunggwon Kim / Hong Kit Wong thắng Sam Gibbs / Ben Johns (11-6, 11-4, 0-0).",
+            "Đôi nam, Round 32: Zane Navratil / Luc Pham thắng Spencer Sandridge / Jordan Halliday (11-1, 11-1, 0-0).",
+            "Đôi nam, Round 32: Hunter Johnson / Tyson McGuffin thắng Joshua Ho / Phi Lam (11-0, 11-1, 0-0).",
+            "Đôi nam, Round 32: Connor Garnett / Dylan Frazier thắng Nathaniel Leith / Tama Skipper (11-2, 11-0, 0-0).",
+            "Đôi nam, Round 32: Gabriel Tardio / Hayden Patriquin thắng Nicholas Maleganeas / Kane Townsend (11-2, 11-2, 0-0).",
+            "Đôi nam, Round 32: Harrison Brown / Lucas Pascoe thắng Wesley Vine / Lachy Donnelly (11-1, 11-0, 0-0).",
+            "Đôi nam nữ, Round 32: Parris Todd / Christian Alshon thắng Daiki Tanabe / Katerina Valos (11-6, 11-1, 0-0).",
+            "Đôi nam nữ, Round 32: Sahra Dennehy / Tama Shimabukuro thắng Tayah Cross / Conor Robertshawe (11-0, 11-9, 0-0).",
+            "Đôi nam nữ, Round 32: Aiko Yoshitomi / Lucas Pascoe thắng Mitchell Hargreaves / Brittany Yang (11-4, 11-3, 0-0)."
           ]
         },
         {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đôi nam nữ, Round 64: Lachy Donnelly / Seina Shima gặp Jessica Christie / Aaron Blitz — trạng thái live.",
-            "Đôi nam nữ, Round 64: Tayah Cross / Conor Robertshawe gặp Johnny Goldberg / Regina Goldberg — trạng thái live.",
+            "Đơn nam, Round 16: Luc Pham gặp Mitchell Hargreaves — trạng thái live.",
+            "Đơn nam, Round 16: Hunter Johnson gặp Daiki Tanabe — trạng thái live.",
             "Đôi nữ, Round 16: Regina Goldberg / Kaitlyn Christian gặp Kaitlynn Hart / Katie Morris — trạng thái scheduled.",
+            "Đôi nữ, Round 16: Tyra Hurricane Black / Jorja Johnson gặp Bernadette Massih / Talia Saunders — trạng thái scheduled.",
             "Đôi nữ, Round 16: Sahra Dennehy / Jessie Irvine gặp Pei-Yu Lai / Seina Shima — trạng thái scheduled.",
             "Đôi nữ, Round 16: Jamie Haas / Kei Sawaki gặp Sarah Burr / Rika Fujiwara — trạng thái scheduled.",
             "Đôi nữ, Round 16: Nok Yiu Tang / Yufei Long gặp Tayah Cross / Mihae Kwon — trạng thái scheduled.",
             "Đôi nữ, Round 16: Judit Castillo / Kiora Kunimoto gặp Albie Huang / Andie Dikosavljevic — trạng thái scheduled.",
             "Đôi nữ, Round 16: Aiko Yoshitomi / Sophia Nhi Huynh gặp Hannah Blatt / Sophia Phuong Anh Tran — trạng thái scheduled.",
-            "Đôi nữ, Round 32: Katerina Valos / Brittany Yang gặp Clare Butler / Chau Vo — trạng thái scheduled.",
-            "Đôi nữ, Round 32: Bernadette Massih / Talia Saunders gặp Gianni Martine / Aria Henare — trạng thái scheduled."
+            "Đôi nữ, Round 16: Parris Todd / Danni-Elle Townsend gặp Katerina Valos / Brittany Yang — trạng thái scheduled."
           ]
         },
         {
