@@ -10,6 +10,35 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-courts-vinh-2026",
+    "publishedDate": "2026-10-15",
+    "updatedDate": "2026-10-15",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball courts",
+      "vinh",
+      "court directory",
+      "court booking",
+      "court prices",
+      "vietnam"
+    ],
+    "ctaPath": "/san/khu-vuc/vinh",
+    "ctaLabel": {
+      "en": "Browse pickleball courts in Vinh",
+      "vi": "Xem sân pickleball ở Vinh"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-courts-vinh-2026-hero.webp",
+      "alt": "Pickleball Courts in Vinh 2026: 15 Venues, Court Counts and Hourly Prices"
+    },
+    "titleEn": "Pickleball Courts in Vinh 2026: 15 Venues, Court Counts and Hourly Prices",
+    "titleVi": "Sân pickleball Vinh 2026: 15 sân, khu vực, số sân và giá thuê theo giờ",
+    "metaTitleEn": "Pickleball Courts in Vinh 2026: 15 Venues, Prices",
+    "metaTitleVi": "Sân pickleball Vinh 2026: 15 sân, giá thuê",
+    "metaDescriptionEn": "15 pickleball venues in Vinh, Vietnam: area, court count and hourly prices from 50,000 to 190,000 VND, plus how to confirm a booking.",
+    "metaDescriptionVi": "15 sân pickleball ở Vinh: khu vực, số sân, giá 50,000–190,000đ/giờ và cách xác nhận trước khi đặt sân."
+  },
+  {
     "slug": "how-to-choose-a-pickleball-paddle",
     "publishedDate": "2026-10-13",
     "updatedDate": "2026-10-13",
