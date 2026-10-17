@@ -10,6 +10,31 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-courts-ha-tinh-2026",
+    "publishedDate": "2026-10-17",
+    "updatedDate": "2026-10-17",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball courts",
+      "ha tinh",
+      "vietnam pickleball",
+      "court directory",
+      "court booking",
+      "san pickleball"
+    ],
+    "ctaPath": "/san/khu-vuc/ha-tinh",
+    "ctaLabel": {
+      "en": "See all Hà Tĩnh venues",
+      "vi": "Xem 11 sân pickleball Hà Tĩnh"
+    },
+    "titleEn": "Pickleball Courts in Hà Tĩnh 2026: 11 Venues, Areas and Hourly Rates",
+    "titleVi": "Sân pickleball Hà Tĩnh 2026: 11 sân, khu vực và giá thuê theo giờ",
+    "metaTitleEn": "Pickleball Courts in Hà Tĩnh 2026: 11 Venues & Prices",
+    "metaTitleVi": "Sân pickleball Hà Tĩnh 2026: 11 sân và giá thuê",
+    "metaDescriptionEn": "ThePickleHub lists 11 pickleball venues in Hà Tĩnh as of 17 Oct 2026, with areas, hourly rates from 70,000 to 140,000 VND and a booking checklist.",
+    "metaDescriptionVi": "ThePickleHub có 11 sân pickleball ở Hà Tĩnh (17/10/2026), giá 70.000–140.000đ/giờ ở 5 sân, kèm cách hỏi lịch."
+  },
+  {
     "slug": "pickleball-courts-vinh-2026",
     "publishedDate": "2026-10-15",
     "updatedDate": "2026-10-15",
