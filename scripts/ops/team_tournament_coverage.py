@@ -132,6 +132,16 @@ def slots(event, config):
         day = start + timedelta(days=offset)
         result.append(('daily-' + day.isoformat(), at(day)))
     result.append(('final', at(end + timedelta(days=1))))
+    every = int(config.get('refresh_every_hours') or 0)
+    if event.get('auto_publish') and every > 0:
+        # Results pages refresh all day while the event runs, not once each morning:
+        # a 07:30 run only ever showed yesterday's rounds (Cuong, 18/10).
+        first = date.fromisoformat(event.get('publish_from', event['start_date']))
+        cursor = datetime.combine(first, wall_time(), local).astimezone(tz)
+        stop = datetime.combine(end + timedelta(days=1), wall_time(12), local).astimezone(tz)
+        while cursor <= stop:
+            result.append((cursor.strftime('live-%Y-%m-%dT%H%M'), cursor))
+            cursor += timedelta(hours=every)
     return sorted(result, key=lambda pair: pair[1])
 
 
@@ -187,6 +197,9 @@ def queue_due(store, now=None, config=None, fetcher=fetch_source):
             except Exception as exc:
                 result = {'status': 'blocked', 'reason': type(exc).__name__}
             if result.get('status') in {'published', 'unchanged'}:
+                with store.db:
+                    store.db.execute("UPDATE tasks SET status='resolved',updated=? WHERE dedupe=? AND status='open'",
+                                     (time.time(), f"tournament-autopublish:{event['key']}"))
                 key = f"schedule:tournament:{event['key']}:{label}"
                 evidence = {'event_key': event['key'], 'slot': label, 'auto_publish': True,
                             'result': result, 'sources': sources, 'draft_only': False}
@@ -195,6 +208,15 @@ def queue_due(store, now=None, config=None, fetcher=fetch_source):
                         (key, 'editorial', f"{event['title']} · {label} · tự đăng", 'resolved', json.dumps(evidence, ensure_ascii=False), time.time(), time.time()))
                     if cur.rowcount:
                         created.append(cur.lastrowid)
+                continue
+            # A blocked push went unnoticed for 3 days (15→18/10) as "awaiting_review" drafts; say it out loud.
+            store.task(f"tournament-autopublish:{event['key']}", 'editorial',
+                       f"Tự đăng kết quả {event['title']} bị chặn: {result.get('reason')}", 'open',
+                       {'event_key': event['key'], 'slot': label, 'result': result})
+            if label.startswith('live-'):
+                with store.db:
+                    store.db.execute('INSERT OR IGNORE INTO tasks(dedupe,role,title,status,evidence,created,updated) VALUES (?,?,?,?,?,?,?)',
+                        (key, 'editorial', f"{event['title']} · {label} · bị chặn", 'cancelled', json.dumps(result), time.time(), time.time()))
                 continue
             sources.append({'url': event['result_source'], 'checked_at': now.isoformat(), 'missing': result.get('reason', 'autopublish_blocked')})
         request = (

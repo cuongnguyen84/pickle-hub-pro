@@ -101,6 +101,43 @@ class CoverageTests(unittest.TestCase):
             self.queue('2026-10-04T12:00:00+07:00', fetcher=lambda url: 'Official text')
         self.assertEqual(calls, [])
 
+    def test_live_slots_only_for_auto_publish_and_block_alerts(self):
+        self.config['refresh_every_hours'] = 2
+        self.assertFalse([l for l, _ in coverage.slots(self.event, self.config) if l.startswith('live-')])
+        self.event.update(auto_publish=True, event_id='event-1', result_source='https://example.org/scores')
+        live = [l for l, _ in coverage.slots(self.event, self.config) if l.startswith('live-')]
+        self.assertGreaterEqual(len(live), 7 * 12)
+        import sys
+        sys.path.insert(0, str(Path(coverage.__file__).parents[1] / 'blog'))
+        import tournament_results_autopublish
+        with patch.object(tournament_results_autopublish, 'publish_event', side_effect=RuntimeError('push')):
+            self.assertEqual(self.queue('2026-10-20T15:10:00+07:00'), [])
+        rows = dict(self.store.db.execute('SELECT dedupe,status FROM tasks').fetchall())
+        self.assertEqual(rows['tournament-autopublish:hk'], 'open')
+        self.assertEqual([s for d, s in rows.items() if ':live-' in d], ['cancelled'])
+        with patch.object(tournament_results_autopublish, 'publish_event', return_value={'status': 'unchanged'}):
+            self.queue('2026-10-20T17:10:00+07:00')
+        self.assertEqual(self.store.db.execute("SELECT status FROM tasks WHERE dedupe='tournament-autopublish:hk'").fetchone()[0], 'resolved')
+
+    def test_results_page_lists_every_round(self):
+        import sys
+        sys.path.insert(0, str(Path(coverage.__file__).parents[1] / 'blog'))
+        import tournament_results_autopublish as t
+        def m(div, rnd, label, a, b):
+            return {'division': div, 'roundNumber': rnd, 'roundLabel': label, 'dateKey': f'2026-10-1{rnd}', 'status': 'final',
+                    'teams': [{'players': [a], 'winner': True, 'games': [11]}, {'players': [b], 'winner': False, 'games': [5]}]}
+        finals = [m("PRO MEN'S SINGLES - MAIN DRAW", r, f'Round {r}', f'A{i}', f'B{i}') for r in range(1, 4) for i in range(10)]
+        finals.append(m("PRO MEN'S SINGLES - MAIN DRAW", 4, 'Finals', 'Champ', 'Runner'))
+        finals.append(m("Mixed Doubles", 1, 'Round 32', 'X', 'Y'))
+        en = t.draw_sections(finals)
+        self.assertEqual([x['heading'] for x in en], ["Men's Singles results", 'Mixed Doubles results'])
+        self.assertEqual(len(en[0]['listItems']), 31)
+        self.assertTrue(en[0]['content'].startswith('Champion: Champ.'))
+        self.assertIn('Finals', en[0]['listItems'][0])
+        self.assertIn('Round 1', en[0]['listItems'][-1])
+        self.assertTrue(en[1]['content'].startswith('No champion yet.'))
+        self.assertEqual(t.draw_sections(finals, True)[0]['heading'], 'Kết quả Đơn nam')
+
     def test_score_snapshot_keeps_raw_facts_and_bounds_sample(self):
         match = {'id': 'a', 'division': 'Singles', 'roundLabel': 'Final', 'dateLabel': 'Date TBA',
                  'status': 'scheduled', 'teams': [{'players': ['A'], 'winner': False, 'games': [None]}]}
