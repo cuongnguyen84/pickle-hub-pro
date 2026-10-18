@@ -115,6 +115,7 @@ class CoverageTests(unittest.TestCase):
         rows = dict(self.store.db.execute('SELECT dedupe,status FROM tasks').fetchall())
         self.assertEqual(rows['tournament-autopublish:hk'], 'open')
         self.assertEqual([s for d, s in rows.items() if ':live-' in d], ['cancelled'])
+        self.assertEqual(self.store.db.execute('SELECT COUNT(*) FROM outbox').fetchone()[0], 1)
         with patch.object(tournament_results_autopublish, 'publish_event', return_value={'status': 'unchanged'}):
             self.queue('2026-10-20T17:10:00+07:00')
         self.assertEqual(self.store.db.execute("SELECT status FROM tasks WHERE dedupe='tournament-autopublish:hk'").fetchone()[0], 'resolved')

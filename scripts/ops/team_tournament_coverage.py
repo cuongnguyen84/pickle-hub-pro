@@ -213,6 +213,11 @@ def queue_due(store, now=None, config=None, fetcher=fetch_source):
             store.task(f"tournament-autopublish:{event['key']}", 'editorial',
                        f"Tự đăng kết quả {event['title']} bị chặn: {result.get('reason')}", 'open',
                        {'event_key': event['key'], 'slot': label, 'result': result})
+            with store.db:  # Telegram via the supervisor outbox; one message per event per day
+                store.db.execute('INSERT OR IGNORE INTO outbox(dedupe,body,created,updated) VALUES (?,?,?,?)',
+                    (f"tournament-autopublish:{event['key']}:{now.date()}",
+                     f"⚠️ Tự đăng kết quả {event['title']} bị chặn ({result.get('reason')}), slot {label}. "
+                     "Trang EN sẽ đứng yên tới khi sửa. Kiểm: git status -sb ở repo chính.", time.time(), time.time()))
             if label.startswith('live-'):
                 with store.db:
                     store.db.execute('INSERT OR IGNORE INTO tasks(dedupe,role,title,status,evidence,created,updated) VALUES (?,?,?,?,?,?,?)',
