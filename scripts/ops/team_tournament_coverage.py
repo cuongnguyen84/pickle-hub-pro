@@ -145,6 +145,40 @@ def slots(event, config):
     return sorted(result, key=lambda pair: pair[1])
 
 
+VERIFY_AFTER = 30 * 60  # Cloudflare build is ~5-10 min; 30 leaves room for a queued build
+
+
+def fetch_live(url):
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'})
+    context = ssl.create_default_context()
+    if not context.get_ca_certs() and Path('/etc/ssl/cert.pem').exists():
+        context.load_verify_locations('/etc/ssl/cert.pem')
+    with urllib.request.urlopen(req, timeout=15, context=context) as response:
+        return response.read(3_000_000).decode('utf-8', errors='replace')
+
+
+def verify_live(store, now_ts=None, fetch=fetch_live):
+    """A pushed commit is not a live page: the build can fail. Check what bots actually get."""
+    now_ts = now_ts or time.time()
+    for key, raw in store.db.execute("SELECT key,value FROM meta WHERE key LIKE 'verify-live:%'").fetchall():
+        item = json.loads(raw)
+        if now_ts - item['at'] < VERIFY_AFTER:
+            continue
+        url = f"https://www.thepicklehub.net/blog/{item['slug']}?nocache=1"  # nocache: KV would mask a failed deploy
+        try:
+            ok = item['marker'] in fetch(url)
+        except Exception as exc:
+            ok, item['error'] = False, type(exc).__name__
+        with store.db:
+            store.db.execute('DELETE FROM meta WHERE key=?', (key,))
+            if not ok:
+                store.db.execute('INSERT OR IGNORE INTO outbox(dedupe,body,created,updated) VALUES (?,?,?,?)',
+                    (f"{key}:{int(item['at'])}",
+                     f"⚠️ Đã đẩy {item['slug']} hơn 30 phút nhưng production chưa có \"{item['marker']}\"{' (' + item['error'] + ')' if item.get('error') else ''}. "
+                     "Kiểm deploy: npx wrangler pages deployment list --project-name pickle-hub-pro --environment production",
+                     now_ts, now_ts))
+
+
 def queue_due(store, now=None, config=None, fetcher=fetch_source):
     if store.get('paused', False) or PAUSE.exists():
         return []
@@ -157,6 +191,7 @@ def queue_due(store, now=None, config=None, fetcher=fetch_source):
     now = now or datetime.now(ZoneInfo(config.get('timezone', 'Asia/Ho_Chi_Minh')))
     if now.tzinfo is None:
         raise ValueError('now_requires_timezone')
+    verify_live(store)
     created = []
     for event in config.get('events', []):
         if not event.get('enabled', True):
@@ -196,6 +231,8 @@ def queue_due(store, now=None, config=None, fetcher=fetch_source):
                 result = publish_event(event, now=now, push=True)
             except Exception as exc:
                 result = {'status': 'blocked', 'reason': type(exc).__name__}
+            if result.get('status') == 'published' and result.get('marker'):
+                store.put(f"verify-live:{event['key']}", {'slug': result['slug'], 'marker': result['marker'], 'at': time.time()})
             if result.get('status') in {'published', 'unchanged'}:
                 with store.db:
                     store.db.execute("UPDATE tasks SET status='resolved',updated=? WHERE dedupe=? AND status='open'",
@@ -213,6 +250,11 @@ def queue_due(store, now=None, config=None, fetcher=fetch_source):
             store.task(f"tournament-autopublish:{event['key']}", 'editorial',
                        f"Tự đăng kết quả {event['title']} bị chặn: {result.get('reason')}", 'open',
                        {'event_key': event['key'], 'slot': label, 'result': result})
+            with store.db:  # Telegram via the supervisor outbox; one message per event per day
+                store.db.execute('INSERT OR IGNORE INTO outbox(dedupe,body,created,updated) VALUES (?,?,?,?)',
+                    (f"tournament-autopublish:{event['key']}:{now.date()}",
+                     f"⚠️ Tự đăng kết quả {event['title']} bị chặn ({result.get('reason')}), slot {label}. "
+                     "Trang EN sẽ đứng yên tới khi sửa. Kiểm: git status -sb ở repo chính.", time.time(), time.time()))
             if label.startswith('live-'):
                 with store.db:
                     store.db.execute('INSERT OR IGNORE INTO tasks(dedupe,role,title,status,evidence,created,updated) VALUES (?,?,?,?,?,?,?)',
