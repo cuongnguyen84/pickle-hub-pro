@@ -10,6 +10,34 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "hong-kong-slam-2026-results",
+    "publishedDate": "2026-10-19",
+    "updatedDate": "2026-10-18",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball",
+      "results",
+      "hong kong slam",
+      "ppa tour asia",
+      "2026"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/hong-kong-slam-2026-preview-hero.webp",
+      "alt": "Hong Kong Slam 2026 results at Kai Tak Arena"
+    },
+    "titleEn": "Hong Kong Slam 2026 Results: Daily Scores and Confirmed Winners",
+    "titleVi": "Kết quả Hong Kong Slam 2026: cập nhật hằng ngày",
+    "metaTitleEn": "Hong Kong Slam Results 2026 | Daily Scores",
+    "metaTitleVi": "Kết quả Hong Kong Slam 2026 mỗi ngày",
+    "metaDescriptionEn": "Hong Kong Slam 2026 results and daily scores from the official PPA feed, checked by ThePickleHub.",
+    "metaDescriptionVi": "Kết quả Hong Kong Slam 2026 từ feed PPA chính thức, được ThePickleHub kiểm chứng."
+  },
+  {
     "slug": "pickleball-courts-bac-ninh-2026",
     "publishedDate": "2026-10-18",
     "updatedDate": "2026-10-18",
