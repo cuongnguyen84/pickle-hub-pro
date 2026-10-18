@@ -587,10 +587,23 @@ async function pickNextNewsItem(env: Env, page: FacebookPage): Promise<NewsItem 
   // 'posted' = done, 'skipped' = intentionally not posting (e.g. backlog the
   // admin chose to drop). PostgREST has no anti-join, so we fetch the
   // excluded ids separately.
+  //
+  // published_at has two lower bounds: when this page started posting at all,
+  // and how stale an article may be. Take the later of the two.
+  const ageCutoff = new Date(
+    Date.now() - facebookMaxItemAgeDays(env) * 24 * 3600_000,
+  ).toISOString();
+  const floor = laterOf(page.startAt, ageCutoff);
+
+  // Only log rows written since the floor can belong to a candidate (a row is
+  // created after its item is published). Without this bound the query passed
+  // PostgREST's silent 1000-row cap on 2026-10-18 (1046 rows per page), the
+  // newest posted ids fell off, and the picker served an already-posted item.
   const doneUrl = new URL(`${env.SUPABASE_URL}/rest/v1/fb_post_log`);
   doneUrl.searchParams.set('select', 'news_item_id');
   doneUrl.searchParams.set('status', 'in.(posted,skipped)');
   doneUrl.searchParams.set('page_id', `eq.${page.id}`);
+  doneUrl.searchParams.set('created_at', `gte.${floor}`);
   const postedRes = await fetch(doneUrl.toString(), { headers: supabaseRestHeaders(env) });
   if (!postedRes.ok) {
     throw new Error(`pickNext done query failed: ${postedRes.status} ${await postedRes.text()}`);
@@ -620,12 +633,6 @@ async function pickNextNewsItem(env: Env, page: FacebookPage): Promise<NewsItem 
   url.searchParams.set('language', 'eq.vi');
   url.searchParams.set('ai_translated', 'eq.true');
   url.searchParams.set('status', 'eq.published');
-  // published_at has two lower bounds: when this page started posting at all,
-  // and how stale an article may be. Take the later of the two.
-  const ageCutoff = new Date(
-    Date.now() - facebookMaxItemAgeDays(env) * 24 * 3600_000,
-  ).toISOString();
-  const floor = laterOf(page.startAt, ageCutoff);
   url.searchParams.set('published_at', `gte.${floor}`);
   url.searchParams.set('order', 'importance.desc,published_at.desc');
   url.searchParams.set('limit', String(scanLimit));

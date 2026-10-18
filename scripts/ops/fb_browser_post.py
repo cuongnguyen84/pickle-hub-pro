@@ -221,6 +221,14 @@ def main() -> int:
 
 def post_one(item: dict) -> int:
     caption, link, news_id = item["caption"], item["link"], item["news_item_id"]
+    # Chốt chặn cuối: dry run của worker không claim, nên picker sai (vd trần
+    # 1000 dòng PostgREST 18/10) = đăng trùng thật trên page. Hỏi sổ cái lần nữa.
+    if rest("GET", f"fb_post_log?select=id&news_item_id=eq.{news_id}&page_id=eq.{PAGE_ID}"
+                   "&status=in.(posted,skipped)"):
+        STOP_FILE.write_text(f"picker trả bài đã đăng {news_id}\n", encoding="utf-8")
+        tele(f"⚠️ fb-browser: worker trả lại bài ĐÃ đăng ({item.get('slug')}), job dừng.\n"
+             f"Xoá {STOP_FILE} sau khi sửa picker.")
+        return 1
 
     payload = item.get("fb_payload") or {}
     image_url = payload.get("body", {}).get("url") if payload.get("endpoint") == "photos" else None
