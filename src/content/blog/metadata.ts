@@ -10,6 +10,32 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-courts-bac-ninh-2026",
+    "publishedDate": "2026-10-18",
+    "updatedDate": "2026-10-18",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball courts",
+      "Bac Ninh",
+      "Vietnam",
+      "court directory",
+      "where to play",
+      "court booking",
+      "Tu Son"
+    ],
+    "ctaPath": "/san/khu-vuc/bac-ninh",
+    "ctaLabel": {
+      "en": "Browse all Bac Ninh courts",
+      "vi": "Xem tất cả sân ở Bắc Ninh"
+    },
+    "titleEn": "Pickleball Courts in Bac Ninh 2026: 15 Venues, 84 Courts by Ward",
+    "titleVi": "Sân pickleball Bắc Ninh 2026: 15 địa điểm, 84 sân theo khu vực",
+    "metaTitleEn": "Pickleball Courts in Bac Ninh 2026: Venues & Court Counts",
+    "metaTitleVi": "Sân pickleball Bắc Ninh 2026: 21 địa điểm",
+    "metaDescriptionEn": "Bac Ninh pickleball directory, 18 Oct 2026: 21 venues, 15 listed with 84 courts by ward, links to each venue page and a pre-booking checklist.",
+    "metaDescriptionVi": "Sân pickleball Bắc Ninh 18/10/2026: 15 địa điểm, 84 sân theo phường, kèm link từng sân và việc cần hỏi trước khi đặt."
+  },
+  {
     "slug": "pickleball-courts-ha-tinh-2026",
     "publishedDate": "2026-10-17",
     "updatedDate": "2026-10-17",
