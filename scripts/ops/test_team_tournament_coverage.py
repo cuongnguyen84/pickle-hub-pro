@@ -120,6 +120,20 @@ class CoverageTests(unittest.TestCase):
             self.queue('2026-10-20T17:10:00+07:00')
         self.assertEqual(self.store.db.execute("SELECT status FROM tasks WHERE dedupe='tournament-autopublish:hk'").fetchone()[0], 'resolved')
 
+    def test_verify_live_alerts_once_when_production_is_stale(self):
+        self.store.put('verify-live:hk', {'slug': 'hk-results', 'marker': 'Last updated: X', 'at': 1000})
+        coverage.verify_live(self.store, 1000 + 60, fetch=lambda url: 'old')
+        self.assertIsNotNone(self.store.get('verify-live:hk'))  # too early, untouched
+        seen = []
+        coverage.verify_live(self.store, 1000 + 1801, fetch=lambda url: seen.append(url) or 'old page')
+        self.assertEqual(seen, ['https://www.thepicklehub.net/blog/hk-results?nocache=1'])
+        self.assertIsNone(self.store.get('verify-live:hk'))
+        self.assertEqual(self.store.db.execute('SELECT COUNT(*) FROM outbox').fetchone()[0], 1)
+        self.store.put('verify-live:hk', {'slug': 'hk-results', 'marker': 'Last updated: Y', 'at': 5000})
+        coverage.verify_live(self.store, 5000 + 1801, fetch=lambda url: '<p>Last updated: Y. ok</p>')
+        self.assertIsNone(self.store.get('verify-live:hk'))
+        self.assertEqual(self.store.db.execute('SELECT COUNT(*) FROM outbox').fetchone()[0], 1)
+
     def test_results_page_lists_every_round(self):
         import sys
         sys.path.insert(0, str(Path(coverage.__file__).parents[1] / 'blog'))

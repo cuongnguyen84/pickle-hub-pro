@@ -262,4 +262,6 @@ def publish_event(event: dict, now: datetime | None = None, push: bool = True) -
             subprocess.run(["git", "push", "origin", "HEAD:main"], cwd=REPO, check=True)
         head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO, capture_output=True, text=True, check=True).stdout.strip()
     remember(event, fingerprint)
-    return {"status": "published", "fingerprint": fingerprint, "head": head, "pushed": push, "slug": pkg["slug"]}
+    # What production must serve once the deploy lands; checked by team_tournament_coverage.verify_live.
+    marker = pkg["en"]["sections"][0]["content"].split(". ", 1)[0]
+    return {"status": "published", "fingerprint": fingerprint, "head": head, "pushed": push, "slug": pkg["slug"], "marker": marker}
