@@ -162,7 +162,11 @@ CAPTION>>>
    NGHĨA PAGE, đúng thứ tự, mỗi cái là một bình luận riêng:
    a) {link}
    b) {APP_COMMENT}
-7. Đóng tab bạn đã mở.
+7. BẮT BUỘC trước khi kết thúc: nếu Facebook đang ở danh nghĩa page (ô bình luận
+   ghi "Bình luận dưới tên TA Pickleball", menu trái là "Quản lý trang"), bấm ảnh
+   đại diện góc phải trên → chọn hồ sơ cá nhân "Nguyễn Thế Cường" để chuyển về.
+   Kiểm tra lại bằng ảnh chụp màn hình rằng đã về hồ sơ cá nhân.
+8. Đóng tab bạn đã mở.
 
 Nếu gặp checkpoint, đăng nhập, captcha, cảnh báo bảo mật hoặc bất cứ thứ gì lạ:
 DỪNG, không tự xử lý. Không bao giờ đăng 2 lần cùng một bài — nếu không chắc bài đã
@@ -173,11 +177,15 @@ Dòng CUỐI cùng của câu trả lời phải là đúng một JSON, không g
 
 
 def run_claude(prompt: str) -> dict:
-    p = subprocess.run(
+    WORK.mkdir(parents=True, exist_ok=True)
+    try:
+        p = subprocess.run(
         [CLAUDE_BIN, "-p", prompt, "--chrome", "--permission-mode", "bypassPermissions",
          "--add-dir", str(WORK),
          "--disallowedTools", "Bash", "Edit", "Write", "NotebookEdit", "WebFetch", "Agent"],
         cwd=str(WORK), capture_output=True, text=True, timeout=CLAUDE_TIMEOUT_S)
+    except Exception as e:  # timeout / thiếu binary → vẫn phải chốt dòng log
+        return {"posted": False, "permalink": None, "error": f"{type(e).__name__}: {e}"}
     out = (p.stdout or "").strip()
     last = out.splitlines()[-1] if out else ""
     try:
