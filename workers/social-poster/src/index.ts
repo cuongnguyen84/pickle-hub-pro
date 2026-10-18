@@ -53,6 +53,7 @@ export interface Env {
   GEMINI_MODEL: string;
   FB_SECONDARY_PAGE_ID?: string;
   FB_SECONDARY_START_AT?: string;
+  FB_SECONDARY_VIA_BROWSER?: string;
   // secrets
   SUPABASE_SERVICE_ROLE_KEY: string;
   SOCIAL_POSTER_SECRET: string;
@@ -113,6 +114,10 @@ interface FacebookPage {
   id: string;
   accessToken: string;
   startAt: string | null;
+  // Published by scripts/ops/fb_browser_post.py through Cuong's own Chrome
+  // session, not by this Worker. The Worker still picks the item and writes
+  // the caption (dry run); it never calls the Graph API for this page.
+  viaBrowser: boolean;
 }
 
 // A 'pending' row older than this is considered orphaned (the Worker that
@@ -156,6 +161,7 @@ interface SupabaseWebhookPayload {
 interface RunBody {
   news_item_id?: string;
   dry_run?: boolean;
+  page_key?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -281,6 +287,7 @@ export function configuredPages(env: Env): FacebookPage[] {
     id: env.FB_PAGE_ID,
     accessToken: env.FB_PAGE_ACCESS_TOKEN,
     startAt: null,
+    viaBrowser: false,
   }];
   if (env.FB_SECONDARY_PAGE_ID && env.FB_SECONDARY_PAGE_ACCESS_TOKEN) {
     pages.push({
@@ -288,6 +295,7 @@ export function configuredPages(env: Env): FacebookPage[] {
       id: env.FB_SECONDARY_PAGE_ID,
       accessToken: env.FB_SECONDARY_PAGE_ACCESS_TOKEN,
       startAt: env.FB_SECONDARY_START_AT ?? null,
+      viaBrowser: env.FB_SECONDARY_VIA_BROWSER === '1',
     });
   }
   return pages;
@@ -303,6 +311,11 @@ async function handleRun(env: Env, body: RunBody): Promise<Response> {
   const results: unknown[] = [];
 
   for (const page of pages) {
+    if (body.page_key && body.page_key !== page.key) continue;
+    if (!dryRun && page.viaBrowser) {
+      results.push({ page_key: page.key, skipped: true, reason: 'browser_mode' });
+      continue;
+    }
     if (!dryRun && !body.news_item_id) {
       const retried = await retryLinkComment(env, page);
       if (retried) {
@@ -574,10 +587,23 @@ async function pickNextNewsItem(env: Env, page: FacebookPage): Promise<NewsItem 
   // 'posted' = done, 'skipped' = intentionally not posting (e.g. backlog the
   // admin chose to drop). PostgREST has no anti-join, so we fetch the
   // excluded ids separately.
+  //
+  // published_at has two lower bounds: when this page started posting at all,
+  // and how stale an article may be. Take the later of the two.
+  const ageCutoff = new Date(
+    Date.now() - facebookMaxItemAgeDays(env) * 24 * 3600_000,
+  ).toISOString();
+  const floor = laterOf(page.startAt, ageCutoff);
+
+  // Only log rows written since the floor can belong to a candidate (a row is
+  // created after its item is published). Without this bound the query passed
+  // PostgREST's silent 1000-row cap on 2026-10-18 (1046 rows per page), the
+  // newest posted ids fell off, and the picker served an already-posted item.
   const doneUrl = new URL(`${env.SUPABASE_URL}/rest/v1/fb_post_log`);
   doneUrl.searchParams.set('select', 'news_item_id');
   doneUrl.searchParams.set('status', 'in.(posted,skipped)');
   doneUrl.searchParams.set('page_id', `eq.${page.id}`);
+  doneUrl.searchParams.set('created_at', `gte.${floor}`);
   const postedRes = await fetch(doneUrl.toString(), { headers: supabaseRestHeaders(env) });
   if (!postedRes.ok) {
     throw new Error(`pickNext done query failed: ${postedRes.status} ${await postedRes.text()}`);
@@ -607,12 +633,6 @@ async function pickNextNewsItem(env: Env, page: FacebookPage): Promise<NewsItem 
   url.searchParams.set('language', 'eq.vi');
   url.searchParams.set('ai_translated', 'eq.true');
   url.searchParams.set('status', 'eq.published');
-  // published_at has two lower bounds: when this page started posting at all,
-  // and how stale an article may be. Take the later of the two.
-  const ageCutoff = new Date(
-    Date.now() - facebookMaxItemAgeDays(env) * 24 * 3600_000,
-  ).toISOString();
-  const floor = laterOf(page.startAt, ageCutoff);
   url.searchParams.set('published_at', `gte.${floor}`);
   url.searchParams.set('order', 'importance.desc,published_at.desc');
   url.searchParams.set('limit', String(scanLimit));

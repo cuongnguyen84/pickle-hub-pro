@@ -3,6 +3,7 @@ import { buildPostedMessage } from './notify';
 import {
   buildAppComment,
   buildLinkComment,
+  configuredPages,
   facebookMaxItemAgeDays,
   laterOf,
   isFacebookPostingWindow,
@@ -148,5 +149,26 @@ describe('Telegram post notice', () => {
       body: 'Dallas & Brooklyn vào bán kết' });
     expect(m).toContain('Dallas &amp; Brooklyn');
     expect(m).toContain('<b>Đã đăng lên Facebook</b> — TA Pickleball');
+  });
+});
+
+describe('browser-mode page', () => {
+  const env = {
+    FB_PAGE_ID: '1',
+    FB_PAGE_ACCESS_TOKEN: 't',
+    FB_SECONDARY_PAGE_ID: '2',
+    FB_SECONDARY_PAGE_ACCESS_TOKEN: 't2',
+  } as unknown as Parameters<typeof configuredPages>[0];
+
+  it('flags only the secondary page when FB_SECONDARY_VIA_BROWSER=1', () => {
+    const pages = configuredPages({ ...env, FB_SECONDARY_VIA_BROWSER: '1' });
+    expect(pages.map((p) => [p.key, p.viaBrowser])).toEqual([
+      ['thepicklehub', false],
+      ['ta-pickleball', true],
+    ]);
+  });
+
+  it('keeps both pages on the API when the flag is unset', () => {
+    expect(configuredPages(env).every((p) => !p.viaBrowser)).toBe(true);
   });
 });
