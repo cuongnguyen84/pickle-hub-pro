@@ -149,7 +149,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     "slug": "virginia-beach-open-2026-results",
     "publishedDate": "2026-10-12",
-    "updatedDate": "2026-10-15",
+    "updatedDate": "2026-10-18",
     "author": "The PickleHub Team",
     "tags": [
       "pickleball",
