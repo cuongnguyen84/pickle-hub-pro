@@ -75,6 +75,11 @@ FB_MAX_ITEM_AGE_DAYS = "3"
 GEMINI_MODEL = "gemini-flash-lite-latest"
 FB_SECONDARY_PAGE_ID = "376956272170210"
 FB_SECONDARY_START_AT = "2026-07-31T10:04:31Z"
+# TA Pickleball is posted from Cuong's own Chrome session, not the Graph API
+# (2026-10-18: API posts on that page were barely distributed). The Worker only
+# serves the next item + caption as a dry run to scripts/ops/fb_browser_post.py
+# and refuses to publish there. Set to "0" to hand the page back to the API.
+FB_SECONDARY_VIA_BROWSER = "1"
 # No pacing. Cuong's call on 2026-08-17: news should reach X as it arrives, not
 # on a drip. The drain still publishes one row per tick, so the real ceiling is
 # the 5-minute cron, and the queue only ever holds genuinely new stories —

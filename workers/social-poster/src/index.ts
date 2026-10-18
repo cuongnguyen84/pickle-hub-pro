@@ -53,6 +53,7 @@ export interface Env {
   GEMINI_MODEL: string;
   FB_SECONDARY_PAGE_ID?: string;
   FB_SECONDARY_START_AT?: string;
+  FB_SECONDARY_VIA_BROWSER?: string;
   // secrets
   SUPABASE_SERVICE_ROLE_KEY: string;
   SOCIAL_POSTER_SECRET: string;
@@ -113,6 +114,10 @@ interface FacebookPage {
   id: string;
   accessToken: string;
   startAt: string | null;
+  // Published by scripts/ops/fb_browser_post.py through Cuong's own Chrome
+  // session, not by this Worker. The Worker still picks the item and writes
+  // the caption (dry run); it never calls the Graph API for this page.
+  viaBrowser: boolean;
 }
 
 // A 'pending' row older than this is considered orphaned (the Worker that
@@ -156,6 +161,7 @@ interface SupabaseWebhookPayload {
 interface RunBody {
   news_item_id?: string;
   dry_run?: boolean;
+  page_key?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -281,6 +287,7 @@ export function configuredPages(env: Env): FacebookPage[] {
     id: env.FB_PAGE_ID,
     accessToken: env.FB_PAGE_ACCESS_TOKEN,
     startAt: null,
+    viaBrowser: false,
   }];
   if (env.FB_SECONDARY_PAGE_ID && env.FB_SECONDARY_PAGE_ACCESS_TOKEN) {
     pages.push({
@@ -288,6 +295,7 @@ export function configuredPages(env: Env): FacebookPage[] {
       id: env.FB_SECONDARY_PAGE_ID,
       accessToken: env.FB_SECONDARY_PAGE_ACCESS_TOKEN,
       startAt: env.FB_SECONDARY_START_AT ?? null,
+      viaBrowser: env.FB_SECONDARY_VIA_BROWSER === '1',
     });
   }
   return pages;
@@ -303,6 +311,11 @@ async function handleRun(env: Env, body: RunBody): Promise<Response> {
   const results: unknown[] = [];
 
   for (const page of pages) {
+    if (body.page_key && body.page_key !== page.key) continue;
+    if (!dryRun && page.viaBrowser) {
+      results.push({ page_key: page.key, skipped: true, reason: 'browser_mode' });
+      continue;
+    }
     if (!dryRun && !body.news_item_id) {
       const retried = await retryLinkComment(env, page);
       if (retried) {
