@@ -1,0 +1,876 @@
+/**
+ * /tools/quick-tables/chat — tạo giải chia bảng bằng hội thoại.
+ *
+ * Chip bấm được xử lý tại chỗ (không gọi AI, tức thì, không tốn credit). Chỉ
+ * tin nhắn gõ tự do mới đi qua edge function quick-table-chat, và nó chỉ trả
+ * về bản vá nháp. Câu hỏi tiếp theo do nextSlot() quyết, giải được tạo bằng
+ * đúng createTable + setupRosterAtomic của wizard cũ.
+ */
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, Check, ChevronDown, Copy, Loader2, MessageSquareText, Pencil, Send, Shuffle, Sparkles, Trash2, TriangleAlert, Trophy } from "lucide-react";
+import { toast } from "sonner";
+import { TheLineLayout } from "@/components/layout";
+import { SetupLoginGate } from "@/components/tournament/SetupShell";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/useAuth";
+import { useI18n } from "@/i18n";
+import { useQuickTable, type QuickTable } from "@/hooks/useQuickTable";
+import { supabase } from "@/integrations/supabase/client";
+import { getSiteUrl } from "@/lib/auth-config";
+import { cn } from "@/lib/utils";
+import {
+  applyPatch, buildRoster, defaultName, duplicateIndexes, entryCount, entryLabel, groupOptions,
+  MAX_CHAT_ENTRIES, nextSlot, pairEntries, previewAssignments,
+  type Draft, type Entry, type GroupOption, type PairingMode, type Slot,
+} from "@/lib/quick-table-chat";
+
+type Lang = "vi" | "en";
+interface Msg { id: string; role: "user" | "bot"; text: string }
+interface Chip { label: string; sub?: string; recommended?: boolean; onClick: () => void }
+type SubMenu = null | "sets";
+
+const GROUP_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const STORAGE_PREFIX = "qt-chat:v1:";
+const PASTE_COLLAPSE_LINES = 4;
+
+const COPY = {
+  vi: {
+    layoutTitle: "Tạo giải bằng chat AI",
+    title: "Tạo giải bằng chat",
+    classicForm: "Dùng form thường",
+    loginTitle: "Đăng nhập để tạo giải bằng chat",
+    loginDesc: "Kể cho trợ lý nghe về giải hoặc dán danh sách từ Zalo — vài giây là có bảng đấu.",
+    toolLabel: "Chia bảng",
+    welcome: "Chào bạn 👋 Kể mình nghe về giải nhé, ví dụ: “Giải CLB tối thứ 7, 16 đôi, chia 4 bảng”. Hoặc dán thẳng danh sách VĐV vào đây.",
+    unit: (d: Draft): string => (d.is_doubles === false ? "VĐV" : "đội"),
+    format: "Giải đánh đôi hay đánh đơn?",
+    doubles: "Đôi", singles: "Đơn",
+    count: (u: string) => `Có bao nhiêu ${u}? Hoặc dán luôn danh sách vào đây.`,
+    pasteList: "Dán danh sách",
+    tooMany: (n: number, u: string) => `Chat hiện tạo được tối đa ${MAX_CHAT_ENTRIES} ${u}. Giải ${n} ${u} nên dùng thể thức playoff lớn trong form thường.`,
+    changeCount: "Sửa số lượng",
+    pairing: (n: number) => `Mình thấy ${n} tên lẻ. Ghép thành đôi thế nào?`,
+    pairingOdd: (n: number) => `Mình thấy ${n} tên lẻ — ghép đôi cần số chẵn nên đang thừa 1 người. Gõ thêm 1 tên, hoặc:`,
+    pairSeq: "Ghép theo thứ tự", pairSeqSub: "1+2, 3+4…",
+    pairRandom: "Ghép ngẫu nhiên",
+    pairLine: "Mỗi dòng là 1 đội",
+    dropLast: (name: string) => `Bỏ “${name}”`,
+    mismatch: (m: number, n: number, u: string) => `Danh sách có ${m} ${u}, nhưng bạn nói ${n}. Lấy theo danh sách hay dán thêm?`,
+    useList: (m: number, u: string) => `Lấy ${m} ${u}`,
+    pasteMore: "Dán thêm",
+    groups: (n: number, u: string) => `${n} ${u} chia thế nào?`,
+    groupsInvalid: (k: number, u: string) => `Không chia được ${k} bảng đều 3–6 ${u}/bảng. Chọn một cách dưới đây nhé:`,
+    groupsBig: " Giải đông, nhiều bảng sẽ xong nhanh hơn.",
+    groupLabel: (o: GroupOption) => (o.groupCount === 1 ? "1 bảng vòng tròn" : `${o.groupCount} bảng × ${o.sizes[0] === o.sizes[o.sizes.length - 1] ? o.sizes[0] : `${o.sizes[o.sizes.length - 1]}–${o.sizes[0]}`}`),
+    groupSub: (o: GroupOption) =>
+      o.groupCount === 1
+        ? "Ai cũng gặp nhau, xếp hạng theo thắng–thua"
+        : o.wildcards === 0
+          ? `Top 2 mỗi bảng vào thẳng ${ROUND_VI[o.playoffSize] ?? "playoff"}`
+          : `Vào ${ROUND_VI[o.playoffSize] ?? "playoff"}, cần thêm ${o.wildcards} suất vé vớt`,
+    recommended: "Khuyên dùng",
+    roster: (u: string) => `Có danh sách ${u} chưa? Dán vào là mình xếp bảng luôn.`,
+    pasteNow: "Dán ngay",
+    openRegistration: "Mở cho người chơi tự đăng ký",
+    later: "Để sau, tự nhập",
+    paste: (d: Draft) => `Dán danh sách vào ô bên dưới nhé — mỗi dòng 1 ${d.is_doubles === false ? "VĐV" : "đội, kiểu “Nam - Hùng”"}.`,
+    name: "Đặt tên giải là gì?",
+    customName: "Gõ tên khác ở ô bên dưới",
+    options: "Gần xong rồi! Muốn thêm gì nữa không?",
+    optSeed: "Hạt giống", optCourts: "Sân & giờ", optSets: (s: number) => `Số set: ${s === 1 ? "1 set" : `BO${s}`}`, optTeam: "Tránh cùng CLB",
+    optDone: "Xong, xem lại",
+    hintSeed: (u: string) => `Gõ tên các ${u} hạt giống theo thứ tự, ví dụ: “hạt giống: Nam - Hùng, Tú - Long”. Hạt giống sẽ được tách ra các bảng khác nhau.`,
+    hintCourts: "Gõ sân và giờ, ví dụ: “sân 1 đến 4, bắt đầu 19:00”.",
+    hintTeam: "Gõ những đội cùng CLB, ví dụ: “Nam - Hùng, Tú - Long cùng CLB Hà Đông”. Mình sẽ xếp họ vào các bảng khác nhau.",
+    setsQ: "Mỗi trận đánh mấy set?",
+    set1: "1 set", set3: "Best of 3", set5: "Best of 5",
+    confirm: "Mọi thứ đã sẵn sàng. Kiểm tra lại rồi bấm Tạo giải nhé.",
+    received: (n: number, u: string) => `Đã nhận ${n} ${u}.`,
+    dupWarn: (n: number) => ` ⚠️ Có ${n} dòng trùng — xem lại trong Bản nháp.`,
+    aiError: "Mình chưa nghe rõ, mạng hoặc trợ lý đang chậm. Thử lại nhé?",
+    retry: "Thử lại",
+    quotaFull: (q: number) => `Bạn đang có đủ ${q} giải chia bảng. Kết thúc hoặc xoá bớt giải cũ để tạo giải mới nhé.`,
+    myTables: "Xem giải của tôi",
+    placeholder: "Nhắn hoặc dán danh sách…",
+    send: "Gửi",
+    pasted: (n: number) => `📋 Đã dán ${n} dòng`,
+    showAll: "Xem hết", collapse: "Thu gọn",
+    draft: "Bản nháp",
+    fFormat: "Thể thức", fCount: "Số lượng", fGroups: "Chia bảng", fRoster: "Danh sách", fName: "Tên giải", fExtra: "Tuỳ chọn",
+    rosterReg: "Người chơi tự đăng ký", rosterLater: "Nhập sau",
+    empty: "—",
+    edit: "Sửa",
+    removeDup: (n: number) => `Xoá ${n} dòng trùng`,
+    addRow: "+ Thêm dòng",
+    p1: "VĐV 1", p2: "VĐV 2",
+    group: (i: number) => `Bảng ${GROUP_LETTERS[i]}`,
+    reshuffle: "Xáo lại bảng",
+    create: "Tạo giải",
+    creating: "Đang tạo…",
+    confirmReg: "Người chơi tự đăng ký qua link giải — bạn duyệt rồi xếp bảng sau.",
+    confirmLater: "Bước tiếp theo bạn nhập danh sách, mình mở sẵn trang nhập.",
+    created: (name: string) => `🎉 Đã tạo “${name}”!`,
+    openTable: "Mở giải",
+    enterRoster: "Nhập danh sách",
+    copyLink: "Copy link",
+    copyZalo: "Copy tin nhắn Zalo",
+    copied: "Đã copy",
+    another: "Tạo giải khác",
+    rosterFailed: "Giải đã tạo nhưng chưa xếp được bảng. Mở trang nhập danh sách để thử lại.",
+    zaloLink: "Xem lịch & kết quả",
+    courts: (c: number[]) => `Sân ${c.join(", ")}`,
+    reload: "Hội thoại được lưu trên máy này, tải lại trang không mất.",
+  },
+  en: {
+    layoutTitle: "Create a tournament by chat",
+    title: "Create by chat",
+    classicForm: "Use the classic form",
+    loginTitle: "Sign in to create a tournament by chat",
+    loginDesc: "Describe your event or paste a player list from your group chat — groups are ready in seconds.",
+    toolLabel: "Round robin",
+    welcome: "Hi 👋 Tell me about your event, e.g. “Club night Saturday, 16 doubles teams, 4 groups”. Or just paste your player list here.",
+    unit: (d: Draft): string => (d.is_doubles === false ? "players" : "teams"),
+    format: "Doubles or singles?",
+    doubles: "Doubles", singles: "Singles",
+    count: (u: string) => `How many ${u}? Or paste the list right here.`,
+    pasteList: "Paste a list",
+    tooMany: (n: number, u: string) => `Chat can create up to ${MAX_CHAT_ENTRIES} ${u}. For ${n} ${u}, use the large playoff format in the classic form.`,
+    changeCount: "Change the number",
+    pairing: (n: number) => `I see ${n} single names. How should I pair them?`,
+    pairingOdd: (n: number) => `I see ${n} single names — pairs need an even number, so one is left over. Type one more name, or:`,
+    pairSeq: "Pair in order", pairSeqSub: "1+2, 3+4…",
+    pairRandom: "Pair randomly",
+    pairLine: "Each line is a team",
+    dropLast: (name: string) => `Drop “${name}”`,
+    mismatch: (m: number, n: number, u: string) => `The list has ${m} ${u}, but you said ${n}. Go with the list, or paste more?`,
+    useList: (m: number, u: string) => `Use ${m} ${u}`,
+    pasteMore: "Paste more",
+    groups: (n: number, u: string) => `How should ${n} ${u} be split?`,
+    groupsInvalid: (k: number, u: string) => `${k} groups won't split evenly into 3–6 ${u} each. Pick one of these:`,
+    groupsBig: " Big field — more groups finish faster.",
+    groupLabel: (o: GroupOption) => (o.groupCount === 1 ? "1 round-robin group" : `${o.groupCount} groups × ${o.sizes[0] === o.sizes[o.sizes.length - 1] ? o.sizes[0] : `${o.sizes[o.sizes.length - 1]}–${o.sizes[0]}`}`),
+    groupSub: (o: GroupOption) =>
+      o.groupCount === 1
+        ? "Everyone plays everyone, ranked by wins"
+        : o.wildcards === 0
+          ? `Top 2 per group go straight to the ${ROUND_EN[o.playoffSize] ?? "playoff"}`
+          : `${ROUND_EN[o.playoffSize] ?? "Playoff"} needs ${o.wildcards} wildcard spots`,
+    recommended: "Recommended",
+    roster: (u: string) => `Do you have the list of ${u}? Paste it and I'll draw the groups now.`,
+    pasteNow: "Paste now",
+    openRegistration: "Let players sign up",
+    later: "Later, I'll type it",
+    paste: (d: Draft) => `Paste the list below — one ${d.is_doubles === false ? "player" : "team, like “Nam - Hung”"} per line.`,
+    name: "What's the tournament called?",
+    customName: "Type another name below",
+    options: "Almost done! Anything else?",
+    optSeed: "Seeds", optCourts: "Courts & time", optSets: (s: number) => `Sets: ${s === 1 ? "1 game" : `BO${s}`}`, optTeam: "Keep clubs apart",
+    optDone: "Done, review",
+    hintSeed: (u: string) => `Type the seeded ${u} in order, e.g. “seeds: Nam - Hung, Tu - Long”. Seeds are placed in different groups.`,
+    hintCourts: "Type courts and start time, e.g. “courts 1 to 4, start 19:00”.",
+    hintTeam: "Tell me which teams share a club, e.g. “Nam - Hung, Tu - Long are Ha Dong club”. I'll keep them in different groups.",
+    setsQ: "How many games per match?",
+    set1: "1 game", set3: "Best of 3", set5: "Best of 5",
+    confirm: "All set. Check it over, then tap Create.",
+    received: (n: number, u: string) => `Got ${n} ${u}.`,
+    dupWarn: (n: number) => ` ⚠️ ${n} duplicate lines — check the Draft.`,
+    aiError: "I didn't catch that — the network or assistant is slow. Try again?",
+    retry: "Try again",
+    quotaFull: (q: number) => `You already have ${q} round-robin tournaments. Finish or delete one to create another.`,
+    myTables: "My tournaments",
+    placeholder: "Message or paste a list…",
+    send: "Send",
+    pasted: (n: number) => `📋 Pasted ${n} lines`,
+    showAll: "Show all", collapse: "Collapse",
+    draft: "Draft",
+    fFormat: "Format", fCount: "Entries", fGroups: "Groups", fRoster: "List", fName: "Name", fExtra: "Options",
+    rosterReg: "Players sign up", rosterLater: "Add later",
+    empty: "—",
+    edit: "Edit",
+    removeDup: (n: number) => `Remove ${n} duplicates`,
+    addRow: "+ Add a line",
+    p1: "Player 1", p2: "Player 2",
+    group: (i: number) => `Group ${GROUP_LETTERS[i]}`,
+    reshuffle: "Reshuffle groups",
+    create: "Create tournament",
+    creating: "Creating…",
+    confirmReg: "Players sign up through the tournament link — you approve them and draw groups later.",
+    confirmLater: "Next you'll enter the list — I'll open the entry page for you.",
+    created: (name: string) => `🎉 “${name}” is live!`,
+    openTable: "Open tournament",
+    enterRoster: "Enter the list",
+    copyLink: "Copy link",
+    copyZalo: "Copy group-chat message",
+    copied: "Copied",
+    another: "Create another",
+    rosterFailed: "The tournament was created but the groups weren't drawn. Open the entry page to try again.",
+    zaloLink: "Schedule & results",
+    courts: (c: number[]) => `Courts ${c.join(", ")}`,
+    reload: "This chat is saved on this device — reloading won't lose it.",
+  },
+};
+const ROUND_VI: Record<number, string> = { 4: "bán kết", 8: "tứ kết", 16: "vòng 1/8", 32: "vòng 1/16" };
+const ROUND_EN: Record<number, string> = { 4: "semifinals", 8: "quarterfinals", 16: "round of 16", 32: "round of 32" };
+
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+const QuickTableChat = () => {
+  const { language } = useI18n();
+  const lang: Lang = language === "en" ? "en" : "vi";
+  const c = COPY[lang];
+  const { user, loading: authLoading } = useAuth();
+
+  if (authLoading) return <TheLineLayout title={c.layoutTitle} noindex><div style={{ minHeight: "60vh" }} /></TheLineLayout>;
+  if (!user) {
+    return (
+      <SetupLoginGate
+        layoutTitle={c.layoutTitle}
+        noindex
+        toolLabel={c.toolLabel}
+        toolPath="/tools/quick-tables"
+        icon={MessageSquareText}
+        title={c.loginTitle}
+        desc={c.loginDesc}
+        loginRedirect="/tools/quick-tables/chat"
+      />
+    );
+  }
+  return <ChatScreen key={user.id} userId={user.id} lang={lang} />;
+};
+
+function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
+  const c = COPY[lang];
+  const navigate = useNavigate();
+  const { createTable, setupRosterAtomic, getUserQuotaInfo } = useQuickTable();
+  const storageKey = STORAGE_PREFIX + userId;
+
+  const restored = useMemo(() => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      return raw ? (JSON.parse(raw) as { draft: Draft; messages: Msg[] }) : null;
+    } catch {
+      return null;
+    }
+  }, [storageKey]);
+
+  const [draft, setDraft] = useState<Draft>(restored?.draft ?? {});
+  const [messages, setMessages] = useState<Msg[]>(restored?.messages ?? [{ id: uid(), role: "bot", text: c.welcome }]);
+  const [input, setInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [failedText, setFailedText] = useState<string | null>(null);
+  const [subMenu, setSubMenu] = useState<SubMenu>(null);
+  const [assignments, setAssignments] = useState<number[]>([]);
+  const [creating, setCreating] = useState(false);
+  const [created, setCreated] = useState<{ table: QuickTable; rosterOk: boolean } | null>(null);
+  const [quotaFull, setQuotaFull] = useState<number | null>(null);
+  const [draftOpen, setDraftOpen] = useState(false);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
+
+  const slot = nextSlot(draft);
+  const unit = c.unit(draft);
+
+  useEffect(() => {
+    try {
+      if (created) localStorage.removeItem(storageKey);
+      else localStorage.setItem(storageKey, JSON.stringify({ draft, messages: messages.slice(-60) }));
+    } catch { /* private mode — chat still works, just not restorable */ }
+  }, [draft, messages, created, storageKey]);
+
+  useEffect(() => {
+    getUserQuotaInfo().then((q) => { if (q && q.current_count >= q.quota) setQuotaFull(q.quota); });
+  }, [getUserQuotaInfo]);
+
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages, busy, slot, subMenu, created]);
+
+  // Bảng xem trước: tính lại khi danh sách / số bảng đổi, giữ nguyên khi chỉ đổi tên.
+  const rosterKey = JSON.stringify([draft.entries, draft.group_count]);
+  useEffect(() => {
+    setAssignments(draft.entries?.length && draft.group_count ? previewAssignments(draft) : []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rosterKey]);
+
+  const questionFor = useCallback((d: Draft, s: Slot): string => {
+    const u = c.unit(d);
+    const n = entryCount(d);
+    switch (s) {
+      case "format": return c.format;
+      case "count": return c.count(u);
+      case "too_many": return c.tooMany(n, u);
+      case "pairing": return (d.entries!.length % 2 ? c.pairingOdd : c.pairing)(d.entries!.length);
+      case "mismatch": return c.mismatch(d.entries!.length, d.player_count!, u);
+      case "groups":
+        return (d.group_count ? c.groupsInvalid(d.group_count, u) : c.groups(n, u)) + (n > 32 ? c.groupsBig : "");
+      case "roster": return c.roster(u);
+      case "paste": return c.paste(d);
+      case "name": return c.name;
+      case "options": return c.options;
+      case "confirm": return c.confirm;
+    }
+  }, [c]);
+
+  const pushBot = (text: string) => setMessages((m) => [...m, { id: uid(), role: "bot", text }]);
+
+  /** Áp nháp mới rồi hỏi câu tiếp theo (kèm câu xác nhận ngắn nếu có). */
+  const advance = useCallback((next: Draft, ack?: string) => {
+    setDraft(next);
+    setSubMenu(null);
+    const q = questionFor(next, nextSlot(next));
+    setMessages((m) => [...m, { id: uid(), role: "bot", text: [ack?.trim(), q].filter(Boolean).join(" ") }]);
+  }, [questionFor]);
+
+  const pushUser = (text: string) => setMessages((m) => [...m, { id: uid(), role: "user", text }]);
+
+  const choose = (label: string, patch: Partial<Draft>) => {
+    pushUser(label);
+    advance({ ...draft, ...patch });
+  };
+
+  const send = async (raw?: string) => {
+    const text = (raw ?? input).trim();
+    if (!text || busy) return;
+    if (raw === undefined) {
+      pushUser(text);
+      setInput("");
+    }
+    setFailedText(null);
+    setBusy(true);
+    // Thử lại: bỏ tin lỗi + chính tin người dùng đó khỏi lịch sử rồi gửi lại.
+    const prior = raw === undefined ? messages : messages.slice(0, messages.map((m) => m.role).lastIndexOf("user"));
+    const history = [...prior, { role: "user" as const, text }]
+      .slice(-8)
+      .map((m) => ({ role: m.role, text: m.text.slice(0, 4000) }));
+    const { data, error } = await supabase.functions.invoke("quick-table-chat", {
+      body: { messages: history, draft, pending: slot, lang },
+      timeout: 25_000,
+    });
+    setBusy(false);
+    if (error || !data || typeof data !== "object" || "error" in data) {
+      setFailedText(text);
+      pushBot(c.aiError);
+      return;
+    }
+    const res = data as { reply: string; intent: string; patch: unknown };
+    if (res.intent !== "fill") {
+      advance(draft, res.reply);
+      return;
+    }
+    const next = applyPatch(draft, res.patch);
+    let ack = res.reply;
+    const gotList = !draft.entries?.length && !!next.entries?.length;
+    if (gotList) {
+      ack = c.received(next.entries!.length, c.unit(next));
+      const dups = duplicateIndexes(next.entries!).size;
+      if (dups) ack += c.dupWarn(dups);
+    }
+    // Đang ở bước tuỳ chọn mà người dùng gõ hạt giống/sân/CLB → ở lại bước tuỳ chọn.
+    advance(next, ack);
+  };
+
+  // ---------- chip theo bước ----------
+  const chips: Chip[] = (() => {
+    if (created || quotaFull != null || busy) return [];
+    if (failedText) return [{ label: c.retry, onClick: () => send(failedText) }];
+    const n = entryCount(draft);
+    switch (slot) {
+      case "format":
+        return [
+          { label: c.doubles, onClick: () => choose(c.doubles, { is_doubles: true }) },
+          { label: c.singles, onClick: () => choose(c.singles, { is_doubles: false }) },
+        ];
+      case "count":
+        return [
+          ...[8, 12, 16, 24, 32].map((k) => ({ label: String(k), onClick: () => choose(`${k} ${unit}`, { player_count: k }) })),
+          { label: c.pasteList, onClick: () => inputRef.current?.focus() },
+        ];
+      case "too_many":
+        return [
+          { label: c.classicForm, onClick: () => navigate("/tools/quick-tables") },
+          { label: c.changeCount, onClick: () => choose(c.changeCount, { player_count: undefined, entries: undefined, roster_mode: undefined }) },
+        ];
+      case "pairing": {
+        const list = draft.entries!;
+        const pair = (mode: PairingMode, label: string) => () =>
+          choose(label, { entries: pairEntries(list, mode), pairing_done: true, player_count: mode === "each_line" ? list.length : Math.floor(list.length / 2) });
+        if (list.length % 2) {
+          const last = list[list.length - 1].p1;
+          return [
+            { label: c.dropLast(last), onClick: () => choose(c.dropLast(last), { entries: list.slice(0, -1), player_count: list.length - 1 }) },
+            { label: c.pairLine, onClick: pair("each_line", c.pairLine) },
+          ];
+        }
+        return [
+          { label: c.pairSeq, sub: c.pairSeqSub, onClick: pair("sequential", c.pairSeq) },
+          { label: c.pairRandom, onClick: pair("random", c.pairRandom) },
+          { label: c.pairLine, onClick: pair("each_line", c.pairLine) },
+        ];
+      }
+      case "mismatch":
+        return [
+          { label: c.useList(draft.entries!.length, unit), onClick: () => choose(c.useList(draft.entries!.length, unit), { player_count: draft.entries!.length }) },
+          { label: c.pasteMore, onClick: () => inputRef.current?.focus() },
+        ];
+      case "groups":
+        return groupOptions(n).map((o) => ({
+          label: c.groupLabel(o),
+          sub: c.groupSub(o),
+          recommended: o.recommended,
+          onClick: () => choose(c.groupLabel(o), { group_count: o.groupCount }),
+        }));
+      case "roster":
+        return [
+          { label: c.pasteNow, onClick: () => choose(c.pasteNow, { roster_mode: "now" }) },
+          { label: c.openRegistration, onClick: () => choose(c.openRegistration, { roster_mode: "registration" }) },
+          { label: c.later, onClick: () => choose(c.later, { roster_mode: "later" }) },
+        ];
+      case "paste":
+        return [{ label: c.later, onClick: () => choose(c.later, { roster_mode: "later" }) }];
+      case "name": {
+        const name = defaultName(draft, lang);
+        return [{ label: name, onClick: () => choose(name, { name }) }];
+      }
+      case "options": {
+        if (subMenu === "sets") {
+          return ([1, 3, 5] as const).map((s) => ({
+            label: s === 1 ? c.set1 : s === 3 ? c.set3 : c.set5,
+            onClick: () => { pushUser(s === 1 ? c.set1 : s === 3 ? c.set3 : c.set5); setDraft((d) => ({ ...d, default_sets: s })); setSubMenu(null); pushBot(c.options); },
+          }));
+        }
+        const hint = (label: string, text: string) => () => { pushUser(label); pushBot(text); inputRef.current?.focus(); };
+        return [
+          { label: c.optDone, recommended: true, onClick: () => choose(c.optDone, { options_done: true }) },
+          { label: c.optSeed, onClick: hint(c.optSeed, c.hintSeed(unit)) },
+          { label: c.optCourts, onClick: hint(c.optCourts, c.hintCourts) },
+          { label: c.optSets(draft.default_sets ?? 1), onClick: () => { pushUser(c.optSets(draft.default_sets ?? 1)); pushBot(c.setsQ); setSubMenu("sets"); } },
+          { label: c.optTeam, onClick: hint(c.optTeam, c.hintTeam) },
+        ];
+      }
+      default:
+        return [];
+    }
+  })();
+
+  // ---------- sửa từ Bản nháp ----------
+  const editField = (field: "format" | "count" | "groups" | "roster" | "name" | "extra") => {
+    setDraftOpen(false);
+    const d = { ...draft };
+    if (field === "format") { d.is_doubles = undefined; d.pairing_done = false; }
+    if (field === "count") { d.player_count = undefined; d.entries = undefined; d.roster_mode = undefined; d.group_count = undefined; }
+    if (field === "groups") d.group_count = undefined;
+    if (field === "roster") { d.entries = undefined; d.roster_mode = undefined; d.options_done = false; }
+    if (field === "name") d.name = undefined;
+    if (field === "extra") d.options_done = false;
+    advance(d);
+  };
+
+  const setEntries = (entries: Entry[]) => setDraft((d) => ({ ...d, entries, player_count: entries.length }));
+
+  // ---------- tạo giải ----------
+  const create = async () => {
+    if (creating || slot !== "confirm") return;
+    setCreating(true);
+    const n = entryCount(draft);
+    const table = await createTable(draft.name!, n, "round_robin", draft.group_count, {
+      is_doubles: draft.is_doubles !== false,
+      requires_registration: draft.roster_mode === "registration",
+    });
+    if (!table) { setCreating(false); return; } // createTable đã toast lỗi (quota/auth)
+    if ((draft.default_sets ?? 1) > 1) {
+      await supabase.from("quick_tables").update({ default_sets: draft.default_sets } as never).eq("id", table.id);
+    }
+    let rosterOk = true;
+    if (draft.entries?.length) {
+      rosterOk = await setupRosterAtomic(
+        table.id,
+        buildRoster(draft),
+        draft.group_count ?? 1,
+        assignments.length === draft.entries.length ? assignments : undefined,
+        draft.courts ?? [],
+        draft.start_time ?? null,
+      );
+    }
+    setCreating(false);
+    setCreated({ table, rosterOk });
+  };
+
+  const tableUrl = created ? `${getSiteUrl()}/tools/quick-tables/${created.table.share_id}` : "";
+  const groupsList = useMemo(() => {
+    const k = draft.group_count ?? 1;
+    const out: Entry[][] = Array.from({ length: k }, () => []);
+    (draft.entries ?? []).forEach((e, i) => out[assignments[i] ?? 0]?.push(e));
+    return out;
+  }, [draft.entries, draft.group_count, assignments]);
+
+  const copy = async (text: string) => {
+    try { await navigator.clipboard.writeText(text); toast.success(c.copied); } catch { /* clipboard bị chặn */ }
+  };
+  const zaloText = () => [
+    `🏓 ${draft.name}`,
+    ...(draft.entries?.length ? groupsList.map((g, i) => `${c.group(i)}: ${g.map(entryLabel).join(", ")}`) : []),
+    `${c.zaloLink}: ${tableUrl}`,
+  ].join("\n");
+
+  const startOver = () => {
+    setCreated(null);
+    setDraft({});
+    setMessages([{ id: uid(), role: "bot", text: c.welcome }]);
+  };
+
+  const quotaMsg = quotaFull != null ? c.quotaFull(quotaFull) : null;
+  const filled = [draft.is_doubles !== undefined, entryCount(draft) > 0, !!draft.group_count && slot !== "groups", !!draft.name].filter(Boolean).length;
+
+  return (
+    <TheLineLayout title={c.layoutTitle} noindex active="lab">
+      <div className="tl-shell" style={{ maxWidth: 680, minHeight: "calc(100dvh - 64px)", display: "flex", flexDirection: "column" }}>
+        {/* header */}
+        <header style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 0" }}>
+          <Button asChild variant="ghost" size="icon" aria-label={lang === "vi" ? "Quay lại" : "Back"}>
+            <Link to="/tools/quick-tables"><ArrowLeft className="w-5 h-5" /></Link>
+          </Button>
+          <h1 style={{ flex: 1, margin: 0, fontSize: 17, fontWeight: 600, color: "var(--tl-fg)", display: "flex", alignItems: "center", gap: 6 }}>
+            <Sparkles className="w-4 h-4" style={{ color: "var(--tl-green)" }} /> {c.title}
+          </h1>
+          <Button asChild variant="link" size="sm" style={{ color: "var(--tl-fg-3)" }}>
+            <Link to="/tools/quick-tables">{c.classicForm}</Link>
+          </Button>
+        </header>
+
+        {/* bản nháp dính trên cùng */}
+        {!created && (
+          <section
+            style={{ position: "sticky", top: "calc(env(safe-area-inset-top) + 61px + 8px)", zIndex: 5, background: "var(--tl-bg-elev)", border: "1px solid var(--tl-border)", borderRadius: "var(--tl-radius-lg)" }}
+          >
+            <button
+              type="button"
+              onClick={() => setDraftOpen((o) => !o)}
+              aria-expanded={draftOpen}
+              style={{ width: "100%", minHeight: 44, display: "flex", alignItems: "center", gap: 10, padding: "8px 14px", background: "transparent", border: 0, color: "var(--tl-fg)", cursor: "pointer" }}
+            >
+              <span style={{ fontWeight: 600, fontSize: 14 }}>{c.draft}</span>
+              <span aria-hidden style={{ display: "flex", gap: 4 }}>
+                {[0, 1, 2, 3].map((i) => (
+                  <span key={i} style={{ width: 8, height: 8, borderRadius: 4, background: i < filled ? "var(--tl-green)" : "var(--tl-border)" }} />
+                ))}
+              </span>
+              <span style={{ fontSize: 13, color: "var(--tl-fg-3)" }}>{filled}/4</span>
+              <span style={{ flex: 1, textAlign: "left", fontSize: 13, color: "var(--tl-fg-2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {draft.name ?? ""}
+              </span>
+              <ChevronDown className={cn("w-4 h-4 transition-transform", draftOpen && "rotate-180")} />
+            </button>
+            {draftOpen && (
+              <DraftPanel draft={draft} c={c} onEdit={editField} onEntries={setEntries} />
+            )}
+          </section>
+        )}
+
+        {/* hội thoại */}
+        <div role="log" aria-live="polite" style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10, padding: "16px 0" }}>
+          {messages.map((m) => <Bubble key={m.id} msg={m} c={c} />)}
+          {quotaMsg && <Bubble msg={{ id: "quota", role: "bot", text: quotaMsg }} c={c} />}
+          {busy && (
+            <div aria-label="…" style={{ alignSelf: "flex-start", padding: "10px 14px", borderRadius: 16, background: "var(--tl-bg-elev)", border: "1px solid var(--tl-border)" }}>
+              <span className="inline-flex gap-1">
+                {[0, 1, 2].map((i) => <span key={i} className="animate-pulse" style={{ width: 6, height: 6, borderRadius: 3, background: "var(--tl-fg-3)", animationDelay: `${i * 150}ms` }} />)}
+              </span>
+            </div>
+          )}
+
+          {slot === "confirm" && !created && !busy && (
+            <ConfirmCard
+              draft={draft} c={c} groups={groupsList} creating={creating}
+              onCreate={create}
+              onEdit={() => setDraftOpen(true)}
+              onReshuffle={() => setAssignments(previewAssignments(draft))}
+            />
+          )}
+
+          {created && (
+            <SuccessCard
+              c={c} name={draft.name ?? created.table.name} rosterOk={created.rosterOk}
+              needsRoster={!draft.entries?.length && draft.roster_mode !== "registration"}
+              onOpen={() => navigate(`/tools/quick-tables/${created.table.share_id}`)}
+              onRoster={() => navigate(`/tools/quick-tables/${created.table.share_id}/setup`)}
+              onCopyLink={() => copy(tableUrl)}
+              onCopyZalo={() => copy(zaloText())}
+              onAnother={startOver}
+            />
+          )}
+          {quotaMsg && (
+            <div><Button variant="outline" onClick={() => navigate("/tools/quick-tables")}>{c.myTables}</Button></div>
+          )}
+          <div ref={endRef} />
+        </div>
+
+        {/* chip + ô nhập */}
+        {!created && quotaFull == null && (
+          <div style={{ position: "sticky", bottom: 0, background: "var(--tl-bg)", paddingBottom: "max(12px, env(safe-area-inset-bottom))", paddingTop: 8 }}>
+            {chips.length > 0 && <ChipRow chips={chips} />}
+            <form
+              onSubmit={(e) => { e.preventDefault(); send(); }}
+              style={{ display: "flex", gap: 8, alignItems: "flex-end" }}
+            >
+              <Textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing && window.matchMedia("(pointer: fine)").matches) {
+                    e.preventDefault();
+                    send();
+                  }
+                }}
+                placeholder={c.placeholder}
+                aria-label={c.placeholder}
+                rows={1}
+                maxLength={4000}
+                className="resize-none"
+                style={{ minHeight: 44, maxHeight: 160, fontSize: 16, fieldSizing: "content" } as React.CSSProperties}
+              />
+              <Button type="submit" size="icon" disabled={!input.trim() || busy} aria-label={c.send} style={{ width: 44, height: 44, flexShrink: 0 }}>
+                {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              </Button>
+            </form>
+            <p style={{ fontSize: 11, color: "var(--tl-fg-3)", margin: "6px 2px 0" }}>{c.reload}</p>
+          </div>
+        )}
+      </div>
+    </TheLineLayout>
+  );
+}
+
+type C = (typeof COPY)["vi"];
+
+function Bubble({ msg, c }: { msg: Msg; c: C }) {
+  const lines = msg.text.split("\n");
+  const long = msg.role === "user" && lines.length > PASTE_COLLAPSE_LINES;
+  const [open, setOpen] = useState(false);
+  const mine = msg.role === "user";
+  return (
+    <div
+      style={{
+        alignSelf: mine ? "flex-end" : "flex-start",
+        maxWidth: "85%",
+        padding: "10px 14px",
+        borderRadius: 16,
+        borderBottomRightRadius: mine ? 4 : 16,
+        borderBottomLeftRadius: mine ? 16 : 4,
+        background: mine ? "var(--tl-green)" : "var(--tl-bg-elev)",
+        color: mine ? "var(--tl-bg)" : "var(--tl-fg)",
+        border: mine ? 0 : "1px solid var(--tl-border)",
+        fontSize: 15,
+        lineHeight: 1.45,
+        whiteSpace: "pre-wrap",
+        wordBreak: "break-word",
+      }}
+    >
+      {long && !open ? c.pasted(lines.filter((l) => l.trim()).length) : msg.text}
+      {long && (
+        <button type="button" onClick={() => setOpen((o) => !o)} style={{ display: "block", marginTop: 4, background: "none", border: 0, padding: 0, color: "inherit", textDecoration: "underline", fontSize: 13, cursor: "pointer", opacity: 0.85 }}>
+          {open ? c.collapse : c.showAll}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ChipRow({ chips }: { chips: Chip[] }) {
+  const big = chips.some((ch) => ch.sub);
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: big ? "column" : "row",
+        gap: 8,
+        overflowX: big ? undefined : "auto",
+        paddingBottom: 8,
+        scrollbarWidth: "none",
+      }}
+    >
+      {chips.map((ch) => (
+        <button
+          key={ch.label}
+          type="button"
+          onClick={ch.onClick}
+          style={{
+            flexShrink: 0,
+            minHeight: 44,
+            padding: big ? "10px 14px" : "0 16px",
+            borderRadius: big ? "var(--tl-radius)" : 22,
+            border: `1px solid ${ch.recommended ? "var(--tl-green)" : "var(--tl-border)"}`,
+            background: ch.recommended ? "var(--tl-green-glow)" : "var(--tl-bg-elev)",
+            color: "var(--tl-fg)",
+            fontSize: 14.5,
+            fontWeight: 500,
+            textAlign: "left",
+            cursor: "pointer",
+            whiteSpace: big ? "normal" : "nowrap",
+          }}
+        >
+          <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            {ch.recommended && big && <span aria-hidden>⭐</span>}
+            {ch.label}
+          </span>
+          {ch.sub && <span style={{ display: "block", fontSize: 12.5, color: "var(--tl-fg-3)", fontWeight: 400, marginTop: 2 }}>{ch.sub}</span>}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function DraftPanel({ draft, c, onEdit, onEntries }: {
+  draft: Draft; c: C;
+  onEdit: (f: "format" | "count" | "groups" | "roster" | "name" | "extra") => void;
+  onEntries: (e: Entry[]) => void;
+}) {
+  const n = entryCount(draft);
+  const extras = [
+    draft.courts?.length ? c.courts(draft.courts) : null,
+    draft.start_time ?? null,
+    (draft.default_sets ?? 1) > 1 ? `BO${draft.default_sets}` : null,
+    draft.entries?.some((e) => e.seed) ? c.optSeed : null,
+  ].filter(Boolean).join(" · ");
+  const rows: Array<[string, string, Parameters<typeof onEdit>[0]]> = [
+    [c.fFormat, draft.is_doubles === undefined ? c.empty : draft.is_doubles ? c.doubles : c.singles, "format"],
+    [c.fCount, n ? `${n} ${c.unit(draft)}` : c.empty, "count"],
+    [c.fGroups, draft.group_count && n ? (groupOptions(n).find((o) => o.groupCount === draft.group_count) ? c.groupLabel(groupOptions(n).find((o) => o.groupCount === draft.group_count)!) : c.empty) : c.empty, "groups"],
+    [c.fRoster, draft.entries?.length ? `${draft.entries.length} ${c.unit(draft)}` : draft.roster_mode === "registration" ? c.rosterReg : draft.roster_mode === "later" ? c.rosterLater : c.empty, "roster"],
+    [c.fName, draft.name ?? c.empty, "name"],
+    [c.fExtra, extras || c.empty, "extra"],
+  ];
+  return (
+    <div style={{ borderTop: "1px solid var(--tl-border)", padding: "6px 14px 12px", maxHeight: "60dvh", overflowY: "auto" }}>
+      {rows.map(([label, value, field]) => (
+        <div key={field} style={{ display: "flex", alignItems: "center", gap: 10, minHeight: 40, fontSize: 14 }}>
+          <span style={{ width: 92, color: "var(--tl-fg-3)", flexShrink: 0 }}>{label}</span>
+          <span style={{ flex: 1, color: "var(--tl-fg)", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{value}</span>
+          {value !== c.empty && (
+            <Button variant="ghost" size="sm" onClick={() => onEdit(field)} aria-label={`${c.edit} ${label}`}>
+              <Pencil className="w-3.5 h-3.5" />
+            </Button>
+          )}
+        </div>
+      ))}
+      {!!draft.entries?.length && <EntriesEditor entries={draft.entries} doubles={draft.is_doubles !== false} c={c} onChange={onEntries} />}
+    </div>
+  );
+}
+
+function EntriesEditor({ entries, doubles, c, onChange }: { entries: Entry[]; doubles: boolean; c: C; onChange: (e: Entry[]) => void }) {
+  const dups = duplicateIndexes(entries);
+  const update = (i: number, patch: Partial<Entry>) => onChange(entries.map((e, j) => (j === i ? { ...e, ...patch } : e)));
+  return (
+    <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
+      {dups.size > 0 && (
+        <Button variant="outline" size="sm" onClick={() => onChange(entries.filter((_, i) => !dups.has(i)))}>
+          <TriangleAlert className="w-3.5 h-3.5" /> {c.removeDup(dups.size)}
+        </Button>
+      )}
+      {entries.map((e, i) => (
+        <div key={i} style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <span style={{ width: 22, fontSize: 12, color: dups.has(i) ? "hsl(var(--destructive))" : "var(--tl-fg-3)", textAlign: "right" }}>
+            {dups.has(i) ? "⚠️" : i + 1}
+          </span>
+          <Input value={e.p1} onChange={(ev) => update(i, { p1: ev.target.value })} aria-label={`${c.p1} ${i + 1}`} className="h-9" style={{ fontSize: 16 }} />
+          {doubles && (
+            <Input value={e.p2 ?? ""} onChange={(ev) => update(i, { p2: ev.target.value || undefined })} aria-label={`${c.p2} ${i + 1}`} className="h-9" style={{ fontSize: 16 }} />
+          )}
+          <Button variant="ghost" size="icon" onClick={() => onChange(entries.filter((_, j) => j !== i))} aria-label={`${c.edit} ${i + 1}`} style={{ width: 36, height: 36, flexShrink: 0 }}>
+            <Trash2 className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      ))}
+      {entries.length < MAX_CHAT_ENTRIES && (
+        <Button variant="ghost" size="sm" onClick={() => onChange([...entries, { p1: "" }])}>{c.addRow}</Button>
+      )}
+    </div>
+  );
+}
+
+function ConfirmCard({ draft, c, groups, creating, onCreate, onEdit, onReshuffle }: {
+  draft: Draft; c: C; groups: Entry[][]; creating: boolean;
+  onCreate: () => void; onEdit: () => void; onReshuffle: () => void;
+}) {
+  const n = entryCount(draft);
+  const invalidRows = draft.entries?.some((e) => !e.p1.trim()) ?? false;
+  const meta = [
+    draft.is_doubles === false ? c.singles : c.doubles,
+    `${n} ${c.unit(draft)}`,
+    groupOptions(n).find((o) => o.groupCount === draft.group_count) ? c.groupLabel(groupOptions(n).find((o) => o.groupCount === draft.group_count)!) : null,
+    draft.default_sets && draft.default_sets > 1 ? `BO${draft.default_sets}` : null,
+    draft.courts?.length ? c.courts(draft.courts) : null,
+    draft.start_time ?? null,
+  ].filter(Boolean).join(" · ");
+  return (
+    <div style={{ background: "var(--tl-bg-elev)", border: "1px solid var(--tl-green)", borderRadius: "var(--tl-radius-lg)", padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Trophy className="w-4 h-4" style={{ color: "var(--tl-green)" }} />
+          <strong style={{ fontSize: 17, color: "var(--tl-fg)" }}>{draft.name}</strong>
+        </div>
+        <div style={{ fontSize: 13, color: "var(--tl-fg-3)", marginTop: 4 }}>{meta}</div>
+      </div>
+      {draft.entries?.length ? (
+        <>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 8 }}>
+            {groups.map((g, i) => (
+              <div key={i} style={{ border: "1px solid var(--tl-border)", borderRadius: "var(--tl-radius)", padding: "8px 10px" }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--tl-green)", marginBottom: 4 }}>{c.group(i)}</div>
+                {g.map((e, j) => (
+                  <div key={j} style={{ fontSize: 13, color: "var(--tl-fg-2)", lineHeight: 1.5 }}>
+                    {e.seed ? <span title={c.optSeed}>★ </span> : null}{entryLabel(e)}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+          {(draft.group_count ?? 1) > 1 && (
+            <Button variant="ghost" size="sm" onClick={onReshuffle} style={{ alignSelf: "flex-start" }}>
+              <Shuffle className="w-3.5 h-3.5" /> {c.reshuffle}
+            </Button>
+          )}
+        </>
+      ) : (
+        <p style={{ fontSize: 14, color: "var(--tl-fg-2)", margin: 0 }}>
+          {draft.roster_mode === "registration" ? c.confirmReg : c.confirmLater}
+        </p>
+      )}
+      <div style={{ display: "flex", gap: 8 }}>
+        <Button variant="default" onClick={onCreate} disabled={creating || invalidRows} style={{ flex: 1, minHeight: 44 }}>
+          {creating ? <><Loader2 className="w-4 h-4 animate-spin" /> {c.creating}</> : <><Check className="w-4 h-4" /> {c.create}</>}
+        </Button>
+        <Button variant="outline" onClick={onEdit} style={{ minHeight: 44 }}>
+          <Pencil className="w-4 h-4" /> {c.edit}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function SuccessCard({ c, name, rosterOk, needsRoster, onOpen, onRoster, onCopyLink, onCopyZalo, onAnother }: {
+  c: C; name: string; rosterOk: boolean; needsRoster: boolean;
+  onOpen: () => void; onRoster: () => void; onCopyLink: () => void; onCopyZalo: () => void; onAnother: () => void;
+}) {
+  const goRoster = needsRoster || !rosterOk;
+  return (
+    <div style={{ background: "var(--tl-green-glow)", border: "1px solid var(--tl-green)", borderRadius: "var(--tl-radius-lg)", padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+      <strong style={{ fontSize: 17, color: "var(--tl-fg)" }}>{c.created(name)}</strong>
+      {!rosterOk && <p style={{ margin: 0, fontSize: 14, color: "var(--tl-fg-2)" }}>{c.rosterFailed}</p>}
+      <Button variant="default" onClick={goRoster ? onRoster : onOpen} style={{ minHeight: 44 }}>
+        {goRoster ? c.enterRoster : c.openTable}
+      </Button>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <Button variant="outline" onClick={onCopyLink} style={{ flex: 1, minHeight: 44 }}><Copy className="w-4 h-4" /> {c.copyLink}</Button>
+        {rosterOk && !needsRoster && (
+          <Button variant="outline" onClick={onCopyZalo} style={{ flex: 1, minHeight: 44 }}><Copy className="w-4 h-4" /> {c.copyZalo}</Button>
+        )}
+      </div>
+      <Button variant="ghost" onClick={onAnother}>{c.another}</Button>
+    </div>
+  );
+}
+
+export default QuickTableChat;

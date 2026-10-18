@@ -980,6 +980,18 @@
         "cron.write.cron_secret.shared_secret"
       ],
       "status": "classified"
+    },
+    "quick-table-chat": {
+      "verify_jwt": false,
+      "service_role": {
+        "uses_client": false,
+        "accepts_bearer": false
+      },
+      "flows": [
+        "user.read.user_jwt.derived_identity"
+      ],
+      "status": "classified",
+      "notes": "Bearer JWT is verified internally; returns a Gemini-parsed draft patch only, writes nothing."
     }
   }
 }

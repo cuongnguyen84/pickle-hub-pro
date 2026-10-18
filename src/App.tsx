@@ -121,6 +121,7 @@ const SellerOrderDetail = lazyRetry(() => import("./pages/shop/SellerOrderDetail
 const Tools = lazyRetry(() => import("./pages/Tools"));
 const QuickTables = lazyRetry(() => import("./pages/QuickTables"));
 const QuickTableSetup = lazyRetry(() => import("./pages/QuickTableSetup"));
+const QuickTableChat = lazyRetry(() => import("./pages/QuickTableChat"));
 const QuickTableView = lazyRetry(() => import("./pages/QuickTableView"));
 const ParentTournamentPage = lazyRetry(() => import("./pages/ParentTournamentPage"));
 const QuickTableRefereeScoring = lazyRetry(() => import("./pages/QuickTableRefereeScoring"));
@@ -672,6 +673,7 @@ const MIRRORED: MirroredRoute[] = [
   { path: "/forum/new", element: <ForumPostCreate /> },
   { path: "/tools", element: <Tools /> },
   { path: "/tools/quick-tables", element: <QuickTables /> },
+  { path: "/tools/quick-tables/chat", element: <QuickTableChat /> },
   { path: "/tools/quick-tables/parent/:shareId", element: <ParentTournamentPage /> },
   { path: "/tools/quick-tables/:shareId", element: <ConditionalAuth><QuickTableView /></ConditionalAuth> },
   { path: "/tools/quick-tables/:shareId/setup", element: <QuickTableSetup /> },

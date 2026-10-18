@@ -858,7 +858,8 @@ const QuickTableView = () => {
         </header>
 
         {/* Advance to Playoff banner */}
-        {canManageTable && groupStageComplete && !hasPlayoff && table.status === 'group_stage' && (
+        {/* 1 bảng = vòng tròn thuần, không có playoff */}
+        {canManageTable && groupStageComplete && !hasPlayoff && table.status === 'group_stage' && (table.group_count ?? 0) >= 2 && (
           <section style={{ marginTop: 32 }}>
             <div
               className="tl-panel"

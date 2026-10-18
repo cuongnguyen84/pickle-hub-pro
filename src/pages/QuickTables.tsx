@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Users, Trophy, Zap, Check, ArrowRight, LogIn, Calendar, Eye, Shield, ClipboardList, ChevronDown, Layers, Monitor } from "lucide-react";
+import { Users, Trophy, Zap, Check, ArrowRight, LogIn, Calendar, Eye, Shield, ClipboardList, ChevronDown, Layers, Monitor, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
@@ -376,6 +376,12 @@ const QuickTables = () => {
 
           {step === "count" && (
             <div style={{ display: "flex", gap: 10, marginTop: 28, flexWrap: "wrap" }}>
+              <Button asChild variant="default">
+                <Link to="/tools/quick-tables/chat">
+                  <Sparkles className="w-4 h-4" />
+                  {language === "vi" ? "Tạo bằng chat AI" : "Create by AI chat"}
+                </Link>
+              </Button>
               <button
                 type="button"
                 className="tl-btn"

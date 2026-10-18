@@ -1040,7 +1040,8 @@ struct QuickTableDetailView: View {
                     }
                 }
                 if model.canManage && !detail.table.isPlayoffStage { scheduleManageButton(detail) }
-                if model.canManage && detail.groupStageComplete && !detail.hasPlayoff && detail.table.status == "group_stage" {
+                // 1 bảng = vòng tròn thuần, không có playoff (giải nhỏ tạo từ chat AI).
+                if model.canManage && detail.groupStageComplete && !detail.hasPlayoff && detail.table.status == "group_stage" && (detail.table.groupCount ?? 0) >= 2 {
                     advanceBanner
                 }
                 tabPicker(detail)
