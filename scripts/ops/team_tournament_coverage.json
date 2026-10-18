@@ -2,6 +2,7 @@
   "enabled": true,
   "timezone": "Asia/Ho_Chi_Minh",
   "daily_time": "07:30",
+  "refresh_every_hours": 2,
   "verified_at": "2026-10-13",
   "events": [
     {

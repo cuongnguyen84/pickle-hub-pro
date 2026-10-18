@@ -75,8 +75,7 @@ def _match_line(match, vi=False):
     if status in {"final", "completed", "finished", "walkover", "retired"}:
         winner = a if a.get("winner") else b
         loser = b if winner is a else a
-        games = winner.get("games") or []
-        scores = ", ".join(f"{x}-{y}" for x, y in zip(winner.get("games") or [], loser.get("games") or []) if x is not None and y is not None)
+        scores = ", ".join(f"{x}-{y}" for x, y in zip(winner.get("games") or [], loser.get("games") or []) if x is not None and y is not None and (x or y))  # unplayed game 3 comes back as 0-0
         if vi:
             return f"{division}, {label}: {_names(winner)} thắng {_names(loser)}" + (f" ({scores})" if scores else f" ({status})") + "."
         return f"{division}, {label}: {_names(winner)} beat {_names(loser)}" + (f" ({scores})" if scores else f" ({status})") + "."
@@ -85,10 +84,34 @@ def _match_line(match, vi=False):
     return f"{division}, {label}: {_names(a)} vs {_names(b)} — status {status}."
 
 
+def draw_sections(finals: list, vi: bool = False) -> list:
+    """One section per division with EVERY completed match, latest round first.
+
+    Readers search for the whole draw ("ppa brisbane results"); the old 20-row
+    cap left the page showing only the last rounds and none of the early ones.
+    """
+    by_div: dict[str, list] = {}
+    for m in finals:
+        by_div.setdefault(_match_line(m, vi).split(",", 1)[0], []).append(m)
+    out = []
+    for division, rows in by_div.items():
+        rows.sort(key=lambda m: (int(m.get("roundNumber", 0) or 0), str(m.get("dateKey", ""))), reverse=True)
+        top = rows[0]
+        champion = None
+        if re.fullmatch(r"(?i)finals?", str(top.get("roundLabel") or "").strip()):
+            champion = _names(top["teams"][0] if top["teams"][0].get("winner") else top["teams"][1])
+        if vi:
+            lead = (f"Vô địch: {champion}. " if champion else "Chưa có nhà vô địch. ") + f"{len(rows)} trận đã kết thúc, vòng mới nhất ở trên."
+            out.append({"heading": f"Kết quả {division}", "content": lead, "listItems": [_match_line(m, True) for m in rows]})
+        else:
+            lead = (f"Champion: {champion}. " if champion else "No champion yet. ") + f"{len(rows)} completed matches, latest round first."
+            out.append({"heading": f"{division} results", "content": lead, "listItems": [_match_line(m) for m in rows]})
+    return out
+
+
 def package(event: dict, feed: dict, now: datetime) -> dict:
     matches = feed["matches"]
     finals = [m for m in matches if m["status"] in {"final", "completed", "finished", "walkover", "retired"}]
-    recent = sorted(finals, key=lambda m: (str(m.get("dateKey", "")), int(m.get("roundNumber", 0) or 0)), reverse=True)[:20]
     live = [m for m in matches if m["status"] == "live"]
     upcoming = [m for m in matches if m["status"] == "scheduled"]
     # The stamp says "Vietnam time", so make it true whatever tz the caller's clock is in.
@@ -110,24 +133,24 @@ def package(event: dict, feed: dict, now: datetime) -> dict:
     related = event.get("related") or []
     en_links = [{"text": "Official event scores", "path": source}] + [{"text": r["en"], "path": r["path"]} for r in related]
     vi_links = [{"text": "Nguồn điểm số chính thức", "path": source}] + [{"text": r["vi"], "path": r["vi_path"]} for r in related]
-    en_results = [_match_line(m) for m in recent] or ["No final result has been published in the official feed yet."]
-    vi_results = [_match_line(m, True) for m in recent] or ["Nguồn chính thức chưa công bố kết quả chung cuộc nào."]
+    en_draw = draw_sections(finals) or [{"heading": "Confirmed results", "content": "No final result has been published in the official feed yet."}]
+    vi_draw = draw_sections(finals, True) or [{"heading": "Kết quả đã xác nhận", "content": "Nguồn chính thức chưa công bố kết quả chung cuộc nào."}]
     en_live = [_match_line(m) for m in (live + upcoming)[:10]] or ["No match is currently marked live or scheduled in the official feed."]
     vi_live = [_match_line(m, True) for m in (live + upcoming)[:10]] or ["Nguồn chính thức hiện không đánh dấu trận nào đang diễn ra hoặc sắp đấu."]
     en_sections = [
         {"heading": en_h, "content": f"Last updated: {stamp_en}. ThePickleHub publishes this {name} results page from the official PPA scores feed for {event['dates_en']} at {venue}. The feed currently contains {len(matches)} matches, including {len(finals)} completed or final records and {len(live)} live records. A missing score remains unconfirmed until the official feed supplies it.", "internalLinks": en_links},
-        {"heading": "Latest confirmed results", "content": "These are the latest completed records returned by the official feed. They are a summary, not a copy of the full draw.", "listItems": en_results},
+        *en_draw,
         {"heading": "Live and upcoming status", "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.", "listItems": en_live},
-        {"heading": "How to read this update", "content": f"ThePickleHub checks the event id, match status, two-team structure and unique winner flag before updating this page. The page is refreshed when the source snapshot changes. Event dates: {event['dates_en']}. Venue: {venue}. Official source: {source}."},
+        {"heading": "How to read this update", "content": f"ThePickleHub checks the event id, match status, two-team structure and unique winner flag before updating this page. The page is checked every few hours during the event and refreshed whenever the source snapshot changes. Event dates: {event['dates_en']}. Venue: {venue}. Official source: {source}."},
     ]
     vi_sections = [
         {"heading": f"Kết quả {base} {year}", "content": f"Cập nhật: {stamp_vi}. ThePickleHub đăng trang kết quả {base} {year} từ feed điểm số chính thức của PPA cho thời gian {event['dates_vi']} tại {venue}. Feed hiện có {len(matches)} trận, gồm {len(finals)} bản ghi đã kết thúc/chung cuộc và {len(live)} bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.", "internalLinks": vi_links},
-        {"heading": "Kết quả đã xác nhận gần nhất", "content": "Danh sách dưới đây là tóm tắt các bản ghi đã kết thúc từ feed chính thức, không sao chép toàn bộ nhánh đấu.", "listItems": vi_results},
+        *vi_draw,
         {"heading": "Trận đang đấu và sắp đấu", "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.", "listItems": vi_live},
-        {"heading": "Cách kiểm chứng cập nhật", "content": f"ThePickleHub kiểm tra event id, trạng thái trận, cấu trúc hai đội và cờ người thắng duy nhất trước khi cập nhật. Trang chỉ đổi khi snapshot nguồn thay đổi. Thời gian giải: {event['dates_vi']}. Địa điểm: {venue}. Nguồn chính thức: {source}."},
+        {"heading": "Cách kiểm chứng cập nhật", "content": f"ThePickleHub kiểm tra event id, trạng thái trận, cấu trúc hai đội và cờ người thắng duy nhất trước khi cập nhật. Trong thời gian giải, trang được kiểm tra vài giờ một lần và cập nhật ngay khi snapshot nguồn thay đổi. Thời gian giải: {event['dates_vi']}. Địa điểm: {venue}. Nguồn chính thức: {source}."},
     ]
-    faq_en = [{"question": "Where do these results come from?", "answer": f"The official PPA scores feed: {source}."}, {"question": "Are scheduled matches final results?", "answer": "No. Only an official final or completed status with one winner is presented as a result."}, {"question": "When is this page updated?", "answer": "When the verified official score snapshot changes."}]
-    faq_vi = [{"question": "Kết quả lấy từ đâu?", "answer": f"Từ feed điểm số PPA chính thức: {source}."}, {"question": "Trận scheduled có phải kết quả không?", "answer": "Không. Chỉ bản ghi final hoặc completed có đúng một người thắng mới được trình bày là kết quả."}, {"question": "Trang cập nhật khi nào?", "answer": "Khi snapshot điểm số chính thức đã kiểm chứng thay đổi."}]
+    faq_en = [{"question": "Where do these results come from?", "answer": f"The official PPA scores feed: {source}."}, {"question": "Are scheduled matches final results?", "answer": "No. Only an official final or completed status with one winner is presented as a result."}, {"question": "When is this page updated?", "answer": "Every few hours while the event is on, whenever the verified official score snapshot changes."}]
+    faq_vi = [{"question": "Kết quả lấy từ đâu?", "answer": f"Từ feed điểm số PPA chính thức: {source}."}, {"question": "Trận scheduled có phải kết quả không?", "answer": "Không. Chỉ bản ghi final hoặc completed có đúng một người thắng mới được trình bày là kết quả."}, {"question": "Trang cập nhật khi nào?", "answer": "Vài giờ một lần trong thời gian giải, mỗi khi snapshot điểm số chính thức đã kiểm chứng thay đổi."}]
     package = {"verdict": "NEW", "unverified": [], "slug": event["slug"], "tags": event.get("tags", ["pickleball", "results", "2026"]), "ctaPath": "/live", "ctaLabel": {"en": "Follow live scores on ThePickleHub", "vi": "Theo dõi điểm số trên ThePickleHub"}, "en": {"title": f"{name} Results: Daily Scores and Confirmed Winners", "metaTitle": en_meta, "metaDescription": en_desc, "sections": en_sections, "faqItems": faq_en}, "vi": {"slug": event["vi_slug"], "title": f"Kết quả {base} {year}: cập nhật hằng ngày", "metaTitle": vi_meta, "metaDescription": f"Kết quả {base} {year} từ feed PPA chính thức, được ThePickleHub kiểm chứng.", "excerpt": f"Kết quả {base} {year} cập nhật từ nguồn điểm số PPA chính thức.", "focusKeyword": f"kết quả {base.lower()} {year}", "sections": vi_sections, "faqItems": faq_vi}}
     # Keep the editorial hero attached to every future source-driven refresh.
     if event.get("hero_image"):
@@ -197,6 +220,13 @@ def _upsert_vi(pkg: dict) -> None:
             raise RuntimeError("vi_row_write_failed")
 
 
+def _sync_main() -> None:
+    """Rebase local main onto origin/main; never leave a half-finished rebase behind."""
+    if subprocess.run(["git", "pull", "--rebase", "--quiet", "origin", "main"], cwd=REPO).returncode:
+        subprocess.run(["git", "rebase", "--abort"], cwd=REPO)
+        raise RuntimeError("autopublish_rebase_failed")
+
+
 def publish_event(event: dict, now: datetime | None = None, push: bool = True) -> dict:
     """Fetch, validate and publish one changed official score snapshot.
 
@@ -212,6 +242,10 @@ def publish_event(event: dict, now: datetime | None = None, push: bool = True) -
     branch = subprocess.run(["git", "branch", "--show-current"], cwd=REPO, capture_output=True, text=True, check=True).stdout.strip()
     if status or branch != "main":
         raise RuntimeError("autopublish_checkout_not_clean_main")
+    if push:
+        # PR merges land on origin between our runs; without this every push
+        # after 15/10 was rejected non-fast-forward and EN froze for 3 days.
+        _sync_main()
     today = now.astimezone(timezone.utc).date().isoformat()
     pkg = package(event, feed, now)
     # The first publication date is stable; only updatedDate changes thereafter.
@@ -223,6 +257,9 @@ def publish_event(event: dict, now: datetime | None = None, push: bool = True) -
     subprocess.run(["git", "commit", "-m", f"content(blog): update {pkg['slug']}"], cwd=REPO, check=True, stdout=subprocess.DEVNULL)
     head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO, capture_output=True, text=True, check=True).stdout.strip()
     if push:
-        subprocess.run(["git", "push", "origin", "HEAD:main"], cwd=REPO, check=True)
+        if subprocess.run(["git", "push", "origin", "HEAD:main"], cwd=REPO).returncode:
+            _sync_main()  # someone merged between our pull and push: rebase once, retry
+            subprocess.run(["git", "push", "origin", "HEAD:main"], cwd=REPO, check=True)
+        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO, capture_output=True, text=True, check=True).stdout.strip()
     remember(event, fingerprint)
     return {"status": "published", "fingerprint": fingerprint, "head": head, "pushed": push, "slug": pkg["slug"]}
