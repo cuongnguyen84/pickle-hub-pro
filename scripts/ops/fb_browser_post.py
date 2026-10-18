@@ -122,12 +122,18 @@ def fetch_image(url: str, news_id: str) -> Path | None:
     WORK.mkdir(parents=True, exist_ok=True)
     for old in WORK.glob("*"):
         old.unlink()
-    dest = WORK / f"{news_id}.jpg"
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=60) as r:
-            dest.write_bytes(r.read())
-        return dest if dest.stat().st_size > 1000 else None
+            ctype = (r.headers.get("Content-Type") or "").split(";")[0].strip()
+            data = r.read()
+        ext = {"image/png": "png", "image/webp": "webp", "image/gif": "gif"}.get(ctype, "jpg")
+        if not ctype.startswith("image/") or len(data) < 1000:
+            log(f"ảnh không hợp lệ ({ctype}, {len(data)}B) → đăng không ảnh")
+            return None
+        dest = WORK / f"{news_id}.{ext}"
+        dest.write_bytes(data)
+        return dest
     except Exception as e:
         log(f"tải ảnh lỗi ({e}) → đăng không ảnh")
         return None
@@ -137,7 +143,8 @@ def build_prompt(caption: str, link: str, image: Path | None) -> str:
     image_step = (
         f"Gắn ảnh: tìm ô input file trong hộp soạn bài (read_page/find, KHÔNG click nút "
         f"ảnh vì sẽ mở hộp chọn file hệ thống) rồi dùng file_upload với đường dẫn "
-        f"{image}. Đợi ảnh hiện preview."
+        f"{image}. Đợi ảnh hiện preview. Nếu không gắn được ảnh thì KHÔNG đăng bài: "
+        f"dừng và trả posted=false, error=\"image_upload_failed\"."
         if image else "Bài này không có ảnh; chỉ đăng chữ.")
     return f"""Bạn đăng MỘT bài lên Facebook Page "TA Pickleball" (id {PAGE_ID},
 https://www.facebook.com/tapickleballvn) trong Chrome của chủ page, người đã đăng
