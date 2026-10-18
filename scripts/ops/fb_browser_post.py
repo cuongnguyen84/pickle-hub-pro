@@ -6,8 +6,8 @@ phân phối. Worker social-poster vẫn chọn bài + viết caption (dry run,
 FB_SECONDARY_VIA_BROWSER=1 chặn nó tự đăng); script này lấy kết quả đó rồi
 giao cho `claude -p --chrome` đăng trong phiên Facebook đang đăng nhập.
 
-Một lượt = tối đa 1 bài. launchd gọi mỗi 30', script tự giữ khung giờ VN và
-khoảng cách giữa 2 bài. Sổ cái vẫn là fb_post_log (page_id TA) nên worker
+launchd gọi mỗi 10', mỗi lượt đăng hết bài đang chờ (trần MAX_PER_RUN) trong
+khung giờ VN. Sổ cái vẫn là fb_post_log (page_id TA) nên worker
 không bao giờ chọn lại bài đã đăng.
 
   python3 scripts/ops/fb_browser_post.py            # 1 lượt thật
@@ -40,8 +40,10 @@ PAGE_KEY = "ta-pickleball"
 PAGE_ID = "376956272170210"
 ICT = timezone(timedelta(hours=7))
 WINDOW = (7, 21)  # giờ VN, giống FB_POST_WINDOW_VN của worker
-# ponytail: khoảng cách cố định; tăng/giảm qua env nếu page cần nhịp khác.
-MIN_GAP_MIN = int(os.environ.get("FB_BROWSER_MIN_GAP_MINUTES", "120"))
+# Cuong 18/10: có bài là đăng, không giãn nhịp. Đặt env >0 nếu cần giãn lại.
+MIN_GAP_MIN = int(os.environ.get("FB_BROWSER_MIN_GAP_MINUTES", "0"))
+# ponytail: trần mỗi lượt để một lượt không chạy vô hạn khi backlog lớn.
+MAX_PER_RUN = 10
 CLAUDE_TIMEOUT_S = 15 * 60
 APP_COMMENT = (
     "📲 Tải app ThePickleHub: Tournaments để xem livestream và cập nhật tin tức "
@@ -202,17 +204,23 @@ def main() -> int:
     hour = datetime.now(ICT).hour
     if not dry and not (WINDOW[0] <= hour < WINDOW[1]):
         return 0
-    if not dry and not gap_ok():
-        return 0
-
-    item = next_item()
-    if not item:
-        log("không có bài mới")
-        return 0
-    caption, link, news_id = item["caption"], item["link"], item["news_item_id"]
     if dry:
-        print(json.dumps(item, ensure_ascii=False, indent=2))
+        print(json.dumps(next_item(), ensure_ascii=False, indent=2))
         return 0
+    for _ in range(MAX_PER_RUN):
+        if not (WINDOW[0] <= datetime.now(ICT).hour < WINDOW[1]) or not gap_ok():
+            return 0
+        item = next_item()
+        if not item:
+            log("không có bài mới")
+            return 0
+        if post_one(item) != 0:
+            return 1
+    return 0
+
+
+def post_one(item: dict) -> int:
+    caption, link, news_id = item["caption"], item["link"], item["news_item_id"]
 
     payload = item.get("fb_payload") or {}
     image_url = payload.get("body", {}).get("url") if payload.get("endpoint") == "photos" else None
