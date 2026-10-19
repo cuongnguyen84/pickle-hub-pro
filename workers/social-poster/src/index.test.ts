@@ -7,6 +7,7 @@ import {
   facebookMaxItemAgeDays,
   laterOf,
   isFacebookPostingWindow,
+  isStaleTournamentNews,
   pickNextId,
   pickNextScanLimit,
   sanitizeCaption,
@@ -170,5 +171,15 @@ describe('browser-mode page', () => {
 
   it('keeps both pages on the API when the flag is unset', () => {
     expect(configuredPages(env).every((p) => !p.viaBrowser)).toBe(true);
+  });
+});
+
+describe('isStaleTournamentNews', () => {
+  const now = Date.parse('2026-10-19T12:00:00Z');
+  it('drops tournament news older than 24h, keeps other categories', () => {
+    expect(isStaleTournamentNews('tournament', '2026-10-18T11:00:00Z', now)).toBe(true);
+    expect(isStaleTournamentNews('tournament', '2026-10-18T13:00:00Z', now)).toBe(false);
+    expect(isStaleTournamentNews('player', '2026-10-16T12:00:00Z', now)).toBe(false);
+    expect(isStaleTournamentNews(null, '2026-10-16T12:00:00Z', now)).toBe(false);
   });
 });

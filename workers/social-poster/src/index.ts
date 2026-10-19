@@ -629,7 +629,7 @@ async function pickNextNewsItem(env: Env, page: FacebookPage): Promise<NewsItem 
   const url = new URL(`${env.SUPABASE_URL}/rest/v1/news_items`);
   // title/summary/category ride along so promotional rows can be dropped during
   // selection. Still no content_html, so the scan stays cheap.
-  url.searchParams.set('select', 'id,title,summary,category');
+  url.searchParams.set('select', 'id,title,summary,category,published_at');
   url.searchParams.set('language', 'eq.vi');
   url.searchParams.set('ai_translated', 'eq.true');
   url.searchParams.set('status', 'eq.published');
@@ -645,8 +645,10 @@ async function pickNextNewsItem(env: Env, page: FacebookPage): Promise<NewsItem 
     title: string;
     summary: string | null;
     category: string | null;
+    published_at: string;
   }>;
   const done = new Set(postedIds);
+  const now = Date.now();
 
   // Shadow mode (2026-09-21): record what Jev would have said about these
   // same candidates. Observational only — the `nextId` below is still the
@@ -669,7 +671,10 @@ async function pickNextNewsItem(env: Env, page: FacebookPage): Promise<NewsItem 
   // head of the queue would stall the whole pipeline, which is the same shape
   // as the bug this function was just fixed for.
   const nextId = rows.find(
-    (r) => !done.has(r.id) && !isPromotionalSource(r.title, r.summary, null, r.category),
+    (r) =>
+      !done.has(r.id) &&
+      !isPromotionalSource(r.title, r.summary, null, r.category) &&
+      !isStaleTournamentNews(r.category, r.published_at, now),
   )?.id;
   return nextId ? await fetchNewsItemById(env, nextId) : null;
 }
@@ -686,6 +691,18 @@ export function pickNextId(
 ): string | null {
   const done = new Set(doneIds);
   return orderedIds.slice(0, scanLimit).find((id) => !done.has(id)) ?? null;
+}
+
+// Tin giải hết hạn nhanh hơn 3 ngày chung: 19/10 job Chrome kẹt limit 6 tiếng,
+// backlog đăng "bán kết Virginia Beach" sau khi chung kết đã lên.
+export const TOURNAMENT_MAX_AGE_MS = 24 * 3600_000;
+
+export function isStaleTournamentNews(
+  category: string | null,
+  publishedAt: string,
+  now: number,
+): boolean {
+  return category === 'tournament' && now - Date.parse(publishedAt) > TOURNAMENT_MAX_AGE_MS;
 }
 
 export function pickNextScanLimit(doneCount: number): number {
