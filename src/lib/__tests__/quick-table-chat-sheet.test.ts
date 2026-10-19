@@ -15,6 +15,14 @@ describe("parseSheet", () => {
       { p1: "Lê Tú", p2: "Phạm Long" },
     ]);
   });
+  it("Cuong's file: Team | Vận động viên 1 | Vận động viên 2", () => {
+    expect(parseSheet([["Team", "Vận động viên 1", "Vận động viên 2"], ["Team 01", "Nguyễn Minh Anh", "Trần Quốc Bảo"], ["Team 02", "Lê Hoàng Nam", "Phạm Đức Huy"]]))
+      .toEqual([{ p1: "Nguyễn Minh Anh", p2: "Trần Quốc Bảo" }, { p1: "Lê Hoàng Nam", p2: "Phạm Đức Huy" }]);
+  });
+  it("unknown headers: numbered team labels are skipped", () => {
+    expect(parseSheet([["Mã", "Người 1", "Người 2"], ["Team 01", "Nguyễn Minh Anh", "Trần Quốc Bảo"], ["Team 02", "Lê Hoàng Nam", "Phạm Đức Huy"]]).slice(-2))
+      .toEqual([{ p1: "Nguyễn Minh Anh", p2: "Trần Quốc Bảo" }, { p1: "Lê Hoàng Nam", p2: "Phạm Đức Huy" }]);
+  });
   it("one player column holding pairs", () => {
     expect(parseSheet([["#", "Cặp VĐV"], ["1", "Nam - Hùng"], ["2", "Tú & Long"]]))
       .toEqual([{ p1: "Nam", p2: "Hùng" }, { p1: "Tú", p2: "Long" }]);

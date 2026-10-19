@@ -260,7 +260,7 @@ export function defaultName(d: Draft, lang: "vi" | "en", now = new Date()): stri
 // ---------- đọc bảng tính tại chỗ (không qua AI) ----------
 
 const HEADER_TEAM = /^(tên\s*)?(đội|team|cặp|cap|doi)(\s*name)?$/i;
-const HEADER_PLAYER = /(vđv|vdv|player|họ\s*(và\s*)?tên|ho\s*ten|^tên|^ten|^name|người chơi|nguoi choi|thành viên|member|athlete)/i;
+const HEADER_PLAYER = /(vđv|vdv|vận động viên|van dong vien|player|họ\s*(và\s*)?tên|ho\s*ten|^tên|^ten|^name|người chơi|nguoi choi|thành viên|member|athlete)/i;
 const HEADER_CLUB = /^(clb|club|câu lạc bộ|cau lac bo|đơn vị|don vi)$/i;
 const HEADER_ANY = /^(stt|tt|#|no\.?|số|sdt|sđt|phone|điện thoại|dien thoai|email|ghi chú|note|trạng thái|status|tiền|lệ phí|phí|ck|dupr|trình|level|giới tính|gender)/i;
 const PAIR_SPLIT = /\s+(?:-|–|&|\/|\+|và|and)\s+|\s*[&/+]\s*/i;
@@ -269,6 +269,8 @@ const PAIR_SPLIT = /\s+(?:-|–|&|\/|\+|và|and)\s+|\s*[&/+]\s*/i;
 function isNameCell(s: string): boolean {
   if (!/\p{L}/u.test(s)) return false;
   if (/^(đã|chưa|da|chua)\s*(ck|chuyển|chuyen|đóng|dong|tt)/i.test(s)) return false;
+  // nhãn đánh số ("Team 01", "Đội 5") không phải tên người
+  if (/^(team|đội|doi|cặp|cap|nhóm|nhom|pair)\s*#?\d+$/i.test(s)) return false;
   // "Nam" là tên phổ biến nên không coi là giới tính
   if (/^(nữ|male|female|x|ok|có|không|yes|no)$/i.test(s)) return false;
   return !/^[\d\s.,:/+()kđ₫vndVND-]+$/.test(s);
