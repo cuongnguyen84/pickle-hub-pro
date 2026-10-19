@@ -18,7 +18,7 @@ import {
   UserMinus, ClipboardList, MapPin, Trash2, RefreshCw, Pencil, ListRestart, Monitor,
 } from 'lucide-react';
 import QuickTablePlayoffView from '@/components/quicktable/QuickTablePlayoffView';
-import type { SwapSlot } from '@/components/tournament/PlayoffBracket';
+import PlayoffBracket, { type SwapSlot } from '@/components/tournament/PlayoffBracket';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import RefereeManagement from '@/components/quicktable/RefereeManagement';
@@ -45,7 +45,7 @@ import {
   resolveBracketConflicts,
 } from '@/lib/quick-table-seeding-v2';
 import { scheduleMatches } from '@/lib/round-robin';
-import { assignSeries, maxSeries, seriesBracket, seriesLine, seriesName, seriesPlan } from '@/lib/quick-table-series';
+import { assignSeries, maxSeries, seriesBracket, seriesLine, seriesName, seriesPlan, seriesPreview } from '@/lib/quick-table-series';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -353,7 +353,13 @@ const QuickTableView = () => {
   const seriesCap = maxSeries(groupSizesNow);
   const seriesCount = Math.min(seriesChoice ?? table?.playoff_series ?? 1, seriesCap);
   const seriesStyle = table?.playoff_series_style ?? 'series';
-  const playoffDivisions = [...new Set(playoffMatches.map((m) => m.playoff_division ?? 0))].sort();
+  // Chưa tạo playoff mà giải chia nhánh → sơ đồ tạm tính theo BXH hiện tại.
+  const preview = !hasPlayoff && seriesCount > 1 && table?.status === 'group_stage'
+    ? seriesPreview(groups, players, seriesCount, language === 'en' ? 'en' : 'vi')
+    : null;
+  const playoffDivisions = preview
+    ? preview.series.map((_, d) => d)
+    : [...new Set(playoffMatches.map((m) => m.playoff_division ?? 0))].sort();
 
   const startSeriesPlayoff = async (count: number) => {
     if (!table) return;
@@ -996,9 +1002,9 @@ const QuickTableView = () => {
               type="button"
               aria-pressed={activeTab === 'playoff'}
               className={cn('tl-tab', activeTab === 'playoff' && 'active')}
-              onClick={() => hasPlayoff && setActiveTab('playoff')}
-              disabled={!hasPlayoff}
-              style={!hasPlayoff ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
+              onClick={() => (hasPlayoff || preview) && setActiveTab('playoff')}
+              disabled={!hasPlayoff && !preview}
+              style={!hasPlayoff && !preview ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
             >
               {t.quickTable.view.playoffTab}
               {hasPlayoff && <span className="count">{playoffMatches.length}</span>}
@@ -1483,10 +1489,26 @@ const QuickTableView = () => {
                       onClick={() => setPlayoffDivision(d)}
                     >
                       {seriesName(seriesStyle, d, language === 'en' ? 'en' : 'vi')}
-                      <span className="count">{playoffMatches.filter((m) => (m.playoff_division ?? 0) === d).length}</span>
+                      <span className="count">{preview ? preview.series[d].length : playoffMatches.filter((m) => (m.playoff_division ?? 0) === d).length}</span>
                     </button>
                   ))}
                 </div>
+              )}
+              {preview && (
+                <>
+                  <p style={{ margin: 0, fontSize: 13.5, color: 'var(--tl-fg-3)' }}>
+                    {language === 'en'
+                      ? 'Projected from the current standings. Names are filled in when the playoff is created after the group stage.'
+                      : 'Sơ đồ tạm tính theo bảng xếp hạng hiện tại. Tên VĐV được điền khi tạo playoff sau vòng bảng.'}
+                  </p>
+                  <PlayoffBracket
+                    key={`pv-${playoffDivision}`}
+                    matches={preview.series[Math.min(playoffDivision, preview.series.length - 1)]}
+                    players={preview.players}
+                    canEdit={false}
+                    onScoreUpdate={() => {}}
+                  />
+                </>
               )}
               {hasPlayoff && (
                 <QuickTablePlayoffView

@@ -157,3 +157,53 @@ export function seriesLine(name: string, s: SeriesSlot, lang: "vi" | "en", unit?
     ? `${name}: ${s.size} ${unit ?? "đội"}${s.byes ? ` (${s.byes} miễn vòng 1)` : ""}`
     : `${name}: ${s.size} ${unit ?? "teams"}${s.byes ? ` (${s.byes} byes)` : ""}`;
 }
+
+const RANK_VI = ["Nhất", "Nhì", "Ba", "Tư", "Năm", "Sáu", "Bảy", "Tám"];
+
+export interface PreviewPlayer { id: string; name: string; seed: number | null; group_id: string | null }
+export interface PreviewMatch {
+  id: string; player1_id: string | null; player2_id: string | null;
+  score1: null; score2: null; winner_id: null; status: "pending";
+  playoff_round: number; playoff_match_number: number;
+  bracket_position: null; next_match_id: null; next_match_slot: null;
+}
+
+/**
+ * Sơ đồ tạm tính của từng nhánh trước khi tạo playoff: mỗi ô là một hạng
+ * ("Nhất A", "Nhì C"…) mang thành tích hiện tại của người đang giữ hạng đó,
+ * nên xếp hạt giống / cặp đấu đúng như lúc tạo thật nếu bảng giữ nguyên.
+ */
+export function seriesPreview<P extends Ranked>(
+  groups: { id: string; name: string }[], players: P[], k: number, lang: "vi" | "en",
+): { players: PreviewPlayer[]; series: PreviewMatch[][] } {
+  const label = (rank: number, g: string) => (lang === "vi" ? `${RANK_VI[rank] ?? `Hạng ${rank + 1}`} ${g}` : `${g}${rank + 1}`);
+  const slots = groups.flatMap((g) =>
+    players
+      .filter((p) => p.group_id === g.id)
+      .sort((a, b) => b.matches_won - a.matches_won || b.point_diff - a.point_diff || b.points_for - a.points_for)
+      .map((p, i) => ({ ...p, id: `pv-${g.id}-${i}`, name: label(i, g.name) })),
+  );
+  const out: PreviewPlayer[] = [{ id: BYE_PLAYER_ID, name: "BYE", seed: null, group_id: null }];
+  const series = assignSeries(groups.map((g) => g.id), slots, k).map((ordered, d) => {
+    const first = seriesBracket(ordered);
+    for (const p of first) for (const sp of [p.player1, p.player2]) {
+      const s = slots.find((x) => x.id === sp.playerId);
+      if (s) out.push({ id: s.id, name: s.name, seed: sp.seed, group_id: s.group_id ?? null });
+    }
+    const matches: PreviewMatch[] = [];
+    for (let round = 1, n = first.length; n >= 1; round++, n /= 2) {
+      for (let m = 1; m <= n; m++) {
+        const p = round === 1 ? first[m - 1] : null;
+        matches.push({
+          id: `pv-${d}-${round}-${m}`,
+          player1_id: p?.player1.playerId ?? null, player2_id: p?.player2.playerId ?? null,
+          score1: null, score2: null, winner_id: null, status: "pending",
+          playoff_round: round, playoff_match_number: m,
+          bracket_position: null, next_match_id: null, next_match_slot: null,
+        });
+      }
+    }
+    return matches;
+  });
+  return { players: out, series };
+}
