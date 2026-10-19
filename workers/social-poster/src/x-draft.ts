@@ -38,7 +38,7 @@ import {
   type RoundupMatch,
 } from './x-roundup';
 
-const NEWS_SELECT = 'id,title,summary,content_html,category,importance,published_at,source';
+const NEWS_SELECT = 'id,slug,title,summary,content_html,category,importance,published_at,source';
 
 /**
  * How many news posts one run may create. Cuong dropped the 2-4/day editorial
@@ -91,6 +91,16 @@ export interface NewsRow {
   importance: number;
   published_at: string;
   source?: string | null;
+  slug?: string | null;
+}
+
+/**
+ * EN article URL, replied under the post (status link_url). Free since X went
+ * through Chrome on 19/10/2026; via the API the reply costs $0.20, so revisit
+ * this if X_VIA_BROWSER goes back to "0".
+ */
+export function newsLinkUrl(slug: string | null | undefined): string | null {
+  return slug ? `https://www.thepicklehub.net/news/${slug}` : null;
 }
 
 export interface XDraftBody {
@@ -344,6 +354,7 @@ async function insertDraft(env: XDraftEnv, row: NewsRow, body: string): Promise<
       status: NEW_ROW_STATUS,
       source_table: 'news_items',
       source_id: row.id,
+      link_url: newsLinkUrl(row.slug),
     }),
   });
   if (!res.ok) throw new Error(`x_posts insert failed: ${res.status} ${await res.text()}`);
