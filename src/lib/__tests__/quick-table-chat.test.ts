@@ -29,19 +29,23 @@ describe("nextSlot — hỏi đúng thứ còn thiếu", () => {
     d = applyPatch(d, { entries: teams(16) });
     expect(nextSlot(d)).toBe("name");
     d = { ...d, name: "Giải CLB" };
+    expect(nextSlot(d)).toBe("courts");
+    d = applyPatch(d, { courts: [1, 2, 3, 4] });
+    expect(nextSlot(d)).toBe("start_time");
+    d = applyPatch(d, { start_time: "19:00" });
     expect(nextSlot(d)).toBe("options");
     d = { ...d, options_done: true };
     expect(nextSlot(d)).toBe("confirm");
   });
 
   it("one message with everything goes straight to options", () => {
-    const d = applyPatch({}, { is_doubles: true, player_count: 16, group_count: 4, series: 2, series_style: "medal", name: "CLB", entries: teams(16) });
+    const d = applyPatch({}, { is_doubles: true, player_count: 16, group_count: 4, series: 2, series_style: "medal", name: "CLB", entries: teams(16), courts: [1, 2], start_time: "08:00" });
     expect(d.series_style).toBe("medal");
     expect(nextSlot(d)).toBe("options");
   });
 
   it("registration / later skip options", () => {
-    const d: Draft = { is_doubles: true, player_count: 16, group_count: 4, series: 1, roster_mode: "registration", name: "x" };
+    const d: Draft = { is_doubles: true, player_count: 16, group_count: 4, series: 1, roster_mode: "registration", name: "x", courts_done: true };
     expect(nextSlot(d)).toBe("confirm");
   });
 
@@ -54,6 +58,14 @@ describe("nextSlot — hỏi đúng thứ còn thiếu", () => {
   it("asks how to pair when a doubles list has only single names", () => {
     const d = applyPatch({ is_doubles: true }, { entries: [{ p1: "a" }, { p1: "b" }, { p1: "c" }, { p1: "d" }] });
     expect(nextSlot(d)).toBe("pairing");
+  });
+});
+
+describe("courts step", () => {
+  it("skipping courts skips the start time too", () => {
+    const base: Draft = { is_doubles: true, player_count: 9, group_count: 3, roster_mode: "later", name: "x" };
+    expect(nextSlot(base)).toBe("courts");
+    expect(nextSlot({ ...base, courts_done: true })).toBe("confirm");
   });
 });
 
@@ -87,7 +99,7 @@ describe("applyPatch never trusts the model", () => {
       player_count: "lots", group_count: 99, start_time: "7pm", courts: [0, 2, 2, "x", 3], default_sets: 2,
       entries: [{ p1: "  Nam  " }, { p1: "" }, { p2: "orphan" }], evil: true,
     });
-    expect(d).toEqual({ courts: [2, 3], entries: [{ p1: "Nam" }], roster_mode: "now", pairing_done: false, player_count: 1 });
+    expect(d).toEqual({ courts: [2, 3], courts_done: true, entries: [{ p1: "Nam" }], roster_mode: "now", pairing_done: false, player_count: 1 });
   });
 });
 

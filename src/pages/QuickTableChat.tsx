@@ -8,7 +8,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Check, ChevronDown, Copy, Loader2, MessageSquareText, Paperclip, Pencil, Send, Shuffle, Sparkles, Trash2, TriangleAlert, Trophy } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, Copy, Loader2, MessageSquareText, Paperclip, Pencil, RotateCcw, Send, Shuffle, Sparkles, Trash2, TriangleAlert, Trophy, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { TheLineLayout } from "@/components/layout";
 import { SetupLoginGate } from "@/components/tournament/SetupShell";
@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
+import { useConfirm } from "@/hooks/useConfirm";
 import { useQuickTable, type QuickTable } from "@/hooks/useQuickTable";
 import { supabase } from "@/integrations/supabase/client";
 import { getSiteUrl } from "@/lib/auth-config";
@@ -94,12 +95,22 @@ const COPY = {
     later: "Để sau, tự nhập",
     paste: (d: Draft) => `Dán danh sách vào ô bên dưới nhé — mỗi dòng 1 ${d.is_doubles === false ? "VĐV" : "đội, kiểu “Nam - Hùng”"}. Có ảnh chụp hay file Excel thì tải lên cũng được.`,
     name: "Đặt tên giải là gì?",
+    courtsQ: "Có bao nhiêu sân thi đấu? Mình sẽ tự xếp sân và giờ cho từng trận.",
+    courtN: (k: number) => `${k} sân`,
+    courtsSkip: "Chưa biết, bỏ qua",
+    timeQ: "Mấy giờ bắt đầu? Gõ kiểu “7h tối” cũng được.",
+    timeSkip: "Chưa biết",
+    fCourts: "Sân & giờ",
+    undo: "Quay lại bước trước",
+    reset: "Làm lại từ đầu",
+    resetTitle: "Xoá hết và làm lại?",
+    resetDesc: "Toàn bộ hội thoại và bản nháp sẽ bị xoá. Giải đã tạo không bị ảnh hưởng.",
+    resetOk: "Làm lại",
     customName: "Gõ tên khác ở ô bên dưới",
     options: "Gần xong rồi! Muốn thêm gì nữa không?",
-    optSeed: "Hạt giống", optCourts: "Sân & giờ", optSets: (s: number) => `Số set: ${s === 1 ? "1 set" : `BO${s}`}`, optTeam: "Tránh cùng CLB",
+    optSeed: "Hạt giống", optSets: (s: number) => `Số set: ${s === 1 ? "1 set" : `BO${s}`}`, optTeam: "Tránh cùng CLB",
     optDone: "Xong, xem lại",
     hintSeed: (u: string) => `Gõ tên các ${u} hạt giống theo thứ tự, ví dụ: “hạt giống: Nam - Hùng, Tú - Long”. Hạt giống sẽ được tách ra các bảng khác nhau.`,
-    hintCourts: "Gõ sân và giờ, ví dụ: “sân 1 đến 4, bắt đầu 19:00”.",
     hintTeam: "Gõ những đội cùng CLB, ví dụ: “Nam - Hùng, Tú - Long cùng CLB Hà Đông”. Mình sẽ xếp họ vào các bảng khác nhau.",
     setsQ: "Mỗi trận đánh mấy set?",
     set1: "1 set", set3: "Best of 3", set5: "Best of 5",
@@ -189,12 +200,22 @@ const COPY = {
     later: "Later, I'll type it",
     paste: (d: Draft) => `Paste the list below — one ${d.is_doubles === false ? "player" : "team, like “Nam - Hung”"} per line. A photo or spreadsheet works too.`,
     name: "What's the tournament called?",
+    courtsQ: "How many courts do you have? I'll assign courts and times to every match.",
+    courtN: (k: number) => `${k} ${k === 1 ? "court" : "courts"}`,
+    courtsSkip: "Not sure, skip",
+    timeQ: "What time do you start? You can type “7pm” too.",
+    timeSkip: "Not sure",
+    fCourts: "Courts & time",
+    undo: "Undo last step",
+    reset: "Start over",
+    resetTitle: "Clear everything and start over?",
+    resetDesc: "The whole chat and draft will be cleared. Tournaments already created are not affected.",
+    resetOk: "Start over",
     customName: "Type another name below",
     options: "Almost done! Anything else?",
-    optSeed: "Seeds", optCourts: "Courts & time", optSets: (s: number) => `Sets: ${s === 1 ? "1 game" : `BO${s}`}`, optTeam: "Keep clubs apart",
+    optSeed: "Seeds", optSets: (s: number) => `Sets: ${s === 1 ? "1 game" : `BO${s}`}`, optTeam: "Keep clubs apart",
     optDone: "Done, review",
     hintSeed: (u: string) => `Type the seeded ${u} in order, e.g. “seeds: Nam - Hung, Tu - Long”. Seeds are placed in different groups.`,
-    hintCourts: "Type courts and start time, e.g. “courts 1 to 4, start 19:00”.",
     hintTeam: "Tell me which teams share a club, e.g. “Nam - Hung, Tu - Long are Ha Dong club”. I'll keep them in different groups.",
     setsQ: "How many games per match?",
     set1: "1 game", set3: "Best of 3", set5: "Best of 5",
@@ -269,6 +290,7 @@ const QuickTableChat = () => {
 function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   const c = COPY[lang];
   const navigate = useNavigate();
+  const confirm = useConfirm();
   const { createTable, setupRosterAtomic, getUserQuotaInfo } = useQuickTable();
   const storageKey = STORAGE_PREFIX + userId;
 
@@ -331,7 +353,27 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     setMessages((m) => [...m, { id: uid(), role: "bot", text: [ack?.trim(), q].filter(Boolean).join(" ") }]);
   }, [c]);
 
-  const pushUser = (text: string) => setMessages((m) => [...m, { id: uid(), role: "user", text }]);
+  // Quay lại: ảnh chụp nháp + hội thoại trước mỗi lượt người dùng (chỉ trong phiên).
+  const history = useRef<Array<{ draft: Draft; messages: Msg[] }>>([]);
+  const [canUndo, setCanUndo] = useState(false);
+  const snap = () => {
+    history.current = [...history.current.slice(-29), { draft, messages }];
+    setCanUndo(true);
+  };
+  const undo = () => {
+    const prev = history.current.pop();
+    setCanUndo(history.current.length > 0);
+    if (!prev) return;
+    setDraft(prev.draft);
+    setMessages(prev.messages);
+    setSubMenu(null);
+    setFailed(null);
+  };
+
+  const pushUser = (text: string) => {
+    snap();
+    setMessages((m) => [...m, { id: uid(), role: "user", text }]);
+  };
 
   const choose = (label: string, patch: Partial<Draft>) => {
     pushUser(label);
@@ -341,7 +383,14 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   const send = async (out?: Outgoing, isRetry = false) => {
     const msg = out ?? { text: input.trim() };
     if (!msg.text || busy) return;
+    // Lệnh gõ tay, xử lý tại chỗ không gọi AI.
+    if (!out && !isRetry) {
+      const cmd = msg.text.toLocaleLowerCase("vi").replace(/[.!]+$/, "").trim();
+      if (/^(làm lại|lam lai|xoá hết|xóa hết|xoa het|reset|start over|restart)$/.test(cmd)) { setInput(""); void resetAll(); return; }
+      if (/^(quay lại|quay lai|undo|back)$/.test(cmd)) { setInput(""); undo(); return; }
+    }
     if (!isRetry) {
+      snap();
       setMessages((m) => [...m, { id: uid(), role: "user", text: msg.text, label: msg.label }]);
       if (!out) setInput("");
     }
@@ -455,6 +504,19 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           { label: c.upload, onClick: () => fileRef.current?.click() },
           { label: c.later, onClick: () => choose(c.later, { roster_mode: "later" }) },
         ];
+      case "courts":
+        return [
+          ...[1, 2, 3, 4, 5, 6, 8].map((k) => ({
+            label: c.courtN(k),
+            onClick: () => choose(c.courtN(k), { courts: Array.from({ length: k }, (_, i) => i + 1), courts_done: true }),
+          })),
+          { label: c.courtsSkip, onClick: () => choose(c.courtsSkip, { courts_done: true }) },
+        ];
+      case "start_time":
+        return [
+          ...["07:00", "08:00", "09:00", "17:00", "18:00", "19:00"].map((t) => ({ label: t, onClick: () => choose(t, { start_time: t, time_done: true }) })),
+          { label: c.timeSkip, onClick: () => choose(c.timeSkip, { time_done: true }) },
+        ];
       case "name": {
         const name = defaultName(draft, lang);
         return [{ label: name, onClick: () => choose(name, { name }) }];
@@ -470,7 +532,6 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
         return [
           { label: c.optDone, recommended: true, onClick: () => choose(c.optDone, { options_done: true }) },
           { label: c.optSeed, onClick: hint(c.optSeed, c.hintSeed(unit)) },
-          { label: c.optCourts, onClick: hint(c.optCourts, c.hintCourts) },
           { label: c.optSets(draft.default_sets ?? 1), onClick: () => { pushUser(c.optSets(draft.default_sets ?? 1)); pushBot(c.setsQ); setSubMenu("sets"); } },
           { label: c.optTeam, onClick: hint(c.optTeam, c.hintTeam) },
           ...((draft.series ?? 1) > 1
@@ -492,8 +553,9 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   })();
 
   // ---------- sửa từ Bản nháp ----------
-  const editField = (field: "format" | "count" | "groups" | "roster" | "name" | "extra") => {
+  const editField = (field: EditField) => {
     setDraftOpen(false);
+    snap();
     const d = { ...draft };
     if (field === "format") { d.is_doubles = undefined; d.pairing_done = false; }
     if (field === "count") { d.player_count = undefined; d.entries = undefined; d.roster_mode = undefined; d.group_count = undefined; d.series = undefined; }
@@ -501,6 +563,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     if (field === "roster") { d.entries = undefined; d.roster_mode = undefined; d.options_done = false; }
     if (field === "name") d.name = undefined;
     if (field === "extra") d.options_done = false;
+    if (field === "courts") { d.courts = undefined; d.start_time = undefined; d.courts_done = false; d.time_done = false; }
     advance(d);
   };
 
@@ -517,9 +580,12 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     });
     if (!table) { setCreating(false); return; } // createTable đã toast lỗi (quota/auth)
     const series = Math.min(draft.series ?? 1, seriesCap(draft));
-    if ((draft.default_sets ?? 1) > 1 || series > 1) {
+    // Có danh sách → setupRosterAtomic lưu sân + xếp lịch; chưa có → lưu sẵn lên giải cho bước nhập sau.
+    const courtsOnTable = !draft.entries?.length && !!draft.courts?.length;
+    if ((draft.default_sets ?? 1) > 1 || series > 1 || courtsOnTable) {
       await supabase.from("quick_tables").update({
         ...((draft.default_sets ?? 1) > 1 ? { default_sets: draft.default_sets } : {}),
+        ...(courtsOnTable ? { courts: draft.courts!.map(String), start_time: draft.start_time ?? null } : {}),
         ...(series > 1 ? { playoff_series: series, playoff_series_style: draft.series_style ?? "series" } : {}),
       } as never).eq("id", table.id);
     }
@@ -568,6 +634,15 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     setCreated(null);
     setDraft({});
     setMessages(freshMessages(c, {}));
+    setSubMenu(null);
+    setFailed(null);
+    setInput("");
+    history.current = [];
+    setCanUndo(false);
+  };
+
+  const resetAll = async () => {
+    if (await confirm({ title: c.resetTitle, description: c.resetDesc, confirmText: c.resetOk, destructive: true })) startOver();
   };
 
   const quotaMsg = quotaFull != null ? c.quotaFull(quotaFull) : null;
@@ -584,9 +659,16 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           <h1 style={{ flex: 1, margin: 0, fontSize: 17, fontWeight: 600, color: "var(--tl-fg)", display: "flex", alignItems: "center", gap: 6 }}>
             <Sparkles className="w-4 h-4" style={{ color: "var(--tl-green)" }} /> {c.title}
           </h1>
-          <Button asChild variant="link" size="sm" style={{ color: "var(--tl-fg-3)" }}>
-            <Link to="/tools/quick-tables">{c.classicForm}</Link>
-          </Button>
+          {!created && (
+            <>
+              <Button variant="ghost" size="icon" onClick={undo} disabled={!canUndo || busy || creating} aria-label={c.undo} title={c.undo}>
+                <Undo2 className="w-5 h-5" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => void resetAll()} disabled={busy || creating} aria-label={c.reset} title={c.reset}>
+                <RotateCcw className="w-5 h-5" />
+              </Button>
+            </>
+          )}
         </header>
 
         {/* bản nháp dính trên cùng */}
@@ -695,7 +777,10 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
                 {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </Button>
             </form>
-            <p style={{ fontSize: 11, color: "var(--tl-fg-3)", margin: "6px 2px 0" }}>{c.reload}</p>
+            <p style={{ fontSize: 11, color: "var(--tl-fg-3)", margin: "6px 2px 0", display: "flex", gap: 8, justifyContent: "space-between", flexWrap: "wrap" }}>
+              <span>{c.reload}</span>
+              <Link to="/tools/quick-tables" style={{ color: "var(--tl-fg-2)", textDecoration: "underline" }}>{c.classicForm}</Link>
+            </p>
           </div>
         )}
       </div>
@@ -704,6 +789,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
 }
 
 type C = (typeof COPY)["vi"];
+type EditField = "format" | "count" | "groups" | "roster" | "name" | "courts" | "extra";
 
 function seriesLabel(d: Draft, lang: Lang): string | null {
   const k = Math.min(d.series ?? 1, seriesCap(d));
@@ -725,6 +811,8 @@ function questionFor(c: C, d: Draft, s: Slot): string {
     case "roster": return c.roster(u);
     case "paste": return c.paste(d);
     case "name": return c.name;
+    case "courts": return c.courtsQ;
+    case "start_time": return c.timeQ;
     case "options": return c.options;
     case "confirm": return c.confirm;
   }
@@ -859,13 +947,11 @@ function ChipRow({ chips }: { chips: Chip[] }) {
 
 function DraftPanel({ draft, c, lang, onEdit, onEntries }: {
   draft: Draft; c: C; lang: Lang;
-  onEdit: (f: "format" | "count" | "groups" | "roster" | "name" | "extra") => void;
+  onEdit: (f: EditField) => void;
   onEntries: (e: Entry[]) => void;
 }) {
   const n = entryCount(draft);
   const extras = [
-    draft.courts?.length ? c.courts(draft.courts) : null,
-    draft.start_time ?? null,
     (draft.default_sets ?? 1) > 1 ? `BO${draft.default_sets}` : null,
     draft.entries?.some((e) => e.seed) ? c.optSeed : null,
   ].filter(Boolean).join(" · ");
@@ -875,6 +961,7 @@ function DraftPanel({ draft, c, lang, onEdit, onEntries }: {
     [c.fGroups, draft.group_count && n ? (groupOptions(n).find((o) => o.groupCount === draft.group_count) ? [c.groupLabel(groupOptions(n).find((o) => o.groupCount === draft.group_count)!), seriesLabel(draft, lang)].filter(Boolean).join(" · ") : c.empty) : c.empty, "groups"],
     [c.fRoster, draft.entries?.length ? `${draft.entries.length} ${c.unit(draft)}` : draft.roster_mode === "registration" ? c.rosterReg : draft.roster_mode === "later" ? c.rosterLater : c.empty, "roster"],
     [c.fName, draft.name ?? c.empty, "name"],
+    [c.fCourts, draft.courts?.length ? [c.courts(draft.courts), draft.start_time].filter(Boolean).join(" · ") : c.empty, "courts"],
     [c.fExtra, extras || c.empty, "extra"],
   ];
   return (

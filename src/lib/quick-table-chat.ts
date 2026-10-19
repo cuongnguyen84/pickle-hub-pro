@@ -36,6 +36,9 @@ export interface Draft {
   pairing_done?: boolean;
   /** đã qua bước "thêm tuỳ chọn" */
   options_done?: boolean;
+  /** đã trả lời (hoặc bỏ qua) câu số sân / giờ bắt đầu */
+  courts_done?: boolean;
+  time_done?: boolean;
 }
 
 export type Slot =
@@ -49,6 +52,8 @@ export type Slot =
   | "roster"
   | "paste"
   | "name"
+  | "courts"
+  | "start_time"
   | "options"
   | "confirm";
 
@@ -110,6 +115,9 @@ export function nextSlot(d: Draft): Slot {
     if (d.roster_mode === "now") return "paste";
   }
   if (!d.name?.trim()) return "name";
+  if (!d.courts_done && !d.courts?.length) return "courts";
+  // giờ chỉ có nghĩa khi có sân (lịch tự xếp theo sân + giờ)
+  if (d.courts?.length && !d.time_done && !d.start_time) return "start_time";
   if (d.entries?.length && !d.options_done) return "options";
   return "confirm";
 }
@@ -167,10 +175,11 @@ export function applyPatch(d: Draft, patch: unknown): Draft {
   }
   if (Array.isArray(p.courts)) {
     const courts = [...new Set(p.courts.map(Number).filter((c) => Number.isInteger(c) && c > 0 && c < 100))];
-    if (courts.length) next.courts = courts;
+    if (courts.length) { next.courts = courts; next.courts_done = true; }
   }
   if (typeof p.start_time === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(p.start_time)) {
     next.start_time = p.start_time;
+    next.time_done = true;
   }
   if (p.default_sets === 1 || p.default_sets === 3 || p.default_sets === 5) next.default_sets = p.default_sets;
   if (p.series === 1 || p.series === 2 || p.series === 3) next.series = p.series;

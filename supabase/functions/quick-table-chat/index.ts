@@ -87,8 +87,8 @@ Trường của patch:
   - seed: 1, 2, 3… nếu người dùng chỉ định hạt giống; chỉ gán cho đội có trong danh sách.
 - Nếu tin nhắn kèm ẢNH hoặc PDF: đó là danh sách đăng ký (ảnh chụp Zalo/Messenger, bảng Excel, giấy viết tay, poster). Đọc MỌI dòng tên trong đó thành entries theo đúng quy tắc trên; bỏ tiêu đề cột, số thứ tự, số điện thoại, số tiền, trạng thái chuyển khoản. Chữ không đọc chắc thì vẫn ghi theo cách đọc gần nhất, không bỏ dòng. Ảnh không có danh sách tên → patch rỗng, reply nói ngắn là không thấy danh sách.
 - roster_mode: "now" nếu dán danh sách, "later" nếu nói sẽ nhập sau, "registration" nếu muốn người chơi tự đăng ký.
-- courts: danh sách số sân ("sân 1 đến 4" → [1,2,3,4], "sân 2,3,5" → [2,3,5]).
-- start_time: giờ bắt đầu dạng HH:MM 24 giờ ("7h tối" → "19:00", "8h sáng" → "08:00").
+- courts: danh sách số sân ("sân 1 đến 4" → [1,2,3,4], "sân 2,3,5" → [2,3,5]). Chỉ nói số lượng ("có 4 sân", "4") khi ứng dụng đang hỏi courts → [1,2,3,4].
+- start_time: giờ bắt đầu dạng HH:MM 24 giờ ("7h tối" → "19:00", "8h sáng" → "08:00", "7h30" → "07:30"). Chỉ một con số khi ứng dụng đang hỏi start_time → hiểu là giờ đó.
 - default_sets: 1, 3 hoặc 5 (đánh 1 set / best of 3 / best of 5).
 - series: số nhánh playoff sau vòng bảng (1–3). "nhánh vàng, nhánh bạc" / "series A, B" / "nhất nhì đánh A, ba tư đánh B" → 2; thêm "nhánh đồng" / "series C" → 3; "chỉ lấy top 2" → 1.
 - series_style: "medal" nếu người dùng gọi là vàng/bạc/đồng, "series" nếu gọi series A/B/C.
