@@ -3,6 +3,7 @@ import {
   buildLinkReply,
   checkXBody,
   countXWeighted,
+  handleXRun,
   isRetryableXStatus,
   shouldRefreshToken,
   xLinkDelaySeconds,
@@ -137,5 +138,12 @@ describe('buildLinkReply', () => {
     expect(buildLinkReply('https://www.thepicklehub.net/news/a')).toBe(
       '🔗 https://www.thepicklehub.net/news/a',
     );
+  });
+});
+
+describe('X_VIA_BROWSER', () => {
+  it('refuses to publish but lets dry runs through to the queue', async () => {
+    const e = env({ X_CLIENT_ID: 'id', X_CLIENT_SECRET: 's', X_VIA_BROWSER: '1' });
+    expect(await handleXRun(e, {})).toEqual({ ok: true, skipped: true, reason: 'x_via_browser' });
   });
 });

@@ -97,6 +97,10 @@ X_POST_MIN_GAP_MINUTES = "0"
 # the post has been distributed, short enough that early readers still see it.
 X_LINK_COMMENT_DELAY_SECONDS = "90"
 X_MAX_ATTEMPTS = "3"
+# 19/10/2026: X is posted from Cuong's logged-in Chrome (scripts/ops/x_browser_post.py
+# + launchd com.picklehub.x-browser), same move as TA Pickleball. /x/run only
+# answers dry runs while this is "1". Set "0" + deploy to go back to the API.
+X_VIA_BROWSER = "1"
 # Shadow-mode model. An alias moves when TypeSafe ships a release, so pin a
 # version here ("jev-1.13.0") if two weeks of rows need to come from one model.
 # The response reports which version actually answered and that is what gets
