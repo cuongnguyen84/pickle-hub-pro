@@ -151,8 +151,9 @@ def build_prompt(caption: str, link: str, image: Path | None, retry: bool = Fals
         if image else "Bài này không có ảnh; chỉ đăng chữ.")
     retry_step = (
         "0. Lần trước đăng bài này bị NGẮT GIỮA CHỪNG, có thể bài đã lên. Trước tiên mở "
-        "https://www.facebook.com/tapickleballvn, xem các bài gần nhất: nếu đã có bài mở "
-        "đầu giống dòng đầu caption thì KHÔNG đăng lại — lấy permalink bài đó, bổ sung "
+        "https://www.facebook.com/tapickleballvn, xem các bài gần nhất (24h): caption được "
+        "viết lại mỗi lượt nên chữ sẽ KHÁC — so theo chủ đề/nội dung. Nếu đã có bài cùng "
+        "nội dung thì đó chính là bài này, KHÔNG đăng lại — lấy permalink bài đó, bổ sung "
         "bình luận còn thiếu ở bước 6, làm bước 7-8 rồi trả posted=true.\n"
         if retry else "")
     return f"""Bạn đăng MỘT bài lên Facebook Page "TA Pickleball" (id {PAGE_ID},
