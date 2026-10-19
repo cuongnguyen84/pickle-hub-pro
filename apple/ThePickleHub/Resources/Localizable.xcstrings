@@ -20110,12 +20110,22 @@
         }
       }
     },
-    "%@: hạng %lld–%lld mỗi bảng" : {
+    "%@: %lld đội, %lld miễn vòng 1" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@: ranks %lld–%lld in each group"
+            "value" : "%@: %lld teams, %lld byes"
+          }
+        }
+      }
+    },
+    "%@: %lld đội" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: %lld teams"
           }
         }
       }

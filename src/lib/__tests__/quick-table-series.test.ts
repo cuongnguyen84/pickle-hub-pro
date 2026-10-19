@@ -1,26 +1,91 @@
 import { describe, expect, it } from "vitest";
-import { maxSeries, seriesName, splitIntoSeries } from "@/lib/quick-table-series";
+import { assignSeries, crossGroupCompare, maxSeries, seriesBracket, seriesName, seriesPlan } from "@/lib/quick-table-series";
+import { groupOptions } from "@/lib/quick-table-chat";
+import { BYE_PLAYER_ID } from "@/lib/quick-table-playoff";
 
-describe("quick-table series", () => {
-  it("only clean brackets get more than one series", () => {
-    expect(maxSeries(8, 4)).toBe(2); // 32 đội: 16 vào A, 16 vào B
-    expect(maxSeries(4, 6)).toBe(3);
-    expect(maxSeries(4, 3)).toBe(1);
-    expect(maxSeries(6, 4)).toBe(1); // cần vé vớt
-    expect(maxSeries(2, 8)).toBe(3); // trần 3 nhánh
+/** Giải giả: mỗi bảng có kết quả ngẫu nhiên nhưng cố định. */
+function fakeTable(sizes: number[], seed = 1) {
+  let s = seed;
+  const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+  const groupIds = sizes.map((_, g) => `g${g}`);
+  const players = sizes.flatMap((n, g) =>
+    Array.from({ length: n }, (_, i) => {
+      const played = n - 1;
+      const won = Math.floor(rnd() * (played + 1));
+      return { id: `g${g}p${i}`, name: `g${g}p${i}`, group_id: `g${g}`, matches_played: played, matches_won: won, point_diff: Math.round((rnd() - 0.5) * 30), points_for: Math.round(rnd() * 40) };
+    }),
+  );
+  return { groupIds, players };
+}
+
+describe("seriesPlan — the examples Cuong asked about", () => {
+  const sizes = (n: number, g: number) => groupOptions(n).find((o) => o.groupCount === g)!.sizes;
+  it("24 teams", () => {
+    expect(seriesPlan(sizes(24, 4), 3)?.map((x) => x.size)).toEqual([8, 8, 8]);
+    expect(seriesPlan(sizes(24, 8), 2)?.map((x) => x.size)).toEqual([16, 8]);
   });
+  it("26 teams, 8 groups: B = 10 in a 16 draw, 6 byes", () => {
+    expect(seriesPlan(sizes(26, 8), 2)).toEqual([{ size: 16, bracket: 16, byes: 0 }, { size: 10, bracket: 16, byes: 6 }]);
+  });
+  it("28 teams, 6 groups: A 16 with 4 wildcards, B 8 + C 4 or B 12", () => {
+    expect(seriesPlan(sizes(28, 6), 2)?.map((x) => [x.size, x.byes])).toEqual([[16, 0], [12, 4]]);
+    expect(seriesPlan(sizes(28, 6), 3)?.map((x) => x.size)).toEqual([16, 8, 4]);
+  });
+});
 
+describe("every team count 6–48, every group split, every series count", () => {
+  for (let n = 6; n <= 48; n++) {
+    for (const o of groupOptions(n)) {
+      if (o.groupCount < 2) continue;
+      for (let k = 1; k <= maxSeries(o.sizes); k++) {
+        it(`${n} teams · ${o.groupCount} groups · ${k} series`, () => {
+          const plan = seriesPlan(o.sizes, k)!;
+          expect(plan).not.toBeNull();
+          if (k >= 2) expect(plan.reduce((a, x) => a + x.size, 0)).toBe(n); // ai cũng được đánh tiếp
+          for (const x of plan) {
+            expect(x.size).toBeGreaterThanOrEqual(2);
+            expect(x.bracket & (x.bracket - 1)).toBe(0);
+            expect(x.byes).toBeLessThan(x.bracket / 2); // không bao giờ BYE gặp BYE
+          }
+
+          const { groupIds, players } = fakeTable(o.sizes, n * 31 + k);
+          const series = assignSeries(groupIds, players, k);
+          expect(series.map((s) => s.length)).toEqual(plan.map((x) => x.size));
+          const ids = series.flat().map((p) => p.id);
+          expect(new Set(ids).size).toBe(ids.length);
+
+          series.forEach((s, d) => {
+            const pairs = seriesBracket(s);
+            expect(pairs).toHaveLength(plan[d].bracket / 2);
+            const real = pairs.flatMap((p) => [p.player1, p.player2]).filter((x) => x.playerId !== BYE_PLAYER_ID);
+            expect(real).toHaveLength(s.length);
+            for (const p of pairs) expect(p.player1.playerId === BYE_PLAYER_ID && p.player2.playerId === BYE_PLAYER_ID).toBe(false);
+            // BYE thuộc về hạt giống cao nhất
+            const byeSeeds = pairs.filter((p) => p.player1.playerId === BYE_PLAYER_ID || p.player2.playerId === BYE_PLAYER_ID)
+              .map((p) => Math.min(p.player1.seed, p.player2.seed)).sort((a, b) => a - b);
+            expect(byeSeeds).toEqual(Array.from({ length: plan[d].byes }, (_, i) => i + 1));
+          });
+        });
+      }
+    }
+  }
+});
+
+describe("ordering", () => {
+  it("series A gets every group's top 2, series B the rest", () => {
+    const { groupIds, players } = fakeTable([4, 4, 3, 3], 7);
+    const [a, b] = assignSeries(groupIds, players, 2);
+    expect(a).toHaveLength(8);
+    expect(b).toHaveLength(6);
+  });
+  it("compares across groups per match, not by totals", () => {
+    const three = { id: "x", name: "x", group_id: "a", matches_played: 2, matches_won: 2, point_diff: 10, points_for: 22 };
+    const four = { id: "y", name: "y", group_id: "b", matches_played: 3, matches_won: 2, point_diff: 10, points_for: 30 };
+    expect(crossGroupCompare(three, four)).toBeLessThan(0); // 2/2 thắng xếp trên 2/3
+  });
   it("names", () => {
     expect(seriesName("series", 1, "vi")).toBe("Series B");
     expect(seriesName("medal", 0, "vi")).toBe("Nhánh Vàng");
     expect(seriesName("medal", 1, "en")).toBe("Silver bracket");
-  });
-
-  it("splits ranks 1-2 / 3-4 per group", () => {
-    const p = (id: string, g: string, w: number) => ({ id, group_id: g, matches_won: w, point_diff: 0, points_for: 0 });
-    const players = [p("a1", "A", 3), p("a4", "A", 0), p("a2", "A", 2), p("a3", "A", 1), p("b1", "B", 3), p("b2", "B", 2), p("b3", "B", 1), p("b4", "B", 0)];
-    const s = splitIntoSeries(["A", "B"], players, 2);
-    expect(s[0].map((g) => g.map((x) => x.id))).toEqual([["a1", "a2"], ["b1", "b2"]]);
-    expect(s[1].map((g) => g.map((x) => x.id))).toEqual([["a3", "a4"], ["b3", "b4"]]);
   });
 });

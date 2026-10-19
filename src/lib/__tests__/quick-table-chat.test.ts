@@ -60,7 +60,8 @@ describe("nextSlot — hỏi đúng thứ còn thiếu", () => {
 describe("series step", () => {
   it("only asked when the chosen groups allow more than one series", () => {
     expect(nextSlot({ is_doubles: true, player_count: 32, group_count: 8 })).toBe("series");
-    expect(nextSlot({ is_doubles: true, player_count: 18, group_count: 6 })).toBe("roster"); // 6 bảng cần vé vớt
+    expect(nextSlot({ is_doubles: true, player_count: 18, group_count: 6 })).toBe("series"); // A 16 (có vé vớt), B 2
+    expect(nextSlot({ is_doubles: true, player_count: 9, group_count: 3 })).toBe("roster"); // A 8, chỉ dư 1 đội
     expect(nextSlot({ is_doubles: true, player_count: 32, group_count: 8, series: 3 })).toBe("series"); // 8×4 chỉ tối đa 2
   });
 });

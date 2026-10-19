@@ -45,7 +45,7 @@ import {
   resolveBracketConflicts,
 } from '@/lib/quick-table-seeding-v2';
 import { scheduleMatches } from '@/lib/round-robin';
-import { maxSeries, seriesName, seriesRanks, splitIntoSeries } from '@/lib/quick-table-series';
+import { assignSeries, maxSeries, seriesBracket, seriesLine, seriesName, seriesPlan } from '@/lib/quick-table-series';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -348,11 +348,9 @@ const QuickTableView = () => {
   const playoffMatches = matches.filter(m => m.is_playoff);
   const hasPlayoff = playoffMatches.length > 0;
 
-  // Series A/B/C: mỗi nhánh cần 2 người từ mỗi bảng, bracket sạch (2/4/8 bảng).
-  const seriesCap = maxSeries(
-    groups.length,
-    groups.length ? Math.min(...groups.map((g) => players.filter((p) => p.group_id === g.id).length)) : 0,
-  );
+  // Series A/B/C: A = nhất + nhì (+ vé vớt), nhánh sau nhận mọi người còn lại, lẻ thì BYE.
+  const groupSizesNow = groups.map((g) => players.filter((p) => p.group_id === g.id).length);
+  const seriesCap = maxSeries(groupSizesNow);
   const seriesCount = Math.min(seriesChoice ?? table?.playoff_series ?? 1, seriesCap);
   const seriesStyle = table?.playoff_series_style ?? 'series';
   const playoffDivisions = [...new Set(playoffMatches.map((m) => m.playoff_division ?? 0))].sort();
@@ -360,21 +358,13 @@ const QuickTableView = () => {
   const startSeriesPlayoff = async (count: number) => {
     if (!table) return;
     const lang = language === 'en' ? 'en' : 'vi';
-    const split = splitIntoSeries(groups.map((g) => g.id), players, count);
-    const series = split.map((byGroup) => {
-      const qualified = byGroup.flatMap((pair) => pair.map((p, i) => ({ ...p, playoff_seed: i + 1 })));
-      return { qualified, bracketMatches: generatePlayoffBracket(groups.length, qualified, [], groups) };
-    });
-    if (series.some((s) => s.bracketMatches.length === 0)) {
+    const plan = seriesPlan(groupSizesNow, count);
+    if (!plan) {
       toast.error(t.quickTable.view.errorOccurred);
       return;
     }
-    const lines = series.map((s, d) => {
-      const [hi, lo] = seriesRanks(d);
-      return lang === 'vi'
-        ? `${seriesName(seriesStyle, d, lang)}: ${s.qualified.length} đội hạng ${hi}–${lo}`
-        : `${seriesName(seriesStyle, d, lang)}: ${s.qualified.length} teams ranked ${hi}–${lo}`;
-    });
+    const series = assignSeries(groups.map((g) => g.id), players, count).map(seriesBracket);
+    const lines = plan.map((sl, d) => seriesLine(seriesName(seriesStyle, d, lang), sl, lang));
     const ok = await confirm({
       title: lang === 'vi' ? `Tạo ${count} nhánh playoff?` : `Create ${count} playoff brackets?`,
       description: lines.join('\n') + (lang === 'vi'
@@ -961,7 +951,7 @@ const QuickTableView = () => {
                       >
                         {k === 1
                           ? (language === 'vi' ? '1 nhánh (top 2)' : '1 bracket (top 2)')
-                          : Array.from({ length: k }, (_, d) => seriesName(seriesStyle, d, language === 'en' ? 'en' : 'vi')).join(' + ')}
+                          : (seriesPlan(groupSizesNow, k) ?? []).map((sl, d) => `${seriesName(seriesStyle, d, language === 'en' ? 'en' : 'vi')} · ${sl.size}`).join(' + ')}
                       </button>
                     ))}
                   </div>

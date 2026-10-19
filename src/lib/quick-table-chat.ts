@@ -84,10 +84,15 @@ export function groupOptions(n: number): GroupOption[] {
   }));
 }
 
+/** Cỡ các bảng của cách chia đã chọn (để tính nhánh trước khi có danh sách). */
+export function groupSizes(d: Draft): number[] {
+  return groupOptions(entryCount(d)).find((x) => x.groupCount === d.group_count)?.sizes ?? [];
+}
+
 /** Số nhánh tối đa với cách chia bảng đã chọn (1 nếu chưa chọn / không chia được). */
 export function seriesCap(d: Draft): number {
   const o = groupOptions(entryCount(d)).find((x) => x.groupCount === d.group_count);
-  return o ? maxSeries(o.groupCount, Math.min(...o.sizes)) : 1;
+  return o && o.groupCount >= 2 ? maxSeries(o.sizes) : 1;
 }
 
 export function nextSlot(d: Draft): Slot {

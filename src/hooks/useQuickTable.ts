@@ -6,6 +6,7 @@ import { tStandalone } from '@/lib/i18n-standalone';
 import { sanitizeString } from '@/lib/validation';
 import { useQuickTableMutations } from './useQuickTableMutations';
 import type { Json } from '@/integrations/supabase/types';
+import { BYE_PLAYER_ID, type BracketPairing } from '@/lib/quick-table-playoff';
 import {
   suggestGroupConfigs,
   generateRoundRobinMatches,
@@ -428,27 +429,20 @@ export function useQuickTable() {
     }
   }, []);
 
-  /** Nhiều nhánh (Series A/B/C) trong MỘT lần gọi RPC: nhánh d = phần tử d. */
-  const createSeriesPlayoffAtomic = useCallback(async (
-    tableId: string,
-    series: Array<{
-      qualified: QuickTablePlayer[];
-      bracketMatches: Array<{ player1: QuickTablePlayer | null; player2: QuickTablePlayer | null; bracketPosition: string; matchNumber: number }>;
-    }>,
-  ): Promise<void> => {
+  /** Nhiều nhánh (Series A/B/C) trong MỘT lần gọi RPC: phần tử d = cặp vòng 1 của nhánh d (có BYE). */
+  const createSeriesPlayoffAtomic = useCallback(async (tableId: string, series: BracketPairing[][]): Promise<void> => {
+    const real = (id: string) => (id === BYE_PLAYER_ID ? null : id);
     const { data, error } = await supabase.rpc('create_quick_table_playoff_atomic', {
       p_table_id: tableId,
-      p_qualifiers: series.flatMap((s, division) => s.qualified.map((player) => ({
-        player_id: player.id,
-        playoff_seed: player.playoff_seed ?? 1,
-        is_wildcard: false,
-        division,
-      }))) as Json,
-      p_first_round: series.flatMap((s, division) => s.bracketMatches.map((match) => ({
-        player1_id: match.player1?.id ?? null,
-        player2_id: match.player2?.id ?? null,
-        bracket_position: match.bracketPosition,
-        match_number: match.matchNumber,
+      p_qualifiers: series.flatMap((pairs, division) => pairs
+        .flatMap((p) => [p.player1, p.player2])
+        .filter((sp) => sp.playerId !== BYE_PLAYER_ID)
+        .map((sp) => ({ player_id: sp.playerId, playoff_seed: sp.seed, is_wildcard: false, division }))) as Json,
+      p_first_round: series.flatMap((pairs, division) => pairs.map((p) => ({
+        player1_id: real(p.player1.playerId),
+        player2_id: real(p.player2.playerId),
+        bracket_position: p.matchNumber <= pairs.length / 2 ? 'upper' : 'lower',
+        match_number: p.matchNumber,
         division,
       }))) as Json,
     });

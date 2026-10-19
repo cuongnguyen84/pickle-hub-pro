@@ -21,10 +21,10 @@ import { useQuickTable, type QuickTable } from "@/hooks/useQuickTable";
 import { supabase } from "@/integrations/supabase/client";
 import { getSiteUrl } from "@/lib/auth-config";
 import { cn } from "@/lib/utils";
-import { seriesName, seriesRanks, type SeriesStyle } from "@/lib/quick-table-series";
+import { seriesLine, seriesName, seriesPlan, type SeriesStyle } from "@/lib/quick-table-series";
 import {
   applyPatch, buildRoster, defaultName, duplicateIndexes, entryCount, entryLabel, groupOptions,
-  MAX_CHAT_ENTRIES, nextSlot, pairEntries, previewAssignments, seriesCap,
+  groupSizes, MAX_CHAT_ENTRIES, nextSlot, pairEntries, previewAssignments, seriesCap,
   type Draft, type Entry, type GroupOption, type PairingMode, type Slot,
 } from "@/lib/quick-table-chat";
 
@@ -84,10 +84,9 @@ const COPY = {
           ? `Top 2 mỗi bảng vào thẳng ${ROUND_VI[o.playoffSize] ?? "playoff"}`
           : `Vào ${ROUND_VI[o.playoffSize] ?? "playoff"}, cần thêm ${o.wildcards} suất vé vớt`,
     recommended: "Khuyên dùng",
-    series: "Hết vòng bảng thì đánh mấy nhánh? Nhiều nhánh thì ai cũng được đánh tiếp.",
+    series: "Hết vòng bảng thì đánh mấy nhánh? Series A là nhất, nhì mỗi bảng; nhánh sau nhận tất cả đội còn lại, đội xếp cao được miễn vòng 1 nếu lẻ.",
     seriesOne: "1 nhánh", seriesOneSub: "Chỉ top 2 mỗi bảng vào playoff",
     seriesMany: (names: string[]) => `${names.length} nhánh: ${names.join(" + ")}`,
-    seriesLine: (name: string, n: number, u: string, hi: number, lo: number) => `${name}: ${n} ${u} hạng ${hi}–${lo}`,
     optStyle: (s: SeriesStyle): string => (s === "medal" ? "Đổi tên: Series A, B" : "Đổi tên: Nhánh Vàng, Bạc"),
     roster: (u: string) => `Có danh sách ${u} chưa? Dán vào là mình xếp bảng luôn.`,
     pasteNow: "Dán ngay",
@@ -180,10 +179,9 @@ const COPY = {
           ? `Top 2 per group go straight to the ${ROUND_EN[o.playoffSize] ?? "playoff"}`
           : `${ROUND_EN[o.playoffSize] ?? "Playoff"} needs ${o.wildcards} wildcard spots`,
     recommended: "Recommended",
-    series: "After the groups, how many brackets? More brackets means everyone keeps playing.",
+    series: "After the groups, how many brackets? Series A takes each group's top 2; the next bracket takes everyone else, with byes for the best seeds when the count is uneven.",
     seriesOne: "1 bracket", seriesOneSub: "Only the top 2 of each group go to the playoff",
     seriesMany: (names: string[]) => `${names.length} brackets: ${names.join(" + ")}`,
-    seriesLine: (name: string, n: number, u: string, hi: number, lo: number) => `${name}: ${n} ${u} ranked ${hi}–${lo}`,
     optStyle: (s: SeriesStyle): string => (s === "medal" ? "Rename: Series A, B" : "Rename: Gold, Silver"),
     roster: (u: string) => `Do you have the list of ${u}? Paste it and I'll draw the groups now.`,
     pasteNow: "Paste now",
@@ -435,13 +433,12 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
         }));
       case "series": {
         const style = draft.series_style ?? "series";
-        const g = draft.group_count ?? 1;
         return Array.from({ length: seriesCap(draft) }, (_, i) => i + 1).map((k) => {
           const names = Array.from({ length: k }, (_, d) => seriesName(style, d, lang));
           const label = k === 1 ? c.seriesOne : c.seriesMany(names);
           return {
             label,
-            sub: k === 1 ? c.seriesOneSub : names.map((nm, d) => c.seriesLine(nm, g * 2, unit, ...seriesRanks(d))).join(" · "),
+            sub: k === 1 ? c.seriesOneSub : (seriesPlan(groupSizes(draft), k) ?? []).map((sl, d) => seriesLine(names[d], sl, lang, unit)).join(" · "),
             recommended: k === seriesCap(draft),
             onClick: () => choose(label, { series: k }),
           };
