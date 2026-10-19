@@ -78,7 +78,9 @@ DỪNG, không tự xử lý. Không bao giờ đăng 2 lần cùng một bài �
 chưa, kiểm tra trang @{HANDLE} trước khi bấm Post lại.
 
 Dòng CUỐI cùng của câu trả lời phải là đúng một JSON, không gì khác:
-{{"posted": true|false, "url": "<url hoặc null>", "replied": true|false, "error": "<lý do hoặc null>"}}"""
+{{"posted": true|false, "url": "<url hoặc null>", "replied": true|false, "error": "<lý do hoặc null>"}}
+Đăng được bài nhưng không reply được link thì vẫn posted=true, replied=false và ghi
+lý do cụ thể vào error."""
 
 
 def post_one(row: dict) -> int:
@@ -100,8 +102,9 @@ def post_one(row: dict) -> int:
             "error_message": None,
             **({"link_commented_at": datetime.now(timezone.utc).isoformat()} if replied else {}),
         })
-        log(f"OK {url}")
-        fb.tele(f"✅ X (Chrome): {url}")
+        miss = f" — CHƯA reply link: {res.get('error')}" if row.get("link_url") and not replied else ""
+        log(f"OK {url}{miss}")
+        fb.tele(f"✅ X (Chrome): {url}{miss}")
         return 0
 
     # Trả về approved: lượt sau có attempt_count > 1 nên kiểm trang trước khi đăng lại.
