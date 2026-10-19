@@ -1564,25 +1564,25 @@ const QuickTableView = () => {
               {canManageTable && playoffUntouched && (
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, flexWrap: 'wrap' }}>
                   {(table.courts?.length ?? 0) > 0 && (
-                    <button
+                    <Button
                       type="button"
-                      className="tl-btn"
+                      variant="outline"
+                      size="sm"
                       onClick={async () => {
                         const ok = await assignPlayoffCourts();
                         if (ok) toast.success(language === 'vi' ? 'Đã xếp sân và giờ cho playoff.' : 'Playoff courts and times assigned.');
                         else toast.error(t.quickTable.view.errorOccurred);
                         await loadData();
                       }}
-                      style={{ fontSize: 12.5, padding: '7px 12px' }}
                     >
                       <MapPin className="w-4 h-4" />
                       {language === 'vi' ? 'Xếp lại sân playoff' : 'Re-assign playoff courts'}
-                    </button>
+                    </Button>
                   )}
-                  <button type="button" className="tl-btn" onClick={() => void cancelPlayoff()} style={{ fontSize: 12.5, padding: '7px 12px' }}>
+                  <Button type="button" variant="outline" size="sm" onClick={() => void cancelPlayoff()}>
                     <RotateCcw className="w-4 h-4" />
                     {language === 'vi' ? 'Huỷ playoff, chọn lại cách chia' : 'Cancel playoff, re-split'}
-                  </button>
+                  </Button>
                 </div>
               )}
               {playoffDivisions.length > 1 && (
