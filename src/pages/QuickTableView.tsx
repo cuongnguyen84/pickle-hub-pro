@@ -46,7 +46,7 @@ import {
 } from '@/lib/quick-table-seeding-v2';
 import { scheduleMatches } from '@/lib/round-robin';
 import { playoffStartTime, schedulePlayoff } from '@/lib/quick-table-playoff-schedule';
-import { assignSeries, maxSeries, resolveSeriesSizes, seriesBracket, seriesLine, seriesName, seriesPlan, seriesPreview, seriesDrawPreview, slot } from '@/lib/quick-table-series';
+import { maxSeries, resolveSeriesSizes, seriesDraws, seriesLine, seriesName, seriesPlan, seriesPreview, seriesDrawPreview, slot } from '@/lib/quick-table-series';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -372,8 +372,8 @@ const QuickTableView = () => {
   const preview = !hasPlayoff && seriesPath && table?.status === 'group_stage'
     ? (groupStageComplete
       // đủ kết quả → đúng cặp sẽ tạo (tên thật, đã tránh cùng bảng)
-      ? seriesDrawPreview(assignSeries(groups.map((g) => g.id), players, chosenSizes))
-      : seriesPreview(groupSizesNow, chosenSizes, language === 'en' ? 'en' : 'vi'))
+      ? seriesDrawPreview(seriesDraws(groups.map((g) => g.id), players, chosenSizes))
+      : seriesPreview(groups.map((g) => g.name), groupSizesNow, chosenSizes, language === 'en' ? 'en' : 'vi'))
     : null;
   const playoffDivisions = preview
     ? preview.series.map((_, d) => d)
@@ -384,7 +384,7 @@ const QuickTableView = () => {
     const lang = language === 'en' ? 'en' : 'vi';
     const count = sizes.length;
     const plan = sizes.map(slot);
-    const series = assignSeries(groups.map((g) => g.id), players, sizes).map(seriesBracket);
+    const series = seriesDraws(groups.map((g) => g.id), players, sizes);
     const lines = plan.map((sl, d) => seriesLine(seriesName(seriesStyle, d, lang), sl, lang));
     const ok = await confirm({
       title: lang === 'vi'

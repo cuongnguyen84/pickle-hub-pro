@@ -120,6 +120,13 @@ export function crossGroupCompare(a: Ranked, b: Ranked): number {
  * Luật mặc định (A = nhất + nhì + vé vớt hạng 3, …) chính là một cách cắt như vậy.
  */
 export function assignSeries<P extends Ranked>(groupIds: string[], players: P[], sizes: number[]): P[][] {
+  return cut(tieredOrder(groupIds, players), sizes).map((c) => c.map((x) => x.p));
+}
+
+interface Tiered<P> { p: P; tier: number; group: number }
+
+/** Thứ tự toàn giải kèm hạng trong bảng + chỉ số bảng (để nhận ra nhánh ghép chéo được). */
+function tieredOrder<P extends Ranked>(groupIds: string[], players: P[]): Tiered<P>[] {
   const ranked = groupIds.map((gid) =>
     players
       .filter((p) => p.group_id === gid)
@@ -127,10 +134,46 @@ export function assignSeries<P extends Ranked>(groupIds: string[], players: P[],
       .sort((a, b) => b.matches_won - a.matches_won || b.point_diff - a.point_diff || b.points_for - a.points_for),
   );
   const maxTier = Math.max(0, ...ranked.map((r) => r.length));
-  const order: P[] = [];
-  for (let t = 0; t < maxTier; t++) order.push(...ranked.flatMap((r) => (r[t] ? [r[t]] : [])).sort(crossGroupCompare));
+  const order: Tiered<P>[] = [];
+  for (let t = 0; t < maxTier; t++) {
+    order.push(...ranked.flatMap((r, group) => (r[t] ? [{ p: r[t], tier: t, group }] : [])).sort((a, b) => crossGroupCompare(a.p, b.p)));
+  }
+  return order;
+}
+
+const cut = <T,>(order: T[], sizes: number[]): T[][] => {
   let at = 0;
   return sizes.map((n) => order.slice(at, (at += n)));
+};
+
+/**
+ * Nhánh gồm ĐỦ 2 hạng liền nhau (mỗi bảng góp 1 đội mỗi hạng) với 2/4/8/16 bảng →
+ * ghép chéo cổ điển như playoff 1 nhánh: A1–B2, C1–D2… nửa trên; B1–A2, D1–C2… nửa dưới
+ * (nhánh hạng 3–4: Ba A–Tư B…). Hai đội cùng bảng nằm ở hai nửa → chỉ gặp ở chung kết.
+ * null = nhánh khác (có vé vớt / cỡ tuỳ chỉnh) → seriesBracket.
+ */
+function classicPairs<P extends Ranked & { id: string }>(chunk: Tiered<P>[], groupCount: number): BracketPairing[] | null {
+  if (![2, 4, 8, 16].includes(groupCount) || chunk.length !== 2 * groupCount) return null;
+  const t = Math.min(...chunk.map((c) => c.tier));
+  const top: (Tiered<P> | undefined)[] = Array(groupCount);
+  const bottom: (Tiered<P> | undefined)[] = Array(groupCount);
+  for (const c of chunk) {
+    if (c.tier === t) top[c.group] = c;
+    else if (c.tier === t + 1) bottom[c.group] = c;
+    else return null;
+  }
+  if (top.some((x) => !x) || bottom.some((x) => !x)) return null;
+  const seeded = (c: Tiered<P>) => toSeeded(c.p, chunk.indexOf(c) + 1);
+  const half = groupCount / 2;
+  const pairs: BracketPairing[] = [];
+  for (let i = 0; i < half; i++) pairs.push({ player1: seeded(top[2 * i]!), player2: seeded(bottom[2 * i + 1]!), matchNumber: i + 1 });
+  for (let i = 0; i < half; i++) pairs.push({ player1: seeded(top[2 * i + 1]!), player2: seeded(bottom[2 * i]!), matchNumber: half + i + 1 });
+  return pairs;
+}
+
+/** Vòng 1 của từng nhánh: ghép chéo cổ điển khi được, không thì xếp hạt giống + tách cùng bảng. */
+export function seriesDraws<P extends Ranked & { id: string }>(groupIds: string[], players: P[], sizes: number[]): BracketPairing[][] {
+  return cut(tieredOrder(groupIds, players), sizes).map((c) => classicPairs(c, groupIds.length) ?? seriesBracket(c.map((x) => x.p)));
 }
 
 const toSeeded = (p: Ranked, seed: number): SeededPlayer => ({
@@ -241,33 +284,38 @@ export interface PreviewMatch {
  * trong cùng nhóm hạt giống để không gặp nhau sớm.
  */
 export function seriesPreview(
-  groupSizes: number[], sizes: number[], lang: "vi" | "en",
+  groupNames: string[], groupSizes: number[], sizes: number[], lang: "vi" | "en",
 ): { players: PreviewPlayer[]; series: PreviewMatch[][] } {
-  // Trước khi đá chưa biết bảng nào nhất/nhì tốt hơn → nhãn theo hạng + thứ tự so giữa các bảng
-  // ("Nhì #5" = đội nhì xếp thứ 5 trong các đội nhì), đúng thứ tự assignSeries cắt nhánh.
-  const label = (t: number, k: number) =>
-    lang === "vi" ? `${RANK_VI[t] ?? `Hạng ${t + 1}`} #${k}` : `${RANK_EN[t] ?? `${t + 1}th`} #${k}`;
+  // Trước khi đá chưa biết bảng nào nhất/nhì tốt hơn. Nhánh ghép chéo cổ điển thì cặp cố định
+  // theo bảng ("Nhất A" – "Nhì B"); nhánh khác nhãn theo hạng + thứ tự so giữa các bảng
+  // ("Nhì #5" = đội nhì xếp thứ 5 trong các đội nhì) và không đổi chỗ tránh cùng bảng (chưa biết bảng).
+  const rank = (t: number) => (lang === "vi" ? RANK_VI[t] ?? `Hạng ${t + 1}` : RANK_EN[t] ?? `${t + 1}th`);
+  const fake = (id: string, name: string, group: string) =>
+    ({ id, name, group_id: group, matches_played: 0, matches_won: 0, point_diff: 0, points_for: 0 });
   const maxTier = Math.max(0, ...groupSizes);
-  const order: (Ranked & { id: string })[] = [];
+  const order: Tiered<ReturnType<typeof fake>>[] = [];
   for (let t = 0; t < maxTier; t++) {
-    for (let k = 1; k <= tierCount(groupSizes, t); k++) {
-      // bảng riêng cho mỗi ô: chưa biết bảng thật nên sơ đồ không đổi chỗ tránh cùng bảng
-      order.push({ id: `pv-${t}-${k}`, name: label(t, k), group_id: `pv-${t}-${k}`, matches_played: 0, matches_won: 0, point_diff: 0, points_for: 0 });
-    }
+    groupSizes.forEach((n, g) => {
+      if (n > t) order.push({ p: fake(`pv-${t}-${g}`, `${rank(t)} ${groupNames[g] ?? g + 1}`, `pv-g${g}`), tier: t, group: g });
+    });
   }
-  let at = 0;
-  return seriesDrawPreview(sizes.map((n) => order.slice(at, (at += n))));
+  const draws = cut(order, sizes).map((chunk) => {
+    const classic = classicPairs(chunk, groupSizes.length);
+    if (classic) return classic;
+    return seriesBracket(chunk.map((c) => {
+      const k = order.filter((x) => x.tier === c.tier).indexOf(c) + 1;
+      return fake(c.p.id, `${rank(c.tier)} #${k}`, c.p.id);
+    }));
+  });
+  return seriesDrawPreview(draws);
 }
 
-/** Sơ đồ từ các nhánh đã chia (người thật sau vòng bảng, hoặc ô giả của seriesPreview). */
-export function seriesDrawPreview(chunks: (Ranked & { id: string })[][]): { players: PreviewPlayer[]; series: PreviewMatch[][] } {
-  const slots = chunks.flat();
+/** Sơ đồ (vòng 1 + các vòng sau trống) từ vòng 1 của từng nhánh — người thật hoặc ô giả. */
+export function seriesDrawPreview(draws: BracketPairing[][]): { players: PreviewPlayer[]; series: PreviewMatch[][] } {
   const out: PreviewPlayer[] = [{ id: BYE_PLAYER_ID, name: "BYE", seed: null, group_id: null }];
-  const series = chunks.map((ordered, d) => {
-    const first = seriesBracket(ordered);
+  const series = draws.map((first, d) => {
     for (const p of first) for (const sp of [p.player1, p.player2]) {
-      const s = slots.find((x) => x.id === sp.playerId);
-      if (s) out.push({ id: s.id, name: s.name, seed: sp.seed, group_id: s.group_id ?? null });
+      if (sp.playerId !== BYE_PLAYER_ID) out.push({ id: sp.playerId, name: sp.name, seed: sp.seed, group_id: sp.sourceGroupId || null });
     }
     const matches: PreviewMatch[] = [];
     for (let round = 1, n = first.length; n >= 1; round++, n /= 2) {

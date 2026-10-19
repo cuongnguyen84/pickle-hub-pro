@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assignSeries, crossGroupCompare, maxSeries, resolveSeriesSizes, seriesBracket, seriesName, seriesPlan, seriesPreview } from "@/lib/quick-table-series";
+import { assignSeries, crossGroupCompare, maxSeries, resolveSeriesSizes, seriesBracket, seriesDraws, seriesName, seriesPlan, seriesPreview } from "@/lib/quick-table-series";
 import { groupOptions } from "@/lib/quick-table-chat";
 import { BYE_PLAYER_ID } from "@/lib/quick-table-playoff";
 
@@ -92,7 +92,7 @@ describe("ordering", () => {
 
 describe("seriesPreview — bracket per series before the playoff exists", () => {
   it("44 teams, 11 groups of 4, Gold 16 / Silver 14 / Bronze 14: generic slot labels", () => {
-    const pv = seriesPreview(Array(11).fill(4), [16, 14, 14], "vi");
+    const pv = seriesPreview("ABCDEFGHIJK".split(""), Array(11).fill(4), [16, 14, 14], "vi");
     expect(pv.series.map((s) => s.length)).toEqual([15, 15, 15]);
     const names = (d: number) => pv.series[d].filter((m) => m.playoff_round === 1)
       .flatMap((m) => [m.player1_id, m.player2_id]).map((id) => pv.players.find((p) => p.id === id)!.name);
@@ -172,5 +172,32 @@ describe("custom series sizes", () => {
     expect(gold.every((p) => rankIn(p) <= 1)).toBe(true);
     expect(gold.filter((p) => rankIn(p) === 0)).toHaveLength(11); // mọi đội nhất
     for (const s of [gold, silver, bronze]) expect(seriesBracket(s).length).toBe(8);
+  });
+});
+
+describe("2/4/8/16 groups: a series made of two whole ranks pairs crosswise like the classic playoff", () => {
+  const label = (pairs: ReturnType<typeof seriesBracket>, players: { id: string; group_id: string }[], ranks: Map<string, number>) =>
+    pairs.map((m) => [m.player1, m.player2].map((x) => `${ranks.get(x.playerId)! + 1}${"ABCDEFGHIJKLMNOP"[Number(players.find((p) => p.id === x.playerId)!.group_id.slice(1))]}`).join("-"));
+  it("8 groups of 4, A 16 + B 16: A1–B2 … B1–A2 in A, A3–B4 … B3–A4 in B", () => {
+    const { groupIds, players } = fakeTable(Array(8).fill(4), 3);
+    const ranks = new Map<string, number>();
+    for (const g of groupIds) players.filter((p) => p.group_id === g)
+      .sort((a, b) => b.matches_won - a.matches_won || b.point_diff - a.point_diff || b.points_for - a.points_for)
+      .forEach((p, i) => ranks.set(p.id, i));
+    const [a, b] = seriesDraws(groupIds, players, [16, 16]);
+    expect(label(a, players, ranks)).toEqual(["1A-2B", "1C-2D", "1E-2F", "1G-2H", "1B-2A", "1D-2C", "1F-2E", "1H-2G"]);
+    expect(label(b, players, ranks)).toEqual(["3A-4B", "3C-4D", "3E-4F", "3G-4H", "3B-4A", "3D-4C", "3F-4E", "3H-4G"]);
+  });
+  it("preview before results shows the same fixed pairs", () => {
+    const pv = seriesPreview("ABCDEFGH".split(""), Array(8).fill(4), [16, 16], "vi");
+    const first = (d: number) => pv.series[d].filter((m) => m.playoff_round === 1)
+      .map((m) => [m.player1_id, m.player2_id].map((id) => pv.players.find((p) => p.id === id)!.name).join(" – "));
+    expect(first(0).slice(0, 2)).toEqual(["Nhất A – Nhì B", "Nhất C – Nhì D"]);
+    expect(first(1)[4]).toBe("Ba B – Tư A");
+  });
+  it("not classic when the series mixes ranks (wildcards) or the group count is 3/6", () => {
+    const { groupIds, players } = fakeTable(Array(11).fill(4), 4);
+    const [gold] = seriesDraws(groupIds, players, [16, 14, 14]);
+    expect(gold).toHaveLength(8); // seriesBracket path, still a valid 16 draw
   });
 });
