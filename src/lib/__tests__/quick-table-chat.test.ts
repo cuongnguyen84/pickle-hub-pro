@@ -52,7 +52,8 @@ describe("nextSlot — hỏi đúng thứ còn thiếu", () => {
   it("flags count mismatch, too many, invalid group count", () => {
     expect(nextSlot(applyPatch({ is_doubles: true }, { player_count: 16, entries: teams(15) }))).toBe("mismatch");
     expect(nextSlot({ is_doubles: true, player_count: 49 })).toBe("too_many");
-    expect(nextSlot({ is_doubles: true, player_count: 16, group_count: 5 })).toBe("groups");
+    expect(nextSlot({ is_doubles: true, player_count: 16, group_count: 6 })).toBe("groups"); // bảng 2 đội
+    expect(nextSlot({ is_doubles: true, player_count: 16, group_count: 5 })).not.toBe("groups"); // 4–3: số bảng tuỳ ý hợp lệ
   });
 
   it("asks how to pair when a doubles list has only single names", () => {

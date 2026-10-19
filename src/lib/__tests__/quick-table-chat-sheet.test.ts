@@ -74,3 +74,29 @@ describe("localSlotPatch", () => {
     expect(nextSlot({ is_doubles: true, entries, player_count: 26, roster_mode: "now", pairing_done: true, group_count: 8 })).toBe("series");
   });
 });
+
+import { applyPatch, chatFacts, customGroupOption, draftSeriesPlan, groupChoices } from "@/lib/quick-table-chat";
+
+describe("Cuong's 44-team chat: 11 groups of 4, Gold 16, rest Silver + Bronze", () => {
+  const base = { is_doubles: true, player_count: 44 };
+  it("11 groups is a valid choice and offered as the 4-per-group chip", () => {
+    expect(customGroupOption(44, 11)?.sizes).toEqual(Array(11).fill(4));
+    expect(groupChoices(44).some((o) => o.groupCount === 11)).toBe(true);
+    expect(customGroupOption(44, 20)).toBeNull(); // bảng 2 đội
+    expect(nextSlot({ ...base, group_count: 11 })).toBe("series");
+  });
+  it("custom sizes from the AI skip the series question", () => {
+    const d = applyPatch({ ...base, group_count: 11 }, { series_sizes: [16, 0, 0], series_style: "medal" });
+    expect(d.series_sizes).toEqual([16, 14, 14]);
+    expect(draftSeriesPlan(d)?.map((s) => [s.size, s.byes])).toEqual([[16, 0], [14, 2], [14, 2]]);
+    expect(nextSlot(d)).toBe("roster");
+  });
+  it("facts carry the real numbers for the question 'how do 11 groups qualify?'", () => {
+    const f = chatFacts({ ...base, group_count: 11 }, "vi");
+    expect(f).toContain("11 bảng × 4 đội: playoff 1 nhánh lấy nhất + nhì 11 bảng = 22 + 10 đội hạng 3 tốt nhất = 32 → cây 32; 12 đội bị loại.");
+    expect(f).toContain("Đang chọn: 11 bảng × 4.");
+  });
+  it("a filename is not the user mentioning a time", () => {
+    expect(trustPatch({ start_time: "10:44" }, "", "count")).toEqual({});
+  });
+});

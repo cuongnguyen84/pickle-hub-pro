@@ -45,7 +45,7 @@ import {
   resolveBracketConflicts,
 } from '@/lib/quick-table-seeding-v2';
 import { scheduleMatches } from '@/lib/round-robin';
-import { assignSeries, maxSeries, seriesBracket, seriesLine, seriesName, seriesPlan, seriesPreview } from '@/lib/quick-table-series';
+import { assignSeries, maxSeries, resolveSeriesSizes, seriesBracket, seriesLine, seriesName, seriesPlan, seriesPreview, slot } from '@/lib/quick-table-series';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -350,26 +350,37 @@ const QuickTableView = () => {
 
   // Series A/B/C: A = nhất + nhì (+ vé vớt), nhánh sau nhận mọi người còn lại, lẻ thì BYE.
   const groupSizesNow = groups.map((g) => players.filter((p) => p.group_id === g.id).length);
+  const totalNow = groupSizesNow.reduce((a, b) => a + b, 0);
   const seriesCap = maxSeries(groupSizesNow);
-  const seriesCount = Math.min(seriesChoice ?? table?.playoff_series ?? 1, seriesCap);
   const seriesStyle = table?.playoff_series_style ?? 'series';
+  // Các cách chia nhánh: cỡ tuỳ chỉnh lúc tạo giải (nếu còn hợp lệ) + 1..cap nhánh theo luật mặc định.
+  const defaultPlans = Array.from({ length: seriesCap }, (_, i) => (seriesPlan(groupSizesNow, i + 1) ?? []).map((sl) => sl.size))
+    .filter((p) => p.length > 0 && p.every((x) => x >= 2));
+  const customSizes = resolveSeriesSizes(table?.playoff_series_sizes, totalNow);
+  const sameSizes = (a: number[], b?: number[]) => !!b && a.join() === b.join();
+  const planOptions = customSizes && !defaultPlans.some((p) => sameSizes(p, customSizes)) ? [customSizes, ...defaultPlans] : defaultPlans;
+  const defaultPlanIdx = customSizes
+    ? planOptions.findIndex((p) => sameSizes(p, customSizes))
+    : planOptions.findIndex((p) => p.length === Math.min(table?.playoff_series ?? 1, seriesCap));
+  const chosenSizes = planOptions[Math.min(seriesChoice ?? Math.max(0, defaultPlanIdx), planOptions.length - 1)] ?? [];
+  // Playoff cổ điển (có màn xem trước/đổi cặp) chỉ cho 1 nhánh mặc định với 2/3/4/6/8 bảng;
+  // số bảng tuỳ ý hoặc cỡ nhánh tuỳ ý đi đường chia nhánh tổng quát.
+  const seriesPath = chosenSizes.length > 0 &&
+    !(sameSizes(chosenSizes, defaultPlans[0]) && [2, 3, 4, 6, 8].includes(table?.group_count ?? 0));
   // Chưa tạo playoff mà giải chia nhánh → sơ đồ tạm tính theo BXH hiện tại.
-  const preview = !hasPlayoff && seriesCount > 1 && table?.status === 'group_stage'
-    ? seriesPreview(groups, players, seriesCount, language === 'en' ? 'en' : 'vi')
+  const preview = !hasPlayoff && seriesPath && table?.status === 'group_stage'
+    ? seriesPreview(groups, players, chosenSizes, language === 'en' ? 'en' : 'vi')
     : null;
   const playoffDivisions = preview
     ? preview.series.map((_, d) => d)
     : [...new Set(playoffMatches.map((m) => m.playoff_division ?? 0))].sort();
 
-  const startSeriesPlayoff = async (count: number) => {
+  const startSeriesPlayoff = async (sizes: number[]) => {
     if (!table) return;
     const lang = language === 'en' ? 'en' : 'vi';
-    const plan = seriesPlan(groupSizesNow, count);
-    if (!plan) {
-      toast.error(t.quickTable.view.errorOccurred);
-      return;
-    }
-    const series = assignSeries(groups.map((g) => g.id), players, count).map(seriesBracket);
+    const count = sizes.length;
+    const plan = sizes.map(slot);
+    const series = assignSeries(groups.map((g) => g.id), players, sizes).map(seriesBracket);
     const lines = plan.map((sl, d) => seriesLine(seriesName(seriesStyle, d, lang), sl, lang));
     const ok = await confirm({
       title: lang === 'vi' ? `Tạo ${count} nhánh playoff?` : `Create ${count} playoff brackets?`,
@@ -392,8 +403,8 @@ const QuickTableView = () => {
 
   const handleStartPlayoff = () => {
     if (!table || !table.group_count) return;
-    if (seriesCount > 1) {
-      void startSeriesPlayoff(seriesCount);
+    if (seriesPath) {
+      void startSeriesPlayoff(chosenSizes);
       return;
     }
 
@@ -940,24 +951,24 @@ const QuickTableView = () => {
                 <p style={{ color: 'var(--tl-fg-2)', fontSize: 13.5, margin: '4px 0 0' }}>
                   {t.quickTable.view.groupCompleteDesc}
                 </p>
-                {seriesCap > 1 && (
+                {planOptions.length > 1 && (
                   <div role="group" aria-label={language === 'vi' ? 'Số nhánh playoff' : 'Playoff brackets'} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 12 }}>
-                    {Array.from({ length: seriesCap }, (_, i) => i + 1).map((k) => (
+                    {planOptions.map((sizes, k) => (
                       <button
                         key={k}
                         type="button"
-                        aria-pressed={seriesCount === k}
+                        aria-pressed={sizes === chosenSizes}
                         onClick={() => setSeriesChoice(k)}
                         style={{
                           minHeight: 36, padding: '0 12px', borderRadius: 18, fontSize: 13, cursor: 'pointer',
-                          border: `1px solid ${seriesCount === k ? 'var(--tl-green)' : 'var(--tl-border)'}`,
-                          background: seriesCount === k ? 'var(--tl-bg-elev)' : 'transparent',
+                          border: `1px solid ${sizes === chosenSizes ? 'var(--tl-green)' : 'var(--tl-border)'}`,
+                          background: sizes === chosenSizes ? 'var(--tl-bg-elev)' : 'transparent',
                           color: 'var(--tl-fg)',
                         }}
                       >
-                        {k === 1
+                        {sameSizes(sizes, defaultPlans[0])
                           ? (language === 'vi' ? '1 nhánh (top 2)' : '1 bracket (top 2)')
-                          : (seriesPlan(groupSizesNow, k) ?? []).map((sl, d) => `${seriesName(seriesStyle, d, language === 'en' ? 'en' : 'vi')} · ${sl.size}`).join(' + ')}
+                          : sizes.map((n, d) => `${seriesName(seriesStyle, d, language === 'en' ? 'en' : 'vi')} · ${n}`).join(' + ')}
                       </button>
                     ))}
                   </div>

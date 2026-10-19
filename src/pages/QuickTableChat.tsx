@@ -24,7 +24,7 @@ import { getSiteUrl } from "@/lib/auth-config";
 import { cn } from "@/lib/utils";
 import { seriesLine, seriesName, seriesPlan, type SeriesStyle } from "@/lib/quick-table-series";
 import {
-  applyPatch, buildRoster, defaultName, duplicateIndexes, entryCount, entryLabel, groupOptions,
+  applyPatch, buildRoster, chatFacts, customSeries, defaultName, draftSeriesPlan, duplicateIndexes, entryCount, entryLabel, findGroupOption, groupChoices,
   groupSizes, localSlotPatch, MAX_CHAT_ENTRIES, nextSlot, pairEntries, parseSheet, previewAssignments, seriesCap, trustPatch,
   type Draft, type Entry, type GroupOption, type PairingMode, type Slot,
 } from "@/lib/quick-table-chat";
@@ -76,7 +76,7 @@ const COPY = {
     useList: (m: number, u: string) => `Lấy ${m} ${u}`,
     pasteMore: "Dán thêm",
     groups: (n: number, u: string) => `${n} ${u} chia thế nào?`,
-    groupsInvalid: (k: number, u: string) => `Không chia được ${k} bảng đều 3–6 ${u}/bảng. Chọn một cách dưới đây nhé:`,
+    groupsInvalid: (k: number, u: string) => `Không chia được ${k} bảng (mỗi bảng 3–8 ${u}, tối đa 16 bảng). Chọn một cách dưới đây nhé:`,
     groupsBig: " Giải đông, nhiều bảng sẽ xong nhanh hơn.",
     groupLabel: (o: GroupOption) => (o.groupCount === 1 ? "1 bảng vòng tròn" : `${o.groupCount} bảng × ${o.sizes[0] === o.sizes[o.sizes.length - 1] ? o.sizes[0] : `${o.sizes[o.sizes.length - 1]}–${o.sizes[0]}`}`),
     groupSub: (o: GroupOption) =>
@@ -119,6 +119,7 @@ const COPY = {
     received: (n: number, u: string) => `Đã nhận ${n} ${u}.`,
     dupWarn: (n: number) => ` ⚠️ Có ${n} dòng trùng — xem lại trong Bản nháp.`,
     aiError: "Mình chưa nghe rõ, mạng hoặc trợ lý đang chậm. Thử lại nhé?",
+    attachmentNoList: "Mình chưa đọc được tên trong file này. Bạn thử ảnh rõ hơn, file Excel, hoặc dán danh sách dạng chữ nhé.",
     retry: "Thử lại",
     quotaFull: (q: number) => `Bạn đang có đủ ${q} giải chia bảng. Kết thúc hoặc xoá bớt giải cũ để tạo giải mới nhé.`,
     myTables: "Xem giải của tôi",
@@ -181,7 +182,7 @@ const COPY = {
     useList: (m: number, u: string) => `Use ${m} ${u}`,
     pasteMore: "Paste more",
     groups: (n: number, u: string) => `How should ${n} ${u} be split?`,
-    groupsInvalid: (k: number, u: string) => `${k} groups won't split evenly into 3–6 ${u} each. Pick one of these:`,
+    groupsInvalid: (k: number, u: string) => `${k} groups won't work (3–8 ${u} per group, up to 16 groups). Pick one of these:`,
     groupsBig: " Big field — more groups finish faster.",
     groupLabel: (o: GroupOption) => (o.groupCount === 1 ? "1 round-robin group" : `${o.groupCount} groups × ${o.sizes[0] === o.sizes[o.sizes.length - 1] ? o.sizes[0] : `${o.sizes[o.sizes.length - 1]}–${o.sizes[0]}`}`),
     groupSub: (o: GroupOption) =>
@@ -224,6 +225,7 @@ const COPY = {
     received: (n: number, u: string) => `Got ${n} ${u}.`,
     dupWarn: (n: number) => ` ⚠️ ${n} duplicate lines — check the Draft.`,
     aiError: "I didn't catch that — the network or assistant is slow. Try again?",
+    attachmentNoList: "I couldn't read the names in this file. Try a clearer photo, an Excel file, or paste the list as text.",
     retry: "Try again",
     quotaFull: (q: number) => `You already have ${q} round-robin tournaments. Finish or delete one to create another.`,
     myTables: "My tournaments",
@@ -415,8 +417,8 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       .slice(-8)
       .map((m) => ({ role: m.role, text: m.text.slice(0, 4000) }));
     const { data, error } = await supabase.functions.invoke("quick-table-chat", {
-      body: { messages: history, draft, pending: slot, lang, attachment: msg.attachment },
-      timeout: msg.attachment ? 45_000 : 25_000,
+      body: { messages: history, draft, pending: slot, lang, attachment: msg.attachment, facts: chatFacts(draft, lang) },
+      timeout: msg.attachment ? 60_000 : 25_000,
     });
     setBusy(false);
     if (error || !data || typeof data !== "object" || "error" in data) {
@@ -425,11 +427,18 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       return;
     }
     const res = data as { reply: string; intent: string; patch: unknown };
-    if (res.intent !== "fill") {
+    if (res.intent !== "fill" && res.intent !== "answer") {
       advance(draft, res.reply);
       return;
     }
-    const next = applyPatch(draft, trustPatch(res.patch, msg.text, slot));
+    // Tên file ("Pasted … 10.44 PM.png") không phải lời người dùng — không cho nó "nhắc" tới giờ/sân.
+    const patch = trustPatch(res.patch, msg.attachment ? "" : msg.text, slot);
+    if (msg.attachment && !(Array.isArray(patch.entries) && patch.entries.length)) {
+      // AI đếm được nhưng không tách được tên → đừng nhận số đội ảo.
+      advance(draft, c.attachmentNoList);
+      return;
+    }
+    const next = applyPatch(draft, patch);
     let ack = res.reply;
     const gotList = !draft.entries?.length && !!next.entries?.length;
     if (gotList) {
@@ -487,7 +496,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           { label: c.upload, onClick: () => fileRef.current?.click() },
         ];
       case "groups":
-        return groupOptions(n).map((o) => ({
+        return groupChoices(n).map((o) => ({
           label: c.groupLabel(o),
           sub: c.groupSub(o),
           recommended: o.recommended,
@@ -502,7 +511,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
             label,
             sub: k === 1 ? c.seriesOneSub : (seriesPlan(groupSizes(draft), k) ?? []).map((sl, d) => seriesLine(names[d], sl, lang, unit)).join(" · "),
             recommended: k === seriesCap(draft),
-            onClick: () => choose(label, { series: k }),
+            onClick: () => choose(label, { series: k, series_sizes: undefined }),
           };
         });
       }
@@ -592,16 +601,19 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       requires_registration: draft.roster_mode === "registration",
     });
     if (!table) { setCreating(false); return; } // createTable đã toast lỗi (quota/auth)
-    const series = Math.min(draft.series ?? 1, seriesCap(draft));
+    const custom = customSeries(draft);
+    const series = custom ? custom.length : Math.min(draft.series ?? 1, seriesCap(draft));
     // Có danh sách → setupRosterAtomic lưu sân + xếp lịch; chưa có → lưu sẵn lên giải cho bước nhập sau.
     const courtsOnTable = !draft.entries?.length && !!draft.courts?.length;
-    if ((draft.default_sets ?? 1) > 1 || series > 1 || courtsOnTable) {
+    if ((draft.default_sets ?? 1) > 1 || series > 1 || custom || courtsOnTable) {
       await supabase.from("quick_tables").update({
         ...((draft.default_sets ?? 1) > 1 ? { default_sets: draft.default_sets } : {}),
         ...(courtsOnTable ? { courts: draft.courts!.map(String), start_time: draft.start_time ?? null } : {}),
-        ...(series > 1 ? { playoff_series: series, playoff_series_style: draft.series_style ?? "series" } : {}),
+        ...(series > 1 || custom ? { playoff_series: series, playoff_series_style: draft.series_style ?? "series" } : {}),
       } as never).eq("id", table.id);
     }
+    // Ghi riêng: cột mới, lỡ chưa có trên DB thì các thiết lập trên vẫn lưu được.
+    if (custom) await supabase.from("quick_tables").update({ playoff_series_sizes: custom } as never).eq("id", table.id);
     let rosterOk = true;
     if (draft.entries?.length) {
       rosterOk = await setupRosterAtomic(
@@ -805,8 +817,10 @@ type C = (typeof COPY)["vi"];
 type EditField = "format" | "count" | "groups" | "roster" | "name" | "courts" | "extra";
 
 function seriesLabel(d: Draft, lang: Lang): string | null {
-  const k = Math.min(d.series ?? 1, seriesCap(d));
-  return k > 1 ? Array.from({ length: k }, (_, i) => seriesName(d.series_style ?? "series", i, lang)).join(" + ") : null;
+  const plan = draftSeriesPlan(d);
+  if (!plan) return null;
+  const sized = !!customSeries(d);
+  return plan.map((sl, i) => `${seriesName(d.series_style ?? "series", i, lang)}${sized ? ` ${sl.size}` : ""}`).join(" + ");
 }
 
 function questionFor(c: C, d: Draft, s: Slot): string {
@@ -975,7 +989,7 @@ function DraftPanel({ draft, c, lang, onEdit, onEntries }: {
   const rows: Array<[string, string, Parameters<typeof onEdit>[0]]> = [
     [c.fFormat, draft.is_doubles === undefined ? c.empty : draft.is_doubles ? c.doubles : c.singles, "format"],
     [c.fCount, n ? `${n} ${c.unit(draft)}` : c.empty, "count"],
-    [c.fGroups, draft.group_count && n ? (groupOptions(n).find((o) => o.groupCount === draft.group_count) ? [c.groupLabel(groupOptions(n).find((o) => o.groupCount === draft.group_count)!), seriesLabel(draft, lang)].filter(Boolean).join(" · ") : c.empty) : c.empty, "groups"],
+    [c.fGroups, findGroupOption(n, draft.group_count) ? [c.groupLabel(findGroupOption(n, draft.group_count)!), seriesLabel(draft, lang)].filter(Boolean).join(" · ") : c.empty, "groups"],
     [c.fRoster, draft.entries?.length ? `${draft.entries.length} ${c.unit(draft)}` : draft.roster_mode === "registration" ? c.rosterReg : draft.roster_mode === "later" ? c.rosterLater : c.empty, "roster"],
     [c.fName, draft.name ?? c.empty, "name"],
     [c.fCourts, draft.courts?.length ? [c.courts(draft.courts), draft.start_time].filter(Boolean).join(" · ") : c.empty, "courts"],
@@ -1039,7 +1053,7 @@ function ConfirmCard({ draft, c, lang, groups, creating, onCreate, onEdit, onRes
   const meta = [
     draft.is_doubles === false ? c.singles : c.doubles,
     `${n} ${c.unit(draft)}`,
-    groupOptions(n).find((o) => o.groupCount === draft.group_count) ? c.groupLabel(groupOptions(n).find((o) => o.groupCount === draft.group_count)!) : null,
+    findGroupOption(n, draft.group_count) ? c.groupLabel(findGroupOption(n, draft.group_count)!) : null,
     seriesLabel(draft, lang),
     draft.default_sets && draft.default_sets > 1 ? `BO${draft.default_sets}` : null,
     draft.courts?.length ? c.courts(draft.courts) : null,

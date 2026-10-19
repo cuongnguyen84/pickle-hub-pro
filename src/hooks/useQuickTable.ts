@@ -58,6 +58,8 @@ export interface QuickTable {
   // Series A/B/C sau vòng bảng (2026-10-19): số nhánh dự kiến + kiểu tên.
   playoff_series?: number;
   playoff_series_style?: "series" | "medal";
+  /** cỡ từng nhánh đặt lúc tạo giải (chat), null = luật mặc định */
+  playoff_series_sizes?: number[] | null;
 }
 
 export interface QuickTableGroup {

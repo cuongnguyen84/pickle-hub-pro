@@ -39,7 +39,7 @@ function wildcards(sizes: number[]): number {
   return Math.min(nextPowerOf2(direct) - direct, tierCount(sizes, 2));
 }
 
-const slot = (size: number): SeriesSlot => {
+export const slot = (size: number): SeriesSlot => {
   const bracket = nextPowerOf2(size);
   return { size, bracket, byes: bracket - size };
 };
@@ -59,6 +59,32 @@ export function seriesPlan(sizes: number[], k: number): SeriesSlot[] | null {
   const b = tierCount(sizes, 2) + tierCount(sizes, 3) - wc;
   const c = rest - b;
   return b >= 2 && c >= 2 ? [slot(a), slot(b), slot(c)] : null;
+}
+
+/**
+ * Cỡ nhánh tuỳ chỉnh ("16 đội mạnh nhất vào nhánh Vàng, còn lại chia Bạc và Đồng"):
+ * 0 = chia đều phần còn lại. Hợp lệ khi 1–3 nhánh, mỗi nhánh ≥ 2, tổng ≤ số đội
+ * (thiếu thì đội cuối bị loại, như playoff 1 nhánh).
+ */
+export function resolveSeriesSizes(raw: unknown, total: number): number[] | null {
+  if (!Array.isArray(raw) || raw.length < 1 || raw.length > MAX_SERIES) return null;
+  const sizes = raw.map((x) => Math.floor(Number(x)));
+  if (sizes.some((x) => !Number.isFinite(x) || x < 0)) return null;
+  const free = sizes.filter((x) => x === 0).length;
+  const rest = total - sizes.reduce((a, b) => a + b, 0);
+  if (free) {
+    if (rest < free * 2) return null;
+    let left = rest;
+    let slots = free;
+    for (let i = 0; i < sizes.length; i++) {
+      if (sizes[i] !== 0) continue;
+      sizes[i] = Math.ceil(left / slots); // nhánh trước nhận phần lẻ
+      left -= sizes[i];
+      slots--;
+    }
+  }
+  if (sizes.some((x) => x < 2) || sizes.reduce((a, b) => a + b, 0) > total) return null;
+  return sizes;
 }
 
 /** Số nhánh tối đa chia được với các bảng này. */
@@ -89,29 +115,23 @@ export function crossGroupCompare(a: Ranked, b: Ranked): number {
 }
 
 /**
- * Chia người thật vào k nhánh, mỗi nhánh xếp từ mạnh → yếu (thứ tự = seed).
- * Số người mỗi nhánh khớp đúng seriesPlan(cỡ bảng, k).
+ * Chia người thật vào các nhánh theo cỡ cho trước (seriesPlan hoặc tuỳ chỉnh),
+ * mỗi nhánh xếp từ mạnh → yếu (thứ tự = seed). Thứ tự toàn giải: mọi đội nhất
+ * (so khác bảng), rồi mọi đội nhì, rồi hạng 3… — cắt lần lượt theo cỡ nhánh.
+ * Luật mặc định (A = nhất + nhì + vé vớt hạng 3, …) chính là một cách cắt như vậy.
  */
-export function assignSeries<P extends Ranked>(groupIds: string[], players: P[], k: number): P[][] {
+export function assignSeries<P extends Ranked>(groupIds: string[], players: P[], sizes: number[]): P[][] {
   const ranked = groupIds.map((gid) =>
     players
       .filter((p) => p.group_id === gid)
       // trong cùng bảng: y như bảng xếp hạng hiển thị / getQualifiedPlayers
       .sort((a, b) => b.matches_won - a.matches_won || b.point_diff - a.point_diff || b.points_for - a.points_for),
   );
-  const tier = (t: number) => ranked.flatMap((r) => (r[t] ? [r[t]] : [])).sort(crossGroupCompare);
   const maxTier = Math.max(0, ...ranked.map((r) => r.length));
-  const wc = wildcards(ranked.map((r) => r.length));
-
-  const thirds = tier(2);
-  const seriesA = [...tier(0), ...tier(1), ...thirds.slice(0, wc)];
-  const rest = [...thirds.slice(wc)];
-  for (let t = 3; t < maxTier; t++) rest.push(...tier(t));
-  if (k <= 1) return [seriesA];
-  if (k === 2) return [seriesA, rest];
-  // 3 nhánh: B = hạng 3–4 còn lại, C = hạng 5 trở xuống (rest đã theo thứ tự hạng).
-  const bCount = thirds.length - wc + tier(3).length;
-  return [seriesA, rest.slice(0, bCount), rest.slice(bCount)];
+  const order: P[] = [];
+  for (let t = 0; t < maxTier; t++) order.push(...ranked.flatMap((r) => (r[t] ? [r[t]] : [])).sort(crossGroupCompare));
+  let at = 0;
+  return sizes.map((n) => order.slice(at, (at += n)));
 }
 
 const toSeeded = (p: Ranked, seed: number): SeededPlayer => ({
@@ -174,7 +194,7 @@ export interface PreviewMatch {
  * nên xếp hạt giống / cặp đấu đúng như lúc tạo thật nếu bảng giữ nguyên.
  */
 export function seriesPreview<P extends Ranked>(
-  groups: { id: string; name: string }[], players: P[], k: number, lang: "vi" | "en",
+  groups: { id: string; name: string }[], players: P[], sizes: number[], lang: "vi" | "en",
 ): { players: PreviewPlayer[]; series: PreviewMatch[][] } {
   const label = (rank: number, g: string) => (lang === "vi" ? `${RANK_VI[rank] ?? `Hạng ${rank + 1}`} ${g}` : `${g}${rank + 1}`);
   const slots = groups.flatMap((g) =>
@@ -184,7 +204,7 @@ export function seriesPreview<P extends Ranked>(
       .map((p, i) => ({ ...p, id: `pv-${g.id}-${i}`, name: label(i, g.name) })),
   );
   const out: PreviewPlayer[] = [{ id: BYE_PLAYER_ID, name: "BYE", seed: null, group_id: null }];
-  const series = assignSeries(groups.map((g) => g.id), slots, k).map((ordered, d) => {
+  const series = assignSeries(groups.map((g) => g.id), slots, sizes).map((ordered, d) => {
     const first = seriesBracket(ordered);
     for (const p of first) for (const sp of [p.player1, p.player2]) {
       const s = slots.find((x) => x.id === sp.playerId);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assignSeries, crossGroupCompare, maxSeries, seriesBracket, seriesName, seriesPlan, seriesPreview } from "@/lib/quick-table-series";
+import { assignSeries, crossGroupCompare, maxSeries, resolveSeriesSizes, seriesBracket, seriesName, seriesPlan, seriesPreview } from "@/lib/quick-table-series";
 import { groupOptions } from "@/lib/quick-table-chat";
 import { BYE_PLAYER_ID } from "@/lib/quick-table-playoff";
 
@@ -49,7 +49,7 @@ describe("every team count 6–48, every group split, every series count", () =>
           }
 
           const { groupIds, players } = fakeTable(o.sizes, n * 31 + k);
-          const series = assignSeries(groupIds, players, k);
+          const series = assignSeries(groupIds, players, plan.map((x) => x.size));
           expect(series.map((s) => s.length)).toEqual(plan.map((x) => x.size));
           const ids = series.flat().map((p) => p.id);
           expect(new Set(ids).size).toBe(ids.length);
@@ -74,7 +74,7 @@ describe("every team count 6–48, every group split, every series count", () =>
 describe("ordering", () => {
   it("series A gets every group's top 2, series B the rest", () => {
     const { groupIds, players } = fakeTable([4, 4, 3, 3], 7);
-    const [a, b] = assignSeries(groupIds, players, 2);
+    const [a, b] = assignSeries(groupIds, players, seriesPlan([4, 4, 3, 3], 2)!.map((x) => x.size));
     expect(a).toHaveLength(8);
     expect(b).toHaveLength(6);
   });
@@ -96,7 +96,7 @@ describe("seriesPreview — bracket per series before the playoff exists", () =>
     const { groupIds, players } = fakeTable(sizes, 3);
     const zero = players.map((p) => ({ ...p, matches_played: 0, matches_won: 0, point_diff: 0, points_for: 0 }));
     const groups = groupIds.map((id, i) => ({ id, name: "ABCDEFGH"[i] }));
-    const pv = seriesPreview(groups, zero, 2, "vi");
+    const pv = seriesPreview(groups, zero, [16, 10], "vi");
     expect(pv.series.map((s) => s.length)).toEqual([15, 15]); // 16 suất: 8+4+2+1
     const name = (id: string | null) => pv.players.find((p) => p.id === id)?.name;
     const a1 = pv.series[0].filter((m) => m.playoff_round === 1).flatMap((m) => [name(m.player1_id), name(m.player2_id)]);
@@ -106,5 +106,30 @@ describe("seriesPreview — bracket per series before the playoff exists", () =>
     expect(b1.filter((n) => n === "BYE")).toHaveLength(6);
     expect(b1.filter((n) => n?.startsWith("Ba"))).toHaveLength(8);
     expect(b1.filter((n) => n?.startsWith("Tư"))).toHaveLength(2);
+  });
+});
+
+describe("custom series sizes", () => {
+  it("44 teams, 11 groups of 4: Gold 16, Silver + Bronze share the rest", () => {
+    expect(resolveSeriesSizes([16, 0, 0], 44)).toEqual([16, 14, 14]);
+    expect(resolveSeriesSizes([16, 16, 0], 44)).toEqual([16, 16, 12]);
+    expect(resolveSeriesSizes([16], 44)).toEqual([16]); // còn lại bị loại
+    expect(resolveSeriesSizes([40, 0], 44)).toEqual([40, 4]);
+    expect(resolveSeriesSizes([43, 0], 44)).toBeNull();
+    expect(resolveSeriesSizes([30, 20], 44)).toBeNull();
+    expect(resolveSeriesSizes([8, 8, 8, 8], 44)).toBeNull();
+  });
+  it("gold takes the best 16 of the 22 group winners and runners-up", () => {
+    const sizes = Array(11).fill(4);
+    const { groupIds, players } = fakeTable(sizes, 5);
+    const [gold, silver, bronze] = assignSeries(groupIds, players, [16, 14, 14]);
+    expect([gold.length, silver.length, bronze.length]).toEqual([16, 14, 14]);
+    const rankIn = (p: (typeof players)[number]) => players
+      .filter((x) => x.group_id === p.group_id)
+      .sort((a, b) => b.matches_won - a.matches_won || b.point_diff - a.point_diff || b.points_for - a.points_for)
+      .indexOf(p);
+    expect(gold.every((p) => rankIn(p) <= 1)).toBe(true);
+    expect(gold.filter((p) => rankIn(p) === 0)).toHaveLength(11); // mọi đội nhất
+    for (const s of [gold, silver, bronze]) expect(seriesBracket(s).length).toBe(8);
   });
 });

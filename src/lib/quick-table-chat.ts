@@ -6,7 +6,7 @@
  * đây để luồng hội thoại luôn ổn định và mọi con số do code tính.
  */
 import { distributePlayersToGroups, suggestGroupConfigs } from "@/lib/quick-table-utils";
-import { maxSeries, type SeriesStyle } from "@/lib/quick-table-series";
+import { maxSeries, resolveSeriesSizes, seriesLine, seriesName, seriesPlan, slot, type SeriesSlot, type SeriesStyle } from "@/lib/quick-table-series";
 
 export const MAX_CHAT_ENTRIES = 48; // trên 48 → large_playoff, chat không hỗ trợ
 
@@ -32,6 +32,8 @@ export interface Draft {
   /** số nhánh playoff sau vòng bảng (Series A/B/C), 1 = chỉ top 2 */
   series?: number;
   series_style?: SeriesStyle;
+  /** cỡ từng nhánh do người dùng đặt (vd [16, 14, 14]); có thì thay cho luật mặc định */
+  series_sizes?: number[];
   /** giải đôi + danh sách toàn tên lẻ: đã chọn cách ghép */
   pairing_done?: boolean;
   /** đã qua bước "thêm tuỳ chọn" */
@@ -89,15 +91,57 @@ export function groupOptions(n: number): GroupOption[] {
   }));
 }
 
+export const MIN_GROUP = 3;
+export const MAX_GROUP = 8;
+export const MAX_GROUPS = 16;
+
+/**
+ * Số bảng tuỳ ý (vd 44 đội → 11 bảng × 4): chia đều, bảng 3–8 đội.
+ * Playoff 1 nhánh tính theo cùng luật Series A (nhất + nhì + vé vớt hạng 3).
+ */
+export function customGroupOption(n: number, g: number): GroupOption | null {
+  if (!Number.isInteger(g) || g < 2 || g > MAX_GROUPS) return null;
+  const sizes = Array.from({ length: g }, (_, i) => Math.floor(n / g) + (i < n % g ? 1 : 0));
+  if (sizes[g - 1] < MIN_GROUP || sizes[0] > MAX_GROUP) return null;
+  const a = seriesPlan(sizes, 1)![0];
+  return { groupCount: g, sizes, recommended: false, playoffSize: a.bracket, wildcards: a.size - 2 * g };
+}
+
+/** Cách chia đã chọn: theo gợi ý chuẩn, không có thì theo số bảng tuỳ ý. */
+export function findGroupOption(n: number, g: number | undefined): GroupOption | null {
+  if (g == null) return null;
+  return groupOptions(n).find((o) => o.groupCount === g) ?? customGroupOption(n, g);
+}
+
+/** Gợi ý chuẩn + một cách "bảng 4 đội" (giải đông hay muốn bảng nhỏ cho nhanh). */
+export function groupChoices(n: number): GroupOption[] {
+  const base = groupOptions(n);
+  const four = customGroupOption(n, Math.round(n / 4));
+  return four && n >= 12 && !base.some((o) => o.groupCount === four.groupCount) ? [...base, four] : base;
+}
+
 /** Cỡ các bảng của cách chia đã chọn (để tính nhánh trước khi có danh sách). */
 export function groupSizes(d: Draft): number[] {
-  return groupOptions(entryCount(d)).find((x) => x.groupCount === d.group_count)?.sizes ?? [];
+  return findGroupOption(entryCount(d), d.group_count)?.sizes ?? [];
 }
 
 /** Số nhánh tối đa với cách chia bảng đã chọn (1 nếu chưa chọn / không chia được). */
 export function seriesCap(d: Draft): number {
-  const o = groupOptions(entryCount(d)).find((x) => x.groupCount === d.group_count);
+  const o = findGroupOption(entryCount(d), d.group_count);
   return o && o.groupCount >= 2 ? maxSeries(o.sizes) : 1;
+}
+
+/** Cỡ nhánh tuỳ chỉnh còn hợp lệ với số đội hiện tại (đổi danh sách có thể làm nó sai). */
+export function customSeries(d: Draft): number[] | null {
+  return d.series_sizes ? resolveSeriesSizes(d.series_sizes, entryCount(d)) : null;
+}
+
+/** Các nhánh sẽ tạo: tuỳ chỉnh nếu có, không thì theo luật mặc định; null = 1 nhánh mặc định. */
+export function draftSeriesPlan(d: Draft): SeriesSlot[] | null {
+  const custom = customSeries(d);
+  if (custom) return custom.map(slot);
+  const k = Math.min(d.series ?? 1, seriesCap(d));
+  return k > 1 ? seriesPlan(groupSizes(d), k) : null;
 }
 
 export function nextSlot(d: Draft): Slot {
@@ -107,9 +151,9 @@ export function nextSlot(d: Draft): Slot {
   if (entryCount(d) < 2) return "count";
   if (needsPairing(d)) return "pairing";
   if (d.entries?.length && d.player_count != null && d.player_count !== d.entries.length) return "mismatch";
-  if (!groupOptions(entryCount(d)).some((o) => o.groupCount === d.group_count)) return "groups";
+  if (!findGroupOption(entryCount(d), d.group_count)) return "groups";
   const cap = seriesCap(d);
-  if (cap > 1 && (d.series == null || d.series > cap)) return "series";
+  if (cap > 1 && !customSeries(d) && (d.series == null || d.series > cap)) return "series";
   if (!d.entries?.length) {
     if (!d.roster_mode) return "roster";
     if (d.roster_mode === "now") return "paste";
@@ -182,7 +226,11 @@ export function applyPatch(d: Draft, patch: unknown): Draft {
     next.time_done = true;
   }
   if (p.default_sets === 1 || p.default_sets === 3 || p.default_sets === 5) next.default_sets = p.default_sets;
-  if (p.series === 1 || p.series === 2 || p.series === 3) next.series = p.series;
+  if (p.series === 1 || p.series === 2 || p.series === 3) { next.series = p.series; next.series_sizes = undefined; }
+  if (Array.isArray(p.series_sizes) && p.series_sizes.length) {
+    const sizes = resolveSeriesSizes(p.series_sizes, entryCount(next));
+    if (sizes) { next.series_sizes = sizes; next.series = sizes.length; }
+  }
   if (p.series_style === "series" || p.series_style === "medal") next.series_style = p.series_style;
   return next;
 }
@@ -331,7 +379,7 @@ export function trustPatch(patch: unknown, text: string, slot: Slot): Record<str
   const said = (re: RegExp) => re.test(t);
   if (slot !== "start_time" && !said(/\d\s*(h|g|giờ|gio|:\d)|\b(am|pm)\b|sáng|chiều|tối|trưa|morning|evening|o'?clock/)) delete p.start_time;
   if (slot !== "courts" && !said(/sân|san\b|court/)) delete p.courts;
-  if (slot !== "series" && !said(/nhánh|nhanh|series|vàng|bạc|đồng|gold|silver|bronze|top\s*\d|bracket/)) { delete p.series; delete p.series_style; }
+  if (slot !== "series" && !said(/nhánh|nhanh|series|vàng|bạc|đồng|gold|silver|bronze|top\s*\d|bracket|vòng trong|vòng loại|knockout|playoff/)) { delete p.series; delete p.series_style; delete p.series_sizes; }
   if (!said(/set|bo\d|best of|ván|van\b/)) delete p.default_sets;
   return p;
 }
@@ -353,4 +401,43 @@ export function localSlotPatch(text: string, slot: Slot): Partial<Draft> | null 
     return { start_time: `${String(h).padStart(2, "0")}:${String(mm).padStart(2, "0")}`, time_done: true };
   }
   return null;
+}
+
+/**
+ * Số liệu do code tính, gửi kèm cho AI để nó TRẢ LỜI câu hỏi ("11 bảng thì lấy
+ * thế nào vào vòng trong?") bằng con số thật thay vì tự bịa.
+ */
+export function chatFacts(d: Draft, lang: "vi" | "en"): string {
+  const n = entryCount(d);
+  if (n < 2) return "";
+  const u = d.is_doubles === false ? (lang === "en" ? "players" : "VĐV") : (lang === "en" ? "teams" : "đội");
+  const style = d.series_style ?? "series";
+  const range = (o: GroupOption) => (o.sizes[0] === o.sizes[o.sizes.length - 1] ? `${o.sizes[0]}` : `${o.sizes[o.sizes.length - 1]}–${o.sizes[0]}`);
+  const describe = (o: GroupOption) => {
+    if (o.groupCount < 2) return `1 bảng vòng tròn ${n} ${u}, không có playoff.`;
+    const a = seriesPlan(o.sizes, 1)![0];
+    const wc = a.size - 2 * o.groupCount;
+    const lines = [
+      `${o.groupCount} bảng × ${range(o)} ${u}: playoff 1 nhánh lấy nhất + nhì ${o.groupCount} bảng = ${2 * o.groupCount}` +
+        (wc > 0 ? ` + ${wc} đội hạng 3 tốt nhất = ${a.size}` : "") +
+        ` → cây ${a.bracket}${a.byes ? ` (${a.byes} đội xếp cao miễn vòng 1)` : ""}; ${n - a.size} ${u} bị loại.`,
+    ];
+    for (let k = 2; k <= maxSeries(o.sizes); k++) {
+      const plan = seriesPlan(o.sizes, k)!;
+      lines.push(`  ${k} nhánh mặc định: ${plan.map((sl, i) => seriesLine(seriesName(style, i, "vi"), sl, "vi", u)).join("; ")}.`);
+    }
+    return lines.join("\n");
+  };
+  const options = groupChoices(n);
+  const chosen = findGroupOption(n, d.group_count);
+  if (chosen && !options.some((o) => o.groupCount === chosen.groupCount)) options.push(chosen);
+  const plan = draftSeriesPlan(d);
+  return [
+    `Số ${u}: ${n}.`,
+    `Chia bảng: bảng ${MIN_GROUP}–${MAX_GROUP} ${u}, 2–${MAX_GROUPS} bảng, số bảng nào cũng được nếu chia đều nằm trong khoảng đó. Một số cách:`,
+    ...options.map(describe),
+    chosen ? `Đang chọn: ${chosen.groupCount} bảng × ${range(chosen)}.` : "Chưa chọn cách chia bảng.",
+    plan ? `Nhánh đang chọn: ${plan.map((sl, i) => seriesLine(seriesName(style, i, "vi"), sl, "vi", u)).join("; ")}.` : "",
+    `Xếp hạng toàn giải để chia nhánh: mọi đội nhất bảng (so khác bảng bằng tỉ lệ thắng, rồi hiệu số trung bình/trận, rồi điểm ghi trung bình/trận), rồi mọi đội nhì, rồi hạng 3… Nhánh đầu lấy nhóm đầu, nhánh sau lấy tiếp. Cỡ nhánh đặt tuỳ ý được (1–3 nhánh, mỗi nhánh ≥ 2) qua series_sizes. Nhánh không tròn 2/4/8/16/32 thì đội xếp cao được miễn vòng 1 (BYE).`,
+  ].filter(Boolean).join("\n");
 }
