@@ -6,6 +6,7 @@
  * đây để luồng hội thoại luôn ổn định và mọi con số do code tính.
  */
 import { distributePlayersToGroups, suggestGroupConfigs } from "@/lib/quick-table-utils";
+import { maxSeries, type SeriesStyle } from "@/lib/quick-table-series";
 
 export const MAX_CHAT_ENTRIES = 48; // trên 48 → large_playoff, chat không hỗ trợ
 
@@ -28,6 +29,9 @@ export interface Draft {
   courts?: number[];
   start_time?: string;
   default_sets?: 1 | 3 | 5;
+  /** số nhánh playoff sau vòng bảng (Series A/B/C), 1 = chỉ top 2 */
+  series?: number;
+  series_style?: SeriesStyle;
   /** giải đôi + danh sách toàn tên lẻ: đã chọn cách ghép */
   pairing_done?: boolean;
   /** đã qua bước "thêm tuỳ chọn" */
@@ -41,6 +45,7 @@ export type Slot =
   | "pairing"
   | "mismatch"
   | "groups"
+  | "series"
   | "roster"
   | "paste"
   | "name"
@@ -79,6 +84,12 @@ export function groupOptions(n: number): GroupOption[] {
   }));
 }
 
+/** Số nhánh tối đa với cách chia bảng đã chọn (1 nếu chưa chọn / không chia được). */
+export function seriesCap(d: Draft): number {
+  const o = groupOptions(entryCount(d)).find((x) => x.groupCount === d.group_count);
+  return o ? maxSeries(o.groupCount, Math.min(...o.sizes)) : 1;
+}
+
 export function nextSlot(d: Draft): Slot {
   if (d.is_doubles === undefined) return "format";
   if (!d.entries?.length && !d.player_count) return "count";
@@ -87,6 +98,8 @@ export function nextSlot(d: Draft): Slot {
   if (needsPairing(d)) return "pairing";
   if (d.entries?.length && d.player_count != null && d.player_count !== d.entries.length) return "mismatch";
   if (!groupOptions(entryCount(d)).some((o) => o.groupCount === d.group_count)) return "groups";
+  const cap = seriesCap(d);
+  if (cap > 1 && (d.series == null || d.series > cap)) return "series";
   if (!d.entries?.length) {
     if (!d.roster_mode) return "roster";
     if (d.roster_mode === "now") return "paste";
@@ -155,6 +168,8 @@ export function applyPatch(d: Draft, patch: unknown): Draft {
     next.start_time = p.start_time;
   }
   if (p.default_sets === 1 || p.default_sets === 3 || p.default_sets === 5) next.default_sets = p.default_sets;
+  if (p.series === 1 || p.series === 2 || p.series === 3) next.series = p.series;
+  if (p.series_style === "series" || p.series_style === "medal") next.series_style = p.series_style;
   return next;
 }
 

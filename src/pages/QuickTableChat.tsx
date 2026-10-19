@@ -21,9 +21,10 @@ import { useQuickTable, type QuickTable } from "@/hooks/useQuickTable";
 import { supabase } from "@/integrations/supabase/client";
 import { getSiteUrl } from "@/lib/auth-config";
 import { cn } from "@/lib/utils";
+import { seriesName, seriesRanks, type SeriesStyle } from "@/lib/quick-table-series";
 import {
   applyPatch, buildRoster, defaultName, duplicateIndexes, entryCount, entryLabel, groupOptions,
-  MAX_CHAT_ENTRIES, nextSlot, pairEntries, previewAssignments,
+  MAX_CHAT_ENTRIES, nextSlot, pairEntries, previewAssignments, seriesCap,
   type Draft, type Entry, type GroupOption, type PairingMode, type Slot,
 } from "@/lib/quick-table-chat";
 
@@ -83,6 +84,11 @@ const COPY = {
           ? `Top 2 mỗi bảng vào thẳng ${ROUND_VI[o.playoffSize] ?? "playoff"}`
           : `Vào ${ROUND_VI[o.playoffSize] ?? "playoff"}, cần thêm ${o.wildcards} suất vé vớt`,
     recommended: "Khuyên dùng",
+    series: "Hết vòng bảng thì đánh mấy nhánh? Nhiều nhánh thì ai cũng được đánh tiếp.",
+    seriesOne: "1 nhánh", seriesOneSub: "Chỉ top 2 mỗi bảng vào playoff",
+    seriesMany: (names: string[]) => `${names.length} nhánh: ${names.join(" + ")}`,
+    seriesLine: (name: string, n: number, u: string, hi: number, lo: number) => `${name}: ${n} ${u} hạng ${hi}–${lo}`,
+    optStyle: (s: SeriesStyle): string => (s === "medal" ? "Đổi tên: Series A, B" : "Đổi tên: Nhánh Vàng, Bạc"),
     roster: (u: string) => `Có danh sách ${u} chưa? Dán vào là mình xếp bảng luôn.`,
     pasteNow: "Dán ngay",
     openRegistration: "Mở cho người chơi tự đăng ký",
@@ -174,6 +180,11 @@ const COPY = {
           ? `Top 2 per group go straight to the ${ROUND_EN[o.playoffSize] ?? "playoff"}`
           : `${ROUND_EN[o.playoffSize] ?? "Playoff"} needs ${o.wildcards} wildcard spots`,
     recommended: "Recommended",
+    series: "After the groups, how many brackets? More brackets means everyone keeps playing.",
+    seriesOne: "1 bracket", seriesOneSub: "Only the top 2 of each group go to the playoff",
+    seriesMany: (names: string[]) => `${names.length} brackets: ${names.join(" + ")}`,
+    seriesLine: (name: string, n: number, u: string, hi: number, lo: number) => `${name}: ${n} ${u} ranked ${hi}–${lo}`,
+    optStyle: (s: SeriesStyle): string => (s === "medal" ? "Rename: Series A, B" : "Rename: Gold, Silver"),
     roster: (u: string) => `Do you have the list of ${u}? Paste it and I'll draw the groups now.`,
     pasteNow: "Paste now",
     openRegistration: "Let players sign up",
@@ -422,6 +433,20 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           recommended: o.recommended,
           onClick: () => choose(c.groupLabel(o), { group_count: o.groupCount }),
         }));
+      case "series": {
+        const style = draft.series_style ?? "series";
+        const g = draft.group_count ?? 1;
+        return Array.from({ length: seriesCap(draft) }, (_, i) => i + 1).map((k) => {
+          const names = Array.from({ length: k }, (_, d) => seriesName(style, d, lang));
+          const label = k === 1 ? c.seriesOne : c.seriesMany(names);
+          return {
+            label,
+            sub: k === 1 ? c.seriesOneSub : names.map((nm, d) => c.seriesLine(nm, g * 2, unit, ...seriesRanks(d))).join(" · "),
+            recommended: k === seriesCap(draft),
+            onClick: () => choose(label, { series: k }),
+          };
+        });
+      }
       case "roster":
         return [
           { label: c.pasteNow, onClick: () => choose(c.pasteNow, { roster_mode: "now" }) },
@@ -451,6 +476,17 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           { label: c.optCourts, onClick: hint(c.optCourts, c.hintCourts) },
           { label: c.optSets(draft.default_sets ?? 1), onClick: () => { pushUser(c.optSets(draft.default_sets ?? 1)); pushBot(c.setsQ); setSubMenu("sets"); } },
           { label: c.optTeam, onClick: hint(c.optTeam, c.hintTeam) },
+          ...((draft.series ?? 1) > 1
+            ? [{
+                label: c.optStyle(draft.series_style ?? "series"),
+                onClick: () => {
+                  const next: SeriesStyle = draft.series_style === "medal" ? "series" : "medal";
+                  pushUser(c.optStyle(draft.series_style ?? "series"));
+                  setDraft((d) => ({ ...d, series_style: next }));
+                  pushBot(c.options);
+                },
+              }]
+            : []),
         ];
       }
       default:
@@ -463,8 +499,8 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     setDraftOpen(false);
     const d = { ...draft };
     if (field === "format") { d.is_doubles = undefined; d.pairing_done = false; }
-    if (field === "count") { d.player_count = undefined; d.entries = undefined; d.roster_mode = undefined; d.group_count = undefined; }
-    if (field === "groups") d.group_count = undefined;
+    if (field === "count") { d.player_count = undefined; d.entries = undefined; d.roster_mode = undefined; d.group_count = undefined; d.series = undefined; }
+    if (field === "groups") { d.group_count = undefined; d.series = undefined; }
     if (field === "roster") { d.entries = undefined; d.roster_mode = undefined; d.options_done = false; }
     if (field === "name") d.name = undefined;
     if (field === "extra") d.options_done = false;
@@ -483,8 +519,12 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       requires_registration: draft.roster_mode === "registration",
     });
     if (!table) { setCreating(false); return; } // createTable đã toast lỗi (quota/auth)
-    if ((draft.default_sets ?? 1) > 1) {
-      await supabase.from("quick_tables").update({ default_sets: draft.default_sets } as never).eq("id", table.id);
+    const series = Math.min(draft.series ?? 1, seriesCap(draft));
+    if ((draft.default_sets ?? 1) > 1 || series > 1) {
+      await supabase.from("quick_tables").update({
+        ...((draft.default_sets ?? 1) > 1 ? { default_sets: draft.default_sets } : {}),
+        ...(series > 1 ? { playoff_series: series, playoff_series_style: draft.series_style ?? "series" } : {}),
+      } as never).eq("id", table.id);
     }
     let rosterOk = true;
     if (draft.entries?.length) {
@@ -576,7 +616,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
               <ChevronDown className={cn("w-4 h-4 transition-transform", draftOpen && "rotate-180")} />
             </button>
             {draftOpen && (
-              <DraftPanel draft={draft} c={c} onEdit={editField} onEntries={setEntries} />
+              <DraftPanel draft={draft} c={c} lang={lang} onEdit={editField} onEntries={setEntries} />
             )}
           </section>
         )}
@@ -595,7 +635,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
 
           {slot === "confirm" && !created && !busy && (
             <ConfirmCard
-              draft={draft} c={c} groups={groupsList} creating={creating}
+              draft={draft} c={c} lang={lang} groups={groupsList} creating={creating}
               onCreate={create}
               onEdit={() => setDraftOpen(true)}
               onReshuffle={() => setAssignments(previewAssignments(draft))}
@@ -668,6 +708,11 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
 
 type C = (typeof COPY)["vi"];
 
+function seriesLabel(d: Draft, lang: Lang): string | null {
+  const k = Math.min(d.series ?? 1, seriesCap(d));
+  return k > 1 ? Array.from({ length: k }, (_, i) => seriesName(d.series_style ?? "series", i, lang)).join(" + ") : null;
+}
+
 function questionFor(c: C, d: Draft, s: Slot): string {
   const u = c.unit(d);
   const n = entryCount(d);
@@ -679,6 +724,7 @@ function questionFor(c: C, d: Draft, s: Slot): string {
     case "mismatch": return c.mismatch(d.entries!.length, d.player_count!, u);
     case "groups":
       return (d.group_count ? c.groupsInvalid(d.group_count, u) : c.groups(n, u)) + (n > 32 ? c.groupsBig : "");
+    case "series": return c.series;
     case "roster": return c.roster(u);
     case "paste": return c.paste(d);
     case "name": return c.name;
@@ -814,8 +860,8 @@ function ChipRow({ chips }: { chips: Chip[] }) {
   );
 }
 
-function DraftPanel({ draft, c, onEdit, onEntries }: {
-  draft: Draft; c: C;
+function DraftPanel({ draft, c, lang, onEdit, onEntries }: {
+  draft: Draft; c: C; lang: Lang;
   onEdit: (f: "format" | "count" | "groups" | "roster" | "name" | "extra") => void;
   onEntries: (e: Entry[]) => void;
 }) {
@@ -829,7 +875,7 @@ function DraftPanel({ draft, c, onEdit, onEntries }: {
   const rows: Array<[string, string, Parameters<typeof onEdit>[0]]> = [
     [c.fFormat, draft.is_doubles === undefined ? c.empty : draft.is_doubles ? c.doubles : c.singles, "format"],
     [c.fCount, n ? `${n} ${c.unit(draft)}` : c.empty, "count"],
-    [c.fGroups, draft.group_count && n ? (groupOptions(n).find((o) => o.groupCount === draft.group_count) ? c.groupLabel(groupOptions(n).find((o) => o.groupCount === draft.group_count)!) : c.empty) : c.empty, "groups"],
+    [c.fGroups, draft.group_count && n ? (groupOptions(n).find((o) => o.groupCount === draft.group_count) ? [c.groupLabel(groupOptions(n).find((o) => o.groupCount === draft.group_count)!), seriesLabel(draft, lang)].filter(Boolean).join(" · ") : c.empty) : c.empty, "groups"],
     [c.fRoster, draft.entries?.length ? `${draft.entries.length} ${c.unit(draft)}` : draft.roster_mode === "registration" ? c.rosterReg : draft.roster_mode === "later" ? c.rosterLater : c.empty, "roster"],
     [c.fName, draft.name ?? c.empty, "name"],
     [c.fExtra, extras || c.empty, "extra"],
@@ -883,8 +929,8 @@ function EntriesEditor({ entries, doubles, c, onChange }: { entries: Entry[]; do
   );
 }
 
-function ConfirmCard({ draft, c, groups, creating, onCreate, onEdit, onReshuffle }: {
-  draft: Draft; c: C; groups: Entry[][]; creating: boolean;
+function ConfirmCard({ draft, c, lang, groups, creating, onCreate, onEdit, onReshuffle }: {
+  draft: Draft; c: C; lang: Lang; groups: Entry[][]; creating: boolean;
   onCreate: () => void; onEdit: () => void; onReshuffle: () => void;
 }) {
   const n = entryCount(draft);
@@ -893,6 +939,7 @@ function ConfirmCard({ draft, c, groups, creating, onCreate, onEdit, onReshuffle
     draft.is_doubles === false ? c.singles : c.doubles,
     `${n} ${c.unit(draft)}`,
     groupOptions(n).find((o) => o.groupCount === draft.group_count) ? c.groupLabel(groupOptions(n).find((o) => o.groupCount === draft.group_count)!) : null,
+    seriesLabel(draft, lang),
     draft.default_sets && draft.default_sets > 1 ? `BO${draft.default_sets}` : null,
     draft.courts?.length ? c.courts(draft.courts) : null,
     draft.start_time ?? null,

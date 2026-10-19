@@ -220,8 +220,8 @@ describe("Edge Function CORS and server entrypoints", () => {
       ),
       // 77: buyer-facing SePay checkout + seller product-import-enrich import
       // the shared preset; the server-to-server IPN intentionally has no
-      // browser CORS surface.
-    ).toHaveLength(77);
+      // browser CORS surface. 78: quick-table-chat.
+    ).toHaveLength(78);
     expect(combined).not.toMatch(/const corsHeaders\s*=/i);
     expect(combined).not.toMatch(
       /import\s*\{[^}]*corsHeaders[^}]*\}\s*from\s*["']\.\.\/_shared\/auth\.ts["']/s,
@@ -235,8 +235,8 @@ describe("Edge Function CORS and server entrypoints", () => {
   });
 
   it("uses Deno.serve for every function entrypoint", () => {
-    // 85 since Shop added product-import-enrich (seller bulk import).
-    expect(functionSources).toHaveLength(85);
+    // 86 since quick-table-chat.
+    expect(functionSources).toHaveLength(86);
     for (const [functionName, source] of functionSources) {
       const alias = source.match(/import\s+["']\.\.\/([^/]+)\/index\.ts["']/)?.[1];
       const effectiveSource = alias ? functionSources.get(alias) : source;

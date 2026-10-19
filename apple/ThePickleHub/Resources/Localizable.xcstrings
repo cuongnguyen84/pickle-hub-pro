@@ -20039,6 +20039,126 @@
           }
         }
       }
+    },
+    "Nhánh Vàng" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gold bracket"
+          }
+        }
+      }
+    },
+    "Nhánh Bạc" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Silver bracket"
+          }
+        }
+      }
+    },
+    "Nhánh Đồng" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bronze bracket"
+          }
+        }
+      }
+    },
+    "Nhánh playoff" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Playoff bracket"
+          }
+        }
+      }
+    },
+    "Số nhánh playoff" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Playoff brackets"
+          }
+        }
+      }
+    },
+    "1 nhánh" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 bracket"
+          }
+        }
+      }
+    },
+    "Tạo các nhánh playoff?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create the playoff brackets?"
+          }
+        }
+      }
+    },
+    "%@: hạng %lld–%lld mỗi bảng" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: ranks %lld–%lld in each group"
+          }
+        }
+      }
+    },
+    "Vô địch giải là vô địch nhánh đầu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The first bracket's winner is the tournament champion."
+          }
+        }
+      }
+    },
+    "Huỷ" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "Tạo playoff" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create playoff"
+          }
+        }
+      }
+    },
+    "Các bảng này chưa chia được nhiều nhánh." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "These groups can't be split into several brackets."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

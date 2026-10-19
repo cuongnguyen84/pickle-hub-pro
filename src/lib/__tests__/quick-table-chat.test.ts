@@ -21,6 +21,8 @@ describe("nextSlot — hỏi đúng thứ còn thiếu", () => {
     d = { ...d, player_count: 16 };
     expect(nextSlot(d)).toBe("groups");
     d = { ...d, group_count: 4 };
+    expect(nextSlot(d)).toBe("series"); // 4 bảng × 4 → được Series A + B
+    d = { ...d, series: 2 };
     expect(nextSlot(d)).toBe("roster");
     d = { ...d, roster_mode: "now" };
     expect(nextSlot(d)).toBe("paste");
@@ -33,12 +35,13 @@ describe("nextSlot — hỏi đúng thứ còn thiếu", () => {
   });
 
   it("one message with everything goes straight to options", () => {
-    const d = applyPatch({}, { is_doubles: true, player_count: 16, group_count: 4, name: "CLB", entries: teams(16) });
+    const d = applyPatch({}, { is_doubles: true, player_count: 16, group_count: 4, series: 2, series_style: "medal", name: "CLB", entries: teams(16) });
+    expect(d.series_style).toBe("medal");
     expect(nextSlot(d)).toBe("options");
   });
 
   it("registration / later skip options", () => {
-    const d: Draft = { is_doubles: true, player_count: 16, group_count: 4, roster_mode: "registration", name: "x" };
+    const d: Draft = { is_doubles: true, player_count: 16, group_count: 4, series: 1, roster_mode: "registration", name: "x" };
     expect(nextSlot(d)).toBe("confirm");
   });
 
@@ -51,6 +54,14 @@ describe("nextSlot — hỏi đúng thứ còn thiếu", () => {
   it("asks how to pair when a doubles list has only single names", () => {
     const d = applyPatch({ is_doubles: true }, { entries: [{ p1: "a" }, { p1: "b" }, { p1: "c" }, { p1: "d" }] });
     expect(nextSlot(d)).toBe("pairing");
+  });
+});
+
+describe("series step", () => {
+  it("only asked when the chosen groups allow more than one series", () => {
+    expect(nextSlot({ is_doubles: true, player_count: 32, group_count: 8 })).toBe("series");
+    expect(nextSlot({ is_doubles: true, player_count: 18, group_count: 6 })).toBe("roster"); // 6 bảng cần vé vớt
+    expect(nextSlot({ is_doubles: true, player_count: 32, group_count: 8, series: 3 })).toBe("series"); // 8×4 chỉ tối đa 2
   });
 });
 

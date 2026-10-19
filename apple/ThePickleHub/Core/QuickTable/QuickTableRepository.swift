@@ -108,7 +108,7 @@ struct QuickTableRepository {
     func load(shareID: String) async throws -> QuickTableDetail {
         let table: QTTable = try await client
             .from("quick_tables")
-            .select("id, share_id, name, status, format, is_doubles, creator_user_id, top_per_group, requires_registration, requires_skill_level, rating_source, min_skill_level, max_skill_level, auto_approve_registrations, registration_message, group_count, player_count, courts, start_time")
+            .select("id, share_id, name, status, format, is_doubles, creator_user_id, top_per_group, requires_registration, requires_skill_level, rating_source, min_skill_level, max_skill_level, auto_approve_registrations, registration_message, group_count, player_count, courts, start_time, playoff_series, playoff_series_style")
             .eq("share_id", value: shareID)
             .single()
             .execute()
@@ -127,7 +127,7 @@ struct QuickTableRepository {
             .execute().value
         async let matches: [QTMatch] = client
             .from("quick_table_matches")
-            .select("id, group_id, is_playoff, playoff_round, playoff_match_number, player1_id, player2_id, score1, score2, winner_id, status, court_name, court_id, start_at, display_order, score_version")
+            .select("id, group_id, is_playoff, playoff_round, playoff_match_number, player1_id, player2_id, score1, score2, winner_id, status, court_name, court_id, start_at, display_order, score_version, playoff_division")
             .eq("table_id", value: table.id)
             .execute().value
 
@@ -1189,12 +1189,14 @@ struct QuickTableRepository {
         let player_id: String
         let playoff_seed: Int
         let is_wildcard: Bool
+        var division: Int = 0
     }
     private struct AtomicFirstRoundMatch: Encodable {
         let player1_id: String?
         let player2_id: String?
         let bracket_position: String
         let match_number: Int
+        var division: Int = 0
     }
     private struct AtomicPlayoffParams: Encodable {
         let p_table_id: String
@@ -1230,6 +1232,43 @@ struct QuickTableRepository {
                         match_number: $0.matchNumber
                     )
                 }
+            ))
+            .execute().value
+        guard result.success else {
+            throw NSError(
+                domain: "quicktable", code: 3,
+                userInfo: [NSLocalizedDescriptionKey: result.detail ?? result.error ?? String(localized: "Không thể tạo playoff.")]
+            )
+        }
+    }
+
+    /// Series A/B/C: mọi nhánh trong MỘT lần gọi RPC, phần tử d = nhánh d.
+    func createSeriesPlayoff(
+        tableID: UUID,
+        series: [(qualified: [(playerID: UUID, seed: Int)], firstRound: [QTBracketMatch])]
+    ) async throws {
+        let qualifiers = series.enumerated().flatMap { d, s in
+            s.qualified.map {
+                AtomicQualifier(player_id: $0.playerID.uuidString.lowercased(),
+                                playoff_seed: $0.seed, is_wildcard: false, division: d)
+            }
+        }
+        let firstRound = series.enumerated().flatMap { d, s in
+            s.firstRound.map {
+                AtomicFirstRoundMatch(
+                    player1_id: $0.player1?.uuidString.lowercased(),
+                    player2_id: $0.player2?.uuidString.lowercased(),
+                    bracket_position: $0.position,
+                    match_number: $0.matchNumber,
+                    division: d
+                )
+            }
+        }
+        let result: AtomicLifecycleResult = try await client
+            .rpc("create_quick_table_playoff_atomic", params: AtomicPlayoffParams(
+                p_table_id: tableID.uuidString.lowercased(),
+                p_qualifiers: qualifiers,
+                p_first_round: firstRound
             ))
             .execute().value
         guard result.success else {

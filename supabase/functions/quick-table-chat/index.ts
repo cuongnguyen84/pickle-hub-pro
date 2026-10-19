@@ -61,6 +61,8 @@ const RESPONSE_SCHEMA = {
         courts: { type: "ARRAY", items: { type: "INTEGER" } },
         start_time: { type: "STRING" },
         default_sets: { type: "INTEGER" },
+        series: { type: "INTEGER" },
+        series_style: { type: "STRING", enum: ["series", "medal"] },
       },
     },
   },
@@ -88,6 +90,8 @@ Trường của patch:
 - courts: danh sách số sân ("sân 1 đến 4" → [1,2,3,4], "sân 2,3,5" → [2,3,5]).
 - start_time: giờ bắt đầu dạng HH:MM 24 giờ ("7h tối" → "19:00", "8h sáng" → "08:00").
 - default_sets: 1, 3 hoặc 5 (đánh 1 set / best of 3 / best of 5).
+- series: số nhánh playoff sau vòng bảng (1–3). "nhánh vàng, nhánh bạc" / "series A, B" / "nhất nhì đánh A, ba tư đánh B" → 2; thêm "nhánh đồng" / "series C" → 3; "chỉ lấy top 2" → 1.
+- series_style: "medal" nếu người dùng gọi là vàng/bạc/đồng, "series" nếu gọi series A/B/C.
 
 Câu trả lời "reply":
 - Tối đa 1 câu ngắn. ${lang === "en" ? "LUÔN viết reply bằng tiếng Anh (giao diện đang tiếng Anh), kể cả khi người dùng gõ tiếng Việt." : "LUÔN viết reply bằng tiếng Việt (giao diện đang tiếng Việt), kể cả khi người dùng gõ tiếng Anh. Xưng \"mình\", gọi người dùng là \"bạn\"."}

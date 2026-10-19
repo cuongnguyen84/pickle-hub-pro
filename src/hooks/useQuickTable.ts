@@ -54,6 +54,9 @@ export interface QuickTable {
   start_time: string | null;
   is_doubles: boolean;
   parent_tournament_id: string | null;
+  // Series A/B/C sau vòng bảng (2026-10-19): số nhánh dự kiến + kiểu tên.
+  playoff_series?: number;
+  playoff_series_style?: "series" | "medal";
 }
 
 export interface QuickTableGroup {
@@ -96,6 +99,8 @@ export interface QuickTableMatch {
   is_playoff: boolean;
   playoff_round: number | null;
   playoff_match_number: number | null;
+  /** 0 = Series A / nhánh Vàng, 1 = B / Bạc, 2 = C / Đồng */
+  playoff_division?: number;
   bracket_position: string | null;
   large_playoff_round: number | null;
   player1_id: string | null;
@@ -423,6 +428,36 @@ export function useQuickTable() {
     }
   }, []);
 
+  /** Nhiều nhánh (Series A/B/C) trong MỘT lần gọi RPC: nhánh d = phần tử d. */
+  const createSeriesPlayoffAtomic = useCallback(async (
+    tableId: string,
+    series: Array<{
+      qualified: QuickTablePlayer[];
+      bracketMatches: Array<{ player1: QuickTablePlayer | null; player2: QuickTablePlayer | null; bracketPosition: string; matchNumber: number }>;
+    }>,
+  ): Promise<void> => {
+    const { data, error } = await supabase.rpc('create_quick_table_playoff_atomic', {
+      p_table_id: tableId,
+      p_qualifiers: series.flatMap((s, division) => s.qualified.map((player) => ({
+        player_id: player.id,
+        playoff_seed: player.playoff_seed ?? 1,
+        is_wildcard: false,
+        division,
+      }))) as Json,
+      p_first_round: series.flatMap((s, division) => s.bracketMatches.map((match) => ({
+        player1_id: match.player1?.id ?? null,
+        player2_id: match.player2?.id ?? null,
+        bracket_position: match.bracketPosition,
+        match_number: match.matchNumber,
+        division,
+      }))) as Json,
+    });
+    const result = (data ?? {}) as Record<string, unknown>;
+    if (error || result.success !== true) {
+      throw error ?? new Error(String(result.error ?? 'PLAYOFF_CREATE_FAILED'));
+    }
+  }, []);
+
   const isGroupStageComplete = useCallback((matches: QuickTableMatch[]): boolean => {
     const groupMatches = matches.filter(m => !m.is_playoff);
     return groupMatches.length > 0 && groupMatches.every(m => m.status === 'completed');
@@ -467,6 +502,7 @@ export function useQuickTable() {
     getQualifiedPlayers,
     generatePlayoffBracket,
     createPlayoffAtomic,
+    createSeriesPlayoffAtomic,
     isGroupStageComplete,
     getWildcardCount,
     // Spread mutations

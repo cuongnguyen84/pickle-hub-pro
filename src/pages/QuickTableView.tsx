@@ -45,6 +45,7 @@ import {
   resolveBracketConflicts,
 } from '@/lib/quick-table-seeding-v2';
 import { scheduleMatches } from '@/lib/round-robin';
+import { maxSeries, seriesName, seriesRanks, splitIntoSeries } from '@/lib/quick-table-series';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -56,7 +57,7 @@ const QuickTableView = () => {
   const confirm = useConfirm();
   const {
     getTableByShareId, updateMatchScore,
-    getQualifiedPlayers, generatePlayoffBracket, createPlayoffAtomic,
+    getQualifiedPlayers, generatePlayoffBracket, createPlayoffAtomic, createSeriesPlayoffAtomic,
     isGroupStageComplete, getWildcardCount, movePlayerToGroup,
     addPlayerToGroup, removePlayerFromGroup, regenerateGroupMatches,
     updatePlayerName, updateTableName, updateTableCourtSettings,
@@ -95,6 +96,8 @@ const QuickTableView = () => {
   const [wildcardNeeded, setWildcardNeeded] = useState(0);
 
   const [showPlayoffPreview, setShowPlayoffPreview] = useState(false);
+  const [seriesChoice, setSeriesChoice] = useState<number | null>(null);
+  const [playoffDivision, setPlayoffDivision] = useState(0);
   const [previewPairings, setPreviewPairings] = useState<BracketPairing[]>([]);
 
   const [showTeam, setShowTeam] = useState(() => {
@@ -345,8 +348,58 @@ const QuickTableView = () => {
   const playoffMatches = matches.filter(m => m.is_playoff);
   const hasPlayoff = playoffMatches.length > 0;
 
+  // Series A/B/C: mỗi nhánh cần 2 người từ mỗi bảng, bracket sạch (2/4/8 bảng).
+  const seriesCap = maxSeries(
+    groups.length,
+    groups.length ? Math.min(...groups.map((g) => players.filter((p) => p.group_id === g.id).length)) : 0,
+  );
+  const seriesCount = Math.min(seriesChoice ?? table?.playoff_series ?? 1, seriesCap);
+  const seriesStyle = table?.playoff_series_style ?? 'series';
+  const playoffDivisions = [...new Set(playoffMatches.map((m) => m.playoff_division ?? 0))].sort();
+
+  const startSeriesPlayoff = async (count: number) => {
+    if (!table) return;
+    const lang = language === 'en' ? 'en' : 'vi';
+    const split = splitIntoSeries(groups.map((g) => g.id), players, count);
+    const series = split.map((byGroup) => {
+      const qualified = byGroup.flatMap((pair) => pair.map((p, i) => ({ ...p, playoff_seed: i + 1 })));
+      return { qualified, bracketMatches: generatePlayoffBracket(groups.length, qualified, [], groups) };
+    });
+    if (series.some((s) => s.bracketMatches.length === 0)) {
+      toast.error(t.quickTable.view.errorOccurred);
+      return;
+    }
+    const lines = series.map((s, d) => {
+      const [hi, lo] = seriesRanks(d);
+      return lang === 'vi'
+        ? `${seriesName(seriesStyle, d, lang)}: ${s.qualified.length} đội hạng ${hi}–${lo}`
+        : `${seriesName(seriesStyle, d, lang)}: ${s.qualified.length} teams ranked ${hi}–${lo}`;
+    });
+    const ok = await confirm({
+      title: lang === 'vi' ? `Tạo ${count} nhánh playoff?` : `Create ${count} playoff brackets?`,
+      description: lines.join('\n') + (lang === 'vi'
+        ? '\nMỗi nhánh có vô địch riêng; vô địch giải là vô địch nhánh đầu.'
+        : '\nEach bracket has its own winner; the first bracket decides the champion.'),
+      confirmText: t.quickTable.view.startPlayoff,
+    });
+    if (!ok) return;
+    try {
+      await createSeriesPlayoffAtomic(table.id, series);
+      toast.success(t.quickTable.view.playoffCreated);
+      await loadData();
+      setPlayoffDivision(0);
+      setActiveTab('playoff');
+    } catch {
+      toast.error(t.quickTable.view.errorOccurred);
+    }
+  };
+
   const handleStartPlayoff = () => {
     if (!table || !table.group_count) return;
+    if (seriesCount > 1) {
+      void startSeriesPlayoff(seriesCount);
+      return;
+    }
 
     // === Seeding tổng quát v2 cho bảng 3 và 6 (đã test trên native iOS, nay bật prod). ===
     // top-2 mỗi bảng + best 3rd → bracket nextPow2(G·2): 3 bảng → 8, 6 bảng → 16.
@@ -891,6 +944,28 @@ const QuickTableView = () => {
                 <p style={{ color: 'var(--tl-fg-2)', fontSize: 13.5, margin: '4px 0 0' }}>
                   {t.quickTable.view.groupCompleteDesc}
                 </p>
+                {seriesCap > 1 && (
+                  <div role="group" aria-label={language === 'vi' ? 'Số nhánh playoff' : 'Playoff brackets'} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 12 }}>
+                    {Array.from({ length: seriesCap }, (_, i) => i + 1).map((k) => (
+                      <button
+                        key={k}
+                        type="button"
+                        aria-pressed={seriesCount === k}
+                        onClick={() => setSeriesChoice(k)}
+                        style={{
+                          minHeight: 36, padding: '0 12px', borderRadius: 18, fontSize: 13, cursor: 'pointer',
+                          border: `1px solid ${seriesCount === k ? 'var(--tl-green)' : 'var(--tl-border)'}`,
+                          background: seriesCount === k ? 'var(--tl-bg-elev)' : 'transparent',
+                          color: 'var(--tl-fg)',
+                        }}
+                      >
+                        {k === 1
+                          ? (language === 'vi' ? '1 nhánh (top 2)' : '1 bracket (top 2)')
+                          : Array.from({ length: k }, (_, d) => seriesName(seriesStyle, d, language === 'en' ? 'en' : 'vi')).join(' + ')}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <button type="button" className="tl-btn green" onClick={handleStartPlayoff}>
                 <Swords className="w-4 h-4" />
@@ -1407,9 +1482,26 @@ const QuickTableView = () => {
                   </p>
                 </div>
               )}
+              {playoffDivisions.length > 1 && (
+                <div role="group" aria-label={language === 'vi' ? 'Nhánh playoff' : 'Playoff bracket'} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {playoffDivisions.map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      aria-pressed={playoffDivision === d}
+                      className={cn('tl-tab', playoffDivision === d && 'active')}
+                      onClick={() => setPlayoffDivision(d)}
+                    >
+                      {seriesName(seriesStyle, d, language === 'en' ? 'en' : 'vi')}
+                      <span className="count">{playoffMatches.filter((m) => (m.playoff_division ?? 0) === d).length}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
               {hasPlayoff && (
                 <QuickTablePlayoffView
-                  matches={playoffMatches}
+                  key={playoffDivision}
+                  matches={playoffDivisions.length > 1 ? playoffMatches.filter((m) => (m.playoff_division ?? 0) === playoffDivision) : playoffMatches}
                   players={players}
                   groups={groups}
                   canEdit={canEditScores}
