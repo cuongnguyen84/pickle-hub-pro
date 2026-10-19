@@ -256,3 +256,99 @@ export function defaultName(d: Draft, lang: "vi" | "en", now = new Date()): stri
   if (lang === "en") return `${d.is_doubles === false ? "Singles" : "Doubles"} ${date}`;
   return `Giải ${d.is_doubles === false ? "đơn" : "đôi"} ${date}`;
 }
+
+// ---------- đọc bảng tính tại chỗ (không qua AI) ----------
+
+const HEADER_TEAM = /^(tên\s*)?(đội|team|cặp|cap|doi)(\s*name)?$/i;
+const HEADER_PLAYER = /(vđv|vdv|player|họ\s*(và\s*)?tên|ho\s*ten|^tên|^ten|^name|người chơi|nguoi choi|thành viên|member|athlete)/i;
+const HEADER_CLUB = /^(clb|club|câu lạc bộ|cau lac bo|đơn vị|don vi)$/i;
+const HEADER_ANY = /^(stt|tt|#|no\.?|số|sdt|sđt|phone|điện thoại|dien thoai|email|ghi chú|note|trạng thái|status|tiền|lệ phí|phí|ck|dupr|trình|level|giới tính|gender)/i;
+const PAIR_SPLIT = /\s+(?:-|–|&|\/|\+|và|and)\s+|\s*[&/+]\s*/i;
+
+/** Ô có phải tên người/đội không: có chữ, không phải số / SĐT / tiền / ngày / trạng thái. */
+function isNameCell(s: string): boolean {
+  if (!/\p{L}/u.test(s)) return false;
+  if (/^(đã|chưa|da|chua)\s*(ck|chuyển|chuyen|đóng|dong|tt)/i.test(s)) return false;
+  // "Nam" là tên phổ biến nên không coi là giới tính
+  if (/^(nữ|male|female|x|ok|có|không|yes|no)$/i.test(s)) return false;
+  return !/^[\d\s.,:/+()kđ₫vndVND-]+$/.test(s);
+}
+
+const splitPair = (s: string): Entry => {
+  const parts = s.split(PAIR_SPLIT).map(clean).filter(Boolean);
+  return parts.length === 2 ? { p1: parts[0], p2: parts[1] } : { p1: clean(s) };
+};
+
+/**
+ * Bảng tính (mỗi hàng = mảng ô) → danh sách đội/VĐV.
+ * Có dòng tiêu đề thì theo tên cột (Đội / VĐV 1 / VĐV 2 / CLB); không có thì lấy
+ * 1–2 ô tên đầu tiên mỗi hàng. Ô "Nam - Hùng" được tách thành cặp.
+ * Trả [] nếu không nhận ra danh sách → để AI đọc.
+ */
+export function parseSheet(rows: string[][]): Entry[] {
+  const grid = rows.map((r) => r.map((c) => String(c ?? "").replace(/\s+/g, " ").trim())).filter((r) => r.some(Boolean));
+  if (!grid.length) return [];
+  const headerAt = grid.slice(0, 5).findIndex((r) => {
+    const cells = r.filter(Boolean);
+    return cells.length > 0 && cells.every((c) => HEADER_TEAM.test(c) || HEADER_PLAYER.test(c) || HEADER_CLUB.test(c) || HEADER_ANY.test(c))
+      && cells.some((c) => HEADER_TEAM.test(c) || HEADER_PLAYER.test(c));
+  });
+  const out: Entry[] = [];
+  if (headerAt >= 0) {
+    const h = grid[headerAt];
+    const team = h.findIndex((c) => HEADER_TEAM.test(c));
+    const players = h.map((c, i) => (HEADER_PLAYER.test(c) && !HEADER_TEAM.test(c) ? i : -1)).filter((i) => i >= 0);
+    const club = h.findIndex((c) => HEADER_CLUB.test(c));
+    for (const r of grid.slice(headerAt + 1)) {
+      const ps = players.map((i) => r[i] ?? "").filter(isNameCell);
+      const clubName = club >= 0 && r[club] ? clean(r[club]) : "";
+      let e: Entry | null = null;
+      if (ps.length >= 2) e = { p1: clean(ps[0]), p2: clean(ps[1]) };
+      else if (ps.length === 1) e = splitPair(ps[0]);
+      else if (team >= 0 && isNameCell(r[team] ?? "")) e = splitPair(r[team]);
+      if (e?.p1) out.push(clubName ? { ...e, team: clubName } : e);
+    }
+    return out;
+  }
+  for (const r of grid) {
+    const names = r.filter(isNameCell);
+    if (!names.length) continue;
+    out.push(names.length >= 2 ? { p1: clean(names[0]), p2: clean(names[1]) } : splitPair(names[0]));
+  }
+  return out;
+}
+
+/**
+ * AI hay tự điền mặc định cho trường người dùng chưa hề nhắc (vd "8 sân" →
+ * start_time 08:00, đọc file → series 1). Chỉ giữ các trường tuỳ chọn khi
+ * đúng bước đang hỏi hoặc tin nhắn có nhắc tới.
+ */
+export function trustPatch(patch: unknown, text: string, slot: Slot): Record<string, unknown> {
+  const p = { ...((patch ?? {}) as Record<string, unknown>) };
+  const t = text.toLocaleLowerCase("vi");
+  const said = (re: RegExp) => re.test(t);
+  if (slot !== "start_time" && !said(/\d\s*(h|g|giờ|gio|:\d)|\b(am|pm)\b|sáng|chiều|tối|trưa|morning|evening|o'?clock/)) delete p.start_time;
+  if (slot !== "courts" && !said(/sân|san\b|court/)) delete p.courts;
+  if (slot !== "series" && !said(/nhánh|nhanh|series|vàng|bạc|đồng|gold|silver|bronze|top\s*\d|bracket/)) { delete p.series; delete p.series_style; }
+  if (!said(/set|bo\d|best of|ván|van\b/)) delete p.default_sets;
+  return p;
+}
+
+/** Trả lời bước số sân/giờ không cần AI: "8", "8 sân", "4 courts" / "7h", "19:30", "7h30". */
+export function localSlotPatch(text: string, slot: Slot): Partial<Draft> | null {
+  const t = text.toLocaleLowerCase("vi").trim();
+  if (slot === "courts") {
+    const m = t.match(/^(\d{1,2})\s*(sân|san|courts?)?$/);
+    const n = m ? Number(m[1]) : 0;
+    return n >= 1 && n <= 50 ? { courts: Array.from({ length: n }, (_, i) => i + 1), courts_done: true } : null;
+  }
+  if (slot === "start_time") {
+    const m = t.match(/^(\d{1,2})\s*(?:h|g|giờ|:)?\s*(\d{2})?$/);
+    if (!m) return null;
+    const h = Number(m[1]);
+    const mm = Number(m[2] ?? 0);
+    if (h > 23 || mm > 59) return null;
+    return { start_time: `${String(h).padStart(2, "0")}:${String(mm).padStart(2, "0")}`, time_done: true };
+  }
+  return null;
+}

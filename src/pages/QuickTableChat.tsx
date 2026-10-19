@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 import { seriesLine, seriesName, seriesPlan, type SeriesStyle } from "@/lib/quick-table-series";
 import {
   applyPatch, buildRoster, defaultName, duplicateIndexes, entryCount, entryLabel, groupOptions,
-  groupSizes, MAX_CHAT_ENTRIES, nextSlot, pairEntries, previewAssignments, seriesCap,
+  groupSizes, localSlotPatch, MAX_CHAT_ENTRIES, nextSlot, pairEntries, parseSheet, previewAssignments, seriesCap, trustPatch,
   type Draft, type Entry, type GroupOption, type PairingMode, type Slot,
 } from "@/lib/quick-table-chat";
 
@@ -34,7 +34,8 @@ type Lang = "vi" | "en";
 interface Msg { id: string; role: "user" | "bot"; text: string; label?: string }
 /** Ảnh/PDF gửi kèm cho Gemini đọc — chỉ nằm trong request, không lưu localStorage. */
 interface Attachment { mime_type: string; data: string }
-interface Outgoing { text: string; label?: string; attachment?: Attachment }
+/** entries: bảng tính đọc được tại chỗ → vào nháp luôn, không gọi AI. */
+interface Outgoing { text: string; label?: string; attachment?: Attachment; entries?: Entry[] }
 interface Chip { label: string; sub?: string; recommended?: boolean; onClick: () => void }
 type SubMenu = null | "sets";
 
@@ -388,6 +389,16 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       const cmd = msg.text.toLocaleLowerCase("vi").replace(/[.!]+$/, "").trim();
       if (/^(làm lại|lam lai|xoá hết|xóa hết|xoa het|reset|start over|restart)$/.test(cmd)) { setInput(""); void resetAll(); return; }
       if (/^(quay lại|quay lai|undo|back)$/.test(cmd)) { setInput(""); undo(); return; }
+      const local = localSlotPatch(msg.text, slot);
+      if (local) { setInput(""); choose(msg.text, local); return; }
+    }
+    if (msg.entries?.length) {
+      snap();
+      setMessages((m) => [...m, { id: uid(), role: "user", text: msg.text, label: msg.label }]);
+      const next = applyPatch(draft, { entries: msg.entries });
+      const dups = duplicateIndexes(next.entries!).size;
+      advance(next, c.received(next.entries!.length, c.unit(next)) + (dups ? c.dupWarn(dups) : ""));
+      return;
     }
     if (!isRetry) {
       snap();
@@ -416,7 +427,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       advance(draft, res.reply);
       return;
     }
-    const next = applyPatch(draft, res.patch);
+    const next = applyPatch(draft, trustPatch(res.patch, msg.text, slot));
     let ack = res.reply;
     const gotList = !draft.entries?.length && !!next.entries?.length;
     if (gotList) {
@@ -854,16 +865,20 @@ async function readUpload(file: File): Promise<Outgoing> {
   if (file.type === "application/pdf") return { text: `📎 ${file.name}`, attachment: { mime_type: "application/pdf", data: await readAsBase64(file) } };
   if (!SHEET_EXT.test(file.name)) throw new Error("unsupported");
   let text: string;
-  if (/\.(xlsx|xls)$/i.test(file.name)) {
+  let entries: Entry[] = [];
+  if (/\.(xlsx|xls|csv|tsv)$/i.test(file.name)) {
     const XLSX = await import("xlsx/dist/xlsx.mini.min.js");
-    const wb = XLSX.read(await file.arrayBuffer());
-    text = XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]], { FS: "\t", blankrows: false });
+    const wb = /\.(xlsx|xls)$/i.test(file.name) ? XLSX.read(await file.arrayBuffer()) : XLSX.read(await file.text(), { type: "string" });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    entries = parseSheet(XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, raw: false, blankrows: false, defval: "" }));
+    text = XLSX.utils.sheet_to_csv(sheet, { FS: "\t", blankrows: false });
   } else {
     text = await file.text();
   }
   text = text.trim().slice(0, 4000);
   if (!text) throw new Error("empty");
-  return { text, label: `📎 ${file.name}` };
+  // Nhận ra ≥ 2 dòng thì dùng luôn; không thì để AI đọc chữ.
+  return { text, label: `📎 ${file.name}`, ...(entries.length >= 2 ? { entries: entries.slice(0, 200) } : {}) };
 }
 
 
