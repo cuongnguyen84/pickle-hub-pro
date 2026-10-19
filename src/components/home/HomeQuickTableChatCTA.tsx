@@ -24,8 +24,8 @@ export function HomeQuickTableChatCTA() {
           <span className="tl-ai-cta-title">{vi ? "Tạo bảng đấu bằng chat với AI" : "Create a bracket by chatting with AI"}</span>
           <span className="tl-ai-cta-sub">
             {vi
-              ? "Dán danh sách Zalo, ảnh chụp hay file Excel — AI chia bảng, chia nhánh Vàng/Bạc và xếp sân, giờ cho bạn."
-              : "Paste a list, a photo or a spreadsheet — the AI splits groups, sets up Gold/Silver brackets and assigns courts and times."}
+              ? "Dán danh sách VĐV, ảnh chụp hay file Excel — AI chia bảng, chia nhánh Vàng/Bạc và xếp sân, giờ cho bạn."
+              : "Paste a player list, a photo or a spreadsheet — the AI splits groups, sets up Gold/Silver brackets and assigns courts and times."}
           </span>
         </span>
         <span className="tl-ai-cta-go">
