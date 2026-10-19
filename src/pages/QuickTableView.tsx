@@ -45,7 +45,7 @@ import {
   resolveBracketConflicts,
 } from '@/lib/quick-table-seeding-v2';
 import { scheduleMatches } from '@/lib/round-robin';
-import { assignSeries, maxSeries, resolveSeriesSizes, seriesBracket, seriesLine, seriesName, seriesPlan, seriesPreview, slot } from '@/lib/quick-table-series';
+import { assignSeries, maxSeries, resolveSeriesSizes, seriesBracket, seriesLine, seriesName, seriesPlan, seriesPreview, seriesDrawPreview, slot } from '@/lib/quick-table-series';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -369,7 +369,10 @@ const QuickTableView = () => {
     !(sameSizes(chosenSizes, defaultPlans[0]) && [2, 3, 4, 6, 8].includes(table?.group_count ?? 0));
   // Chưa tạo playoff mà giải chia nhánh → sơ đồ tạm tính theo BXH hiện tại.
   const preview = !hasPlayoff && seriesPath && table?.status === 'group_stage'
-    ? seriesPreview(groupSizesNow, chosenSizes, language === 'en' ? 'en' : 'vi')
+    ? (groupStageComplete
+      // đủ kết quả → đúng cặp sẽ tạo (tên thật, đã tránh cùng bảng)
+      ? seriesDrawPreview(assignSeries(groups.map((g) => g.id), players, chosenSizes))
+      : seriesPreview(groupSizesNow, chosenSizes, language === 'en' ? 'en' : 'vi'))
     : null;
   const playoffDivisions = preview
     ? preview.series.map((_, d) => d)
@@ -1508,7 +1511,11 @@ const QuickTableView = () => {
               {preview && (
                 <>
                   <p style={{ margin: 0, fontSize: 13.5, color: 'var(--tl-fg-3)' }}>
-                    {language === 'en'
+                    {groupStageComplete
+                      ? (language === 'en'
+                        ? 'Group stage done: this is the exact draw that will be created. Teams from the same group are placed apart.'
+                        : 'Vòng bảng đã xong: đây đúng là sơ đồ sẽ tạo. Các đội cùng bảng đã được xếp xa nhau.')
+                      : language === 'en'
                       ? 'Projected draw: “2nd #5” is the fifth-best runner-up across groups. Names are filled in when the playoff is created; teams from the same group are then placed apart so they meet as late as possible (ideally only in the final).'
                       : 'Sơ đồ dự kiến: “Nhì #5” là đội nhì xếp thứ 5 khi so giữa các bảng. Tên đội được điền khi tạo playoff sau vòng bảng; lúc đó các đội cùng bảng được xếp xa nhau để không gặp lại sớm (tốt nhất là chỉ ở chung kết).'}
                   </p>
@@ -1516,6 +1523,7 @@ const QuickTableView = () => {
                     key={`pv-${playoffDivision}`}
                     matches={preview.series[Math.min(playoffDivision, preview.series.length - 1)]}
                     players={preview.players}
+                    groupNames={new Map(groups.map((g) => [g.id, g.name]))}
                     canEdit={false}
                     onScoreUpdate={() => {}}
                   />

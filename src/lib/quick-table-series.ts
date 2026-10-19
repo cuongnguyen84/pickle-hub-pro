@@ -256,8 +256,12 @@ export function seriesPreview(
     }
   }
   let at = 0;
-  const chunks = sizes.map((n) => order.slice(at, (at += n)));
-  const slots = order;
+  return seriesDrawPreview(sizes.map((n) => order.slice(at, (at += n))));
+}
+
+/** Sơ đồ từ các nhánh đã chia (người thật sau vòng bảng, hoặc ô giả của seriesPreview). */
+export function seriesDrawPreview(chunks: (Ranked & { id: string })[][]): { players: PreviewPlayer[]; series: PreviewMatch[][] } {
+  const slots = chunks.flat();
   const out: PreviewPlayer[] = [{ id: BYE_PLAYER_ID, name: "BYE", seed: null, group_id: null }];
   const series = chunks.map((ordered, d) => {
     const first = seriesBracket(ordered);
