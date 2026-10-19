@@ -60,7 +60,7 @@ final class QuickTableViewModel {
     }
     var pendingPlayoff: PendingPlayoff?
 
-    // Series A/B/C: số nhánh chủ giải chọn trên banner (nil = theo giải) + nhánh đang xem.
+    // Series A/B/C: cách chia nhánh chủ giải chọn trên banner (chỉ số trong planOptions, nil = theo giải) + nhánh đang xem.
     var seriesChoice: Int?
     var playoffDivision = 0
     var confirmSeries = false
@@ -71,8 +71,34 @@ final class QuickTableViewModel {
 
     func seriesCap(_ d: QuickTableDetail) -> Int { QTSeries.cap(sizes: groupSizes(d)) }
 
-    func seriesCount(_ d: QuickTableDetail) -> Int {
-        min(seriesChoice ?? d.table.playoffSeries ?? 1, seriesCap(d))
+    /// 1..cap nhánh theo luật mặc định (cỡ từng nhánh).
+    func defaultPlans(_ d: QuickTableDetail) -> [[Int]] {
+        (1...seriesCap(d)).compactMap { k in QTSeries.plan(sizes: groupSizes(d), k: k)?.map(\.size) }
+            .filter { !$0.isEmpty && $0.allSatisfy { $0 >= 2 } }
+    }
+
+    /// Các cách chia nhánh trên banner: cỡ tuỳ chỉnh lúc tạo giải (nếu còn hợp lệ) + mặc định (web planOptions).
+    func planOptions(_ d: QuickTableDetail) -> [[Int]] {
+        let defaults = defaultPlans(d)
+        guard let custom = QTSeries.resolveSizes(d.table.playoffSeriesSizes, total: groupSizes(d).reduce(0, +)),
+              !defaults.contains(custom) else { return defaults }
+        return [custom] + defaults
+    }
+
+    func chosenSizes(_ d: QuickTableDetail) -> [Int] {
+        let options = planOptions(d)
+        guard !options.isEmpty else { return [] }
+        let custom = QTSeries.resolveSizes(d.table.playoffSeriesSizes, total: groupSizes(d).reduce(0, +))
+        let fallback = custom.flatMap { options.firstIndex(of: $0) }
+            ?? options.firstIndex { $0.count == min(d.table.playoffSeries ?? 1, seriesCap(d)) } ?? 0
+        return options[min(seriesChoice ?? fallback, options.count - 1)]
+    }
+
+    /// Playoff cổ điển (xem trước/đổi cặp) chỉ cho 1 nhánh mặc định với 2/3/4/6/8 bảng;
+    /// số bảng tuỳ ý hoặc cỡ nhánh tuỳ ý đi đường chia nhánh tổng quát.
+    func seriesPath(_ d: QuickTableDetail) -> Bool {
+        let sizes = chosenSizes(d)
+        return !sizes.isEmpty && !(sizes == defaultPlans(d).first && [2, 3, 4, 6, 8].contains(d.groups.count))
     }
 
     // Đổi cặp SAU khi tạo: chỉ trận vòng 1 chưa đá, chủ giải. Chạm 2 ô ở 2 trận khác nhau.
@@ -230,7 +256,7 @@ final class QuickTableViewModel {
     @MainActor
     func startPlayoff(shareID: String) async {
         guard let d = detail else { return }
-        if seriesCount(d) > 1 { confirmSeries = true; return }
+        if seriesPath(d) { confirmSeries = true; return }
         if d.groups.count == 3 || d.groups.count == 6 {
             await runPlayoffV2(shareID: shareID, advancePerGroup: 2)
             return
@@ -259,8 +285,7 @@ final class QuickTableViewModel {
     @MainActor
     func createSeries(shareID: String) async {
         guard let d = detail else { return }
-        let count = seriesCount(d)
-        let series = QTSeries.assign(groups: d.groups, players: d.players, k: count).map {
+        let series = QTSeries.assign(groups: d.groups, players: d.players, sizes: chosenSizes(d)).map {
             ordered -> (qualified: [(playerID: UUID, seed: Int)], firstRound: [QTBracketMatch]) in
             (ordered.enumerated().map { ($0.element.id, $0.offset + 1) }, QTSeries.bracket(ordered))
         }
@@ -738,7 +763,7 @@ struct QuickTableDetailView: View {
             Button("Tạo playoff") { Task { await model.createSeries(shareID: shareID) } }
         } message: {
             if let d = model.detail {
-                Text((QTSeries.plan(sizes: model.groupSizes(d), k: model.seriesCount(d)) ?? []).enumerated().map { div, sl in
+                Text(model.chosenSizes(d).map(QTSeries.slot).enumerated().map { div, sl in
                     sl.byes > 0
                         ? String(localized: "\(QTSeries.name(style: d.table.playoffSeriesStyle, division: div)): \(sl.size) đội, \(sl.byes) miễn vòng 1")
                         : String(localized: "\(QTSeries.name(style: d.table.playoffSeriesStyle, division: div)): \(sl.size) đội")
@@ -1142,10 +1167,11 @@ struct QuickTableDetailView: View {
                 .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.accent.opacity(0.4), lineWidth: 1))
             }
             .buttonStyle(.plain).disabled(model.generatingPlayoff)
-            if let d = model.detail, model.seriesCap(d) > 1 {
-                Picker("Số nhánh playoff", selection: Binding(get: { model.seriesCount(d) }, set: { model.seriesChoice = $0 })) {
-                    ForEach(1...model.seriesCap(d), id: \.self) { k in
-                        Text(k == 1 ? String(localized: "1 nhánh") : (QTSeries.plan(sizes: model.groupSizes(d), k: k) ?? []).enumerated().map { "\(QTSeries.name(style: d.table.playoffSeriesStyle, division: $0.offset)) · \($0.element.size)" }.joined(separator: " + ")).tag(k)
+            if let d = model.detail, model.planOptions(d).count > 1 {
+                let options = model.planOptions(d)
+                Picker("Số nhánh playoff", selection: Binding(get: { options.firstIndex(of: model.chosenSizes(d)) ?? 0 }, set: { model.seriesChoice = $0 })) {
+                    ForEach(options.indices, id: \.self) { i in
+                        Text(options[i] == model.defaultPlans(d).first ? String(localized: "1 nhánh") : options[i].enumerated().map { "\(QTSeries.name(style: d.table.playoffSeriesStyle, division: $0.offset)) · \($0.element)" }.joined(separator: " + ")).tag(i)
                     }
                 }
                 .pickerStyle(.segmented)

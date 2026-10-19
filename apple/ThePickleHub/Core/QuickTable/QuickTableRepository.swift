@@ -108,7 +108,7 @@ struct QuickTableRepository {
     func load(shareID: String) async throws -> QuickTableDetail {
         let table: QTTable = try await client
             .from("quick_tables")
-            .select("id, share_id, name, status, format, is_doubles, creator_user_id, top_per_group, requires_registration, requires_skill_level, rating_source, min_skill_level, max_skill_level, auto_approve_registrations, registration_message, group_count, player_count, courts, start_time, playoff_series, playoff_series_style")
+            .select("id, share_id, name, status, format, is_doubles, creator_user_id, top_per_group, requires_registration, requires_skill_level, rating_source, min_skill_level, max_skill_level, auto_approve_registrations, registration_message, group_count, player_count, courts, start_time, playoff_series, playoff_series_style, playoff_series_sizes")
             .eq("share_id", value: shareID)
             .single()
             .execute()
