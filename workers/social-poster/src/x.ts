@@ -37,6 +37,7 @@ export interface XEnv extends NotifyEnv {
   X_POST_MIN_GAP_MINUTES?: string;
   X_LINK_COMMENT_DELAY_SECONDS?: string;
   X_MAX_ATTEMPTS?: string;
+  X_VIA_BROWSER?: string;
 }
 
 export type XPostStatus =
@@ -472,6 +473,12 @@ export async function handleXRun(
   }
 
   const dryRun = body.dry_run === true;
+  // 19/10/2026: @thepicklehub is posted from Cuong's Chrome by
+  // scripts/ops/x_browser_post.py, which reads approved x_posts itself.
+  // Only dry runs get through here; set "0" to hand X back to the API.
+  if (env.X_VIA_BROWSER === '1' && !dryRun) {
+    return { ok: true, skipped: true, reason: 'x_via_browser' };
+  }
   const results: Record<string, unknown>[] = [];
 
   if (!body.post_id) {
