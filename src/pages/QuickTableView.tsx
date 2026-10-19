@@ -45,6 +45,7 @@ import {
   resolveBracketConflicts,
 } from '@/lib/quick-table-seeding-v2';
 import { scheduleMatches } from '@/lib/round-robin';
+import { playoffStartTime, schedulePlayoff } from '@/lib/quick-table-playoff-schedule';
 import { assignSeries, maxSeries, resolveSeriesSizes, seriesBracket, seriesLine, seriesName, seriesPlan, seriesPreview, seriesDrawPreview, slot } from '@/lib/quick-table-series';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -397,6 +398,7 @@ const QuickTableView = () => {
     if (!ok) return;
     try {
       await createSeriesPlayoffAtomic(table.id, series);
+      if (!(await assignPlayoffCourts())) toast.error(lang === 'vi' ? 'Tạo playoff xong nhưng chưa xếp được sân.' : 'Playoff created, but courts could not be assigned.');
       toast.success(t.quickTable.view.playoffCreated);
       await loadData();
       setPlayoffDivision(0);
@@ -433,6 +435,28 @@ const QuickTableView = () => {
     setSeriesChoice(null);
     setActiveTab('groups');
     await loadData();
+  };
+
+  // Xếp sân + giờ playoff: vòng 1 nhánh A → vòng 1 nhánh B → … sân trống được bù bằng vòng sau.
+  // Chỉ khi giải có cài sân. Giờ bắt đầu = ngay sau trận vòng bảng muộn nhất.
+  const assignPlayoffCourts = async (): Promise<boolean> => {
+    if (!shareId) return false;
+    const fresh = await getTableByShareId(shareId);
+    if (!fresh) return false;
+    const courts = (fresh.table.courts || []).map((c) => parseInt(c, 10)).filter((c) => !isNaN(c));
+    if (!courts.length) return true;
+    const po = fresh.matches.filter((m) => m.is_playoff);
+    const plan = schedulePlayoff(
+      po.map((m) => ({
+        id: m.id, division: m.playoff_division ?? 0, round: m.playoff_round ?? 0,
+        matchNumber: m.playoff_match_number ?? 0, done: m.status === 'completed', nextMatchId: m.next_match_id,
+      })),
+      courts,
+      playoffStartTime(fresh.matches.filter((m) => !m.is_playoff).map((m) => m.start_at), fresh.table.start_time),
+    );
+    const results = await Promise.all(plan.map((p) =>
+      supabase.from('quick_table_matches').update({ court_id: p.court, start_at: p.startAt }).eq('id', p.matchId)));
+    return !results.some((r) => r.error);
   };
 
   const handleStartPlayoff = () => {
@@ -494,6 +518,7 @@ const QuickTableView = () => {
     try {
       const bracketMatches = generatePlayoffBracket(table.group_count, qualified, wildcards, groups);
       await createPlayoffAtomic(table.id, qualified, wildcards, bracketMatches);
+      await assignPlayoffCourts();
 
       toast.success(t.quickTable.view.playoffCreated);
       await loadData();
@@ -568,6 +593,7 @@ const QuickTableView = () => {
       }));
 
       await createPlayoffAtomic(table.id, qualifiedPlayers, wildcardPlayers, bracketMatches);
+      await assignPlayoffCourts();
 
       toast.success(t.quickTable.view.playoffCreated);
       await loadData();
@@ -1536,7 +1562,23 @@ const QuickTableView = () => {
                 </div>
               )}
               {canManageTable && playoffUntouched && (
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, flexWrap: 'wrap' }}>
+                  {(table.courts?.length ?? 0) > 0 && (
+                    <button
+                      type="button"
+                      className="tl-btn"
+                      onClick={async () => {
+                        const ok = await assignPlayoffCourts();
+                        if (ok) toast.success(language === 'vi' ? 'Đã xếp sân và giờ cho playoff.' : 'Playoff courts and times assigned.');
+                        else toast.error(t.quickTable.view.errorOccurred);
+                        await loadData();
+                      }}
+                      style={{ fontSize: 12.5, padding: '7px 12px' }}
+                    >
+                      <MapPin className="w-4 h-4" />
+                      {language === 'vi' ? 'Xếp lại sân playoff' : 'Re-assign playoff courts'}
+                    </button>
+                  )}
                   <button type="button" className="tl-btn" onClick={() => void cancelPlayoff()} style={{ fontSize: 12.5, padding: '7px 12px' }}>
                     <RotateCcw className="w-4 h-4" />
                     {language === 'vi' ? 'Huỷ playoff, chọn lại cách chia' : 'Cancel playoff, re-split'}

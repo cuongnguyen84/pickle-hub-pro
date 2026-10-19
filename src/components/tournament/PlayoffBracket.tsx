@@ -23,6 +23,7 @@ export interface BracketMatch {
   live_referee_id?: string | null;
   court_id?: number | null;
   court_name?: string | null;
+  start_at?: string | null;
 }
 
 export interface BracketPlayer {
@@ -616,6 +617,7 @@ const BracketMatchCard = ({
                   <MapPin className="w-3 h-3 flex-shrink-0" />
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {match.court_name || `${t.quickTable.view.court} ${match.court_id}`}
+                    {match.start_at ? ` · ${match.start_at}` : ''}
                   </span>
                   {canEditCourt && onCourtNameUpdate && (
                     <button
