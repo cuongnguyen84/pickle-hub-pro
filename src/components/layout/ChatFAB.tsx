@@ -36,6 +36,7 @@ const HIDDEN_PREFIXES = [
   "/embed",
   "/onboarding",
   "/tools/quick-tables/referee", // full-screen live-scoring tool
+  "/tools/quick-tables/chat", // tạo giải bằng chat — FAB đè nút gửi
   "/tools/team-match/match/", // team-match referee scoring (matchId)/score
   "/live/", // trang xem live — FAB đè lên nút gửi chat (trang danh sách /live vẫn hiện)
   "/vi/live/",

@@ -21,6 +21,9 @@ struct QTTable: Decodable, Equatable {
     var playerCount: Int? = nil
     let courts: [String]?     // tên/số sân (vd ["1","2","3"])
     let startTime: String?    // giờ bắt đầu giải "HH:MM"
+    /// Series A/B/C sau vòng bảng (web 2026-10-19): số nhánh dự kiến + kiểu tên (series | medal).
+    var playoffSeries: Int? = nil
+    var playoffSeriesStyle: String? = nil
 
     var displayName: String { name?.nonEmpty ?? "Giải đấu" }
     var isPlayoffStage: Bool { status == "playoff" || status == "completed" }
@@ -52,6 +55,8 @@ struct QTTable: Decodable, Equatable {
         case playerCount = "player_count"
         case courts
         case startTime = "start_time"
+        case playoffSeries = "playoff_series"
+        case playoffSeriesStyle = "playoff_series_style"
     }
 }
 
@@ -259,6 +264,8 @@ struct QTMatch: Decodable, Identifiable, Equatable {
     let startAt: String?      // giờ trận "HH:MM"
     let displayOrder: Int?
     var scoreVersion: Int64 = 0
+    /// 0 = Series A / nhánh Vàng, 1 = B / Bạc, 2 = C / Đồng. Vòng bảng = 0.
+    var playoffDivision: Int? = nil
 
     var isCompleted: Bool { status == "completed" }
     var hasBothPlayers: Bool { player1ID != nil && player2ID != nil }
@@ -282,6 +289,7 @@ struct QTMatch: Decodable, Identifiable, Equatable {
         case startAt = "start_at"
         case displayOrder = "display_order"
         case scoreVersion = "score_version"
+        case playoffDivision = "playoff_division"
     }
 }
 
@@ -337,6 +345,105 @@ struct QTBracketMatch: Equatable {
 
 /// Pure playoff logic — 1:1 port of useQuickTable getQualifiedPlayers /
 /// getWildcardCount / generatePlayoffBracket. No DB.
+/// Series A/B/C — 1:1 port của web src/lib/quick-table-series.ts (mirror test: QuickTableSeriesTests).
+///   A = nhất + nhì mọi bảng + vé vớt hạng 3 tới luỹ thừa 2 kế tiếp.
+///   2 nhánh: B = mọi người còn lại. 3 nhánh: B = hạng 3–4 còn lại, C = hạng 5 trở xuống.
+///   Nhánh lẻ → BYE cho hạt giống cao nhất. Khác bảng so theo tỉ lệ thắng → hiệu số/trận → điểm/trận.
+enum QTSeries {
+    static let maxSeries = 3
+
+    struct Slot: Equatable { let size: Int; let bracket: Int; var byes: Int { bracket - size } }
+
+    private static func tierCount(_ sizes: [Int], _ t: Int) -> Int { sizes.filter { $0 > t }.count }
+
+    private static func wildcards(_ sizes: [Int]) -> Int {
+        let direct = tierCount(sizes, 0) + tierCount(sizes, 1)
+        return min(QTSeedingV2.nextPowerOf2(direct) - direct, tierCount(sizes, 2))
+    }
+
+    private static func slot(_ n: Int) -> Slot { Slot(size: n, bracket: QTSeedingV2.nextPowerOf2(n)) }
+
+    static func plan(sizes: [Int], k: Int) -> [Slot]? {
+        guard sizes.count >= 2, (1...maxSeries).contains(k) else { return nil }
+        let total = sizes.reduce(0, +)
+        let wc = wildcards(sizes)
+        let a = tierCount(sizes, 0) + tierCount(sizes, 1) + wc
+        if k == 1 { return [slot(a)] }
+        let rest = total - a
+        if k == 2 { return rest >= 2 ? [slot(a), slot(rest)] : nil }
+        let b = tierCount(sizes, 2) + tierCount(sizes, 3) - wc
+        let c = rest - b
+        return b >= 2 && c >= 2 ? [slot(a), slot(b), slot(c)] : nil
+    }
+
+    static func cap(sizes: [Int]) -> Int {
+        for k in stride(from: maxSeries, to: 1, by: -1) where plan(sizes: sizes, k: k) != nil { return k }
+        return 1
+    }
+
+    static func name(style: String?, division: Int) -> String {
+        if style == "medal" {
+            switch division {
+            case 0: return String(localized: "Nhánh Vàng")
+            case 1: return String(localized: "Nhánh Bạc")
+            default: return String(localized: "Nhánh Đồng")
+            }
+        }
+        return "Series " + ["A", "B", "C"][min(division, 2)]
+    }
+
+    private static func perMatch(_ v: Int, _ played: Int) -> Double { played > 0 ? Double(v) / Double(played) : 0 }
+
+    /// true nếu a xếp trên b khi so khác bảng.
+    static func crossGroupBetter(_ a: QTPlayer, _ b: QTPlayer) -> Bool {
+        let wa = perMatch(a.matchesWon, a.matchesPlayed), wb = perMatch(b.matchesWon, b.matchesPlayed)
+        if wa != wb { return wa > wb }
+        let da = perMatch(a.pointDiff, a.matchesPlayed), db = perMatch(b.pointDiff, b.matchesPlayed)
+        if da != db { return da > db }
+        return perMatch(a.pointsFor, a.matchesPlayed) > perMatch(b.pointsFor, b.matchesPlayed)
+    }
+
+    /// k nhánh, mỗi nhánh mạnh → yếu (thứ tự = seed). Số người khớp plan(sizes:k:).
+    static func assign(groups: [QTGroup], players: [QTPlayer], k: Int) -> [[QTPlayer]] {
+        let ranked = groups.map { g in
+            players.filter { $0.groupID == g.id }.sorted {
+                if $0.matchesWon != $1.matchesWon { return $0.matchesWon > $1.matchesWon }
+                if $0.pointDiff != $1.pointDiff { return $0.pointDiff > $1.pointDiff }
+                return $0.pointsFor > $1.pointsFor
+            }
+        }
+        func tier(_ t: Int) -> [QTPlayer] { ranked.compactMap { $0.count > t ? $0[t] : nil }.sorted(by: crossGroupBetter) }
+        let maxTier = ranked.map(\.count).max() ?? 0
+        let wc = wildcards(ranked.map(\.count))
+        let thirds = tier(2)
+        let a = tier(0) + tier(1) + thirds.prefix(wc)
+        var rest = Array(thirds.dropFirst(wc))
+        if maxTier > 3 { for t in 3..<maxTier { rest += tier(t) } }
+        if k <= 1 { return [a] }
+        if k == 2 { return [a, rest] }
+        let bCount = thirds.count - wc + tier(3).count
+        return [a, Array(rest.prefix(bCount)), Array(rest.dropFirst(bCount))]
+    }
+
+    /// Vòng 1 của một nhánh: seed chuẩn, BYE cố định cho hạt giống cao nhất, rồi mới
+    /// tránh cùng bảng giữa các trận đủ 2 người.
+    static func bracket(_ ordered: [QTPlayer]) -> [QTBracketMatch] {
+        let size = QTSeedingV2.nextPowerOf2(max(2, ordered.count))
+        var seeded = ordered.enumerated().map { i, p in
+            QTSeedingV2.Seeded(playerID: p.id, name: p.name, seed: i + 1, sourceGroupID: p.groupID,
+                               wins: p.matchesWon, pointDiff: p.pointDiff, pointsFor: p.pointsFor, tier: .winner)
+        }
+        while seeded.count < size {
+            seeded.append(QTSeedingV2.Seeded(playerID: nil, name: "BYE", seed: seeded.count + 1, sourceGroupID: nil,
+                                             wins: 0, pointDiff: 0, pointsFor: 0, tier: .bye))
+        }
+        let pairs = QTSeedingV2.pairings(seeded)
+        let isBye = { (p: (p1: QTSeedingV2.Seeded, p2: QTSeedingV2.Seeded, matchNumber: Int)) in p.p1.playerID == nil || p.p2.playerID == nil }
+        let resolved = QTSeedingV2.resolveBracketConflicts(pairs.filter { !isBye($0) })
+        return QTSeedingV2.toBracketMatches((pairs.filter(isBye) + resolved).sorted { $0.matchNumber < $1.matchNumber })
+    }
+}
+
 enum QTPlayoff {
     /// Wildcards needed to pad to the bracket size (web getWildcardCount).
     static func wildcardCount(groupCount: Int) -> Int {
@@ -471,17 +578,27 @@ struct QuickTableDetail: Equatable {
             }
     }
 
-    /// Playoff matches grouped by round (ascending), matches ordered within round.
-    var playoffByRound: [(round: Int, matches: [QTMatch])] {
-        let grouped = Dictionary(grouping: matches.filter { $0.isPlayoff }) { $0.playoffRound ?? 0 }
+    /// Các nhánh playoff đang có (thường chỉ [0]).
+    var playoffDivisions: [Int] {
+        Array(Set(matches.filter { $0.isPlayoff }.map { $0.playoffDivision ?? 0 })).sorted()
+    }
+
+    /// Nhánh chính (Series A) — quyết định vô địch giải.
+    var playoffByRound: [(round: Int, matches: [QTMatch])] { playoffByRound(division: 0) }
+
+    /// Playoff matches of one series grouped by round (ascending), matches ordered within round.
+    func playoffByRound(division: Int) -> [(round: Int, matches: [QTMatch])] {
+        let grouped = Dictionary(grouping: matches.filter { $0.isPlayoff && ($0.playoffDivision ?? 0) == division }) { $0.playoffRound ?? 0 }
         return grouped.keys.sorted().map { r in
             (r, (grouped[r] ?? []).sorted { ($0.playoffMatchNumber ?? 0) < ($1.playoffMatchNumber ?? 0) })
         }
     }
 
     /// The final-round single match winner once it's completed.
-    var championID: UUID? {
-        guard let last = playoffByRound.last, last.matches.count == 1,
+    var championID: UUID? { championID(division: 0) }
+
+    func championID(division: Int) -> UUID? {
+        guard let last = playoffByRound(division: division).last, last.matches.count == 1,
               let f = last.matches.first, f.isCompleted else { return nil }
         return f.winnerID
     }

@@ -90,6 +90,7 @@ const BottomNav = () => {
     location.pathname.startsWith("/creator") ||
     location.pathname.startsWith("/embed") ||
     location.pathname.startsWith("/tools/quick-tables/referee") || // full-screen live-scoring tool
+    location.pathname.startsWith("/tools/quick-tables/chat") || // ô nhập chat dính đáy màn hình
     // Kênh người bán + quản trị Shop có thanh điều hướng riêng của shell; để
     // thanh 5 mục này hiện nữa là hai thanh chồng nhau ở đáy điện thoại.
     // (/admin/shop đã nằm trong /admin ở trên.)

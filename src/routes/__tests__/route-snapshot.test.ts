@@ -103,7 +103,8 @@ describe("App.tsx route table characterization", () => {
     // 70 -> 72: agent-readiness adds bilingual About and Contact pages.
     // 72 -> 73: pro-tour event results page /live/pro/:slug.
     // 73 -> 74: bilingual author profile.
-    expect(mirrored.length).toBe(74);
+    // 74 -> 75: create a quick table by AI chat.
+    expect(mirrored.length).toBe(75);
   });
 
   it("route table matches the checked-in snapshot exactly", () => {

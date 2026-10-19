@@ -60,6 +60,21 @@ final class QuickTableViewModel {
     }
     var pendingPlayoff: PendingPlayoff?
 
+    // Series A/B/C: số nhánh chủ giải chọn trên banner (nil = theo giải) + nhánh đang xem.
+    var seriesChoice: Int?
+    var playoffDivision = 0
+    var confirmSeries = false
+
+    func groupSizes(_ d: QuickTableDetail) -> [Int] {
+        d.groups.map { g in d.players.filter { $0.groupID == g.id }.count }
+    }
+
+    func seriesCap(_ d: QuickTableDetail) -> Int { QTSeries.cap(sizes: groupSizes(d)) }
+
+    func seriesCount(_ d: QuickTableDetail) -> Int {
+        min(seriesChoice ?? d.table.playoffSeries ?? 1, seriesCap(d))
+    }
+
     // Đổi cặp SAU khi tạo: chỉ trận vòng 1 chưa đá, chủ giải. Chạm 2 ô ở 2 trận khác nhau.
     var swapMode = false
     var swapSel: (matchID: UUID, slot: Int)?
@@ -215,6 +230,7 @@ final class QuickTableViewModel {
     @MainActor
     func startPlayoff(shareID: String) async {
         guard let d = detail else { return }
+        if seriesCount(d) > 1 { confirmSeries = true; return }
         if d.groups.count == 3 || d.groups.count == 6 {
             await runPlayoffV2(shareID: shareID, advancePerGroup: 2)
             return
@@ -237,6 +253,29 @@ final class QuickTableViewModel {
             qualified: pendingQualified.map { ($0.player.id, $0.seed) },
             wildcards: wildcards.enumerated().map { ($0.element.id, 100 + $0.offset) },
             bracket: bracket)
+    }
+
+    /// Nhiều nhánh: mỗi nhánh dựng bracket cổ điển y như 1 nhánh (web startSeriesPlayoff).
+    @MainActor
+    func createSeries(shareID: String) async {
+        guard let d = detail else { return }
+        let count = seriesCount(d)
+        let series = QTSeries.assign(groups: d.groups, players: d.players, k: count).map {
+            ordered -> (qualified: [(playerID: UUID, seed: Int)], firstRound: [QTBracketMatch]) in
+            (ordered.enumerated().map { ($0.element.id, $0.offset + 1) }, QTSeries.bracket(ordered))
+        }
+        guard series.allSatisfy({ !$0.firstRound.isEmpty }) else {
+            playoffError = String(localized: "Các bảng này chưa chia được nhiều nhánh.")
+            return
+        }
+        generatingPlayoff = true; playoffError = nil
+        do {
+            try await repo.createSeriesPlayoff(tableID: d.table.id, series: series)
+            playoffDivision = 0
+            await load(shareID: shareID)
+            tab = .playoff
+        } catch { playoffError = error.localizedDescription }
+        generatingPlayoff = false
     }
 
     /// Chủ giải đã xem preview (có thể đã đổi chỗ) → tạo playoff thật.
@@ -694,6 +733,18 @@ struct QuickTableDetailView: View {
 
     private var managementPresentation: some View {
         scorePresentation
+        .alert(String(localized: "Tạo các nhánh playoff?"), isPresented: Binding(get: { model.confirmSeries }, set: { model.confirmSeries = $0 })) {
+            Button("Huỷ", role: .cancel) {}
+            Button("Tạo playoff") { Task { await model.createSeries(shareID: shareID) } }
+        } message: {
+            if let d = model.detail {
+                Text((QTSeries.plan(sizes: model.groupSizes(d), k: model.seriesCount(d)) ?? []).enumerated().map { div, sl in
+                    sl.byes > 0
+                        ? String(localized: "\(QTSeries.name(style: d.table.playoffSeriesStyle, division: div)): \(sl.size) đội, \(sl.byes) miễn vòng 1")
+                        : String(localized: "\(QTSeries.name(style: d.table.playoffSeriesStyle, division: div)): \(sl.size) đội")
+                }.joined(separator: "\n") + "\n" + String(localized: "Vô địch giải là vô địch nhánh đầu."))
+            }
+        }
         .sheet(isPresented: Binding(get: { model.pendingPlayoff != nil }, set: { if !$0 { model.pendingPlayoff = nil } })) {
             if let p = model.pendingPlayoff, let detail = model.detail {
                 PlayoffPreviewSheet(detail: detail, initial: p.bracket) { bracket in
@@ -1040,7 +1091,8 @@ struct QuickTableDetailView: View {
                     }
                 }
                 if model.canManage && !detail.table.isPlayoffStage { scheduleManageButton(detail) }
-                if model.canManage && detail.groupStageComplete && !detail.hasPlayoff && detail.table.status == "group_stage" {
+                // 1 bảng = vòng tròn thuần, không có playoff (giải nhỏ tạo từ chat AI).
+                if model.canManage && detail.groupStageComplete && !detail.hasPlayoff && detail.table.status == "group_stage" && (detail.table.groupCount ?? 0) >= 2 {
                     advanceBanner
                 }
                 tabPicker(detail)
@@ -1090,6 +1142,14 @@ struct QuickTableDetailView: View {
                 .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.accent.opacity(0.4), lineWidth: 1))
             }
             .buttonStyle(.plain).disabled(model.generatingPlayoff)
+            if let d = model.detail, model.seriesCap(d) > 1 {
+                Picker("Số nhánh playoff", selection: Binding(get: { model.seriesCount(d) }, set: { model.seriesChoice = $0 })) {
+                    ForEach(1...model.seriesCap(d), id: \.self) { k in
+                        Text(k == 1 ? String(localized: "1 nhánh") : (QTSeries.plan(sizes: model.groupSizes(d), k: k) ?? []).enumerated().map { "\(QTSeries.name(style: d.table.playoffSeriesStyle, division: $0.offset)) · \($0.element.size)" }.joined(separator: " + ")).tag(k)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
             if let err = model.playoffError {
                 Text(err).font(TLFont.sans(12)).foregroundStyle(TLColor.live)
             }
@@ -1284,9 +1344,19 @@ struct QuickTableDetailView: View {
 
     @ViewBuilder
     private func playoffTab(_ detail: QuickTableDetail) -> some View {
-        let rounds = detail.playoffByRound
+        let divisions = detail.playoffDivisions
+        let division = divisions.contains(model.playoffDivision) ? model.playoffDivision : 0
+        let rounds = detail.playoffByRound(division: division)
         VStack(alignment: .leading, spacing: 18) {
-            if let champID = detail.championID {
+            if divisions.count > 1 {
+                Picker("Nhánh playoff", selection: Binding(get: { division }, set: { model.playoffDivision = $0; model.swapMode = false; model.swapSel = nil })) {
+                    ForEach(divisions, id: \.self) { d in
+                        Text(QTSeries.name(style: detail.table.playoffSeriesStyle, division: d)).tag(d)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+            if let champID = detail.championID(division: division) {
                 championBanner(detail.name(for: champID))
             }
             if rounds.isEmpty {
@@ -1385,7 +1455,7 @@ struct QuickTableDetailView: View {
 
     @ViewBuilder
     private func bracketCard(_ detail: QuickTableDetail, _ m: QTMatch) -> some View {
-        let swappable = model.swapMode && m.playoffRound == detail.playoffByRound.first?.round
+        let swappable = model.swapMode && m.playoffRound == detail.playoffByRound(division: m.playoffDivision ?? 0).first?.round
             && !m.isCompleted && m.hasBothPlayers
         let canScore = model.editable && m.hasBothPlayers && !swappable
         if swappable {

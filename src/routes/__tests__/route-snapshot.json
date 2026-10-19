@@ -958,5 +958,13 @@
   {
     "path": "/vi/authors/cuong-nguyen",
     "element": "<ViLanguageWrapper><Author /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/tools/quick-tables/chat",
+    "element": "<QuickTableChat />"
+  },
+  {
+    "path": "/vi/tools/quick-tables/chat",
+    "element": "<ViLanguageWrapper><QuickTableChat /></ViLanguageWrapper>"
   }
 ]

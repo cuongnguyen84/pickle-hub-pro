@@ -27,6 +27,7 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { WorldCupLiveCard } from "@/components/live/WorldCupLiveCard";
 import { HomeLogMatchCTA } from "@/components/home/HomeLogMatchCTA";
+import { HomeQuickTableChatCTA } from "@/components/home/HomeQuickTableChatCTA";
 import { useTickerData } from "@/hooks/useTickerData";
 import { useNewsItems } from "@/hooks/useNewsItems";
 
@@ -515,6 +516,9 @@ const Index = () => {
           </div>
         );
       })()}
+
+      {/* Lối tắt nổi bật vào "Tạo giải bằng chat AI" — ngay dưới dải DUPR, trước nội dung. */}
+      <HomeQuickTableChatCTA />
 
       {/* World Cup strip — below the ticker and the DUPR partnership band.
           Live scores when a match is on, else today's results. Self-hides
