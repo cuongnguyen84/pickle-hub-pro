@@ -8,7 +8,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Check, ChevronDown, Copy, Loader2, MessageSquareText, Pencil, Send, Shuffle, Sparkles, Trash2, TriangleAlert, Trophy } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, Copy, Loader2, MessageSquareText, Paperclip, Pencil, Send, Shuffle, Sparkles, Trash2, TriangleAlert, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { TheLineLayout } from "@/components/layout";
 import { SetupLoginGate } from "@/components/tournament/SetupShell";
@@ -28,13 +28,20 @@ import {
 } from "@/lib/quick-table-chat";
 
 type Lang = "vi" | "en";
-interface Msg { id: string; role: "user" | "bot"; text: string }
+/** label: thứ hiện trên bong bóng khi khác nội dung gửi AI (vd tên file thay cho cả bảng CSV). */
+interface Msg { id: string; role: "user" | "bot"; text: string; label?: string }
+/** Ảnh/PDF gửi kèm cho Gemini đọc — chỉ nằm trong request, không lưu localStorage. */
+interface Attachment { mime_type: string; data: string }
+interface Outgoing { text: string; label?: string; attachment?: Attachment }
 interface Chip { label: string; sub?: string; recommended?: boolean; onClick: () => void }
 type SubMenu = null | "sets";
 
 const GROUP_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const STORAGE_PREFIX = "qt-chat:v1:";
 const PASTE_COLLAPSE_LINES = 4;
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+const MAX_IMAGE_SIDE = 1600; // đủ nét để đọc tên, base64 ~300 KB
+const SHEET_EXT = /\.(xlsx|xls|csv|tsv|txt)$/i;
 
 const COPY = {
   vi: {
@@ -44,12 +51,16 @@ const COPY = {
     loginTitle: "Đăng nhập để tạo giải bằng chat",
     loginDesc: "Kể cho trợ lý nghe về giải hoặc dán danh sách từ Zalo — vài giây là có bảng đấu.",
     toolLabel: "Chia bảng",
-    welcome: "Chào bạn 👋 Kể mình nghe về giải nhé, ví dụ: “Giải CLB tối thứ 7, 16 đôi, chia 4 bảng”. Hoặc dán thẳng danh sách VĐV vào đây.",
+    welcome: "Chào bạn 👋 Kể mình nghe về giải nhé, ví dụ: “Giải CLB tối thứ 7, 16 đôi, chia 4 bảng”. Hoặc dán danh sách VĐV, tải ảnh chụp hay file Excel lên đây.",
     unit: (d: Draft): string => (d.is_doubles === false ? "VĐV" : "đội"),
     format: "Giải đánh đôi hay đánh đơn?",
     doubles: "Đôi", singles: "Đơn",
     count: (u: string) => `Có bao nhiêu ${u}? Hoặc dán luôn danh sách vào đây.`,
     pasteList: "Dán danh sách",
+    upload: "Tải ảnh / file",
+    uploadAria: "Tải ảnh hoặc file danh sách",
+    fileUnreadable: "Không đọc được file này. Thử ảnh chụp, Excel, CSV hoặc PDF nhé.",
+    fileTooBig: "File lớn quá, tối đa 4 MB.",
     tooMany: (n: number, u: string) => `Chat hiện tạo được tối đa ${MAX_CHAT_ENTRIES} ${u}. Giải ${n} ${u} nên dùng thể thức playoff lớn trong form thường.`,
     changeCount: "Sửa số lượng",
     pairing: (n: number) => `Mình thấy ${n} tên lẻ. Ghép thành đôi thế nào?`,
@@ -76,7 +87,7 @@ const COPY = {
     pasteNow: "Dán ngay",
     openRegistration: "Mở cho người chơi tự đăng ký",
     later: "Để sau, tự nhập",
-    paste: (d: Draft) => `Dán danh sách vào ô bên dưới nhé — mỗi dòng 1 ${d.is_doubles === false ? "VĐV" : "đội, kiểu “Nam - Hùng”"}.`,
+    paste: (d: Draft) => `Dán danh sách vào ô bên dưới nhé — mỗi dòng 1 ${d.is_doubles === false ? "VĐV" : "đội, kiểu “Nam - Hùng”"}. Có ảnh chụp hay file Excel thì tải lên cũng được.`,
     name: "Đặt tên giải là gì?",
     customName: "Gõ tên khác ở ô bên dưới",
     options: "Gần xong rồi! Muốn thêm gì nữa không?",
@@ -131,12 +142,16 @@ const COPY = {
     loginTitle: "Sign in to create a tournament by chat",
     loginDesc: "Describe your event or paste a player list from your group chat — groups are ready in seconds.",
     toolLabel: "Round robin",
-    welcome: "Hi 👋 Tell me about your event, e.g. “Club night Saturday, 16 doubles teams, 4 groups”. Or just paste your player list here.",
+    welcome: "Hi 👋 Tell me about your event, e.g. “Club night Saturday, 16 doubles teams, 4 groups”. Or paste your player list, or upload a photo or spreadsheet of it.",
     unit: (d: Draft): string => (d.is_doubles === false ? "players" : "teams"),
     format: "Doubles or singles?",
     doubles: "Doubles", singles: "Singles",
     count: (u: string) => `How many ${u}? Or paste the list right here.`,
     pasteList: "Paste a list",
+    upload: "Upload photo / file",
+    uploadAria: "Upload a photo or file of the list",
+    fileUnreadable: "Couldn't read that file. Try a photo, Excel, CSV or PDF.",
+    fileTooBig: "That file is too big — 4 MB max.",
     tooMany: (n: number, u: string) => `Chat can create up to ${MAX_CHAT_ENTRIES} ${u}. For ${n} ${u}, use the large playoff format in the classic form.`,
     changeCount: "Change the number",
     pairing: (n: number) => `I see ${n} single names. How should I pair them?`,
@@ -163,7 +178,7 @@ const COPY = {
     pasteNow: "Paste now",
     openRegistration: "Let players sign up",
     later: "Later, I'll type it",
-    paste: (d: Draft) => `Paste the list below — one ${d.is_doubles === false ? "player" : "team, like “Nam - Hung”"} per line.`,
+    paste: (d: Draft) => `Paste the list below — one ${d.is_doubles === false ? "player" : "team, like “Nam - Hung”"} per line. A photo or spreadsheet works too.`,
     name: "What's the tournament called?",
     customName: "Type another name below",
     options: "Almost done! Anything else?",
@@ -238,7 +253,8 @@ const QuickTableChat = () => {
       />
     );
   }
-  return <ChatScreen key={user.id} userId={user.id} lang={lang} />;
+  // key theo ngôn ngữ: đổi VI/EN là dựng lại hội thoại bằng ngôn ngữ mới, không lẫn câu.
+  return <ChatScreen key={`${user.id}:${lang}`} userId={user.id} lang={lang} />;
 };
 
 function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
@@ -250,17 +266,19 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   const restored = useMemo(() => {
     try {
       const raw = localStorage.getItem(storageKey);
-      return raw ? (JSON.parse(raw) as { draft: Draft; messages: Msg[] }) : null;
+      return raw ? (JSON.parse(raw) as { lang?: Lang; draft: Draft; messages: Msg[] }) : null;
     } catch {
       return null;
     }
   }, [storageKey]);
 
   const [draft, setDraft] = useState<Draft>(restored?.draft ?? {});
-  const [messages, setMessages] = useState<Msg[]>(restored?.messages ?? [{ id: uid(), role: "bot", text: c.welcome }]);
+  // Hội thoại lưu bằng ngôn ngữ khác → chỉ giữ nháp, hỏi lại bằng ngôn ngữ hiện tại.
+  const [messages, setMessages] = useState<Msg[]>(() =>
+    restored?.lang === lang && restored.messages?.length ? restored.messages : freshMessages(c, restored?.draft ?? {}));
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
-  const [failedText, setFailedText] = useState<string | null>(null);
+  const [failed, setFailed] = useState<Outgoing | null>(null);
   const [subMenu, setSubMenu] = useState<SubMenu>(null);
   const [assignments, setAssignments] = useState<number[]>([]);
   const [creating, setCreating] = useState(false);
@@ -268,6 +286,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   const [quotaFull, setQuotaFull] = useState<number | null>(null);
   const [draftOpen, setDraftOpen] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   const slot = nextSlot(draft);
@@ -276,9 +295,9 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   useEffect(() => {
     try {
       if (created) localStorage.removeItem(storageKey);
-      else localStorage.setItem(storageKey, JSON.stringify({ draft, messages: messages.slice(-60) }));
+      else localStorage.setItem(storageKey, JSON.stringify({ lang, draft, messages: messages.slice(-60) }));
     } catch { /* private mode — chat still works, just not restorable */ }
-  }, [draft, messages, created, storageKey]);
+  }, [lang, draft, messages, created, storageKey]);
 
   useEffect(() => {
     getUserQuotaInfo().then((q) => { if (q && q.current_count >= q.quota) setQuotaFull(q.quota); });
@@ -293,34 +312,15 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rosterKey]);
 
-  const questionFor = useCallback((d: Draft, s: Slot): string => {
-    const u = c.unit(d);
-    const n = entryCount(d);
-    switch (s) {
-      case "format": return c.format;
-      case "count": return c.count(u);
-      case "too_many": return c.tooMany(n, u);
-      case "pairing": return (d.entries!.length % 2 ? c.pairingOdd : c.pairing)(d.entries!.length);
-      case "mismatch": return c.mismatch(d.entries!.length, d.player_count!, u);
-      case "groups":
-        return (d.group_count ? c.groupsInvalid(d.group_count, u) : c.groups(n, u)) + (n > 32 ? c.groupsBig : "");
-      case "roster": return c.roster(u);
-      case "paste": return c.paste(d);
-      case "name": return c.name;
-      case "options": return c.options;
-      case "confirm": return c.confirm;
-    }
-  }, [c]);
-
   const pushBot = (text: string) => setMessages((m) => [...m, { id: uid(), role: "bot", text }]);
 
   /** Áp nháp mới rồi hỏi câu tiếp theo (kèm câu xác nhận ngắn nếu có). */
   const advance = useCallback((next: Draft, ack?: string) => {
     setDraft(next);
     setSubMenu(null);
-    const q = questionFor(next, nextSlot(next));
+    const q = questionFor(c, next, nextSlot(next));
     setMessages((m) => [...m, { id: uid(), role: "bot", text: [ack?.trim(), q].filter(Boolean).join(" ") }]);
-  }, [questionFor]);
+  }, [c]);
 
   const pushUser = (text: string) => setMessages((m) => [...m, { id: uid(), role: "user", text }]);
 
@@ -329,27 +329,27 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     advance({ ...draft, ...patch });
   };
 
-  const send = async (raw?: string) => {
-    const text = (raw ?? input).trim();
-    if (!text || busy) return;
-    if (raw === undefined) {
-      pushUser(text);
-      setInput("");
+  const send = async (out?: Outgoing, isRetry = false) => {
+    const msg = out ?? { text: input.trim() };
+    if (!msg.text || busy) return;
+    if (!isRetry) {
+      setMessages((m) => [...m, { id: uid(), role: "user", text: msg.text, label: msg.label }]);
+      if (!out) setInput("");
     }
-    setFailedText(null);
+    setFailed(null);
     setBusy(true);
     // Thử lại: bỏ tin lỗi + chính tin người dùng đó khỏi lịch sử rồi gửi lại.
-    const prior = raw === undefined ? messages : messages.slice(0, messages.map((m) => m.role).lastIndexOf("user"));
-    const history = [...prior, { role: "user" as const, text }]
+    const prior = isRetry ? messages.slice(0, messages.map((m) => m.role).lastIndexOf("user")) : messages;
+    const history = [...prior, { role: "user" as const, text: msg.text }]
       .slice(-8)
       .map((m) => ({ role: m.role, text: m.text.slice(0, 4000) }));
     const { data, error } = await supabase.functions.invoke("quick-table-chat", {
-      body: { messages: history, draft, pending: slot, lang },
-      timeout: 25_000,
+      body: { messages: history, draft, pending: slot, lang, attachment: msg.attachment },
+      timeout: msg.attachment ? 45_000 : 25_000,
     });
     setBusy(false);
     if (error || !data || typeof data !== "object" || "error" in data) {
-      setFailedText(text);
+      setFailed(msg);
       pushBot(c.aiError);
       return;
     }
@@ -373,7 +373,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   // ---------- chip theo bước ----------
   const chips: Chip[] = (() => {
     if (created || quotaFull != null || busy) return [];
-    if (failedText) return [{ label: c.retry, onClick: () => send(failedText) }];
+    if (failed) return [{ label: c.retry, onClick: () => send(failed, true) }];
     const n = entryCount(draft);
     switch (slot) {
       case "format":
@@ -385,6 +385,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
         return [
           ...[8, 12, 16, 24, 32].map((k) => ({ label: String(k), onClick: () => choose(`${k} ${unit}`, { player_count: k }) })),
           { label: c.pasteList, onClick: () => inputRef.current?.focus() },
+          { label: c.upload, onClick: () => fileRef.current?.click() },
         ];
       case "too_many":
         return [
@@ -412,6 +413,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
         return [
           { label: c.useList(draft.entries!.length, unit), onClick: () => choose(c.useList(draft.entries!.length, unit), { player_count: draft.entries!.length }) },
           { label: c.pasteMore, onClick: () => inputRef.current?.focus() },
+          { label: c.upload, onClick: () => fileRef.current?.click() },
         ];
       case "groups":
         return groupOptions(n).map((o) => ({
@@ -427,7 +429,10 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           { label: c.later, onClick: () => choose(c.later, { roster_mode: "later" }) },
         ];
       case "paste":
-        return [{ label: c.later, onClick: () => choose(c.later, { roster_mode: "later" }) }];
+        return [
+          { label: c.upload, onClick: () => fileRef.current?.click() },
+          { label: c.later, onClick: () => choose(c.later, { roster_mode: "later" }) },
+        ];
       case "name": {
         const name = defaultName(draft, lang);
         return [{ label: name, onClick: () => choose(name, { name }) }];
@@ -513,10 +518,19 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     `${c.zaloLink}: ${tableUrl}`,
   ].join("\n");
 
+  const onFile = async (file: File | undefined) => {
+    if (fileRef.current) fileRef.current.value = "";
+    if (!file || busy) return;
+    if (file.size > MAX_UPLOAD_BYTES) { toast.error(c.fileTooBig); return; }
+    let out: Outgoing;
+    try { out = await readUpload(file); } catch { toast.error(c.fileUnreadable); return; }
+    send(out);
+  };
+
   const startOver = () => {
     setCreated(null);
     setDraft({});
-    setMessages([{ id: uid(), role: "bot", text: c.welcome }]);
+    setMessages(freshMessages(c, {}));
   };
 
   const quotaMsg = quotaFull != null ? c.quotaFull(quotaFull) : null;
@@ -613,6 +627,16 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
               onSubmit={(e) => { e.preventDefault(); send(); }}
               style={{ display: "flex", gap: 8, alignItems: "flex-end" }}
             >
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*,application/pdf,.pdf,.xlsx,.xls,.csv,.tsv,.txt"
+                hidden
+                onChange={(e) => onFile(e.target.files?.[0])}
+              />
+              <Button type="button" variant="ghost" size="icon" disabled={busy} onClick={() => fileRef.current?.click()} aria-label={c.uploadAria} title={c.uploadAria} style={{ width: 44, height: 44, flexShrink: 0 }}>
+                <Paperclip className="w-4 h-4" />
+              </Button>
               <Textarea
                 ref={inputRef}
                 value={input}
@@ -644,9 +668,78 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
 
 type C = (typeof COPY)["vi"];
 
+function questionFor(c: C, d: Draft, s: Slot): string {
+  const u = c.unit(d);
+  const n = entryCount(d);
+  switch (s) {
+    case "format": return c.format;
+    case "count": return c.count(u);
+    case "too_many": return c.tooMany(n, u);
+    case "pairing": return (d.entries!.length % 2 ? c.pairingOdd : c.pairing)(d.entries!.length);
+    case "mismatch": return c.mismatch(d.entries!.length, d.player_count!, u);
+    case "groups":
+      return (d.group_count ? c.groupsInvalid(d.group_count, u) : c.groups(n, u)) + (n > 32 ? c.groupsBig : "");
+    case "roster": return c.roster(u);
+    case "paste": return c.paste(d);
+    case "name": return c.name;
+    case "options": return c.options;
+    case "confirm": return c.confirm;
+  }
+}
+
+/** Hội thoại mới bằng đúng ngôn ngữ đang chọn; nháp dở thì hỏi tiếp câu còn thiếu. */
+function freshMessages(c: C, d: Draft): Msg[] {
+  const first: Msg = { id: uid(), role: "bot", text: c.welcome };
+  const s = nextSlot(d);
+  return s === "format" ? [first] : [first, { id: uid(), role: "bot", text: questionFor(c, d, s) }];
+}
+
+async function readAsBase64(blob: Blob): Promise<string> {
+  const url = await new Promise<string>((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
+  return url.slice(url.indexOf(",") + 1);
+}
+
+async function imageToJpeg(file: File): Promise<Attachment> {
+  const bmp = await createImageBitmap(file);
+  const scale = Math.min(1, MAX_IMAGE_SIDE / Math.max(bmp.width, bmp.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bmp.width * scale);
+  canvas.height = Math.round(bmp.height * scale);
+  canvas.getContext("2d")!.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+  bmp.close();
+  const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.85));
+  if (!blob) throw new Error("encode_failed");
+  return { mime_type: "image/jpeg", data: await readAsBase64(blob) };
+}
+
+/** Ảnh/PDF → Gemini đọc; bảng tính/văn bản → đọc tại chỗ thành chữ (tab giữa các cột). */
+async function readUpload(file: File): Promise<Outgoing> {
+  if (file.type.startsWith("image/")) return { text: `🖼️ ${file.name}`, attachment: await imageToJpeg(file) };
+  if (file.type === "application/pdf") return { text: `📎 ${file.name}`, attachment: { mime_type: "application/pdf", data: await readAsBase64(file) } };
+  if (!SHEET_EXT.test(file.name)) throw new Error("unsupported");
+  let text: string;
+  if (/\.(xlsx|xls)$/i.test(file.name)) {
+    const XLSX = await import("xlsx/dist/xlsx.mini.min.js");
+    const wb = XLSX.read(await file.arrayBuffer());
+    text = XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]], { FS: "\t", blankrows: false });
+  } else {
+    text = await file.text();
+  }
+  text = text.trim().slice(0, 4000);
+  if (!text) throw new Error("empty");
+  return { text, label: `📎 ${file.name}` };
+}
+
+
 function Bubble({ msg, c }: { msg: Msg; c: C }) {
   const lines = msg.text.split("\n");
-  const long = msg.role === "user" && lines.length > PASTE_COLLAPSE_LINES;
+  const long = msg.role === "user" && (lines.length > PASTE_COLLAPSE_LINES || !!msg.label);
+  const head = msg.label ?? c.pasted(lines.filter((l) => l.trim()).length);
   const [open, setOpen] = useState(false);
   const mine = msg.role === "user";
   return (
@@ -667,7 +760,7 @@ function Bubble({ msg, c }: { msg: Msg; c: C }) {
         wordBreak: "break-word",
       }}
     >
-      {long && !open ? c.pasted(lines.filter((l) => l.trim()).length) : msg.text}
+      {long && !open ? head : msg.text}
       {long && (
         <button type="button" onClick={() => setOpen((o) => !o)} style={{ display: "block", marginTop: 4, background: "none", border: 0, padding: 0, color: "inherit", textDecoration: "underline", fontSize: 13, cursor: "pointer", opacity: 0.85 }}>
           {open ? c.collapse : c.showAll}

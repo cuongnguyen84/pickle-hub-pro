@@ -9,7 +9,8 @@
 // verify_jwt = false (ES256 workaround) — JWT kiểm trong function bằng
 // getAuthUser. Bắt đăng nhập để khách vãng lai không đốt credit Gemini.
 //
-// Request:  POST { messages: {role:"user"|"bot", text}[], draft, pending, lang }
+// Request:  POST { messages: {role:"user"|"bot", text}[], draft, pending, lang,
+//                  attachment?: { mime_type, data(base64) } }  — ảnh/PDF danh sách
 // Response: { reply, patch, intent }
 // ============================================================================
 
@@ -22,6 +23,8 @@ const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 
 const MAX_MESSAGES = 8;
 const MAX_TEXT = 4000; // một danh sách 48 đôi dán từ Zalo vừa khoảng 2–3k ký tự
+const ATTACHMENT_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
+const MAX_ATTACHMENT_B64 = 6_000_000; // ~4.4 MB file; client đã thu ảnh về ≤1600px
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -80,13 +83,14 @@ Trường của patch:
   - Giữ nguyên dấu tiếng Việt. Không bịa tên, không bỏ sót dòng nào.
   - team: tên CLB nếu người dùng nói các đội thuộc cùng CLB (để tránh chung bảng).
   - seed: 1, 2, 3… nếu người dùng chỉ định hạt giống; chỉ gán cho đội có trong danh sách.
+- Nếu tin nhắn kèm ẢNH hoặc PDF: đó là danh sách đăng ký (ảnh chụp Zalo/Messenger, bảng Excel, giấy viết tay, poster). Đọc MỌI dòng tên trong đó thành entries theo đúng quy tắc trên; bỏ tiêu đề cột, số thứ tự, số điện thoại, số tiền, trạng thái chuyển khoản. Chữ không đọc chắc thì vẫn ghi theo cách đọc gần nhất, không bỏ dòng. Ảnh không có danh sách tên → patch rỗng, reply nói ngắn là không thấy danh sách.
 - roster_mode: "now" nếu dán danh sách, "later" nếu nói sẽ nhập sau, "registration" nếu muốn người chơi tự đăng ký.
 - courts: danh sách số sân ("sân 1 đến 4" → [1,2,3,4], "sân 2,3,5" → [2,3,5]).
 - start_time: giờ bắt đầu dạng HH:MM 24 giờ ("7h tối" → "19:00", "8h sáng" → "08:00").
 - default_sets: 1, 3 hoặc 5 (đánh 1 set / best of 3 / best of 5).
 
 Câu trả lời "reply":
-- Tối đa 1 câu ngắn, xưng "mình", gọi người dùng là "bạn". ${lang === "en" ? "Người dùng đang dùng tiếng Anh: viết reply bằng tiếng Anh." : "Viết bằng ngôn ngữ người dùng đang dùng (mặc định tiếng Việt)."}
+- Tối đa 1 câu ngắn. ${lang === "en" ? "LUÔN viết reply bằng tiếng Anh (giao diện đang tiếng Anh), kể cả khi người dùng gõ tiếng Việt." : "LUÔN viết reply bằng tiếng Việt (giao diện đang tiếng Việt), kể cả khi người dùng gõ tiếng Anh. Xưng \"mình\", gọi người dùng là \"bạn\"."}
 - intent "fill": xác nhận ngắn điều vừa hiểu (vd "Đã nhận 16 đội."). Có thể để reply rỗng.
 - intent "off_topic": người dùng hỏi chuyện khác → trả lời 1 câu thật ngắn rồi thôi, patch rỗng.
 - intent "unsupported": người dùng muốn loại giải khác (MLP/đồng đội, loại kép, flex, đăng ký có DUPR...) → nói ngắn rằng chat này chỉ tạo giải chia bảng.
@@ -108,7 +112,10 @@ Deno.serve(async (req: Request) => {
 
   if (!GEMINI_API_KEY) return json({ error: "ai_not_configured" }, 500);
 
-  let body: { messages?: ChatMessage[]; draft?: unknown; pending?: string; lang?: string };
+  let body: {
+    messages?: ChatMessage[]; draft?: unknown; pending?: string; lang?: string;
+    attachment?: { mime_type?: unknown; data?: unknown };
+  };
   try {
     body = await req.json();
   } catch {
@@ -122,6 +129,14 @@ Deno.serve(async (req: Request) => {
     messages.some((m) => typeof m?.text !== "string" || m.text.length > MAX_TEXT || (m.role !== "user" && m.role !== "bot"))
   ) {
     return json({ error: "invalid_messages" }, 400);
+  }
+  const att = body.attachment;
+  if (
+    att != null &&
+    (typeof att.mime_type !== "string" || !ATTACHMENT_MIMES.has(att.mime_type) ||
+      typeof att.data !== "string" || att.data.length === 0 || att.data.length > MAX_ATTACHMENT_B64)
+  ) {
+    return json({ error: "invalid_attachment" }, 400);
   }
   const lang = body.lang === "en" ? "en" : "vi";
   const draftJson = JSON.stringify(body.draft ?? {}).slice(0, 8000);
@@ -142,9 +157,12 @@ Deno.serve(async (req: Request) => {
     ...turns,
     {
       role: "user",
-      parts: [{
-        text: `NHÁP HIỆN TẠI (JSON): ${draftJson}\nỨNG DỤNG ĐANG HỎI: ${pending || "(chưa hỏi gì)"}\n\nTIN NHẮN MỚI CỦA NGƯỜI DÙNG:\n${messages[messages.length - 1].text}`,
-      }],
+      parts: [
+        {
+          text: `NHÁP HIỆN TẠI (JSON): ${draftJson}\nỨNG DỤNG ĐANG HỎI: ${pending || "(chưa hỏi gì)"}\n\nTIN NHẮN MỚI CỦA NGƯỜI DÙNG${att ? " (kèm file danh sách bên dưới)" : ""}:\n${messages[messages.length - 1].text}`,
+        },
+        ...(att ? [{ inlineData: { mimeType: att.mime_type as string, data: att.data as string } }] : []),
+      ] as Array<{ text: string } | { inlineData: { mimeType: string; data: string } }>,
     },
   ];
 
@@ -154,7 +172,7 @@ Deno.serve(async (req: Request) => {
     geminiRes = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
-      signal: AbortSignal.timeout(20_000),
+      signal: AbortSignal.timeout(att ? 40_000 : 20_000),
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: buildSystemPrompt(lang) }] },
         contents,
