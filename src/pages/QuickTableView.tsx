@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Share2, Trophy, Check, ChevronRight, Swords, Settings, UserPlus, ArrowLeftRight,
-  UserMinus, ClipboardList, MapPin, Trash2, RefreshCw, Pencil, ListRestart, Monitor,
+  UserMinus, ClipboardList, MapPin, Trash2, RefreshCw, Pencil, ListRestart, Monitor, RotateCcw,
 } from 'lucide-react';
 import QuickTablePlayoffView from '@/components/quicktable/QuickTablePlayoffView';
 import PlayoffBracket, { type SwapSlot } from '@/components/tournament/PlayoffBracket';
@@ -386,7 +386,9 @@ const QuickTableView = () => {
     const series = assignSeries(groups.map((g) => g.id), players, sizes).map(seriesBracket);
     const lines = plan.map((sl, d) => seriesLine(seriesName(seriesStyle, d, lang), sl, lang));
     const ok = await confirm({
-      title: lang === 'vi' ? `Tạo ${count} nhánh playoff?` : `Create ${count} playoff brackets?`,
+      title: lang === 'vi'
+        ? `Tạo ${count} nhánh: ${plan.map((sl, d) => `${seriesName(seriesStyle, d, lang)} ${sl.size}`).join(' · ')}?`
+        : `Create ${count} bracket${count > 1 ? 's' : ''}: ${plan.map((sl, d) => `${seriesName(seriesStyle, d, lang)} ${sl.size}`).join(' · ')}?`,
       description: lines.join('\n') + (lang === 'vi'
         ? '\nMỗi nhánh có vô địch riêng; vô địch giải là vô địch nhánh đầu.'
         : '\nEach bracket has its own winner; the first bracket decides the champion.'),
@@ -402,6 +404,35 @@ const QuickTableView = () => {
     } catch {
       toast.error(t.quickTable.view.errorOccurred);
     }
+  };
+
+  // Huỷ playoff vừa tạo (chọn nhầm cách chia) — chỉ khi chưa trận playoff nào có điểm / trọng tài.
+  const playoffUntouched = hasPlayoff && table?.status === 'playoff' &&
+    playoffMatches.every((m) => m.score1 == null && m.score2 == null && !(m as { live_referee_id?: string | null }).live_referee_id);
+  const cancelPlayoff = async () => {
+    if (!table) return;
+    const vi = language !== 'en';
+    const ok = await confirm({
+      title: vi ? 'Huỷ playoff, quay về vòng bảng?' : 'Cancel the playoff and go back to the group stage?',
+      description: vi
+        ? 'Xoá toàn bộ sơ đồ playoff để chọn lại cách chia nhánh. Kết quả vòng bảng giữ nguyên.'
+        : 'Removes the whole playoff draw so you can pick a different split. Group results are kept.',
+      confirmText: vi ? 'Huỷ playoff' : 'Cancel playoff',
+      destructive: true,
+    });
+    if (!ok) return;
+    const { data, error } = await supabase.rpc('cancel_quick_table_playoff' as never, { p_table_id: table.id } as never);
+    const res = (data ?? {}) as { success?: boolean; error?: string };
+    if (error || !res.success) {
+      toast.error(res.error === 'PLAYOFF_STARTED'
+        ? (vi ? 'Playoff đã có trận nhập điểm, không huỷ được.' : 'A playoff match already has a score.')
+        : t.quickTable.view.errorOccurred);
+      return;
+    }
+    toast.success(vi ? 'Đã huỷ playoff. Chọn lại cách chia nhánh nhé.' : 'Playoff cancelled. Pick a split again.');
+    setSeriesChoice(null);
+    setActiveTab('groups');
+    await loadData();
   };
 
   const handleStartPlayoff = () => {
@@ -955,7 +986,12 @@ const QuickTableView = () => {
                   {t.quickTable.view.groupCompleteDesc}
                 </p>
                 {planOptions.length > 1 && (
-                  <div role="group" aria-label={language === 'vi' ? 'Số nhánh playoff' : 'Playoff brackets'} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 12 }}>
+                  <p style={{ margin: '14px 0 0', fontSize: 12.5, color: 'var(--tl-fg-2)', fontWeight: 600 }}>
+                    {language === 'vi' ? 'Chọn cách chia nhánh:' : 'Choose how to split the playoff:'}
+                  </p>
+                )}
+                {planOptions.length > 1 && (
+                  <div role="group" aria-label={language === 'vi' ? 'Số nhánh playoff' : 'Playoff brackets'} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
                     {planOptions.map((sizes, k) => (
                       <button
                         key={k}
@@ -963,18 +999,25 @@ const QuickTableView = () => {
                         aria-pressed={sizes === chosenSizes}
                         onClick={() => setSeriesChoice(k)}
                         style={{
-                          minHeight: 36, padding: '0 12px', borderRadius: 18, fontSize: 13, cursor: 'pointer',
-                          border: `1px solid ${sizes === chosenSizes ? 'var(--tl-green)' : 'var(--tl-border)'}`,
+                          minHeight: 40, padding: '0 14px', borderRadius: 20, fontSize: 13, cursor: 'pointer',
+                          border: `${sizes === chosenSizes ? 2 : 1}px solid ${sizes === chosenSizes ? 'var(--tl-green)' : 'var(--tl-border)'}`,
                           background: sizes === chosenSizes ? 'var(--tl-bg-elev)' : 'transparent',
-                          color: 'var(--tl-fg)',
+                          color: 'var(--tl-fg)', fontWeight: sizes === chosenSizes ? 600 : 400,
                         }}
                       >
+                        {sizes === chosenSizes ? '✓ ' : ''}
+                        {sizes === customSizes ? (language === 'vi' ? 'Theo thiết lập giải: ' : 'As set up: ') : ''}
                         {sameSizes(sizes, defaultPlans[0])
                           ? (language === 'vi' ? '1 nhánh (top 2)' : '1 bracket (top 2)')
                           : sizes.map((n, d) => `${seriesName(seriesStyle, d, language === 'en' ? 'en' : 'vi')} · ${n}`).join(' + ')}
                       </button>
                     ))}
                   </div>
+                )}
+                {seriesPath && (
+                  <p style={{ margin: '8px 0 0', fontSize: 12.5, color: 'var(--tl-fg-2)' }}>
+                    {chosenSizes.map(slot).map((sl, d) => seriesLine(seriesName(seriesStyle, d, language === 'en' ? 'en' : 'vi'), sl, language === 'en' ? 'en' : 'vi')).join(' · ')}
+                  </p>
                 )}
               </div>
               <button type="button" className="tl-btn green" onClick={handleStartPlayoff}>
@@ -1490,6 +1533,14 @@ const QuickTableView = () => {
                   >
                     {t.quickTable.view.onlyCreatorCanScore}
                   </p>
+                </div>
+              )}
+              {canManageTable && playoffUntouched && (
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button type="button" className="tl-btn" onClick={() => void cancelPlayoff()} style={{ fontSize: 12.5, padding: '7px 12px' }}>
+                    <RotateCcw className="w-4 h-4" />
+                    {language === 'vi' ? 'Huỷ playoff, chọn lại cách chia' : 'Cancel playoff, re-split'}
+                  </button>
                 </div>
               )}
               {playoffDivisions.length > 1 && (
