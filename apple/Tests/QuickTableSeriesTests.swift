@@ -28,7 +28,7 @@ struct QuickTableSeriesTests {
         for (g, n) in zip(groups, sizes) {
             for i in 0..<n { players.append(mkPlayer("\(g.name)\(i)", group: g.id, won: n - 1 - i, played: n - 1)) }
         }
-        let series = QTSeries.assign(groups: groups, players: players, sizes: QTSeries.plan(sizes: sizes, k: 2)!.map(\.size))
+        let series = QTSeries.assign(groups: groups, players: players, k: 2)
         #expect(series.map(\.count) == [16, 10])
         let b = QTSeries.bracket(series[1])
         #expect(b.count == 8)
@@ -36,19 +36,5 @@ struct QuickTableSeriesTests {
         #expect(byeMatches.count == 6)
         let topSix = Set(series[1].prefix(6).map(\.id))
         #expect(Set(byeMatches.compactMap { $0.player1 ?? $0.player2 }) == topSix)
-    }
-
-    @Test func customSizesElevenGroups() {
-        #expect(QTSeries.resolveSizes([16, 0, 0], total: 44) == [16, 14, 14])
-        #expect(QTSeries.resolveSizes([16], total: 44) == [16])
-        #expect(QTSeries.resolveSizes([43, 0], total: 44) == nil)
-        #expect(QTSeries.resolveSizes([8, 8, 8, 8], total: 44) == nil)
-        let groups = (0..<11).map { QTGroup(id: UUID(), name: String(UnicodeScalar(65 + $0)!), displayOrder: $0) }
-        var players: [QTPlayer] = []
-        for g in groups { for i in 0..<4 { players.append(mkPlayer("\(g.name)\(i)", group: g.id, won: 3 - i, played: 3)) } }
-        let series = QTSeries.assign(groups: groups, players: players, sizes: [16, 14, 14])
-        #expect(series.map(\.count) == [16, 14, 14])
-        #expect(series[0].filter { $0.name.hasSuffix("0") }.count == 11) // mọi đội nhất vào nhánh Vàng
-        #expect(series.allSatisfy { QTSeries.bracket($0).count == 8 })
     }
 }

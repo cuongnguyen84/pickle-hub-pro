@@ -24,8 +24,6 @@ struct QTTable: Decodable, Equatable {
     /// Series A/B/C sau vòng bảng (web 2026-10-19): số nhánh dự kiến + kiểu tên (series | medal).
     var playoffSeries: Int? = nil
     var playoffSeriesStyle: String? = nil
-    /// Cỡ từng nhánh đặt lúc tạo giải bằng chat (vd [16, 14, 14]); nil = luật mặc định.
-    var playoffSeriesSizes: [Int]? = nil
 
     var displayName: String { name?.nonEmpty ?? "Giải đấu" }
     var isPlayoffStage: Bool { status == "playoff" || status == "completed" }
@@ -59,7 +57,6 @@ struct QTTable: Decodable, Equatable {
         case startTime = "start_time"
         case playoffSeries = "playoff_series"
         case playoffSeriesStyle = "playoff_series_style"
-        case playoffSeriesSizes = "playoff_series_sizes"
     }
 }
 
@@ -364,7 +361,7 @@ enum QTSeries {
         return min(QTSeedingV2.nextPowerOf2(direct) - direct, tierCount(sizes, 2))
     }
 
-    static func slot(_ n: Int) -> Slot { Slot(size: n, bracket: QTSeedingV2.nextPowerOf2(n)) }
+    private static func slot(_ n: Int) -> Slot { Slot(size: n, bracket: QTSeedingV2.nextPowerOf2(n)) }
 
     static func plan(sizes: [Int], k: Int) -> [Slot]? {
         guard sizes.count >= 2, (1...maxSeries).contains(k) else { return nil }
@@ -377,24 +374,6 @@ enum QTSeries {
         let b = tierCount(sizes, 2) + tierCount(sizes, 3) - wc
         let c = rest - b
         return b >= 2 && c >= 2 ? [slot(a), slot(b), slot(c)] : nil
-    }
-
-    /// Cỡ nhánh tuỳ chỉnh: 0 = chia đều phần còn lại; 1–3 nhánh, mỗi nhánh ≥ 2, tổng ≤ số đội (web resolveSeriesSizes).
-    static func resolveSizes(_ raw: [Int]?, total: Int) -> [Int]? {
-        guard var sizes = raw, (1...maxSeries).contains(sizes.count), sizes.allSatisfy({ $0 >= 0 }) else { return nil }
-        let free = sizes.filter { $0 == 0 }.count
-        if free > 0 {
-            var left = total - sizes.reduce(0, +)
-            guard left >= free * 2 else { return nil }
-            var slots = free
-            for i in sizes.indices where sizes[i] == 0 {
-                sizes[i] = (left + slots - 1) / slots
-                left -= sizes[i]
-                slots -= 1
-            }
-        }
-        guard sizes.allSatisfy({ $0 >= 2 }), sizes.reduce(0, +) <= total else { return nil }
-        return sizes
     }
 
     static func cap(sizes: [Int]) -> Int {
@@ -424,9 +403,8 @@ enum QTSeries {
         return perMatch(a.pointsFor, a.matchesPlayed) > perMatch(b.pointsFor, b.matchesPlayed)
     }
 
-    /// Chia theo cỡ nhánh cho trước, mỗi nhánh mạnh → yếu (thứ tự = seed). Thứ tự toàn giải:
-    /// mọi đội nhất (so khác bảng), rồi mọi đội nhì, rồi hạng 3… cắt lần lượt theo cỡ.
-    static func assign(groups: [QTGroup], players: [QTPlayer], sizes: [Int]) -> [[QTPlayer]] {
+    /// k nhánh, mỗi nhánh mạnh → yếu (thứ tự = seed). Số người khớp plan(sizes:k:).
+    static func assign(groups: [QTGroup], players: [QTPlayer], k: Int) -> [[QTPlayer]] {
         let ranked = groups.map { g in
             players.filter { $0.groupID == g.id }.sorted {
                 if $0.matchesWon != $1.matchesWon { return $0.matchesWon > $1.matchesWon }
@@ -436,12 +414,15 @@ enum QTSeries {
         }
         func tier(_ t: Int) -> [QTPlayer] { ranked.compactMap { $0.count > t ? $0[t] : nil }.sorted(by: crossGroupBetter) }
         let maxTier = ranked.map(\.count).max() ?? 0
-        let order = (0..<maxTier).flatMap { tier($0) }
-        var at = 0
-        return sizes.map { n in
-            defer { at += n }
-            return Array(order[min(at, order.count)..<min(at + n, order.count)])
-        }
+        let wc = wildcards(ranked.map(\.count))
+        let thirds = tier(2)
+        let a = tier(0) + tier(1) + thirds.prefix(wc)
+        var rest = Array(thirds.dropFirst(wc))
+        if maxTier > 3 { for t in 3..<maxTier { rest += tier(t) } }
+        if k <= 1 { return [a] }
+        if k == 2 { return [a, rest] }
+        let bCount = thirds.count - wc + tier(3).count
+        return [a, Array(rest.prefix(bCount)), Array(rest.dropFirst(bCount))]
     }
 
     /// Vòng 1 của một nhánh: seed chuẩn, BYE cố định cho hạt giống cao nhất, rồi mới
