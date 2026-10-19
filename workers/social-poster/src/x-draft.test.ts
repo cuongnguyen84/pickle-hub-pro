@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   checkXDraft,
+  newsLinkUrl,
 
   rankNewsCandidates,
   unsourcedNumbers,
@@ -289,5 +290,12 @@ describe('xDraftLimit', () => {
     expect(xDraftLimit({} as never, 4)).toBe(4);
     expect(xDraftLimit({} as never, 999)).toBe(10);
     expect(xDraftLimit({ X_DRAFT_LIMIT: 'nonsense' } as never)).toBe(8);
+  });
+});
+
+describe('newsLinkUrl', () => {
+  it('points at the EN article, null without a slug', () => {
+    expect(newsLinkUrl('a-b-1')).toBe('https://www.thepicklehub.net/news/a-b-1');
+    expect(newsLinkUrl(null)).toBeNull();
   });
 });
