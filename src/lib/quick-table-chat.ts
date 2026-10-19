@@ -6,7 +6,7 @@
  * đây để luồng hội thoại luôn ổn định và mọi con số do code tính.
  */
 import { distributePlayersToGroups, suggestGroupConfigs } from "@/lib/quick-table-utils";
-import { maxSeries, resolveSeriesSizes, seriesLine, seriesName, seriesPlan, slot, type SeriesSlot, type SeriesStyle } from "@/lib/quick-table-series";
+import { MAX_SERIES, maxSeries, resolveSeriesSizes, seriesLine, seriesName, seriesPlan, slot, type SeriesSlot, type SeriesStyle } from "@/lib/quick-table-series";
 
 export const MAX_CHAT_ENTRIES = 48; // trên 48 → large_playoff, chat không hỗ trợ
 
@@ -422,9 +422,18 @@ export function chatFacts(d: Draft, lang: "vi" | "en"): string {
         (wc > 0 ? ` + ${wc} đội hạng 3 tốt nhất = ${a.size}` : "") +
         ` → cây ${a.bracket}${a.byes ? ` (${a.byes} đội xếp cao miễn vòng 1)` : ""}; ${n - a.size} ${u} bị loại.`,
     ];
-    for (let k = 2; k <= maxSeries(o.sizes); k++) {
-      const plan = seriesPlan(o.sizes, k)!;
-      lines.push(`  ${k} nhánh mặc định: ${plan.map((sl, i) => seriesLine(seriesName(style, i, "vi"), sl, "vi", u)).join("; ")}.`);
+    for (let k = 2; k <= MAX_SERIES; k++) {
+      const plan = seriesPlan(o.sizes, k);
+      if (plan) {
+        lines.push(`  ${k} nhánh mặc định: ${plan.map((sl, i) => seriesLine(seriesName(style, i, "vi"), sl, "vi", u)).join("; ")}.`);
+        continue;
+      }
+      // Luật mặc định không ra k nhánh (vd bảng 4 đội không có hạng 5) → gợi ý cỡ tuỳ chỉnh.
+      let top = 1;
+      while (top * 2 <= n / 2) top *= 2;
+      const alt = resolveSeriesSizes([top, ...Array(k - 1).fill(0)], n);
+      lines.push(`  ${k} nhánh theo luật mặc định: KHÔNG chia được.` +
+        (alt ? ` Muốn ${k} nhánh thì đặt cỡ tuỳ chỉnh, ví dụ ${alt.map(slot).map((sl, i) => seriesLine(seriesName(style, i, "vi"), sl, "vi", u)).join("; ")}.` : ""));
     }
     return lines.join("\n");
   };

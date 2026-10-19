@@ -95,6 +95,7 @@ describe("Cuong's 44-team chat: 11 groups of 4, Gold 16, rest Silver + Bronze", 
     const f = chatFacts({ ...base, group_count: 11 }, "vi");
     expect(f).toContain("11 bảng × 4 đội: playoff 1 nhánh lấy nhất + nhì 11 bảng = 22 + 10 đội hạng 3 tốt nhất = 32 → cây 32; 12 đội bị loại.");
     expect(f).toContain("Đang chọn: 11 bảng × 4.");
+    expect(f).toContain("3 nhánh theo luật mặc định: KHÔNG chia được. Muốn 3 nhánh thì đặt cỡ tuỳ chỉnh, ví dụ Series A: 16 đội; Series B: 14 đội (2 miễn vòng 1); Series C: 14 đội (2 miễn vòng 1).");
   });
   it("a filename is not the user mentioning a time", () => {
     expect(trustPatch({ start_time: "10:44" }, "", "count")).toEqual({});
