@@ -10,7 +10,7 @@ INSERT INTO auth.users (
 ) VALUES
   ('c6000001-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
    'cancel-owner@thepicklehub.test', '', now(), '{"provider":"test","providers":["test"]}'::jsonb, '{}'::jsonb, now(), now()),
-  ('c6000001-0000-4000-8000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+  ('c6000002-0000-4000-8000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
    'cancel-other@thepicklehub.test', '', now(), '{"provider":"test","providers":["test"]}'::jsonb, '{}'::jsonb, now(), now());
 
 INSERT INTO public.quick_tables (id, creator_user_id, name, player_count, format, status, group_count, share_id)
@@ -48,7 +48,7 @@ GRANT SELECT ON payload TO authenticated;
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', 'c6000001-0000-4000-8000-000000000001', true);
 INSERT INTO r SELECT 'create1', public.create_quick_table_playoff_atomic('c6600000-0000-4000-8000-000000000001', q, f)::jsonb FROM payload;
-SELECT set_config('request.jwt.claim.sub', 'c6000001-0000-4000-8000-000000000002', true);
+SELECT set_config('request.jwt.claim.sub', 'c6000002-0000-4000-8000-000000000002', true);
 INSERT INTO r SELECT 'other', public.cancel_quick_table_playoff('c6600000-0000-4000-8000-000000000001')::jsonb;
 SELECT set_config('request.jwt.claim.sub', 'c6000001-0000-4000-8000-000000000001', true);
 INSERT INTO r SELECT 'cancel', public.cancel_quick_table_playoff('c6600000-0000-4000-8000-000000000001')::jsonb;
