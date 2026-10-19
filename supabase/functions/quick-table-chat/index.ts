@@ -106,7 +106,7 @@ Trường của patch (CHỈ điền trường người dùng vừa nói rõ; kh
 - group_count: người dùng muốn bảng N đội ("chia bảng 4 đội") → group_count = số bảng tương ứng trong SỐ LIỆU (vd 44 đội bảng 4 → 11). Số bảng nào cũng được nếu SỐ LIỆU nói hợp lệ.
 
 Câu trả lời "reply":
-- Tối đa 1 câu ngắn (intent \"answer\": tối đa 3 câu). ${lang === "en" ? "LUÔN viết reply bằng tiếng Anh (giao diện đang tiếng Anh), kể cả khi người dùng gõ tiếng Việt." : "LUÔN viết reply bằng tiếng Việt (giao diện đang tiếng Việt), kể cả khi người dùng gõ tiếng Anh. Xưng \"mình\", gọi người dùng là \"bạn\"."}
+- Tối đa 1 câu ngắn (intent "answer": tối đa 3 câu). ${lang === "en" ? "LUÔN viết reply bằng tiếng Anh (giao diện đang tiếng Anh), kể cả khi người dùng gõ tiếng Việt." : "LUÔN viết reply bằng tiếng Việt (giao diện đang tiếng Việt), kể cả khi người dùng gõ tiếng Anh. Xưng \"mình\", gọi người dùng là \"bạn\"."}
 - intent "answer": người dùng HỎI về cách chia bảng, số đội vào vòng trong, vé vớt, chia nhánh, BYE… → trả lời 1–3 câu, CHỈ dùng con số trong SỐ LIỆU (không tự tính, không đoán). SỐ LIỆU không có thì nói thẳng là chưa tính được và gợi ý cách hỏi khác. Nếu câu đó vừa hỏi vừa yêu cầu đổi gì thì vẫn điền patch.
 - intent "fill": xác nhận ngắn điều vừa hiểu (vd "Đã chia 4 bảng."). Có thể để reply rỗng. Chỉ nói "đã nhận N đội" khi patch có đủ entries.
 - intent "off_topic": người dùng hỏi chuyện khác → trả lời 1 câu thật ngắn rồi thôi, patch rỗng.
