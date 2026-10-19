@@ -369,7 +369,7 @@ const QuickTableView = () => {
     !(sameSizes(chosenSizes, defaultPlans[0]) && [2, 3, 4, 6, 8].includes(table?.group_count ?? 0));
   // Chưa tạo playoff mà giải chia nhánh → sơ đồ tạm tính theo BXH hiện tại.
   const preview = !hasPlayoff && seriesPath && table?.status === 'group_stage'
-    ? seriesPreview(groups, players, chosenSizes, language === 'en' ? 'en' : 'vi')
+    ? seriesPreview(groupSizesNow, chosenSizes, language === 'en' ? 'en' : 'vi')
     : null;
   const playoffDivisions = preview
     ? preview.series.map((_, d) => d)
@@ -1509,8 +1509,8 @@ const QuickTableView = () => {
                 <>
                   <p style={{ margin: 0, fontSize: 13.5, color: 'var(--tl-fg-3)' }}>
                     {language === 'en'
-                      ? 'Projected from the current standings. Names are filled in when the playoff is created after the group stage.'
-                      : 'Sơ đồ tạm tính theo bảng xếp hạng hiện tại. Tên VĐV được điền khi tạo playoff sau vòng bảng.'}
+                      ? 'Projected draw: “2nd #5” is the fifth-best runner-up across groups. Names are filled in when the playoff is created; teams from the same group are then placed apart so they meet as late as possible (ideally only in the final).'
+                      : 'Sơ đồ dự kiến: “Nhì #5” là đội nhì xếp thứ 5 khi so giữa các bảng. Tên đội được điền khi tạo playoff sau vòng bảng; lúc đó các đội cùng bảng được xếp xa nhau để không gặp lại sớm (tốt nhất là chỉ ở chung kết).'}
                   </p>
                   <PlayoffBracket
                     key={`pv-${playoffDivision}`}

@@ -15,8 +15,7 @@
  */
 import type { QuickTablePlayer } from '@/hooks/useQuickTable';
 import { BYE_PLAYER_ID, type BracketPairing, type SeededPlayer } from '@/lib/quick-table-playoff';
-import { generateBracketPairings, resolveBracketConflicts } from '@/lib/quick-table-seeding-v2';
-import { nextPowerOf2 } from '@/lib/doubles-bracket-utils';
+import { generateSeedPositions, nextPowerOf2 } from '@/lib/doubles-bracket-utils';
 
 export const MAX_SERIES = 3;
 export type SeriesStyle = "series" | "medal";
@@ -156,19 +155,66 @@ const bye = (seed: number): SeededPlayer => ({
   tier: 'bye',
 });
 
+const band = (seed: number) => Math.ceil(Math.log2(seed)); // 1 | 2 | 3–4 | 5–8 | 9–16 …
+
 /**
- * Cây vòng 1 cho một nhánh: seed chuẩn, BYE cố định cho hạt giống cao nhất,
- * rồi mới tránh cùng bảng giữa các trận có đủ 2 người (BYE là phần thưởng hạt
- * giống, không bị đánh đổi để tách bảng).
+ * Cây vòng 1 cho một nhánh. Seed chuẩn (1 gặp cuối, 1 và 2 ở hai nửa), BYE cố định
+ * cho hạt giống cao nhất. Rồi đặt các đội CÙNG BẢNG xa nhau nhất có thể trên cây —
+ * lý tưởng là chỉ gặp lại ở chung kết: chỉ đổi chỗ hai đội cùng nhóm hạt giống
+ * (1 | 2 | 3–4 | 5–8 | 9–16…) và cùng có/không có BYE, nên công bằng hạt giống giữ nguyên.
+ * ponytail: leo đồi (đổi 1 rồi 2 cặp, ≤ 64 ô) — không bảo đảm tối ưu toàn cục, đủ cho giải ≤ 48 đội.
  */
 export function seriesBracket(ordered: Ranked[]): BracketPairing[] {
   const size = nextPowerOf2(Math.max(2, ordered.length));
   const seeded = ordered.map((p, i) => toSeeded(p, i + 1));
   while (seeded.length < size) seeded.push(bye(seeded.length + 1));
-  const pairs = generateBracketPairings(seeded);
-  const isBye = (p: BracketPairing) => p.player1.playerId === BYE_PLAYER_ID || p.player2.playerId === BYE_PLAYER_ID;
-  const resolved = resolveBracketConflicts(pairs.filter((p) => !isBye(p))).pairings;
-  return [...pairs.filter(isBye), ...resolved].sort((a, b) => a.matchNumber - b.matchNumber);
+  const slots = generateSeedPositions(size).map((i) => seeded[i]);
+  const rounds = Math.log2(size);
+  const real = (x: SeededPlayer) => x.playerId !== BYE_PLAYER_ID;
+  const hasBye = (i: number) => !real(slots[i ^ 1]);
+  // Gặp nhau ở vòng r (1 = vòng đầu, rounds = chung kết): phạt nặng dần về vòng sớm, chung kết = 0.
+  const meetCost = (i: number, j: number) => {
+    const r = Math.floor(Math.log2(i ^ j)) + 1;
+    return r === rounds ? 0 : 4 ** (rounds - r);
+  };
+  const cost = () => {
+    const at = new Map<string, number[]>();
+    slots.forEach((x, i) => { if (real(x)) at.set(x.sourceGroupId, [...(at.get(x.sourceGroupId) ?? []), i]); });
+    let c = 0;
+    for (const pos of at.values()) for (let a = 0; a < pos.length; a++) for (let b = a + 1; b < pos.length; b++) c += meetCost(pos[a], pos[b]);
+    return c;
+  };
+  // Các phép đổi hợp lệ: 2 đội thật khác bảng, cùng nhóm hạt giống, cùng có/không có BYE.
+  const swaps: [number, number][] = [];
+  for (let i = 0; i < size; i++) for (let j = i + 1; j < size; j++) {
+    const a = slots[i], b = slots[j];
+    if (real(a) && real(b) && band(a.seed) === band(b.seed) && hasBye(i) === hasBye(j)) swaps.push([i, j]);
+  }
+  const swap = ([i, j]: [number, number]) => { [slots[i], slots[j]] = [slots[j], slots[i]]; };
+  let best = cost();
+  // Leo đồi: đổi 1 cặp; kẹt thì thử đổi 2 cặp liền (có khi phải đi qua một bước không lợi).
+  while (best > 0) {
+    let moved = false;
+    for (const s1 of swaps) {
+      swap(s1);
+      const c = cost();
+      if (c < best) { best = c; moved = true; break; }
+      swap(s1);
+    }
+    if (moved) continue;
+    outer: for (let x = 0; x < swaps.length; x++) {
+      swap(swaps[x]);
+      for (let y = x + 1; y < swaps.length; y++) {
+        swap(swaps[y]);
+        const c = cost();
+        if (c < best) { best = c; moved = true; break outer; }
+        swap(swaps[y]);
+      }
+      swap(swaps[x]);
+    }
+    if (!moved) break;
+  }
+  return Array.from({ length: size / 2 }, (_, m) => ({ player1: slots[2 * m], player2: slots[2 * m + 1], matchNumber: m + 1 }));
 }
 
 /** "Series B: 10 đội (6 miễn vòng 1)" — dùng chung chat + trang giải. */
@@ -179,6 +225,7 @@ export function seriesLine(name: string, s: SeriesSlot, lang: "vi" | "en", unit?
 }
 
 const RANK_VI = ["Nhất", "Nhì", "Ba", "Tư", "Năm", "Sáu", "Bảy", "Tám"];
+const RANK_EN = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"];
 
 export interface PreviewPlayer { id: string; name: string; seed: number | null; group_id: string | null }
 export interface PreviewMatch {
@@ -189,22 +236,30 @@ export interface PreviewMatch {
 }
 
 /**
- * Sơ đồ tạm tính của từng nhánh trước khi tạo playoff: mỗi ô là một hạng
- * ("Nhất A", "Nhì C"…) mang thành tích hiện tại của người đang giữ hạng đó,
- * nên xếp hạt giống / cặp đấu đúng như lúc tạo thật nếu bảng giữ nguyên.
+ * Sơ đồ tạm tính của từng nhánh trước khi tạo playoff: mỗi ô là một suất
+ * ("Nhất #1", "Nhì #5"…). Lúc tạo thật, các đội cùng bảng còn được đổi chỗ
+ * trong cùng nhóm hạt giống để không gặp nhau sớm.
  */
-export function seriesPreview<P extends Ranked>(
-  groups: { id: string; name: string }[], players: P[], sizes: number[], lang: "vi" | "en",
+export function seriesPreview(
+  groupSizes: number[], sizes: number[], lang: "vi" | "en",
 ): { players: PreviewPlayer[]; series: PreviewMatch[][] } {
-  const label = (rank: number, g: string) => (lang === "vi" ? `${RANK_VI[rank] ?? `Hạng ${rank + 1}`} ${g}` : `${g}${rank + 1}`);
-  const slots = groups.flatMap((g) =>
-    players
-      .filter((p) => p.group_id === g.id)
-      .sort((a, b) => b.matches_won - a.matches_won || b.point_diff - a.point_diff || b.points_for - a.points_for)
-      .map((p, i) => ({ ...p, id: `pv-${g.id}-${i}`, name: label(i, g.name) })),
-  );
+  // Trước khi đá chưa biết bảng nào nhất/nhì tốt hơn → nhãn theo hạng + thứ tự so giữa các bảng
+  // ("Nhì #5" = đội nhì xếp thứ 5 trong các đội nhì), đúng thứ tự assignSeries cắt nhánh.
+  const label = (t: number, k: number) =>
+    lang === "vi" ? `${RANK_VI[t] ?? `Hạng ${t + 1}`} #${k}` : `${RANK_EN[t] ?? `${t + 1}th`} #${k}`;
+  const maxTier = Math.max(0, ...groupSizes);
+  const order: (Ranked & { id: string })[] = [];
+  for (let t = 0; t < maxTier; t++) {
+    for (let k = 1; k <= tierCount(groupSizes, t); k++) {
+      // bảng riêng cho mỗi ô: chưa biết bảng thật nên sơ đồ không đổi chỗ tránh cùng bảng
+      order.push({ id: `pv-${t}-${k}`, name: label(t, k), group_id: `pv-${t}-${k}`, matches_played: 0, matches_won: 0, point_diff: 0, points_for: 0 });
+    }
+  }
+  let at = 0;
+  const chunks = sizes.map((n) => order.slice(at, (at += n)));
+  const slots = order;
   const out: PreviewPlayer[] = [{ id: BYE_PLAYER_ID, name: "BYE", seed: null, group_id: null }];
-  const series = assignSeries(groups.map((g) => g.id), slots, sizes).map((ordered, d) => {
+  const series = chunks.map((ordered, d) => {
     const first = seriesBracket(ordered);
     for (const p of first) for (const sp of [p.player1, p.player2]) {
       const s = slots.find((x) => x.id === sp.playerId);

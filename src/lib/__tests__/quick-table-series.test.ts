@@ -91,21 +91,62 @@ describe("ordering", () => {
 });
 
 describe("seriesPreview — bracket per series before the playoff exists", () => {
-  it("26 teams in 8 groups, 2 series, nothing played yet", () => {
-    const sizes = [4, 4, 3, 3, 3, 3, 3, 3];
-    const { groupIds, players } = fakeTable(sizes, 3);
-    const zero = players.map((p) => ({ ...p, matches_played: 0, matches_won: 0, point_diff: 0, points_for: 0 }));
-    const groups = groupIds.map((id, i) => ({ id, name: "ABCDEFGH"[i] }));
-    const pv = seriesPreview(groups, zero, [16, 10], "vi");
-    expect(pv.series.map((s) => s.length)).toEqual([15, 15]); // 16 suất: 8+4+2+1
-    const name = (id: string | null) => pv.players.find((p) => p.id === id)?.name;
-    const a1 = pv.series[0].filter((m) => m.playoff_round === 1).flatMap((m) => [name(m.player1_id), name(m.player2_id)]);
-    expect(a1.filter((n) => n?.startsWith("Nhất"))).toHaveLength(8);
-    expect(a1.filter((n) => n?.startsWith("Nhì"))).toHaveLength(8);
-    const b1 = pv.series[1].filter((m) => m.playoff_round === 1).flatMap((m) => [name(m.player1_id), name(m.player2_id)]);
-    expect(b1.filter((n) => n === "BYE")).toHaveLength(6);
-    expect(b1.filter((n) => n?.startsWith("Ba"))).toHaveLength(8);
-    expect(b1.filter((n) => n?.startsWith("Tư"))).toHaveLength(2);
+  it("44 teams, 11 groups of 4, Gold 16 / Silver 14 / Bronze 14: generic slot labels", () => {
+    const pv = seriesPreview(Array(11).fill(4), [16, 14, 14], "vi");
+    expect(pv.series.map((s) => s.length)).toEqual([15, 15, 15]);
+    const names = (d: number) => pv.series[d].filter((m) => m.playoff_round === 1)
+      .flatMap((m) => [m.player1_id, m.player2_id]).map((id) => pv.players.find((p) => p.id === id)!.name);
+    const count = (d: number, re: RegExp) => names(d).filter((n) => re.test(n)).length;
+    // A = 11 nhất + 5 nhì tốt nhất; B = 6 nhì còn lại + 8 ba tốt nhất (+2 BYE); C = 3 ba còn lại + 11 tư (+2 BYE)
+    expect([count(0, /^Nhất/), count(0, /^Nhì/)]).toEqual([11, 5]);
+    expect(names(0)).toContain("Nhì #5");
+    expect([count(1, /^Nhì/), count(1, /^Ba/), count(1, /^BYE/)]).toEqual([6, 8, 2]);
+    expect(names(1)).toContain("Nhì #6");
+    expect([count(2, /^Ba/), count(2, /^Tư/), count(2, /^BYE/)]).toEqual([3, 11, 2]);
+  });
+});
+
+/** Vòng hai đội gặp nhau sớm nhất nếu cùng thắng (1 = vòng đầu). */
+function meetRound(pairs: ReturnType<typeof seriesBracket>, a: string, b: string): number {
+  const slots = pairs.flatMap((p) => [p.player1.playerId, p.player2.playerId]);
+  const i = slots.indexOf(a), j = slots.indexOf(b);
+  return Math.floor(Math.log2(i ^ j)) + 1;
+}
+
+describe("same-group teams are kept apart through the whole bracket", () => {
+  it("Gold 16 from 11 groups of 4: the 5 groups with a winner and a runner-up only meet in the final", () => {
+    const { groupIds, players } = fakeTable(Array(11).fill(4), 11);
+    const [gold] = assignSeries(groupIds, players, [16, 14, 14]);
+    const pairs = seriesBracket(gold);
+    for (const g of groupIds) {
+      const same = gold.filter((p) => p.group_id === g);
+      if (same.length === 2) expect(meetRound(pairs, same[0].id, same[1].id)).toBe(4);
+    }
+  });
+  it("every split: a group with two teams in a bracket meets only in the final (bar 5 seed/BYE-locked cases)", () => {
+    let pairsChecked = 0, early = 0;
+    for (let n = 6; n <= 48; n++) {
+      for (const o of groupOptions(n)) {
+        if (o.groupCount < 2) continue;
+        for (let k = 1; k <= maxSeries(o.sizes); k++) {
+          const { groupIds, players } = fakeTable(o.sizes, n * 7 + k);
+          for (const s of assignSeries(groupIds, players, seriesPlan(o.sizes, k)!.map((x) => x.size))) {
+            const pairs = seriesBracket(s);
+            const final = Math.log2(pairs.length * 2);
+            for (const g of groupIds) {
+              const same = s.filter((p) => p.group_id === g);
+              if (same.length !== 2) continue;
+              pairsChecked++;
+              if (meetRound(pairs, same[0].id, same[1].id) !== final) early++;
+            }
+          }
+        }
+      }
+    }
+    // 5/1195 không tách được nếu giữ luật công bằng: không lấy BYE của hạt giống cao,
+    // không đổi chỗ khác nhóm hạt giống (vd cây 8 có 5 đội, hạt giống 1 và 4 cùng bảng).
+    expect(pairsChecked).toBeGreaterThan(1000);
+    expect(early).toBeLessThanOrEqual(5);
   });
 });
 
