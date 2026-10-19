@@ -395,7 +395,9 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     if (msg.entries?.length) {
       snap();
       setMessages((m) => [...m, { id: uid(), role: "user", text: msg.text, label: msg.label }]);
-      const next = applyPatch(draft, { entries: msg.entries });
+      // File có cột VĐV 1 + VĐV 2 ở mọi dòng → chắc chắn là giải đôi, khỏi hỏi.
+      const doubles = draft.is_doubles === undefined && msg.entries.every((e) => e.p2);
+      const next = applyPatch(draft, { entries: msg.entries, ...(doubles ? { is_doubles: true } : {}) });
       const dups = duplicateIndexes(next.entries!).size;
       advance(next, c.received(next.entries!.length, c.unit(next)) + (dups ? c.dupWarn(dups) : ""));
       return;
