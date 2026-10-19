@@ -446,6 +446,11 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       const dups = duplicateIndexes(next.entries!).size;
       if (dups) ack += c.dupWarn(dups);
     }
+    // Cỡ nhánh mới đặt → nhắc lại bằng số do code tính (AI chỉ nói chung chung "chia đều").
+    const plan = draftSeriesPlan(next);
+    if (plan && next.series_sizes && next.series_sizes.join() !== draft.series_sizes?.join()) {
+      ack = `${ack ? `${ack} ` : ""}${plan.map((sl, i) => seriesLine(seriesName(next.series_style ?? "series", i, lang), sl, lang, c.unit(next))).join(" · ")}.`;
+    }
     // Đang ở bước tuỳ chọn mà người dùng gõ hạt giống/sân/CLB → ở lại bước tuỳ chọn.
     advance(next, ack);
   };
