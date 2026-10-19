@@ -14,14 +14,14 @@ export function HomeQuickTableChatCTA() {
       <Link
         to={vi ? "/vi/tools/quick-tables/chat" : "/tools/quick-tables/chat"}
         className="tl-ai-cta"
-        aria-label={vi ? "Tạo giải bằng chat AI" : "Create a tournament by chatting with AI"}
+        aria-label={vi ? "Tạo bảng đấu bằng chat với AI" : "Create a bracket by chatting with AI"}
       >
         <span className="tl-ai-cta-icon" aria-hidden="true">
           <Sparkles className="w-6 h-6" />
         </span>
         <span className="tl-ai-cta-body">
           <span className="tl-ai-cta-kicker">{vi ? "Mới · Trợ lý AI" : "New · AI assistant"}</span>
-          <span className="tl-ai-cta-title">{vi ? "Tạo giải bằng chat" : "Create a tournament by chat"}</span>
+          <span className="tl-ai-cta-title">{vi ? "Tạo bảng đấu bằng chat với AI" : "Create a bracket by chatting with AI"}</span>
           <span className="tl-ai-cta-sub">
             {vi
               ? "Dán danh sách Zalo, ảnh chụp hay file Excel — AI chia bảng, chia nhánh Vàng/Bạc và xếp sân, giờ cho bạn."
