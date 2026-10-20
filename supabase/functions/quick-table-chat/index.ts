@@ -155,6 +155,18 @@ function collectAttachments(
   return out;
 }
 
+/**
+ * Trang đăng nhập Google. So khớp đúng hostname — `includes("accounts.google.com")`
+ * khớp cả host giả (evil.com/?q=accounts.google.com). CodeQL js/incomplete-url-substring-sanitization.
+ */
+function isGoogleLoginHost(url: string): boolean {
+  try {
+    return new URL(url).hostname === "accounts.google.com";
+  } catch {
+    return false;
+  }
+}
+
 /** Chỉ tải CSV của một Google Sheet công khai. Id đã được client kiểm, URL do server ghép. */
 async function fetchPublicSheet(sheet: { id?: unknown; gid?: unknown; published?: unknown }): Promise<Response> {
   const id = typeof sheet.id === "string" && /^[a-zA-Z0-9_-]{10,}$/.test(sheet.id) ? sheet.id : "";
@@ -169,7 +181,7 @@ async function fetchPublicSheet(sheet: { id?: unknown; gid?: unknown; published?
   } catch {
     return json({ error: "sheet_unavailable" });
   }
-  if (!res.ok || res.url.includes("accounts.google.com")) return json({ error: "sheet_private" });
+  if (!res.ok || isGoogleLoginHost(res.url)) return json({ error: "sheet_private" });
   const csv = (await res.text()).slice(0, MAX_SHEET_CHARS);
   const head = csv.slice(0, 400).toLowerCase();
   if (!csv.trim()) return json({ error: "sheet_empty" });

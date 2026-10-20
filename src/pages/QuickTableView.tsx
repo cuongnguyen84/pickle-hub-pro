@@ -359,7 +359,8 @@ const QuickTableView = () => {
     .filter((p) => p.length > 0 && p.every((x) => x >= 2));
   const customSizes = resolveSeriesSizes(table?.playoff_series_sizes, totalNow);
   const rankSizes = rankSeriesSizes(groupSizesNow);
-  const sameSizes = (a: number[], b?: number[]) => !!b && a.join() === b.join();
+  // null = không có cách chia hợp lệ (rankSeriesSizes / resolveSeriesSizes).
+  const sameSizes = (a: number[], b?: number[] | null) => !!b && a.join() === b.join();
   const extras = [customSizes, rankSizes].filter((p): p is number[] => !!p && !defaultPlans.some((d) => sameSizes(d, p)));
   const planOptions = [...extras.filter((p, i) => extras.findIndex((q) => sameSizes(q, p)) === i), ...defaultPlans];
   const defaultPlanIdx = customSizes

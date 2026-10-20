@@ -16,6 +16,7 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/bang-a-world-cup-pickleball-2026-hero.webp": [1536, 1024],
   "/images/blog/best-pickleball-paddles-beginners-2026-hero-768.webp": [768, 512],
   "/images/blog/best-pickleball-paddles-beginners-2026-hero.webp": [1536, 1024],
+  "/images/blog/create-tournament-by-chat-hero-768.webp": [768, 480],
   "/images/blog/create-tournament-by-chat-hero.webp": [1200, 750],
   "/images/blog/create-tournament-by-chat-step-1.webp": [1200, 750],
   "/images/blog/create-tournament-by-chat-step-2.webp": [1200, 750],
