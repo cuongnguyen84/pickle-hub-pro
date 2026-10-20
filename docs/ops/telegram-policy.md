@@ -1,0 +1,30 @@
+# Telegram policy (owner decision 20/10/2026)
+
+Cuong's Telegram gets real incidents instantly and everything else in two
+**Grok Bot digests at 08:00 and 21:00 (Asia/Saigon)**. Every message starts
+with `[Grok Bot]`; instant alerts read `[Grok Bot] 🔴 …`, recoveries `[Grok Bot] ✅ …`.
+
+## Instant (deduped per incident, one recovery message)
+| Source | Rule |
+|---|---|
+| `uptime-ping.yml` | GitHub probes `/` and `/feed` twice; first red run of an outage pages, next green run sends "back up". A down site fails the run. |
+| team-v2 site probe (Mac) | Never pages by itself. Two failed sweeps in a row dispatch `uptime-ping.yml` so GitHub decides (max once per 30 min, plus one recheck after recovery). |
+| team-v2 commerce findings | Overdue orders / unconfirmed transfer claims: one message per change, one when cleared (`payment:` / `payment-resolved:` outbox kinds). |
+| `phone-otp-send` | OTP failed on every channel. |
+| `errors-telegram-alert` | Error spikes, failed scheduled jobs and cron incidents **only when payment/auth related** (`errors-telegram-alert/telegram-policy.ts`); SLO burn alerts always. |
+| `ops-edge-health` | Only `CRITICAL_EDGE_FUNCTIONS` (payment, OTP, auth email, prerender). |
+| `deploy-guard.yml` | Every failure on main. |
+| `quality.yml`, `security.yml` | First red run on main, then one "green again". |
+| `news-repair` | Only when rows are stuck (with its buttons) or the queue is unreadable. |
+| team-v2 `watchdog`, replies to commands (`control`, `accepted`, …) | As before, labelled. |
+
+## Digest (team-v2 `scheduled_digest`, reads sources, no new tables)
+- Held outbox rows: `verification`, `alert`, `starting`, `request`, `action-*`, `fallback`, `provider*`, `blocked-*`, `tournament-autopublish`, `content-*` (status `held` → `digested`).
+- `gh run list` on main since the last digest: Quality, Deploy guard, Security, Playwright smoke/full, Lighthouse, Uptime, Milestone-due.
+- Supabase reads: `ops_job_health_snapshot` (replaces the 09:15 `ops-job-digest` Telegram; set `OPS_JOB_DIGEST_TELEGRAM=on` to restore), non-available edge functions, open cron incidents, `client_errors`, `fb_post_log`.
+- 08:00 only: due milestones from `scripts/due-milestones.mjs` (`milestone-due.yml` no longer messages).
+
+## Not changed yet
+- `workers/social-poster` still sends one Telegram per published post when its
+  `TELEGRAM_*` secrets are set; workers deploy manually, so this needs a
+  decision and a `wrangler deploy`.

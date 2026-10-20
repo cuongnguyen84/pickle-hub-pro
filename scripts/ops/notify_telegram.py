@@ -59,6 +59,19 @@ def chunks(text):
     return out or [""]
 
 
+LABEL = "[Grok Bot]"
+
+
+def labelled(text, markdown=True):
+    """Every ops message to Cuong starts with [Grok Bot] (owner rule 20/10/2026).
+
+    Legacy Markdown reads "[" as a link opener, so it is escaped there.
+    """
+    if text.startswith(LABEL) or text.startswith("\\" + LABEL):
+        return text
+    return ("\\" + LABEL if markdown else LABEL) + " " + text
+
+
 def send(token, chat_id, text, markdown=True):
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     payload = {"chat_id": chat_id, "text": text, "disable_web_page_preview": True}
@@ -103,9 +116,9 @@ def main():
     total = len(parts)
     for idx, part in enumerate(parts, 1):
         prefix = f"_(phần {idx}/{total})_\n" if total > 1 else ""
-        status, resp = send(token, chat_id, prefix + part, markdown=True)
+        status, resp = send(token, chat_id, labelled(prefix + part, True), markdown=True)
         if status == 400 and "can't parse" in resp.lower():
-            status, resp = send(token, chat_id, prefix + part, markdown=False)
+            status, resp = send(token, chat_id, labelled(prefix + part, False), markdown=False)
         if status != 200:
             sys.stderr.write(f"Telegram lỗi {status}: {resp[:300]}\n")
             sys.exit(4)

@@ -98,7 +98,8 @@ def rest(secrets: dict, method: str, path: str, body=None, prefer="return=repres
 def send_telegram(secrets: dict, text: str) -> bool:
     req = urllib.request.Request(
         f"https://api.telegram.org/bot{secrets['tg_token']}/sendMessage",
-        data=json.dumps({"chat_id": secrets["chat_id"], "text": text,
+        data=json.dumps({"chat_id": secrets["chat_id"],
+                         "text": text if text.startswith("[Grok Bot]") else f"[Grok Bot] {text}",
                          "disable_web_page_preview": True}).encode(),
         headers={"Content-Type": "application/json"}, method="POST",
     )

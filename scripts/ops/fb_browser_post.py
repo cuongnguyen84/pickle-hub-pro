@@ -282,7 +282,8 @@ def post_one(page: dict, item: dict) -> int:
                     "link_comment_status": "posted" if res.get("comments") else "failed",
                     "raw_response": {"via": "chrome", **res}})
         log(f"OK {res.get('permalink')}")
-        tele(f"✅ {page['name']} (Chrome): {item.get('slug')}\n{res.get('permalink')}")
+        # 20/10/2026: successful posts are counted in the Grok Bot digest
+        # (fb_post_log); only failures message Telegram.
         return 0
 
     # failed (không phải pending) để worker/lượt sau có thể thử lại; lỗi lạ thì báo.
