@@ -169,6 +169,11 @@ describe('browser-mode page', () => {
     ]);
   });
 
+  it('flags the primary page when FB_PRIMARY_VIA_BROWSER=1', () => {
+    const pages = configuredPages({ ...env, FB_PRIMARY_VIA_BROWSER: '1', FB_SECONDARY_VIA_BROWSER: '1' });
+    expect(pages.every((p) => p.viaBrowser)).toBe(true);
+  });
+
   it('keeps both pages on the API when the flag is unset', () => {
     expect(configuredPages(env).every((p) => !p.viaBrowser)).toBe(true);
   });

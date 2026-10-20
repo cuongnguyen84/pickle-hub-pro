@@ -54,6 +54,7 @@ export interface Env {
   FB_SECONDARY_PAGE_ID?: string;
   FB_SECONDARY_START_AT?: string;
   FB_SECONDARY_VIA_BROWSER?: string;
+  FB_PRIMARY_VIA_BROWSER?: string;
   // secrets
   SUPABASE_SERVICE_ROLE_KEY: string;
   SOCIAL_POSTER_SECRET: string;
@@ -287,7 +288,7 @@ export function configuredPages(env: Env): FacebookPage[] {
     id: env.FB_PAGE_ID,
     accessToken: env.FB_PAGE_ACCESS_TOKEN,
     startAt: null,
-    viaBrowser: false,
+    viaBrowser: env.FB_PRIMARY_VIA_BROWSER === '1',
   }];
   if (env.FB_SECONDARY_PAGE_ID && env.FB_SECONDARY_PAGE_ACCESS_TOKEN) {
     pages.push({

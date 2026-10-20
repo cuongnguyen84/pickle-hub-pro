@@ -80,6 +80,8 @@ FB_SECONDARY_START_AT = "2026-07-31T10:04:31Z"
 # serves the next item + caption as a dry run to scripts/ops/fb_browser_post.py
 # and refuses to publish there. Set to "0" to hand the page back to the API.
 FB_SECONDARY_VIA_BROWSER = "1"
+# 20/10: page ThePickleHub cũng đăng qua Chrome (scripts/ops/fb_browser_post.py). "0" + deploy = về API.
+FB_PRIMARY_VIA_BROWSER = "1"
 # No pacing. Cuong's call on 2026-08-17: news should reach X as it arrives, not
 # on a drip. The drain still publishes one row per tick, so the real ceiling is
 # the 5-minute cron, and the queue only ever holds genuinely new stories —
