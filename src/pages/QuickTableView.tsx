@@ -46,7 +46,7 @@ import {
 } from '@/lib/quick-table-seeding-v2';
 import { scheduleMatches } from '@/lib/round-robin';
 import { playoffStartTime, schedulePlayoff } from '@/lib/quick-table-playoff-schedule';
-import { maxSeries, resolveSeriesSizes, seriesDraws, seriesLine, seriesName, seriesPlan, seriesPreview, seriesDrawPreview, slot } from '@/lib/quick-table-series';
+import { maxSeries, rankSeriesSizes, resolveSeriesSizes, seriesDraws, seriesLine, seriesName, seriesPlan, seriesPreview, seriesDrawPreview, slot } from '@/lib/quick-table-series';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -358,8 +358,10 @@ const QuickTableView = () => {
   const defaultPlans = Array.from({ length: seriesCap }, (_, i) => (seriesPlan(groupSizesNow, i + 1) ?? []).map((sl) => sl.size))
     .filter((p) => p.length > 0 && p.every((x) => x >= 2));
   const customSizes = resolveSeriesSizes(table?.playoff_series_sizes, totalNow);
+  const rankSizes = rankSeriesSizes(groupSizesNow);
   const sameSizes = (a: number[], b?: number[]) => !!b && a.join() === b.join();
-  const planOptions = customSizes && !defaultPlans.some((p) => sameSizes(p, customSizes)) ? [customSizes, ...defaultPlans] : defaultPlans;
+  const extras = [customSizes, rankSizes].filter((p): p is number[] => !!p && !defaultPlans.some((d) => sameSizes(d, p)));
+  const planOptions = [...extras.filter((p, i) => extras.findIndex((q) => sameSizes(q, p)) === i), ...defaultPlans];
   const defaultPlanIdx = customSizes
     ? planOptions.findIndex((p) => sameSizes(p, customSizes))
     : planOptions.findIndex((p) => p.length === Math.min(table?.playoff_series ?? 1, seriesCap));
@@ -1032,7 +1034,7 @@ const QuickTableView = () => {
                         }}
                       >
                         {sizes === chosenSizes ? '✓ ' : ''}
-                        {sizes === customSizes ? (language === 'vi' ? 'Theo thiết lập giải: ' : 'As set up: ') : ''}
+                        {sizes === customSizes ? (language === 'vi' ? 'Theo thiết lập giải: ' : 'As set up: ') : sameSizes(sizes, rankSizes) ? (language === 'vi' ? 'Mỗi hạng một nhánh: ' : 'One per place: ') : ''}
                         {sameSizes(sizes, defaultPlans[0])
                           ? (language === 'vi' ? '1 nhánh (top 2)' : '1 bracket (top 2)')
                           : sizes.map((n, d) => `${seriesName(seriesStyle, d, language === 'en' ? 'en' : 'vi')} · ${n}`).join(' + ')}

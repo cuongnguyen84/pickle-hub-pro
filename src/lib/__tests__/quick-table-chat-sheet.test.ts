@@ -75,7 +75,7 @@ describe("localSlotPatch", () => {
   });
 });
 
-import { applyPatch, chatFacts, customGroupOption, draftSeriesPlan, groupChoices } from "@/lib/quick-table-chat";
+import { applyPatch, chatFacts, customGroupOption, draftSeriesPlan, groupChoices, wantsRankSeries } from "@/lib/quick-table-chat";
 
 describe("Cuong's 44-team chat: 11 groups of 4, Gold 16, rest Silver + Bronze", () => {
   const base = { is_doubles: true, player_count: 44 };
@@ -99,5 +99,17 @@ describe("Cuong's 44-team chat: 11 groups of 4, Gold 16, rest Silver + Bronze", 
   });
   it("a filename is not the user mentioning a time", () => {
     expect(trustPatch({ start_time: "10:44" }, "", "count")).toEqual({});
+  });
+  it("mỗi hạng một nhánh: nhất vào A, nhì vào B, ba vào C, tư vào D", () => {
+    expect(wantsRankSeries("nhất nhì đánh A, ba tư đánh B")).toBe(false);
+    expect(wantsRankSeries("mỗi hạng một nhánh, nhất vào A nhì vào B")).toBe(true);
+    const patch = trustPatch({ series: 2 }, "nhất bảng vào A, nhì bảng vào B, ba vào C", "count");
+    expect(patch.series_mode).toBe("by_rank");
+    expect(patch.series).toBeUndefined();
+    const d = applyPatch({ is_doubles: true, player_count: 32, group_count: 8 }, { series_mode: "by_rank" });
+    expect(d.series_sizes).toEqual([8, 8, 8, 8]);
+    expect(d.series).toBe(4);
+    expect(nextSlot(d)).toBe("roster");
+    expect(chatFacts({ is_doubles: true, player_count: 32, group_count: 8 }, "vi")).toContain("Mỗi hạng một nhánh: Series A: 8 đội; Series B: 8 đội; Series C: 8 đội; Series D: 8 đội.");
   });
 });

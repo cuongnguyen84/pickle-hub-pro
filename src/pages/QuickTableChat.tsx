@@ -22,7 +22,7 @@ import { useQuickTable, type QuickTable } from "@/hooks/useQuickTable";
 import { supabase } from "@/integrations/supabase/client";
 import { getSiteUrl } from "@/lib/auth-config";
 import { cn } from "@/lib/utils";
-import { seriesLine, seriesName, seriesPlan, type SeriesStyle } from "@/lib/quick-table-series";
+import { rankSeriesSizes, seriesLine, seriesName, seriesPlan, slot as seriesSlot, type SeriesStyle } from "@/lib/quick-table-series";
 import {
   applyPatch, buildRoster, chatFacts, customSeries, defaultName, draftSeriesPlan, duplicateIndexes, entryCount, entryLabel, findGroupOption, groupChoices,
   groupSizes, localSlotPatch, MAX_CHAT_ENTRIES, nextSlot, pairEntries, parseSheet, previewAssignments, seriesCap, trustPatch,
@@ -86,9 +86,10 @@ const COPY = {
           ? `Top 2 mỗi bảng vào thẳng ${ROUND_VI[o.playoffSize] ?? "playoff"}`
           : `Vào ${ROUND_VI[o.playoffSize] ?? "playoff"}, cần thêm ${o.wildcards} suất vé vớt`,
     recommended: "Khuyên dùng",
-    series: "Hết vòng bảng thì đánh mấy nhánh? Series A là nhất, nhì mỗi bảng; nhánh sau nhận tất cả đội còn lại, đội xếp cao được miễn vòng 1 nếu lẻ.",
+    series: "Hết vòng bảng thì đánh mấy nhánh? Series A là nhất, nhì mỗi bảng; nhánh sau nhận tất cả đội còn lại, đội xếp cao được miễn vòng 1 nếu lẻ. Hoặc mỗi hạng một nhánh: nhất vào A, nhì vào B, ba vào C.",
     seriesOne: "1 nhánh", seriesOneSub: "Chỉ top 2 mỗi bảng vào playoff",
     seriesMany: (names: string[]) => `${names.length} nhánh: ${names.join(" + ")}`,
+    seriesByRank: "Mỗi hạng một nhánh",
     optStyle: (s: SeriesStyle): string => (s === "medal" ? "Đổi tên: Series A, B" : "Đổi tên: Nhánh Vàng, Bạc"),
     roster: (u: string) => `Có danh sách ${u} chưa? Dán vào là mình xếp bảng luôn.`,
     pasteNow: "Dán ngay",
@@ -192,9 +193,10 @@ const COPY = {
           ? `Top 2 per group go straight to the ${ROUND_EN[o.playoffSize] ?? "playoff"}`
           : `${ROUND_EN[o.playoffSize] ?? "Playoff"} needs ${o.wildcards} wildcard spots`,
     recommended: "Recommended",
-    series: "After the groups, how many brackets? Series A takes each group's top 2; the next bracket takes everyone else, with byes for the best seeds when the count is uneven.",
+    series: "After the groups, how many brackets? Series A takes each group's top 2; the next bracket takes everyone else, with byes for the best seeds when the count is uneven. Or one bracket per place: 1st to A, 2nd to B, 3rd to C.",
     seriesOne: "1 bracket", seriesOneSub: "Only the top 2 of each group go to the playoff",
     seriesMany: (names: string[]) => `${names.length} brackets: ${names.join(" + ")}`,
+    seriesByRank: "One bracket per place",
     optStyle: (s: SeriesStyle): string => (s === "medal" ? "Rename: Series A, B" : "Rename: Gold, Silver"),
     roster: (u: string) => `Do you have the list of ${u}? Paste it and I'll draw the groups now.`,
     pasteNow: "Paste now",
@@ -509,16 +511,29 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
         }));
       case "series": {
         const style = draft.series_style ?? "series";
-        return Array.from({ length: seriesCap(draft) }, (_, i) => i + 1).map((k) => {
+        const sizes = groupSizes(draft);
+        const bundled = Array.from({ length: seriesCap(draft) }, (_, i) => i + 1).map((k) => {
           const names = Array.from({ length: k }, (_, d) => seriesName(style, d, lang));
           const label = k === 1 ? c.seriesOne : c.seriesMany(names);
           return {
             label,
-            sub: k === 1 ? c.seriesOneSub : (seriesPlan(groupSizes(draft), k) ?? []).map((sl, d) => seriesLine(names[d], sl, lang, unit)).join(" · "),
+            sub: k === 1 ? c.seriesOneSub : (seriesPlan(sizes, k) ?? []).map((sl, d) => seriesLine(names[d], sl, lang, unit)).join(" · "),
             recommended: k === seriesCap(draft),
             onClick: () => choose(label, { series: k, series_sizes: undefined }),
           };
         });
+        const ranks = rankSeriesSizes(sizes);
+        const rankKey = ranks?.join();
+        const already = ranks != null && bundled.some((_, i) => seriesPlan(sizes, i + 1)?.map((sl) => sl.size).join() === rankKey);
+        if (!ranks || already) return bundled;
+        return [
+          ...bundled,
+          {
+            label: c.seriesByRank,
+            sub: ranks.map((n, d) => seriesLine(seriesName("series", d, lang), seriesSlot(n), lang, unit)).join(" · "),
+            onClick: () => choose(c.seriesByRank, { series: ranks.length, series_sizes: ranks, series_style: "series" }),
+          },
+        ];
       }
       case "roster":
         return [
@@ -561,7 +576,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           { label: c.optSeed, onClick: hint(c.optSeed, c.hintSeed(unit)) },
           { label: c.optSets(draft.default_sets ?? 1), onClick: () => { pushUser(c.optSets(draft.default_sets ?? 1)); pushBot(c.setsQ); setSubMenu("sets"); } },
           { label: c.optTeam, onClick: hint(c.optTeam, c.hintTeam) },
-          ...((draft.series ?? 1) > 1
+          ...((draft.series ?? 1) > 1 && (draft.series ?? 1) <= 3
             ? [{
                 label: c.optStyle(draft.series_style ?? "series"),
                 onClick: () => {
@@ -585,8 +600,8 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     snap();
     const d = { ...draft };
     if (field === "format") { d.is_doubles = undefined; d.pairing_done = false; }
-    if (field === "count") { d.player_count = undefined; d.entries = undefined; d.roster_mode = undefined; d.group_count = undefined; d.series = undefined; }
-    if (field === "groups") { d.group_count = undefined; d.series = undefined; }
+    if (field === "count") { d.player_count = undefined; d.entries = undefined; d.roster_mode = undefined; d.group_count = undefined; d.series = undefined; d.series_sizes = undefined; }
+    if (field === "groups") { d.group_count = undefined; d.series = undefined; d.series_sizes = undefined; }
     if (field === "roster") { d.entries = undefined; d.roster_mode = undefined; d.options_done = false; }
     if (field === "name") d.name = undefined;
     if (field === "extra") d.options_done = false;

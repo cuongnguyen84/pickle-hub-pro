@@ -6,7 +6,7 @@
  * đây để luồng hội thoại luôn ổn định và mọi con số do code tính.
  */
 import { distributePlayersToGroups, suggestGroupConfigs } from "@/lib/quick-table-utils";
-import { MAX_SERIES, maxSeries, resolveSeriesSizes, seriesLine, seriesName, seriesPlan, slot, type SeriesSlot, type SeriesStyle } from "@/lib/quick-table-series";
+import { MAX_SERIES, maxSeries, rankSeriesSizes, resolveSeriesSizes, seriesLine, seriesName, seriesPlan, slot, type SeriesSlot, type SeriesStyle } from "@/lib/quick-table-series";
 
 export const MAX_CHAT_ENTRIES = 48; // trên 48 → large_playoff, chat không hỗ trợ
 
@@ -232,6 +232,14 @@ export function applyPatch(d: Draft, patch: unknown): Draft {
     if (sizes) { next.series_sizes = sizes; next.series = sizes.length; }
   }
   if (p.series_style === "series" || p.series_style === "medal") next.series_style = p.series_style;
+  if (p.series_mode === "by_rank") {
+    const sizes = rankSeriesSizes(groupSizes(next));
+    if (sizes) {
+      next.series_sizes = sizes;
+      next.series = sizes.length;
+      if (sizes.length > MAX_SERIES) next.series_style = "series";
+    }
+  }
   return next;
 }
 
@@ -373,13 +381,30 @@ export function parseSheet(rows: string[][]): Entry[] {
  * start_time 08:00, đọc file → series 1). Chỉ giữ các trường tuỳ chọn khi
  * đúng bước đang hỏi hoặc tin nhắn có nhắc tới.
  */
+/** "nhất vào A, nhì vào B" — không phải "nhất nhì cùng vào A". */
+export function wantsRankSeries(text: string): boolean {
+  const t = text.toLocaleLowerCase("vi");
+  if (/mỗi hạng|moi hang|từng hạng|tung hang|mỗi thứ hạng|each place|each rank|one series per|per place/.test(t)) return true;
+  const toA = /nhất\s*(?:bảng\s*)?(?:vào|sang|→|->)\s*(?:series\s*)?a\b/.test(t) && /nhì\s*(?:bảng\s*)?(?:vào|sang|→|->)/.test(t);
+  const toEn = /1st\s*(?:place\s*)?(?:to|into)\s*(?:series\s*)?a\b/.test(t) && /2nd\s*(?:place\s*)?(?:to|into)/.test(t);
+  return toA || toEn;
+}
+
 export function trustPatch(patch: unknown, text: string, slot: Slot): Record<string, unknown> {
   const p = { ...((patch ?? {}) as Record<string, unknown>) };
   const t = text.toLocaleLowerCase("vi");
   const said = (re: RegExp) => re.test(t);
+  const byRank = wantsRankSeries(text);
   if (slot !== "start_time" && !said(/\d\s*(h|g|giờ|gio|:\d)|\b(am|pm)\b|sáng|chiều|tối|trưa|morning|evening|o'?clock/)) delete p.start_time;
   if (slot !== "courts" && !said(/sân|san\b|court/)) delete p.courts;
-  if (slot !== "series" && !said(/nhánh|nhanh|series|vàng|bạc|đồng|gold|silver|bronze|top\s*\d|bracket|vòng trong|vòng loại|knockout|playoff/)) { delete p.series; delete p.series_style; delete p.series_sizes; }
+  if (slot !== "series" && !said(/nhánh|nhanh|series|vàng|bạc|đồng|gold|silver|bronze|top\s*\d|bracket|vòng trong|vòng loại|knockout|playoff/) && !byRank) {
+    delete p.series; delete p.series_style; delete p.series_sizes; delete p.series_mode;
+  }
+  if (byRank) {
+    p.series_mode = "by_rank";
+    delete p.series;
+    delete p.series_sizes;
+  }
   if (!said(/set|bo\d|best of|ván|van\b/)) delete p.default_sets;
   return p;
 }
@@ -447,6 +472,10 @@ export function chatFacts(d: Draft, lang: "vi" | "en"): string {
     ...options.map(describe),
     chosen ? `Đang chọn: ${chosen.groupCount} bảng × ${range(chosen)}.` : "Chưa chọn cách chia bảng.",
     plan ? `Nhánh đang chọn: ${plan.map((sl, i) => seriesLine(seriesName(style, i, "vi"), sl, "vi", u)).join("; ")}.` : "",
-    `Xếp hạng toàn giải để chia nhánh: mọi đội nhất bảng (so khác bảng bằng tỉ lệ thắng, rồi hiệu số trung bình/trận, rồi điểm ghi trung bình/trận), rồi mọi đội nhì, rồi hạng 3… Nhánh đầu lấy nhóm đầu, nhánh sau lấy tiếp. Cỡ nhánh đặt tuỳ ý được (1–3 nhánh, mỗi nhánh ≥ 2) qua series_sizes. Nhánh không tròn 2/4/8/16/32 thì đội xếp cao được miễn vòng 1 (BYE).`,
+    chosen ? `Mỗi hạng một nhánh: ${(() => {
+      const ranks = rankSeriesSizes(chosen.sizes);
+      return ranks ? ranks.map((n, i) => seriesLine(seriesName("series", i, "vi"), slot(n), "vi", u)).join("; ") + "." : "không tách được (một hạng cần ít nhất 2 đội).";
+    })()}` : "",
+    `Xếp hạng toàn giải để chia nhánh: mọi đội nhất bảng (so khác bảng bằng tỉ lệ thắng, rồi hiệu số trung bình/trận, rồi điểm ghi trung bình/trận), rồi mọi đội nhì, rồi hạng 3… Luật mặc định gộp nhất+nhì vào nhánh đầu. "Mỗi hạng một nhánh" thì nhất → Series A, nhì → B, ba → C, hạng sau một nhánh; hạng chỉ còn 1 đội thì đội đó không vào playoff. Cỡ nhánh đặt tuỳ ý được (1–8 nhánh, mỗi nhánh ≥ 2) qua series_sizes. Nhánh không tròn 2/4/8/16/32 thì đội xếp cao được miễn vòng 1 (BYE).`,
   ].filter(Boolean).join("\n");
 }

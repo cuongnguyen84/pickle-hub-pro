@@ -7,6 +7,9 @@
  *   - Còn lại ai cũng được đánh tiếp:
  *       2 nhánh → Series B = tất cả người còn lại.
  *       3 nhánh → Series B = hạng 3–4 còn lại, Series C = hạng 5 trở xuống.
+ *   - Mỗi hạng một nhánh (Cuong duyệt 2026-10-20): nhất bảng → Series A,
+ *     nhì → B, ba → C, hạng tiếp theo một nhánh. Hạng chỉ còn 1 đội thì
+ *     không tách (đội đó không vào playoff). Tối đa 8 nhánh.
  *   - Nhánh không tròn luỹ thừa 2 → lên cỡ gần nhất, chỗ trống là BYE (miễn vòng 1),
  *     BYE dành cho hạt giống cao nhất.
  *   - So người khác bảng (bảng 3 vs 4 đội đá số trận khác nhau): tỉ lệ thắng,
@@ -18,6 +21,8 @@ import { BYE_PLAYER_ID, type BracketPairing, type SeededPlayer } from '@/lib/qui
 import { generateSeedPositions, nextPowerOf2 } from '@/lib/doubles-bracket-utils';
 
 export const MAX_SERIES = 3;
+/** Mỗi hạng một nhánh: trần = cỡ bảng lớn nhất. */
+export const RANK_SERIES_CAP = 8;
 export type SeriesStyle = "series" | "medal";
 
 export interface SeriesSlot {
@@ -61,12 +66,27 @@ export function seriesPlan(sizes: number[], k: number): SeriesSlot[] | null {
 }
 
 /**
+ * Mỗi hạng trong bảng một nhánh: [số đội nhất, số đội nhì, …].
+ * Hạng còn đúng 1 đội không thành nhánh. null khi không ra được 2 nhánh.
+ */
+export function rankSeriesSizes(groupSizes: number[]): number[] | null {
+  if (groupSizes.length < 2) return null;
+  const depth = Math.min(RANK_SERIES_CAP, Math.max(0, ...groupSizes));
+  const sizes: number[] = [];
+  for (let t = 0; t < depth; t++) {
+    const n = groupSizes.filter((s) => s > t).length;
+    if (n >= 2) sizes.push(n);
+  }
+  return sizes.length >= 2 ? sizes : null;
+}
+
+/**
  * Cỡ nhánh tuỳ chỉnh ("16 đội mạnh nhất vào nhánh Vàng, còn lại chia Bạc và Đồng"):
- * 0 = chia đều phần còn lại. Hợp lệ khi 1–3 nhánh, mỗi nhánh ≥ 2, tổng ≤ số đội
+ * 0 = chia đều phần còn lại. Hợp lệ khi 1–8 nhánh, mỗi nhánh ≥ 2, tổng ≤ số đội
  * (thiếu thì đội cuối bị loại, như playoff 1 nhánh).
  */
 export function resolveSeriesSizes(raw: unknown, total: number): number[] | null {
-  if (!Array.isArray(raw) || raw.length < 1 || raw.length > MAX_SERIES) return null;
+  if (!Array.isArray(raw) || raw.length < 1 || raw.length > RANK_SERIES_CAP) return null;
   const sizes = raw.map((x) => Math.floor(Number(x)));
   if (sizes.some((x) => !Number.isFinite(x) || x < 0)) return null;
   const free = sizes.filter((x) => x === 0).length;
@@ -95,9 +115,15 @@ export function maxSeries(sizes: number[]): number {
 const MEDAL_VI = ["Nhánh Vàng", "Nhánh Bạc", "Nhánh Đồng"];
 const MEDAL_EN = ["Gold bracket", "Silver bracket", "Bronze bracket"];
 
+const seriesLetter = (division: number) =>
+  division >= 0 && division < 26 ? String.fromCharCode(65 + division) : String(division + 1);
+
 export function seriesName(style: SeriesStyle | undefined, division: number, lang: "vi" | "en"): string {
-  if (style === "medal") return (lang === "en" ? MEDAL_EN : MEDAL_VI)[division] ?? `Series ${"ABC"[division]}`;
-  return `Series ${"ABC"[division] ?? division + 1}`;
+  if (style === "medal") {
+    const named = (lang === "en" ? MEDAL_EN : MEDAL_VI)[division];
+    if (named) return named;
+  }
+  return `Series ${seriesLetter(division)}`;
 }
 
 type Ranked = Pick<QuickTablePlayer, 'id' | 'name' | 'group_id' | 'matches_played' | 'matches_won' | 'point_diff' | 'points_for'>;

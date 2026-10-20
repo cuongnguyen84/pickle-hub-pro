@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assignSeries, crossGroupCompare, maxSeries, resolveSeriesSizes, seriesBracket, seriesDraws, seriesName, seriesPlan, seriesPreview } from "@/lib/quick-table-series";
+import { assignSeries, crossGroupCompare, maxSeries, rankSeriesSizes, resolveSeriesSizes, seriesBracket, seriesDraws, seriesName, seriesPlan, seriesPreview } from "@/lib/quick-table-series";
 import { groupOptions } from "@/lib/quick-table-chat";
 import { BYE_PLAYER_ID } from "@/lib/quick-table-playoff";
 
@@ -85,6 +85,7 @@ describe("ordering", () => {
   });
   it("names", () => {
     expect(seriesName("series", 1, "vi")).toBe("Series B");
+    expect(seriesName("series", 3, "vi")).toBe("Series D");
     expect(seriesName("medal", 0, "vi")).toBe("Nhánh Vàng");
     expect(seriesName("medal", 1, "en")).toBe("Silver bracket");
   });
@@ -150,6 +151,30 @@ describe("same-group teams are kept apart through the whole bracket", () => {
   });
 });
 
+describe("one series per place", () => {
+  it("8 groups of 4: 1st→A, 2nd→B, 3rd→C, 4th→D", () => {
+    expect(rankSeriesSizes(Array(8).fill(4))).toEqual([8, 8, 8, 8]);
+  });
+  it("uneven groups keep a rank only when at least two teams remain", () => {
+    expect(rankSeriesSizes([4, 4, 3, 3])).toEqual([4, 4, 4, 2]);
+    expect(rankSeriesSizes([4, 3, 3, 3])).toEqual([4, 4, 4]);
+  });
+  it("series A is every group winner", () => {
+    const sizes = Array(8).fill(4);
+    const { groupIds, players } = fakeTable(sizes, 9);
+    const [a, b, c, d] = assignSeries(groupIds, players, rankSeriesSizes(sizes)!);
+    expect([a, b, c, d].map((s) => s.length)).toEqual([8, 8, 8, 8]);
+    const rankIn = (p: (typeof players)[number]) => players
+      .filter((x) => x.group_id === p.group_id)
+      .sort((x, y) => y.matches_won - x.matches_won || y.point_diff - x.point_diff || y.points_for - x.points_for)
+      .indexOf(p);
+    expect(a.every((p) => rankIn(p) === 0)).toBe(true);
+    expect(b.every((p) => rankIn(p) === 1)).toBe(true);
+    expect(d.every((p) => rankIn(p) === 3)).toBe(true);
+    expect(seriesBracket(a)).toHaveLength(4);
+  });
+});
+
 describe("custom series sizes", () => {
   it("44 teams, 11 groups of 4: Gold 16, Silver + Bronze share the rest", () => {
     expect(resolveSeriesSizes([16, 0, 0], 44)).toEqual([16, 14, 14]);
@@ -158,7 +183,7 @@ describe("custom series sizes", () => {
     expect(resolveSeriesSizes([40, 0], 44)).toEqual([40, 4]);
     expect(resolveSeriesSizes([43, 0], 44)).toBeNull();
     expect(resolveSeriesSizes([30, 20], 44)).toBeNull();
-    expect(resolveSeriesSizes([8, 8, 8, 8], 44)).toBeNull();
+    expect(resolveSeriesSizes([8, 8, 8, 8], 44)).toEqual([8, 8, 8, 8]);
   });
   it("gold takes the best 16 of the 22 group winners and runners-up", () => {
     const sizes = Array(11).fill(4);

@@ -70,6 +70,7 @@ const RESPONSE_SCHEMA = {
         series: { type: "INTEGER" },
         series_style: { type: "STRING", enum: ["series", "medal"] },
         series_sizes: { type: "ARRAY", items: { type: "INTEGER" } },
+        series_mode: { type: "STRING", enum: ["by_rank"] },
       },
     },
   },
@@ -97,9 +98,10 @@ Trường của patch (CHỈ điền trường người dùng vừa nói rõ; kh
 - courts: danh sách số sân ("sân 1 đến 4" → [1,2,3,4], "sân 2,3,5" → [2,3,5]). Chỉ nói số lượng ("có 4 sân", "4") khi ứng dụng đang hỏi courts → [1,2,3,4].
 - start_time: giờ bắt đầu dạng HH:MM 24 giờ ("7h tối" → "19:00", "8h sáng" → "08:00", "7h30" → "07:30"). Chỉ một con số khi ứng dụng đang hỏi start_time → hiểu là giờ đó.
 - default_sets: 1, 3 hoặc 5 (đánh 1 set / best of 3 / best of 5).
-- series: số nhánh playoff sau vòng bảng (1–3). Người dùng muốn từ 4 nhánh trở lên, hoặc mỗi hạng trong bảng một nhánh riêng (nhất→A, nhì→B, ba→C…) → app CHƯA hỗ trợ: KHÔNG điền series, reply nói thẳng là chưa làm được và gợi ý cách gần nhất (vd 2–3 nhánh cắt theo bảng xếp hạng), điền unmet. "nhánh vàng, nhánh bạc" / "series A, B" / "nhất nhì đánh A, ba tư đánh B" → 2; thêm "nhánh đồng" / "series C" → 3; "chỉ lấy top 2" → 1.
+- series: số nhánh playoff theo luật mặc định (1–3). "nhánh vàng, nhánh bạc" / "series A, B" / "nhất nhì đánh A, ba tư đánh B" → 2; thêm "nhánh đồng" / "series C" → 3; "chỉ lấy top 2" → 1. Không dùng series cho "mỗi hạng một nhánh".
+- series_mode: "by_rank" khi người dùng muốn mỗi hạng trong bảng một nhánh riêng (nhất→A, nhì→B, ba→C, hạng sau một nhánh). KHÔNG điền series hay series_sizes trong trường hợp này — ứng dụng tự tính. Không điền unmet cho yêu cầu này.
 - series_style: "medal" nếu người dùng gọi là vàng/bạc/đồng, "series" nếu gọi series A/B/C.
-- series_sizes: BẮT BUỘC dùng (thay cho series) khi người dùng nêu SỐ ĐỘI của bất kỳ nhánh nào. Mỗi phần tử là số đội của một nhánh theo thứ tự (nhánh đầu = mạnh nhất); 0 = "chia đều phần còn lại".
+- series_sizes: BẮT BUỘC dùng (thay cho series) khi người dùng nêu SỐ ĐỘI của bất kỳ nhánh nào. Mỗi phần tử là số đội của một nhánh theo thứ tự (nhánh đầu = mạnh nhất); 0 = "chia đều phần còn lại". Được 1–8 nhánh, mỗi nhánh ≥ 2.
   - "16 đội xuất sắc nhất vào nhánh Vàng, còn lại chia Bạc và Đồng" → [16, 0, 0]
   - "top 16 vào playoff" / "chỉ lấy 16 đội" → [16]
   - "nhánh A 16, nhánh B 16, còn lại nhánh C" → [16, 16, 0]
