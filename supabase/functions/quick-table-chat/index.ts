@@ -10,7 +10,9 @@
 // getAuthUser. Bắt đăng nhập để khách vãng lai không đốt credit Gemini.
 //
 // Request:  POST { messages: {role:"user"|"bot", text}[], draft, pending, lang,
-//                  attachment?: { mime_type, data(base64) },  — ảnh/PDF danh sách
+//                  attachment?: { mime_type, data(base64) },  — một ảnh/PDF
+//                  attachments?: cùng kiểu, tối đa 4 ảnh của cùng một danh sách
+//                  sheet?: { id, gid?, published? },  — chỉ tải CSV Google Sheet công khai
 //                  facts?: string }  — số liệu chia bảng/nhánh do client tính
 // Response: { reply, patch, intent }
 // ============================================================================
@@ -29,7 +31,10 @@ const MAX_MESSAGES = 8;
 const MAX_TEXT = 4000; // một danh sách 48 đôi dán từ Zalo vừa khoảng 2–3k ký tự
 const ATTACHMENT_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
 const MAX_FACTS = 6000;
+const MAX_ATTACHMENTS = 4;
 const MAX_ATTACHMENT_B64 = 6_000_000; // ~4.4 MB file; client đã thu ảnh về ≤1600px
+const MAX_ATTACHMENTS_B64 = 8_000_000; // tổng nhiều ảnh
+const MAX_SHEET_CHARS = 200_000;
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -93,7 +98,8 @@ Trường của patch (CHỈ điền trường người dùng vừa nói rõ; kh
   - Giữ nguyên dấu tiếng Việt. Không bịa tên, không bỏ sót dòng nào.
   - team: tên CLB nếu người dùng nói các đội thuộc cùng CLB (để tránh chung bảng).
   - seed: 1, 2, 3… nếu người dùng chỉ định hạt giống; chỉ gán cho đội có trong danh sách.
-- Nếu tin nhắn kèm ẢNH hoặc PDF: đó là danh sách đăng ký (ảnh chụp Zalo/Messenger, bảng Excel, giấy viết tay, poster). Đọc MỌI dòng tên trong đó thành entries theo đúng quy tắc trên; bỏ tiêu đề cột, số thứ tự, số điện thoại, số tiền, trạng thái chuyển khoản. Chữ không đọc chắc thì vẫn ghi theo cách đọc gần nhất, không bỏ dòng. Ảnh không có danh sách tên → patch rỗng, reply nói ngắn là không thấy danh sách.
+- Nếu tin nhắn kèm ẢNH hoặc PDF: đó là danh sách đăng ký (ảnh chụp Zalo/Messenger, bảng Excel, giấy viết tay, poster). Nhiều ảnh là các phần của CÙNG một danh sách — gộp mọi tên, bỏ dòng trùng. Đọc MỌI dòng tên thành entries theo đúng quy tắc trên; bỏ tiêu đề cột, số thứ tự, số điện thoại, số tiền, trạng thái chuyển khoản. Chữ không đọc chắc thì vẫn ghi theo cách đọc gần nhất, không bỏ dòng. Không thấy tên người → patch.entries để trống, reply nói ngắn là không thấy danh sách.
+- Nếu tin nhắn có bảng CSV (từ Google Sheet): đọc thành entries như file. Toàn số, tiền, hay trạng thái chuyển khoản mà không có tên → patch.entries để trống.
 - roster_mode: "now" nếu dán danh sách, "later" nếu nói sẽ nhập sau, "registration" nếu muốn người chơi tự đăng ký.
 - courts: danh sách số sân ("sân 1 đến 4" → [1,2,3,4], "sân 2,3,5" → [2,3,5]). Chỉ nói số lượng ("có 4 sân", "4") khi ứng dụng đang hỏi courts → [1,2,3,4].
 - start_time: giờ bắt đầu dạng HH:MM 24 giờ ("7h tối" → "19:00", "8h sáng" → "08:00", "7h30" → "07:30"). Chỉ một con số khi ứng dụng đang hỏi start_time → hiểu là giờ đó.
@@ -120,6 +126,56 @@ Câu trả lời "reply":
 }
 
 interface ChatMessage { role: "user" | "bot"; text: string }
+interface Attachment { mime_type: string; data: string }
+
+function oneAttachment(raw: { mime_type?: unknown; data?: unknown } | undefined): Attachment | "invalid" | null {
+  if (raw == null) return null;
+  if (
+    typeof raw.mime_type !== "string" || !ATTACHMENT_MIMES.has(raw.mime_type) ||
+    typeof raw.data !== "string" || raw.data.length === 0 || raw.data.length > MAX_ATTACHMENT_B64
+  ) return "invalid";
+  return { mime_type: raw.mime_type, data: raw.data };
+}
+
+function collectAttachments(
+  single: { mime_type?: unknown; data?: unknown } | undefined,
+  many: { mime_type?: unknown; data?: unknown }[] | undefined,
+): Attachment[] | "invalid" {
+  const raw = Array.isArray(many) && many.length ? many : single ? [single] : [];
+  if (raw.length > MAX_ATTACHMENTS) return "invalid";
+  const out: Attachment[] = [];
+  let total = 0;
+  for (const item of raw) {
+    const att = oneAttachment(item);
+    if (att === "invalid" || att == null) return "invalid";
+    total += att.data.length;
+    if (total > MAX_ATTACHMENTS_B64) return "invalid";
+    out.push(att);
+  }
+  return out;
+}
+
+/** Chỉ tải CSV của một Google Sheet công khai. Id đã được client kiểm, URL do server ghép. */
+async function fetchPublicSheet(sheet: { id?: unknown; gid?: unknown; published?: unknown }): Promise<Response> {
+  const id = typeof sheet.id === "string" && /^[a-zA-Z0-9_-]{10,}$/.test(sheet.id) ? sheet.id : "";
+  const gid = typeof sheet.gid === "string" && /^\d+$/.test(sheet.gid) ? sheet.gid : "";
+  if (!id) return json({ error: "invalid_sheet" }, 400);
+  const url = sheet.published === true
+    ? `https://docs.google.com/spreadsheets/d/e/${id}/pub?output=csv${gid ? `&gid=${gid}` : ""}`
+    : `https://docs.google.com/spreadsheets/d/${id}/export?format=csv${gid ? `&gid=${gid}` : ""}`;
+  let res: Response;
+  try {
+    res = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(8_000) });
+  } catch {
+    return json({ error: "sheet_unavailable" });
+  }
+  if (!res.ok || res.url.includes("accounts.google.com")) return json({ error: "sheet_private" });
+  const csv = (await res.text()).slice(0, MAX_SHEET_CHARS);
+  const head = csv.slice(0, 400).toLowerCase();
+  if (!csv.trim()) return json({ error: "sheet_empty" });
+  if (head.includes("<html") || head.includes("<!doctype")) return json({ error: "sheet_private" });
+  return json({ csv });
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -137,6 +193,8 @@ Deno.serve(async (req: Request) => {
   let body: {
     messages?: ChatMessage[]; draft?: unknown; pending?: string; lang?: string;
     attachment?: { mime_type?: unknown; data?: unknown };
+    attachments?: { mime_type?: unknown; data?: unknown }[];
+    sheet?: { id?: unknown; gid?: unknown; published?: unknown };
     facts?: unknown;
   };
   try {
@@ -144,6 +202,8 @@ Deno.serve(async (req: Request) => {
   } catch {
     return json({ error: "invalid_json" }, 400);
   }
+
+  if (body.sheet != null) return fetchPublicSheet(body.sheet);
 
   const messages = Array.isArray(body.messages) ? body.messages.slice(-MAX_MESSAGES) : [];
   if (
@@ -153,14 +213,8 @@ Deno.serve(async (req: Request) => {
   ) {
     return json({ error: "invalid_messages" }, 400);
   }
-  const att = body.attachment;
-  if (
-    att != null &&
-    (typeof att.mime_type !== "string" || !ATTACHMENT_MIMES.has(att.mime_type) ||
-      typeof att.data !== "string" || att.data.length === 0 || att.data.length > MAX_ATTACHMENT_B64)
-  ) {
-    return json({ error: "invalid_attachment" }, 400);
-  }
+  const atts = collectAttachments(body.attachment, body.attachments);
+  if (atts === "invalid") return json({ error: "invalid_attachment" }, 400);
   const lang = body.lang === "en" ? "en" : "vi";
   const draftJson = JSON.stringify(body.draft ?? {}).slice(0, 8000);
   const pending = typeof body.pending === "string" ? body.pending.slice(0, 40) : "";
@@ -183,9 +237,9 @@ Deno.serve(async (req: Request) => {
       role: "user",
       parts: [
         {
-          text: `NHÁP HIỆN TẠI (JSON): ${draftJson}\n${facts ? `SỐ LIỆU DO ỨNG DỤNG TÍNH (đúng tuyệt đối, chỉ dùng số trong này):\n${facts}\n` : ""}ỨNG DỤNG ĐANG HỎI: ${pending || "(chưa hỏi gì)"}\n\nTIN NHẮN MỚI CỦA NGƯỜI DÙNG${att ? " (kèm file danh sách bên dưới)" : ""}:\n${messages[messages.length - 1].text}`,
+          text: `NHÁP HIỆN TẠI (JSON): ${draftJson}\n${facts ? `SỐ LIỆU DO ỨNG DỤNG TÍNH (đúng tuyệt đối, chỉ dùng số trong này):\n${facts}\n` : ""}ỨNG DỤNG ĐANG HỎI: ${pending || "(chưa hỏi gì)"}\n\nTIN NHẮN MỚI CỦA NGƯỜI DÙNG${atts.length ? ` (kèm ${atts.length} file danh sách bên dưới; gộp mọi tên)` : ""}:\n${messages[messages.length - 1].text}`,
         },
-        ...(att ? [{ inlineData: { mimeType: att.mime_type as string, data: att.data as string } }] : []),
+        ...atts.map((a) => ({ inlineData: { mimeType: a.mime_type, data: a.data } })),
       ] as Array<{ text: string } | { inlineData: { mimeType: string; data: string } }>,
     },
   ];
@@ -196,14 +250,14 @@ Deno.serve(async (req: Request) => {
     generationConfig: {
       temperature: 0.1,
       // model không-lite "nghĩ" trước khi trả lời, phần nghĩ cũng ăn vào hạn mức này
-      maxOutputTokens: att ? 16384 : 8192,
+      maxOutputTokens: atts.length ? 16384 : 8192,
       responseMimeType: "application/json",
       responseSchema: RESPONSE_SCHEMA,
     },
   });
   // Model chính hay báo 503 "high demand" → thử lần lượt model dự phòng (lite cuối cùng).
-  const models = [...new Set([att ? GEMINI_VISION_MODEL : GEMINI_MODEL, "gemini-2.5-flash", "gemini-flash-lite-latest"])];
-  const deadline = Date.now() + (att ? 55_000 : 22_000);
+  const models = [...new Set([atts.length ? GEMINI_VISION_MODEL : GEMINI_MODEL, "gemini-2.5-flash", "gemini-flash-lite-latest"])];
+  const deadline = Date.now() + (atts.length ? 55_000 : 22_000);
   let geminiRes: Response | null = null;
   let lastErr = "";
   for (const model of models) {
@@ -214,7 +268,7 @@ Deno.serve(async (req: Request) => {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
         // mỗi model tối đa 12s (ảnh 30s) để model dự phòng còn thời gian
-        signal: AbortSignal.timeout(Math.min(left, att ? 30_000 : 12_000)),
+        signal: AbortSignal.timeout(Math.min(left, atts.length ? 30_000 : 12_000)),
         body: payload,
       });
       if (res.ok) { geminiRes = res; break; }
@@ -237,7 +291,7 @@ Deno.serve(async (req: Request) => {
   }
   if (typeof parsed.intent !== "string") {
     console.error("[quick-table-chat] unparseable gemini output", String(text).slice(0, 500));
-    await logTurn(user.id, lang, pending, messages[messages.length - 1].text, !!att, null, "error", null);
+    await logTurn(user.id, lang, pending, messages[messages.length - 1].text, atts.length > 0, null, "error", null);
     return json({ error: "ai_unavailable" }, 502);
   }
   const out = {
@@ -246,7 +300,7 @@ Deno.serve(async (req: Request) => {
     patch: parsed.patch && typeof parsed.patch === "object" ? parsed.patch : {},
   };
   const unmet = typeof parsed.unmet === "string" && parsed.unmet.trim() ? parsed.unmet.trim().slice(0, 300) : null;
-  await logTurn(user.id, lang, pending, messages[messages.length - 1].text, !!att, out.reply, out.intent, unmet);
+  await logTurn(user.id, lang, pending, messages[messages.length - 1].text, atts.length > 0, out.reply, out.intent, unmet);
   return json(out);
 });
 

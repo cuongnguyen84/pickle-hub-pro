@@ -19,7 +19,7 @@ const post: BlogPost = {
       metaDescription: "44 teams, 11 groups, then 2 or 3 brackets. ThePickleHub AI reads a pasted list or photo. Up to 48 teams. 20 Oct 2026.",
       howToSteps: [
         { name: "Choose doubles or singles", text: "Open the chat and tap Doubles or Singles." },
-        { name: "Paste the list or send a photo", text: "One team per line, or a photo of the list. Open the draft and read every name before the next question." },
+        { name: "Paste the list or send a photo", text: "One team per line, one or more photos, or a Google Sheet link shared as anyone with the link. Open the draft and read every name." },
         { name: "Review groups, then create", text: "Pick a legal group split, name the event, then tap Create on the review card." },
         { name: "Send the link", text: "Copy the link, or copy the Zalo message that lists the groups." },
       ],
@@ -35,11 +35,11 @@ const post: BlogPost = {
         },
         {
           heading: "Paste the list, then read every name",
-          content: "Paste the list, or send a photo of it. One team per line, written as “Nam - Hung”. A photo of a message, a handwritten sheet, a PDF, Excel, CSV, TSV, or text file is read the same way, up to 4 MB. The reply “Got N teams” is not the list. Open Draft at the top and read every name. If a name is wrong, edit it there before you answer the next question. The chat only offers splits with 3 to 8 teams per group, and at most 16 groups.",
+          content: "Paste the list, or send photos of it — up to four photos at once, when one photo cannot show every name. One team per line, written as “Nam - Hung”. A photo of a message, a handwritten sheet, a PDF, Excel, CSV, TSV, a text file, or a Google Sheet link also works, up to 4 MB. The sheet has to be shared as anyone with the link. A file that has no team names is refused, and the list already read stays as it was. The reply “Got N teams” is not the list. Open Draft at the top and read every name. If a name is wrong, edit it there before you answer the next question. Another photo or file adds names; it does not wipe the ones already there. The chat only offers splits with 3 to 8 teams per group, and at most 16 groups.",
           image: {
             src: "/images/blog/create-tournament-by-chat-step-2.webp",
             alt: "Draft open with four team names, the user paste on the right, and a one-group chip",
-            caption: "Step 2. Paste the list or send a photo, then read every name in the draft.",
+            caption: "Step 2. Paste a list, send up to four photos, or a Google Sheet link. Then read every name in the draft.",
           },
         },
         {
@@ -92,7 +92,7 @@ const post: BlogPost = {
       metaDescription: "44 đội, 11 bảng, rồi 2 hoặc 3 nhánh. AI ThePickleHub đọc ảnh hoặc tin Zalo. Tối đa 48 đội. 20/10/2026.",
       howToSteps: [
         { name: "Chọn đôi hoặc đơn", text: "Mở chat và bấm Đôi hoặc Đơn." },
-        { name: "Dán danh sách hoặc gửi ảnh", text: "Mỗi dòng một đội, hoặc ảnh danh sách. Mở Bản nháp và đọc từng tên trước câu hỏi tiếp theo." },
+        { name: "Dán danh sách hoặc gửi ảnh", text: "Mỗi dòng một đội, nhiều ảnh, hoặc link Google Sheet để quyền bất kỳ ai có link. Mở Bản nháp và đọc từng tên." },
         { name: "Xem thẻ rồi bấm Tạo giải", text: "Chọn cách chia bảng hợp lệ, đặt tên, rồi bấm Tạo giải trên thẻ kiểm tra." },
         { name: "Gửi link", text: "Copy link, hoặc copy tin Zalo có tên từng bảng." },
       ],
@@ -108,11 +108,11 @@ const post: BlogPost = {
         },
         {
           heading: "Dán danh sách, rồi đọc từng tên",
-          content: "Dán danh sách, hoặc gửi ảnh. Mỗi dòng một đội, viết kiểu “Nam - Hùng”. Ảnh chụp tin nhắn, ảnh danh sách viết tay, PDF, Excel, CSV, TSV hoặc file chữ đều đọc được, tối đa 4 MB. Câu “Đã nhận N đội” không phải là danh sách. Mở Bản nháp ở trên và đọc từng tên. Tên sai thì sửa tại đó, rồi mới trả lời câu tiếp theo. Chat chỉ đưa cách chia có 3 đến 8 đội mỗi bảng, tối đa 16 bảng.",
+          content: "Dán danh sách, hoặc gửi ảnh — tối đa bốn ảnh một lần, khi một ảnh không hết tên. Mỗi dòng một đội, viết kiểu “Nam - Hùng”. Ảnh chụp tin nhắn, ảnh danh sách viết tay, PDF, Excel, CSV, TSV, file chữ, hoặc link Google Sheet đều đọc được, tối đa 4 MB. Sheet phải để quyền “Bất kỳ ai có đường liên kết”. File không có tên đội thì chat báo lại và giữ nguyên danh sách đang có. Câu “Đã nhận N đội” không phải là danh sách. Mở Bản nháp ở trên và đọc từng tên. Tên sai thì sửa tại đó, rồi mới trả lời câu tiếp theo. Ảnh hoặc file gửi sau được cộng thêm, không xoá tên đã có. Chat chỉ đưa cách chia có 3 đến 8 đội mỗi bảng, tối đa 16 bảng.",
           image: {
             src: "/images/blog/create-tournament-by-chat-step-2.webp",
             alt: "Bản nháp mở với bốn tên đội, bong bóng danh sách vừa dán, và chip 1 bảng vòng tròn",
-            caption: "Bước 2. Dán danh sách hoặc gửi ảnh, rồi đọc từng tên trong Bản nháp.",
+            caption: "Bước 2. Dán danh sách, gửi tối đa bốn ảnh, hoặc link Google Sheet. Rồi đọc từng tên trong Bản nháp.",
           },
         },
         {

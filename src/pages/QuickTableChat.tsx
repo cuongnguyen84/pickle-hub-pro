@@ -24,8 +24,8 @@ import { getSiteUrl } from "@/lib/auth-config";
 import { cn } from "@/lib/utils";
 import { rankSeriesSizes, seriesLine, seriesName, seriesPlan, slot as seriesSlot, type SeriesStyle } from "@/lib/quick-table-series";
 import {
-  applyPatch, buildRoster, chatFacts, customSeries, defaultName, draftSeriesPlan, duplicateIndexes, entryCount, entryLabel, findGroupOption, groupChoices,
-  groupSizes, localSlotPatch, MAX_CHAT_ENTRIES, nextSlot, pairEntries, parseSheet, previewAssignments, seriesCap, trustPatch,
+  applyPatch, buildRoster, chatFacts, customSeries, defaultName, draftSeriesPlan, duplicateIndexes, entryCount, entryLabel, findGroupOption, googleSheetRef, groupChoices,
+  groupSizes, localSlotPatch, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, nextSlot, pairEntries, parseSheet, previewAssignments, seriesCap, trustPatch,
   type Draft, type Entry, type GroupOption, type PairingMode, type Slot,
 } from "@/lib/quick-table-chat";
 
@@ -34,8 +34,8 @@ type Lang = "vi" | "en";
 interface Msg { id: string; role: "user" | "bot"; text: string; label?: string }
 /** Ảnh/PDF gửi kèm cho Gemini đọc — chỉ nằm trong request, không lưu localStorage. */
 interface Attachment { mime_type: string; data: string }
-/** entries: bảng tính đọc được tại chỗ → vào nháp luôn, không gọi AI. */
-interface Outgoing { text: string; label?: string; attachment?: Attachment; entries?: Entry[] }
+/** entries: bảng tính đọc được tại chỗ → vào nháp luôn, không gọi AI. append: gộp vào danh sách đang có. */
+interface Outgoing { text: string; label?: string; attachment?: Attachment; attachments?: Attachment[]; entries?: Entry[]; append?: boolean }
 interface Chip { label: string; sub?: string; recommended?: boolean; onClick: () => void }
 type SubMenu = null | "sets";
 
@@ -44,6 +44,7 @@ const STORAGE_PREFIX = "qt-chat:v1:";
 const PASTE_COLLAPSE_LINES = 4;
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 const MAX_IMAGE_SIDE = 1600; // đủ nét để đọc tên, base64 ~300 KB
+const MAX_IMAGES = 4;
 const SHEET_EXT = /\.(xlsx|xls|csv|tsv|txt)$/i;
 
 const COPY = {
@@ -54,16 +55,25 @@ const COPY = {
     loginTitle: "Đăng nhập để tạo giải bằng chat",
     loginDesc: "Kể cho trợ lý nghe về giải hoặc dán danh sách từ Zalo — vài giây là có bảng đấu.",
     toolLabel: "Chia bảng",
-    welcome: "Chào bạn 👋 Kể mình nghe về giải nhé, ví dụ: “Giải CLB tối thứ 7, 16 đôi, chia 4 bảng”. Hoặc dán danh sách VĐV, tải ảnh chụp hay file Excel lên đây.",
+    welcome: "Chào bạn 👋 Kể mình nghe về giải nhé, ví dụ: “Giải CLB tối thứ 7, 16 đôi, chia 4 bảng”. Hoặc dán danh sách, gửi link Google Sheet, tải vài ảnh hay một file Excel.",
     unit: (d: Draft): string => (d.is_doubles === false ? "VĐV" : "đội"),
     format: "Giải đánh đôi hay đánh đơn?",
     doubles: "Đôi", singles: "Đơn",
     count: (u: string) => `Có bao nhiêu ${u}? Hoặc dán luôn danh sách vào đây.`,
     pasteList: "Dán danh sách",
     upload: "Tải ảnh / file",
-    uploadAria: "Tải ảnh hoặc file danh sách",
-    fileUnreadable: "Không đọc được file này. Thử ảnh chụp, Excel, CSV hoặc PDF nhé.",
+    uploadAria: "Tải ảnh hoặc file danh sách. Có thể chọn nhiều ảnh.",
+    fileUnreadable: "Không đọc được file này. Thử ảnh chụp, Excel, CSV, PDF hoặc link Google Sheet.",
     fileTooBig: "File lớn quá, tối đa 4 MB.",
+    fileTooMany: "Mỗi lần tối đa 4 ảnh. Mình lấy 4 ảnh đầu; ảnh còn lại gửi tiếp cũng được.",
+    oneFile: "Mỗi lần một file bảng tính. Ảnh thì chọn nhiều một lúc.",
+    fileNotList: "File này không phải danh sách đội. Mỗi dòng một đội, kiểu Nam - Hùng, hoặc hai cột VĐV. Ảnh chụp danh sách cũng được.",
+    sheetPrivate: "Mình không mở được Google Sheet này. Hãy để quyền “Bất kỳ ai có đường liên kết”, rồi gửi lại link. Hoặc tải file Excel xuống.",
+    sheetUnreadable: "Link này không mở được, hoặc sheet đang trống.",
+    sheetLabel: "📊 Google Sheet",
+    added: (n: number, total: number, u: string) => `Đã thêm ${n} ${u}, tổng ${total}. Mở Bản nháp để xoá tên sai.`,
+    alreadyThere: "Những tên này đã có trong Bản nháp.",
+    capped: ` Danh sách dừng ở ${MAX_CHAT_ENTRIES}.`,
     tooMany: (n: number, u: string) => `Chat hiện tạo được tối đa ${MAX_CHAT_ENTRIES} ${u}. Giải ${n} ${u} nên dùng thể thức playoff lớn trong form thường.`,
     changeCount: "Sửa số lượng",
     pairing: (n: number) => `Mình thấy ${n} tên lẻ. Ghép thành đôi thế nào?`,
@@ -95,7 +105,7 @@ const COPY = {
     pasteNow: "Dán ngay",
     openRegistration: "Mở cho người chơi tự đăng ký",
     later: "Để sau, tự nhập",
-    paste: (d: Draft) => `Dán danh sách vào ô bên dưới nhé — mỗi dòng 1 ${d.is_doubles === false ? "VĐV" : "đội, kiểu “Nam - Hùng”"}. Có ảnh chụp hay file Excel thì tải lên cũng được.`,
+    paste: (d: Draft) => `Dán danh sách vào ô bên dưới nhé — mỗi dòng 1 ${d.is_doubles === false ? "VĐV" : "đội, kiểu “Nam - Hùng”"}. Ảnh (nhiều ảnh một lần), file Excel hoặc link Google Sheet cũng được.`,
     name: "Đặt tên giải là gì?",
     courtsQ: "Có bao nhiêu sân thi đấu? Mình sẽ tự xếp sân và giờ cho từng trận.",
     courtN: (k: number) => `${k} sân`,
@@ -120,7 +130,7 @@ const COPY = {
     received: (n: number, u: string) => `Đã nhận ${n} ${u}.`,
     dupWarn: (n: number) => ` ⚠️ Có ${n} dòng trùng — xem lại trong Bản nháp.`,
     aiError: "Mình chưa nghe rõ, mạng hoặc trợ lý đang chậm. Thử lại nhé?",
-    attachmentNoList: "Mình chưa đọc được tên trong file này. Bạn thử ảnh rõ hơn, file Excel, hoặc dán danh sách dạng chữ nhé.",
+    attachmentNoList: "Mình chưa thấy tên đội trong file này. Ảnh cần thấy rõ từng dòng. Danh sách dài thì gửi thêm ảnh. Hoặc dán chữ, file Excel, hay link Google Sheet.",
     retry: "Thử lại",
     quotaFull: (q: number) => `Bạn đang có đủ ${q} giải chia bảng. Kết thúc hoặc xoá bớt giải cũ để tạo giải mới nhé.`,
     myTables: "Xem giải của tôi",
@@ -161,16 +171,25 @@ const COPY = {
     loginTitle: "Sign in to create a tournament by chat",
     loginDesc: "Describe your event or paste a player list from your group chat — groups are ready in seconds.",
     toolLabel: "Round robin",
-    welcome: "Hi 👋 Tell me about your event, e.g. “Club night Saturday, 16 doubles teams, 4 groups”. Or paste your player list, or upload a photo or spreadsheet of it.",
+    welcome: "Hi 👋 Tell me about your event, e.g. “Club night Saturday, 16 doubles teams, 4 groups”. Or paste a list, send a Google Sheet link, or upload several photos or one Excel file.",
     unit: (d: Draft): string => (d.is_doubles === false ? "players" : "teams"),
     format: "Doubles or singles?",
     doubles: "Doubles", singles: "Singles",
     count: (u: string) => `How many ${u}? Or paste the list right here.`,
     pasteList: "Paste a list",
     upload: "Upload photo / file",
-    uploadAria: "Upload a photo or file of the list",
-    fileUnreadable: "Couldn't read that file. Try a photo, Excel, CSV or PDF.",
+    uploadAria: "Upload a photo or a list file. Several photos are fine.",
+    fileUnreadable: "Couldn't read that file. Try a photo, Excel, CSV, PDF, or a Google Sheet link.",
     fileTooBig: "That file is too big — 4 MB max.",
+    fileTooMany: "4 photos at a time. I took the first 4; send the rest next.",
+    oneFile: "One spreadsheet at a time. Photos can be several at once.",
+    fileNotList: "This file isn't a team list. Use one team per line, like Nam - Hung, or two player columns. A photo of the list works too.",
+    sheetPrivate: "I can't open this Google Sheet. Set sharing to “Anyone with the link”, then send it again. Or download the Excel file.",
+    sheetUnreadable: "That link didn't open, or the sheet is empty.",
+    sheetLabel: "📊 Google Sheet",
+    added: (n: number, total: number, u: string) => `Added ${n} ${u}, ${total} in total. Open Draft to remove a wrong name.`,
+    alreadyThere: "Those names are already in the draft.",
+    capped: ` The list stops at ${MAX_CHAT_ENTRIES}.`,
     tooMany: (n: number, u: string) => `Chat can create up to ${MAX_CHAT_ENTRIES} ${u}. For ${n} ${u}, use the large playoff format in the classic form.`,
     changeCount: "Change the number",
     pairing: (n: number) => `I see ${n} single names. How should I pair them?`,
@@ -202,7 +221,7 @@ const COPY = {
     pasteNow: "Paste now",
     openRegistration: "Let players sign up",
     later: "Later, I'll type it",
-    paste: (d: Draft) => `Paste the list below — one ${d.is_doubles === false ? "player" : "team, like “Nam - Hung”"} per line. A photo or spreadsheet works too.`,
+    paste: (d: Draft) => `Paste the list below — one ${d.is_doubles === false ? "player" : "team, like “Nam - Hung”"} per line. Several photos, an Excel file, or a Google Sheet link works too.`,
     name: "What's the tournament called?",
     courtsQ: "How many courts do you have? I'll assign courts and times to every match.",
     courtN: (k: number) => `${k} ${k === 1 ? "court" : "courts"}`,
@@ -227,7 +246,7 @@ const COPY = {
     received: (n: number, u: string) => `Got ${n} ${u}.`,
     dupWarn: (n: number) => ` ⚠️ ${n} duplicate lines — check the Draft.`,
     aiError: "I didn't catch that — the network or assistant is slow. Try again?",
-    attachmentNoList: "I couldn't read the names in this file. Try a clearer photo, an Excel file, or paste the list as text.",
+    attachmentNoList: "I couldn't see team names in this file. The photo needs every line readable. A long list can be several photos. Or paste text, send Excel, or a Google Sheet link.",
     retry: "Try again",
     quotaFull: (q: number) => `You already have ${q} round-robin tournaments. Finish or delete one to create another.`,
     myTables: "My tournaments",
@@ -386,24 +405,54 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   };
 
   const send = async (out?: Outgoing, isRetry = false) => {
-    const msg = out ?? { text: input.trim() };
+    let msg = out ?? { text: input.trim() };
     if (!msg.text || busy) return;
     // Lệnh gõ tay, xử lý tại chỗ không gọi AI.
     if (!out && !isRetry) {
       const cmd = msg.text.toLocaleLowerCase("vi").replace(/[.!]+$/, "").trim();
       if (/^(làm lại|lam lai|xoá hết|xóa hết|xoa het|reset|start over|restart)$/.test(cmd)) { setInput(""); void resetAll(); return; }
       if (/^(quay lại|quay lai|undo|back)$/.test(cmd)) { setInput(""); undo(); return; }
-      const local = localSlotPatch(msg.text, slot);
-      if (local) { setInput(""); choose(msg.text, local); return; }
+      const sheet = googleSheetRef(msg.text);
+      if (sheet) {
+        setInput("");
+        snap();
+        setMessages((m) => [...m, { id: uid(), role: "user", text: msg.text, label: c.sheetLabel }]);
+        setBusy(true);
+        const { data } = await supabase.functions.invoke("quick-table-chat", { body: { sheet }, timeout: 15_000 });
+        setBusy(false);
+        const csv = data && typeof data === "object" && "csv" in data && typeof data.csv === "string" ? data.csv : "";
+        const sheetError = data && typeof data === "object" && "error" in data ? String(data.error) : "";
+        if (!csv) {
+          pushBot(sheetError === "sheet_private" ? c.sheetPrivate : c.sheetUnreadable);
+          return;
+        }
+        let sheetEntries: Entry[] = [];
+        try { sheetEntries = parseSheet(await rowsFromCsv(csv)); } catch { /* bảng lạ thì để AI đọc chữ */ }
+        if (sheetEntries.length >= 2) {
+          const entries = mergeRoster(draft.entries, sheetEntries);
+          const doubles = draft.is_doubles === undefined && entries.every((e) => e.p2);
+          const next = applyPatch(draft, { entries, ...(doubles ? { is_doubles: true } : {}) });
+          advance(next, rosterAck(c, c.unit(next), draft.entries?.length ?? 0, next.entries!.length, sheetEntries.length, next.entries));
+          return;
+        }
+        if (!looksLikeNameList(csv)) {
+          pushBot(c.fileNotList);
+          return;
+        }
+        msg = { text: `${msg.text}\n${csv.trim().slice(0, 3500)}`, label: c.sheetLabel };
+        isRetry = true;
+      } else {
+        const local = localSlotPatch(msg.text, slot);
+        if (local) { setInput(""); choose(msg.text, local); return; }
+      }
     }
     if (msg.entries?.length) {
       snap();
       setMessages((m) => [...m, { id: uid(), role: "user", text: msg.text, label: msg.label }]);
-      // File có cột VĐV 1 + VĐV 2 ở mọi dòng → chắc chắn là giải đôi, khỏi hỏi.
-      const doubles = draft.is_doubles === undefined && msg.entries.every((e) => e.p2);
-      const next = applyPatch(draft, { entries: msg.entries, ...(doubles ? { is_doubles: true } : {}) });
-      const dups = duplicateIndexes(next.entries!).size;
-      advance(next, c.received(next.entries!.length, c.unit(next)) + (dups ? c.dupWarn(dups) : ""));
+      const entries = msg.append ? mergeRoster(draft.entries, msg.entries) : msg.entries.slice(0, MAX_CHAT_ENTRIES);
+      const doubles = draft.is_doubles === undefined && entries.every((e) => e.p2);
+      const next = applyPatch(draft, { entries, ...(doubles ? { is_doubles: true } : {}) });
+      advance(next, rosterAck(c, c.unit(next), draft.entries?.length ?? 0, next.entries!.length, msg.entries.length, next.entries));
       return;
     }
     if (!isRetry) {
@@ -418,9 +467,13 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     const history = [...prior, { role: "user" as const, text: msg.text }]
       .slice(-8)
       .map((m) => ({ role: m.role, text: m.text.slice(0, 4000) }));
+    const files = msg.attachments ?? (msg.attachment ? [msg.attachment] : []);
     const { data, error } = await supabase.functions.invoke("quick-table-chat", {
-      body: { messages: history, draft, pending: slot, lang, attachment: msg.attachment, facts: chatFacts(draft, lang) },
-      timeout: msg.attachment ? 60_000 : 25_000,
+      body: {
+        messages: history, draft, pending: slot, lang, facts: chatFacts(draft, lang),
+        ...(files.length > 1 ? { attachments: files } : files.length === 1 ? { attachment: files[0] } : {}),
+      },
+      timeout: files.length ? 60_000 : 25_000,
     });
     setBusy(false);
     if (error || !data || typeof data !== "object" || "error" in data) {
@@ -434,19 +487,27 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       return;
     }
     // Tên file ("Pasted … 10.44 PM.png") không phải lời người dùng — không cho nó "nhắc" tới giờ/sân.
-    const patch = trustPatch(res.patch, msg.attachment ? "" : msg.text, slot);
-    if (msg.attachment && !(Array.isArray(patch.entries) && patch.entries.length)) {
+    const patch = trustPatch(res.patch, files.length ? "" : msg.text, slot);
+    if (files.length && !(Array.isArray(patch.entries) && patch.entries.length)) {
       // AI đếm được nhưng không tách được tên → đừng nhận số đội ảo.
       advance(draft, c.attachmentNoList);
       return;
     }
+    const incoming = files.length && Array.isArray(patch.entries) ? (patch.entries as Entry[]) : null;
+    if (incoming) patch.entries = mergeRoster(draft.entries, incoming);
     const next = applyPatch(draft, patch);
     let ack = res.reply;
-    const gotList = !draft.entries?.length && !!next.entries?.length;
-    if (gotList) {
-      ack = c.received(next.entries!.length, c.unit(next));
-      const dups = duplicateIndexes(next.entries!).size;
-      if (dups) ack += c.dupWarn(dups);
+    const before = draft.entries?.length ?? 0;
+    const after = next.entries?.length ?? 0;
+    if (incoming && after > 0) {
+      ack = rosterAck(c, c.unit(next), before, after, incoming.length, next.entries);
+    } else {
+      const gotList = !before && after > 0;
+      if (gotList) {
+        ack = c.received(after, c.unit(next));
+        const dups = duplicateIndexes(next.entries!).size;
+        if (dups) ack += c.dupWarn(dups);
+      }
     }
     // Cỡ nhánh mới đặt → nhắc lại bằng số do code tính (AI chỉ nói chung chung "chia đều").
     const plan = draftSeriesPlan(next);
@@ -666,12 +727,19 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     `${c.zaloLink}: ${tableUrl}`,
   ].join("\n");
 
-  const onFile = async (file: File | undefined) => {
+  const onFiles = async (list: FileList | null) => {
     if (fileRef.current) fileRef.current.value = "";
-    if (!file || busy) return;
-    if (file.size > MAX_UPLOAD_BYTES) { toast.error(c.fileTooBig); return; }
+    if (!list?.length || busy) return;
+    const files = [...list];
+    const images = files.filter((f) => f.type.startsWith("image/"));
+    const others = files.filter((f) => !f.type.startsWith("image/"));
+    if (others.length > 1 || (others.length && images.length)) { toast.error(c.oneFile); return; }
+    if (files.some((f) => f.size > MAX_UPLOAD_BYTES)) { toast.error(c.fileTooBig); return; }
+    const batch = images.length > MAX_IMAGES ? images.slice(0, MAX_IMAGES) : images;
+    if (images.length > MAX_IMAGES) toast.error(c.fileTooMany);
     let out: Outgoing;
-    try { out = await readUpload(file); } catch { toast.error(c.fileUnreadable); return; }
+    try { out = others.length ? await readUpload(others[0]) : await readImages(batch); }
+    catch (err) { toast.error(err instanceof UploadError && err.code === "not_a_list" ? c.fileNotList : c.fileUnreadable); return; }
     send(out);
   };
 
@@ -795,8 +863,9 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
                 ref={fileRef}
                 type="file"
                 accept="image/*,application/pdf,.pdf,.xlsx,.xls,.csv,.tsv,.txt"
+                multiple
                 hidden
-                onChange={(e) => onFile(e.target.files?.[0])}
+                onChange={(e) => onFiles(e.target.files)}
               />
               <Button type="button" variant="ghost" size="icon" disabled={busy} onClick={() => fileRef.current?.click()} aria-label={c.uploadAria} title={c.uploadAria} style={{ width: 44, height: 44, flexShrink: 0 }}>
                 <Paperclip className="w-4 h-4" />
@@ -895,11 +964,41 @@ async function imageToJpeg(file: File): Promise<Attachment> {
   return { mime_type: "image/jpeg", data: await readAsBase64(blob) };
 }
 
+class UploadError extends Error {
+  constructor(public code: "unsupported" | "empty" | "not_a_list") { super(code); }
+}
+
+function rosterAck(c: C, unit: string, before: number, after: number, incoming: number, entries?: Entry[]): string {
+  let ack = before === 0 ? c.received(after, unit) : after > before ? c.added(after - before, after, unit) : c.alreadyThere;
+  if (entries) {
+    const dups = duplicateIndexes(entries).size;
+    if (dups) ack += c.dupWarn(dups);
+  }
+  if (before + incoming > after && after >= MAX_CHAT_ENTRIES) ack += c.capped;
+  return ack;
+}
+
+async function rowsFromCsv(csv: string): Promise<string[][]> {
+  const XLSX = await import("xlsx/dist/xlsx.mini.min.js");
+  const wb = XLSX.read(csv, { type: "string" });
+  return XLSX.utils.sheet_to_json<string[]>(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: false, blankrows: false, defval: "" });
+}
+
+async function readImages(files: File[]): Promise<Outgoing> {
+  const attachments = await Promise.all(files.map(imageToJpeg));
+  return {
+    text: files.map((f) => `🖼️ ${f.name}`).join("\n"),
+    label: files.length > 1 ? `🖼️ ${files.length} ảnh` : `🖼️ ${files[0].name}`,
+    ...(attachments.length > 1 ? { attachments } : { attachment: attachments[0] }),
+    append: true,
+  };
+}
+
 /** Ảnh/PDF → Gemini đọc; bảng tính/văn bản → đọc tại chỗ thành chữ (tab giữa các cột). */
 async function readUpload(file: File): Promise<Outgoing> {
-  if (file.type.startsWith("image/")) return { text: `🖼️ ${file.name}`, attachment: await imageToJpeg(file) };
-  if (file.type === "application/pdf") return { text: `📎 ${file.name}`, attachment: { mime_type: "application/pdf", data: await readAsBase64(file) } };
-  if (!SHEET_EXT.test(file.name)) throw new Error("unsupported");
+  if (file.type.startsWith("image/")) return readImages([file]);
+  if (file.type === "application/pdf") return { text: `📎 ${file.name}`, label: `📎 ${file.name}`, attachment: { mime_type: "application/pdf", data: await readAsBase64(file) }, append: true };
+  if (!SHEET_EXT.test(file.name)) throw new UploadError("unsupported");
   let text: string;
   let entries: Entry[] = [];
   if (/\.(xlsx|xls|csv|tsv)$/i.test(file.name)) {
@@ -912,9 +1011,10 @@ async function readUpload(file: File): Promise<Outgoing> {
     text = await file.text();
   }
   text = text.trim().slice(0, 4000);
-  if (!text) throw new Error("empty");
-  // Nhận ra ≥ 2 dòng thì dùng luôn; không thì để AI đọc chữ.
-  return { text, label: `📎 ${file.name}`, ...(entries.length >= 2 ? { entries: entries.slice(0, 200) } : {}) };
+  if (!text) throw new UploadError("empty");
+  if (entries.length < 2 && !looksLikeNameList(text)) throw new UploadError("not_a_list");
+  // Nhận ra ≥ 2 dòng thì dùng luôn; chữ có tên mà chưa tách được thì để AI đọc.
+  return { text, label: `📎 ${file.name}`, append: true, ...(entries.length >= 2 ? { entries: entries.slice(0, 200) } : {}) };
 }
 
 

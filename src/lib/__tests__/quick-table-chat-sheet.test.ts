@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as XLSX from "xlsx";
-import { localSlotPatch, nextSlot, parseSheet, trustPatch } from "@/lib/quick-table-chat";
+import { googleSheetRef, localSlotPatch, looksLikeNameList, mergeRoster, nextSlot, parseSheet, trustPatch } from "@/lib/quick-table-chat";
 
 describe("parseSheet", () => {
   it("header STT | Tên đội | VĐV 1 | VĐV 2 | SĐT | CLB", () => {
@@ -111,5 +111,25 @@ describe("Cuong's 44-team chat: 11 groups of 4, Gold 16, rest Silver + Bronze", 
     expect(d.series).toBe(4);
     expect(nextSlot(d)).toBe("roster");
     expect(chatFacts({ is_doubles: true, player_count: 32, group_count: 8 }, "vi")).toContain("Mỗi hạng một nhánh: Series A: 8 đội; Series B: 8 đội; Series C: 8 đội; Series D: 8 đội.");
+  });
+});
+
+describe("uploads that are not a roster", () => {
+  it("reads a Google Sheet link, including a published one and its gid", () => {
+    expect(googleSheetRef("danh sách https://docs.google.com/spreadsheets/d/1AbCdefGHIjklmnop/edit#gid=3"))
+      .toEqual({ id: "1AbCdefGHIjklmnop", gid: "3", published: false });
+    expect(googleSheetRef("https://docs.google.com/spreadsheets/d/e/2PACX-1vabcdefghij/pubhtml")?.published).toBe(true);
+    expect(googleSheetRef("https://example.com/spreadsheets/d/1AbCdefGHIjklmnop")).toBeNull();
+  });
+  it("a payment sheet is not a name list; two pair lines are", () => {
+    expect(looksLikeNameList("STT\tTiền\n1\t500.000\n2\t200.000")).toBe(false);
+    expect(looksLikeNameList("Nam - Hùng\nTú - Long")).toBe(true);
+  });
+  it("a second photo adds names and drops ones already there", () => {
+    const merged = mergeRoster(
+      [{ p1: "Nam", p2: "Hùng" }, { p1: "Tú", p2: "Long" }],
+      [{ p1: "Nam", p2: "Hùng" }, { p1: "Lan", p2: "Mai" }],
+    );
+    expect(merged.map((e) => e.p1)).toEqual(["Nam", "Tú", "Lan"]);
   });
 });

@@ -376,6 +376,43 @@ export function parseSheet(rows: string[][]): Entry[] {
   return out;
 }
 
+export interface GoogleSheetRef {
+  id: string;
+  gid?: string;
+  published: boolean;
+}
+
+/** Link Google Sheet trong tin nhắn. Chỉ nhận id, không nhận URL tuỳ ý. */
+export function googleSheetRef(text: string): GoogleSheetRef | null {
+  const m = text.match(/https?:\/\/docs\.google\.com\/spreadsheets\/d\/(e\/)?([a-zA-Z0-9_-]{10,})/i);
+  if (!m) return null;
+  const gid = text.match(/[#?&]gid=(\d+)/)?.[1];
+  return { id: m[2], published: !!m[1], ...(gid ? { gid } : {}) };
+}
+
+/** Ít nhất hai dòng có tên. Bảng toàn số, trạng thái CK, hay một dòng tiêu đề thì không phải danh sách. */
+export function looksLikeNameList(text: string): boolean {
+  const lines = text.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+  const named = lines.filter((line) => isNameCell(line) || line.split(/[\t,;|]/).some((cell) => isNameCell(cell.trim())));
+  return named.length >= 2;
+}
+
+/** Gộp danh sách mới vào danh sách đang có. Trùng tên thì bỏ. Dừng ở trần chat. */
+export function mergeRoster(existing: Entry[] | undefined, incoming: Entry[]): Entry[] {
+  const key = (e: Entry) => [e.p1, e.p2 ?? ""].map((s) => s.trim().toLocaleLowerCase("vi")).join("\0");
+  const seen = new Set((existing ?? []).map(key));
+  const out = [...(existing ?? [])];
+  for (const e of incoming) {
+    if (!e.p1?.trim()) continue;
+    const k = key(e);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(e);
+    if (out.length >= MAX_CHAT_ENTRIES) break;
+  }
+  return out;
+}
+
 /**
  * AI hay tự điền mặc định cho trường người dùng chưa hề nhắc (vd "8 sân" →
  * start_time 08:00, đọc file → series 1). Chỉ giữ các trường tuỳ chọn khi
