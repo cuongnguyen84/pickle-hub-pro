@@ -412,7 +412,7 @@ def analyze(store, role, request="", task_id=None):
         return {"run": run, "error": clean_error(exc)}
 
 
-def digest(store):
+def digest(store, slot=None, extra=()):
     now = datetime.now(ICT)
     tasks = [dict(r) for r in store.db.execute(
         "SELECT * FROM tasks WHERE status NOT IN ('resolved','cancelled') ORDER BY "
@@ -425,8 +425,9 @@ def digest(store):
             task['status'] = 'queued' if phase == 'queued' else 'running'
     labels = {"running": "đang làm", "queued": "chưa bắt đầu", "open": "còn tồn đọng",
               "awaiting_review": "cần đội kiểm chứng kết quả", "needs_review": "đội cần xử lý vướng mắc"}
-    lines = ["THEPICKLEHUB · BÁO CÁO NGẮN", now.strftime("%H:%M %d/%m/%Y"),
+    lines = [f"{LABEL} Tổng hợp {slot or now.strftime('%H:%M')} {now.strftime('%d/%m')}",
              "Đội đang tạm dừng." if store.get('paused', False) else "Lịch điều phối đang bật; không đồng nghĩa mọi việc đã xong.",
+             *extra,
              f"\nCÒN {len(tasks)} VIỆC",
              f"Đang xử lý: {sum(t['status'] == 'running' for t in tasks)} · Chờ chạy: {sum(t['status'] == 'queued' for t in tasks)}",
              "Bấm Xử lý ngay dưới báo cáo để đội thực hiện đúng mã việc; bot báo kết quả hoặc chỗ bị chặn."]
@@ -447,8 +448,193 @@ def digest(store):
     return "\n".join(lines)[:3700]
 
 
+# ---------------------------------------------------------------------------
+# Telegram policy (owner decision 20/10/2026). Telegram gets real incidents
+# instantly and everything else in two digests a day, 08:00 and 21:00
+# Asia/Saigon. Every message starts with "[Grok Bot]".
+# Outbox rows whose kind is in DIGEST_KINDS are parked as status='held' by
+# flush() and folded into the next scheduled digest (status='digested').
+# ---------------------------------------------------------------------------
+LABEL = "[Grok Bot]"
+DIGEST_HOURS = (8, 21)
+DIGEST_KINDS = {"verification", "alert", "starting", "request", "fallback", "provider", "provider-switch",
+                "blocked-budget", "blocked-provider", "tournament-autopublish", "content-published",
+                "content-blocked"}
+URGENT_KINDS = {"watchdog", "payment"}
+RESOLVED_KINDS = {"watchdog-recovered", "payment-resolved"}
+KIND_LABELS = {"verification": "Kiểm chứng việc", "alert": "Sự cố site/shop do máy Mac đo",
+               "starting": "Bắt đầu xử lý", "request": "Kết quả lượt xử lý", "action": "Lượt xử lý theo nút",
+               "fallback": "Chuyển model dự phòng", "provider": "Hạn mức model", "provider-switch": "Đổi model",
+               "blocked-budget": "Bị chặn do ngân sách", "blocked-provider": "Bị chặn do model",
+               "tournament-autopublish": "Tự đăng kết quả giải", "content-published": "Bài đã cập nhật",
+               "content-blocked": "Bài chưa xác nhận xong"}
+GH_WATCH = (("quality.yml", "Quality gate"), ("deploy-guard.yml", "Deploy guard"), ("security.yml", "Security"),
+            ("playwright.yml", "Playwright smoke"), ("playwright-full.yml", "Playwright full"),
+            ("lighthouse.yml", "Lighthouse"), ("uptime-ping.yml", "Uptime (GitHub)"),
+            ("milestone-due.yml", "Milestone-due"))
+
+
+def outbox_kind(dedupe):
+    kind = dedupe.split(":", 1)[0]
+    return "action" if kind.startswith("action-") else kind
+
+
+def held_kind(dedupe):
+    kind = outbox_kind(dedupe)
+    return kind == "action" or kind in DIGEST_KINDS
+
+
+def labelled(dedupe, body):
+    if body.startswith(LABEL):
+        return body
+    kind = outbox_kind(dedupe)
+    if kind in URGENT_KINDS:
+        return f"{LABEL} 🔴 {body}"
+    if kind in RESOLVED_KINDS:
+        return f"{LABEL} ✅ {body}"
+    return f"{LABEL} {body}"
+
+
+def hold(store):
+    """Park digest-only rows; they never reach Telegram on their own."""
+    rows = store.db.execute("SELECT id,dedupe FROM outbox WHERE status='pending'").fetchall()
+    ids = [r["id"] for r in rows if held_kind(r["dedupe"])]
+    if ids:
+        with store.db:
+            store.db.executemany("UPDATE outbox SET status='held',updated=? WHERE id=? AND status='pending'",
+                                 [(time.time(), i) for i in ids])
+
+
+def held_section(store):
+    rows = store.db.execute("SELECT id,dedupe,body FROM outbox WHERE status='held' ORDER BY id").fetchall()
+    if not rows:
+        return [], []
+    groups = {}
+    for row in rows:
+        groups.setdefault(outbox_kind(row["dedupe"]), []).append(row)
+    lines = [f"\nTIN GOM TỪ LẦN TRƯỚC ({len(rows)})"]
+    for kind, items in groups.items():
+        note = ""
+        if kind == "verification":
+            closed = sum(r["body"].startswith("✅") for r in items)
+            note = f" ({closed} đóng, {len(items) - closed} mở lại/cần xử lý)"
+        latest = " · ".join(l.strip() for l in items[-1]["body"].splitlines()[:2] if l.strip())
+        lines.append(f"• {KIND_LABELS.get(kind, kind)}: {len(items)}{note}. Mới nhất: {latest[:120]}")
+    return lines, [r["id"] for r in rows]
+
+
+def feed_github(since_iso):
+    lines = []
+    for workflow, name in GH_WATCH:
+        rc, out, _ = command(["gh", "run", "list", "--workflow", workflow, "--branch", "main", "--limit", "40",
+                              "--json", "conclusion,createdAt,status"], timeout=45)
+        if rc:
+            lines.append(f"• {name}: không đọc được gh run list")
+            continue
+        runs = [r for r in json.loads(out or "[]") if r.get("status") == "completed" and r.get("createdAt", "") >= since_iso]
+        red = sum(r.get("conclusion") == "failure" for r in runs)
+        if red:
+            last = "xanh" if runs[0].get("conclusion") == "success" else runs[0].get("conclusion")
+            lines.append(f"• {name}: {red}/{len(runs)} lượt đỏ, lượt cuối {last}")
+    return lines or ["• Không có workflow đỏ trên main."]
+
+
+def feed_supabase(since_iso):
+    lines = []
+    snap = rest("rpc/ops_job_health_snapshot", "POST", {}) or {}
+    counts = snap.get("counts", {}) if isinstance(snap, dict) else {}
+    bad = [j.get("display_name") or j.get("job_key") for j in (snap.get("jobs", []) if isinstance(snap, dict) else [])
+           if j.get("health_state") in ("failed", "warning")]
+    lines.append(f"• Job: {counts.get('healthy', 0)} ổn · {counts.get('warning', 0)} cảnh báo · {counts.get('failed', 0)} lỗi"
+                 + (f" ({', '.join(bad[:6])})" if bad else ""))
+    down = [r["function_slug"] for r in rest("ops_edge_function_state?select=function_slug,state&state=neq.available") or []]
+    flaps = rest(f"ops_edge_function_state?select=function_slug&changed_at=gte.{since_iso}") or []
+    lines.append("• Edge function: " + (f"chưa ổn {', '.join(down[:6])}" if down else "đều chạy")
+                 + (f"; {len(flaps)} đổi trạng thái" if flaps else ""))
+    cron = rest("ops_cron_alert_state?select=monitor_key&recovered_at=is.null&incident_started_at=not.is.null") or []
+    if cron:
+        lines.append(f"• Cron đang lỗi: {', '.join(r['monitor_key'] for r in cron[:6])}")
+    errors = rest(f"client_errors?select=message&recorded_at=gte.{since_iso}&limit=1000") or []
+    if errors:
+        top = {}
+        for e in errors:
+            key = (e.get("message") or "?")[:70]
+            top[key] = top.get(key, 0) + 1
+        common = sorted(top.items(), key=lambda kv: -kv[1])[:2]
+        lines.append(f"• Lỗi web: {len(errors)} lượt; nhiều nhất: " + "; ".join(f"{m} ({n})" for m, n in common))
+    posts = rest(f"fb_post_log?select=page_key&status=eq.posted&posted_at=gte.{since_iso}") or []
+    lines.append(f"• Facebook đã đăng: {len(posts)} bài")
+    return lines
+
+
+def feed_milestones():
+    _, due, _ = command(["/usr/bin/env", "node", "scripts/due-milestones.mjs"], timeout=60)
+    items = re.findall(r"(20\d\d-\d\d-\d\d) ([A-Z][A-Z0-9-]+) —", due or "")
+    if not items:
+        return ["• Không có mốc đến hạn."]
+    return [f"• {mid} (hạn {date[8:10]}/{date[5:7]})" for date, mid in items[:8]] + (
+        [f"• Còn {len(items) - 8} mốc khác trong docs/milestones.md"] if len(items) > 8 else [])
+
+
+def section(title, build, *args):
+    try:
+        body = build(*args)
+    except Exception as exc:
+        body = [f"• Chưa đọc được ({clean_error(exc)})"]
+    return [f"\n{title}", *body]
+
+
+def scheduled_digest(store, hour):
+    since = store.get("last_digest_at", time.time() - 12 * 3600)
+    since_iso = datetime.fromtimestamp(since, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    held, ids = held_section(store)
+    extra = held + section("CI TRÊN MAIN", feed_github, since_iso) + \
+        section("JOB · EDGE · LỖI WEB · BÀI ĐĂNG", feed_supabase, since_iso)
+    if hour == 8:
+        extra += section("MỐC ĐẾN HẠN", feed_milestones)
+    return digest(store, slot=f"{hour:02d}:00", extra=extra), ids
+
+
+def site_escalation(store):
+    """Mac probe failing twice in a row asks GitHub for a second opinion.
+
+    The Mac network alone is not trusted to page (20/10/2026: many "trả 0"
+    flaps while GitHub saw the site up). uptime-ping.yml pages instantly only
+    if GitHub also sees the site down, and sends one recovery message later.
+    """
+    down = store.db.execute("SELECT 1 FROM tasks WHERE status='open' AND dedupe LIKE 'finding:site:%'").fetchone()
+    streak = store.get("site_fail_streak", 0) + 1 if down else 0
+    store.put("site_fail_streak", streak)
+    now = time.time()
+    if streak >= 2 and now - store.get("site_escalated_at", 0) >= 1800:
+        rc, _, _ = command(["gh", "workflow", "run", "uptime-ping.yml", "--ref", "main"], timeout=60)
+        store.put("site_escalated_at", now)
+        store.put("site_recheck_pending", True)
+        store.put("site_escalation", {"at": now, "rc": rc, "streak": streak})
+    elif streak == 0 and store.get("site_recheck_pending", False):
+        rc, _, _ = command(["gh", "workflow", "run", "uptime-ping.yml", "--ref", "main"], timeout=60)
+        store.put("site_recheck_pending", False)
+        store.put("site_escalation", {"at": now, "rc": rc, "streak": 0, "recheck": True})
+
+
+def payment_alert(store):
+    """Shop/payment findings need Cuong (money): instant, once per change."""
+    titles = [r[0] for r in store.db.execute(
+        "SELECT title FROM tasks WHERE status='open' AND dedupe LIKE 'finding:commerce:%' ORDER BY dedupe")]
+    fingerprint = hashlib.sha256(json.dumps(titles).encode()).hexdigest()
+    old = store.get("payment_fingerprint")
+    if fingerprint == old:
+        return
+    if titles:
+        store.enqueue(f"payment:{fingerprint[:16]}", "Shop/thanh toán cần anh xử lý:\n" + "\n".join(titles[:10]))
+    elif old:
+        store.enqueue(f"payment-resolved:{int(time.time())}", "Các việc shop/thanh toán trước đó đã hết.")
+    store.put("payment_fingerprint", fingerprint)
+
+
 def flush(store):
     from team_progress import reply_keyboard
+    hold(store)
     token, chat = secret("TELEGRAM_BOT_TOKEN"), secret("TELEGRAM_CHAT_ID")
     if not token or not chat:
         return
@@ -460,7 +646,7 @@ def flush(store):
         status, receipt = "uncertain", None
         try:
             req = urllib.request.Request(f"https://api.telegram.org/bot{token}/sendMessage",
-                data=json.dumps({"chat_id": chat, "text": row["body"], "disable_web_page_preview": True,
+                data=json.dumps({"chat_id": chat, "text": labelled(row["dedupe"], row["body"]), "disable_web_page_preview": True,
                                  "reply_markup": reply_keyboard(row["body"], store)}).encode(),
                 headers={"Content-Type": "application/json"})
             with urllib.request.urlopen(req, timeout=25) as r:
@@ -785,6 +971,11 @@ def tick(store, full=False, allow_ai=True):
         full = full or store.get("last_full") != today
         if full or time.time() - store.get("last_sweep", 0) >= 300:
             sweep(store, full)
+            try:
+                site_escalation(store)
+            except Exception as exc:
+                store.put("site_escalation_error", {"error": clean_error(exc), "at": time.time()})
+            payment_alert(store)
         if allow_ai:
             for role in ROLES:
                 previous = store.get("analysis:" + role, {})
@@ -803,11 +994,17 @@ def tick(store, full=False, allow_ai=True):
                 store.enqueue(f"alert:{time.time()}", "THAY ĐỔI SỰ CỐ\n" + ("\n".join(p["title"] for p in problems) or "Các cảnh báo site/shop trước đó đã được đo lại và hết."))
             store.put("alert_fingerprint", fingerprint)
     now = datetime.now(ICT)
-    for hour in (8, 21):
+    hold(store)
+    for hour in DIGEST_HOURS:
         if now.hour >= hour:
             key = f"digest:{now.date()}:{hour}"
             if not store.get(key):
-                store.enqueue(key, digest(store))
+                body, held_ids = scheduled_digest(store, hour)
+                store.enqueue(key, body)
+                with store.db:
+                    store.db.executemany("UPDATE outbox SET status='digested',updated=? WHERE id=? AND status='held'",
+                                         [(time.time(), i) for i in held_ids])
+                store.put("last_digest_at", time.time())
                 store.put(key, True)
     flush(store)
     store.put("heartbeat", time.time())

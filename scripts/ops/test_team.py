@@ -436,5 +436,132 @@ class InstallerTests(unittest.TestCase):
         self.assertNotIn("com.picklehub.fix-agent", installer.OLD)
 
 
+class TelegramPolicyTests(unittest.TestCase):
+    """Owner rule 20/10/2026: instant incidents only, digests at 08:00/21:00, [Grok Bot] label."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.store = Store(Path(self.tmp.name))
+
+    def tearDown(self):
+        self.store.db.close()
+        self.tmp.cleanup()
+
+    def sent_texts(self, send):
+        return [json.loads(call.args[0].data)["text"] for call in send.call_args_list]
+
+    def fake_response(self):
+        class R:
+            def __enter__(self_inner):
+                return self_inner
+            def __exit__(self_inner, *a):
+                return False
+            def read(self_inner):
+                return b'{"ok": true, "result": {"message_id": 7}}'
+        return R()
+
+    def test_noisy_kinds_are_held_and_urgent_kinds_are_labelled(self):
+        self.store.enqueue("verification:40:1:x", "✅ ĐÃ KIỂM CHỨNG VÀ ĐÓNG · T40\nĐã đo lại jobs")
+        self.store.enqueue("alert:1.0", "THAY ĐỔI SỰ CỐ\nhttps://www.thepicklehub.net/ trả 0")
+        self.store.enqueue("action-start:5:1", "▶️ ĐANG XỬ LÝ · T5")
+        self.store.enqueue("starting:5:run:1", "T5: bắt đầu")
+        self.store.enqueue("watchdog:1.0", "Đội agent v2 không hoàn thành lượt chạy")
+        self.store.enqueue("control:9", "BÁO CÁO · T9")
+        self.store.enqueue("payment:abc", "Shop/thanh toán cần anh xử lý:\nĐơn A1 quá hạn")
+        with patch.object(team, "secret", return_value="test"), \
+             patch.object(team.urllib.request, "urlopen", side_effect=lambda *a, **k: self.fake_response()) as send:
+            team.flush(self.store)
+            team.flush(self.store)
+        texts = self.sent_texts(send)
+        self.assertEqual(len(texts), 3)
+        self.assertTrue(all(t.startswith("[Grok Bot]") for t in texts))
+        self.assertIn("[Grok Bot] 🔴 Đội agent v2", texts[0])
+        self.assertIn("[Grok Bot] BÁO CÁO · T9", texts[1])
+        self.assertIn("[Grok Bot] 🔴 Shop/thanh toán", texts[2])
+        held = [r[0] for r in self.store.db.execute("SELECT dedupe FROM outbox WHERE status='held' ORDER BY id")]
+        self.assertEqual(held, ["verification:40:1:x", "alert:1.0", "action-start:5:1", "starting:5:run:1"])
+
+    def test_scheduled_digest_folds_held_rows_and_external_feeds(self):
+        self.store.enqueue("verification:40:1:x", "✅ ĐÃ KIỂM CHỨNG VÀ ĐÓNG · T40\nĐã đo lại jobs")
+        self.store.enqueue("verification:41:1:y", "🔁 LỖI TÁI DIỄN — MỞ LẠI CÙNG MÃ\nJob news-repair cần chẩn đoán")
+        self.store.enqueue("alert:2.0", "THAY ĐỔI SỰ CỐ\nhttps://www.thepicklehub.net/vi trả 0")
+        team.hold(self.store)
+
+        def fake_command(argv, cwd=None, timeout=120, env=None):
+            if argv[:3] == ["gh", "run", "list"]:
+                wf = argv[argv.index("--workflow") + 1]
+                runs = [{"status": "completed", "conclusion": "success", "createdAt": "2099-01-01T00:00:00Z"}]
+                if wf == "quality.yml":
+                    runs = [{"status": "completed", "conclusion": "success", "createdAt": "2099-01-01T01:00:00Z"},
+                            {"status": "completed", "conclusion": "failure", "createdAt": "2099-01-01T00:00:00Z"}]
+                return 0, json.dumps(runs), ""
+            if "scripts/due-milestones.mjs" in argv:
+                return 3, "⏰ 2026-10-27 WC-RESULTS-ENABLE — bật tự đăng", ""
+            return 1, "", ""
+
+        def fake_rest(path, method="GET", data=None):
+            if path.startswith("rpc/ops_job_health_snapshot"):
+                return {"counts": {"healthy": 9, "warning": 1, "failed": 0},
+                        "jobs": [{"display_name": "News rewrite", "health_state": "warning"}]}
+            if path.startswith("ops_edge_function_state?select=function_slug,state"):
+                return []
+            if path.startswith("client_errors"):
+                return [{"message": "Load failed"}, {"message": "Load failed"}]
+            if path.startswith("fb_post_log"):
+                return [{"page_key": "thepicklehub"}]
+            return []
+
+        with patch.object(team, "command", side_effect=fake_command), patch.object(team, "rest", side_effect=fake_rest):
+            body, ids = team.scheduled_digest(self.store, 8)
+        self.assertTrue(body.startswith("[Grok Bot] Tổng hợp 08:00 "))
+        self.assertIn("TIN GOM TỪ LẦN TRƯỚC (3)", body)
+        self.assertIn("Kiểm chứng việc: 2 (1 đóng, 1 mở lại/cần xử lý)", body)
+        self.assertIn("Quality gate: 1/2 lượt đỏ, lượt cuối xanh", body)
+        self.assertIn("Job: 9 ổn · 1 cảnh báo · 0 lỗi (News rewrite)", body)
+        self.assertIn("Lỗi web: 2 lượt", body)
+        self.assertIn("Facebook đã đăng: 1 bài", body)
+        self.assertIn("WC-RESULTS-ENABLE", body)
+        self.assertEqual(len(ids), 3)
+        self.assertLessEqual(len(body), 3700)
+
+    def test_evening_digest_has_no_milestones_and_survives_feed_errors(self):
+        with patch.object(team, "command", return_value=(1, "", "")), \
+             patch.object(team, "rest", side_effect=urllib.error.URLError("down")):
+            body, ids = team.scheduled_digest(self.store, 21)
+        self.assertTrue(body.startswith("[Grok Bot] Tổng hợp 21:00 "))
+        self.assertNotIn("MỐC ĐẾN HẠN", body)
+        self.assertIn("Chưa đọc được (URLError)", body)
+        self.assertEqual(ids, [])
+
+    def test_site_needs_two_failed_sweeps_then_asks_github(self):
+        self.store.task("finding:site:site:/", "platform", "https://www.thepicklehub.net/ trả 0", "open")
+        with patch.object(team, "command", return_value=(0, "", "")) as cmd:
+            team.site_escalation(self.store)
+            self.assertEqual(cmd.call_count, 0)
+            team.site_escalation(self.store)
+            self.assertEqual(cmd.call_args.args[0], ["gh", "workflow", "run", "uptime-ping.yml", "--ref", "main"])
+            team.site_escalation(self.store)  # still down: no second dispatch within 30 min
+            self.assertEqual(cmd.call_count, 1)
+            with self.store.db:
+                self.store.db.execute("UPDATE tasks SET status='resolved'")
+            team.site_escalation(self.store)  # back up: one recheck so GitHub can send the recovery
+            self.assertEqual(cmd.call_count, 2)
+            team.site_escalation(self.store)
+            self.assertEqual(cmd.call_count, 2)
+        self.assertEqual(self.store.db.execute("SELECT COUNT(*) FROM outbox").fetchone()[0], 0)
+
+    def test_payment_findings_page_once_and_resolve_once(self):
+        self.store.task("finding:commerce:shop:claim:A1", "commerce", "Đơn A1 khách báo đã chuyển khoản >12h", "open")
+        team.payment_alert(self.store)
+        team.payment_alert(self.store)
+        with self.store.db:
+            self.store.db.execute("UPDATE tasks SET status='resolved'")
+        team.payment_alert(self.store)
+        team.payment_alert(self.store)
+        kinds = [r[0].split(":")[0] for r in self.store.db.execute("SELECT dedupe FROM outbox ORDER BY id")]
+        self.assertEqual(kinds, ["payment", "payment-resolved"])
+        self.assertTrue(team.labelled("payment-resolved:1", "x").startswith("[Grok Bot] ✅"))
+
+
 if __name__ == "__main__":
     unittest.main()
