@@ -32,9 +32,13 @@ CLAUDE_BIN = os.environ.get("CLAUDE_BIN", str(Path.home() / ".local/bin/claude")
 WORK = Path.home() / "Library/Application Support/PickleHub/fb-browser"
 LOG = Path.home() / "Library/Logs/PickleHub/fb-browser.log"
 PAUSE_FILE = REPO / ".claude/AGENTS_PAUSED"
-# Lỗi đầu tiên dựng cờ này: Chrome tắt / FB checkpoint thì thử lại mỗi 30' chỉ
+# Lỗi thứ HAI liên tiếp dựng cờ này: Chrome tắt / FB checkpoint thì thử lại mãi chỉ
 # tổ hại tài khoản. Cuong xoá file để chạy lại.
 STOP_FILE = WORK.parent / "fb-browser.STOPPED"
+# 20/10/2026 (Cuong): lỗi đăng chỉ báo Telegram ngay khi lỗi >=2 lượt liên tiếp;
+# lỗi đơn lẻ thì lượt 10' sau thử lại (bài đã ghi failed, prompt retry kiểm trang trước).
+FAIL_STREAK_FILE = WORK.parent / "fb-browser.failstreak"
+FAIL_STREAK_ALERT = 2
 # Hết usage Claude (19/10 08:09 dừng cả buổi sáng) không phải lỗi FB: không dựng
 # cờ, lượt 10' sau tự thử lại; claude thoát ngay nên thử lại gần như miễn phí.
 LIMIT_RE = re.compile(r"hit your .*limit|usage limit|rate.?limit|overloaded", re.I)
@@ -104,6 +108,21 @@ def tele(text: str) -> None:
                        input=text, capture_output=True, text=True, timeout=120)
     except Exception as e:
         log(f"telegram lỗi: {e}")
+
+
+def failure_streak(path: Path, failed: bool) -> int:
+    """Count consecutive posting failures in a small state file; success resets it."""
+    if not failed:
+        path.unlink(missing_ok=True)
+        return 0
+    try:
+        n = int(path.read_text().strip() or 0)
+    except (OSError, ValueError):
+        n = 0
+    n += 1
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(str(n), encoding="utf-8")
+    return n
 
 
 def gap_ok(page: dict) -> bool:
@@ -282,6 +301,7 @@ def post_one(page: dict, item: dict) -> int:
                     "link_comment_status": "posted" if res.get("comments") else "failed",
                     "raw_response": {"via": "chrome", **res}})
         log(f"OK {res.get('permalink')}")
+        failure_streak(FAIL_STREAK_FILE, False)
         # 20/10/2026: successful posts are counted in the Grok Bot digest
         # (fb_post_log); only failures message Telegram.
         return 0
@@ -293,9 +313,13 @@ def post_one(page: dict, item: dict) -> int:
     if LIMIT_RE.search(err):
         log(f"LIMIT {err} → thử lại lượt sau")
         return 1
+    streak = failure_streak(FAIL_STREAK_FILE, True)
+    if streak < FAIL_STREAK_ALERT:
+        log(f"FAIL {err} → lỗi {streak}/{FAIL_STREAK_ALERT}, lượt sau thử lại")
+        return 1
     STOP_FILE.write_text(f"{datetime.now(ICT):%Y-%m-%d %H:%M} {err}\n", encoding="utf-8")
     log(f"FAIL {err} → dừng tới khi xoá {STOP_FILE}")
-    tele(f"⚠️ {page['name']} đăng qua Chrome thất bại, job đã DỪNG: {item.get('slug')}\n{err}\n"
+    tele(f"🔴 {page['name']} đăng qua Chrome thất bại {streak} lượt liên tiếp, job đã DỪNG: {item.get('slug')}\n{err}\n"
          f"Kiểm tra Chrome còn mở + đăng nhập FB, rồi xoá:\n{STOP_FILE}")
     return 1
 

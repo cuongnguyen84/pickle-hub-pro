@@ -480,8 +480,9 @@ def outbox_kind(dedupe):
 
 
 def held_kind(dedupe):
-    kind = outbox_kind(dedupe)
-    return kind == "action" or kind in DIGEST_KINDS
+    # Button-press replies ("action-*") stay instant: Cuong just pressed the
+    # button and is waiting for the answer (owner decision 20/10/2026).
+    return outbox_kind(dedupe) in DIGEST_KINDS
 
 
 def labelled(dedupe, body):
@@ -563,7 +564,8 @@ def feed_supabase(since_iso):
         common = sorted(top.items(), key=lambda kv: -kv[1])[:2]
         lines.append(f"• Lỗi web: {len(errors)} lượt; nhiều nhất: " + "; ".join(f"{m} ({n})" for m, n in common))
     posts = rest(f"fb_post_log?select=page_key&status=eq.posted&posted_at=gte.{since_iso}") or []
-    lines.append(f"• Facebook đã đăng: {len(posts)} bài")
+    tweets = rest(f"x_posts?select=id&status=in.(posted,link_commented)&posted_at=gte.{since_iso}") or []
+    lines.append(f"• Đã đăng: Facebook {len(posts)} bài · X {len(tweets)} bài")
     return lines
 
 
