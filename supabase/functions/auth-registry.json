@@ -984,14 +984,15 @@
     "quick-table-chat": {
       "verify_jwt": false,
       "service_role": {
-        "uses_client": false,
+        "uses_client": true,
         "accepts_bearer": false
       },
       "flows": [
-        "user.read.user_jwt.derived_identity"
+        "user.read.user_jwt.derived_identity",
+        "user.write.user_jwt.derived_identity"
       ],
       "status": "classified",
-      "notes": "Bearer JWT is verified internally; returns a Gemini-parsed draft patch only, writes nothing."
+      "notes": "Bearer JWT is verified internally; returns a Gemini-parsed draft patch. Service role only inserts the caller's own turn (user_id from the verified JWT) into quick_table_chat_log for the unmet-requests agent."
     }
   }
 }
