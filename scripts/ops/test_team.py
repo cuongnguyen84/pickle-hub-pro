@@ -473,13 +473,15 @@ class TelegramPolicyTests(unittest.TestCase):
             team.flush(self.store)
             team.flush(self.store)
         texts = self.sent_texts(send)
-        self.assertEqual(len(texts), 3)
+        self.assertEqual(len(texts), 4)
         self.assertTrue(all(t.startswith("[Grok Bot]") for t in texts))
-        self.assertIn("[Grok Bot] 🔴 Đội agent v2", texts[0])
-        self.assertIn("[Grok Bot] BÁO CÁO · T9", texts[1])
-        self.assertIn("[Grok Bot] 🔴 Shop/thanh toán", texts[2])
+        # Button-press replies are instant: the owner is waiting on them.
+        self.assertIn("[Grok Bot] ▶️ ĐANG XỬ LÝ · T5", texts[0])
+        self.assertIn("[Grok Bot] 🔴 Đội agent v2", texts[1])
+        self.assertIn("[Grok Bot] BÁO CÁO · T9", texts[2])
+        self.assertIn("[Grok Bot] 🔴 Shop/thanh toán", texts[3])
         held = [r[0] for r in self.store.db.execute("SELECT dedupe FROM outbox WHERE status='held' ORDER BY id")]
-        self.assertEqual(held, ["verification:40:1:x", "alert:1.0", "action-start:5:1", "starting:5:run:1"])
+        self.assertEqual(held, ["verification:40:1:x", "alert:1.0", "starting:5:run:1"])
 
     def test_scheduled_digest_folds_held_rows_and_external_feeds(self):
         self.store.enqueue("verification:40:1:x", "✅ ĐÃ KIỂM CHỨNG VÀ ĐÓNG · T40\nĐã đo lại jobs")
@@ -509,6 +511,8 @@ class TelegramPolicyTests(unittest.TestCase):
                 return [{"message": "Load failed"}, {"message": "Load failed"}]
             if path.startswith("fb_post_log"):
                 return [{"page_key": "thepicklehub"}]
+            if path.startswith("x_posts"):
+                return [{"id": "a"}, {"id": "b"}]
             return []
 
         with patch.object(team, "command", side_effect=fake_command), patch.object(team, "rest", side_effect=fake_rest):
@@ -519,10 +523,19 @@ class TelegramPolicyTests(unittest.TestCase):
         self.assertIn("Quality gate: 1/2 lượt đỏ, lượt cuối xanh", body)
         self.assertIn("Job: 9 ổn · 1 cảnh báo · 0 lỗi (News rewrite)", body)
         self.assertIn("Lỗi web: 2 lượt", body)
-        self.assertIn("Facebook đã đăng: 1 bài", body)
+        self.assertIn("Đã đăng: Facebook 1 bài · X 2 bài", body)
         self.assertIn("WC-RESULTS-ENABLE", body)
         self.assertEqual(len(ids), 3)
         self.assertLessEqual(len(body), 3700)
+
+    def test_posting_failure_alerts_only_from_second_failure_in_a_row(self):
+        import fb_browser_post as fb
+        path = Path(self.tmp.name) / "fb.failstreak"
+        self.assertEqual(fb.failure_streak(path, True), 1)
+        self.assertLess(1, fb.FAIL_STREAK_ALERT)
+        self.assertEqual(fb.failure_streak(path, False), 0)
+        self.assertEqual(fb.failure_streak(path, True), 1)
+        self.assertEqual(fb.failure_streak(path, True), fb.FAIL_STREAK_ALERT)
 
     def test_evening_digest_has_no_milestones_and_survives_feed_errors(self):
         with patch.object(team, "command", return_value=(1, "", "")), \

@@ -41,7 +41,6 @@ import { handleXRun, xHealth, type XRunBody } from './x';
 import { handleXDraft, type XDraftBody } from './x-draft';
 import { isPromotionalSource } from './promo-filter';
 import { recordPromoShadow } from './promo-shadow';
-import { notifyPosted } from './notify';
 
 export interface Env {
   // vars
@@ -464,12 +463,7 @@ async function processNewsItem(
     if (appComment.status !== 'posted') {
       console.warn('[social-poster] app CTA comment failed:', appComment.error);
     }
-    await notifyPosted(env, {
-      platform: 'Facebook',
-      account: page.key,
-      body: item.title,
-      url: `https://facebook.com/${postedId}`,
-    });
+    // 20/10/2026: no per-post Telegram; the Grok Bot digest counts fb_post_log.
     await updateLinkComment(env, page.id, item.id, comment, 1);
     return {
       posted: true,

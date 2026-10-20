@@ -19,9 +19,8 @@
  *
  *   1. It never changes a decision. Nothing reads `promo_filter_shadow`.
  *   2. It never throws. A failure here must not cost a post that was fine.
- *   3. It is silent without `TYPESAFE_API_KEY`, exactly like `notify.ts` is
- *      without a Telegram token, so the pipeline runs unchanged when the trial
- *      ends and the secret is deleted.
+ *   3. It is silent without `TYPESAFE_API_KEY`, so the pipeline runs
+ *      unchanged when the trial ends and the secret is deleted.
  */
 
 import { isPromotionalSource } from './promo-filter';

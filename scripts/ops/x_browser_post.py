@@ -27,6 +27,7 @@ import fb_browser_post as fb  # noqa: E402  — dùng chung secret/rest/tele/run
 fb.LOG = Path.home() / "Library/Logs/PickleHub/x-browser.log"
 log = fb.log
 STOP_FILE = fb.WORK.parent / "x-browser.STOPPED"
+FAIL_STREAK_FILE = fb.WORK.parent / "x-browser.failstreak"  # xem fb_browser_post.FAIL_STREAK_ALERT
 HANDLE = "thepicklehub"
 MAX_PER_RUN = 10
 
@@ -110,6 +111,7 @@ def post_one(row: dict) -> int:
         })
         miss = f" — CHƯA reply link: {res.get('error')}" if row.get("link_url") and not replied else ""
         log(f"OK {url}{miss}")
+        fb.failure_streak(FAIL_STREAK_FILE, False)
         # 20/10/2026: success goes to the log only; a missing link reply still pages.
         if miss:
             fb.tele(f"⚠️ X (Chrome) đã đăng nhưng{miss}\n{url}")
@@ -121,9 +123,13 @@ def post_one(row: dict) -> int:
     if fb.LIMIT_RE.search(err):
         log(f"LIMIT {err} → thử lại lượt sau")
         return 1
+    streak = fb.failure_streak(FAIL_STREAK_FILE, True)
+    if streak < fb.FAIL_STREAK_ALERT:
+        log(f"FAIL {err} → lỗi {streak}/{fb.FAIL_STREAK_ALERT}, lượt sau thử lại")
+        return 1
     STOP_FILE.write_text(f"{datetime.now(fb.ICT):%Y-%m-%d %H:%M} {err}\n", encoding="utf-8")
     log(f"FAIL {err} → dừng tới khi xoá {STOP_FILE}")
-    fb.tele(f"⚠️ X đăng qua Chrome thất bại, job đã DỪNG.\n{err}\n"
+    fb.tele(f"🔴 X đăng qua Chrome thất bại {streak} lượt liên tiếp, job đã DỪNG.\n{err}\n"
             f"Kiểm tra Chrome còn mở + đăng nhập @{HANDLE}, rồi xoá:\n{STOP_FILE}")
     return 1
 

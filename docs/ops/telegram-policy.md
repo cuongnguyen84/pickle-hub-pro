@@ -16,15 +16,14 @@ with `[Grok Bot]`; instant alerts read `[Grok Bot] 🔴 …`, recoveries `[Grok 
 | `deploy-guard.yml` | Every failure on main. |
 | `quality.yml`, `security.yml` | First red run on main, then one "green again". |
 | `news-repair` | Only when rows are stuck (with its buttons) or the queue is unreadable. |
-| team-v2 `watchdog`, replies to commands (`control`, `accepted`, …) | As before, labelled. |
+| team-v2 `watchdog`, replies to commands and button presses (`control`, `accepted`, `action-*`, …) | As before, labelled. |
+| `fb_browser_post.py` / `x_browser_post.py` | Only when posting fails 2+ times in a row (job stops); a single failure retries next run. Also: picker returned an already-posted item; X posted without its link reply. |
 
 ## Digest (team-v2 `scheduled_digest`, reads sources, no new tables)
-- Held outbox rows: `verification`, `alert`, `starting`, `request`, `action-*`, `fallback`, `provider*`, `blocked-*`, `tournament-autopublish`, `content-*` (status `held` → `digested`).
+- Held outbox rows: `verification`, `alert`, `starting`, `request`, `fallback`, `provider*`, `blocked-*`, `tournament-autopublish`, `content-*` (status `held` → `digested`).
 - `gh run list` on main since the last digest: Quality, Deploy guard, Security, Playwright smoke/full, Lighthouse, Uptime, Milestone-due.
-- Supabase reads: `ops_job_health_snapshot` (replaces the 09:15 `ops-job-digest` Telegram; set `OPS_JOB_DIGEST_TELEGRAM=on` to restore), non-available edge functions, open cron incidents, `client_errors`, `fb_post_log`.
+- Supabase reads: `ops_job_health_snapshot` (replaces the 09:15 `ops-job-digest` Telegram; set `OPS_JOB_DIGEST_TELEGRAM=on` to restore), non-available edge functions, open cron incidents, `client_errors`, published posts (`fb_post_log`, `x_posts`).
 - 08:00 only: due milestones from `scripts/due-milestones.mjs` (`milestone-due.yml` no longer messages).
 
-## Not changed yet
-- `workers/social-poster` still sends one Telegram per published post when its
-  `TELEGRAM_*` secrets are set; workers deploy manually, so this needs a
-  decision and a `wrangler deploy`.
+## Social posting
+- `workers/social-poster` no longer sends a Telegram per published post (removed 20/10/2026); posts are counted in the digest.
