@@ -323,6 +323,7 @@ ERRORS = {
     'proposal_only_no_publishable_code': 'Bản cũ chỉ có đề xuất/Markdown; chưa có thay đổi ứng dụng để triển khai. Cần biên tập/kiểm chứng nguồn và tạo bản code thực tế.',
     'blog_requires_bilingual_publication_review': 'Bài blog cần đủ bản EN/VI, bản ghi VI trong DB, metadata và kiểm tra public; chưa có gói xuất bản đầy đủ.',
     'draft_model_failed': 'Claude không hoàn tất lượt sửa. Đã lưu chẩn đoán của provider; chưa có bản hợp lệ để triển khai.',
+    'grok_report_only_no_code_executor': 'Grok trả báo cáo, không sửa code và không xuất bản. Claude chỉ đăng Facebook và X.',
     'ci_not_successful': 'CI chưa đạt trên đúng phiên bản đã duyệt. Cần sửa hoặc đợi CI rồi bấm xử lý lại.',
     'pr_changed_or_not_mergeable': 'PR đã thay đổi hoặc chưa merge được. Phải kiểm chứng phiên bản mới trước khi duyệt lại.',
     'missing_reviewable_patch': 'Chưa có patch thực tế để kiểm tra/triển khai.',
@@ -391,17 +392,7 @@ def run_one(store):
                             return True
                     if not team.provider_available(store):
                         raise RuntimeError('provider_unavailable')
-                    if store.get('provider', 'claude') == 'codex':
-                        raise RuntimeError('codex_report_only_no_code_executor')
-                    from team_workspace import draft
-                    role = 'editorial' if task['role'] == 'editorial' else 'engineering'
-                    result = draft(store, role, context(store, task), tid)
-                    if not result:
-                        save(store, tid, phase='queued', reason='Chờ hạn mức model; yêu cầu được giữ nguyên.')
-                        return True
-                    if result.get('error') or result.get('deferred'):
-                        raise RuntimeError(result.get('error', 'provider_quota'))
-                    ev = result
+                    raise RuntimeError('grok_report_only_no_code_executor')
                 reply = prepare_pr(store, task, ev)
             store.enqueue(f'action-result:{tid}:{current["attempt"]}', reply)
         except (Exception, SystemExit) as exc:

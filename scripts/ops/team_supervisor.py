@@ -204,7 +204,16 @@ def collect(name):
             problems["ga4"] = "GA4 chưa đọc được — cần kiểm tra credential/dependency"
         _, due, _ = command(["/usr/bin/env", "node", "scripts/due-milestones.mjs"])
         for date, milestone in re.findall(r"(20\d\d-\d\d-\d\d) ([A-Z][A-Z0-9-]+) —", due):
-            problems["milestone:" + milestone] = f"Mốc {milestone} đến hạn {date}; cần làm theo predicate và ghi bằng chứng"
+            paths = team_seo.PAGE_MILESTONES.get(milestone)
+            if paths is not None:
+                missing = team_seo.pages_not_live(paths)
+                if missing:
+                    problems["milestone:" + milestone] = (
+                        f"Mốc {milestone} đến hạn {date}; trang chưa 200, thiếu thân bài, hoặc chưa có trong sitemap: "
+                        + ", ".join(missing))
+                continue
+            problems["milestone:" + milestone] = (
+                f"Mốc {milestone} đến hạn {date}; máy không kiểm được predicate, không tự đóng")
         return {"problems": problems, "seo": seo, "ga4": ga4, "milestones": due}
     if name in {"crawl", "citation"}:
         # Đo ngoài site, không chạm DB. Chỉ chạy trong lượt quét đầy đủ mỗi ngày
@@ -282,10 +291,17 @@ def clean_env():
     return env
 
 
+def provider_block_key(provider):
+    if provider == "codex":
+        return "codex_blocked_until"
+    if provider == "grok":
+        return "grok_blocked_until"
+    return "provider_blocked_until"
+
+
 def provider_available(store):
     select_provider(store)
-    key = "codex_blocked_until" if store.get("provider", "claude") == "codex" else "provider_blocked_until"
-    return time.time() >= store.get(key, 0)
+    return time.time() >= store.get(provider_block_key(store.get("provider", "claude")), 0)
 
 
 def claude_quota_exhausted(response):
@@ -294,25 +310,25 @@ def claude_quota_exhausted(response):
 
 
 def select_provider(store):
-    if store.get("provider_policy") != "claude_first":
-        return store.get("provider", "claude")
-    exhausted = (store.get("claude_block_reason") == "quota" and
-                 time.time() < store.get("provider_blocked_until", 0))
-    selected = "codex" if exhausted else "claude"
-    if store.get("provider", "claude") != selected:
-        store.put("provider", selected)
-        store.enqueue(f"provider-switch:{selected}:{int(time.time())}",
-                      "Claude hết hạn mức: dùng Codex dự phòng; tác vụ vẫn theo quyền và giới hạn hiện có." if exhausted else
-                      "Đã quay lại ưu tiên Claude; sẽ kiểm tra hạn mức ở tác vụ tiếp theo.")
-    return selected
+    """App control, development, operations and SEO stay off Claude. Claude only posts.
+
+    The slot name remains grok so Telegram cannot switch it. team_grok.run
+    sends the prompt to Gemini with GEMINI_API_KEY.
+    """
+    if store.get("provider") != "grok" or store.get("provider_policy") != "grok":
+        store.put("provider", "grok")
+        store.put("provider_policy", "grok")
+    return "grok"
 
 
 def provider_failure(store, response):
     """Trip a shared circuit on account exhaustion; collectors still run."""
     result = str(response.get("result", ""))
-    if store.get("provider", "claude") == "codex":
-        store.put("codex_blocked_until", time.time() + 1800)
-        store.task("provider", "chief", "Codex chưa trả kết quả hợp lệ; thử lại sau 30 phút")
+    provider = store.get("provider", "grok")
+    if provider in {"codex", "grok"}:
+        store.put(provider_block_key(provider), time.time() + 1800)
+        name = "Grok" if provider == "grok" else "Codex"
+        store.task("provider", "chief", f"{name} chưa trả kết quả hợp lệ; thử lại sau 30 phút")
         return True
     quota = claude_quota_exhausted(response)
     if not quota and "not logged in" not in result.lower():
@@ -354,13 +370,10 @@ def analyze(store, role, request="", task_id=None):
               + json.dumps(scrub({"request": request[:8000], "bundle": model_bundle(bundle)}), ensure_ascii=False))
     failure_detail = {}
     try:
-        provider = store.get("provider", "claude")
-        if provider == "codex":
-            from team_codex import run as codex_run
-            rc, response = codex_run(prompt, scratch, command, clean_env())
-        else:
-            rc, out, _ = command(ai_command(prompt), cwd=scratch, timeout=300, env=clean_env())
-            response = json.loads(out)
+        provider = "grok"
+        store.put("provider", "grok")
+        from team_grok import run as grok_run
+        rc, response = grok_run(prompt, secret)
         result = response.get("result")
         if rc or response.get("is_error") or not isinstance(result, str) or not result.strip() or (provider == "claude" and claude_quota_exhausted(response)):
             failure_detail = scrub({"exit": rc, "subtype": response.get("subtype"), "terminal_reason": response.get("terminal_reason"), "result": str(result)[:1000], "cost": response.get("total_cost_usd")})
@@ -375,7 +388,7 @@ def analyze(store, role, request="", task_id=None):
         artifact.update({"provider": provider, "usage": response.get("usage", {}),
                          "cost_status": response.get("cost_status", "api_equivalent")})
         store.finish(run, "draft_ready", artifact, cost)
-        store.put("codex_blocked_until" if provider == "codex" else "provider_blocked_until", 0)
+        store.put(provider_block_key(provider), 0)
         store.task("provider", "chief", provider + " hoạt động", "resolved", {"run": run})
         store.task("budget", "chief", "Giới hạn nội bộ không chặn tác vụ", "resolved", {"run": run})
         store.task(f"model:{role}", "chief", f"Agent {role} trả kết quả hợp lệ", "resolved", {"run": run})
@@ -525,11 +538,11 @@ def handle_control(store, task, text):
     elif action == 'deploy' and len(parts) == 4 and re.fullmatch(r'[0-9a-f]{12}', parts[3]):
         from team_actions import approve
         reply = approve(store, parts[2], parts[3])
-    elif action == "provider" and len(parts) == 3 and parts[2].lower() in {"codex", "claude"}:
-        provider = parts[2].lower()
-        store.put("provider_policy", "manual")
-        store.put("provider", provider)
-        reply = f"Đã chọn {provider}. Không thay đổi trần lượt gọi; kết quả lần chạy được báo riêng. Codex hiện trả phân tích/bản nháp, không tự sửa hay xuất bản."
+    elif action == "provider" and len(parts) == 3 and parts[2].lower() in {"codex", "claude", "grok"}:
+        store.put("provider_policy", "grok")
+        store.put("provider", "grok")
+        reply = ("Đội này dùng Grok cho kiểm soát ứng dụng, phát triển, vận hành và SEO. "
+                 "Claude chỉ đăng Facebook và X. Lệnh này không đổi sang Claude hay Codex.")
     elif action in {"content", "calendar"}:
         from team_content import render_calendar
         if len(parts) == 3 and parts[2].lower() in {'pause', 'resume'}:
@@ -594,7 +607,7 @@ def handle_control(store, task, text):
             changed = store.db.execute("UPDATE tasks SET status='cancelled',updated=? WHERE id=? AND status IN ('queued','awaiting_review','needs_review')", (time.time(), target))
         reply = f"Đã huỷ việc T{target}; giữ patch/báo cáo để tra cứu." if changed.rowcount else "Việc không ở trạng thái có thể huỷ."
     else:
-        reply = "Lệnh: /xuly team status|inbox|pause|resume, team provider codex|claude hoặc team report <run>."
+        reply = "Lệnh: /xuly team status|inbox|pause|resume hoặc team report <run>. Não đội là Grok."
     with store.db:
         store.db.execute("UPDATE tasks SET status='resolved',updated=? WHERE id=?", (time.time(), task["id"]))
         store.db.execute("INSERT OR IGNORE INTO outbox(dedupe,body,created,updated) VALUES (?,?,?,?)",
@@ -624,15 +637,11 @@ def work_queue(store, allow_ai):
         if re.match(r"^team(?:\s|$)", text, re.I):
             continue
         if not provider_available(store):
-            store.enqueue(f"blocked-provider:{task['id']}:{store.get('provider', 'claude')}",
-                          f"T{task['id']}: đang chờ vì provider {store.get('provider', 'claude')} bị chặn/hết hạn mức. Chưa thực hiện. Có thể dùng /xuly team provider codex để chuyển; không cần gọi AI để đổi provider.")
+            store.enqueue(f"blocked-provider:{task['id']}:grok",
+                          f"T{task['id']}: đang chờ vì Grok bị chặn hoặc thiếu khóa. Chưa thực hiện. Không chuyển sang Claude.")
             continue
         role = next((r for r in ROLES if re.match(rf"^{r}\b", text, re.I)), "engineering")
-        if role in {"engineering", "editorial"} and store.get("provider", "claude") != "codex":
-            from team_workspace import draft
-            result = draft(store, role, text, task["id"])
-        else:
-            result = analyze(store, role, text, task["id"])
+        result = analyze(store, role, text, task["id"])
         if result is None:
             earliest = store.db.execute("SELECT MIN(started) FROM runs WHERE started>? AND reserved>0", (time.time() - 86400,)).fetchone()[0]
             retry = datetime.fromtimestamp(earliest + 86401, ICT).strftime("%H:%M %d/%m") if earliest else "chưa xác định"
@@ -670,7 +679,9 @@ WRIAI_BRIEF = (
     "BẢN VI: bài Wriai giữ nguyên ý và dữ kiện, chỉ sửa lỗi hiển nhiên: tên thương hiệu viết đúng \"ThePickleHub\", "
     "bỏ nhân vật/chức danh bịa (vd \"Chuyên Gia Thepicklehub\"), bỏ lời hứa tính năng site không có. "
     "Mục đầu bản VI cũng phải nêu \"ThePickleHub\" đúng một lần (đúng hoa/thường; máy từ chối gói thiếu).\n"
-    "CÔNG SỨC NỘI DUNG (cả EN và VI, ưu tiên hơn 'giữ nguyên ý'): mỗi mục phải giúp người đọc làm được việc họ tìm. "
+    "CÔNG SỨC NỘI DUNG (cả EN và VI, ưu tiên hơn 'giữ nguyên ý'): không thêm bài hướng dẫn chung. "
+    "Bài trong hộp chờ vẫn chuẩn hoá đúng phạm vi của nó; không bịa thêm chủ đề. "
+    "Mỗi mục phải giúp người đọc làm được việc họ tìm. "
     "BỎ HẲN mục chỉ nhắc lại điều ai cũng tra được hoặc lạc truy vấn (giới thiệu nền tảng, đăng nhập/quyền riêng tư, "
     "'triển vọng', lịch sử môn chơi); bài ngắn hơn cũng được, miễn ≥600 từ. Nếu có khối DỮ LIỆU RIÊNG THEPICKLEHUB "
     "ở dưới thì đó là phần chính của bài: đặt thành \"table\" ngay sau đoạn mở đầu (tên, khu vực, số sân, giá), "
@@ -756,7 +767,7 @@ def tick(store, full=False, allow_ai=True):
         key = f"schedule:{now.date()}:editorial"
         if not store.db.execute("SELECT 1 FROM tasks WHERE dedupe=?", (key,)).fetchone():
             store.task(key, "editorial", "Bản nháp nội dung theo lịch Thứ Ba/Năm/Bảy", "queued", {
-                "request": "editorial Chọn một chủ đề có giá trị cho người chơi Việt Nam từ các nguồn tin đã đo, tránh trùng bài VI gần nhất; viết bản nháp Markdown VI và EN hoàn chỉnh trong docs/agent-drafts, ghi nguồn URL và thông tin cần xác minh. Nếu nguồn chưa đủ, chỉ viết đề cương có câu hỏi kiểm chứng, tuyệt đối không bịa."})
+                "request": "editorial Chỉ làm trang kết quả tiếng Việt của một giải đang có bản tiếng Anh mà bản /vi còn mỏng hoặc chưa có. Không viết bài hướng dẫn chung. Nếu không có giải nào như vậy, ghi một dòng là không có việc và dừng, không bịa chủ đề. Khi viết: ghi URL nguồn, ngày kiểm tra, và chỗ còn thiếu."})
     try:
         queue_wriai(store)
         store.task("wriai", "editorial", "Hộp chờ Wriai đọc được", "resolved")

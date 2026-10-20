@@ -16,6 +16,7 @@ from team_store import Store
 import team_supervisor as team
 from team_workspace import permitted
 import team_codex
+import team_grok
 import team_progress
 import team_install as installer
 
@@ -62,34 +63,33 @@ class StoreTests(unittest.TestCase):
         self.assertIsNone(self.store.begin("chief", "analysis", .75, 1, 1))
         self.assertIsNotNone(self.store.begin("chief", "analysis", .75, 1, 1, enforce_limits=False))
         self.assertEqual(self.store.db.execute("SELECT COUNT(*) FROM runs").fetchone()[0], 2)
-    def test_claude_first_only_falls_back_on_quota(self):
+    def test_team_stays_on_grok(self):
         self.store.put("provider_policy", "claude_first")
         self.store.put("provider", "codex")
-        self.assertEqual(team.select_provider(self.store), "claude")
-        self.assertFalse(team.provider_failure(self.store, {"result": "network error"}))
-        self.assertEqual(self.store.get("provider"), "claude")
-        team.provider_failure(self.store, {"result": "You're out of usage credits."})
-        self.assertEqual(self.store.get("provider"), "codex")
-        self.store.put("provider_blocked_until", time.time() - 1)
-        self.assertEqual(team.select_provider(self.store), "claude")
+        self.assertEqual(team.select_provider(self.store), "grok")
+        self.assertEqual(self.store.get("provider"), "grok")
+        self.assertEqual(self.store.get("provider_policy"), "grok")
+        self.assertTrue(team.provider_failure(self.store, {"result": "invalid key"}))
+        self.assertEqual(self.store.get("provider"), "grok")
+        self.assertFalse(team.provider_available(self.store))
 
-    def test_claude_auth_failure_does_not_use_codex(self):
-        self.store.put("provider_policy", "claude_first")
+    def test_grok_failure_does_not_call_claude(self):
+        self.store.put("provider", "grok")
         team.provider_failure(self.store, {"result": "Not logged in"})
-        self.assertEqual(team.select_provider(self.store), "claude")
+        self.assertEqual(team.select_provider(self.store), "grok")
         self.assertFalse(team.provider_available(self.store))
         self.assertFalse(team.claude_quota_exhausted({"result": "Rate limit exceeded"}))
 
-    def test_analysis_quota_keeps_original_request_for_fallback(self):
-        self.store.put("provider_policy", "claude_first")
+    def test_grok_failure_keeps_original_request(self):
         tid = self.store.task("telegram:900", "chief", "request", "queued", {"request": "original", "telegram_id": 900})
-        response = {"is_error": True, "result": "You're out of usage credits.", "total_cost_usd": 0, "usage": {"input_tokens": 0, "output_tokens": 0}}
-        with patch.object(team, "ROOT", Path(self.tmp.name)), patch.object(team, "flush"), patch.object(team, "command", return_value=(0, json.dumps(response), "")):
+        response = {"is_error": True, "result": "thiếu XAI_API_KEY", "total_cost_usd": None, "usage": {}}
+        with patch.object(team, "ROOT", Path(self.tmp.name)), patch.object(team, "flush"), patch("team_grok.run", return_value=(1, response)), patch.object(team, "command") as call:
             result = team.analyze(self.store, "chief", "original", tid)
-        self.assertTrue(result["deferred"])
-        self.assertEqual(self.store.get("provider"), "codex")
+        call.assert_not_called()
+        self.assertIn("error", result)
+        self.assertNotIn("deferred", result)
+        self.assertEqual(self.store.get("provider"), "grok")
         task = self.store.db.execute("SELECT * FROM tasks WHERE id=?", (tid,)).fetchone()
-        self.assertEqual(task["status"], "queued")
         self.assertEqual(json.loads(task["evidence"])["request"], "original")
 
     def test_progress_snapshot_excludes_inbox_and_reports_block(self):
@@ -154,18 +154,45 @@ class StoreTests(unittest.TestCase):
         self.assertNotIn("resume", args)
         self.assertNotIn("--dangerously-bypass-approvals-and-sandbox", args)
 
-    def test_provider_control_bypasses_claude_circuit(self):
+    def test_grok_parser_rejects_empty_or_http_error(self):
+        ok = team_grok.parse(200, json.dumps({"candidates": [{"content": {"parts": [{"text": "báo cáo"}]}}], "usageMetadata": {"candidatesTokenCount": 4}}))
+        self.assertFalse(ok["is_error"])
+        self.assertEqual(ok["result"], "báo cáo")
+        self.assertEqual(ok["provider"], "gemini")
+        self.assertEqual(ok["usage"]["completion_tokens"], 4)
+        self.assertIsNone(ok["total_cost_usd"])
+        denied = team_grok.parse(401, json.dumps({"error": {"message": "invalid key"}}))
+        self.assertTrue(denied["is_error"])
+        self.assertEqual(denied["result"], "invalid key")
+        self.assertNotIn("x-goog-api-key", json.dumps(team_grok.body("hello")))
+
+    def test_grok_switch_and_editorial_stays_report_only(self):
         self.store.put("provider_blocked_until", time.time() + 3600)
-        tid = self.store.task("telegram:200", "chief", "switch", "queued", {"request": "team provider codex"})
+        tid = self.store.task("telegram:201", "chief", "switch", "queued", {"request": "team provider grok"})
         with patch.object(team, "analyze") as model:
             team.work_queue(self.store, False)
         model.assert_not_called()
-        self.assertEqual(self.store.get("provider"), "codex")
+        self.assertEqual(self.store.get("provider"), "grok")
+        self.assertEqual(self.store.db.execute("SELECT status FROM tasks WHERE id=?", (tid,)).fetchone()[0], "resolved")
+        self.store.task("telegram:202", "editorial", "viết", "queued", {"request": "editorial viết bài"})
+        with patch.object(team, "analyze", return_value={"run": 1, "result": "báo cáo"}) as analyze:
+            team.work_queue(self.store, True)
+        analyze.assert_called()
+        self.assertEqual(analyze.call_args.args[0].get("provider"), "grok")
+
+    def test_provider_command_cannot_leave_grok(self):
+        self.store.put("provider_blocked_until", time.time() + 3600)
+        tid = self.store.task("telegram:200", "chief", "switch", "queued", {"request": "team provider claude"})
+        with patch.object(team, "analyze") as model:
+            team.work_queue(self.store, False)
+        model.assert_not_called()
+        self.assertEqual(self.store.get("provider"), "grok")
         self.assertTrue(team.provider_available(self.store))
         self.assertEqual(self.store.db.execute("SELECT status FROM tasks WHERE id=?", (tid,)).fetchone()[0], "resolved")
 
     def test_blocked_provider_notifies_each_task_once(self):
-        self.store.put("provider_blocked_until", time.time() + 3600)
+        self.store.put("provider", "grok")
+        self.store.put("grok_blocked_until", time.time() + 3600)
         for i in (1, 2):
             self.store.task(f"telegram:{i}", "chief", "job", "queued", {"request": "do job"})
         team.work_queue(self.store, True)
@@ -386,7 +413,7 @@ class InstallerTests(unittest.TestCase):
             ops = repo / "scripts/ops"
             (ops / "launchagents").mkdir(parents=True)
             launch.mkdir()
-            files = ["team_actions.py", "team_measure.py", "chief_brief.py", "content_agent.py", "ops_sweep.py", "xuly_daemon.py", "fix_agent_daemon.py", "team_supervisor.py", "team_store.py", "team_workspace.py", "team_codex.py", "team_progress.py", "team_verification.py", "team_seo.py", "team_content.py", "team_wriai.py", "team_tournament_coverage.py", "team_tournament_coverage.json", "team_content_plan.json", "team_roles.json", "team_watchdog.py", "team_ga4.py"]
+            files = ["team_actions.py", "team_measure.py", "chief_brief.py", "content_agent.py", "ops_sweep.py", "xuly_daemon.py", "fix_agent_daemon.py", "team_supervisor.py", "team_store.py", "team_workspace.py", "team_codex.py", "team_grok.py", "team_progress.py", "team_verification.py", "team_seo.py", "team_content.py", "team_wriai.py", "team_tournament_coverage.py", "team_tournament_coverage.json", "team_content_plan.json", "team_roles.json", "team_watchdog.py", "team_ga4.py"]
             for name in files:
                 (ops / name).write_text("fixture")
             for label in installer.OLD:

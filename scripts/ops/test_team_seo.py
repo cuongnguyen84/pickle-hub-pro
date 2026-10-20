@@ -115,6 +115,32 @@ class CrawlTests(unittest.TestCase):
         result = self.run_crawl({url: (200, page(url, alts=(("en", "/blog/a"), ("vi", "/vi/blog/ghost"), ("x-default", "/blog/a"))))})
         self.assertIn("blog:hreflang_orphan", result["problems"])
 
+    def test_single_canonical_segment_with_no_hreflang_is_not_a_problem(self):
+        result = self.run_crawl({})
+        players = next(row for row in result["segments"] if row["segment"] == "players")
+        self.assertEqual(players["hreflang"], "single_canonical")
+        self.assertEqual(players["with_hreflang"], 0)
+        self.assertNotIn("players:hreflang_missing", result["problems"])
+        self.assertIsNone(seo.hreflang_gap("players", [{"loc": "x", "alts": {}}]))
+        self.assertIsNone(seo.hreflang_gap("events", [{"loc": "x", "alts": {"vi": "/vi/x"}}]))
+        self.assertIn("phải có hreflang", seo.hreflang_gap("events", [{"loc": "x", "alts": {}}]))
+
+    def test_live_results_pages_close_the_milestone(self):
+        paths = list(seo.PAGE_MILESTONES["HK-RESULTS-LIVE"])
+        blog = "".join(f"<url><loc>{SITE}{path}</loc></url>" for path in paths)
+
+        def get(url, **kwargs):
+            if url.endswith("/sitemap-blog.xml"):
+                return 200, blog
+            path = url.split(SITE, 1)[-1].split("?", 1)[0]
+            if path in paths:
+                return 200, page(SITE + path, alts=(), words=400)
+            return 404, ""
+
+        self.assertEqual(seo.pages_not_live(paths, get=get), [])
+        thin = lambda url, **k: (200, blog if "sitemap" in url else page(url, words=10))
+        self.assertEqual(seo.pages_not_live(paths, get=thin), paths)
+
     def test_canonical_poisoning_signature(self):
         """Chữ ký sự cố cũ: nhiều path khác nhau cùng trả một canonical."""
         victim = f"{SITE}/vi/blog/a-vi"

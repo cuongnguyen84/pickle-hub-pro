@@ -283,17 +283,13 @@ Tối đa 3 improvements, 3 content_ideas."""
 
 
 def reason(bundle: dict) -> dict | None:
-    if not Path(CLAUDE_BIN).exists():
-        return None
     prompt = RUNBOOK + "\n\nBUNDLE:\n" + json.dumps(bundle, ensure_ascii=False)
     try:
-        # Dạng argv (`claude -p "<prompt>"`) — chạy được cả trên macOS lẫn các
-        # môi trường wrapper chỉ chấp nhận đúng cú pháp này (không stdin, không flag thêm).
-        p = subprocess.run(
-            [CLAUDE_BIN, "-p", prompt],
-            capture_output=True, text=True, timeout=REASON_TIMEOUT_S,
-        )
-        out = (p.stdout or "").strip()
+        from team_grok import run as grok_run
+        rc, response = grok_run(prompt)
+        if rc or response.get("is_error"):
+            return None
+        out = str(response.get("result") or "").strip()
         return json.loads(out[out.index("{"):out.rindex("}") + 1])
     except Exception:
         return None

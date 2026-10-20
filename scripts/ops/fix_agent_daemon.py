@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""fix_agent_daemon — rút /agentfix từ telegram_commands, chạy Claude điều-tra-only.
+"""fix_agent_daemon — rút /agentfix từ telegram_commands, chạy Grok điều-tra-only.
 
 Hình dạng đã chốt qua panel /idea telegram-fix-agent (05/08):
-  - Agent (`claude -p`) chạy KHÔNG tool, KHÔNG credential, KHÔNG mạng — chỉ suy
-    luận trên bundle chẩn đoán do daemon dựng sẵn, trả JSON verdict + opcode.
+  - Grok chạy KHÔNG tool — chỉ suy luận trên bundle chẩn đoán do daemon dựng
+    sẵn, trả JSON verdict + opcode. Claude không còn được gọi từ job này.
   - Daemon (file này) là bên duy nhất cầm key (đọc từ SECRETS_FILE), và opcode
     duy nhất nó thực thi là CHÈN một lệnh /retry hoặc /fix vào telegram_commands
     — bot ops-job-control tự thực thi qua các nhánh đã vá và tự báo kết quả.
@@ -212,30 +212,23 @@ def run_agent(job_key: str, bundle: dict) -> dict | None:
         + json.dumps(bundle, ensure_ascii=False, indent=1)[:60_000]
         + "\n```\n\nJOB_KEY=" + job_key + "\nTrả về DUY NHẤT một JSON object theo hợp đồng output."
     )
-    # Env sạch: không secret nào lọt vào tiến trình agent. --allowedTools "" = 0 tool,
-    # agent chỉ suy luận trên bundle — không shell, không mạng, không file.
-    env = {"PATH": "/usr/bin:/bin", "HOME": str(Path.home()),
-           "TERM": "dumb", "NO_COLOR": "1"}
     try:
-        proc = subprocess.run(
-            [CLAUDE_BIN, "-p", prompt, "--output-format", "json", "--allowedTools", "", "--max-turns", "1"],
-            capture_output=True, text=True, timeout=AGENT_TIMEOUT_S, cwd=str(SCRATCH), env=env,
-        )
-    except subprocess.TimeoutExpired:
-        log(f"agent timeout {AGENT_TIMEOUT_S}s cho {job_key}")
+        from team_grok import run as grok_run
+        rc, response = grok_run(prompt)
+    except Exception as exc:
+        log(f"grok lỗi cho {job_key}: {exc}")
         return None
-    if proc.returncode != 0:
-        log(f"agent exit {proc.returncode}: {(proc.stderr or '')[:300]}")
+    text = str((response or {}).get("result") or "")
+    if rc or (response or {}).get("is_error"):
+        log(f"grok không trả verdict cho {job_key}: {text[:300]}")
         return None
     try:
-        outer = json.loads(proc.stdout)
-        text = outer.get("result", "") if isinstance(outer, dict) else str(outer)
         match = re.search(r"\{.*\}", text, re.S)
         verdict = json.loads(match.group(0)) if match else None
     except (json.JSONDecodeError, AttributeError):
         verdict = None
     if not isinstance(verdict, dict):
-        log(f"agent output không parse được cho {job_key}: {proc.stdout[:300]}")
+        log(f"grok output không parse được cho {job_key}: {text[:300]}")
         return None
     return verdict
 
