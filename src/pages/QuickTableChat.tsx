@@ -132,6 +132,7 @@ const COPY = {
     dupWarn: (n: number) => ` ⚠️ Có ${n} dòng trùng — xem lại trong Bản nháp.`,
     aiError: "Mình chưa nghe rõ, mạng hoặc trợ lý đang chậm. Thử lại nhé?",
     attachmentNoList: "Mình chưa thấy tên đội trong file này. Ảnh cần thấy rõ từng dòng. Danh sách dài thì gửi thêm ảnh. Hoặc dán chữ, file Excel, hay link Google Sheet.",
+    photoMissed: (n: number) => (n === 1 ? " Một ảnh chưa thấy tên." : ` ${n} ảnh chưa thấy tên.`),
     retry: "Thử lại",
     quotaFull: (q: number) => `Bạn đang có đủ ${q} giải chia bảng. Kết thúc hoặc xoá bớt giải cũ để tạo giải mới nhé.`,
     myTables: "Xem giải của tôi",
@@ -248,6 +249,7 @@ const COPY = {
     dupWarn: (n: number) => ` ⚠️ ${n} duplicate lines — check the Draft.`,
     aiError: "I didn't catch that — the network or assistant is slow. Try again?",
     attachmentNoList: "I couldn't see team names in this file. The photo needs every line readable. A long list can be several photos. Or paste text, send Excel, or a Google Sheet link.",
+    photoMissed: (n: number) => (n === 1 ? " One photo had no names." : ` ${n} photos had no names.`),
     retry: "Try again",
     quotaFull: (q: number) => `You already have ${q} round-robin tournaments. Finish or delete one to create another.`,
     myTables: "My tournaments",
@@ -474,16 +476,56 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     setBusy(true);
     // Thử lại: bỏ tin lỗi + chính tin người dùng đó khỏi lịch sử rồi gửi lại.
     const prior = isRetry ? messages.slice(0, messages.map((m) => m.role).lastIndexOf("user")) : messages;
+    const files = msg.attachments ?? (msg.attachment ? [msg.attachment] : []);
+    // Mỗi ảnh một lượt. Gửi chung hai ảnh, kèm nháp 32 đội và câu "chia thế nào?",
+    // mô hình trả entries rỗng dù ảnh có tên — rồi trang vẫn hỏi chia 32 đội.
+    if (files.length) {
+      const hint = "Đọc hết tên trong ảnh này. Đánh đôi thì mỗi cặp một đội. Chỉ trả tên nhìn thấy trong ảnh, không chép danh sách khác.";
+      const history = [{ role: "user" as const, text: hint }];
+      const draftWithoutList = { ...draft, entries: undefined, player_count: undefined };
+      let incoming: Entry[] = [];
+      let missed = 0;
+      let transportFailed = false;
+      try {
+        for (const file of files) {
+          const { data, error } = await supabase.functions.invoke("quick-table-chat", {
+            body: { messages: history, draft: draftWithoutList, pending: "count", lang, attachment: file },
+            timeout: 60_000,
+          });
+          if (error || !data || typeof data !== "object" || "error" in data) { transportFailed = true; missed++; continue; }
+          const res = data as { intent: string; patch: unknown };
+          if (res.intent !== "fill" && res.intent !== "answer") { missed++; continue; }
+          const patch = trustPatch(res.patch, "", "count");
+          const got = Array.isArray(patch.entries) ? (patch.entries as Entry[]) : [];
+          if (!got.length) { missed++; continue; }
+          incoming = mergeRoster(incoming, got);
+        }
+      } finally {
+        setBusy(false);
+      }
+      if (!incoming.length) {
+        if (transportFailed) { setFailed(msg); pushBot(c.aiError); return; }
+        pushBot(c.attachmentNoList);
+        return;
+      }
+      const before = draft.entries?.length ?? 0;
+      const entries = mergeRoster(draft.entries, incoming);
+      const next = applyPatch(draft, { entries, roster_mode: "now" });
+      const fresh = entries.slice(before);
+      let ack = rosterAck(c, c.unit(next), before, entries.length, incoming.length, next.entries);
+      if (fresh.length) ack += ` ${fresh.slice(0, 6).map(entryLabel).join(", ")}${fresh.length > 6 ? ` +${fresh.length - 6}` : ""}`;
+      if (missed) ack += c.photoMissed(missed);
+      advance(next, ack);
+      return;
+    }
     const history = [...prior, { role: "user" as const, text: msg.text }]
       .slice(-8)
       .map((m) => ({ role: m.role, text: m.text.slice(0, 4000) }));
-    const files = msg.attachments ?? (msg.attachment ? [msg.attachment] : []);
     const { data, error } = await supabase.functions.invoke("quick-table-chat", {
       body: {
         messages: history, draft, pending: slot, lang, facts: chatFacts(draft, lang),
-        ...(files.length > 1 ? { attachments: files } : files.length === 1 ? { attachment: files[0] } : {}),
       },
-      timeout: files.length ? 60_000 : 25_000,
+      timeout: 25_000,
     });
     setBusy(false);
     if (error || !data || typeof data !== "object" || "error" in data) {
