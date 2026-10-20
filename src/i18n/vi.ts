@@ -235,6 +235,10 @@ export interface Translations {
     admin: string;
     openMenu: string;
     closeMenu: string;
+    toDark: string;
+    toLight: string;
+    accountMenu: string;
+    createTool: string;
   };
   tools: {
     title: string;
@@ -1096,6 +1100,11 @@ export interface Translations {
       startPlayoff: string;
       registrationTab: string;
       playoffTab: string;
+      playoffLockedOneGroup: string;
+      playoffLockedWaiting: string;
+      playoffLockedReady: string;
+      shareWith: string;
+      shareZalo: string;
       standings: string;
       player: string;
       wins: string;
@@ -3259,7 +3268,7 @@ export const vi: Translations = {
     tournaments: "Giải đấu",
     tools: "Công cụ",
     feed: "Bảng tin",
-    social: "Social",
+    social: "Cộng đồng",
     shop: "Chợ",
     more: "Thêm",
     search: "Tìm kiếm",
@@ -3272,6 +3281,10 @@ export const vi: Translations = {
     admin: "Quản trị",
     openMenu: "Mở menu",
     closeMenu: "Đóng menu",
+    toDark: "Chuyển sang nền tối",
+    toLight: "Chuyển sang nền sáng",
+    accountMenu: "Menu tài khoản",
+    createTool: "Tạo bảng đấu",
   },
   tools: {
     title: "Phần mềm Tổ chức Giải Pickleball & Tạo Bracket Miễn Phí",
@@ -3910,7 +3923,7 @@ export const vi: Translations = {
     status: {
       setup: "Đang thiết lập",
       groupStage: "Vòng bảng",
-      playoff: "Playoff",
+      playoff: "Vòng knockout",
       completed: "Hoàn thành",
     },
     myTournaments: "Giải đấu của tôi",
@@ -4131,10 +4144,15 @@ export const vi: Translations = {
       deleteConfirm: "Bạn có chắc chắn muốn xóa giải \"{name}\"? Tất cả dữ liệu (VĐV, trận đấu, đăng ký...) sẽ bị xóa vĩnh viễn.",
       deleteBtn: "Xóa giải",
       groupCompleteTitle: "Vòng bảng đã hoàn tất!",
-      groupCompleteDesc: "Tất cả trận đấu đã có kết quả. Bạn có thể chuyển sang vòng Playoff.",
-      startPlayoff: "Bắt đầu Playoff",
+      groupCompleteDesc: "Mọi trận vòng bảng đã có kết quả. Có thể mở vòng knockout.",
+      startPlayoff: "Bắt đầu vòng knockout",
       registrationTab: "Đăng ký",
-      playoffTab: "Playoff",
+      playoffTab: "Vòng knockout",
+      playoffLockedOneGroup: "Một bảng vòng tròn thì không có vòng knockout.",
+      playoffLockedWaiting: "Vòng knockout mở sau khi mọi trận vòng bảng có kết quả.",
+      playoffLockedReady: "Vòng knockout chưa được tạo. Khi vòng bảng xong, nút tạo nằm phía trên.",
+      shareWith: "Chia sẻ giải",
+      shareZalo: "Gửi qua Zalo",
       standings: "Bảng xếp hạng",
       player: "Người chơi",
       wins: "Thắng",
@@ -4205,8 +4223,8 @@ export const vi: Translations = {
       addPlayerName: "Tên VĐV",
       addPlayerTeam: "Team (không bắt buộc)",
       editInlineScore: "Sửa",
-      inputInlineScore: "Nhập",
-      openScoringPage: "Chấm",
+      inputInlineScore: "Nhập điểm",
+      openScoringPage: "Màn chấm điểm",
       cancelEdit: "Hủy",
       saveScore: "Lưu",
       errorOccurred: "Có lỗi xảy ra",
@@ -4569,7 +4587,7 @@ export const vi: Translations = {
       notFound: "Không tìm thấy giải đấu",
       backToList: "Quay lại danh sách",
       preliminary: "Sơ loại",
-      playoff: "Playoff",
+      playoff: "Vòng knockout",
       teams: "Đội",
       settings: "Cài đặt",
       teamList: "Danh sách đội",
@@ -4787,11 +4805,11 @@ export const vi: Translations = {
     completed: "Đã hoàn thành",
     backToList: "Quay lại",
     backToEvent: "Quay lại nội dung thi đấu",
-    openDashboard: "Dashboard",
+    openDashboard: "Bảng điều khiển",
     group: "Bảng",
     groupStage: "Vòng bảng",
     round: "Vòng",
-    playoff: "Playoff",
+    playoff: "Vòng knockout",
     winnersBracket: "Nhánh thắng",
     losersBracket: "Nhánh thua",
     final: "Chung kết",

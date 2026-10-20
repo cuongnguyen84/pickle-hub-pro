@@ -124,7 +124,7 @@ export const TheLineLayout = ({ title, exactTitle, description, noindex = false,
   const onRootPath = ROOT_PATHS.has(location.pathname);
   // UX-08: no history (deep-link landing) no longer hides the affordance —
   // it renders as a Link to the section root instead (sectionRootFor).
-  const { language, setLanguage } = useI18n();
+  const { language, setLanguage, t } = useI18n();
 
   // Phase 4 news fix (2026-05-19): clicking EN/VI in the global toggle used
   // to only call setLanguage(), which mutated i18n state but kept the URL
@@ -627,7 +627,7 @@ export const TheLineLayout = ({ title, exactTitle, description, noindex = false,
           <button
             className="tl-icon-btn"
             type="button"
-            aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label={mode === "dark" ? t.nav.toLight : t.nav.toDark}
             onClick={toggleMode}
           >
             {mode === "dark" ? (
@@ -646,7 +646,7 @@ export const TheLineLayout = ({ title, exactTitle, description, noindex = false,
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
               <path d="M12 5v14M5 12h14" />
             </svg>
-            <span>{language === "vi" ? "Tạo bracket" : "Create bracket"}</span>
+            <span>{t.nav.createTool}</span>
           </Link>
 
           {user ? (
@@ -662,7 +662,7 @@ export const TheLineLayout = ({ title, exactTitle, description, noindex = false,
                 <button
                   type="button"
                   className="tl-avatar"
-                  aria-label="Account menu"
+                  aria-label={t.nav.accountMenu}
                   aria-expanded={avatarOpen}
                   onClick={() => setAvatarOpen((p) => !p)}
                 >
@@ -1049,7 +1049,7 @@ export const TheLineLayout = ({ title, exactTitle, description, noindex = false,
               <h4>{language === "vi" ? "THI ĐẤU" : "Compete"}</h4>
               <ul>
                 <li><Link to="/tournaments">{language === "vi" ? "Giải đấu" : "Tournaments"}</Link></li>
-                <li><Link to="/tools">{language === "vi" ? "Bracket Lab" : "Bracket Lab"}</Link></li>
+                <li><Link to={language === "vi" ? "/vi/tools" : "/tools"}>{language === "vi" ? "Công cụ" : "Bracket Lab"}</Link></li>
                 <li><Link to="/forum">{language === "vi" ? "Diễn đàn" : "Forum"}</Link></li>
               </ul>
             </div>
