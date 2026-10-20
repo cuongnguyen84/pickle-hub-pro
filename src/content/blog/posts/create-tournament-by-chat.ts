@@ -14,9 +14,9 @@ const post: BlogPost = {
   },
   content: {
     en: {
-      title: "Create a Pickleball Draw by Chat: Paste a List, Up to 48 Teams",
-      metaTitle: "Paste a Pickleball List into Chat | ThePickleHub",
-      metaDescription: "Paste a Zalo or Excel list into ThePickleHub chat and create a round-robin for up to 48 teams. 8 teams, 2 courts: 28 or 12 matches. 20 Oct 2026.",
+      title: "Create a Pickleball Draw with AI: Paste a List, Up to 48 Teams",
+      metaTitle: "AI Pickleball Draw from a Pasted List | ThePickleHub",
+      metaDescription: "ThePickleHub AI reads a pasted list or photo and builds a round-robin for up to 48 teams. 8 teams, 2 courts: 28 or 12 matches. 20 Oct 2026.",
       howToSteps: [
         { name: "Choose doubles or singles", text: "Open the chat and tap Doubles or Singles. That tap does not call the model." },
         { name: "Paste the list and read the draft", text: "One team per line, like Nam - Hung. Open the draft and read every name before the next question." },
@@ -26,7 +26,7 @@ const post: BlogPost = {
       sections: [
         {
           heading: "Open the chat",
-          content: "Last updated: 20 October 2026. ThePickleHub chat at https://www.thepicklehub.net/tools/quick-tables/chat turns a pasted list into one round-robin draw for up to 48 doubles teams or 48 singles players. Sign in, paste the names, read every name in the draft, then tap Create. For 8 teams and 2 courts, one group is 28 matches and two groups of 4 are 12 group matches before the playoff. The Vietnamese screen is https://www.thepicklehub.net/vi/tools/quick-tables/chat. A chip tap does not call the model. Typed text, a photo, a PDF, or a spreadsheet does.",
+          content: "Last updated: 20 October 2026. ThePickleHub AI chat at https://www.thepicklehub.net/tools/quick-tables/chat reads a pasted list, a photo, or a spreadsheet and builds one round-robin draw for up to 48 doubles teams or 48 singles players. Sign in, paste the names, read every name in the draft, then tap Create. For 8 teams and 2 courts, one group is 28 matches and two groups of 4 are 12 group matches before the playoff. The Vietnamese screen is https://www.thepicklehub.net/vi/tools/quick-tables/chat. A chip tap does not call the AI. Typed text, a photo, a PDF, or a spreadsheet does, and a misread name has to be fixed in the draft before you continue.",
           image: {
             src: "/images/blog/create-tournament-by-chat-step-1.webp",
             alt: "Chat asking doubles or singles, with Doubles highlighted and a message box underneath",
@@ -87,9 +87,9 @@ const post: BlogPost = {
       ],
     },
     vi: {
-      title: "Tạo giải pickleball bằng chat: dán danh sách Zalo, tối đa 48 đội",
-      metaTitle: "Tạo giải pickleball bằng chat | Dán danh sách",
-      metaDescription: "Dán danh sách Zalo vào chat ThePickleHub, đọc từng tên, tạo giải vòng bảng tối đa 48 đội. 8 đội 2 sân: 28 trận hoặc 12 trận. 20/10/2026.",
+      title: "Tạo giải pickleball bằng AI: dán danh sách Zalo, tối đa 48 đội",
+      metaTitle: "Tạo giải AI pickleball | Dán danh sách Zalo",
+      metaDescription: "AI của ThePickleHub đọc danh sách Zalo hoặc ảnh và tạo giải vòng bảng tối đa 48 đội. 8 đội 2 sân: 28 trận hoặc 12 trận. 20/10/2026.",
       howToSteps: [
         { name: "Chọn đôi hoặc đơn", text: "Mở chat và bấm Đôi hoặc Đơn. Bấm chip không gọi AI." },
         { name: "Dán danh sách và đọc Bản nháp", text: "Mỗi dòng một đội, kiểu Nam - Hùng. Mở Bản nháp và đọc từng tên trước câu hỏi tiếp theo." },
@@ -99,7 +99,7 @@ const post: BlogPost = {
       sections: [
         {
           heading: "Mở chat",
-          content: "Cập nhật lần cuối: 20/10/2026. Chat của ThePickleHub tại https://www.thepicklehub.net/vi/tools/quick-tables/chat tạo giải vòng bảng pickleball từ danh sách dán — tin Zalo, ảnh hoặc Excel — cho tối đa 48 đội đánh đôi hoặc 48 VĐV đánh đơn. Bạn đăng nhập, dán tên, đọc từng tên trong Bản nháp, rồi bấm Tạo giải. Với 8 đội và 2 sân: một bảng là 28 trận; hai bảng 4 đội là 12 trận vòng bảng rồi vào nhánh. Bản tiếng Anh nằm ở https://www.thepicklehub.net/tools/quick-tables/chat. Bấm chip thì trả lời ngay, không gọi AI. Chữ gõ tay, ảnh, PDF hoặc file bảng tính thì có gọi.",
+          content: "Cập nhật lần cuối: 20/10/2026. AI của ThePickleHub tại https://www.thepicklehub.net/vi/tools/quick-tables/chat đọc danh sách dán — tin Zalo, ảnh hoặc Excel — và tạo một giải vòng bảng pickleball cho tối đa 48 đội đánh đôi hoặc 48 VĐV đánh đơn. Bạn đăng nhập, dán tên, đọc từng tên trong Bản nháp, rồi bấm Tạo giải. Với 8 đội và 2 sân: một bảng là 28 trận; hai bảng 4 đội là 12 trận vòng bảng rồi vào nhánh. Bản tiếng Anh nằm ở https://www.thepicklehub.net/tools/quick-tables/chat. Bấm chip thì trả lời ngay, không gọi AI. Chữ gõ tay, ảnh, PDF hoặc file bảng tính thì AI đọc, và tên đọc sai phải sửa trong Bản nháp trước khi đi tiếp.",
           image: {
             src: "/images/blog/create-tournament-by-chat-step-1.webp",
             alt: "Màn chat hỏi đánh đôi hay đánh đơn, chip Đôi đang được chọn, ô nhắn ở dưới",

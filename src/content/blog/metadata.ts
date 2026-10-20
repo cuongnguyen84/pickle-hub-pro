@@ -21,12 +21,12 @@ export const blogMetadata: BlogPostMetadata[] = [
       "src": "/images/blog/create-tournament-by-chat-hero.webp",
       "alt": "ThePickleHub chat screen ready to create a club draw, with two groups and a Create button"
     },
-    "titleEn": "Create a Pickleball Draw by Chat: Paste a List, Up to 48 Teams",
-    "titleVi": "Tạo giải pickleball bằng chat: dán danh sách Zalo, tối đa 48 đội",
-    "metaTitleEn": "Paste a Pickleball List into Chat | ThePickleHub",
-    "metaTitleVi": "Tạo giải pickleball bằng chat | Dán danh sách",
-    "metaDescriptionEn": "Paste a Zalo or Excel list into ThePickleHub chat and create a round-robin for up to 48 teams. 8 teams, 2 courts: 28 or 12 matches. 20 Oct 2026.",
-    "metaDescriptionVi": "Dán danh sách Zalo vào chat ThePickleHub, đọc từng tên, tạo giải vòng bảng tối đa 48 đội. 8 đội 2 sân: 28 trận hoặc 12 trận. 20/10/2026."
+    "titleEn": "Create a Pickleball Draw with AI: Paste a List, Up to 48 Teams",
+    "titleVi": "Tạo giải pickleball bằng AI: dán danh sách Zalo, tối đa 48 đội",
+    "metaTitleEn": "AI Pickleball Draw from a Pasted List | ThePickleHub",
+    "metaTitleVi": "Tạo giải AI pickleball | Dán danh sách Zalo",
+    "metaDescriptionEn": "ThePickleHub AI reads a pasted list or photo and builds a round-robin for up to 48 teams. 8 teams, 2 courts: 28 or 12 matches. 20 Oct 2026.",
+    "metaDescriptionVi": "AI của ThePickleHub đọc danh sách Zalo hoặc ảnh và tạo giải vòng bảng tối đa 48 đội. 8 đội 2 sân: 28 trận hoặc 12 trận. 20/10/2026."
   },
   {
     "slug": "hong-kong-slam-2026-results",
