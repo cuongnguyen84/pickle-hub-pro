@@ -34,6 +34,8 @@ export interface Draft {
   series_style?: SeriesStyle;
   /** cỡ từng nhánh do người dùng đặt (vd [16, 14, 14]); có thì thay cho luật mặc định */
   series_sizes?: number[];
+  /** đúng N đội/VĐV mỗi bảng vào vòng knockout — không lấy thêm hạng 3 */
+  advance_per_group?: number;
   /** giải đôi + danh sách toàn tên lẻ: đã chọn cách ghép */
   pairing_done?: boolean;
   /** đã qua bước "thêm tuỳ chọn" */
@@ -226,7 +228,11 @@ export function applyPatch(d: Draft, patch: unknown): Draft {
     next.time_done = true;
   }
   if (p.default_sets === 1 || p.default_sets === 3 || p.default_sets === 5) next.default_sets = p.default_sets;
-  if (p.series === 1 || p.series === 2 || p.series === 3) { next.series = p.series; next.series_sizes = undefined; }
+  if (p.series === 1 || p.series === 2 || p.series === 3) {
+    next.series = p.series;
+    next.series_sizes = undefined;
+    if (p.advance_per_group == null) next.advance_per_group = undefined;
+  }
   if (Array.isArray(p.series_sizes) && p.series_sizes.length) {
     const sizes = resolveSeriesSizes(p.series_sizes, entryCount(next));
     if (sizes) { next.series_sizes = sizes; next.series = sizes.length; }
@@ -237,10 +243,14 @@ export function applyPatch(d: Draft, patch: unknown): Draft {
     if (sizes) {
       next.series_sizes = sizes;
       next.series = sizes.length;
+      next.advance_per_group = undefined;
       if (sizes.length > MAX_SERIES) next.series_style = "series";
     }
   }
-  return next;
+  const adv = Number(p.advance_per_group);
+  if (p.advance_per_group === null) next.advance_per_group = undefined;
+  else if (Number.isInteger(adv) && adv >= 1 && adv <= 8) next.advance_per_group = adv;
+  return lockAdvance(next);
 }
 
 export type PairingMode = "sequential" | "random" | "each_line";
@@ -526,6 +536,9 @@ export function chatFacts(d: Draft, lang: "vi" | "en"): string {
     `Chia bảng: bảng ${MIN_GROUP}–${MAX_GROUP} ${u}, 2–${MAX_GROUPS} bảng, số bảng nào cũng được nếu chia đều nằm trong khoảng đó. Một số cách:`,
     ...options.map(describe),
     chosen ? `Đang chọn: ${chosen.groupCount} bảng × ${range(chosen)}.` : "Chưa chọn cách chia bảng.",
+    d.advance_per_group && d.group_count
+      ? `ĐÃ CHỐT: đúng ${d.advance_per_group} mỗi bảng = ${d.advance_per_group * d.group_count} vào vòng knockout. KHÔNG lấy thêm hạng 3, KHÔNG vé vớt.`
+      : "",
     plan ? `Nhánh đang chọn: ${plan.map((sl, i) => seriesLine(seriesName(style, i, "vi"), sl, "vi", u)).join("; ")}.` : "",
     chosen ? `Mỗi hạng một nhánh: ${(() => {
       const ranks = rankSeriesSizes(chosen.sizes);
@@ -533,4 +546,256 @@ export function chatFacts(d: Draft, lang: "vi" | "en"): string {
     })()}` : "",
     `Xếp hạng toàn giải để chia nhánh: mọi đội nhất bảng (so khác bảng bằng tỉ lệ thắng, rồi hiệu số trung bình/trận, rồi điểm ghi trung bình/trận), rồi mọi đội nhì, rồi hạng 3… Luật mặc định gộp nhất+nhì vào nhánh đầu. "Mỗi hạng một nhánh" thì nhất → Series A, nhì → B, ba → C, hạng sau một nhánh; hạng chỉ còn 1 đội thì đội đó không vào playoff. Cỡ nhánh đặt tuỳ ý được (1–8 nhánh, mỗi nhánh ≥ 2) qua series_sizes. Nhánh không tròn 2/4/8/16/32 thì đội xếp cao được miễn vòng 1 (BYE).`,
   ].filter(Boolean).join("\n");
+}
+
+const fold = (s: string) =>
+  s.normalize("NFD").replace(/\p{M}/gu, "").toLocaleLowerCase("vi").replace(/đ/g, "d").replace(/\s+/g, " ").trim();
+
+/** "top N mỗi bảng" = đúng N × số bảng, không kéo thêm hạng 3 cho đủ cây. */
+export function lockAdvance(d: Draft): Draft {
+  const n = d.advance_per_group;
+  const g = d.group_count;
+  if (!n || !g) return d;
+  const qual = n * g;
+  const total = entryCount(d);
+  if (qual < 2 || (total > 0 && qual > total)) {
+    return { ...d, advance_per_group: undefined };
+  }
+  if (d.series === 1 && d.series_sizes?.length === 1 && d.series_sizes[0] === qual) return d;
+  return { ...d, series: 1, series_sizes: [qual] };
+}
+
+/** Số liệu người dùng đã nói trong câu, không cần mô hình. */
+export function readUserFacts(text: string): Partial<Draft> {
+  const folded = fold(text);
+  const out: Partial<Draft> = {};
+  // "đổi chỗ / đổi tên" cũng gấp thành "doi" — không được hiểu thành đánh đôi.
+  const spoken = folded.replace(/\bdoi (cho|ten)\b/g, " ");
+  const singles = /\b(don|singles)\b/.test(spoken);
+  const doubles = /\b(doi|doubles|cap)\b/.test(spoken);
+  if (singles && !doubles) out.is_doubles = false;
+  else if (doubles) out.is_doubles = true;
+
+  const advancePhrase = /(?:top|lay|chon)\s*(\d{1,2})\s*(?:nguoi|doi|vdv)?\s*(?:moi|per)\s*(?:bang|group)\b/;
+  const count = folded.match(/\b(\d{1,3})\s*(doi|vdv|nguoi|cap|pairs|players|teams)\b/);
+  if (count) {
+    const n = Number(count[1]);
+    const advHit = folded.match(advancePhrase);
+    const insideAdvance = !!advHit && advHit[0].includes(count[0]);
+    if (!insideAdvance && n >= 2 && n <= 500) out.player_count = n;
+  }
+
+  const grid = folded.match(/\b(\d{1,2})\s*[x×]\s*(\d{1,2})\b/);
+  // "2 bảng" / "chia 4 bảng". "top 2 mỗi bảng" không khớp vì có chữ giữa số và "bảng".
+  const groups = folded.match(/(?:chia\s+)?(\d{1,2})\s+(?:bang|groups?)\b/);
+  if (grid && Number(grid[2]) >= MIN_GROUP && Number(grid[2]) <= MAX_GROUP) out.group_count = Number(grid[1]);
+  else if (groups) {
+    const g = Number(groups[1]);
+    if (g >= 1 && g <= MAX_GROUPS) out.group_count = g;
+  }
+
+  const named = text.match(/(?:tên giải|ten giai|tên là|ten la|gọi là|goi la|name is|named)\s*[:：]?\s*([^,\n]+)/i);
+  if (named) {
+    const raw = named[1].replace(/\s+(đôi|doi|đơn|don|doubles|singles|playoff)\s*$/i, "").replace(/^["“]|["”]$/g, "").trim();
+    if (raw.length >= 2 && raw.length <= 80) out.name = raw;
+  }
+
+  const courts = folded.match(/\b(\d{1,2})\s*(?:san|courts?)\b/);
+  if (courts) {
+    const n = Number(courts[1]);
+    if (n >= 1 && n <= 50) {
+      out.courts = Array.from({ length: n }, (_, i) => i + 1);
+      out.courts_done = true;
+    }
+  }
+
+  const hm = text.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
+  const spokenTime = folded.match(/\b(\d{1,2})\s*h\s*(\d{1,2})?\s*(toi|sang|chieu|trua|pm|am)?\b/);
+  if (hm) out.start_time = `${hm[1].padStart(2, "0")}:${hm[2]}`;
+  else if (spokenTime) {
+    let h = Number(spokenTime[1]);
+    const mi = Number(spokenTime[2] ?? 0);
+    const part = spokenTime[3];
+    if ((part === "toi" || part === "pm" || part === "chieu") && h < 12) h += 12;
+    if (h <= 23 && mi <= 59) {
+      out.start_time = `${String(h).padStart(2, "0")}:${String(mi).padStart(2, "0")}`;
+      out.time_done = true;
+    }
+  }
+
+  const adv = folded.match(/(?:top|lay|chon)\s*(\d{1,2})\s*(?:nguoi|doi|vdv)?\s*(?:moi|per)\s*(?:bang|group)\b/);
+  if (adv) out.advance_per_group = Number(adv[1]);
+  else if (/top\s*2\b|nhat nhi moi bang|1st and 2nd/.test(folded)) out.advance_per_group = 2;
+  return out;
+}
+
+function findEntry(entries: Entry[], query: string): number {
+  const q = fold(query).replace(/^(doi|vdv|cap)\s+/, "");
+  if (q.length < 1) return -1;
+  const exact = entries.findIndex((e) => fold(e.p1) === q || (e.p2 && fold(e.p2) === q) || fold(entryLabel(e)) === q);
+  if (exact >= 0) return exact;
+  return entries.findIndex((e) => fold(e.p1).includes(q) || (e.p2 && fold(e.p2).includes(q)) || fold(entryLabel(e)).includes(q));
+}
+
+const structuralEdit = (text: string) =>
+  /doi cho|swap |doi ten|rename |chia\s+\d+\s*bang|\d+\s*[x×]\s*\d+/.test(fold(text));
+
+/** Câu hỏi hoặc danh sách dán thì vẫn cần mô hình. Số liệu và lệnh sửa thì không. */
+export function messageNeedsModel(text: string): boolean {
+  if (looksLikeNameList(text)) return true;
+  const folded = fold(text);
+  return /[?]/.test(text) || /the nao|bao nhieu|tai sao|\bhow\b|\bwhat\b|\bwhy\b/.test(folded);
+}
+
+/**
+ * Đổi chỗ / đổi tên / chia bảng trên đúng danh sách đang có.
+ * Trả null khi câu không chứa lệnh hay số liệu.
+ */
+export function applySpokenEdit(draft: Draft, text: string): Draft | null {
+  const facts = readUserFacts(text);
+  let next: Draft = { ...draft, ...(draft.entries ? { entries: draft.entries.map((e) => ({ ...e })) } : {}) };
+  let touched = false;
+  if (Object.keys(facts).length) {
+    next = applyPatch(next, facts);
+    touched = true;
+  }
+  const entries = next.entries ? next.entries.map((e) => ({ ...e })) : undefined;
+  let rosterTouched = false;
+  if (entries) {
+    for (const m of text.matchAll(/(?:đổi chỗ|doi cho|swap)\s+(.+?)\s+(?:với|voi|và|va|and|with)\s+([^,\n]+)/gi)) {
+      const i = findEntry(entries, m[1]);
+      const j = findEntry(entries, m[2]);
+      if (i >= 0 && j >= 0 && i !== j) {
+        [entries[i], entries[j]] = [entries[j], entries[i]];
+        rosterTouched = true;
+      }
+    }
+    for (const m of text.matchAll(/(?:đổi tên|doi ten|rename)\s+(.+?)\s+(?:thành|thanh|to)\s+([^,\n]+)/gi)) {
+      const i = findEntry(entries, m[1]);
+      const name = m[2].trim().replace(/\s+/g, " ").slice(0, 60);
+      if (i >= 0 && name) {
+        const target = fold(m[1]);
+        const e = entries[i];
+        if (e.p2 && fold(e.p2).includes(target) && !fold(e.p1).includes(target)) entries[i] = { ...e, p2: name };
+        else entries[i] = { ...e, p1: name };
+        rosterTouched = true;
+      }
+    }
+    if (rosterTouched) next = { ...next, entries, player_count: entries.length };
+  }
+  touched = touched || rosterTouched;
+  if (!touched) return null;
+  return lockAdvance(next);
+}
+
+/** Danh sách mô hình bịa (không có trong câu, không phải lệnh sửa) thì bỏ. */
+export function dropInventedRoster(patch: Record<string, unknown>, text: string, before: Entry[] | undefined): Record<string, unknown> {
+  const p = { ...patch };
+  const facts = readUserFacts(text);
+  if (facts.advance_per_group && facts.group_count == null) delete p.group_count;
+  if (typeof p.player_count === "number" && facts.player_count == null && !looksLikeNameList(text)) delete p.player_count;
+  if (!Array.isArray(p.entries)) return p;
+  const entries = p.entries as Entry[];
+  if (looksLikeNameList(text)) return p;
+  if (structuralEdit(text)) {
+    delete p.entries;
+    return p;
+  }
+  const known = new Set((before ?? []).map((e) => fold(entryLabel(e))));
+  const folded = fold(text);
+  const invented = entries.filter((e) => !known.has(fold(entryLabel(e))) && !folded.includes(fold(e.p1)));
+  if (!(before?.length) && invented.length === entries.length) delete p.entries;
+  return p;
+}
+
+/** Giữ chỗ đã xếp khi chỉ đổi chỗ/đổi tên. Đổi số bảng thì chia lại theo thứ tự hiện tại, không xáo. */
+export function keepOrAssign(prev: number[], count: number, prevGroups: number, nextGroups: number): number[] | null {
+  if (!count || !nextGroups) return [];
+  if (prev.length === count && prevGroups === nextGroups && prev.every((g) => g >= 0 && g < nextGroups)) return prev;
+  if (prev.length === count && prevGroups > 0 && prevGroups !== nextGroups) {
+    return Array.from({ length: count }, (_, i) => i % nextGroups);
+  }
+  return null;
+}
+
+export function playoffSummary(d: Draft, lang: "vi" | "en"): string | null {
+  const g = d.group_count ?? 0;
+  const vi = lang === "vi";
+  if (g < 2) return g === 1 ? (vi ? "Một bảng vòng tròn, không có vòng knockout" : "One round-robin group, no knockout") : null;
+  const adv = d.advance_per_group;
+  if (adv) {
+    const n = adv * g;
+    return vi
+      ? `Vòng knockout: đúng ${adv} mỗi bảng (${n}), không lấy thêm hạng 3`
+      : `Knockout: exactly ${adv} from each group (${n}), no extra 3rd places`;
+  }
+  const plan = draftSeriesPlan(d);
+  if (!plan) return vi ? "Vòng knockout: nhất và nhì mỗi bảng" : "Knockout: 1st and 2nd from each group";
+  const u = d.is_doubles === false ? (vi ? "VĐV" : "players") : (vi ? "đội" : "teams");
+  return plan.map((sl, i) => seriesLine(seriesName(d.series_style ?? "series", i, lang), sl, lang, u)).join(" · ");
+}
+
+const UNCHANGED_VI = "Bản nháp chưa đổi.";
+const UNCHANGED_EN = "The draft did not change.";
+
+/** Câu trả lời chỉ nói điều bản nháp thực sự đổi. */
+export function factualAck(before: Draft, after: Draft, lang: "vi" | "en", request = ""): string {
+  const vi = lang === "vi";
+  const u = after.is_doubles === false ? (vi ? "VĐV" : "players") : (vi ? "đội" : "teams");
+  const bits: string[] = [];
+  const asked = request ? readUserFacts(request) : {};
+  if (asked.group_count && after.group_count !== asked.group_count) {
+    bits.push(vi ? `Không chia được ${asked.group_count} bảng với số đội này.` : `Can't make ${asked.group_count} groups with this field.`);
+  } else if (after.group_count && after.group_count !== before.group_count) {
+    bits.push(vi ? `Đã chia ${after.group_count} bảng.` : `Split into ${after.group_count} groups.`);
+  }
+  if (after.name && after.name !== before.name) bits.push(vi ? `Tên giải: ${after.name}.` : `Name: ${after.name}.`);
+  if (after.advance_per_group && after.advance_per_group !== before.advance_per_group) {
+    bits.push(playoffSummary(after, lang) ?? "");
+  }
+  const prev = before.entries ?? [];
+  const next = after.entries ?? [];
+  if (next.length > prev.length && (looksLikeNameList(request) || next.some((e) => fold(request).includes(fold(e.p1))))) {
+    bits.push(vi ? `Đã nhận ${next.length} ${u} trong danh sách.` : `Got ${next.length} ${u} from the list.`);
+  } else if (!next.length && after.player_count && after.player_count !== before.player_count) {
+    bits.push(vi ? `${after.player_count} ${u}.` : `${after.player_count} ${u}.`);
+  }
+  if (prev.length && next.length === prev.length) {
+    const moved: string[] = [];
+    for (let i = 0; i < next.length; i++) {
+      if (entryLabel(prev[i]) !== entryLabel(next[i]) && prev.some((e) => entryLabel(e) === entryLabel(next[i]))) {
+        moved.push(entryLabel(next[i]));
+      }
+    }
+    const renamed = next.filter((e, i) => prev[i] && fold(entryLabel(prev[i])) !== fold(entryLabel(e)) && !prev.some((p) => fold(entryLabel(p)) === fold(entryLabel(e))));
+    if (moved.length >= 2 && renamed.length === 0) {
+      bits.push(vi ? `Đã đổi chỗ ${moved.slice(0, 2).join(" và ")}.` : `Swapped ${moved.slice(0, 2).join(" and ")}.`);
+    }
+    for (const e of renamed) {
+      const was = prev.find((p) => fold(p.p1) === fold(e.p1) || (e.p2 && fold(p.p2 ?? "") === fold(e.p2)));
+      bits.push(vi ? `Đã đổi tên thành ${entryLabel(e)}.` : `Renamed to ${entryLabel(e)}.`);
+      void was;
+    }
+  }
+  if (after.courts?.join() !== before.courts?.join() && after.courts?.length) {
+    bits.push(vi ? `${after.courts.length} sân, đánh song song.` : `${after.courts.length} courts, playing at the same time.`);
+  }
+  if (after.start_time && after.start_time !== before.start_time) bits.push(after.start_time);
+  const text = bits.filter(Boolean).join(" ");
+  return text || (vi ? UNCHANGED_VI : UNCHANGED_EN);
+}
+
+const stripClaims = (reply: string) =>
+  reply
+    .replace(/(?:đã|da)\s+(?:nhận|nhan|chia|đổi|doi|xếp|xep|ghép|ghep|cập nhật|cap nhat)\s+[^.!\n]*/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+export function replyFromDraft(before: Draft, after: Draft, llmReply: string, lang: "vi" | "en", request = ""): string {
+  const fact = factualAck(before, after, lang, request);
+  const unchanged = fact === (lang === "vi" ? UNCHANGED_VI : UNCHANGED_EN);
+  const cleaned = stripClaims(llmReply);
+  if (unchanged) return cleaned || fact;
+  if (request && messageNeedsModel(request) && cleaned) return `${fact} ${cleaned}`;
+  return fact;
 }
