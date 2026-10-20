@@ -333,11 +333,11 @@ export function scheduleMatches(
         (roundRobinMeta.get(b.matchId)?.rrMatchIndex ?? 999),
   );
 
-  // 1 group = 1 home court (priority); courts beyond #groups are shared spares.
+  // Home court is only a tie-break. Every chosen court is a candidate, so two
+  // courts run in parallel — including two matches from the same group.
   const homeCount = Math.min(numGroups, courts.length);
   const homeCourtByGroup = new Map<number, number>();
   for (let i = 0; i < homeCount; i++) homeCourtByGroup.set(i, courts[i]);
-  const spareCourts = courts.slice(homeCount);
 
   const courtSlotBusy = new Set<string>();         // `${court}:${slot}`
   const playerSlots = new Map<string, Set<number>>(); // playerId → slots played
@@ -363,8 +363,7 @@ export function scheduleMatches(
 
   for (const m of roundOrdered) {
     const home = homeCourtByGroup.get(m.groupIndex);
-    // Home court first, then shared spares (preserves "ưu tiên 1 bảng/sân").
-    const candidates = home !== undefined ? [home, ...spareCourts] : courts;
+    const candidates = home !== undefined ? [home, ...courts.filter((c) => c !== home)] : courts;
 
     let best: { court: number; slot: number } | null = null;
     for (const court of candidates) {
