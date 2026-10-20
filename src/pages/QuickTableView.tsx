@@ -34,6 +34,8 @@ import DoublesRegistrationForm from '@/components/quicktable/DoublesRegistration
 import TeamManager from '@/components/quicktable/TeamManager';
 import { useVisibilityRefresh } from '@/hooks/useVisibilityRefresh';
 import { useI18n } from '@/i18n';
+import { getSiteUrl } from '@/lib/auth-config';
+import { localePath } from '@/lib/locale-path';
 import { useConfirm } from '@/hooks/useConfirm';
 import PlayoffPreviewDialog from '@/components/quicktable/PlayoffPreviewDialog';
 import {
@@ -55,6 +57,7 @@ const QuickTableView = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { t, language } = useI18n();
+  const loc = (path: string) => localePath(path, language === 'vi' ? 'vi' : 'en');
   const confirm = useConfirm();
   const {
     getTableByShareId, updateMatchScore,
@@ -91,6 +94,7 @@ const QuickTableView = () => {
   const canManageTable = userRole.canManageTable;
   const canEditScores = userRole.canEditScores;
 
+  const [shareOpen, setShareOpen] = useState(false);
   const [showWildcardDialog, setShowWildcardDialog] = useState(false);
   const [selectedWildcards, setSelectedWildcards] = useState<string[]>([]);
   const [thirdPlacePlayers, setThirdPlacePlayers] = useState<QuickTablePlayer[]>([]);
@@ -255,8 +259,9 @@ const QuickTableView = () => {
     toast.success(t.quickTable.view.scoreUpdated);
   };
 
-  const handleShare = () => {
-    const shareUrl = `https://www.thepicklehub.net/tools/quick-tables/${shareId}`;
+  const shareUrl = `${getSiteUrl()}${loc(`/tools/quick-tables/${shareId}`)}`;
+  const handleShare = () => setShareOpen((open) => !open);
+  const copyShareUrl = () => {
     navigator.clipboard.writeText(shareUrl);
     toast.success(t.quickTable.view.shareSuccess);
   };
@@ -801,7 +806,7 @@ const QuickTableView = () => {
 
     const success = await deleteTable(table.id);
     if (success) {
-      navigate('/tools/quick-tables');
+      navigate(loc('/tools/quick-tables'));
     }
   };
 
@@ -841,7 +846,7 @@ const QuickTableView = () => {
         <div className="tl-shell">
           <div className="tl-empty" style={{ marginTop: 56 }}>
             <h3>{t.quickTable.view.notFound}</h3>
-            <Link to="/tools/quick-tables" className="tl-btn">
+            <Link to={loc('/tools/quick-tables')} className="tl-btn">
               ← {t.quickTable.view.goBack}
             </Link>
           </div>
@@ -864,6 +869,11 @@ const QuickTableView = () => {
     statusKey === 'completed' ? 'var(--tl-fg-3)' :
     statusKey === 'playoff' || statusKey === 'group_stage' ? 'var(--tl-green)' :
     'var(--tl-gold)';
+  const playoffLockedReason = (table.group_count ?? 0) < 2
+    ? t.quickTable.view.playoffLockedOneGroup
+    : !groupStageComplete
+      ? t.quickTable.view.playoffLockedWaiting
+      : t.quickTable.view.playoffLockedReady;
 
   return (
     <TheLineLayout
@@ -874,16 +884,16 @@ const QuickTableView = () => {
     >
       <div className="tl-shell">
         <nav className="tl-breadcrumb">
-          <Link to="/tools">{language === 'vi' ? 'Bracket Lab' : 'Bracket Lab'}</Link>
+          <Link to={loc('/tools')}>{language === 'vi' ? 'Công cụ' : 'Bracket Lab'}</Link>
           <span className="sep">/</span>
-          <Link to="/tools/quick-tables">Quick Tables</Link>
+          <Link to={loc('/tools/quick-tables')}>{language === 'vi' ? 'Chia bảng' : 'Quick Tables'}</Link>
           <span className="sep">/</span>
           <span className="current">{table.name}</span>
         </nav>
 
         <header className="tl-page-head">
           <div className="kicker">
-            ◆ {table.format === 'round_robin' ? 'Round Robin' : 'Playoff'}
+            ◆ {table.format === 'round_robin' ? (language === 'vi' ? 'Vòng bảng' : 'Round robin') : (language === 'vi' ? 'Vòng knockout' : 'Playoff')}
             <span style={{ color: 'var(--tl-fg-4)', margin: '0 8px' }}>·</span>
             {players.length} {t.quickTable.players}
             {groups.length > 0 && (
@@ -940,7 +950,7 @@ const QuickTableView = () => {
                 <button
                   type="button"
                   className="tl-btn green"
-                  onClick={() => navigate(`/tools/dashboard/quick-table/${table.share_id}`)}
+                  onClick={() => navigate(loc(`/tools/dashboard/quick-table/${table.share_id}`))}
                 >
                   <Monitor className="w-4 h-4" />
                   {t.dashboard.openDashboard}
@@ -979,6 +989,17 @@ const QuickTableView = () => {
             </div>
           </div>
         </header>
+
+        {shareOpen && (
+          <section aria-label={t.quickTable.view.shareWith} style={{ marginTop: 16, padding: 16, border: '1px solid var(--tl-border)', borderRadius: 'var(--tl-radius-lg)', background: 'var(--tl-bg-elev)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <strong style={{ fontSize: 14 }}>{t.quickTable.view.shareWith}</strong>
+            <input readOnly value={shareUrl} aria-label={t.quickTable.view.shareWith} onFocus={(e) => e.currentTarget.select()} style={{ width: '100%', minHeight: 44, fontSize: 16, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--tl-border)', background: 'var(--tl-bg)', color: 'var(--tl-fg)' }} />
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button type="button" className="tl-btn" onClick={copyShareUrl}>{language === 'vi' ? 'Sao chép link' : 'Copy link'}</button>
+              <a className="tl-btn" href={`https://zalo.me/share/url?url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer">{t.quickTable.view.shareZalo}</a>
+            </div>
+          </section>
+        )}
 
         {/* Advance to Playoff banner */}
         {/* 1 bảng = vòng tròn thuần, không có playoff */}
@@ -1090,12 +1111,16 @@ const QuickTableView = () => {
               className={cn('tl-tab', activeTab === 'playoff' && 'active')}
               onClick={() => (hasPlayoff || preview) && setActiveTab('playoff')}
               disabled={!hasPlayoff && !preview}
+              title={!hasPlayoff && !preview ? playoffLockedReason : undefined}
               style={!hasPlayoff && !preview ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
             >
               {t.quickTable.view.playoffTab}
               {hasPlayoff && <span className="count">{playoffMatches.length}</span>}
             </button>
           </div>
+          {!hasPlayoff && !preview && (
+            <p style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--tl-fg-3)' }}>{playoffLockedReason}</p>
+          )}
 
           {/* Registration Tab */}
           {table.requires_registration && activeTab === 'registration' && (

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuickTableMutations } from '@/hooks/useQuickTableMutations';
 import { useI18n } from '@/i18n';
+import { localePath } from '@/lib/locale-path';
 import { RefereeScoringScreen, RefereeCentered, type RefereeLoaded } from '@/components/referee/RefereeScoringScreen';
 import type { RefereeLiveState } from '@/lib/refereeScoring';
 
@@ -65,7 +66,7 @@ export default function QuickTableRefereeScoring() {
           matchId, isDoubles: tb?.is_doubles === true,
           teamAName: p1?.name ?? 'Đội A', teamBName: p2?.name ?? 'Đội B',
           playersA: names(p1), playersB: names(p2),
-          backHref: `/tools/quick-tables/${tb?.share_id ?? ''}`,
+          backHref: localePath(`/tools/quick-tables/${tb?.share_id ?? ''}`, vi ? 'vi' : 'en'),
         });
       } catch { setError(vi ? 'Không tải được trận đấu.' : 'Could not load match.'); }
     })();
@@ -144,8 +145,8 @@ export default function QuickTableRefereeScoring() {
     if (note) {
       try { await supabase.from('quick_table_matches').update({ referee_note: note } as never).eq('id', matchId); } catch { /* best-effort */ }
     }
-    navigate(`/tools/quick-tables/${shareId}?tab=${isPlayoff ? 'playoff' : 'groups'}`);
-  }, [matchId, navigate, updateMatchScore]);
+    navigate(localePath(`/tools/quick-tables/${shareId}?tab=${isPlayoff ? 'playoff' : 'groups'}`, vi ? 'vi' : 'en'));
+  }, [matchId, navigate, updateMatchScore, vi]);
 
   if (error) return <RefereeCentered>{error}</RefereeCentered>;
   if (!loaded) return <RefereeCentered>{vi ? 'Đang tải…' : 'Loading…'}</RefereeCentered>;

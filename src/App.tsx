@@ -677,6 +677,7 @@ const MIRRORED: MirroredRoute[] = [
   { path: "/tools/quick-tables/parent/:shareId", element: <ParentTournamentPage /> },
   { path: "/tools/quick-tables/:shareId", element: <ConditionalAuth><QuickTableView /></ConditionalAuth> },
   { path: "/tools/quick-tables/:shareId/setup", element: <QuickTableSetup /> },
+  { path: "/tools/quick-tables/referee/:matchId", element: <QuickTableRefereeScoring /> },
   { path: "/tools/team-match", element: <TeamMatchList /> },
   { path: "/tools/team-match/new", element: <TeamMatchSetup /> },
   { path: "/tools/team-match/match/:matchId/score", element: <TeamMatchScoring /> },
@@ -837,7 +838,6 @@ const App = () => (
                     <Route path="/share/live/:id" element={<ShareRedirect type="live" />} />
                     <Route path="/share/video/:id" element={<ShareRedirect type="video" />} />
                     {/* Tools routes */}
-                    <Route path="/tools/quick-tables/referee/:matchId" element={<QuickTableRefereeScoring />} />
                     {/* Team Match routes */}
                     {/* Doubles Elimination routes */}
                     {/* Flex Tournament routes */}

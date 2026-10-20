@@ -444,6 +444,10 @@
     "element": "<QuickTableRefereeScoring />"
   },
   {
+    "path": "/vi/tools/quick-tables/referee/:matchId",
+    "element": "<ViLanguageWrapper><QuickTableRefereeScoring /></ViLanguageWrapper>"
+  },
+  {
     "path": "/tools/team-match",
     "element": "<TeamMatchList />"
   },
