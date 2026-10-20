@@ -32,7 +32,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Hong Kong Slam 2026 results and daily scores",
-          "content": "Last updated: October 20, 2026, 16:02 Vietnam time. ThePickleHub publishes this Hong Kong Slam 2026 results page from the official PPA scores feed for October 19–25, 2026 at Kai Tak Arena, Hong Kong. The feed currently contains 159 matches, including 85 completed or final records and 5 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: October 21, 2026, 01:00 Vietnam time. ThePickleHub publishes this Hong Kong Slam 2026 results page from the official PPA scores feed for October 19–25, 2026 at Kai Tak Arena, Hong Kong. The feed currently contains 168 matches, including 97 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -68,7 +68,7 @@ const post: BlogPost = {
             "Men's Doubles, Round 64: Easton Horricks / Julian Chow beat Nguyen Tien / Hoang Nguyen Anh (final).",
             "Men's Doubles, Round 64: Robert Stirling / Joey Wild beat Samuel Dickson / William Hsieh (11-5, 11-6).",
             "Men's Doubles, Round 64: Jimmy Liong Kai Long / Loh Shi Sheng beat Yaxuann Miao / Xiang Cai (11-3, 11-7).",
-            "Men's Doubles, Round 64: Jonathan Truong / Max Freeman beat Derek To / Henry K (11-5, 11-3).",
+            "Men's Doubles, Round 64: Jonathan Truong / Max Freeman beat Derek To / Henry Kwan (11-5, 11-3).",
             "Men's Doubles, Round 64: Lucas Pascoe / Adam Harvey beat Kelvin Lam / Fung Boman (11-1, 11-3).",
             "Men's Doubles, Round 64: HE Phoenix / Francis Chi beat Ryan Lam / Daniel Moore (6-11, 11-4, 11-7).",
             "Men's Doubles, Round 64: Josh Barber / Conor Robertshawe beat Ryan Ng / Huanhan Li (13-11, 11-7).",
@@ -80,20 +80,32 @@ const post: BlogPost = {
         },
         {
           "heading": "Mixed Doubles results",
-          "content": "No champion yet. 12 completed matches, latest round first.",
+          "content": "No champion yet. 24 completed matches, latest round first.",
           "listItems": [
-            "Mixed Doubles, Round 64: Ting Chieh Wei / Hunter Johnson beat Zefeng Li / HO Tam (11-8, 9-11, 11-7).",
-            "Mixed Doubles, Round 64: Len Yang / Kiora Kunimoto beat Macy Ybañez / Kim Ivor Saraza (11-4, 11-0).",
+            "Mixed Doubles, Round 64: Eunggwon Kim / Nok Yiu Tang beat Miyu Hazawa / Syed Uzair Sufi (11-3, 11-0).",
             "Mixed Doubles, Round 64: Judit Castillo / Tyson McGuffin beat Wil Shaffer / Sophia Phuong Anh Tran (11-8, 11-9).",
             "Mixed Doubles, Round 64: Chao Yi Wang / Armaan Bhatia beat Aline Morales / Rex T (11-1, 11-3).",
+            "Mixed Doubles, Round 64: Mihae Kwon / Collin Johns beat Yuta Funemizu / Albie Huang (11-5, 11-3).",
             "Mixed Doubles, Round 64: Hannah Blatt / Grayson Goldin beat Kenta Miyoshi / Sarah Burr (11-5, 11-4).",
             "Mixed Doubles, Round 64: Will Mackinnon / Jaeda Minniefield beat Kwan Wun Man / Chenyuan Ma (11-3, 11-3).",
-            "Mixed Doubles, Round 64: Luc Pham / Jamie Haas beat Marcela Aguila Ampon / Colin Wong (11-4, 11-1).",
-            "Mixed Doubles, Round 64: Mihae Kwon / Collin Johns beat Yuta Funemizu / Albie Huang (11-5, 11-3).",
+            "Mixed Doubles, Round 64: Adam Harvey / Yufei Long beat Trang Huynh / Harrison Brown (5-11, 11-9, 11-2).",
+            "Mixed Doubles, Round 64: Ting Chieh Wei / Hunter Johnson beat Zefeng Li / HO Tam (11-8, 9-11, 11-7).",
             "Mixed Doubles, Round 64: Allyce Jones / Connor Garnett beat Anni Xie / Marco Leung (11-1, 11-3).",
             "Mixed Doubles, Round 64: Andie Dikosavljevic / Joey Wild beat Aditya Ruhela / Seina Shima (11-6, 11-3).",
-            "Mixed Doubles, Round 64: Adam Harvey / Yufei Long beat Trang Huynh / Harrison Brown (5-11, 11-9, 11-2).",
-            "Mixed Doubles, Round 64: Eunggwon Kim / Nok Yiu Tang beat Miyu Hazawa / Syed Uzair Sufi (11-3, 11-0)."
+            "Mixed Doubles, Round 64: Len Yang / Kiora Kunimoto beat Macy Ybañez / Kim Ivor Saraza (11-4, 11-0).",
+            "Mixed Doubles, Round 64: Luc Pham / Jamie Haas beat Marcela Aguila Ampon / Colin Wong (11-4, 11-1).",
+            "Mixed Doubles, Round 64: Alix Truong / Christopher Haworth beat Paranya Jareonvongrayab / Longsheng Liu (11-1, 11-5).",
+            "Mixed Doubles, Round 64: Jimmy Liong Kai Long / Lacy Schneemann beat Sofia Sewing / Casey Diamond (11-7, 11-5).",
+            "Mixed Doubles, Round 64: Dylan Frazier / Kaitlyn Christian beat Qing Chen / Xiang Cai (11-1, 11-1).",
+            "Mixed Doubles, Round 64: Sophia Nhi Huynh / Hien Truong beat Yu-Chieh Hsieh / George Wall (12-10, 11-7).",
+            "Mixed Doubles, Round 64: Sahra Dennehy / Tama Shimabukuro beat Ryan Lam / Yunqi He (11-1, 11-2).",
+            "Mixed Doubles, Round 64: Mari Humberg / Augustus Ge beat Athilla Miasara Bt Azizul Azhar / Muhammad Aiman (11-4, 11-7).",
+            "Mixed Doubles, Round 64: Hong Kit Wong / Lingwei Kong beat Pei-Yu Lai / Timothy Foo (11-5, 11-6).",
+            "Mixed Doubles, Round 64: Quan Do / Kei Sawaki beat Xiao Yi Wang-Beckvall / Robert Stirling (10-12, 12-10, 11-6).",
+            "Mixed Doubles, Round 64: Jonathan Truong / Jessie Irvine beat Yutong Tang / Xirui Liu (11-5, 11-1).",
+            "Mixed Doubles, Round 64: Max Freeman / Cailyn Campbell beat Eduardo Santini Ayon / Mayu Ito (11-1, 11-4).",
+            "Mixed Doubles, Round 64: Nasa Hatakeyama / Rika Fujiwara beat Aiko Yoshitomi / Lucas Pascoe (6-11, 11-8, 11-8).",
+            "Mixed Doubles, Round 64: Zane Navratil / Katie Morris beat Kaitlynn Hart / Mitchell Hargreaves (4-11, 13-11, 11-3)."
           ]
         },
         {
@@ -161,16 +173,16 @@ const post: BlogPost = {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Mixed Doubles, Round 64: Alix Truong / Christopher Haworth vs Paranya Jareonvongrayab / Longsheng Liu — status live.",
-            "Mixed Doubles, Round 64: Sophia Nhi Huynh / Hien Truong vs Yu-Chieh Hsieh / George Wall — status live.",
-            "Mixed Doubles, Round 64: Jimmy Liong Kai Long / Lacy Schneemann vs Sofia Sewing / Casey Diamond — status live.",
-            "Mixed Doubles, Round 64: Xiao Yi Wang-Beckvall / Robert Stirling vs Quan Do / Kei Sawaki — status live.",
-            "Mixed Doubles, Round 64: Dylan Frazier / Kaitlyn Christian vs Qing Chen / Xiang Cai — status live.",
             "Women's Doubles, Round 32: Xiao Yi Wang-Beckvall / Aiko Yoshitomi vs Lynn Lim / Kwan Wun Man — status scheduled.",
             "Women's Doubles, Round 32: Judit Castillo / Kiora Kunimoto vs Kaitlynn Hart / Katie Morris — status scheduled.",
             "Women's Doubles, Round 32: Hannah Blatt / Kei Sawaki vs Mayu Ito / Sophia Phuong Anh Tran — status scheduled.",
             "Women's Doubles, Round 32: Albie Huang / Andie Dikosavljevic vs Jaeda Minniefield / Mihae Kwon — status scheduled.",
-            "Women's Doubles, Round 32: Lingwei Kong / Yufei Long vs Pei-Yu Lai / Seina Shima — status scheduled."
+            "Women's Doubles, Round 32: Lingwei Kong / Yufei Long vs Pei-Yu Lai / Seina Shima — status scheduled.",
+            "Women's Doubles, Round 32: Sahra Dennehy / Danni-Elle Townsend vs Yunqi He / Ying Suet Lam — status scheduled.",
+            "Women's Doubles, Round 32: Mari Humberg / Cailyn Campbell vs Trang Huynh / Yu-Chieh Hsieh — status scheduled.",
+            "Women's Doubles, Round 32: Sophia Nhi Huynh / HO Tam vs Jamie Haas / Rika Fujiwara — status scheduled.",
+            "Men's Doubles, Round 32: Yuta Funemizu / Christian Alshon vs HE Phoenix / Francis Chi — status scheduled.",
+            "Men's Doubles, Round 32: Eric Oncins / Noe Khlif vs Josh Barber / Conor Robertshawe — status scheduled."
           ]
         },
         {
@@ -200,7 +212,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Hong Kong Slam 2026",
-          "content": "Cập nhật: 16:02 ngày 20/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Hong Kong Slam 2026 từ feed điểm số chính thức của PPA cho thời gian 19–25/10/2026 tại Kai Tak Arena, Hong Kong. Feed hiện có 159 trận, gồm 85 bản ghi đã kết thúc/chung cuộc và 5 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 01:00 ngày 21/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Hong Kong Slam 2026 từ feed điểm số chính thức của PPA cho thời gian 19–25/10/2026 tại Kai Tak Arena, Hong Kong. Feed hiện có 168 trận, gồm 97 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -236,7 +248,7 @@ const post: BlogPost = {
             "Đôi nam, Round 64: Easton Horricks / Julian Chow thắng Nguyen Tien / Hoang Nguyen Anh (final).",
             "Đôi nam, Round 64: Robert Stirling / Joey Wild thắng Samuel Dickson / William Hsieh (11-5, 11-6).",
             "Đôi nam, Round 64: Jimmy Liong Kai Long / Loh Shi Sheng thắng Yaxuann Miao / Xiang Cai (11-3, 11-7).",
-            "Đôi nam, Round 64: Jonathan Truong / Max Freeman thắng Derek To / Henry K (11-5, 11-3).",
+            "Đôi nam, Round 64: Jonathan Truong / Max Freeman thắng Derek To / Henry Kwan (11-5, 11-3).",
             "Đôi nam, Round 64: Lucas Pascoe / Adam Harvey thắng Kelvin Lam / Fung Boman (11-1, 11-3).",
             "Đôi nam, Round 64: HE Phoenix / Francis Chi thắng Ryan Lam / Daniel Moore (6-11, 11-4, 11-7).",
             "Đôi nam, Round 64: Josh Barber / Conor Robertshawe thắng Ryan Ng / Huanhan Li (13-11, 11-7).",
@@ -248,20 +260,32 @@ const post: BlogPost = {
         },
         {
           "heading": "Kết quả Đôi nam nữ",
-          "content": "Chưa có nhà vô địch. 12 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Chưa có nhà vô địch. 24 trận đã kết thúc, vòng mới nhất ở trên.",
           "listItems": [
-            "Đôi nam nữ, Round 64: Ting Chieh Wei / Hunter Johnson thắng Zefeng Li / HO Tam (11-8, 9-11, 11-7).",
-            "Đôi nam nữ, Round 64: Len Yang / Kiora Kunimoto thắng Macy Ybañez / Kim Ivor Saraza (11-4, 11-0).",
+            "Đôi nam nữ, Round 64: Eunggwon Kim / Nok Yiu Tang thắng Miyu Hazawa / Syed Uzair Sufi (11-3, 11-0).",
             "Đôi nam nữ, Round 64: Judit Castillo / Tyson McGuffin thắng Wil Shaffer / Sophia Phuong Anh Tran (11-8, 11-9).",
             "Đôi nam nữ, Round 64: Chao Yi Wang / Armaan Bhatia thắng Aline Morales / Rex T (11-1, 11-3).",
+            "Đôi nam nữ, Round 64: Mihae Kwon / Collin Johns thắng Yuta Funemizu / Albie Huang (11-5, 11-3).",
             "Đôi nam nữ, Round 64: Hannah Blatt / Grayson Goldin thắng Kenta Miyoshi / Sarah Burr (11-5, 11-4).",
             "Đôi nam nữ, Round 64: Will Mackinnon / Jaeda Minniefield thắng Kwan Wun Man / Chenyuan Ma (11-3, 11-3).",
-            "Đôi nam nữ, Round 64: Luc Pham / Jamie Haas thắng Marcela Aguila Ampon / Colin Wong (11-4, 11-1).",
-            "Đôi nam nữ, Round 64: Mihae Kwon / Collin Johns thắng Yuta Funemizu / Albie Huang (11-5, 11-3).",
+            "Đôi nam nữ, Round 64: Adam Harvey / Yufei Long thắng Trang Huynh / Harrison Brown (5-11, 11-9, 11-2).",
+            "Đôi nam nữ, Round 64: Ting Chieh Wei / Hunter Johnson thắng Zefeng Li / HO Tam (11-8, 9-11, 11-7).",
             "Đôi nam nữ, Round 64: Allyce Jones / Connor Garnett thắng Anni Xie / Marco Leung (11-1, 11-3).",
             "Đôi nam nữ, Round 64: Andie Dikosavljevic / Joey Wild thắng Aditya Ruhela / Seina Shima (11-6, 11-3).",
-            "Đôi nam nữ, Round 64: Adam Harvey / Yufei Long thắng Trang Huynh / Harrison Brown (5-11, 11-9, 11-2).",
-            "Đôi nam nữ, Round 64: Eunggwon Kim / Nok Yiu Tang thắng Miyu Hazawa / Syed Uzair Sufi (11-3, 11-0)."
+            "Đôi nam nữ, Round 64: Len Yang / Kiora Kunimoto thắng Macy Ybañez / Kim Ivor Saraza (11-4, 11-0).",
+            "Đôi nam nữ, Round 64: Luc Pham / Jamie Haas thắng Marcela Aguila Ampon / Colin Wong (11-4, 11-1).",
+            "Đôi nam nữ, Round 64: Alix Truong / Christopher Haworth thắng Paranya Jareonvongrayab / Longsheng Liu (11-1, 11-5).",
+            "Đôi nam nữ, Round 64: Jimmy Liong Kai Long / Lacy Schneemann thắng Sofia Sewing / Casey Diamond (11-7, 11-5).",
+            "Đôi nam nữ, Round 64: Dylan Frazier / Kaitlyn Christian thắng Qing Chen / Xiang Cai (11-1, 11-1).",
+            "Đôi nam nữ, Round 64: Sophia Nhi Huynh / Hien Truong thắng Yu-Chieh Hsieh / George Wall (12-10, 11-7).",
+            "Đôi nam nữ, Round 64: Sahra Dennehy / Tama Shimabukuro thắng Ryan Lam / Yunqi He (11-1, 11-2).",
+            "Đôi nam nữ, Round 64: Mari Humberg / Augustus Ge thắng Athilla Miasara Bt Azizul Azhar / Muhammad Aiman (11-4, 11-7).",
+            "Đôi nam nữ, Round 64: Hong Kit Wong / Lingwei Kong thắng Pei-Yu Lai / Timothy Foo (11-5, 11-6).",
+            "Đôi nam nữ, Round 64: Quan Do / Kei Sawaki thắng Xiao Yi Wang-Beckvall / Robert Stirling (10-12, 12-10, 11-6).",
+            "Đôi nam nữ, Round 64: Jonathan Truong / Jessie Irvine thắng Yutong Tang / Xirui Liu (11-5, 11-1).",
+            "Đôi nam nữ, Round 64: Max Freeman / Cailyn Campbell thắng Eduardo Santini Ayon / Mayu Ito (11-1, 11-4).",
+            "Đôi nam nữ, Round 64: Nasa Hatakeyama / Rika Fujiwara thắng Aiko Yoshitomi / Lucas Pascoe (6-11, 11-8, 11-8).",
+            "Đôi nam nữ, Round 64: Zane Navratil / Katie Morris thắng Kaitlynn Hart / Mitchell Hargreaves (4-11, 13-11, 11-3)."
           ]
         },
         {
@@ -329,16 +353,16 @@ const post: BlogPost = {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đôi nam nữ, Round 64: Alix Truong / Christopher Haworth gặp Paranya Jareonvongrayab / Longsheng Liu — trạng thái live.",
-            "Đôi nam nữ, Round 64: Sophia Nhi Huynh / Hien Truong gặp Yu-Chieh Hsieh / George Wall — trạng thái live.",
-            "Đôi nam nữ, Round 64: Jimmy Liong Kai Long / Lacy Schneemann gặp Sofia Sewing / Casey Diamond — trạng thái live.",
-            "Đôi nam nữ, Round 64: Xiao Yi Wang-Beckvall / Robert Stirling gặp Quan Do / Kei Sawaki — trạng thái live.",
-            "Đôi nam nữ, Round 64: Dylan Frazier / Kaitlyn Christian gặp Qing Chen / Xiang Cai — trạng thái live.",
             "Đôi nữ, Round 32: Xiao Yi Wang-Beckvall / Aiko Yoshitomi gặp Lynn Lim / Kwan Wun Man — trạng thái scheduled.",
             "Đôi nữ, Round 32: Judit Castillo / Kiora Kunimoto gặp Kaitlynn Hart / Katie Morris — trạng thái scheduled.",
             "Đôi nữ, Round 32: Hannah Blatt / Kei Sawaki gặp Mayu Ito / Sophia Phuong Anh Tran — trạng thái scheduled.",
             "Đôi nữ, Round 32: Albie Huang / Andie Dikosavljevic gặp Jaeda Minniefield / Mihae Kwon — trạng thái scheduled.",
-            "Đôi nữ, Round 32: Lingwei Kong / Yufei Long gặp Pei-Yu Lai / Seina Shima — trạng thái scheduled."
+            "Đôi nữ, Round 32: Lingwei Kong / Yufei Long gặp Pei-Yu Lai / Seina Shima — trạng thái scheduled.",
+            "Đôi nữ, Round 32: Sahra Dennehy / Danni-Elle Townsend gặp Yunqi He / Ying Suet Lam — trạng thái scheduled.",
+            "Đôi nữ, Round 32: Mari Humberg / Cailyn Campbell gặp Trang Huynh / Yu-Chieh Hsieh — trạng thái scheduled.",
+            "Đôi nữ, Round 32: Sophia Nhi Huynh / HO Tam gặp Jamie Haas / Rika Fujiwara — trạng thái scheduled.",
+            "Đôi nam, Round 32: Yuta Funemizu / Christian Alshon gặp HE Phoenix / Francis Chi — trạng thái scheduled.",
+            "Đôi nam, Round 32: Eric Oncins / Noe Khlif gặp Josh Barber / Conor Robertshawe — trạng thái scheduled."
           ]
         },
         {
