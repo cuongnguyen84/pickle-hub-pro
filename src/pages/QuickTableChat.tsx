@@ -728,18 +728,20 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   ].join("\n");
 
   const onFiles = async (list: FileList | null) => {
+    // FileList gắn với ô input: xoá value trước khi copy thì danh sách về rỗng, chọn file xong không có gì xảy ra.
+    const files = [...(list ?? [])];
     if (fileRef.current) fileRef.current.value = "";
-    if (!list?.length || busy) return;
-    const files = [...list];
-    const images = files.filter((f) => f.type.startsWith("image/"));
-    const others = files.filter((f) => !f.type.startsWith("image/"));
-    if (others.length > 1 || (others.length && images.length)) { toast.error(c.oneFile); return; }
-    if (files.some((f) => f.size > MAX_UPLOAD_BYTES)) { toast.error(c.fileTooBig); return; }
+    if (!files.length || busy) return;
+    const say = (text: string) => pushBot(text);
+    const images = files.filter((f) => f.type.startsWith("image/") || /\.(png|jpe?g|webp|gif|heic|heif)$/i.test(f.name));
+    const others = files.filter((f) => !images.includes(f));
+    if (others.length > 1 || (others.length && images.length)) { say(c.oneFile); return; }
+    if (files.some((f) => f.size > MAX_UPLOAD_BYTES)) { say(c.fileTooBig); return; }
     const batch = images.length > MAX_IMAGES ? images.slice(0, MAX_IMAGES) : images;
-    if (images.length > MAX_IMAGES) toast.error(c.fileTooMany);
+    if (images.length > MAX_IMAGES) say(c.fileTooMany);
     let out: Outgoing;
     try { out = others.length ? await readUpload(others[0], draft.is_doubles === true) : await readImages(batch); }
-    catch (err) { toast.error(err instanceof UploadError && err.code === "not_a_list" ? c.fileNotList : c.fileUnreadable); return; }
+    catch (err) { say(err instanceof UploadError && err.code === "not_a_list" ? c.fileNotList : c.fileUnreadable); return; }
     send(out);
   };
 
