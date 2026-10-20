@@ -995,8 +995,10 @@ const QuickTableView = () => {
             <strong style={{ fontSize: 14 }}>{t.quickTable.view.shareWith}</strong>
             <input readOnly value={shareUrl} aria-label={t.quickTable.view.shareWith} onFocus={(e) => e.currentTarget.select()} style={{ width: '100%', minHeight: 44, fontSize: 16, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--tl-border)', background: 'var(--tl-bg)', color: 'var(--tl-fg)' }} />
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button type="button" className="tl-btn" onClick={copyShareUrl}>{language === 'vi' ? 'Sao chép link' : 'Copy link'}</button>
-              <a className="tl-btn" href={`https://zalo.me/share/url?url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer">{t.quickTable.view.shareZalo}</a>
+              <Button type="button" variant="outline" onClick={copyShareUrl} style={{ minHeight: 44 }}>{language === 'vi' ? 'Sao chép link' : 'Copy link'}</Button>
+              <Button variant="outline" asChild style={{ minHeight: 44 }}>
+                <a href={`https://zalo.me/share/url?url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer">{t.quickTable.view.shareZalo}</a>
+              </Button>
             </div>
           </section>
         )}
