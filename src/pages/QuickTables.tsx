@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import { localePath } from "@/lib/locale-path";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { HreflangTags, ToolsInternalLinks, WebApplicationSchema, QuickTablesSeoContent, FAQSchema } from "@/components/seo";
@@ -264,9 +265,9 @@ const QuickTables = () => {
         <FAQSchema items={faqItems} />
         <div className="tl-shell">
           <nav className="tl-breadcrumb">
-            <Link to="/tools">{language === "vi" ? "Bracket Lab" : "Bracket Lab"}</Link>
+            <Link to={localePath("/tools", language === "vi" ? "vi" : "en")}>{language === "vi" ? "Công cụ" : "Bracket Lab"}</Link>
             <span className="sep">/</span>
-            <span className="current">Quick Tables</span>
+            <span className="current">{language === "vi" ? "Chia bảng" : "Quick Tables"}</span>
           </nav>
 
           <header className="tl-page-head">
@@ -358,9 +359,9 @@ const QuickTables = () => {
 
       <div className="tl-shell">
         <nav className="tl-breadcrumb">
-          <Link to="/tools">{language === "vi" ? "Bracket Lab" : "Bracket Lab"}</Link>
+          <Link to={localePath("/tools", language === "vi" ? "vi" : "en")}>{language === "vi" ? "Công cụ" : "Bracket Lab"}</Link>
           <span className="sep">/</span>
-          <span className="current">Quick Tables</span>
+          <span className="current">{language === "vi" ? "Chia bảng" : "Quick Tables"}</span>
         </nav>
 
         <header className="tl-page-head">
@@ -377,7 +378,7 @@ const QuickTables = () => {
           {step === "count" && (
             <div style={{ display: "flex", gap: 10, marginTop: 28, flexWrap: "wrap" }}>
               <Button asChild variant="default">
-                <Link to="/tools/quick-tables/chat">
+                <Link to={localePath("/tools/quick-tables/chat", language === "vi" ? "vi" : "en")}>
                   <Sparkles className="w-4 h-4" />
                   {language === "vi" ? "Tạo bằng chat AI" : "Create by AI chat"}
                 </Link>

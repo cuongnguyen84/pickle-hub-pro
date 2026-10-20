@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useI18n } from "@/i18n";
+import { withoutLocale } from "@/lib/locale-path";
 import { isIOS } from "@/lib/platform";
 
 /**
@@ -103,19 +104,18 @@ const ChatFAB = () => {
     return () => document.removeEventListener("scroll", onScroll, { capture: true });
   }, []);
 
-  const shouldHide = HIDDEN_PREFIXES.some((prefix) =>
-    location.pathname.startsWith(prefix),
-  );
+  const barePath = withoutLocale(location.pathname);
+  const shouldHide = HIDDEN_PREFIXES.some((prefix) => barePath.startsWith(prefix));
 
   if (shouldHide) {
     return null;
   }
 
   const isVi = language === "vi";
-  const messengerLabel = "MESSENGER";
-  const zaloLabel = "ZALO";
   const messengerAria = isVi ? "Chat qua Messenger" : "Chat on Messenger";
   const zaloAria = isVi ? "Chat qua Zalo" : "Chat on Zalo";
+  const messengerLabel = messengerAria;
+  const zaloLabel = zaloAria;
 
   // Clear BottomNav on mobile — match the height logic used by BottomNav.
   const isIOSDevice = isIOS();

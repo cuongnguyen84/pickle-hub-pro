@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useI18n } from "@/i18n";
+import { isVietnamesePath } from "@/i18n/loader";
 
 interface ViLanguageWrapperProps {
   children: React.ReactNode;
@@ -23,8 +24,11 @@ export const ViLanguageWrapper = ({ children }: ViLanguageWrapperProps) => {
     // declares self-hreflang="vi" but the document still says lang="en".
     document.documentElement.setAttribute("lang", "vi");
     return () => {
-      setLanguageFromUrl("en");
-      document.documentElement.setAttribute("lang", "en");
+      // Another /vi page sets Vietnamese itself. Leaving /vi must not flip a
+      // Vietnamese user to English unless they explicitly chose English.
+      if (isVietnamesePath(window.location.pathname)) return;
+      const stored = localStorage.getItem("pickleball-hub-language");
+      setLanguageFromUrl(stored === "en" ? "en" : "vi");
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

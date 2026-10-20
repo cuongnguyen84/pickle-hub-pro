@@ -22,11 +22,12 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { useQuickTable, type QuickTable } from "@/hooks/useQuickTable";
 import { supabase } from "@/integrations/supabase/client";
 import { getSiteUrl } from "@/lib/auth-config";
+import { localePath } from "@/lib/locale-path";
 import { cn } from "@/lib/utils";
 import { rankSeriesSizes, seriesLine, seriesName, seriesPlan, slot as seriesSlot, type SeriesStyle } from "@/lib/quick-table-series";
 import {
-  applyPatch, buildRoster, chatFacts, customSeries, defaultName, draftSeriesPlan, duplicateIndexes, entryCount, entryLabel, findGroupOption, googleSheetRef, groupChoices,
-  groupSizes, localSlotPatch, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, nextSlot, pairEntries, parseSheet, previewAssignments, seriesCap, trustPatch,
+  applyPatch, applySpokenEdit, buildRoster, chatFacts, customSeries, defaultName, draftSeriesPlan, dropInventedRoster, duplicateIndexes, entryCount, entryLabel, factualAck, findGroupOption, googleSheetRef, groupChoices,
+  groupSizes, keepOrAssign, localSlotPatch, lockAdvance, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, messageNeedsModel, nextSlot, pairEntries, parseSheet, playoffSummary, previewAssignments, replyFromDraft, seriesCap, trustPatch,
   type Draft, type Entry, type GroupOption, type PairingMode, type Slot,
 } from "@/lib/quick-table-chat";
 
@@ -94,14 +95,14 @@ const COPY = {
       o.groupCount === 1
         ? "Ai cũng gặp nhau, xếp hạng theo thắng–thua"
         : o.wildcards === 0
-          ? `Top 2 mỗi bảng vào thẳng ${ROUND_VI[o.playoffSize] ?? "playoff"}`
-          : `Vào ${ROUND_VI[o.playoffSize] ?? "playoff"}, cần thêm ${o.wildcards} suất vé vớt`,
+          ? `2 đội đứng đầu mỗi bảng vào ${ROUND_VI[o.playoffSize] ?? "vòng knockout"}`
+          : `Vòng knockout cần thêm ${o.wildcards} đội hạng 3`,
     recommended: "Khuyên dùng",
-    series: "Hết vòng bảng thì đánh mấy nhánh? Series A là nhất, nhì mỗi bảng; nhánh sau nhận tất cả đội còn lại, đội xếp cao được miễn vòng 1 nếu lẻ. Hoặc mỗi hạng một nhánh: nhất vào A, nhì vào B, ba vào C.",
-    seriesOne: "1 nhánh", seriesOneSub: "Chỉ top 2 mỗi bảng vào playoff",
-    seriesMany: (names: string[]) => `${names.length} nhánh: ${names.join(" + ")}`,
-    seriesByRank: "Mỗi hạng một nhánh",
-    optStyle: (s: SeriesStyle): string => (s === "medal" ? "Đổi tên: Series A, B" : "Đổi tên: Nhánh Vàng, Bạc"),
+    series: "Hết vòng bảng, đội đi tiếp đánh thế nào? Một bảng đấu lấy đúng 2 đội đứng đầu mỗi bảng. Nhiều bảng đấu: đội mạnh vào bảng đầu, đội còn lại vào bảng sau — số lẻ thì đội xếp cao được nghỉ vòng đầu. Hoặc mỗi thứ hạng một bảng đấu riêng.",
+    seriesOne: "Một bảng đấu", seriesOneSub: "Đúng 2 đội đứng đầu mỗi bảng",
+    seriesMany: (names: string[]) => `${names.length} bảng đấu: ${names.join(" + ")}`,
+    seriesByRank: "Mỗi thứ hạng một bảng đấu",
+    optStyle: (s: SeriesStyle): string => (s === "medal" ? "Đổi tên: bảng A, B" : "Đổi tên: Vàng, Bạc"),
     roster: (u: string) => `Có danh sách ${u} chưa? Dán vào là mình xếp bảng luôn.`,
     pasteNow: "Dán ngay",
     openRegistration: "Mở cho người chơi tự đăng ký",
@@ -121,16 +122,18 @@ const COPY = {
     resetOk: "Làm lại",
     customName: "Gõ tên khác ở ô bên dưới",
     options: "Gần xong rồi! Muốn thêm gì nữa không?",
-    optSeed: "Hạt giống", optSets: (s: number) => `Số set: ${s === 1 ? "1 set" : `BO${s}`}`, optTeam: "Tránh cùng CLB",
+    optSeed: "Tách đội mạnh", optSets: (s: number) => (s === 1 ? "Mỗi trận 1 set" : `Thắng ${Math.ceil(s / 2)} trong ${s} set`), optTeam: "Tách đội cùng CLB",
     optDone: "Xong, xem lại",
-    hintSeed: (u: string) => `Gõ tên các ${u} hạt giống theo thứ tự, ví dụ: “hạt giống: Nam - Hùng, Tú - Long”. Hạt giống sẽ được tách ra các bảng khác nhau.`,
+    hintSeed: (u: string) => `Gõ các ${u} mạnh theo thứ tự, ví dụ: “đội mạnh: Nam - Hùng, Tú - Long”. Họ sẽ vào các bảng khác nhau.`,
     hintTeam: "Gõ những đội cùng CLB, ví dụ: “Nam - Hùng, Tú - Long cùng CLB Hà Đông”. Mình sẽ xếp họ vào các bảng khác nhau.",
     setsQ: "Mỗi trận đánh mấy set?",
-    set1: "1 set", set3: "Best of 3", set5: "Best of 5",
+    set1: "1 set", set3: "Thắng 2 trong 3 set", set5: "Thắng 3 trong 5 set",
     confirm: "Mọi thứ đã sẵn sàng. Kiểm tra lại rồi bấm Tạo giải nhé.",
     received: (n: number, u: string) => `Đã nhận ${n} ${u}.`,
     dupWarn: (n: number) => ` ⚠️ Có ${n} dòng trùng — xem lại trong Bản nháp.`,
     aiError: "Mình chưa nghe rõ, mạng hoặc trợ lý đang chậm. Thử lại nhé?",
+    thinking: "Đang đọc tin nhắn…",
+    thinkingRetry: "Hơi chậm, mình thử lại một lần nữa…",
     attachmentNoList: "Mình chưa thấy tên đội trong file này. Ảnh cần thấy rõ từng dòng. Danh sách dài thì gửi thêm ảnh. Hoặc dán chữ, file Excel, hay link Google Sheet.",
     photoMissed: (n: number) => (n === 1 ? " Một ảnh chưa thấy tên." : ` ${n} ảnh chưa thấy tên.`),
     retry: "Thử lại",
@@ -151,7 +154,7 @@ const COPY = {
     group: (i: number) => `Bảng ${GROUP_LETTERS[i]}`,
     reshuffle: "Xáo lại bảng",
     create: "Tạo giải",
-    creating: "Đang tạo…",
+    creating: "Đang xếp bảng và lịch…",
     confirmReg: "Người chơi tự đăng ký qua link giải — bạn duyệt rồi xếp bảng sau.",
     confirmLater: "Bước tiếp theo bạn nhập danh sách, mình mở sẵn trang nhập.",
     created: (name: string) => `🎉 Đã tạo “${name}”!`,
@@ -248,6 +251,8 @@ const COPY = {
     received: (n: number, u: string) => `Got ${n} ${u}.`,
     dupWarn: (n: number) => ` ⚠️ ${n} duplicate lines — check the Draft.`,
     aiError: "I didn't catch that — the network or assistant is slow. Try again?",
+    thinking: "Reading your message…",
+    thinkingRetry: "That was slow, trying once more…",
     attachmentNoList: "I couldn't see team names in this file. The photo needs every line readable. A long list can be several photos. Or paste text, send Excel, or a Google Sheet link.",
     photoMissed: (n: number) => (n === 1 ? " One photo had no names." : ` ${n} photos had no names.`),
     retry: "Try again",
@@ -268,7 +273,7 @@ const COPY = {
     group: (i: number) => `Group ${GROUP_LETTERS[i]}`,
     reshuffle: "Reshuffle groups",
     create: "Create tournament",
-    creating: "Creating…",
+    creating: "Drawing groups and the schedule…",
     confirmReg: "Players sign up through the tournament link — you approve them and draw groups later.",
     confirmLater: "Next you'll enter the list — I'll open the entry page for you.",
     created: (name: string) => `🎉 “${name}” is live!`,
@@ -289,6 +294,44 @@ const ROUND_EN: Record<number, string> = { 4: "semifinals", 8: "quarterfinals", 
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
+const QT_CHAT_CSS = `
+.qt-chat-shell { max-width: 720px; min-height: calc(100dvh - 64px); display: flex; flex-direction: column; }
+.qt-chat-draft { position: sticky; top: calc(env(safe-area-inset-top) + 69px); z-index: 5; }
+@media (min-width: 960px) {
+  .qt-chat-shell { max-width: 1080px; display: grid; grid-template-columns: minmax(0, 1fr) 340px; grid-template-rows: auto minmax(0, 1fr) auto; column-gap: 16px; align-items: start; }
+  .qt-chat-header { grid-column: 1 / -1; }
+  .qt-chat-log { grid-column: 1; grid-row: 2; min-width: 0; }
+  .qt-chat-composer { grid-column: 1; grid-row: 3; position: sticky; }
+  .qt-chat-draft { grid-column: 2; grid-row: 2 / span 2; position: sticky; top: 16px; max-height: calc(100dvh - 96px); overflow: auto; z-index: 1; }
+}
+`;
+
+function isTransient(error: unknown): boolean {
+  const msg = error instanceof Error
+    ? `${error.name} ${error.message}`
+    : String((error as { message?: string } | null)?.message ?? "");
+  return /abort|timeout|timed out|network|failed to send|fetch|load failed/i.test(msg);
+}
+
+/** One automatic retry when the assistant times out. The user message is already on screen. */
+async function invokeChat(
+  body: Record<string, unknown>,
+  timeout: number,
+  onRetry: () => void,
+): Promise<{ data: unknown; error: unknown }> {
+  let last: { data: unknown; error: unknown } = { data: null, error: null };
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      last = await supabase.functions.invoke("quick-table-chat", { body, timeout });
+    } catch (error) {
+      last = { data: null, error };
+    }
+    if (!last.error || attempt === 1 || !isTransient(last.error)) return last;
+    onRetry();
+  }
+  return last;
+}
+
 const QuickTableChat = () => {
   const { language } = useI18n();
   const lang: Lang = language === "en" ? "en" : "vi";
@@ -302,11 +345,11 @@ const QuickTableChat = () => {
         layoutTitle={c.layoutTitle}
         noindex
         toolLabel={c.toolLabel}
-        toolPath="/tools/quick-tables"
+        toolPath={localePath("/tools/quick-tables", lang)}
         icon={MessageSquareText}
         title={c.loginTitle}
         desc={c.loginDesc}
-        loginRedirect="/tools/quick-tables/chat"
+        loginRedirect={localePath("/tools/quick-tables/chat", lang)}
       />
     );
   }
@@ -317,6 +360,7 @@ const QuickTableChat = () => {
 function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   const c = COPY[lang];
   const navigate = useNavigate();
+  const to = (path: string) => localePath(path, lang);
   const confirm = useConfirm();
   const { createTable, setupRosterAtomic, getUserQuotaInfo } = useQuickTable();
   const storageKey = STORAGE_PREFIX + userId;
@@ -336,6 +380,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     restored?.lang === lang && restored.messages?.length ? restored.messages : freshMessages(c, restored?.draft ?? {}));
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [busyNote, setBusyNote] = useState("");
   const [failed, setFailed] = useState<Outgoing | null>(null);
   const [subMenu, setSubMenu] = useState<SubMenu>(null);
   const [assignments, setAssignments] = useState<number[]>([]);
@@ -363,10 +408,19 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages, busy, slot, subMenu, created]);
 
-  // Bảng xem trước: tính lại khi danh sách / số bảng đổi, giữ nguyên khi chỉ đổi tên.
+  // Đổi chỗ / đổi tên giữ nguyên bảng. Đổi số bảng thì chia lại theo thứ tự hiện tại, không xáo.
   const rosterKey = JSON.stringify([draft.entries, draft.group_count]);
+  const groupsRef = useRef(draft.group_count ?? 0);
   useEffect(() => {
-    setAssignments(draft.entries?.length && draft.group_count ? previewAssignments(draft) : []);
+    const count = draft.entries?.length ?? 0;
+    const g = draft.group_count ?? 0;
+    if (!count || !g) {
+      setAssignments([]);
+      groupsRef.current = g;
+      return;
+    }
+    setAssignments((prev) => keepOrAssign(prev, count, groupsRef.current, g) ?? previewAssignments(draft));
+    groupsRef.current = g;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rosterKey]);
 
@@ -374,9 +428,10 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
 
   /** Áp nháp mới rồi hỏi câu tiếp theo (kèm câu xác nhận ngắn nếu có). */
   const advance = useCallback((next: Draft, ack?: string) => {
-    setDraft(next);
+    const locked = lockAdvance(next);
+    setDraft(locked);
     setSubMenu(null);
-    const q = questionFor(c, next, nextSlot(next));
+    const q = questionFor(c, locked, nextSlot(locked));
     setMessages((m) => [...m, { id: uid(), role: "bot", text: [ack?.trim(), q].filter(Boolean).join(" ") }]);
   }, [c]);
 
@@ -422,6 +477,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
         snap();
         setMessages((m) => [...m, { id: uid(), role: "user", text: msg.text, label: c.sheetLabel }]);
         setBusy(true);
+        setBusyNote(c.thinking);
         let data: unknown = null;
         try {
           const res = await supabase.functions.invoke("quick-table-chat", { body: { sheet }, timeout: 15_000 });
@@ -452,6 +508,13 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       } else {
         const local = localSlotPatch(msg.text, slot);
         if (local) { setInput(""); choose(msg.text, local); return; }
+        const spoken = applySpokenEdit(draft, msg.text);
+        if (spoken && !messageNeedsModel(msg.text)) {
+          setInput("");
+          pushUser(msg.text);
+          advance(spoken, factualAck(draft, spoken, lang, msg.text));
+          return;
+        }
       }
     }
     if (msg.entries?.length) {
@@ -474,6 +537,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     }
     setFailed(null);
     setBusy(true);
+    setBusyNote(c.thinking);
     // Thử lại: bỏ tin lỗi + chính tin người dùng đó khỏi lịch sử rồi gửi lại.
     const prior = isRetry ? messages.slice(0, messages.map((m) => m.role).lastIndexOf("user")) : messages;
     const files = msg.attachments ?? (msg.attachment ? [msg.attachment] : []);
@@ -488,10 +552,11 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       let transportFailed = false;
       try {
         for (const file of files) {
-          const { data, error } = await supabase.functions.invoke("quick-table-chat", {
-            body: { messages: history, draft: draftWithoutList, pending: "count", lang, attachment: file },
-            timeout: 60_000,
-          });
+          const { data, error } = await invokeChat(
+            { messages: history, draft: draftWithoutList, pending: "count", lang, attachment: file },
+            60_000,
+            () => setBusyNote(c.thinkingRetry),
+          );
           if (error || !data || typeof data !== "object" || "error" in data) { transportFailed = true; missed++; continue; }
           const res = data as { intent: string; patch: unknown };
           if (res.intent !== "fill" && res.intent !== "answer") { missed++; continue; }
@@ -521,52 +586,36 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     const history = [...prior, { role: "user" as const, text: msg.text }]
       .slice(-8)
       .map((m) => ({ role: m.role, text: m.text.slice(0, 4000) }));
-    const { data, error } = await supabase.functions.invoke("quick-table-chat", {
-      body: {
-        messages: history, draft, pending: slot, lang, facts: chatFacts(draft, lang),
-      },
-      timeout: 25_000,
-    });
+    const { data, error } = await invokeChat(
+      { messages: history, draft, pending: slot, lang, facts: chatFacts(draft, lang) },
+      25_000,
+      () => setBusyNote(c.thinkingRetry),
+    );
     setBusy(false);
     if (error || !data || typeof data !== "object" || "error" in data) {
       setFailed(msg);
       pushBot(c.aiError);
       return;
     }
-    const res = data as { reply: string; intent: string; patch: unknown };
+    const res = data as { reply?: string; intent: string; patch: unknown };
+    const said = typeof res.reply === "string" ? res.reply : "";
     if (res.intent !== "fill" && res.intent !== "answer") {
-      advance(draft, res.reply);
+      const spoken = applySpokenEdit(draft, msg.text);
+      const next = spoken ?? draft;
+      advance(next, replyFromDraft(draft, next, said, lang, msg.text));
       return;
     }
-    // Tên file ("Pasted … 10.44 PM.png") không phải lời người dùng — không cho nó "nhắc" tới giờ/sân.
-    const patch = trustPatch(res.patch, files.length ? "" : msg.text, slot);
-    if (files.length && !(Array.isArray(patch.entries) && patch.entries.length)) {
-      // AI đếm được nhưng không tách được tên → đừng nhận số đội ảo.
-      advance(draft, c.attachmentNoList);
-      return;
-    }
-    const incoming = files.length && Array.isArray(patch.entries) ? (patch.entries as Entry[]) : null;
-    if (incoming) patch.entries = mergeRoster(draft.entries, incoming);
-    const next = applyPatch(draft, patch);
-    let ack = res.reply;
-    const before = draft.entries?.length ?? 0;
-    const after = next.entries?.length ?? 0;
-    if (incoming && after > 0) {
-      ack = rosterAck(c, c.unit(next), before, after, incoming.length, next.entries);
-    } else {
-      const gotList = !before && after > 0;
-      if (gotList) {
-        ack = c.received(after, c.unit(next));
-        const dups = duplicateIndexes(next.entries!).size;
-        if (dups) ack += c.dupWarn(dups);
-      }
-    }
-    // Cỡ nhánh mới đặt → nhắc lại bằng số do code tính (AI chỉ nói chung chung "chia đều").
+    // Ảnh đã được đọc ở vòng trên. Ở đây chỉ còn chữ người dùng gõ.
+    const patch = dropInventedRoster(trustPatch(res.patch, msg.text, slot), msg.text, draft.entries);
+    const patched = applyPatch(draft, patch);
+    const spoken = applySpokenEdit(patched, msg.text);
+    const next = spoken ?? patched;
+    let ack = replyFromDraft(draft, next, said, lang, msg.text);
     const plan = draftSeriesPlan(next);
-    if (plan && next.series_sizes && next.series_sizes.join() !== draft.series_sizes?.join()) {
-      ack = `${ack ? `${ack} ` : ""}${plan.map((sl, i) => seriesLine(seriesName(next.series_style ?? "series", i, lang), sl, lang, c.unit(next))).join(" · ")}.`;
+    if (plan && !next.advance_per_group && next.series_sizes && next.series_sizes.join() !== draft.series_sizes?.join()) {
+      const line = plan.map((sl, i) => seriesLine(seriesName(next.series_style ?? "series", i, lang), sl, lang, c.unit(next))).join(" · ");
+      if (!ack.includes(line)) ack = `${ack} ${line}.`;
     }
-    // Đang ở bước tuỳ chọn mà người dùng gõ hạt giống/sân/CLB → ở lại bước tuỳ chọn.
     advance(next, ack);
   };
 
@@ -589,7 +638,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
         ];
       case "too_many":
         return [
-          { label: c.classicForm, onClick: () => navigate("/tools/quick-tables") },
+          { label: c.classicForm, onClick: () => navigate(to("/tools/quick-tables")) },
           { label: c.changeCount, onClick: () => choose(c.changeCount, { player_count: undefined, entries: undefined, roster_mode: undefined }) },
         ];
       case "pairing": {
@@ -632,7 +681,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
             label,
             sub: k === 1 ? c.seriesOneSub : (seriesPlan(sizes, k) ?? []).map((sl, d) => seriesLine(names[d], sl, lang, unit)).join(" · "),
             recommended: k === seriesCap(draft),
-            onClick: () => choose(label, { series: k, series_sizes: undefined }),
+            onClick: () => choose(label, { series: k, series_sizes: undefined, advance_per_group: undefined }),
           };
         });
         const ranks = rankSeriesSizes(sizes);
@@ -644,7 +693,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           {
             label: c.seriesByRank,
             sub: ranks.map((n, d) => seriesLine(seriesName("series", d, lang), seriesSlot(n), lang, unit)).join(" · "),
-            onClick: () => choose(c.seriesByRank, { series: ranks.length, series_sizes: ranks, series_style: "series" }),
+            onClick: () => choose(c.seriesByRank, { series: ranks.length, series_sizes: ranks, series_style: "series", advance_per_group: undefined }),
           },
         ];
       }
@@ -762,7 +811,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     setCreated({ table, rosterOk });
   };
 
-  const tableUrl = created ? `${getSiteUrl()}/tools/quick-tables/${created.table.share_id}` : "";
+  const tableUrl = created ? `${getSiteUrl()}${to(`/tools/quick-tables/${created.table.share_id}`)}` : "";
   const groupsList = useMemo(() => {
     const k = draft.group_count ?? 1;
     const out: Entry[][] = Array.from({ length: k }, () => []);
@@ -827,11 +876,12 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
 
   return (
     <TheLineLayout title={c.layoutTitle} noindex active="lab">
-      <div className="tl-shell" style={{ maxWidth: 680, minHeight: "calc(100dvh - 64px)", display: "flex", flexDirection: "column" }}>
+      <style>{QT_CHAT_CSS}</style>
+      <div className="tl-shell qt-chat-shell">
         {/* header */}
-        <header style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 0" }}>
+        <header className="qt-chat-header" style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 0" }}>
           <Button asChild variant="ghost" size="icon" aria-label={lang === "vi" ? "Quay lại" : "Back"}>
-            <Link to="/tools/quick-tables"><ArrowLeft className="w-5 h-5" /></Link>
+            <Link to={to("/tools/quick-tables")}><ArrowLeft className="w-5 h-5" /></Link>
           </Button>
           <h1 style={{ flex: 1, margin: 0, fontSize: 17, fontWeight: 600, color: "var(--tl-fg)", display: "flex", alignItems: "center", gap: 6 }}>
             <Sparkles className="w-4 h-4" style={{ color: "var(--tl-green)" }} /> {c.title}
@@ -851,7 +901,8 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
         {/* bản nháp dính trên cùng */}
         {!created && (
           <section
-            style={{ position: "sticky", top: "calc(env(safe-area-inset-top) + 61px + 8px)", zIndex: 5, background: "var(--tl-bg-elev)", border: "1px solid var(--tl-border)", borderRadius: "var(--tl-radius-lg)" }}
+            className="qt-chat-draft"
+            style={{ background: "var(--tl-bg-elev)", border: "1px solid var(--tl-border)", borderRadius: "var(--tl-radius-lg)" }}
           >
             <button
               type="button"
@@ -878,14 +929,15 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
         )}
 
         {/* hội thoại */}
-        <div role="log" aria-live="polite" style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10, padding: "16px 0" }}>
+        <div className="qt-chat-log" role="log" aria-live="polite" style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10, padding: "16px 0" }}>
           {messages.map((m) => <Bubble key={m.id} msg={m} c={c} />)}
           {quotaMsg && <Bubble msg={{ id: "quota", role: "bot", text: quotaMsg }} c={c} />}
           {busy && (
-            <div aria-label="…" style={{ alignSelf: "flex-start", padding: "10px 14px", borderRadius: 16, background: "var(--tl-bg-elev)", border: "1px solid var(--tl-border)" }}>
-              <span className="inline-flex gap-1">
+            <div role="status" aria-live="polite" style={{ alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderRadius: 16, background: "var(--tl-bg-elev)", border: "1px solid var(--tl-border)", color: "var(--tl-fg-2)", fontSize: 14 }}>
+              <span className="inline-flex gap-1" aria-hidden>
                 {[0, 1, 2].map((i) => <span key={i} className="animate-pulse" style={{ width: 6, height: 6, borderRadius: 3, background: "var(--tl-fg-3)", animationDelay: `${i * 150}ms` }} />)}
               </span>
+              {busyNote || c.thinking}
             </div>
           )}
 
@@ -902,22 +954,22 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
             <SuccessCard
               c={c} name={draft.name ?? created.table.name} rosterOk={created.rosterOk}
               needsRoster={!draft.entries?.length && draft.roster_mode !== "registration"}
-              onOpen={() => navigate(`/tools/quick-tables/${created.table.share_id}`)}
-              onRoster={() => navigate(`/tools/quick-tables/${created.table.share_id}/setup`)}
+              onOpen={() => navigate(to(`/tools/quick-tables/${created.table.share_id}`))}
+              onRoster={() => navigate(to(`/tools/quick-tables/${created.table.share_id}/setup`))}
               onCopyLink={() => copy(tableUrl)}
               onCopyZalo={() => copy(zaloText())}
               onAnother={startOver}
             />
           )}
           {quotaMsg && (
-            <div><Button variant="outline" onClick={() => navigate("/tools/quick-tables")}>{c.myTables}</Button></div>
+            <div><Button variant="outline" onClick={() => navigate(to("/tools/quick-tables"))}>{c.myTables}</Button></div>
           )}
           <div ref={endRef} />
         </div>
 
         {/* chip + ô nhập */}
         {!created && quotaFull == null && (
-          <div style={{ position: "sticky", bottom: 0, background: "var(--tl-bg)", paddingBottom: "max(12px, env(safe-area-inset-bottom))", paddingTop: 8 }}>
+          <div className="qt-chat-composer" style={{ position: "sticky", bottom: 0, background: "var(--tl-bg)", paddingBottom: "max(12px, env(safe-area-inset-bottom))", paddingTop: 8 }}>
             {chips.length > 0 && <ChipRow chips={chips} />}
             <form
               onSubmit={(e) => { e.preventDefault(); send(); }}
@@ -963,7 +1015,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
             </form>
             <p style={{ fontSize: 11, color: "var(--tl-fg-3)", margin: "6px 2px 0", display: "flex", gap: 8, justifyContent: "space-between", flexWrap: "wrap" }}>
               <span>{c.reload}</span>
-              <Link to="/tools/quick-tables" style={{ color: "var(--tl-fg-2)", textDecoration: "underline" }}>{c.classicForm}</Link>
+              <Link to={to("/tools/quick-tables")} style={{ color: "var(--tl-fg-2)", textDecoration: "underline" }}>{c.classicForm}</Link>
             </p>
           </div>
         )}
@@ -1130,10 +1182,9 @@ function ChipRow({ chips }: { chips: Chip[] }) {
       style={{
         display: "flex",
         flexDirection: big ? "column" : "row",
+        flexWrap: "wrap",
         gap: 8,
-        overflowX: big ? undefined : "auto",
         paddingBottom: 8,
-        scrollbarWidth: "none",
       }}
     >
       {chips.map((ch) => (
@@ -1153,7 +1204,7 @@ function ChipRow({ chips }: { chips: Chip[] }) {
             fontWeight: 500,
             textAlign: "left",
             cursor: "pointer",
-            whiteSpace: big ? "normal" : "nowrap",
+            whiteSpace: "normal",
           }}
         >
           <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -1174,13 +1225,13 @@ function DraftPanel({ draft, c, lang, onEdit, onEntries }: {
 }) {
   const n = entryCount(draft);
   const extras = [
-    (draft.default_sets ?? 1) > 1 ? `BO${draft.default_sets}` : null,
+    (draft.default_sets ?? 1) > 1 ? c.optSets(draft.default_sets ?? 1) : null,
     draft.entries?.some((e) => e.seed) ? c.optSeed : null,
   ].filter(Boolean).join(" · ");
   const rows: Array<[string, string, Parameters<typeof onEdit>[0]]> = [
     [c.fFormat, draft.is_doubles === undefined ? c.empty : draft.is_doubles ? c.doubles : c.singles, "format"],
     [c.fCount, n ? `${n} ${c.unit(draft)}` : c.empty, "count"],
-    [c.fGroups, findGroupOption(n, draft.group_count) ? [c.groupLabel(findGroupOption(n, draft.group_count)!), seriesLabel(draft, lang)].filter(Boolean).join(" · ") : c.empty, "groups"],
+    [c.fGroups, findGroupOption(n, draft.group_count) ? [c.groupLabel(findGroupOption(n, draft.group_count)!), playoffSummary(draft, lang) ?? seriesLabel(draft, lang)].filter(Boolean).join(" · ") : c.empty, "groups"],
     [c.fRoster, draft.entries?.length ? `${draft.entries.length} ${c.unit(draft)}` : draft.roster_mode === "registration" ? c.rosterReg : draft.roster_mode === "later" ? c.rosterLater : c.empty, "roster"],
     [c.fName, draft.name ?? c.empty, "name"],
     [c.fCourts, draft.courts?.length ? [c.courts(draft.courts), draft.start_time].filter(Boolean).join(" · ") : c.empty, "courts"],
@@ -1245,8 +1296,8 @@ function ConfirmCard({ draft, c, lang, groups, creating, onCreate, onEdit, onRes
     draft.is_doubles === false ? c.singles : c.doubles,
     `${n} ${c.unit(draft)}`,
     findGroupOption(n, draft.group_count) ? c.groupLabel(findGroupOption(n, draft.group_count)!) : null,
-    seriesLabel(draft, lang),
-    draft.default_sets && draft.default_sets > 1 ? `BO${draft.default_sets}` : null,
+    playoffSummary(draft, lang) ?? seriesLabel(draft, lang),
+    draft.default_sets && draft.default_sets > 1 ? c.optSets(draft.default_sets) : null,
     draft.courts?.length ? c.courts(draft.courts) : null,
     draft.start_time ?? null,
   ].filter(Boolean).join(" · ");
@@ -1286,7 +1337,7 @@ function ConfirmCard({ draft, c, lang, groups, creating, onCreate, onEdit, onRes
       )}
       <div style={{ display: "flex", gap: 8 }}>
         <Button variant="default" onClick={onCreate} disabled={creating || invalidRows} style={{ flex: 1, minHeight: 44 }}>
-          {creating ? <><Loader2 className="w-4 h-4 animate-spin" /> {c.creating}</> : <><Check className="w-4 h-4" /> {c.create}</>}
+          {creating ? <><Loader2 className="w-4 h-4 animate-spin" /> <span role="status">{c.creating}</span></> : <><Check className="w-4 h-4" /> {c.create}</>}
         </Button>
         <Button variant="outline" onClick={onEdit} style={{ minHeight: 44 }}>
           <Pencil className="w-4 h-4" /> {c.edit}

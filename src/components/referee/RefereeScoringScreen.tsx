@@ -96,6 +96,13 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
   // game
   const [state, setState] = useState<ScoreState | null>(null);
   const [history, setHistory] = useState<ScoreState[]>([]);
+  // A reused screen (new persistKey, same instance) must not keep the previous board.
+  const [scoreKey, setScoreKey] = useState(storeKey);
+  if (scoreKey !== storeKey) {
+    setScoreKey(storeKey);
+    setState(null);
+    setHistory([]);
+  }
   const [switchAnnounced, setSwitchAnnounced] = useState(false);
   const [showSwitch, setShowSwitch] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -130,7 +137,8 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
   // device switches resume with undo stack, timeouts and notes intact.
   const restoredFromDb = useRef(false);
   useEffect(() => {
-    if (state) return;
+    restoredFromDb.current = false;
+    finishedRef.current = false;
     const env = parseLiveState(initialLiveState);
     if (env) {
       restoredFromDb.current = true;
@@ -142,14 +150,17 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
       setNoteA(env.notes.a); setNoteB(env.notes.b);
       return;
     }
+    let restored = false;
     try {
       const raw = localStorage.getItem(storeKey);
       if (raw) {
+        restored = true;
         const s = JSON.parse(raw) as ScoreState;
         setState(s); setMode(s.mode); setTarget(s.winTarget);
         setSwitchAnnounced(Math.max(s.a, s.b) >= sideSwitchPoint(s.winTarget));
       }
     } catch { /* ignore */ }
+    if (!restored) setState(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeKey]);
   useEffect(() => { if (state && !readOnly) localStorage.setItem(storeKey, JSON.stringify(state)); }, [state, storeKey, readOnly]);
@@ -185,6 +196,8 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
   const liveStateTimer = useRef<number | null>(null);
   const onLiveStateRef = useRef(onLiveState);
   onLiveStateRef.current = onLiveState;
+  // The write that was scheduled belongs to the match that scheduled it.
+  const flushCallbackRef = useRef(onLiveState);
   const pendingEnvRef = useRef<RefereeLiveState | null>(null);
   const finishedRef = useRef(false);
   // readOnlyRef mirrors the derived lockout — the timer, the unmount flush
@@ -201,9 +214,11 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
       regularTO,
     });
     if (liveStateTimer.current) window.clearTimeout(liveStateTimer.current);
+    const callback = onLiveState;
+    flushCallbackRef.current = callback;
     liveStateTimer.current = window.setTimeout(() => {
       liveStateTimer.current = null;
-      if (!finishedRef.current && !readOnlyRef.current && pendingEnvRef.current) onLiveStateRef.current?.(pendingEnvRef.current);
+      if (!finishedRef.current && !readOnlyRef.current && pendingEnvRef.current) callback(pendingEnvRef.current);
     }, 400);
     return () => { if (liveStateTimer.current) window.clearTimeout(liveStateTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -211,7 +226,7 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
   // Unmount flush — a rally scored right before closing must still land.
   useEffect(() => () => {
     if (!finishedRef.current && !readOnlyRef.current && liveStateTimer.current && pendingEnvRef.current) {
-      onLiveStateRef.current?.(pendingEnvRef.current);
+      flushCallbackRef.current?.(pendingEnvRef.current);
     }
   }, []);
 
