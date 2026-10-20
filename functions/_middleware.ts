@@ -1319,7 +1319,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // guide paragraph.
   // v131 (2026-10-20): Hong Kong Slam results refresh, and the schedule plus
   // preview now link to that results page.
-  const cacheKey = `pr:v131:${url.pathname}`;
+  // v132 (2026-10-20): new chat-draw guide on the blog index and sitemap.
+  const cacheKey = `pr:v132:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

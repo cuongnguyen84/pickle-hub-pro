@@ -10,6 +10,25 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "create-tournament-by-chat",
+    "publishedDate": "2026-10-20",
+    "updatedDate": "2026-10-20",
+    "author": "The PickleHub Team",
+    "tags": ["tạo giải pickleball", "dán danh sách", "chat", "vòng bảng", "round robin"],
+    "ctaPath": "/tools/quick-tables/chat",
+    "ctaLabel": { "en": "Open the chat", "vi": "Mở chat tạo giải" },
+    "heroImage": {
+      "src": "/images/blog/create-tournament-by-chat-hero.webp",
+      "alt": "ThePickleHub chat screen ready to create a club draw, with two groups and a Create button"
+    },
+    "titleEn": "Create a Pickleball Draw by Chat: Paste a List, Up to 48 Teams",
+    "titleVi": "Tạo giải pickleball bằng chat: dán danh sách Zalo, tối đa 48 đội",
+    "metaTitleEn": "Paste a Pickleball List into Chat | ThePickleHub",
+    "metaTitleVi": "Tạo giải pickleball bằng chat | Dán danh sách",
+    "metaDescriptionEn": "Paste a Zalo or Excel list into ThePickleHub chat and create a round-robin for up to 48 teams. 8 teams, 2 courts: 28 or 12 matches. 20 Oct 2026.",
+    "metaDescriptionVi": "Dán danh sách Zalo vào chat ThePickleHub, đọc từng tên, tạo giải vòng bảng tối đa 48 đội. 8 đội 2 sân: 28 trận hoặc 12 trận. 20/10/2026."
+  },
+  {
     "slug": "hong-kong-slam-2026-results",
     "publishedDate": "2026-10-19",
     "updatedDate": "2026-10-20",
