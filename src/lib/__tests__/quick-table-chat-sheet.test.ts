@@ -125,6 +125,17 @@ describe("uploads that are not a roster", () => {
     expect(looksLikeNameList("STT\tTiền\n1\t500.000\n2\t200.000")).toBe(false);
     expect(looksLikeNameList("Nam - Hùng\nTú - Long")).toBe(true);
   });
+  it("doubles needs two names side by side, not a team column and not a stray label", () => {
+    expect(parseSheet([["Nam", "Hùng"], ["Tú", "Long"]], { doubles: true }))
+      .toEqual([{ p1: "Nam", p2: "Hùng" }, { p1: "Tú", p2: "Long" }]);
+    expect(parseSheet([["Nam - Hùng"], ["Tú & Long"]], { doubles: true }))
+      .toEqual([{ p1: "Nam", p2: "Hùng" }, { p1: "Tú", p2: "Long" }]);
+    expect(parseSheet([["STT", "Tên đội"], ["1", "Sấm Sét"], ["2", "Gió Bão"]], { doubles: true }))
+      .toEqual([{ p1: "Sấm Sét" }, { p1: "Gió Bão" }]);
+    const unrelated = Array.from({ length: 16 }, (_, i) => [`Mục ${i + 1}`, "120.000"]);
+    expect(parseSheet(unrelated, { doubles: true })).toEqual([]);
+    expect(parseSheet([["Nam", "", "Hùng"], ["Tú", "", "Long"]], { doubles: true })).toEqual([]);
+  });
   it("a second photo adds names and drops ones already there", () => {
     const merged = mergeRoster(
       [{ p1: "Nam", p2: "Hùng" }, { p1: "Tú", p2: "Long" }],

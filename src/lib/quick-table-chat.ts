@@ -324,6 +324,7 @@ const PAIR_SPLIT = /\s+(?:-|–|&|\/|\+|và|and)\s+|\s*[&/+]\s*/i;
 /** Ô có phải tên người/đội không: có chữ, không phải số / SĐT / tiền / ngày / trạng thái. */
 function isNameCell(s: string): boolean {
   if (!/\p{L}/u.test(s)) return false;
+  if (s.split(/\s+/).length > 5 || /https?:|@/.test(s)) return false;
   if (/^(đã|chưa|da|chua)\s*(ck|chuyển|chuyen|đóng|dong|tt)/i.test(s)) return false;
   // nhãn đánh số ("Team 01", "Đội 5") không phải tên người
   if (/^(team|đội|doi|cặp|cap|nhóm|nhom|pair)\s*#?\d+$/i.test(s)) return false;
@@ -342,8 +343,10 @@ const splitPair = (s: string): Entry => {
  * Có dòng tiêu đề thì theo tên cột (Đội / VĐV 1 / VĐV 2 / CLB); không có thì lấy
  * 1–2 ô tên đầu tiên mỗi hàng. Ô "Nam - Hùng" được tách thành cặp.
  * Trả [] nếu không nhận ra danh sách → để AI đọc.
+ * doubles: không có tiêu đề thì chỉ nhận hai tên đứng cạnh nhau (hai ô liền, hoặc "Nam - Hùng").
+ * Không đòi cột tên đội.
  */
-export function parseSheet(rows: string[][]): Entry[] {
+export function parseSheet(rows: string[][], opts?: { doubles?: boolean }): Entry[] {
   const grid = rows.map((r) => r.map((c) => String(c ?? "").replace(/\s+/g, " ").trim())).filter((r) => r.some(Boolean));
   if (!grid.length) return [];
   const headerAt = grid.slice(0, 5).findIndex((r) => {
@@ -368,10 +371,23 @@ export function parseSheet(rows: string[][]): Entry[] {
     }
     return out;
   }
+  const doubles = opts?.doubles === true;
   for (const r of grid) {
+    const inline = r.map((cell) => splitPair(cell)).find((e) => e.p2 && isNameCell(e.p1) && isNameCell(e.p2));
+    if (inline?.p2) { out.push(inline); continue; }
+    let paired = false;
+    for (let i = 0; i < r.length - 1; i++) {
+      const a = r[i] ?? "";
+      const b = r[i + 1] ?? "";
+      if (isNameCell(a) && isNameCell(b)) {
+        out.push({ p1: clean(a), p2: clean(b) });
+        paired = true;
+        break;
+      }
+    }
+    if (paired || doubles) continue;
     const names = r.filter(isNameCell);
-    if (!names.length) continue;
-    out.push(names.length >= 2 ? { p1: clean(names[0]), p2: clean(names[1]) } : splitPair(names[0]));
+    if (names.length) out.push({ p1: clean(names[0]) });
   }
   return out;
 }

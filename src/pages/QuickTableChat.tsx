@@ -67,7 +67,7 @@ const COPY = {
     fileTooBig: "File lớn quá, tối đa 4 MB.",
     fileTooMany: "Mỗi lần tối đa 4 ảnh. Mình lấy 4 ảnh đầu; ảnh còn lại gửi tiếp cũng được.",
     oneFile: "Mỗi lần một file bảng tính. Ảnh thì chọn nhiều một lúc.",
-    fileNotList: "File này không phải danh sách đội. Mỗi dòng một đội, kiểu Nam - Hùng, hoặc hai cột VĐV. Ảnh chụp danh sách cũng được.",
+    fileNotList: "Mình chưa thấy hai tên đứng cạnh nhau. Đánh đôi thì mỗi dòng hai VĐV, kiểu Nam - Hùng hoặc hai cột tên. Không cần cột tên đội.",
     sheetPrivate: "Mình không mở được Google Sheet này. Hãy để quyền “Bất kỳ ai có đường liên kết”, rồi gửi lại link. Hoặc tải file Excel xuống.",
     sheetUnreadable: "Link này không mở được, hoặc sheet đang trống.",
     sheetLabel: "📊 Google Sheet",
@@ -183,7 +183,7 @@ const COPY = {
     fileTooBig: "That file is too big — 4 MB max.",
     fileTooMany: "4 photos at a time. I took the first 4; send the rest next.",
     oneFile: "One spreadsheet at a time. Photos can be several at once.",
-    fileNotList: "This file isn't a team list. Use one team per line, like Nam - Hung, or two player columns. A photo of the list works too.",
+    fileNotList: "I couldn't see two names next to each other. For doubles, each row needs two players, like Nam - Hung, or two name columns. A team-name column isn't required.",
     sheetPrivate: "I can't open this Google Sheet. Set sharing to “Anyone with the link”, then send it again. Or download the Excel file.",
     sheetUnreadable: "That link didn't open, or the sheet is empty.",
     sheetLabel: "📊 Google Sheet",
@@ -427,7 +427,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           return;
         }
         let sheetEntries: Entry[] = [];
-        try { sheetEntries = parseSheet(await rowsFromCsv(csv)); } catch { /* bảng lạ thì để AI đọc chữ */ }
+        try { sheetEntries = parseSheet(await rowsFromCsv(csv), { doubles: draft.is_doubles === true }); } catch { /* bảng lạ thì để AI đọc chữ */ }
         if (sheetEntries.length >= 2) {
           const entries = mergeRoster(draft.entries, sheetEntries);
           const doubles = draft.is_doubles === undefined && entries.every((e) => e.p2);
@@ -435,7 +435,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           advance(next, rosterAck(c, c.unit(next), draft.entries?.length ?? 0, next.entries!.length, sheetEntries.length, next.entries));
           return;
         }
-        if (!looksLikeNameList(csv)) {
+        if (draft.is_doubles === true || !looksLikeNameList(csv)) {
           pushBot(c.fileNotList);
           return;
         }
@@ -738,7 +738,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     const batch = images.length > MAX_IMAGES ? images.slice(0, MAX_IMAGES) : images;
     if (images.length > MAX_IMAGES) toast.error(c.fileTooMany);
     let out: Outgoing;
-    try { out = others.length ? await readUpload(others[0]) : await readImages(batch); }
+    try { out = others.length ? await readUpload(others[0], draft.is_doubles === true) : await readImages(batch); }
     catch (err) { toast.error(err instanceof UploadError && err.code === "not_a_list" ? c.fileNotList : c.fileUnreadable); return; }
     send(out);
   };
@@ -995,7 +995,7 @@ async function readImages(files: File[]): Promise<Outgoing> {
 }
 
 /** Ảnh/PDF → Gemini đọc; bảng tính/văn bản → đọc tại chỗ thành chữ (tab giữa các cột). */
-async function readUpload(file: File): Promise<Outgoing> {
+async function readUpload(file: File, doubles = false): Promise<Outgoing> {
   if (file.type.startsWith("image/")) return readImages([file]);
   if (file.type === "application/pdf") return { text: `📎 ${file.name}`, label: `📎 ${file.name}`, attachment: { mime_type: "application/pdf", data: await readAsBase64(file) }, append: true };
   if (!SHEET_EXT.test(file.name)) throw new UploadError("unsupported");
@@ -1005,13 +1005,14 @@ async function readUpload(file: File): Promise<Outgoing> {
     const XLSX = await import("xlsx/dist/xlsx.mini.min.js");
     const wb = /\.(xlsx|xls)$/i.test(file.name) ? XLSX.read(await file.arrayBuffer()) : XLSX.read(await file.text(), { type: "string" });
     const sheet = wb.Sheets[wb.SheetNames[0]];
-    entries = parseSheet(XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, raw: false, blankrows: false, defval: "" }));
+    entries = parseSheet(XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, raw: false, blankrows: false, defval: "" }), { doubles });
     text = XLSX.utils.sheet_to_csv(sheet, { FS: "\t", blankrows: false });
   } else {
     text = await file.text();
   }
   text = text.trim().slice(0, 4000);
   if (!text) throw new UploadError("empty");
+  if (doubles && entries.filter((e) => e.p2).length < 2 && entries.length < 2) throw new UploadError("not_a_list");
   if (entries.length < 2 && !looksLikeNameList(text)) throw new UploadError("not_a_list");
   // Nhận ra ≥ 2 dòng thì dùng luôn; chữ có tên mà chưa tách được thì để AI đọc.
   return { text, label: `📎 ${file.name}`, append: true, ...(entries.length >= 2 ? { entries: entries.slice(0, 200) } : {}) };
