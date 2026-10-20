@@ -1322,7 +1322,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v132 (2026-10-20): new chat-draw guide on the blog index and sitemap.
   // v133 (2026-10-20): the chat-draw guide title leads with AI.
   // v134 (2026-10-20): English title is "AI pickleball round robin" plus a pasted list.
-  const cacheKey = `pr:v134:${url.pathname}`;
+  // v135 (2026-10-20): the chat guide example is 44 teams, 11 groups, 2 or 3 brackets.
+  const cacheKey = `pr:v135:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

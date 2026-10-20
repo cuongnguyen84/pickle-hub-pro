@@ -25,8 +25,8 @@ export const blogMetadata: BlogPostMetadata[] = [
     "titleVi": "Tạo giải pickleball bằng AI: dán danh sách Zalo, tối đa 48 đội",
     "metaTitleEn": "AI Pickleball Round Robin in Chat | ThePickleHub",
     "metaTitleVi": "Tạo giải AI pickleball | Dán danh sách Zalo",
-    "metaDescriptionEn": "Paste a list into ThePickleHub AI chat for a pickleball round robin, up to 48 teams. 8 teams, 2 courts: 28 or 12 matches. 20 Oct 2026.",
-    "metaDescriptionVi": "AI ThePickleHub đọc tin Zalo hoặc ảnh, tạo giải vòng bảng tối đa 48 đội. 8 đội 2 sân: 28 hoặc 12 trận. 20/10/2026."
+    "metaDescriptionEn": "44 teams, 11 groups, then 2 or 3 brackets. ThePickleHub AI reads a pasted list or photo. Up to 48 teams. 20 Oct 2026.",
+    "metaDescriptionVi": "44 đội, 11 bảng, rồi 2 hoặc 3 nhánh. AI ThePickleHub đọc ảnh hoặc tin Zalo. Tối đa 48 đội. 20/10/2026."
   },
   {
     "slug": "hong-kong-slam-2026-results",
