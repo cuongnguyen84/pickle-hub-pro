@@ -349,10 +349,12 @@ const splitPair = (s: string): Entry => {
 export function parseSheet(rows: string[][], opts?: { doubles?: boolean }): Entry[] {
   const grid = rows.map((r) => r.map((c) => String(c ?? "").replace(/\s+/g, " ").trim())).filter((r) => r.some(Boolean));
   if (!grid.length) return [];
+  const headerLabel = (c: string) => c.length <= 40 && c.split(/\s+/).length <= 4
+    && (HEADER_TEAM.test(c) || HEADER_PLAYER.test(c) || HEADER_CLUB.test(c) || HEADER_ANY.test(c));
   const headerAt = grid.slice(0, 5).findIndex((r) => {
     const cells = r.filter(Boolean);
-    return cells.length > 0 && cells.every((c) => HEADER_TEAM.test(c) || HEADER_PLAYER.test(c) || HEADER_CLUB.test(c) || HEADER_ANY.test(c))
-      && cells.some((c) => HEADER_TEAM.test(c) || HEADER_PLAYER.test(c));
+    return cells.length > 0 && cells.every(headerLabel)
+      && cells.some((c) => headerLabel(c) && (HEADER_TEAM.test(c) || HEADER_PLAYER.test(c)));
   });
   const out: Entry[] = [];
   if (headerAt >= 0) {

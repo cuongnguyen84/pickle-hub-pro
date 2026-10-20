@@ -135,6 +135,15 @@ describe("uploads that are not a roster", () => {
     const unrelated = Array.from({ length: 16 }, (_, i) => [`Mục ${i + 1}`, "120.000"]);
     expect(parseSheet(unrelated, { doubles: true })).toEqual([]);
     expect(parseSheet([["Nam", "", "Hùng"], ["Tú", "", "Long"]], { doubles: true })).toEqual([]);
+    const pricing = [
+      ["PWC PICKLEBALL TV — BẢNG ĐỊNH GIÁ PHẦN GÓP CÔNG NGHỆ (CUONG)"],
+      ["MỤC ĐÍCH"],
+      ["Lượng hóa phần góp, thống kê VĐV, vận hành kỹ thuật trong nhiều tháng cho toàn bộ nền tảng đã có."],
+      ["NGUYÊN TẮC ĐỊNH GIÁ"],
+      ["QUY ƯỚC MÀU"],
+      ["LƯU Ý PHÁP LÝ"],
+    ];
+    expect(parseSheet(pricing, { doubles: true })).toEqual([]);
   });
   it("a second photo adds names and drops ones already there", () => {
     const merged = mergeRoster(
