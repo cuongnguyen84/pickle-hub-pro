@@ -33,7 +33,13 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Hong Kong Slam 2026 schedule at a glance",
-          "content": "Last updated: September 30, 2026.\n\nThe Hang Seng Bank Hong Kong Slam 2026 runs October 19–25, 2026 at Kai Tak Arena in Hong Kong: qualifying on Monday, October 19, one main-draw round per day from Tuesday to Saturday, and the finals on Championship Sunday, October 25, from 1:00 to 6:00 pm Hong Kong time (12:00 to 5:00 pm in Vietnam). This ThePickleHub schedule lists every round in both Hong Kong and Vietnam time, the stars already confirmed, the Vietnamese players to watch and how to get tickets.\n\nIt is the first PPA Asia 1500 event ever held and the finale of the 2026 PPA Tour Asia season, with up to US$1.1 million in Pro prize money and 1,500 World Pickleball Ranking (WPR) points for each champion. Hong Kong is one hour ahead of Vietnam, so every session starts at 8:00 am Vietnam time."
+          "content": "Last updated: September 30, 2026.\n\nThe Hang Seng Bank Hong Kong Slam 2026 runs October 19–25, 2026 at Kai Tak Arena in Hong Kong: qualifying on Monday, October 19, one main-draw round per day from Tuesday to Saturday, and the finals on Championship Sunday, October 25, from 1:00 to 6:00 pm Hong Kong time (12:00 to 5:00 pm in Vietnam). This ThePickleHub schedule lists every round in both Hong Kong and Vietnam time, the stars already confirmed, the Vietnamese players to watch and how to get tickets. Match scores from the official PPA feed are on the Hong Kong Slam 2026 results page.\n\nIt is the first PPA Asia 1500 event ever held and the finale of the 2026 PPA Tour Asia season, with up to US$1.1 million in Pro prize money and 1,500 World Pickleball Ranking (WPR) points for each champion. Hong Kong is one hour ahead of Vietnam, so every session starts at 8:00 am Vietnam time.",
+          "internalLinks": [
+            {
+              "text": "Hong Kong Slam 2026 results and daily scores",
+              "path": "/blog/hong-kong-slam-2026-results"
+            }
+          ]
         },
         {
           "heading": "Day-by-day schedule (Hong Kong and Vietnam time)",
@@ -169,7 +175,13 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Lịch thi đấu Hong Kong Slam 2026 tóm tắt",
-          "content": "Cập nhật: 30/9/2026.\n\nHang Seng Bank Hong Kong Slam 2026 diễn ra từ 19 đến 25/10/2026 tại Kai Tak Arena, Hồng Kông: vòng loại thứ Hai 19/10, mỗi ngày một vòng đấu chính từ thứ Ba đến thứ Bảy, và chung kết vào Chủ nhật 25/10 từ 12:00 đến 17:00 giờ Việt Nam. Lịch thi đấu do ThePickleHub tổng hợp dưới đây ghi từng vòng theo cả giờ Hồng Kông và giờ Việt Nam, kèm danh sách sao đã xác nhận, các VĐV Việt Nam đáng chú ý và cách mua vé.\n\nĐây là giải PPA Asia 1500 đầu tiên trong lịch sử và là chặng cuối mùa 2026 của PPA Tour Asia, với tổng tiền thưởng Pro tới 1,1 triệu USD và 1.500 điểm xếp hạng thế giới (WPR) cho mỗi nhà vô địch. Hồng Kông đi trước Việt Nam 1 tiếng, nên mọi phiên đấu bắt đầu lúc 8:00 sáng giờ Việt Nam."
+          "content": "Cập nhật: 30/9/2026.\n\nHang Seng Bank Hong Kong Slam 2026 diễn ra từ 19 đến 25/10/2026 tại Kai Tak Arena, Hồng Kông: vòng loại thứ Hai 19/10, mỗi ngày một vòng đấu chính từ thứ Ba đến thứ Bảy, và chung kết vào Chủ nhật 25/10 từ 12:00 đến 17:00 giờ Việt Nam. Lịch thi đấu do ThePickleHub tổng hợp dưới đây ghi từng vòng theo cả giờ Hồng Kông và giờ Việt Nam, kèm danh sách sao đã xác nhận, các VĐV Việt Nam đáng chú ý và cách mua vé. Tỷ số từ feed PPA nằm ở trang kết quả Hong Kong Slam 2026.\n\nĐây là giải PPA Asia 1500 đầu tiên trong lịch sử và là chặng cuối mùa 2026 của PPA Tour Asia, với tổng tiền thưởng Pro tới 1,1 triệu USD và 1.500 điểm xếp hạng thế giới (WPR) cho mỗi nhà vô địch. Hồng Kông đi trước Việt Nam 1 tiếng, nên mọi phiên đấu bắt đầu lúc 8:00 sáng giờ Việt Nam.",
+          "internalLinks": [
+            {
+              "text": "Kết quả Hong Kong Slam 2026",
+              "path": "/vi/blog/ket-qua-hong-kong-slam-2026"
+            }
+          ]
         },
         {
           "heading": "Lịch từng ngày (giờ Hồng Kông và giờ Việt Nam)",

@@ -1317,7 +1317,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v130 (2026-10-12): VI shop product titles/descriptions lead with the
   // category keyword ("Vợt pickleball <tên>"); category pages gain a buying
   // guide paragraph.
-  const cacheKey = `pr:v130:${url.pathname}`;
+  // v131 (2026-10-20): Hong Kong Slam results refresh, and the schedule plus
+  // preview now link to that results page.
+  const cacheKey = `pr:v131:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

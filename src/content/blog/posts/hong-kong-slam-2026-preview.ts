@@ -36,6 +36,10 @@ const post: BlogPost = {
             "Last updated: September 10, 2026 — the full prize breakdown is now published and registration is open. The PPA Asia 1500 Hang Seng Bank Hong Kong Slam runs October 19–25, 2026 at the Kai Tak Arena inside Hong Kong's new Kai Tak Sports Park: the first Slam ever staged in Asia, the grand finale of the 2026 tour, and — at up to US$1.1 million (about HK$8.58 million) — the richest prize purse in Asian professional pickleball history. Entry for both the Professional and Amateur divisions opened on August 10, 2026 and remains open on a first-come, first-served basis for amateurs. Organized by F-Sports Promotions and title-sponsored by Hang Seng Bank, with support from the Hong Kong, China Tennis Association, the Slam awards 1,500 ranking points to gold — the most on offer at any tour stop. This ThePickleHub preview covers everything PPA Tour Asia has confirmed, and is updated as qualification, tickets and the player field are announced.",
           internalLinks: [
             {
+              text: "Hong Kong Slam 2026 results and daily scores",
+              path: "/blog/hong-kong-slam-2026-results",
+            },
+            {
               text: "Vietnam's PPA Asia 500 in August — how the HCMC Open 2026 finished",
               path: "/blog/hcmc-open-2026-preview",
             },
@@ -192,6 +196,10 @@ const post: BlogPost = {
           content:
             "Mùa giải pickleball chuyên nghiệp tại châu Á sẽ khép lại bằng sự kiện lớn nhất từ trước đến nay. Ngày 3/8/2026, PPA Tour Asia xác nhận giải PPA Asia 1500 Hang Seng Bank Hong Kong Slam — Slam đầu tiên được tổ chức tại châu Á và là chung kết của mùa tour 2026 — diễn ra từ 19 đến 25/10/2026 tại Kai Tak Arena, trong khu liên hợp thể thao Kai Tak Sports Park mới của Hồng Kông. Do F-Sports Promotions tổ chức, Hang Seng Bank tài trợ danh xưng, cùng sự hỗ trợ của Hong Kong, China Tennis Association, giải có tổng thưởng lên tới 1,1 triệu USD (khoảng 8,58 triệu HKD) — cao nhất trong lịch sử pickleball chuyên nghiệp châu Á — và 1.500 điểm xếp hạng, mức cao nhất ở bất kỳ chặng nào. Diễn ra chỉ vài tuần sau tháng 8 rực lửa của pickleball Việt Nam, đây là sự kiện mà cả khu vực hướng tới suốt cả mùa. Bài preview này của ThePickleHub tổng hợp mọi thông tin đã xác nhận, và sẽ được cập nhật khi có thông tin về suất tham dự, vé và danh sách VĐV.",
           internalLinks: [
+            {
+              text: "Kết quả Hong Kong Slam 2026",
+              path: "/vi/blog/ket-qua-hong-kong-slam-2026",
+            },
             {
               text: "Chặng PPA Asia 500 của Việt Nam tháng 8 này — toàn cảnh HCMC Open 2026",
               path: "/vi/blog/hcmc-open-2026",
