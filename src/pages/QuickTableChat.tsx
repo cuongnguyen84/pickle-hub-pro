@@ -7,6 +7,7 @@
  * đúng createTable + setupRosterAtomic của wizard cũ.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Check, ChevronDown, Copy, Loader2, MessageSquareText, Paperclip, Pencil, RotateCcw, Send, Shuffle, Sparkles, Trash2, TriangleAlert, Trophy, Undo2 } from "lucide-react";
 import { toast } from "sonner";
@@ -35,7 +36,7 @@ interface Msg { id: string; role: "user" | "bot"; text: string; label?: string }
 /** Ảnh/PDF gửi kèm cho Gemini đọc — chỉ nằm trong request, không lưu localStorage. */
 interface Attachment { mime_type: string; data: string }
 /** entries: bảng tính đọc được tại chỗ → vào nháp luôn, không gọi AI. append: gộp vào danh sách đang có. */
-interface Outgoing { text: string; label?: string; attachment?: Attachment; attachments?: Attachment[]; entries?: Entry[]; append?: boolean }
+interface Outgoing { text: string; label?: string; attachment?: Attachment; attachments?: Attachment[]; entries?: Entry[]; append?: boolean; echoed?: boolean }
 interface Chip { label: string; sub?: string; recommended?: boolean; onClick: () => void }
 type SubMenu = null | "sets";
 
@@ -406,7 +407,8 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
 
   const send = async (out?: Outgoing, isRetry = false) => {
     let msg = out ?? { text: input.trim() };
-    if (!msg.text || busy) return;
+    // File vừa chọn vẫn phải đi tiếp dù lượt trước đang bận — nếu không, bấm file xong im luôn.
+    if (!msg.text || (busy && !out)) return;
     // Lệnh gõ tay, xử lý tại chỗ không gọi AI.
     if (!out && !isRetry) {
       const cmd = msg.text.toLocaleLowerCase("vi").replace(/[.!]+$/, "").trim();
@@ -418,8 +420,12 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
         snap();
         setMessages((m) => [...m, { id: uid(), role: "user", text: msg.text, label: c.sheetLabel }]);
         setBusy(true);
-        const { data } = await supabase.functions.invoke("quick-table-chat", { body: { sheet }, timeout: 15_000 });
-        setBusy(false);
+        let data: unknown = null;
+        try {
+          const res = await supabase.functions.invoke("quick-table-chat", { body: { sheet }, timeout: 15_000 });
+          data = res.data;
+        } catch { /* mạng lỗi thì báo không đọc được, đừng khoá ô nhập */ }
+        finally { setBusy(false); }
         const csv = data && typeof data === "object" && "csv" in data && typeof data.csv === "string" ? data.csv : "";
         const sheetError = data && typeof data === "object" && "error" in data ? String(data.error) : "";
         if (!csv) {
@@ -447,8 +453,10 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       }
     }
     if (msg.entries?.length) {
-      snap();
-      setMessages((m) => [...m, { id: uid(), role: "user", text: msg.text, label: msg.label }]);
+      if (!msg.echoed) {
+        snap();
+        setMessages((m) => [...m, { id: uid(), role: "user", text: msg.text, label: msg.label }]);
+      }
       const entries = msg.append ? mergeRoster(draft.entries, msg.entries) : msg.entries.slice(0, MAX_CHAT_ENTRIES);
       const doubles = draft.is_doubles === undefined && entries.every((e) => e.p2);
       const next = applyPatch(draft, { entries, ...(doubles ? { is_doubles: true } : {}) });
@@ -456,8 +464,10 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       return;
     }
     if (!isRetry) {
-      snap();
-      setMessages((m) => [...m, { id: uid(), role: "user", text: msg.text, label: msg.label }]);
+      if (!msg.echoed) {
+        snap();
+        setMessages((m) => [...m, { id: uid(), role: "user", text: msg.text, label: msg.label }]);
+      }
       if (!out) setInput("");
     }
     setFailed(null);
@@ -728,21 +738,31 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   ].join("\n");
 
   const onFiles = async (list: FileList | null) => {
-    // FileList gắn với ô input: xoá value trước khi copy thì danh sách về rỗng, chọn file xong không có gì xảy ra.
+    // Copy trước khi xoá value. FileList sống cùng ô input; xoá trước thì danh sách về rỗng.
     const files = [...(list ?? [])];
     if (fileRef.current) fileRef.current.value = "";
     if (!files.length || busy) return;
-    const say = (text: string) => pushBot(text);
+    const say = (text: string) => { setBusy(false); pushBot(text); };
+    // Hiện tên file ngay, trước khi đọc. Nếu không, lúc parse hoặc gọi AI người dùng thấy im.
+    snap();
+    setMessages((m) => [...m, {
+      id: uid(),
+      role: "user",
+      text: files.map((f) => f.name).join("\n"),
+      label: files.length > 1 ? `📎 ${files.length}` : `📎 ${files[0].name}`,
+    }]);
+    setBusy(true);
     const images = files.filter((f) => f.type.startsWith("image/") || /\.(png|jpe?g|webp|gif|heic|heif)$/i.test(f.name));
     const others = files.filter((f) => !images.includes(f));
     if (others.length > 1 || (others.length && images.length)) { say(c.oneFile); return; }
     if (files.some((f) => f.size > MAX_UPLOAD_BYTES)) { say(c.fileTooBig); return; }
     const batch = images.length > MAX_IMAGES ? images.slice(0, MAX_IMAGES) : images;
-    if (images.length > MAX_IMAGES) say(c.fileTooMany);
+    if (images.length > MAX_IMAGES) pushBot(c.fileTooMany);
     let out: Outgoing;
     try { out = others.length ? await readUpload(others[0], draft.is_doubles === true) : await readImages(batch); }
     catch (err) { say(err instanceof UploadError && err.code === "not_a_list" ? c.fileNotList : c.fileUnreadable); return; }
-    send(out);
+    setBusy(false);
+    send({ ...out, echoed: true });
   };
 
   const startOver = () => {
@@ -861,17 +881,23 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
               onSubmit={(e) => { e.preventDefault(); send(); }}
               style={{ display: "flex", gap: 8, alignItems: "flex-end" }}
             >
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*,application/pdf,.pdf,.xlsx,.xls,.csv,.tsv,.txt"
-                multiple
-                hidden
-                onChange={(e) => onFiles(e.target.files)}
-              />
               <Button type="button" variant="ghost" size="icon" disabled={busy} onClick={() => fileRef.current?.click()} aria-label={c.uploadAria} title={c.uploadAria} style={{ width: 44, height: 44, flexShrink: 0 }}>
                 <Paperclip className="w-4 h-4" />
               </Button>
+              {createPortal(
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*,application/pdf,.pdf,.xlsx,.xls,.csv,.tsv,.txt"
+                  multiple
+                  disabled={busy}
+                  tabIndex={-1}
+                  aria-label={c.uploadAria}
+                  onChange={(e) => { void onFiles(e.currentTarget.files); }}
+                  style={{ position: "fixed", left: -1000, top: 0, width: 44, height: 44, opacity: 0 }}
+                />,
+                document.body,
+              )}
               <Textarea
                 ref={inputRef}
                 value={input}
