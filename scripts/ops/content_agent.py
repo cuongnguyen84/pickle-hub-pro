@@ -159,30 +159,9 @@ def daily_digest(mode: str | None) -> None:
 
 
 def run_mode(mode: str) -> None:
-    runbook = RUNBOOK.read_text(encoding="utf-8") if RUNBOOK.exists() else ""
-    today = datetime.now(ICT)
-    prompt = (
-        f"{runbook}\n\n"
-        f"HÔM NAY: {today.strftime('%A %Y-%m-%d')} (ICT), tuần ISO W{today.isocalendar()[1]}.\n"
-        f"CHẾ ĐỘ LƯỢT NÀY: {mode.upper()}. Thực hiện đúng mục chế độ đó trong runbook."
-    )
-    log(f"bắt đầu chế độ {mode}")
-    try:
-        p = subprocess.run(
-            [CLAUDE_BIN, "-p", prompt, "--permission-mode", PERMISSION_MODE],
-            cwd=str(REPO), capture_output=True, text=True, timeout=TASK_TIMEOUT_S)
-    except subprocess.TimeoutExpired:
-        tele(f"❌ CONTENT {mode.upper()} QUÁ GIỜ ({TASK_TIMEOUT_S // 60}')\n"
-             "Việc có thể dở dang — kiểm tra `git status` + .claude/chief/ trước khi chạy lại.",
-             f"{mode}-timeout")
-        log(f"quá giờ chế độ {mode}")
-        return
-    except FileNotFoundError:
-        tele(f"❌ CONTENT: không thấy Claude ở {CLAUDE_BIN}", f"{mode}-noclaude")
-        return
-    out = (p.stdout or "").strip() or f"(agent {mode} không in gì — mã thoát {p.returncode})"
-    tele(out, mode)
-    log(f"xong chế độ {mode} (mã {p.returncode})")
+    log(f"bỏ qua chế độ {mode}: nội dung do team-v2 Grok; Claude chỉ đăng Facebook và X")
+    tele("CONTENT không gọi Claude. Việc nội dung nằm ở đội team-v2 (Grok). Claude chỉ đăng Facebook và X.",
+         f"{mode}-retired")
 
 
 def main() -> int:

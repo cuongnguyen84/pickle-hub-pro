@@ -6,7 +6,7 @@
 # Nguồn: bảng quick_table_chat_log (edge function quick-table-chat ghi mỗi lượt,
 # kèm `unmet` khi AI tự nhận ra yêu cầu chưa làm được). Agent đọc 24h gần nhất:
 #   1. Gom các lượt AI đã đánh dấu unmet / unsupported / lỗi.
-#   2. Đưa CẢ hội thoại cho `claude -p` đọc lại → tìm thêm yêu cầu AI bỏ sót,
+#   2. Đưa CẢ hội thoại cho Grok đọc lại → tìm thêm yêu cầu AI bỏ sót,
 #      gom nhóm, xếp ưu tiên theo số người hỏi, gợi ý hướng xử lý.
 #   3. Gửi Telegram. Không có lượt chat nào thì im (không spam).
 #
@@ -14,7 +14,7 @@
 # Chạy tay:
 #   python3 scripts/ops/chat_requests_agent.py              # 24h qua, gửi Telegram
 #   python3 scripts/ops/chat_requests_agent.py --hours 72 --dry   # in ra, không gửi
-#   python3 scripts/ops/chat_requests_agent.py --no-reason  # bỏ bước claude -p
+#   python3 scripts/ops/chat_requests_agent.py --no-reason  # bỏ bước Grok
 # ============================================================================
 from __future__ import annotations
 
@@ -77,9 +77,6 @@ def anon_ids(rows: list[dict]) -> dict[str, str]:
 
 
 def reason(rows: list[dict], ids: dict[str, str]) -> dict | None:
-    if not Path(CLAUDE_BIN).exists():
-        log(f"không thấy {CLAUDE_BIN} — bỏ bước suy luận")
-        return None
     lines = [
         json.dumps({
             "u": ids[r.get("user_id") or "?"], "step": r.get("pending"),
@@ -89,12 +86,15 @@ def reason(rows: list[dict], ids: dict[str, str]) -> dict | None:
         for r in rows[-MAX_TURNS_TO_REASON:]
     ]
     try:
-        p = subprocess.run([CLAUDE_BIN, "-p", PROMPT + "\n\nNHẬT KÝ:\n" + "\n".join(lines)],
-                           capture_output=True, text=True, timeout=REASON_TIMEOUT_S)
-        out = (p.stdout or "").strip()
+        from team_grok import run as grok_run
+        rc, response = grok_run(PROMPT + "\n\nNHẬT KÝ:\n" + "\n".join(lines))
+        if rc or response.get("is_error"):
+            log(f"grok lỗi: {str(response.get('result', ''))[:300]}")
+            return None
+        out = str(response.get("result") or "").strip()
         return json.loads(out[out.index("{"):out.rindex("}") + 1])
     except Exception as e:
-        log(f"claude -p lỗi: {e}")
+        log(f"grok lỗi: {e}")
         return None
 
 
@@ -131,7 +131,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--hours", type=int, default=24)
     ap.add_argument("--dry", action="store_true", help="in ra, không gửi Telegram")
-    ap.add_argument("--no-reason", action="store_true", help="bỏ bước claude -p")
+    ap.add_argument("--no-reason", action="store_true", help="bỏ bước Grok")
     a = ap.parse_args()
     if PAUSE_FILE.exists():
         log("AGENTS_PAUSED — thoát")
