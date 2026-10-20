@@ -47,6 +47,17 @@ PER_SEGMENT = int(os.environ.get("SEO_CRAWL_PER_SEGMENT", "3"))
 # render rỗng mà không réo vì một bài vốn ngắn. blog thì 71 từ chính là lỗi 05/08.
 WORD_FLOORS = {"blog": 250, "news": 180, "static": 120, "venues": 100, "shop": 100}
 DEFAULT_WORD_FLOOR = int(os.environ.get("SEO_WORD_FLOOR", "60"))
+# Một URL cho cả hai ngôn ngữ. Sitemap cố ý không gắn hreflang (CLAUDE.md).
+SINGLE_CANONICAL_SEGMENTS = {"tournaments", "matches", "players", "videos", "livestreams", "organizations"}
+# Hai URL, hoặc news chỉ vi + x-default. with_hreflang = 0 ở đây là lỗi.
+HREFLANG_SEGMENTS = {"blog", "events", "venues", "static", "news"}
+# Mốc đóng khi đúng các trang kết quả trả 200, có thân bài, và nằm trong sitemap-blog.
+PAGE_MILESTONES = {
+    "HK-RESULTS-LIVE": (
+        "/blog/hong-kong-slam-2026-results",
+        "/vi/blog/ket-qua-hong-kong-slam-2026",
+    ),
+}
 MAX_BYTES = 3_000_000  # sitemap-venues.xml ~1.9k URL; đọc có trần để khỏi nuốt cả bộ nhớ.
 
 LOC_RE = re.compile(r"<loc>\s*([^<\s]+)\s*</loc>", re.I)
@@ -105,6 +116,40 @@ def page_facts(html):
     return {"canonical": canonical.group(1) if canonical else None,
             "title": " ".join(title.group(1).split()) if title else "",
             "alts": alts, "words": len(re.sub(r"\s+", " ", body).split())}
+
+
+def hreflang_policy(name):
+    if name in SINGLE_CANONICAL_SEGMENTS:
+        return "single_canonical"
+    if name in HREFLANG_SEGMENTS:
+        return "expected"
+    return "unknown"
+
+
+def hreflang_gap(name, entries):
+    """None khi segment cố ý không có hreflang, hoặc khi sitemap đã khai."""
+    if hreflang_policy(name) != "expected" or not entries:
+        return None
+    if any(entry["alts"] for entry in entries):
+        return None
+    return f"sitemap-{name}.xml phải có hreflang nhưng không URL nào khai"
+
+
+def pages_not_live(paths, get=fetch, floor=200):
+    """Đường dẫn chưa đồng thời 200, đủ chữ, và có trong sitemap-blog."""
+    status, xml = get(f"{SITE}/sitemap-blog.xml")
+    listed = set()
+    if status == 200 and xml:
+        for loc in LOC_RE.findall(xml):
+            path = loc.split(SITE, 1)[-1].split("?", 1)[0].rstrip("/")
+            listed.add(path)
+    missing = []
+    for path in paths:
+        code, html = get(f"{SITE}{path}?nocache=1")
+        words = page_facts(html)["words"] if html else 0
+        if code != 200 or words < floor or path.rstrip("/") not in listed:
+            missing.append(path)
+    return missing
 
 
 def sample(entries, per, day):
@@ -176,8 +221,12 @@ def crawl_observation(get=fetch, day=None, per_segment=PER_SEGMENT, recheck=None
         catalogue.update({e["loc"]: (name, e) for e in entries})
         chosen = sample(entries, per_segment, day)
         picked += [(name, e) for e in chosen]
+        with_hreflang = sum(bool(e["alts"]) for e in entries)
         segment_rows.append({"segment": name, "total": len(entries), "sampled": len(chosen),
-                             "with_hreflang": sum(bool(e["alts"]) for e in entries)})
+                             "with_hreflang": with_hreflang, "hreflang": hreflang_policy(name)})
+        gap = hreflang_gap(name, entries)
+        if gap:
+            problems[f"segment:{name}:hreflang_missing"] = gap
     if not picked:
         raise RuntimeError("no_sampled_urls")
     # URL từng lỗi mà vẫn còn trong sitemap được đo lại; rời sitemap = hết việc.
@@ -216,7 +265,9 @@ def crawl_observation(get=fetch, day=None, per_segment=PER_SEGMENT, recheck=None
             "rechecked": [loc for loc in previous if loc in catalogue],
             "corpus_size": len(corpus), "day_index": day,
             "word_floors": {**WORD_FLOORS, "*": DEFAULT_WORD_FLOOR},
-            "note": "Mẫu xoay vòng theo ngày; trang không nằm trong mẫu hôm nay chưa được kiểm tra, không kết luận là đạt."}
+            "note": "Mẫu xoay vòng theo ngày; trang không nằm trong mẫu hôm nay chưa được kiểm tra, không kết luận là đạt. "
+                    "with_hreflang = 0 ở tournaments, matches, players, videos, livestreams, organizations là đúng: "
+                    "một URL cho cả hai ngôn ngữ, sitemap không gắn hreflang. events thì phải có."}
 
 
 # ─── Trích dẫn AI search ───────────────────────────────────────────────────
