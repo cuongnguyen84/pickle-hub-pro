@@ -16,6 +16,7 @@ không bao giờ chọn lại bài đã đăng.
 """
 from __future__ import annotations
 
+import fcntl
 import json
 import os
 import re
@@ -204,6 +205,10 @@ Dòng CUỐI cùng của câu trả lời phải là đúng một JSON, không g
 
 def run_claude(prompt: str) -> dict:
     WORK.mkdir(parents=True, exist_ok=True)
+    # fb-browser và x-browser dùng chung MỘT Chrome/extension: chạy song song thì giành
+    # tab và rớt kết nối (20/10 19:47). Khoá chờ tới khi job kia xong.
+    lock = open(WORK.parent / "chrome.lock", "a")
+    fcntl.flock(lock, fcntl.LOCK_EX)
     try:
         p = subprocess.run(
         [CLAUDE_BIN, "-p", prompt, "--chrome", "--permission-mode", "bypassPermissions",
@@ -212,6 +217,8 @@ def run_claude(prompt: str) -> dict:
         cwd=str(WORK), capture_output=True, text=True, timeout=CLAUDE_TIMEOUT_S)
     except Exception as e:  # timeout / thiếu binary → vẫn phải chốt dòng log
         return {"posted": False, "permalink": None, "error": f"{type(e).__name__}: {e}"}
+    finally:
+        lock.close()
     out = (p.stdout or "").strip()
     last = out.splitlines()[-1] if out else ""
     try:
