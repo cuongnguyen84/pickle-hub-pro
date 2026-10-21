@@ -1332,7 +1332,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // in a broken <img>, so the article now points at the -en-v2 files.
   // v140 (2026-10-21): quick-table share cards name the tournament in plain
   // Vietnamese and declare the real 1024×1024 preview image size.
-  const cacheKey = `pr:v140:${url.pathname}`;
+  // v141 (2026-10-21): /rankings and /rankings/ppa-tour titles and descriptions
+  // fit the 60/160 byte clamps. The VI rankings title and the VI PPA description
+  // were one and four bytes over, so cached HTML shipped a trailing ellipsis.
+  const cacheKey = `pr:v141:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

@@ -154,12 +154,14 @@ const PpaRankings = () => {
     </tr>
   );
 
+  // CTR-01 (2026-08-27) — kept byte-identical to the SSR strings in
+  // functions/_lib/render/ppa-rankings.ts. DynamicMeta appends the brand.
   return (
     <TheLineLayout
-      title={vi ? "Bảng xếp hạng PPA Tour (WPR)" : "PPA Tour Rankings (WPR)"}
+      title={vi ? "Bảng xếp hạng PPA Tour: Top 25 WPR" : "PPA Tour Rankings — Top 25 WPR"}
       description={vi
-        ? "Top VĐV pickleball nhà nghề thế giới theo World Pickleball Ranking (WPR) của PPA Tour — bảng Nam và Nữ, kèm các VĐV Việt Nam và gốc Việt."
-        : "Top professional pickleball players by PPA Tour's World Pickleball Ranking (WPR) — men's and women's boards, with Vietnamese and Vietnamese-origin pros."}
+        ? "Xếp hạng PPA Tour: top 25 nam và top 25 nữ theo điểm World Pickleball Ranking, kèm các VĐV Việt Nam và gốc Việt."
+        : "PPA Tour world rankings: top 25 men and top 25 women by World Pickleball Ranking points, plus every Vietnamese pro on the board."}
       active="rankings"
     >
       <div className="tl-shell">

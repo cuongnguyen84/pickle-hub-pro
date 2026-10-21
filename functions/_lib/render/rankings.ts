@@ -24,12 +24,28 @@ export async function renderRankings(
   rawPath: string,
   lang: Lang,
 ): Promise<Response> {
+  // CTR-01 (2026-08-27) — the previous VI title was 61 UTF-8 bytes and the VI
+  // description 161, one byte over the clamps in html.ts. buildHtml truncated
+  // both, so Google was shown "Bảng xếp hạng DUPR Pickleball Việt Nam |…" —
+  // brand gone, dangling pipe. GSC: the cluster lost 9 clicks WoW (2026-08-18
+  // → 08-24) while average position held, which is the CTR signature, not an
+  // indexing one. Every string below is byte-budgeted with margin and held
+  // there by functions/__tests__/ssr-meta-byte-budget.test.ts.
+  //
+  // Copy also re-aimed at the queries this route actually receives. 28-day GSC
+  // for /rankings* is dominated by world/PPA ranking intent ("pickleball world
+  // rankings", "ppa ranking") alongside "dupr vietnam" — the old EN title said
+  // only "Vietnam", hiding the Open/Junior/continental boards the page ships.
+  //
+  // NOTE: keep these in sync with src/pages/Rankings.tsx (TheLineLayout
+  // title/description). They diverged until CTR-01: SSR served "Vietnam DUPR
+  // Pickleball Rankings", the hydrated SPA overwrote it with "DUPR Rankings".
   const titleVn = lang === "vi"
-    ? "Bảng xếp hạng DUPR Pickleball Việt Nam | ThePickleHub"
-    : "Vietnam DUPR Pickleball Rankings | ThePickleHub";
+    ? "Bảng xếp hạng DUPR Việt Nam | ThePickleHub"
+    : "DUPR Pickleball Rankings: Vietnam & World | ThePickleHub";
   const descriptionVn = lang === "vi"
-    ? "Bảng xếp hạng DUPR cho VĐV pickleball Việt Nam đã kết nối DUPR — cập nhật theo thời gian thực qua webhook DUPR. Top 100 đôi và đơn."
-    : "Live DUPR leaderboard for Vietnamese pickleball players linked to DUPR — updated in real time via DUPR webhook. Top 100 doubles and singles.";
+    ? "Bảng xếp hạng DUPR pickleball: bảng Việt Nam cập nhật trực tiếp từ DUPR, kèm Open, Junior và 5 châu lục. Xem cách để có tên."
+    : "DUPR pickleball rankings: the Vietnam board updated live from DUPR, plus Open, Junior and five continental boards. See how to get listed.";
 
   // Fetch live data. RPC is SECURITY DEFINER + whitelist columns so any
   // SSR-side client (anon or service) can call safely. We pass through
