@@ -1646,6 +1646,13 @@
   width: 100%; height: 100%; object-fit: cover; display: block;
   transition: transform 0.6s ease;
 }
+/* Mobile art is 2400×600. The desktop <source> is 2400×300, but the <img>
+   width/height stay 4:1, so the wide band used to grow into a short strip
+   after decode. */
+[data-theme="the-line"] .tl-dupr-strip img { aspect-ratio: 2400 / 600; }
+@media (min-width: 768px) {
+  [data-theme="the-line"] .tl-dupr-strip img { aspect-ratio: 2400 / 300; }
+}
 [data-theme="the-line"] .tl-story:hover .tl-story-img img { transform: scale(1.04); }
 [data-theme="the-line"] .tl-story-img::after {
   content: ''; position: absolute; inset: 0;

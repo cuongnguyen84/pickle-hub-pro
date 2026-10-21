@@ -225,6 +225,10 @@ export async function renderTournamentDetail(supabase: SupabaseClient, slug: str
     description: desc,
     url: `${siteUrl}/tournament/${t.slug}`,
     siteUrl,
+    // The lead, facts and how-to are Vietnamese. html lang and og:locale
+    // follow the body. /vi/tournament/:slug still 301s here — one URL, so
+    // hreflang stays omitted (singleCanonicalHreflang).
+    lang: "vi",
     // Per-tournament og:image from the first broadcast thumbnail we hold.
     // Previously all 14 URLs shared DEFAULT_OG_IMAGE, so every share card of
     // every tournament looked identical. Falls back to the default when the

@@ -792,14 +792,17 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   //       warning was a false positive on a feature that's expected
   //       to deep-link.
 
-  // ─── 1g. SEO audit batch 8 — /vi/ trailing slash collapses to /vi.
-  //       renderHomeVi() emits canonical=/vi (no trailing slash) and
-  //       sitemap-static lists /vi (no slash); SEOnaut found /vi/
-  //       linked from somewhere and flagged it as non-canonical and
-  //       missing self-reference. Trailing-slash normalize so both
-  //       resolve to one indexable surface.
-  if (url.pathname === "/vi/") {
-    return secureRedirect(`https://${url.hostname}/vi${url.search}`, 301);
+  // ─── 1g. Collapse a trailing slash on a real SPA route.
+  //       /blog/ 404'd for bots (routeAndRender matches /blog exactly) while
+  //       humans received the shell and React Router 404'd. Only /vi/ used
+  //       to 301. Known routes now 301 to the slashless URL the canonical
+  //       and the sitemap already use. "/" stays "/". Unknown paths are
+  //       left alone so a typo does not look like a real URL.
+  if (url.pathname.length > 1 && url.pathname.endsWith("/")) {
+    const stripped = url.pathname.replace(/\/+$/, "") || "/";
+    if (isKnownSpaPath(url.pathname)) {
+      return secureRedirect(`https://${url.hostname}${stripped}${url.search}`, 301);
+    }
   }
 
   // ─── 1h. Markdown content negotiation ────────────────
@@ -907,7 +910,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     if (request.method === "GET" && isPublicContentPath(pathname)) {
       const response = await servePublicPage(await next(), () => routeAndRender(
         pathname, env, env.CANONICAL_HOST || "https://www.thepicklehub.net",
-      ));
+      ), 2500, pathname);
       const headers = new Headers(response.headers);
       applySecurityHeaders(headers);
       return new Response(response.body, { status: response.status, headers });
@@ -1337,7 +1340,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // were one and four bytes over, so cached HTML shipped a trailing ellipsis.
   // v142 (2026-10-21): /vi tool list pages use Vietnamese titles
   // (Chia bảng, Đấu đồng đội, Loại trực tiếp đôi, Giải linh hoạt).
-  const cacheKey = `pr:v142:${url.pathname}`;
+  // v143 (2026-10-21): tool titles no longer truncate, tournament detail is
+  // lang=vi, homepage canonical keeps the slash, rankings H1 uses the row
+  // count, VI posts emit BreadcrumbList + a square Organization logo.
+  const cacheKey = `pr:v143:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

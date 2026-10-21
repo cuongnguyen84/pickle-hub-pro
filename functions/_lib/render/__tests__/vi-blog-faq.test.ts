@@ -108,4 +108,14 @@ describe("renderViBlogPost FAQ", () => {
     expect(html).not.toContain("FAQPage");
     expect(visibleText(html)).not.toContain("Câu hỏi thường gặp");
   });
+
+  it("matches the English post: Person author and a BreadcrumbList", async () => {
+    const html = await renderViBlogPost(fakeSupabase(POST), "bai-kiem-tra", SITE).then((r) => r.text());
+    expect(html).toContain('"@type":"BreadcrumbList"');
+    expect(html).toContain('"@type":"Person"');
+    expect(html).toContain('"jobTitle":"Founder"');
+    expect(html).toContain("https://www.facebook.com/thepicklehubnet");
+    expect(html).toContain("https://x.com/thepicklehub");
+    expect(html).toContain("/android-chrome-512x512.png");
+  });
 });

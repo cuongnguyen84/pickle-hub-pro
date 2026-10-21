@@ -73,9 +73,10 @@ export async function renderRankings(
 
   // Render an <ol> with player links so Googlebot can crawl into
   // /nguoi-choi/:username and pick up the leaderboard as internal linking.
-  const heading = lang === "vi"
-    ? "Top 25 đôi nam/nữ — Việt Nam"
-    : "Top 25 Doubles — Vietnam";
+  const n = rows.length;
+  const heading = n === 0
+    ? (lang === "vi" ? "Bảng xếp hạng đôi — Việt Nam" : "Doubles rankings — Vietnam")
+    : (lang === "vi" ? `Top ${n} đôi — Việt Nam` : `Top ${n} Doubles — Vietnam`);
   const subhead = lang === "vi"
     ? "Đọc trực tiếp từ profile VĐV đã kết nối DUPR và bật chế độ công khai."
     : "Live from profiles of players linked to DUPR with public visibility on.";

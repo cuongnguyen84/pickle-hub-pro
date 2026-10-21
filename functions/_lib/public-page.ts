@@ -1,4 +1,39 @@
+import { blogMetadata } from "../../src/content/blog/metadata";
+import { byEffectiveDateDesc, pinWorldCupResults } from "../../src/lib/blogOrder";
+import { blogHeroSrcSet } from "../../src/lib/image-utils";
+
 /** Progressive HTML for public editorial/marketing routes. React still owns the app. */
+
+const HOME_LCP_SIZES = "(min-width: 1100px) 800px, (min-width: 640px) 50vw, calc(100vw - 32px)";
+const BLOG_LCP_SIZES = "(max-width: 900px) 100vw, 832px";
+
+function imagePreload(src: string, sizes: string): string {
+  const responsive = blogHeroSrcSet(src);
+  if (!responsive) {
+    return `<link rel="preload" as="image" href="${src}" fetchpriority="high"/>`;
+  }
+  return `<link rel="preload" as="image" href="${responsive.small}" imagesrcset="${responsive.srcSet}" imagesizes="${sizes}" fetchpriority="high"/>`;
+}
+
+/**
+ * Early fetch for the LCP hero on the human HTML path. The image lives in
+ * the React tree, so without this the browser only discovers it after JS.
+ * /vi heroes come from the database and are not known here. Tool landings
+ * have no hero image.
+ */
+export function lcpPreloadTag(pathname: string): string {
+  if (pathname === "/") {
+    const first = pinWorldCupResults(
+      [...blogMetadata].sort(byEffectiveDateDesc((p) => p.publishedDate, (p) => p.updatedDate)),
+      (p) => p.slug,
+    )[0];
+    return first?.heroImage?.src ? imagePreload(first.heroImage.src, HOME_LCP_SIZES) : "";
+  }
+  const blog = pathname.match(/^\/blog\/([^/]+)$/);
+  if (!blog) return "";
+  const src = blogMetadata.find((p) => p.slug === blog[1])?.heroImage?.src;
+  return src ? imagePreload(src, BLOG_LCP_SIZES) : "";
+}
 export function isPublicContentPath(pathname: string): boolean {
   const path = pathname.replace(/^\/vi(?=\/|$)/, '') || '/';
   return ['/', '/blog', '/tools', '/about', '/contact', '/authors/cuong-nguyen'].includes(path)
@@ -28,6 +63,7 @@ export async function servePublicPage(
   shell: Response,
   render: () => Promise<Response>,
   budgetMs = 2500,
+  pathname = "",
 ): Promise<Response> {
   if (shell.status !== 200 || !shell.headers.get('content-type')?.includes('text/html')) return shell;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -47,10 +83,14 @@ export async function servePublicPage(
     headers.delete('ETag');
     const response = new Response(shell.body, { status: shell.status, headers });
     const remove = { element(el: Element) { el.remove(); } };
+    const preload = lcpPreloadTag(pathname);
     return new HTMLRewriter()
       .on('html', { element(el) { el.setAttribute('lang', parts.lang); } })
       .on('title, meta[name="description"], meta[name="robots"], meta[property^="og:"], meta[property^="article:"], meta[name^="twitter:"], link[rel="canonical"], link[hreflang], script[type="application/ld+json"]', remove)
-      .on('head', { element(el) { el.append(parts.head, { html: true }); } })
+      .on('head', { element(el) {
+        el.append(parts.head, { html: true });
+        if (preload) el.append(`\n${preload}`, { html: true });
+      } })
       .on('#root', { element(el) { el.setInnerContent(`<div data-public-content>${parts.body}</div>`, { html: true }); } })
       .transform(response);
   } catch (error) {

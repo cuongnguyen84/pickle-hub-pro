@@ -24,10 +24,11 @@ export default function DoublesEliminationList() {
   const { t, language, setLanguageFromUrl } = useI18n();
   const location = useLocation();
 
-  // EN route — force English regardless of persisted language state
+  // EN route forces English. /vi/tools/... is a real Vietnamese page.
   useEffect(() => {
+    if (location.pathname === "/vi" || location.pathname.startsWith("/vi/")) return;
     setLanguageFromUrl("en");
-  }, [setLanguageFromUrl]);
+  }, [location.pathname, setLanguageFromUrl]);
   const { getUserTournaments } = useDoublesElimination();
   const { quota, used: totalUsed } = useUserCreateQuota();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -94,7 +95,7 @@ export default function DoublesEliminationList() {
       description="Free double elimination bracket generator for pickleball tournaments. Create winners and losers brackets for 32-128+ teams."
       active="lab"
     >
-      <HreflangTags enPath="/tools/doubles-elimination" />
+      <HreflangTags enPath="/tools/doubles-elimination" viPath="/vi/tools/doubles-elimination" />
       <WebApplicationSchema
         name="Doubles Elimination Bracket Generator"
         description="Create doubles elimination brackets for pickleball tournaments. Support for 4-32 teams with best-of-1, best-of-3, or best-of-5 match formats."

@@ -331,6 +331,18 @@ describe("renderRankings — explainer content (THIN-01)", () => {
     }
   });
 
+  it("names the players actually rendered, not a fixed Top 25", async () => {
+    const html = await renderRank(PLAYERS);
+    expect(html).toContain("<h1>Top 2 đôi — Việt Nam</h1>");
+    expect(html).not.toContain("Top 25");
+    const en = await renderRank(PLAYERS, "en");
+    expect(en).toContain("<h1>Top 2 Doubles — Vietnam</h1>");
+    const empty = await renderRank([]);
+    expect(empty).not.toContain("Top 0");
+    expect(empty).not.toContain("Top 25");
+    expect(empty).toContain("<h1>Bảng xếp hạng đôi — Việt Nam</h1>");
+  });
+
   it("still emits the ItemList and the player links it wraps", async () => {
     const html = await renderRank(PLAYERS);
 

@@ -525,10 +525,10 @@ const Index = () => {
           when there is nothing live and no result today, and after Sep 7. */}
       <WorldCupLiveCard language={language} />
 
-      {/* ── Priority feed — Live (on air / upcoming) → Editorial → News ──
-          Product priority wins while a broadcast is live or scheduled.
-          Replay-only days keep editorial first. Reserved editorial/news
-          skeletons still stabilize the async content inside each slot. */}
+      {/* ── Feed — Editorial → Live → Pro tour → News ──
+          Editorial stays above the live slot so a skeleton that collapses
+          cannot push the LCP story. Reserved news skeletons still stabilize
+          the async rows inside that slot. */}
       {(() => {
         const editorialNode = stories.length > 0 ? (
           <section className="tl-section">
@@ -633,13 +633,18 @@ const Index = () => {
                     liveStreams={liveStreams}
                     scheduledStreams={scheduledStreams}
                     language={language}
-                    priority
                   />
                 ),
               }
             : null;
 
+        // Editorial first. The live slot reserves a skeleton whenever there is
+        // no localStorage hint (every lab run, every new device) and then
+        // collapses on a quiet week. That push was the 0.361 CLS on
+        // SECTION.tl-section — the section that holds the LCP story image.
+        // Content below can still move; the LCP section does not.
         const cluster: Array<{ key: string; node: ReactNode }> = [
+          editorialNode ? { key: "editorial", node: editorialNode } : null,
           liveNode,
           {
             // Pro-tour tournaments in season — same registry-driven strip as
@@ -651,7 +656,6 @@ const Index = () => {
               </section>
             ),
           },
-          editorialNode ? { key: "editorial", node: editorialNode } : null,
           {
             key: "news",
             node: (

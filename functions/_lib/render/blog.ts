@@ -22,7 +22,7 @@ import {
   relatedBlogLinks,
   bilingualHreflang,
   buildBreadcrumbJsonLd,
-  DEFAULT_OG_IMAGE,
+  organizationLogo,
 } from "../utils";
 import { blogImageDims } from "../../../src/content/blog/image-dims";
 import { render404 } from "./static-pages";
@@ -105,7 +105,7 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
       "@type": "Organization",
       name: "ThePickleHub",
       url: siteUrl,
-      logo: { "@type": "ImageObject", url: DEFAULT_OG_IMAGE },
+      logo: organizationLogo(siteUrl),
     },
     inLanguage: "en-US",
   };
@@ -224,7 +224,9 @@ export function withViCoverImage(
   const src = normalizeImageUrl(coverImageUrl);
   if (!src || contentHtml.includes(src)) return contentHtml;
   const dims = blogImageDims(src);
-  const sized = dims ? ` width="${dims[0]}" height="${dims[1]}"` : "";
+  const sized = dims
+    ? ` width="${dims[0]}" height="${dims[1]}" style="width:100%;height:auto;aspect-ratio:${dims[0]} / ${dims[1]}"`
+    : "";
   const figure =
     `<figure><img src="${escapeHtml(src)}" alt="${escapeHtml(title)}"${sized}` +
     ` loading="eager" fetchpriority="high" decoding="async"/></figure>`;
@@ -232,6 +234,17 @@ export function withViCoverImage(
   return afterH1 === -1
     ? `${figure}${contentHtml}`
     : `${contentHtml.slice(0, afterH1 + 5)}${figure}${contentHtml.slice(afterH1 + 5)}`;
+}
+
+/** EN twin's byline when we have one. Empty or "ThePickleHub" VI bylines become Cuong Nguyen so the article matches the EN Person author. A real guest name stays a Person. "The PickleHub Team" on the EN twin stays Organization. */
+function viPostAuthor(authorName: string | null | undefined, alternateEnSlug: string | null | undefined): string {
+  if (alternateEnSlug) {
+    const en = blogMetadata.find((p) => p.slug === alternateEnSlug)?.author;
+    if (en) return en;
+  }
+  const raw = (authorName || "").trim();
+  if (raw && !/team|pickle\s*hub/i.test(raw)) return raw;
+  return "Cuong Nguyen";
 }
 
 export async function renderViBlogPost(supabase: SupabaseClient, slug: string, siteUrl: string): Promise<Response> {
@@ -325,19 +338,26 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
     ? `<link rel="alternate" hreflang="en" href="${siteUrl}/blog/${p.alternate_en_slug}"/>\n<link rel="alternate" hreflang="vi" href="${url}"/>\n<link rel="alternate" hreflang="x-default" href="${siteUrl}/blog/${p.alternate_en_slug}"/>`
     : `<link rel="alternate" hreflang="vi" href="${url}"/>\n<link rel="alternate" hreflang="x-default" href="${url}"/>`;
 
-  const articleSchema = {
-    "@context": "https://schema.org",
+  const viCrumbs = [
+    { label: "Trang chủ", href: `${siteUrl}/vi` },
+    { label: "Blog", href: `${siteUrl}/vi/blog` },
+    { label: p.title },
+  ];
+  const articleNode = {
     "@type": "BlogPosting",
     headline: p.title,
     description: p.meta_description,
     image: absImage(p.cover_image_url, siteUrl),
     datePublished: p.published_at,
     dateModified: viDateModified,
-    author: authorIdentity(p.author_name || "ThePickleHub", siteUrl),
-    publisher: { "@type": "Organization", name: "ThePickleHub", logo: { "@type": "ImageObject", url: DEFAULT_OG_IMAGE } },
+    author: authorIdentity(viPostAuthor(p.author_name, p.alternate_en_slug), siteUrl),
+    publisher: { "@type": "Organization", name: "ThePickleHub", logo: organizationLogo(siteUrl) },
     inLanguage: "vi-VN",
   };
-  extraMeta += `\n<script type="application/ld+json">${escapeJsonLd(JSON.stringify(articleSchema))}</script>`;
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@graph": [articleNode, buildBreadcrumbJsonLd(viCrumbs)],
+  };
 
   if (p.faq_items && Array.isArray(p.faq_items) && p.faq_items.length > 0) {
     const faqSchema = {
@@ -364,7 +384,7 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
         .join("")}</section>`
     : "";
 
-  const bc = breadcrumb([{ label: "Trang chủ", href: `${siteUrl}/vi` }, { label: "Blog", href: `${siteUrl}/vi/blog` }, { label: p.title }]);
+  const bc = breadcrumb(viCrumbs);
 
   const relatedItems = (relatedRes.data || []) as { slug: string; title: string }[];
   const relatedSection = relatedItems.length > 0
@@ -389,6 +409,7 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
     type: "article",
     lang: "vi",
     extraMeta,
+    jsonLd: articleSchema,
     bodyContent: `${bc}<article>${viBody}${viFaqSection}</article>${relatedSection}`,
   }));
 }

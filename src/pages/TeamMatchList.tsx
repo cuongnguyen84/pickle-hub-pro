@@ -231,10 +231,11 @@ export default function TeamMatchList() {
   const { t, language, setLanguageFromUrl } = useI18n();
   const location = useLocation();
 
-  // EN route — force English regardless of persisted language state
+  // EN route forces English. /vi/tools/... is a real Vietnamese page.
   useEffect(() => {
+    if (location.pathname === "/vi" || location.pathname.startsWith("/vi/")) return;
     setLanguageFromUrl("en");
-  }, [setLanguageFromUrl]);
+  }, [location.pathname, setLanguageFromUrl]);
   const { myTournaments, isLoading, deleteTournament, isDeleting } = useTeamMatch();
   const { quota, used: totalUsed } = useUserCreateQuota();
 
@@ -251,7 +252,7 @@ export default function TeamMatchList() {
       description="Create MLP-style pickleball team competitions. Features lineup management, dreambreaker games, rally scoring, and team standings."
       active="lab"
     >
-      <HreflangTags enPath="/tools/team-match" />
+      <HreflangTags enPath="/tools/team-match" viPath="/vi/tools/team-match" />
       <WebApplicationSchema
         name="Team Match - MLP Style Pickleball Tournament"
         description="Create team match competitions with MLP-style format. Features lineup management, dreambreaker games, rally scoring, and team tournament organization."

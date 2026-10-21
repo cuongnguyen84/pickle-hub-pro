@@ -14,6 +14,7 @@ import {
   breadcrumb,
   bilingualHreflang,
   DEFAULT_OG_IMAGE,
+  organizationLogo,
   sanitizeBlogHtml,
 } from "../utils";
 import { buildListJsonLd } from "./shared";
@@ -147,7 +148,7 @@ async function renderNewsArticleByLang(
       "@type": "Organization",
       name: "ThePickleHub",
       url: siteUrl,
-      logo: { "@type": "ImageObject", url: DEFAULT_OG_IMAGE },
+      logo: organizationLogo(siteUrl),
     },
     inLanguage: language === "vi" ? "vi-VN" : "en-US",
     mainEntityOfPage: { "@type": "WebPage", "@id": url },

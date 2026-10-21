@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { isPublicContentPath, publicPageParts, servePublicPage } from '../public-page';
+import { isPublicContentPath, lcpPreloadTag, publicPageParts, servePublicPage } from '../public-page';
 import { renderTools } from '../render/tools';
 import { renderAuthor } from '../render/author';
 import { renderEnBlogBody } from '../render/blog-body';
@@ -47,6 +47,19 @@ describe('public editorial HTML', () => {
     const body = await renderEnBlogBody('vietnam-pickleball-tournament-calendar-2026', site);
     expect(body).toContain('/authors/cuong-nguyen');
     expect(body).toContain('2026-09-14');
+  });
+  it('preloads the homepage and English blog heroes, and skips pages with no known hero', () => {
+    const home = lcpPreloadTag('/');
+    expect(home).toContain('rel="preload"');
+    expect(home).toContain('as="image"');
+    expect(home).toContain('fetchpriority="high"');
+    expect(home).toContain('hong-kong-slam-2026-preview-hero-768.webp');
+    const post = lcpPreloadTag('/blog/what-is-dupr-pickleball-rating-system');
+    expect(post).toContain('dupr-pickleball-rating-hero-768.webp');
+    expect(post).toContain('imagesrcset=');
+    expect(lcpPreloadTag('/vi')).toBe('');
+    expect(lcpPreloadTag('/vi/blog/top-san-pickleball-ha-noi-2026')).toBe('');
+    expect(lcpPreloadTag('/tools/flex-tournament')).toBe('');
   });
   it('suggests World Cup coverage for a World Cup article, not generic tournament tools', () => {
     const related = getRelatedPosts('pickleball-world-cup-2026-da-nang-from-the-stands');

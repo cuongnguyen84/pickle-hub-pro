@@ -261,13 +261,17 @@ const BlogPost = () => {
             </div>
           </header>
 
-          {post.heroImage && !heroImgFailed && (
+          {post.heroImage && !heroImgFailed && (() => {
+            const heroDims = heroDimsProps(post.heroImage!.src);
+            const heroRatio = `${heroDims.width} / ${heroDims.height}`;
+            return (
             <figure
               style={{
                 borderRadius: "var(--tl-radius-lg)",
                 overflow: "hidden",
                 margin: "0 0 48px",
                 border: "1px solid var(--tl-border)",
+                aspectRatio: heroRatio,
               }}
             >
               <img
@@ -275,7 +279,7 @@ const BlogPost = () => {
                 srcSet={blogHeroSrcSet(post.heroImage.src)?.srcSet}
                 sizes="(max-width: 900px) 100vw, 832px"
                 alt={post.heroImage.alt}
-                {...heroDimsProps(post.heroImage.src)}
+                {...heroDims}
                 loading="eager"
                 fetchPriority="high"
                 decoding="async"
@@ -284,10 +288,12 @@ const BlogPost = () => {
                   width: "100%",
                   height: "auto",
                   display: "block",
+                  aspectRatio: heroRatio,
                 }}
               />
             </figure>
-          )}
+            );
+          })()}
 
           <AdSlot slot="blogInArticle" minHeight={120} className="my-6" />
           <div className="tl-longform">

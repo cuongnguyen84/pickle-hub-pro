@@ -1088,7 +1088,7 @@ export const TheLineLayout = ({ title, exactTitle, description, noindex = false,
                 rel="noopener noreferrer"
                 aria-label={language === "vi" ? "ThePickleHub trên Facebook" : "ThePickleHub on Facebook"}
               >
-                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+                <svg viewBox="0 0 24 24" width={15} height={15} fill="currentColor" aria-hidden="true" focusable="false">
                   <path d="M13.5 21v-8h2.7l.4-3.13H13.5V7.9c0-.9.25-1.52 1.55-1.52h1.66V3.57c-.29-.04-1.27-.12-2.42-.12-2.4 0-4.04 1.46-4.04 4.15v2.31H7.55V13h2.7v8h3.25z" />
                 </svg>
               </a>
@@ -1103,7 +1103,7 @@ export const TheLineLayout = ({ title, exactTitle, description, noindex = false,
                 rel="noopener noreferrer"
                 aria-label={language === "vi" ? "ThePickleHub trên X" : "ThePickleHub on X"}
               >
-                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+                <svg viewBox="0 0 24 24" width={15} height={15} fill="currentColor" aria-hidden="true" focusable="false">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                 </svg>
               </a>

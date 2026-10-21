@@ -7,7 +7,7 @@ import { byEffectiveDateDesc } from "../../../src/lib/blogOrder";
 import { wcResultsPath } from "../../../src/lib/wc-results";
 import type { SupabaseClient } from "../supabase";
 import { buildHtml, htmlResponse } from "../html";
-import { escapeHtml, DEFAULT_OG_IMAGE } from "../utils";
+import { escapeHtml, organizationLogo } from "../utils";
 
 // ─── Home ───────────────────────────���─────────────────────
 
@@ -94,7 +94,7 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
   return htmlResponse(buildHtml({
     title,
     description,
-    url: siteUrl,
+    url: `${siteUrl}/`,
     siteUrl,
     lang: "en",
     // SEO audit 2026-08-11 — buildHtml auto-generates an <h1> from `title`,
@@ -102,13 +102,11 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
     // page shipped two H1s. Omit the auto header and keep the body H1 as the
     // single H1 (same pattern as venues.ts / social-event.ts).
     omitAutoHeader: true,
-    // PR73 Phase 2D (audit I-12) — canonical (set via `url: siteUrl` above)
-    // has no trailing slash, but the hreflang en + x-default previously
-    // pointed at `${siteUrl}/` (with slash). Mismatched canonical and
-    // hreflang values are a Google "invalid signal" — fixed by dropping
-    // the trailing slash from hreflang en + x-default so all three refer
-    // to the same URL string.
-    extraMeta: `<link rel="alternate" hreflang="en" href="${siteUrl}"/>\n<link rel="alternate" hreflang="vi" href="${siteUrl}/vi"/>\n<link rel="alternate" hreflang="x-default" href="${siteUrl}"/>`,
+    // The served URL, index.html and sitemap loc "/" are all
+    // https://www.thepicklehub.net/ (with the slash). Canonical and the
+    // en / x-default hreflang use that same string. /vi stays slashless
+    // because /vi/ 301s to /vi.
+    extraMeta: `<link rel="alternate" hreflang="en" href="${siteUrl}/"/>\n<link rel="alternate" hreflang="vi" href="${siteUrl}/vi"/>\n<link rel="alternate" hreflang="x-default" href="${siteUrl}/"/>`,
     jsonLd: {
       "@context": "https://schema.org",
       "@graph": [
@@ -121,8 +119,8 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
           // entity name has no space. alternateName binds those variants to
           // this entity so Google surfaces the homepage for the brand query.
           alternateName: ["The Pickle Hub", "Pickle Hub", "Picklehub"],
-          url: siteUrl,
-          logo: DEFAULT_OG_IMAGE,
+          url: `${siteUrl}/`,
+          logo: organizationLogo(siteUrl),
           description: "Editorial coverage of professional pickleball — PPA, APP, MLP, European Open, Asia Pacific Series. Bilingual Vietnamese-English. Headquartered in Ho Chi Minh City.",
           address: {
             "@type": "PostalAddress",
@@ -190,7 +188,7 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
         {
           "@type": "WebSite",
           "@id": `${siteUrl}#website`,
-          url: siteUrl,
+          url: `${siteUrl}/`,
           name: "ThePickleHub",
           publisher: { "@id": `${siteUrl}#org` },
           potentialAction: {
@@ -214,7 +212,7 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
         <li><a href="${siteUrl}/tournaments">Tournaments</a> — Schedules, brackets, results across PPA Asia and beyond</li>
         <li><a href="${siteUrl}/social">Community events</a> — Open pickleball events you can register for by phone</li>
         <li><a href="${siteUrl}/clubs">Clubs</a> — Pickleball clubs across Vietnam with schedules + events</li>
-        <li><a href="${siteUrl}/san">Courts</a> — Pickleball court directory: 690+ courts across Vietnam, browsable by city</li>
+        <li><a href="${siteUrl}/san">Courts</a> — ${venueCount ? `Pickleball court directory: ${venueCount}+ courts across Vietnam, browsable by city` : "Pickleball court directory across Vietnam, browsable by city"}</li>
         <li><a href="${siteUrl}/feed">Match feed</a> — Latest community matches, scores, and DUPR ratings</li>
         <li><a href="${siteUrl}/tools">Bracket Lab</a> — Free tournament tools (round robin, single/double elimination, MLP)</li>
         <li><a href="${siteUrl}/rankings">Rankings</a> — Player rankings (placeholder, coming soon)</li>
@@ -284,10 +282,9 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
     // body <h1> is the single H1. The VI page was doubly wrong here — the auto
     // H1 was the full 58-char title AND the body had its own H1.
     omitAutoHeader: true,
-    // PR73 Phase 2D (audit I-12) — see renderHome above. Same trailing-
-    // slash mismatch (canonical without slash vs hreflang en/x-default
-    // with slash). Aligned to the no-trailing-slash convention.
-    extraMeta: `<link rel="alternate" hreflang="vi" href="${siteUrl}/vi"/>\n<link rel="alternate" hreflang="en" href="${siteUrl}"/>\n<link rel="alternate" hreflang="x-default" href="${siteUrl}"/>`,
+    // See renderHome: en and x-default point at the slashed homepage.
+    // This page's own canonical stays /vi (no slash; /vi/ redirects there).
+    extraMeta: `<link rel="alternate" hreflang="vi" href="${siteUrl}/vi"/>\n<link rel="alternate" hreflang="en" href="${siteUrl}/"/>\n<link rel="alternate" hreflang="x-default" href="${siteUrl}/"/>`,
     jsonLd: {
       "@context": "https://schema.org",
       "@graph": [
@@ -298,8 +295,8 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
           // Brand-entity consolidation (see renderHome): bind spaced/variant
           // brand searches to this entity so the homepage wins the brand query.
           alternateName: ["The Pickle Hub", "Pickle Hub", "Picklehub"],
-          url: siteUrl,
-          logo: DEFAULT_OG_IMAGE,
+          url: `${siteUrl}/`,
+          logo: organizationLogo(siteUrl),
           description: "Đưa tin pickleball chuyên nghiệp toàn cầu — PPA, APP, MLP, European Open, Asia Pacific Series. Song ngữ Việt-Anh. Trụ sở tại TP.HCM.",
           address: {
             "@type": "PostalAddress",
@@ -367,7 +364,7 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
         {
           "@type": "WebSite",
           "@id": `${siteUrl}#website`,
-          url: siteUrl,
+          url: `${siteUrl}/`,
           name: "ThePickleHub",
           publisher: { "@id": `${siteUrl}#org` },
           potentialAction: {
@@ -390,7 +387,7 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
         <li><a href="${siteUrl}/vi/tournaments">Giải đấu</a> — Lịch, bracket, kết quả</li>
         <li><a href="${siteUrl}/social">Sự kiện cộng đồng</a> — Đăng ký sự kiện pickleball mở bằng số điện thoại</li>
         <li><a href="${siteUrl}/clubs">Câu lạc bộ</a> — CLB pickleball khắp Việt Nam, lịch sinh hoạt và sự kiện</li>
-        <li><a href="${siteUrl}/vi/san">Sân pickleball</a> — Danh bạ 690+ sân pickleball khắp Việt Nam, tìm theo khu vực</li>
+        <li><a href="${siteUrl}/vi/san">Sân pickleball</a> — ${venueCount ? `Danh bạ ${venueCount}+ sân pickleball khắp Việt Nam, tìm theo khu vực` : "Danh bạ sân pickleball khắp Việt Nam, tìm theo khu vực"}</li>
         <li><a href="${siteUrl}/vi/feed">Bảng tin trận đấu</a> — Trận đấu cộng đồng mới nhất + rating DUPR</li>
         <li><a href="${siteUrl}/vi/tools">Bracket Lab</a> — Công cụ tổ chức miễn phí</li>
         <li><a href="${siteUrl}/vi/rankings">Bảng xếp hạng</a> — Sắp ra mắt</li>

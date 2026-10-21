@@ -10,7 +10,12 @@ export const OrganizationSchema = (): null => {
       "@type": "Organization",
       name: "ThePickleHub",
       url: "https://www.thepicklehub.net",
-      logo: "https://www.thepicklehub.net/og-image.png",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://www.thepicklehub.net/android-chrome-512x512.png",
+        width: 512,
+        height: 512,
+      },
       description:
         "ThePickleHub là nền tảng pickleball hàng đầu Việt Nam với livestream, giải đấu, và cộng đồng pickleball sôi động.",
       contactPoint: {
