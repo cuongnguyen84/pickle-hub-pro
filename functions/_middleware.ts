@@ -1343,7 +1343,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v143 (2026-10-21): tool titles no longer truncate, tournament detail is
   // lang=vi, homepage canonical keeps the slash, rankings H1 uses the row
   // count, VI posts emit BreadcrumbList + a square Organization logo.
-  const cacheKey = `pr:v143:${url.pathname}`;
+  // v144 (2026-10-21): VI blog bodies demote their own <h1> to <h2> (one H1
+  // per page), short club descriptions enriched, org meta fallback is
+  // org-specific — PR #906 renders must not be served from v143 entries.
+  const cacheKey = `pr:v144:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
