@@ -1326,9 +1326,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v136 (2026-10-20): the chat guide covers several photos and a Google Sheet link.
   // v137 (2026-10-20): the chat-draw guide hero has a 768w card, so its
   // article <img> now includes that srcset.
-  // v138 (2026-10-21): quick-table share cards name the tournament in plain
+  // v138 (2026-10-20): the English chat-draw guide uses English UI screenshots.
+  // The Vietnamese article keeps the Vietnamese images.
+  // v139 (2026-10-21): those English cards were rebuilt. The first pass baked
+  // in a broken <img>, so the article now points at the -en-v2 files.
+  // v140 (2026-10-21): quick-table share cards name the tournament in plain
   // Vietnamese and declare the real 1024×1024 preview image size.
-  const cacheKey = `pr:v138:${url.pathname}`;
+  const cacheKey = `pr:v140:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

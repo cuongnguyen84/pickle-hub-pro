@@ -9,8 +9,8 @@ const post: BlogPost = {
   ctaPath: "/tools/quick-tables/chat",
   ctaLabel: { en: "Open the chat", vi: "Mở chat tạo giải" },
   heroImage: {
-    src: "/images/blog/create-tournament-by-chat-hero.webp",
-    alt: "ThePickleHub chat screen ready to create Giải CLB tối thứ 7, with groups A and B and a Create button",
+    src: "/images/blog/create-tournament-by-chat-hero-en-v2.webp",
+    alt: "ThePickleHub chat review for Saturday Night Club, with groups A and B and a Create tournament button",
   },
   content: {
     en: {
@@ -20,16 +20,16 @@ const post: BlogPost = {
       howToSteps: [
         { name: "Choose doubles or singles", text: "Open the chat and tap Doubles or Singles." },
         { name: "Paste the list or send a photo", text: "One team per line, one or more photos, or a Google Sheet link shared as anyone with the link. Open the draft and read every name." },
-        { name: "Review groups, then create", text: "Pick a legal group split, name the event, then tap Create on the review card." },
-        { name: "Send the link", text: "Copy the link, or copy the Zalo message that lists the groups." },
+        { name: "Review groups, then create", text: "Pick a legal group split, name the event, then tap Create tournament on the review card." },
+        { name: "Send the link", text: "Copy the link, or copy the group-chat message that lists the groups." },
       ],
       sections: [
         {
           heading: "Open the chat",
-          content: "Last updated: 20 October 2026. ThePickleHub AI chat at https://www.thepicklehub.net/tools/quick-tables/chat reads a pasted list, a photo, or a spreadsheet and builds a round-robin draw for up to 48 doubles teams or 48 singles players. A 44-team event is 11 groups of 4, then either 2 brackets (32 and 12) or 3 brackets (16, 14 and 14). Sign in, send the list, read every name in the draft, then tap Create. The Vietnamese screen is https://www.thepicklehub.net/vi/tools/quick-tables/chat. A misread name has to be fixed in the draft before you continue.",
+          content: "Last updated: 20 October 2026. ThePickleHub AI chat at https://www.thepicklehub.net/tools/quick-tables/chat reads a pasted list, a photo, or a spreadsheet and builds a round-robin draw for up to 48 doubles teams or 48 singles players. A 44-team event is 11 groups of 4, then either 2 brackets (32 and 12) or 3 brackets (16, 14 and 14). Sign in, send the list, read every name in the draft, then tap Create tournament. The Vietnamese screen is https://www.thepicklehub.net/vi/tools/quick-tables/chat. A misread name has to be fixed in the draft before you continue.",
           image: {
-            src: "/images/blog/create-tournament-by-chat-step-1.webp",
-            alt: "Chat asking doubles or singles, with Doubles highlighted and a message box underneath",
+            src: "/images/blog/create-tournament-by-chat-step-1-en-v2.webp",
+            alt: "Chat asking doubles or singles, with Doubles and Singles chips and a message box underneath",
             caption: "Step 1. Tap Doubles or Singles.",
           },
         },
@@ -37,27 +37,27 @@ const post: BlogPost = {
           heading: "Paste the list, then read every name",
           content: "Paste the list, or send photos of it — up to four photos at once, when one photo cannot show every name. One team per line, written as “Nam - Hung”. A photo of a message, a handwritten sheet, a PDF, Excel, CSV, TSV, a text file, or a Google Sheet link also works, up to 4 MB. The sheet has to be shared as anyone with the link. A file that has no team names is refused, and the list already read stays as it was. The reply “Got N teams” is not the list. Open Draft at the top and read every name. If a name is wrong, edit it there before you answer the next question. Another photo or file adds names; it does not wipe the ones already there. The chat only offers splits with 3 to 8 teams per group, and at most 16 groups.",
           image: {
-            src: "/images/blog/create-tournament-by-chat-step-2.webp",
-            alt: "Draft open with four team names, the user paste on the right, and a one-group chip",
+            src: "/images/blog/create-tournament-by-chat-step-2-en-v2.webp",
+            alt: "Draft open with four team names, the pasted list, and a one round-robin group chip",
             caption: "Step 2. Paste a list, send up to four photos, or a Google Sheet link. Then read every name in the draft.",
           },
         },
         {
           heading: "Review the card, then tap Create",
-          content: "After the list, the chat asks for a group split, a playoff shape when more than one bracket is possible, a name, and optionally courts and a start time. Time is only asked when you set courts. The review card shows the name, the format, the groups, and the time. Read it. Use Edit in the draft if a name or a group is wrong. Tap Create only when the card matches the event. One bracket per finishing place is available when you ask for it: 1st to A, 2nd to B, and so on, up to eight brackets.",
+          content: "After the list, the chat asks for a group split, a playoff shape when more than one bracket is possible, a name, and optionally courts and a start time. Time is only asked when you set courts. The review card shows the name, the format, the groups, and the time. Read it. Use Edit in the draft if a name or a group is wrong. Tap Create tournament only when the card matches the event. One bracket per finishing place is available when you ask for it: 1st to A, 2nd to B, and so on, up to eight brackets.",
           image: {
-            src: "/images/blog/create-tournament-by-chat-step-3.webp",
-            alt: "Review card for Giải CLB tối thứ 7 with two groups of four and a Create button",
+            src: "/images/blog/create-tournament-by-chat-step-3-en-v2.webp",
+            alt: "Review card for Saturday Night Club with two groups of four and a Create tournament button",
             caption: "Step 3. The review card is the last check. Create writes the draw.",
           },
         },
         {
           heading: "Send the link to the group",
-          content: "After Create, Open tournament goes to the draw. Copy link is the page for the schedule and results. Copy Zalo message pastes the group names plus that link, ready for a group chat. The conversation itself stays on this device. A tournament already created is not deleted if you start over.",
+          content: "After Create, Open tournament goes to the draw. Copy link is the page for the schedule and results. Copy group-chat message pastes the group names plus that link, ready for a group chat. The conversation itself stays on this device. A tournament already created is not deleted if you start over.",
           image: {
-            src: "/images/blog/create-tournament-by-chat-step-4.webp",
-            alt: "Success card with Open tournament, Copy link, and Copy Zalo message",
-            caption: "Step 4. Copy the link, or the Zalo message, and send it to the players.",
+            src: "/images/blog/create-tournament-by-chat-step-4-en-v2.webp",
+            alt: "Success card with Open tournament, Copy link, and Copy group-chat message",
+            caption: "Step 4. Copy the link, or the group-chat message, and send it to the players.",
           },
           internalLinks: [
             { text: "Round-robin sizes, from 4 players up", path: "/blog/how-to-create-pickleball-bracket" },
