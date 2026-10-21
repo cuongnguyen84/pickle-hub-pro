@@ -40,6 +40,7 @@ struct VideoPlayerScreen: View {
 
     @State private var player: AVPlayer?
     @State private var observer: Any?
+    @State private var showFullscreen = false
     @State private var playbackQuality: PlaybackQuality = .auto
 
     private var isHLS: Bool { url.pathExtension.lowercased() == "m3u8" }
@@ -76,14 +77,44 @@ struct VideoPlayerScreen: View {
         }
         .onAppear(perform: start)
         .onDisappear(perform: stop)
+        .fullScreenCover(isPresented: $showFullscreen) {
+            ZStack(alignment: .topTrailing) {
+                AVPlayerControllerView(player: player)
+                    .ignoresSafeArea()
+                    .background(Color.black)
+                HStack(spacing: 8) {
+                    if isHLS { qualityMenu }
+                    Button { showFullscreen = false } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 44, height: 44)
+                            .background(.black.opacity(0.55), in: Circle())
+                    }
+                    .accessibilityLabel("Thoát toàn màn hình")
+                }
+                .padding(16)
+            }
+            .onAppear { OrientationLock.allowMediaRotation() }
+            .onDisappear { OrientationLock.unlock() }
+        }
     }
 
     private var playerView: some View {
         ZStack(alignment: .topTrailing) {
-            VideoPlayer(player: player)
-            if isHLS {
-                qualityMenu.padding(8)
+            AVPlayerControllerView(player: player)
+            HStack(spacing: 6) {
+                if isHLS { qualityMenu }
+                Button { showFullscreen = true } label: {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 38, height: 38)
+                        .background(.black.opacity(0.55), in: Circle())
+                }
+                .accessibilityLabel("Toàn màn hình")
             }
+            .padding(8)
         }
     }
 
@@ -200,5 +231,25 @@ struct VideoPlayerScreen: View {
     private func configureAudioSession() {
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
         try? AVAudioSession.sharedInstance().setActive(true)
+    }
+}
+
+/// `AVPlayerViewController` exposes the system Picture-in-Picture and AirPlay
+/// controls, which SwiftUI's compact `VideoPlayer` does not consistently show.
+private struct AVPlayerControllerView: UIViewControllerRepresentable {
+    let player: AVPlayer?
+
+    func makeUIViewController(context: Context) -> AVPlayerViewController {
+        let controller = AVPlayerViewController()
+        controller.player = player
+        controller.showsPlaybackControls = true
+        controller.allowsPictureInPicturePlayback = true
+        controller.canStartPictureInPictureAutomaticallyFromInline = true
+        controller.updatesNowPlayingInfoCenter = true
+        return controller
+    }
+
+    func updateUIViewController(_ controller: AVPlayerViewController, context: Context) {
+        if controller.player !== player { controller.player = player }
     }
 }

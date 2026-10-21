@@ -1,3 +1,5 @@
+import { authorIdentity } from "../../../src/content/authors";
+import { blogMetadata } from "../../../src/content/blog/metadata";
 /**
  * SSR render handlers — EN static blog + VI database blog pages.
  * SEO-04 — split from index.ts, code moved verbatim.
@@ -98,7 +100,7 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
     description: meta.description,
     image: blogImage,
     url: enUrl,
-    author: { "@type": "Person", name: "Cuong Nguyen", url: siteUrl },
+    author: authorIdentity(blogMetadata.find((post) => post.slug === slug)?.author ?? "ThePickleHub", siteUrl),
     publisher: {
       "@type": "Organization",
       name: "ThePickleHub",
@@ -239,7 +241,7 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
   const [postRes, relatedRes] = await Promise.all([
     supabase
       .from("vi_blog_posts")
-      .select("title, meta_title, meta_description, content_html, cover_image_url, faq_items, alternate_en_slug, published_at, updated_at")
+      .select("title, meta_title, meta_description, content_html, cover_image_url, faq_items, alternate_en_slug, published_at, updated_at, author_name")
       .eq("slug", slug)
       .eq("status", "published")
       .single(),
@@ -331,7 +333,7 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
     image: absImage(p.cover_image_url, siteUrl),
     datePublished: p.published_at,
     dateModified: viDateModified,
-    author: { "@type": "Person", name: "Cuong Nguyen", url: siteUrl },
+    author: authorIdentity(p.author_name || "ThePickleHub", siteUrl),
     publisher: { "@type": "Organization", name: "ThePickleHub", logo: { "@type": "ImageObject", url: DEFAULT_OG_IMAGE } },
     inLanguage: "vi-VN",
   };
@@ -349,6 +351,18 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
     };
     extraMeta += `\n<script type="application/ld+json">${escapeJsonLd(JSON.stringify(faqSchema))}</script>`;
   }
+
+  // The FAQ has to be IN THE BODY, not only in the JSON-LD above. Google's
+  // structured-data policy requires the question and answer text to be visible
+  // on the page, and the prerendered HTML is the copy crawlers get — the React
+  // page (src/pages/ViBlogPost.tsx) has always rendered the accordion, so until
+  // 2026-09-10 the two paths disagreed and only the bot one was in breach.
+  // Heading text matches the React accordion so the two renders read the same.
+  const viFaqSection = (p.faq_items && Array.isArray(p.faq_items) && p.faq_items.length > 0)
+    ? `<section><h2>Câu hỏi thường gặp</h2>${(p.faq_items as { question: string; answer: string }[])
+        .map((f) => `<h3>${escapeHtml(f.question)}</h3><p>${escapeHtml(f.answer)}</p>`)
+        .join("")}</section>`
+    : "";
 
   const bc = breadcrumb([{ label: "Trang chủ", href: `${siteUrl}/vi` }, { label: "Blog", href: `${siteUrl}/vi/blog` }, { label: p.title }]);
 
@@ -375,7 +389,7 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
     type: "article",
     lang: "vi",
     extraMeta,
-    bodyContent: `${bc}<article>${viBody}</article>${relatedSection}`,
+    bodyContent: `${bc}<article>${viBody}${viFaqSection}</article>${relatedSection}`,
   }));
 }
 

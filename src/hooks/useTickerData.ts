@@ -222,7 +222,20 @@ function useRecentProMatches() {
         .order("played_at", { ascending: false })
         .limit(MATCH_LIMIT);
       if (error) throw error;
-      return (data ?? []).map(toProMatchInput);
+      return (
+        (data ?? [])
+          .map(toProMatchInput)
+          // Bye/walkover rows arrive with a winner but no participants —
+          // they rendered as the literal "Doi A: Doi B" placeholder
+          // (Cuong, 2026-09-09). A line naming nobody informs nobody: keep
+          // a row only when both sides have names, or when the team names
+          // live in MLP notes instead of participants.
+          .filter(
+            (m) =>
+              Boolean(m.notes) ||
+              (m.team_a_lastnames.length > 0 && m.team_b_lastnames.length > 0),
+          )
+      );
     },
   });
 }

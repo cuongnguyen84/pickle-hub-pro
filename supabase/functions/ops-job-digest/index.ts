@@ -105,7 +105,14 @@ Deno.serve(async (req) => {
   if (claimError) return Response.json({ error: "claim_failed", detail: claimError.message }, { status: 500 });
   if (!claimed) return Response.json({ ok: true, duplicate: true, report_date: reportDate });
 
-  const sent = await sendTelegram(text);
+  // 2026-10-20: folded into the Grok Bot 08:00 digest (team-v2 reads
+  // ops_job_health_snapshot itself). The scheduled run still claims and records
+  // the day's preview for /admin/jobs, but does not message Telegram unless
+  // OPS_JOB_DIGEST_TELEGRAM=on is set as a function secret.
+  const folded = (Deno.env.get("OPS_JOB_DIGEST_TELEGRAM") ?? "") !== "on";
+  const sent = folded
+    ? { ok: true, error: "telegram_folded_into_grok_bot_digest" }
+    : await sendTelegram(text);
   const counts = snapshot.counts;
   await supabase.rpc("ops_finish_daily_digest", {
     p_report_date: reportDate,
@@ -118,7 +125,7 @@ Deno.serve(async (req) => {
   });
 
   return Response.json(
-    sent.ok ? { ok: true, report_date: reportDate } : { ok: false, error: sent.error },
+    sent.ok ? { ok: true, report_date: reportDate, folded } : { ok: false, error: sent.error },
     { status: sent.ok ? 200 : 502 },
   );
 });

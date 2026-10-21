@@ -3,7 +3,7 @@
 
 BEGIN;
 
-SELECT plan(50);
+SELECT plan(52);
 
 SELECT has_function(
   'public', 'setup_quick_table_roster_atomic',
@@ -69,7 +69,9 @@ INSERT INTO public.quick_tables (
   ('a7000050-0000-4000-8000-000000000050', 'a7000001-0000-4000-8000-000000000001',
    'QT Bye', 6, 'round_robin', 'setup', 2, 'task4qtbye'),
   ('a7000060-0000-4000-8000-000000000060', 'a7000001-0000-4000-8000-000000000001',
-   'QT Large', 4, 'large_playoff', 'setup', NULL, 'task4qtlarge');
+   'QT Large', 4, 'large_playoff', 'setup', NULL, 'task4qtlarge'),
+  ('a7000070-0000-4000-8000-000000000070', 'a7000001-0000-4000-8000-000000000001',
+   'QT Parallel', 4, 'round_robin', 'setup', 1, 'task4qtparallel');
 
 CREATE TEMP TABLE qt_atomic_results (kind text PRIMARY KEY, result jsonb NOT NULL);
 GRANT SELECT, INSERT, UPDATE ON qt_atomic_results TO authenticated;
@@ -169,6 +171,24 @@ SELECT is((
     GROUP BY player_id, start_at HAVING count(*) > 1
   ) collisions
 ), 0, 'court schedule never double-books a player');
+
+INSERT INTO qt_atomic_results VALUES (
+  'parallel-courts',
+  public.setup_quick_table_roster_atomic(
+    'a7000070-0000-4000-8000-000000000070',
+    '[{"name":"P1"},{"name":"P2"},{"name":"P3"},{"name":"P4"}]'::jsonb,
+    '[0,0,0,0]'::jsonb,
+    '[1,2]'::jsonb,
+    '19:00'
+  )::jsonb
+);
+SELECT is((SELECT result ->> 'success' FROM qt_atomic_results WHERE kind = 'parallel-courts'),
+  'true', 'one group on two courts still sets up');
+SELECT is((
+  SELECT count(DISTINCT court_id)::integer
+  FROM public.quick_table_matches
+  WHERE table_id = 'a7000070-0000-4000-8000-000000000070' AND NOT is_playoff
+), 2, 'one group uses both chosen courts in parallel');
 
 UPDATE qt_atomic_results
 SET result = public.setup_quick_table_roster_atomic(

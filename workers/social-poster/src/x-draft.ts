@@ -31,13 +31,14 @@
 
 import { checkXBody, type XEnv } from './x';
 import { isPromotionalSource } from './promo-filter';
+import { recordPromoShadow } from './promo-shadow';
 import {
   buildRoundupBody,
   proTourProviderFilter,
   type RoundupMatch,
 } from './x-roundup';
 
-const NEWS_SELECT = 'id,title,summary,content_html,category,importance,published_at,source';
+const NEWS_SELECT = 'id,slug,title,summary,content_html,category,importance,published_at,source';
 
 /**
  * How many news posts one run may create. Cuong dropped the 2-4/day editorial
@@ -76,6 +77,9 @@ export interface XDraftEnv extends XEnv {
   SOCIAL_POSTER_SECRET?: string;
   X_DRAFT_LIMIT?: string;
   X_DRAFT_LOOKBACK_HOURS?: string;
+  /** TypeSafe shadow mode — see src/promo-shadow.ts. Absent => off. */
+  TYPESAFE_API_KEY?: string;
+  TYPESAFE_MODEL?: string;
 }
 
 export interface NewsRow {
@@ -87,6 +91,16 @@ export interface NewsRow {
   importance: number;
   published_at: string;
   source?: string | null;
+  slug?: string | null;
+}
+
+/**
+ * EN article URL, replied under the post (status link_url). Free since X went
+ * through Chrome on 19/10/2026; via the API the reply costs $0.20, so revisit
+ * this if X_VIA_BROWSER goes back to "0".
+ */
+export function newsLinkUrl(slug: string | null | undefined): string | null {
+  return slug ? `https://www.thepicklehub.net/news/${slug}` : null;
 }
 
 export interface XDraftBody {
@@ -340,6 +354,7 @@ async function insertDraft(env: XDraftEnv, row: NewsRow, body: string): Promise<
       status: NEW_ROW_STATUS,
       source_table: 'news_items',
       source_id: row.id,
+      link_url: newsLinkUrl(row.slug),
     }),
   });
   if (!res.ok) throw new Error(`x_posts insert failed: ${res.status} ${await res.text()}`);
@@ -453,6 +468,15 @@ export async function handleXDraft(
     fetchEnglishNews(env, body),
     fetchDraftedIds(env),
   ]);
+  // Shadow mode (2026-09-21): the English half of the comparison. Logged
+  // BEFORE ranking, because rankNewsCandidates drops the promotional rows and
+  // those are exactly the ones the trial is about. Nothing below reads it.
+  await recordPromoShadow(
+    env,
+    'x',
+    candidates.filter((row) => !drafted.has(row.id)).map((row) => ({ ...row, language: 'en' })),
+  );
+
   const ranked = rankNewsCandidates(candidates, drafted);
   if (ranked.length === 0) return { drafted: 0, reason: 'no_new_news', ...roundup };
 

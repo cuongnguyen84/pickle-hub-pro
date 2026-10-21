@@ -100,6 +100,10 @@ vi.mock("@/hooks/usePullToRefresh", () => ({
 
 vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
+  // ProTourEventsStrip (mounted on Live/Index) reads the pro_tour_events
+  // registry through useQuery; an empty result makes it render null, which
+  // is exactly what these error-state assertions want out of the way.
+  useQuery: () => ({ data: undefined, isLoading: false, isError: false, refetch: vi.fn() }),
 }));
 
 const NETWORK_ERROR = "Lỗi kết nối";
@@ -136,13 +140,14 @@ describe("query failure surfaces", () => {
     expect(screen.queryByRole("button", { name: /Tất cả/ })).toBeNull();
   });
 
-  it("Live retry refetches every one of the three queries", async () => {
+  it("Live retry refetches both of the queries the hub still runs", async () => {
     await renderPage(() => import("../Live"));
     fireEvent.click(screen.getByRole("button", { name: /Thử lại/ }));
     // A retry that refreshes only the live query leaves the counts stale.
+    // Replays are hidden (16/09), so there is no third query to refetch.
     expect(refetchLive).toHaveBeenCalledTimes(1);
     expect(refetchSched).toHaveBeenCalledTimes(1);
-    expect(refetchEnded).toHaveBeenCalledTimes(1);
+    expect(refetchEnded).not.toHaveBeenCalled();
   });
 
   it("News shows the network error, not 'no news in this view'", async () => {

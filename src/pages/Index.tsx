@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState, Fragment, FormEvent, ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Clock, Diamond, CircleDot, Target, Check } from "lucide-react";
+import { Clock, Diamond, CircleDot, Target, Check, Trophy } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { useLivestreams, useTournaments, useVideos } from "@/hooks/useSupabaseData";
 import { useLiveStatusRealtime } from "@/hooks/useLiveStatusRealtime";
 import { LiveSection, LiveSectionSkeleton } from "@/components/home/LiveSection";
+import { ProTourEventsStrip } from "@/components/live/ProTourEventsStrip";
 import { HomeNewsFeed } from "@/components/home/HomeNewsFeed";
 import { useHomepageStats } from "@/hooks/useHomepageStats";
 import { useNewsletterSubscribe } from "@/hooks/useNewsletterSubscribe";
@@ -13,6 +14,7 @@ import { usePublishedViBlogPosts } from "@/hooks/useViBlogPosts";
 import { normalizeImageUrl } from "@/lib/url-utils";
 import { blogHeroSrcSet } from "@/lib/image-utils";
 import { PPA_ASIA_STOPS } from "@/lib/constants";
+import { wcResultsPath, wcResultsLabel } from "@/lib/wc-results";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Countdown } from "@/components/Countdown";
 import { formatDate, formatRelative, formatTime } from "@/lib/format-datetime";
@@ -25,6 +27,7 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { WorldCupLiveCard } from "@/components/live/WorldCupLiveCard";
 import { HomeLogMatchCTA } from "@/components/home/HomeLogMatchCTA";
+import { HomeQuickTableChatCTA } from "@/components/home/HomeQuickTableChatCTA";
 import { useTickerData } from "@/hooks/useTickerData";
 import { useNewsItems } from "@/hooks/useNewsItems";
 
@@ -95,17 +98,11 @@ const Index = () => {
   const { language } = useI18n();
   const liveQuery = useLivestreams("live");
   const scheduledQuery = useLivestreams("scheduled");
-  // Luồng vừa kết thúc — giữ trên home 7 ngày, tối đa 4 dòng replay.
-  const endedQuery = useLivestreams("ended", 8);
   const liveStreams = useMemo(() => liveQuery.data ?? [], [liveQuery.data]);
   const scheduledStreams = useMemo(
     () => scheduledQuery.data ?? [],
     [scheduledQuery.data],
   );
-  const endedStreams = useMemo(() => endedQuery.data ?? [], [endedQuery.data]);
-  const recentEnded = endedStreams
-    .filter((s) => s.ended_at && Date.now() - new Date(s.ended_at).getTime() < 7 * 86_400_000)
-    .slice(0, 4);
   // CLS INC3: remember whether live led the page last time so the hero slot is
   // reserved from first paint (skeleton) instead of inserting itself above the
   // editorial section when the queries resolve.
@@ -125,14 +122,14 @@ const Index = () => {
   // insertion shift that was hitting every new reader and every lab run.
   // See src/lib/home-live-lead.ts for the TTL and the failure modes.
   const liveQueriesLoading =
-    liveQuery.isLoading || scheduledQuery.isLoading || endedQuery.isLoading;
+    liveQuery.isLoading || scheduledQuery.isLoading;
   const [expectLiveLead] = useState<boolean>(() => shouldReserveLiveSlot());
   useEffect(() => {
     if (liveQueriesLoading) return;
     const leads =
-      liveStreams.length > 0 || scheduledStreams.length > 0 || recentEnded.length > 0;
+      liveStreams.length > 0 || scheduledStreams.length > 0;
     writeLiveLeadHint(leads);
-  }, [liveQueriesLoading, liveStreams.length, scheduledStreams.length, recentEnded.length]);
+  }, [liveQueriesLoading, liveStreams.length, scheduledStreams.length]);
   const { data: allTournaments = [] } = useTournaments();
   const { data: videos = [] } = useVideos({ limit: 6 });
   const { data: homeStats } = useHomepageStats();
@@ -520,6 +517,9 @@ const Index = () => {
         );
       })()}
 
+      {/* Lối tắt nổi bật vào "Tạo giải bằng chat AI" — ngay dưới dải DUPR, trước nội dung. */}
+      <HomeQuickTableChatCTA />
+
       {/* World Cup strip — below the ticker and the DUPR partnership band.
           Live scores when a match is on, else today's results. Self-hides
           when there is nothing live and no result today, and after Sep 7. */}
@@ -616,11 +616,11 @@ const Index = () => {
           </section>
         ) : null;
 
-        // Live leads whenever a stream is on air, scheduled, OR ended within
-        // 7 days (restores the 4f8c53b1 replay-window behavior dropped by
-        // 48a94353/#501 — owner call: replays hold the top slot for a week).
+        // Live leads whenever a stream is on air or scheduled. The seven-day
+        // replay window that used to hold this slot went with the replay rows
+        // (16/09) — a quiet week now collapses the section instead.
         const liveLeads =
-          hasLiveData || scheduledStreams.length > 0 || recentEnded.length > 0;
+          hasLiveData || scheduledStreams.length > 0;
         const liveNode = liveQueriesLoading
           ? expectLiveLead
             ? { key: "live", node: <LiveSectionSkeleton /> }
@@ -632,7 +632,6 @@ const Index = () => {
                   <LiveSection
                     liveStreams={liveStreams}
                     scheduledStreams={scheduledStreams}
-                    endedStreams={recentEnded}
                     language={language}
                     priority
                   />
@@ -642,6 +641,16 @@ const Index = () => {
 
         const cluster: Array<{ key: string; node: ReactNode }> = [
           liveNode,
+          {
+            // Pro-tour tournaments in season — same registry-driven strip as
+            // /live (zero requests, self-hides out of season).
+            key: "protour",
+            node: (
+              <section className="tl-shell">
+                <ProTourEventsStrip language={language} surface="home" />
+              </section>
+            ),
+          },
           editorialNode ? { key: "editorial", node: editorialNode } : null,
           {
             key: "news",
@@ -712,6 +721,12 @@ const Index = () => {
             <span className="tl-pulse-value">{PPA_ASIA_STOPS}</span>
             <span className="tl-pulse-label">PPA ASIA · 2026</span>
           </div>
+          {/* Kết quả World Cup 2026 — bài tổng hợp vẫn là trang đích chính cho
+              "kết quả pickleball world cup", nên chip này không tự rút lui. */}
+          <Link to={wcResultsPath(language)} className="tl-pulse-chip" role="listitem">
+            <span className="tl-pulse-ico" aria-hidden="true"><Trophy size={12} /></span>
+            <span className="tl-pulse-label">{wcResultsLabel(language).toUpperCase()}</span>
+          </Link>
         </div>
       </section>
 

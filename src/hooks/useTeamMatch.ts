@@ -66,7 +66,7 @@ export interface GameTemplate {
 
 export interface CreateTournamentInput {
   name: string;
-  team_roster_size: 4 | 6 | 8;
+  team_roster_size: number;
   team_count: number;
   format: 'round_robin' | 'single_elimination' | 'rr_playoff';
   playoff_team_count?: number;

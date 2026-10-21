@@ -27,6 +27,7 @@ protocol ShopOrderRepository: Sendable {
 }
 
 struct SupabaseShopOrderRepository: ShopOrderRepository {
+    private static let orderSelect = "id,code,status,payment_method,recipient_name,recipient_phone,shipping_address,delivery_note,items_total_vnd,shipping_fee_vnd,total_vnd,tracking_code,cancel_reason,payment_claimed_at,payment_confirmed_at,shop:shops(slug,name,state),items:shop_order_items(id,product_id,variant_id,qty,product_title,variant_label,sku,unit_price_vnd,line_total_vnd)"
     private let client: SupabaseClient
     init(client: SupabaseClient = SupabaseManager.shared.client) { self.client = client }
 
@@ -84,7 +85,7 @@ struct SupabaseShopOrderRepository: ShopOrderRepository {
         enum CodingKeys: String, CodingKey { case claimedAt = "claimed_at"; case confirmedAt = "confirmed_at" }
     }
 
-    private struct CreateParams: Encodable {
+    struct CreateParams: Encodable {
         let clientToken: String; let paymentMethod: String; let recipientName: String
         let recipientPhone: String; let shippingAddress: String; let deliveryNote: String?
         let expectedShippingFeeVND: Int; let items: [ShopOrderCreateInput.Item]
@@ -99,6 +100,26 @@ struct SupabaseShopOrderRepository: ShopOrderRepository {
             case recipientName = "_recipient_name"; case recipientPhone = "_recipient_phone"
             case shippingAddress = "_shipping_address"; case deliveryNote = "_delivery_note"
             case expectedShippingFeeVND = "_expected_shipping_fee_vnd"; case items = "_items"
+        }
+
+        // Synthesized Encodable omits an Optional whose value is nil. PostgREST
+        // resolves RPC overloads from the JSON object keys, so omitting this key
+        // makes it look for a seven-argument shop_order_create function that
+        // does not exist. Keep the nullable argument in the payload explicitly.
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(clientToken, forKey: .clientToken)
+            try container.encode(paymentMethod, forKey: .paymentMethod)
+            try container.encode(recipientName, forKey: .recipientName)
+            try container.encode(recipientPhone, forKey: .recipientPhone)
+            try container.encode(shippingAddress, forKey: .shippingAddress)
+            if let deliveryNote {
+                try container.encode(deliveryNote, forKey: .deliveryNote)
+            } else {
+                try container.encodeNil(forKey: .deliveryNote)
+            }
+            try container.encode(expectedShippingFeeVND, forKey: .expectedShippingFeeVND)
+            try container.encode(items, forKey: .items)
         }
     }
 }

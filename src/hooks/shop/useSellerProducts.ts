@@ -308,7 +308,7 @@ export const useDeleteProducts = () => {
 
 /**
  * % giảm trên sản phẩm đang bán, từ danh sách — không phải gỡ xuống sửa.
- * Server tính giá gốc từ giá đang công khai; 0 là bỏ giảm giá.
+ * Server trừ thẳng vào giá bán, lấy giá gốc làm neo; 0 là bỏ giảm, giá về neo.
  */
 export const useSetProductDiscount = () => {
   const qc = useQueryClient();

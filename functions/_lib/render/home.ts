@@ -4,6 +4,7 @@
  */
 
 import { byEffectiveDateDesc } from "../../../src/lib/blogOrder";
+import { wcResultsPath } from "../../../src/lib/wc-results";
 import type { SupabaseClient } from "../supabase";
 import { buildHtml, htmlResponse } from "../html";
 import { escapeHtml, DEFAULT_OG_IMAGE } from "../utils";
@@ -220,6 +221,7 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
         <li><a href="${siteUrl}/blog">Stories</a> — Match reports and longform coverage</li>
         <li><a href="${siteUrl}/news">News</a> — Daily pickleball updates</li>
         <li><a href="${siteUrl}/videos">Videos</a> — Match highlights (Courtside)</li>
+        <li><a href="${siteUrl}${wcResultsPath("en")}">World Cup 2026 results</a> — Every final and every Pro match from Da Nang</li>
         <li><a href="${siteUrl}/forum">Forum</a> — Community discussions</li>
         <li><a href="${siteUrl}/shop">Shop</a> — Paddles, shoes and gear from verified Vietnamese sellers</li>
         <li><a href="${siteUrl}/openapi.json">API specification</a> — Machine-readable OpenAPI 3.1 contract</li>
@@ -395,6 +397,7 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
         <li><a href="${siteUrl}/vi/blog">Bài viết</a> — Tường thuật và bài chuyên sâu</li>
         <li><a href="${siteUrl}/vi/news">Tin tức</a> — Cập nhật pickleball hàng ngày</li>
         <li><a href="${siteUrl}/vi/videos">Video</a> — Highlights trận đấu</li>
+        <li><a href="${siteUrl}${wcResultsPath("vi")}">Kết quả World Cup 2026</a> — Toàn bộ chung kết, mọi trận Pro tại Đà Nẵng</li>
         <li><a href="${siteUrl}/vi/forum">Diễn đàn</a> — Thảo luận cộng đồng</li>
         <li><a href="${siteUrl}/vi/shop">Chợ pickleball</a> — Vợt, giày, phụ kiện từ shop đã xác minh</li>
         <li><a href="${siteUrl}/openapi.json">Đặc tả API</a> — Hợp đồng OpenAPI 3.1 dành cho máy đọc</li>

@@ -53,6 +53,21 @@ struct FeedRepository {
         return rows.compactMap { FeedItem(news: $0, now: now) }
     }
 
+    /// Loads editorial content for the native news reader without requesting
+    /// or navigating to the public website.
+    func newsArticle(slug: String, language: String) async throws -> NewsArticleDetail? {
+        let rows: [NewsArticleDetail] = try await client
+            .from("news_items")
+            .select("title, summary, source, image_url, category, content_html, published_at, ai_translated")
+            .eq("slug", value: slug)
+            .eq("language", value: language)
+            .eq("status", value: "published")
+            .limit(1)
+            .execute()
+            .value
+        return rows.first
+    }
+
     /// Admin-curated + auto-ingested Instagram reels (feed_embeds), scored
     /// client-side and merged like news. Mirrors `useFeedEmbeds.ts`.
     func embeds() async throws -> [FeedItem] {

@@ -15,7 +15,9 @@ enum RemoteNotificationRoute {
             return .livestream(id: id)
         }
 
-        if let linkURL = string("link_url", in: userInfo),
+        // Database shop triggers use `url`; legacy notification rows and other
+        // producers use `link_url`. Accept both contracts.
+        if let linkURL = string("url", in: userInfo) ?? string("link_url", in: userInfo),
            let link = deepLink(fromPath: linkURL) {
             return link
         }

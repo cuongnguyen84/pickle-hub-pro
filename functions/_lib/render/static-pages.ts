@@ -123,8 +123,8 @@ export function renderAbout(siteUrl: string, rawPath: string, lang: Lang): Respo
       { hreflang: "x-default", href: `${siteUrl}/about` },
     ],
     bodyContent: isVi
-      ? `<section><h2>Chúng tôi làm gì</h2><p>ThePickleHub tập hợp công cụ quản lý giải đấu miễn phí, lịch và kết quả thi đấu, livestream, video, tin tức, bảng xếp hạng DUPR, danh bạ sân và hoạt động cộng đồng trong một nền tảng song ngữ Việt–Anh. Người tổ chức có thể thử các công cụ round robin, loại trực tiếp và thể thức đồng đội mà không cần đăng ký.</p><h2>Chúng tôi phục vụ ai</h2><p>Nền tảng dành cho người chơi, câu lạc bộ và ban tổ chức. Đội ngũ đặt tại TP.HCM và tập trung đặc biệt vào hệ sinh thái pickleball Việt Nam và châu Á.</p><h2>Nguyên tắc biên tập</h2><p>Chúng tôi ưu tiên thông tin có nguồn, cập nhật rõ ràng và nội dung hữu ích từ trải nghiệm thực tế của cộng đồng địa phương.</p></section>`
-      : `<section><h2>What we do</h2><p>ThePickleHub brings together free tournament-management tools, schedules and results, livestreams, video, news, DUPR rankings, court discovery, and community events in one Vietnamese–English platform. Organizers can try round-robin, elimination, and team formats without creating an account.</p><h2>Who we serve</h2><p>The platform serves players, clubs, and tournament organizers. Our team is based in Ho Chi Minh City with a particular focus on pickleball in Vietnam and Asia.</p><h2>Editorial principles</h2><p>We prioritize sourced information, transparent updates, and useful coverage grounded in first-hand local community experience.</p></section>`,
+      ? `<section><h2>Chúng tôi làm gì</h2><p>ThePickleHub tập hợp công cụ quản lý giải đấu miễn phí, lịch và kết quả thi đấu, livestream, video, tin tức, bảng xếp hạng DUPR, danh bạ sân và hoạt động cộng đồng trong một nền tảng song ngữ Việt–Anh. Người tổ chức đăng nhập để tạo và quản lý giải. Khán giả xem bảng đấu công khai không cần tài khoản.</p><h2>Chúng tôi phục vụ ai</h2><p>Nền tảng dành cho người chơi, câu lạc bộ và ban tổ chức. Đội ngũ đặt tại TP.HCM và tập trung đặc biệt vào hệ sinh thái pickleball Việt Nam và châu Á.</p><h2>Người xây dựng</h2><p><a href="${siteUrl}/vi/authors/cuong-nguyen">Cuong Nguyen</a> xây dựng nền tảng và đóng góp nội dung về pickleball Việt Nam, châu Á.</p><h2>Nguyên tắc biên tập</h2><p>Chúng tôi ưu tiên thông tin có nguồn, cập nhật rõ ràng và nội dung hữu ích từ trải nghiệm thực tế của cộng đồng địa phương.</p></section>`
+      : `<section><h2>What we do</h2><p>ThePickleHub brings together free tournament-management tools, schedules and results, livestreams, video, news, DUPR rankings, court discovery, and community events in one Vietnamese–English platform. Organizers sign in to create and manage round-robin, elimination, and team tournaments. Spectators can view public brackets without an account.</p><h2>Who we serve</h2><p>The platform serves players, clubs, and tournament organizers. Our team is based in Ho Chi Minh City with a particular focus on pickleball in Vietnam and Asia.</p><h2>Who builds ThePickleHub</h2><p><a href="${siteUrl}/authors/cuong-nguyen">Cuong Nguyen</a> builds the platform and contributes coverage of pickleball in Vietnam and Asia.</p><h2>Editorial principles</h2><p>We prioritize sourced information, transparent updates, and useful coverage grounded in first-hand local community experience.</p></section>`,
   }));
 }
 
@@ -209,9 +209,10 @@ export function renderDefault(path: string, siteUrl: string, lang: Lang): Respon
 
 export function render404(path: string, siteUrl: string, accept = ""): Response {
   const isVi = detectLang(path) === "vi";
+  const isArticle = /^\/(?:vi\/)?blog\/[^/]+$/.test(path);
   const title = isVi
-    ? "404 - Không tìm thấy trang | ThePickleHub"
-    : "404 - Page Not Found | ThePickleHub";
+    ? `404 - ${isArticle ? "Không tìm thấy bài viết" : "Không tìm thấy trang"} | ThePickleHub`
+    : `404 - ${isArticle ? "Article not found" : "Page Not Found"} | ThePickleHub`;
   const description = isVi
     ? "Trang bạn tìm không tồn tại. Quay lại trang chủ ThePickleHub để khám phá giải đấu, livestream và cộng đồng pickleball Việt Nam."
     : "The page you're looking for doesn't exist. Return to ThePickleHub for pickleball tournaments, livestreams, and Vietnam's pickleball community.";

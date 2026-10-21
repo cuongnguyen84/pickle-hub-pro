@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { ManualGroupAssignment } from '@/components/quicktable/ManualGroupAssignment';
 import CourtTimeSettings from '@/components/quicktable/CourtTimeSettings';
 import { useI18n } from '@/i18n';
+import { localePath } from '@/lib/locale-path';
 import { useConfirm } from '@/hooks/useConfirm';
 import { parseCourtsInput } from '@/lib/round-robin';
 import { surfaceCard, stepKickerStyle, stepHeadingStyle, stepDescStyle } from '@/components/tournament/setup-styles';
@@ -344,7 +345,7 @@ const QuickTableSetup = () => {
           <div className="tl-empty" style={{ marginTop: 56 }}>
             <h3>{t.quickTable.setup.notFound}</h3>
             <p>{t.quickTable.setup.notFoundDesc}</p>
-            <Link to="/tools/quick-tables" className="tl-btn">
+            <Link to={localePath("/tools/quick-tables", language === "vi" ? "vi" : "en")} className="tl-btn">
               ← {t.quickTable.view.goBack}
             </Link>
           </div>
@@ -361,9 +362,9 @@ const QuickTableSetup = () => {
       <TheLineLayout title={`Chia bảng - ${table.name}`} noindex={true} active="lab">
         <div className="tl-shell">
           <nav className="tl-breadcrumb">
-            <Link to="/tools">{language === 'vi' ? 'Bracket Lab' : 'Bracket Lab'}</Link>
+            <Link to={localePath("/tools", language === "vi" ? "vi" : "en")}>{language === "vi" ? "Công cụ" : "Bracket Lab"}</Link>
             <span className="sep">/</span>
-            <Link to="/tools/quick-tables">Quick Tables</Link>
+            <Link to={localePath("/tools/quick-tables", language === "vi" ? "vi" : "en")}>{language === "vi" ? "Chia bảng" : "Quick Tables"}</Link>
             <span className="sep">/</span>
             <span className="current">{table.name}</span>
           </nav>
@@ -453,9 +454,9 @@ const QuickTableSetup = () => {
     <TheLineLayout title={`Nhập VĐV - ${table.name}`} noindex={true} active="lab">
       <div className="tl-shell">
         <nav className="tl-breadcrumb">
-          <Link to="/tools">{language === 'vi' ? 'Bracket Lab' : 'Bracket Lab'}</Link>
+          <Link to={localePath("/tools", language === "vi" ? "vi" : "en")}>{language === "vi" ? "Công cụ" : "Bracket Lab"}</Link>
           <span className="sep">/</span>
-          <Link to="/tools/quick-tables">Quick Tables</Link>
+          <Link to={localePath("/tools/quick-tables", language === "vi" ? "vi" : "en")}>{language === "vi" ? "Chia bảng" : "Quick Tables"}</Link>
           <span className="sep">/</span>
           <span className="current">{table.name}</span>
         </nav>

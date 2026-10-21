@@ -1,5 +1,5 @@
 /**
- * DUPR rankings snapshot — parsed from www.dupr.com on 2026-07-20.
+ * DUPR rankings snapshot — parsed from www.dupr.com on 2026-10-19.
  *
  * Source pages:
  *   - https://www.dupr.com/rankings (Open + Junior)
@@ -52,153 +52,153 @@ export const DUPR_RANKINGS: Record<
     "mens-doubles": [
       {
         "rank": 1,
-        "name": "Ben Johns",
-        "age": 27,
-        "rating": 7.121
+        "name": "JW Johnson",
+        "age": 24,
+        "rating": 7.066
       },
       {
         "rank": 2,
-        "name": "JW Johnson",
-        "age": 24,
-        "rating": 7.006
+        "name": "Ben Johns",
+        "age": 27,
+        "rating": 7.023
       },
       {
         "rank": 3,
         "name": "Hayden Patriquin",
-        "age": 20,
-        "rating": 6.943
+        "age": 21,
+        "rating": 6.905
       },
       {
         "rank": 4,
-        "name": "Gabriel Tardio",
-        "age": 20,
-        "rating": 6.923
+        "name": "Christian Alshon",
+        "age": 26,
+        "rating": 6.888
       },
       {
         "rank": 5,
         "name": "Andrei Daescu",
-        "age": 37,
-        "rating": 6.889
+        "age": 38,
+        "rating": 6.855
       },
       {
         "rank": 6,
-        "name": "Christian Alshon",
-        "age": 26,
-        "rating": 6.881
+        "name": "Gabriel Tardio",
+        "age": 21,
+        "rating": 6.824
       },
       {
         "rank": 7,
         "name": "Federico Staksrud",
         "age": 30,
-        "rating": 6.708
+        "rating": 6.732
       },
       {
         "rank": 8,
         "name": "Riley Newman",
         "age": 33,
-        "rating": 6.688
+        "rating": 6.674
       },
       {
         "rank": 9,
-        "name": "Eric Oncins",
-        "age": 24,
-        "rating": 6.688
+        "name": "Nicolas Acevedo",
+        "age": 27,
+        "rating": 6.664
       },
       {
         "rank": 10,
-        "name": "Jay Devilliers",
-        "age": 31,
-        "rating": 6.616
+        "name": "Eric Oncins",
+        "age": 25,
+        "rating": 6.635
       },
       {
         "rank": 11,
-        "name": "Connor Garnett",
-        "age": 29,
-        "rating": 6.598
+        "name": "CJ Klinger",
+        "age": 20,
+        "rating": 6.62
       },
       {
         "rank": 12,
-        "name": "CJ Klinger",
-        "age": 20,
-        "rating": 6.563
+        "name": "Connor Garnett",
+        "age": 29,
+        "rating": 6.551
       },
       {
         "rank": 13,
-        "name": "Nicolas Acevedo",
-        "age": 26,
-        "rating": 6.547
+        "name": "Noe Khlif",
+        "age": 28,
+        "rating": 6.509
       },
       {
         "rank": 14,
         "name": "Will Howells",
         "age": 27,
-        "rating": 6.546
+        "rating": 6.487
       },
       {
         "rank": 15,
-        "name": "Noe Khlif",
-        "age": 28,
-        "rating": 6.544
+        "name": "Jay Devilliers",
+        "age": 32,
+        "rating": 6.457
       },
       {
         "rank": 16,
         "name": "Jack Sock",
-        "age": 33,
-        "rating": 6.542
+        "age": 34,
+        "rating": 6.45
       },
       {
         "rank": 17,
-        "name": "Dylan Frazier",
-        "age": 24,
-        "rating": 6.507
+        "name": "Dekel Bar",
+        "age": 33,
+        "rating": 6.444
       },
       {
         "rank": 18,
-        "name": "Dekel Bar",
-        "age": 33,
-        "rating": 6.494
+        "name": "Dylan Frazier",
+        "age": 25,
+        "rating": 6.425
       },
       {
         "rank": 19,
-        "name": "Hunter Johnson",
-        "age": 32,
-        "rating": 6.451
+        "name": "Jaume Martinez Vich",
+        "age": 33,
+        "rating": 6.4
       },
       {
         "rank": 20,
-        "name": "Jaume Martinez Vich",
+        "name": "Hunter Johnson",
         "age": 32,
-        "rating": 6.392
+        "rating": 6.396
       },
       {
         "rank": 21,
-        "name": "Pablo Tellez",
-        "age": 31,
-        "rating": 6.385
+        "name": "Tyson Mcguffin",
+        "age": 37,
+        "rating": 6.35
       },
       {
         "rank": 22,
-        "name": "Augustus Ge",
-        "age": 29,
-        "rating": 6.345
+        "name": "John Goins",
+        "age": 18,
+        "rating": 6.327
       },
       {
         "rank": 23,
-        "name": "Tyson Mcguffin",
-        "age": 37,
-        "rating": 6.328
+        "name": "Pablo Tellez",
+        "age": 31,
+        "rating": 6.322
       },
       {
         "rank": 24,
-        "name": "Jack Munro",
-        "age": 22,
-        "rating": 6.323
+        "name": "Roscoe Bellamy",
+        "age": 26,
+        "rating": 6.318
       },
       {
         "rank": 25,
-        "name": "Matt Wright",
-        "age": 49,
-        "rating": 6.318
+        "name": "Augustus Ge",
+        "age": 30,
+        "rating": 6.314
       }
     ],
     "womens-doubles": [
@@ -206,303 +206,303 @@ export const DUPR_RANKINGS: Record<
         "rank": 1,
         "name": "Anna Leigh Waters",
         "age": 19,
-        "rating": 6.987
+        "rating": 6.976
       },
       {
         "rank": 2,
         "name": "Anna Bright",
-        "age": 26,
-        "rating": 6.598
+        "age": 27,
+        "rating": 6.605
       },
       {
         "rank": 3,
         "name": "Hurricane Tyra Black",
         "age": 25,
-        "rating": 6.306
+        "rating": 6.398
       },
       {
         "rank": 4,
         "name": "Jorja Johnson",
-        "age": 19,
-        "rating": 6.298
+        "age": 20,
+        "rating": 6.35
       },
       {
         "rank": 5,
         "name": "Parris Todd",
         "age": 28,
-        "rating": 6.273
+        "rating": 6.328
       },
       {
         "rank": 6,
-        "name": "Sofia Sewing",
-        "age": 26,
-        "rating": 6.262
+        "name": "Rachel Rohrabacher",
+        "age": 29,
+        "rating": 6.292
       },
       {
         "rank": 7,
-        "name": "Rachel Rohrabacher",
-        "age": 29,
-        "rating": 6.238
+        "name": "Sofia Sewing",
+        "age": 27,
+        "rating": 6.192
       },
       {
         "rank": 8,
         "name": "Jackie Kawamoto",
         "age": 30,
-        "rating": 6.231
+        "rating": 6.189
       },
       {
         "rank": 9,
-        "name": "Tina Pisnik",
-        "age": 45,
-        "rating": 6.228
+        "name": "Kate Fahey",
+        "age": 30,
+        "rating": 6.184
       },
       {
         "rank": 10,
-        "name": "Jade Kawamoto",
-        "age": 30,
-        "rating": 6.188
+        "name": "Tina Pisnik",
+        "age": 45,
+        "rating": 6.179
       },
       {
         "rank": 11,
+        "name": "Catherine Parenteau",
+        "age": 32,
+        "rating": 6.157
+      },
+      {
+        "rank": 12,
+        "name": "Eugenia Carolina Lopez Ascarate",
+        "age": 50,
+        "rating": 6.153
+      },
+      {
+        "rank": 13,
+        "name": "Jade Kawamoto",
+        "age": 30,
+        "rating": 6.138
+      },
+      {
+        "rank": 14,
         "name": "Mariechristine Salvas",
         "age": 38,
         "rating": 6.121
       },
       {
-        "rank": 12,
-        "name": "Kate Fahey",
-        "age": 29,
-        "rating": 6.115
-      },
-      {
-        "rank": 13,
-        "name": "Katerina Stewart",
-        "age": 28,
-        "rating": 6.103
-      },
-      {
-        "rank": 14,
-        "name": "Catherine Parenteau",
-        "age": 32,
-        "rating": 6.082
-      },
-      {
         "rank": 15,
-        "name": "Mariana Humberg",
-        "age": 30,
-        "rating": 6.042
+        "name": "Roos Van Reek",
+        "age": 25,
+        "rating": 6.097
       },
       {
         "rank": 16,
-        "name": "Roos Van Reek",
-        "age": 25,
-        "rating": 6.027
+        "name": "Meghan Dizon",
+        "age": 33,
+        "rating": 6.048
       },
       {
         "rank": 17,
-        "name": "Danni-Elle Townsend",
-        "age": 23,
-        "rating": 6.025
+        "name": "Mariana Humberg",
+        "age": 30,
+        "rating": 6.035
       },
       {
         "rank": 18,
-        "name": "Eugenia Carolina Lopez Ascarate",
-        "age": 50,
-        "rating": 6.024
+        "name": "Danni-Elle Townsend",
+        "age": 23,
+        "rating": 6.034
       },
       {
         "rank": 19,
-        "name": "Jillian Braverman",
-        "age": 36,
-        "rating": 6.007
+        "name": "Etta Tuionetoa",
+        "age": 34,
+        "rating": 6.014
       },
       {
         "rank": 20,
-        "name": "Etta Tuionetoa",
-        "age": 34,
-        "rating": 6.002
+        "name": "Lacy Schneemann",
+        "age": 30,
+        "rating": 6.01
       },
       {
         "rank": 21,
-        "name": "Vivian Glozman",
-        "age": 26,
-        "rating": 5.993
+        "name": "Audra Spielberger",
+        "age": 55,
+        "rating": 6.002
       },
       {
         "rank": 22,
-        "name": "Megan Fudge",
-        "age": 38,
-        "rating": 5.986
+        "name": "Jillian Braverman",
+        "age": 37,
+        "rating": 5.989
       },
       {
         "rank": 23,
-        "name": "Lacy Schneemann",
+        "name": "Katerina Stewart",
         "age": 29,
-        "rating": 5.974
+        "rating": 5.94
       },
       {
         "rank": 24,
-        "name": "Meghan Dizon",
-        "age": 33,
-        "rating": 5.946
+        "name": "Megan Fudge",
+        "age": 39,
+        "rating": 5.934
       },
       {
         "rank": 25,
         "name": "Bobbi Oshiro",
         "age": 32,
-        "rating": 5.942
+        "rating": 5.921
       }
     ],
     "mens-singles": [
       {
         "rank": 1,
-        "name": "Christopher Haworth",
-        "age": 33,
-        "rating": 6.803
+        "name": "Hunter Johnson",
+        "age": 32,
+        "rating": 6.761
       },
       {
         "rank": 2,
-        "name": "Federico Staksrud",
-        "age": 30,
-        "rating": 6.772
+        "name": "Christopher Haworth",
+        "age": 33,
+        "rating": 6.704
       },
       {
         "rank": 3,
-        "name": "Hunter Johnson",
-        "age": 32,
-        "rating": 6.699
+        "name": "Federico Staksrud",
+        "age": 30,
+        "rating": 6.683
       },
       {
         "rank": 4,
         "name": "Christian Alshon",
         "age": 26,
-        "rating": 6.581
+        "rating": 6.542
       },
       {
         "rank": 5,
-        "name": "Jack Sock",
-        "age": 33,
-        "rating": 6.533
+        "name": "John Goins",
+        "age": 18,
+        "rating": 6.527
       },
       {
         "rank": 6,
-        "name": "John Goins",
-        "age": 18,
-        "rating": 6.518
+        "name": "Roscoe Bellamy",
+        "age": 26,
+        "rating": 6.504
       },
       {
         "rank": 7,
-        "name": "Ammar Wazir",
-        "age": 23,
-        "rating": 6.517
+        "name": "Jack Sock",
+        "age": 34,
+        "rating": 6.477
       },
       {
         "rank": 8,
-        "name": "Roscoe Bellamy",
-        "age": 26,
-        "rating": 6.486
+        "name": "Ben Johns",
+        "age": 27,
+        "rating": 6.437
       },
       {
         "rank": 9,
-        "name": "Connor Garnett",
-        "age": 29,
-        "rating": 6.448
-      },
-      {
-        "rank": 10,
-        "name": "Zane Ford",
-        "age": 21,
+        "name": "Jaume Martinez Vich",
+        "age": 33,
         "rating": 6.431
       },
       {
+        "rank": 10,
+        "name": "Noe Khlif",
+        "age": 28,
+        "rating": 6.404
+      },
+      {
         "rank": 11,
-        "name": "Jaume Martinez Vich",
-        "age": 32,
-        "rating": 6.424
+        "name": "Ammar Wazir",
+        "age": 23,
+        "rating": 6.385
       },
       {
         "rank": 12,
-        "name": "Noe Khlif",
-        "age": 28,
-        "rating": 6.395
+        "name": "Gabriel Joseph",
+        "age": 29,
+        "rating": 6.299
       },
       {
         "rank": 13,
-        "name": "Dusty Boyer",
-        "age": 33,
-        "rating": 6.354
+        "name": "JW Johnson",
+        "age": 24,
+        "rating": 6.28
       },
       {
         "rank": 14,
-        "name": "JW Johnson",
-        "age": 24,
-        "rating": 6.31
+        "name": "Rafael Lenhard",
+        "age": 30,
+        "rating": 6.27
       },
       {
         "rank": 15,
-        "name": "Mohaned Alhouni",
-        "age": 30,
-        "rating": 6.292
+        "name": "Yates Johnson",
+        "age": 32,
+        "rating": 6.268
       },
       {
         "rank": 16,
-        "name": "Matthew Barlow",
-        "age": 32,
-        "rating": 6.285
+        "name": "Connor Garnett",
+        "age": 29,
+        "rating": 6.264
       },
       {
         "rank": 17,
-        "name": "Dylan Frazier",
-        "age": 24,
-        "rating": 6.269
+        "name": "Tama Shimabukuro",
+        "age": 15,
+        "rating": 6.251
       },
       {
         "rank": 18,
-        "name": "Adam Harvey",
-        "age": 25,
-        "rating": 6.259
+        "name": "Luca Mack",
+        "age": 26,
+        "rating": 6.25
       },
       {
         "rank": 19,
-        "name": "Gabriel Joseph",
-        "age": 29,
-        "rating": 6.257
+        "name": "Zane Ford",
+        "age": 22,
+        "rating": 6.233
       },
       {
         "rank": 20,
-        "name": "Nam Ly Hoang",
-        "age": 29,
-        "rating": 6.245
+        "name": "Adam Harvey",
+        "age": 25,
+        "rating": 6.228
       },
       {
         "rank": 21,
-        "name": "Luca Mack",
-        "age": 26,
-        "rating": 6.244
+        "name": "Nam Ly Hoang",
+        "age": 29,
+        "rating": 6.196
       },
       {
         "rank": 22,
-        "name": "Tama Shimabukuro",
+        "name": "Camden Chaffin",
         "age": 15,
-        "rating": 6.24
+        "rating": 6.188
       },
       {
         "rank": 23,
-        "name": "Donald Young",
-        "age": 36,
-        "rating": 6.237
+        "name": "Matthew Barlow",
+        "age": 32,
+        "rating": 6.177
       },
       {
         "rank": 24,
-        "name": "Ronan Camron",
-        "age": 21,
-        "rating": 6.235
+        "name": "Mohaned Alhouni",
+        "age": 30,
+        "rating": 6.16
       },
       {
         "rank": 25,
-        "name": "Yates Johnson",
-        "age": 32,
-        "rating": 6.218
+        "name": "Dusty Boyer",
+        "age": 33,
+        "rating": 6.155
       }
     ],
     "womens-singles": [
@@ -510,151 +510,151 @@ export const DUPR_RANKINGS: Record<
         "rank": 1,
         "name": "Anna Leigh Waters",
         "age": 19,
-        "rating": 6.453
+        "rating": 6.704
       },
       {
         "rank": 2,
         "name": "Kate Fahey",
-        "age": 29,
-        "rating": 6.175
+        "age": 30,
+        "rating": 6.241
       },
       {
         "rank": 3,
-        "name": "Parris Todd",
-        "age": 28,
-        "rating": 6.105
+        "name": "Katerina Stewart",
+        "age": 29,
+        "rating": 6.022
       },
       {
         "rank": 4,
-        "name": "Katerina Stewart",
-        "age": 28,
-        "rating": 6.043
+        "name": "Kaitlyn Christian",
+        "age": 34,
+        "rating": 5.906
       },
       {
         "rank": 5,
-        "name": "Sofia Sewing",
-        "age": 26,
-        "rating": 6.004
+        "name": "Seone Mendez",
+        "age": 27,
+        "rating": 5.902
       },
       {
         "rank": 6,
-        "name": "Lea Jansen",
-        "age": 33,
+        "name": "Sofia Sewing",
+        "age": 27,
         "rating": 5.882
       },
       {
         "rank": 7,
-        "name": "Seone Mendez",
-        "age": 27,
-        "rating": 5.875
+        "name": "Brooke Buckner",
+        "age": 34,
+        "rating": 5.862
       },
       {
         "rank": 8,
-        "name": "Brooke Buckner",
-        "age": 34,
-        "rating": 5.874
+        "name": "Judit Castillo Gargallo",
+        "age": 28,
+        "rating": 5.81
       },
       {
         "rank": 9,
-        "name": "Kaitlyn Christian",
-        "age": 34,
-        "rating": 5.864
+        "name": "Catherine Parenteau",
+        "age": 32,
+        "rating": 5.802
       },
       {
         "rank": 10,
         "name": "Kiora Kunimoto",
         "age": 18,
-        "rating": 5.801
+        "rating": 5.773
       },
       {
         "rank": 11,
-        "name": "Genie Bouchard",
-        "age": 32,
-        "rating": 5.769
+        "name": "Andie Dikosavljevic",
+        "age": 30,
+        "rating": 5.76
       },
       {
         "rank": 12,
-        "name": "Judit Castillo Gargallo",
-        "age": 27,
-        "rating": 5.764
+        "name": "Lea Jansen",
+        "age": 33,
+        "rating": 5.755
       },
       {
         "rank": 13,
-        "name": "Catherine Parenteau",
-        "age": 32,
-        "rating": 5.759
+        "name": "Sahra Dennehy",
+        "age": 24,
+        "rating": 5.731
       },
       {
         "rank": 14,
-        "name": "Sahra Dennehy",
-        "age": 23,
-        "rating": 5.716
+        "name": "Bobbi Oshiro",
+        "age": 32,
+        "rating": 5.695
       },
       {
         "rank": 15,
-        "name": "Mary Brascia",
+        "name": "Domenika Turkovic",
         "age": 26,
-        "rating": 5.684
-      },
-      {
-        "rank": 16,
-        "name": "Rika Fujiwara",
-        "age": 44,
-        "rating": 5.684
-      },
-      {
-        "rank": 17,
-        "name": "Cailyn Campbell",
-        "age": 16,
         "rating": 5.678
       },
       {
+        "rank": 16,
+        "name": "Keilly Ulery",
+        "age": 36,
+        "rating": 5.663
+      },
+      {
+        "rank": 17,
+        "name": "Genie Bouchard",
+        "age": 32,
+        "rating": 5.652
+      },
+      {
         "rank": 18,
-        "name": "Chao Yi Wang",
-        "age": 24,
-        "rating": 5.664
+        "name": "Roos Van Reek",
+        "age": 25,
+        "rating": 5.625
       },
       {
         "rank": 19,
-        "name": "Trang Huynh",
-        "age": 32,
-        "rating": 5.66
+        "name": "Marianna Petrei",
+        "age": 30,
+        "rating": 5.603
       },
       {
         "rank": 20,
-        "name": "Roos Van Reek",
-        "age": 25,
-        "rating": 5.64
+        "name": "Cailyn Campbell",
+        "age": 16,
+        "rating": 5.6
       },
       {
         "rank": 21,
-        "name": "Isabella Dunlap",
-        "age": 26,
-        "rating": 5.636
+        "name": "Yu-Chieh Hsieh",
+        "age": 33,
+        "rating": 5.598
       },
       {
         "rank": 22,
-        "name": "Kao Pei Chuan",
-        "age": 31,
-        "rating": 5.635
+        "name": "Helena Jansen",
+        "age": 27,
+        "rating": 5.596
       },
       {
         "rank": 23,
-        "name": "Jorja Johnson",
-        "age": 19,
-        "rating": 5.62
+        "name": "Isabella Dunlap",
+        "age": 26,
+        "rating": 5.596
       },
       {
         "rank": 24,
-        "name": "Andie Dikosavljevic",
-        "age": 30,
-        "rating": 5.611
+        "name": "Amber Policare",
+        "age": 28,
+        "rating": 5.582
       },
       {
         "rank": 25,
-        "name": "Bobbi Oshiro",
-        "age": 32,
-        "rating": 5.603
+        "name": "Maria Vyshkina",
+        "age": 22,
+        "rating": 5.572
       }
     ]
   },
@@ -664,303 +664,303 @@ export const DUPR_RANKINGS: Record<
         "rank": 1,
         "name": "John Goins",
         "age": 18,
-        "rating": 6.237
+        "rating": 6.327
       },
       {
         "rank": 2,
-        "name": "Tama Shimabukuro",
+        "name": "Camden Chaffin",
         "age": 15,
-        "rating": 6.12
+        "rating": 6.159
       },
       {
         "rank": 3,
-        "name": "Camden Chaffin",
-        "age": 15,
-        "rating": 6.073
+        "name": "Will Mackinnon",
+        "age": 18,
+        "rating": 6.101
       },
       {
         "rank": 4,
-        "name": "Will Mackinnon",
-        "age": 18,
-        "rating": 6.012
+        "name": "Tama Shimabukuro",
+        "age": 15,
+        "rating": 6.086
       },
       {
         "rank": 5,
         "name": "Tristan Dussault",
-        "age": 17,
-        "rating": 6.003
+        "age": 18,
+        "rating": 6.07
       },
       {
         "rank": 6,
-        "name": "Jace Morris",
+        "name": "Ben Slive",
         "age": 17,
-        "rating": 5.812
+        "rating": 5.836
       },
       {
         "rank": 7,
-        "name": "Dale Kim",
-        "age": 18,
-        "rating": 5.786
+        "name": "Francis Chi",
+        "age": 14,
+        "rating": 5.805
       },
       {
         "rank": 8,
-        "name": "Karthik Ganesh",
+        "name": "Jace Morris",
         "age": 18,
-        "rating": 5.755
+        "rating": 5.8
       },
       {
         "rank": 9,
-        "name": "Mauro Garcia Sanchez",
-        "age": 18,
-        "rating": 5.742
+        "name": "Indy Dagnall",
+        "age": 17,
+        "rating": 5.794
       },
       {
         "rank": 10,
-        "name": "Mateusz Matysik",
-        "age": 18,
-        "rating": 5.71
+        "name": "Braden Jacobson",
+        "age": 17,
+        "rating": 5.766
       },
       {
         "rank": 11,
-        "name": "Arwid Dahlin",
+        "name": "Andrew Caldarella",
         "age": 17,
-        "rating": 5.677
+        "rating": 5.728
       },
       {
         "rank": 12,
-        "name": "Ben Slive",
-        "age": 16,
-        "rating": 5.657
+        "name": "Ahmad ElZarif",
+        "age": 18,
+        "rating": 5.72
       },
       {
         "rank": 13,
+        "name": "Andre Mercado",
+        "age": 17,
+        "rating": 5.715
+      },
+      {
+        "rank": 14,
+        "name": "Parth Mody",
+        "age": 18,
+        "rating": 5.711
+      },
+      {
+        "rank": 15,
+        "name": "Arjun Singh",
+        "age": 16,
+        "rating": 5.701
+      },
+      {
+        "rank": 16,
+        "name": "Braylon Ohrel",
+        "age": 15,
+        "rating": 5.694
+      },
+      {
+        "rank": 17,
+        "name": "Arwid Dahlin",
+        "age": 18,
+        "rating": 5.69
+      },
+      {
+        "rank": 18,
+        "name": "Mackonner Dy",
+        "age": 16,
+        "rating": 5.68
+      },
+      {
+        "rank": 19,
+        "name": "Ethan Bakalinsky",
+        "age": 15,
+        "rating": 5.676
+      },
+      {
+        "rank": 20,
         "name": "Jace Howard",
         "age": 18,
         "rating": 5.651
       },
       {
-        "rank": 14,
-        "name": "Arjun Singh",
-        "age": 16,
-        "rating": 5.648
-      },
-      {
-        "rank": 15,
-        "name": "Parth Mody",
-        "age": 17,
-        "rating": 5.629
-      },
-      {
-        "rank": 16,
-        "name": "Ethan Bakalinsky",
-        "age": 15,
-        "rating": 5.622
-      },
-      {
-        "rank": 17,
-        "name": "Indy Dagnall",
-        "age": 16,
-        "rating": 5.612
-      },
-      {
-        "rank": 18,
-        "name": "George Rangelov",
-        "age": 18,
-        "rating": 5.606
-      },
-      {
-        "rank": 19,
-        "name": "Braden Jacobson",
-        "age": 16,
-        "rating": 5.605
-      },
-      {
-        "rank": 20,
-        "name": "Andre Mercado",
-        "age": 16,
-        "rating": 5.595
-      },
-      {
         "rank": 21,
-        "name": "Daniel Phillips",
+        "name": "Andrew Angulo",
         "age": 16,
-        "rating": 5.581
+        "rating": 5.537
       },
       {
         "rank": 22,
-        "name": "Jaxon Madsen",
-        "age": 18,
-        "rating": 5.542
+        "name": "Daniel Phillips",
+        "age": 16,
+        "rating": 5.525
       },
       {
         "rank": 23,
-        "name": "Andrew Caldarella",
-        "age": 16,
-        "rating": 5.54
+        "name": "Aj Marrero",
+        "age": 18,
+        "rating": 5.51
       },
       {
         "rank": 24,
         "name": "Jayce Landheer",
-        "age": 17,
-        "rating": 5.538
+        "age": 18,
+        "rating": 5.503
       },
       {
         "rank": 25,
-        "name": "Francis Chi",
-        "age": 14,
-        "rating": 5.536
+        "name": "Jacob Bolkowy",
+        "age": 17,
+        "rating": 5.493
       }
     ],
     "womens-doubles": [
       {
         "rank": 1,
-        "name": "Cailyn Campbell",
-        "age": 16,
-        "rating": 5.715
+        "name": "Kiora Kunimoto",
+        "age": 18,
+        "rating": 5.909
       },
       {
         "rank": 2,
-        "name": "Ella Yeh",
+        "name": "Cailyn Campbell",
         "age": 16,
-        "rating": 5.59
+        "rating": 5.735
       },
       {
         "rank": 3,
-        "name": "Kiora Kunimoto",
-        "age": 18,
-        "rating": 5.561
+        "name": "Ella Yeh",
+        "age": 16,
+        "rating": 5.675
       },
       {
         "rank": 4,
         "name": "Kelly Goodnow",
         "age": 14,
-        "rating": 5.481
+        "rating": 5.556
       },
       {
         "rank": 5,
-        "name": "Aline Morales",
-        "age": 15,
-        "rating": 5.462
+        "name": "Averry Chew",
+        "age": 18,
+        "rating": 5.546
       },
       {
         "rank": 6,
-        "name": "Averry Chew",
-        "age": 17,
-        "rating": 5.459
+        "name": "Aline Morales",
+        "age": 16,
+        "rating": 5.528
       },
       {
         "rank": 7,
-        "name": "Emma Nelson",
-        "age": 15,
-        "rating": 5.439
+        "name": "Mary McGowan",
+        "age": 18,
+        "rating": 5.449
       },
       {
         "rank": 8,
-        "name": "Jalina Ingram",
-        "age": 18,
-        "rating": 5.425
+        "name": "Elsie Hendershot",
+        "age": 13,
+        "rating": 5.419
       },
       {
         "rank": 9,
-        "name": "Adalynn Lund",
-        "age": 16,
-        "rating": 5.359
+        "name": "Jaeda Minniefield",
+        "age": 17,
+        "rating": 5.402
       },
       {
         "rank": 10,
-        "name": "Elsie Hendershot",
-        "age": 13,
-        "rating": 5.347
+        "name": "Emma Nelson",
+        "age": 16,
+        "rating": 5.365
       },
       {
         "rank": 11,
-        "name": "Valerie Simon",
-        "age": 18,
-        "rating": 5.335
+        "name": "Adalynn Lund",
+        "age": 17,
+        "rating": 5.321
       },
       {
         "rank": 12,
         "name": "Kei Sawaki",
-        "age": 15,
-        "rating": 5.327
+        "age": 16,
+        "rating": 5.306
       },
       {
         "rank": 13,
-        "name": "Jaeda Minniefield",
-        "age": 16,
-        "rating": 5.307
+        "name": "Valerie Simon",
+        "age": 18,
+        "rating": 5.288
       },
       {
         "rank": 14,
         "name": "Jayda Maldonado",
         "age": 16,
-        "rating": 5.253
+        "rating": 5.244
       },
       {
         "rank": 15,
-        "name": "Mary McGowan",
-        "age": 17,
-        "rating": 5.228
+        "name": "CC Eleven Sacca",
+        "age": 15,
+        "rating": 5.215
       },
       {
         "rank": 16,
-        "name": "Ariana Ajani",
-        "age": 15,
-        "rating": 5.224
+        "name": "Mary Monson",
+        "age": 18,
+        "rating": 5.195
       },
       {
         "rank": 17,
-        "name": "Mary Monson",
-        "age": 17,
-        "rating": 5.175
+        "name": "Adelie Osher",
+        "age": 18,
+        "rating": 5.185
       },
       {
         "rank": 18,
-        "name": "Kayla Williams",
-        "age": 16,
-        "rating": 5.154
+        "name": "Jade Rau",
+        "age": 17,
+        "rating": 5.174
       },
       {
         "rank": 19,
-        "name": "CC Eleven Sacca",
-        "age": 14,
-        "rating": 5.15
+        "name": "Emily Cho",
+        "age": 17,
+        "rating": 5.108
       },
       {
         "rank": 20,
-        "name": "Jade Rau",
-        "age": 16,
-        "rating": 5.125
+        "name": "Naomi Amalsadiwala",
+        "age": 17,
+        "rating": 5.097
       },
       {
         "rank": 21,
-        "name": "E Elenga",
-        "age": 17,
-        "rating": 5.103
+        "name": "Victoria Nguyen",
+        "age": 18,
+        "rating": 5.085
       },
       {
         "rank": 22,
-        "name": "Victoria A Simon",
-        "age": 16,
-        "rating": 5.101
+        "name": "Ella Cosma",
+        "age": 17,
+        "rating": 5.078
       },
       {
         "rank": 23,
-        "name": "Victoria Nguyen",
-        "age": 17,
-        "rating": 5.084
+        "name": "Victoria A Simon",
+        "age": 16,
+        "rating": 5.057
       },
       {
         "rank": 24,
-        "name": "Emily Cho",
-        "age": 16,
-        "rating": 5.081
+        "name": "Stevie Petropouleas",
+        "age": 15,
+        "rating": 5.026
       },
       {
         "rank": 25,
-        "name": "Naomi Amalsadiwala",
+        "name": "Ariana Ajani",
         "age": 16,
-        "rating": 5.064
+        "rating": 5.019
       }
     ],
     "mens-singles": [
@@ -968,150 +968,150 @@ export const DUPR_RANKINGS: Record<
         "rank": 1,
         "name": "John Goins",
         "age": 18,
-        "rating": 6.518
+        "rating": 6.527
       },
       {
         "rank": 2,
         "name": "Tama Shimabukuro",
         "age": 15,
-        "rating": 6.24
+        "rating": 6.251
       },
       {
         "rank": 3,
         "name": "Camden Chaffin",
         "age": 15,
-        "rating": 6.217
+        "rating": 6.188
       },
       {
         "rank": 4,
-        "name": "George Rangelov",
+        "name": "Tristan Dussault",
         "age": 18,
-        "rating": 5.928
+        "rating": 6.052
       },
       {
         "rank": 5,
-        "name": "Tristan Dussault",
-        "age": 17,
-        "rating": 5.901
+        "name": "Daniel Phillips",
+        "age": 16,
+        "rating": 5.833
       },
       {
         "rank": 6,
-        "name": "Dale Kim",
-        "age": 18,
-        "rating": 5.892
+        "name": "Andrew Caldarella",
+        "age": 17,
+        "rating": 5.641
       },
       {
         "rank": 7,
-        "name": "Jaxon Madsen",
+        "name": "Jace Morris",
         "age": 18,
-        "rating": 5.816
+        "rating": 5.63
       },
       {
         "rank": 8,
         "name": "Indy Dagnall",
-        "age": 16,
-        "rating": 5.658
+        "age": 17,
+        "rating": 5.564
       },
       {
         "rank": 9,
-        "name": "Jace Morris",
-        "age": 17,
-        "rating": 5.648
+        "name": "Ben Herrick",
+        "age": 18,
+        "rating": 5.561
       },
       {
         "rank": 10,
-        "name": "Daniel Phillips",
-        "age": 16,
-        "rating": 5.555
+        "name": "Braylon Ohrel",
+        "age": 15,
+        "rating": 5.561
       },
       {
         "rank": 11,
-        "name": "Mauro Garcia Sanchez",
-        "age": 18,
-        "rating": 5.553
+        "name": "Braden Jacobson",
+        "age": 17,
+        "rating": 5.555
       },
       {
         "rank": 12,
-        "name": "Andrew Caldarella",
+        "name": "Mackonner Dy",
         "age": 16,
-        "rating": 5.538
+        "rating": 5.493
       },
       {
         "rank": 13,
-        "name": "Karthik Ganesh",
-        "age": 18,
-        "rating": 5.514
+        "name": "Hoai Anh Pham",
+        "age": 15,
+        "rating": 5.467
       },
       {
         "rank": 14,
-        "name": "Mateusz Matysik",
+        "name": "Parth Mody",
         "age": 18,
-        "rating": 5.502
+        "rating": 5.454
       },
       {
         "rank": 15,
-        "name": "Parth Mody",
+        "name": "Wil Shaffer",
         "age": 17,
-        "rating": 5.45
+        "rating": 5.447
       },
       {
         "rank": 16,
-        "name": "Mackonner Dy",
+        "name": "heyonglin",
         "age": 16,
-        "rating": 5.446
+        "rating": 5.426
       },
       {
         "rank": 17,
-        "name": "Arjun Singh",
-        "age": 16,
-        "rating": 5.44
+        "name": "Ben Slive",
+        "age": 17,
+        "rating": 5.423
       },
       {
         "rank": 18,
-        "name": "Ben Herrick",
-        "age": 17,
-        "rating": 5.434
-      },
-      {
-        "rank": 19,
-        "name": "Braden Jacobson",
+        "name": "Arjun Singh",
         "age": 16,
         "rating": 5.411
       },
       {
+        "rank": 19,
+        "name": "Will Mackinnon",
+        "age": 18,
+        "rating": 5.398
+      },
+      {
         "rank": 20,
-        "name": "Ben Slive",
-        "age": 16,
-        "rating": 5.41
+        "name": "Ethan Bakalinsky",
+        "age": 15,
+        "rating": 5.38
       },
       {
         "rank": 21,
-        "name": "Dylan Lewis",
-        "age": 18,
-        "rating": 5.405
-      },
-      {
-        "rank": 22,
-        "name": "heyonglin",
-        "age": 16,
-        "rating": 5.404
-      },
-      {
-        "rank": 23,
-        "name": "Wil Shaffer",
-        "age": 17,
-        "rating": 5.383
-      },
-      {
-        "rank": 24,
         "name": "Lucas Riffe",
         "age": 16,
         "rating": 5.374
       },
       {
+        "rank": 22,
+        "name": "Alessio Gabbiani",
+        "age": 17,
+        "rating": 5.35
+      },
+      {
+        "rank": 23,
+        "name": "Dev Shah",
+        "age": 18,
+        "rating": 5.342
+      },
+      {
+        "rank": 24,
+        "name": "Jace Howard",
+        "age": 18,
+        "rating": 5.337
+      },
+      {
         "rank": 25,
         "name": "Arwid Dahlin",
-        "age": 17,
+        "age": 18,
         "rating": 5.324
       }
     ],
@@ -1120,151 +1120,151 @@ export const DUPR_RANKINGS: Record<
         "rank": 1,
         "name": "Kiora Kunimoto",
         "age": 18,
-        "rating": 5.801
+        "rating": 5.773
       },
       {
         "rank": 2,
         "name": "Cailyn Campbell",
         "age": 16,
-        "rating": 5.678
+        "rating": 5.6
       },
       {
         "rank": 3,
-        "name": "Jalina Ingram",
-        "age": 18,
-        "rating": 5.316
+        "name": "Kei Sawaki",
+        "age": 16,
+        "rating": 5.337
       },
       {
         "rank": 4,
-        "name": "Averry Chew",
-        "age": 17,
-        "rating": 5.199
+        "name": "Valerie Simon",
+        "age": 18,
+        "rating": 5.132
       },
       {
         "rank": 5,
-        "name": "Kei Sawaki",
-        "age": 15,
-        "rating": 5.149
+        "name": "Sophia Tran Phuong Anh",
+        "age": 18,
+        "rating": 5.09
       },
       {
         "rank": 6,
-        "name": "Emma Nelson",
-        "age": 15,
-        "rating": 5.128
+        "name": "Huong Dan Linh",
+        "age": 14,
+        "rating": 5.059
       },
       {
         "rank": 7,
-        "name": "Huong Dan Linh",
-        "age": 14,
-        "rating": 5.069
+        "name": "Elsie Hendershot",
+        "age": 13,
+        "rating": 5.013
       },
       {
         "rank": 8,
-        "name": "Valerie Simon",
+        "name": "Averry Chew",
         "age": 18,
-        "rating": 4.93
+        "rating": 4.979
       },
       {
         "rank": 9,
-        "name": "Lauren Gosling",
-        "age": 15,
-        "rating": 4.927
+        "name": "Kelly Goodnow",
+        "age": 14,
+        "rating": 4.964
       },
       {
         "rank": 10,
-        "name": "Sophia Tran Phuong Anh",
-        "age": 18,
-        "rating": 4.887
+        "name": "Aria Henare",
+        "age": 16,
+        "rating": 4.903
       },
       {
         "rank": 11,
-        "name": "Elsie Hendershot",
-        "age": 13,
-        "rating": 4.861
+        "name": "Caroline Maguire",
+        "age": 15,
+        "rating": 4.894
       },
       {
         "rank": 12,
-        "name": "Kayla Williams",
-        "age": 16,
-        "rating": 4.841
+        "name": "Stella Bảo Châu",
+        "age": 15,
+        "rating": 4.87
       },
       {
         "rank": 13,
-        "name": "Kelly Goodnow",
-        "age": 14,
-        "rating": 4.84
+        "name": "Lauren Gosling",
+        "age": 16,
+        "rating": 4.829
       },
       {
         "rank": 14,
-        "name": "Jade Rau",
-        "age": 16,
-        "rating": 4.821
+        "name": "Jaeda Minniefield",
+        "age": 17,
+        "rating": 4.816
       },
       {
         "rank": 15,
+        "name": "Jade Rau",
+        "age": 17,
+        "rating": 4.794
+      },
+      {
+        "rank": 16,
         "name": "Jayda Maldonado",
         "age": 16,
         "rating": 4.785
       },
       {
-        "rank": 16,
-        "name": "Isadora Campi",
-        "age": 18,
-        "rating": 4.772
-      },
-      {
         "rank": 17,
-        "name": "Lynn Lim",
-        "age": 16,
-        "rating": 4.734
+        "name": "Niesha  Enja",
+        "age": 15,
+        "rating": 4.784
       },
       {
         "rank": 18,
-        "name": "Caroline Maguire",
-        "age": 14,
-        "rating": 4.727
+        "name": "Lynn Lim",
+        "age": 16,
+        "rating": 4.753
       },
       {
         "rank": 19,
-        "name": "Aria Henare",
-        "age": 16,
-        "rating": 4.646
+        "name": "Isadora Campi",
+        "age": 18,
+        "rating": 4.734
       },
       {
         "rank": 20,
-        "name": "Melody Li",
-        "age": 12,
-        "rating": 4.646
+        "name": "Diane Huynh",
+        "age": 15,
+        "rating": 4.678
       },
       {
         "rank": 21,
-        "name": "Abigail OKelley",
+        "name": "Eliana Ling",
         "age": 18,
-        "rating": 4.635
+        "rating": 4.636
       },
       {
         "rank": 22,
-        "name": "Jing Robinson",
-        "age": 14,
-        "rating": 4.617
+        "name": "Memory Lelenoa",
+        "age": 18,
+        "rating": 4.62
       },
       {
         "rank": 23,
-        "name": "Stevie Petropouleas",
-        "age": 15,
-        "rating": 4.597
+        "name": "Natalia Simson",
+        "age": 14,
+        "rating": 4.62
       },
       {
         "rank": 24,
-        "name": "Ella Cosma",
-        "age": 17,
-        "rating": 4.574
+        "name": "Jing Robinson",
+        "age": 15,
+        "rating": 4.61
       },
       {
         "rank": 25,
-        "name": "Victoria A Simon",
+        "name": "Lizzie McFarland",
         "age": 16,
-        "rating": 4.563
+        "rating": 4.555
       }
     ]
   },
@@ -1274,151 +1274,151 @@ export const DUPR_RANKINGS: Record<
         "rank": 1,
         "name": "Armaan Bhatia",
         "age": null,
-        "rating": 6.317
+        "rating": 6.272
       },
       {
         "rank": 2,
         "name": "Jonathan Truong",
         "age": null,
-        "rating": 6.31
+        "rating": 6.267
       },
       {
         "rank": 3,
-        "name": "Quang Duong",
+        "name": "Yuta Funemizu",
         "age": null,
-        "rating": 6.245
+        "rating": 6.153
       },
       {
         "rank": 4,
-        "name": "Yuta Funemizu",
+        "name": "Quang Duong",
         "age": null,
-        "rating": 6.243
+        "rating": 6.07
       },
       {
         "rank": 5,
         "name": "Len Yang",
         "age": null,
-        "rating": 6.107
+        "rating": 6.068
       },
       {
         "rank": 6,
-        "name": "Quan Do",
+        "name": "Thomas Yu",
         "age": null,
-        "rating": 6.042
+        "rating": 6.017
       },
       {
         "rank": 7,
-        "name": "Thomas Yu",
+        "name": "Kailas Shekar",
         "age": null,
-        "rating": 6.015
+        "rating": 5.936
       },
       {
         "rank": 8,
-        "name": "Altaf Merchant",
+        "name": "Quan Do",
         "age": null,
-        "rating": 5.994
+        "rating": 5.925
       },
       {
         "rank": 9,
-        "name": "Harsh Mehta",
+        "name": "Wong Hong Kit",
         "age": null,
-        "rating": 5.942
+        "rating": 5.909
       },
       {
         "rank": 10,
-        "name": "Kailas Shekar",
+        "name": "Luc Pham",
         "age": null,
-        "rating": 5.941
+        "rating": 5.908
       },
       {
         "rank": 11,
         "name": "Sanil Jagtiani",
         "age": null,
-        "rating": 5.913
+        "rating": 5.888
       },
       {
         "rank": 12,
-        "name": "Naveen Beasley",
+        "name": "Truong Hien",
         "age": null,
-        "rating": 5.911
+        "rating": 5.888
       },
       {
         "rank": 13,
-        "name": "Eric Roddy",
-        "age": null,
-        "rating": 5.905
-      },
-      {
-        "rank": 14,
-        "name": "Wong Hong Kit",
-        "age": null,
-        "rating": 5.898
-      },
-      {
-        "rank": 15,
-        "name": "Eunggwon Kim",
-        "age": null,
-        "rating": 5.892
-      },
-      {
-        "rank": 16,
-        "name": "Daniel Moore",
+        "name": "Dale Kim",
         "age": null,
         "rating": 5.876
       },
       {
-        "rank": 17,
-        "name": "Kenta Miyoshi",
+        "rank": 14,
+        "name": "Arnav Duarah",
         "age": null,
-        "rating": 5.849
+        "rating": 5.865
+      },
+      {
+        "rank": 15,
+        "name": "Eric Roddy",
+        "age": null,
+        "rating": 5.858
+      },
+      {
+        "rank": 16,
+        "name": "Naveen Beasley",
+        "age": null,
+        "rating": 5.85
+      },
+      {
+        "rank": 17,
+        "name": "Harsh Mehta",
+        "age": null,
+        "rating": 5.846
       },
       {
         "rank": 18,
-        "name": "Phuc Huynh",
+        "name": "Eunggwon Kim",
         "age": null,
-        "rating": 5.848
+        "rating": 5.836
       },
       {
         "rank": 19,
-        "name": "Santhosh Narayanan",
+        "name": "Nam Ly Hoang",
         "age": null,
-        "rating": 5.832
+        "rating": 5.79
       },
       {
         "rank": 20,
-        "name": "Luc Pham",
+        "name": "Kenta Miyoshi",
         "age": null,
-        "rating": 5.83
+        "rating": 5.779
       },
       {
         "rank": 21,
-        "name": "Truong Hien",
+        "name": "Rougel Aninon",
         "age": null,
-        "rating": 5.823
+        "rating": 5.778
       },
       {
         "rank": 22,
-        "name": "James Yu",
+        "name": "Sarinreach Leng",
         "age": null,
-        "rating": 5.792
+        "rating": 5.748
       },
       {
         "rank": 23,
-        "name": "Dale Kim",
+        "name": "Arjun Singh",
         "age": null,
-        "rating": 5.786
+        "rating": 5.701
       },
       {
         "rank": 24,
-        "name": "Kenneth Lee",
+        "name": "Ram Kotnana",
         "age": null,
-        "rating": 5.745
+        "rating": 5.696
       },
       {
         "rank": 25,
-        "name": "Nam Ly Hoang",
+        "name": "James Yu",
         "age": null,
-        "rating": 5.738
+        "rating": 5.695
       }
     ],
     "womens-doubles": [
@@ -1426,151 +1426,151 @@ export const DUPR_RANKINGS: Record<
         "rank": 1,
         "name": "Aibika Kalsarieva",
         "age": null,
-        "rating": 5.854
+        "rating": 5.865
       },
       {
         "rank": 2,
-        "name": "Chao Yi Wang",
+        "name": "Alix Truong",
         "age": null,
         "rating": 5.839
       },
       {
         "rank": 3,
-        "name": "Trang Huynh",
+        "name": "Kara Wheatley",
         "age": null,
-        "rating": 5.816
+        "rating": 5.78
       },
       {
         "rank": 4,
-        "name": "Ting Chieh Wei",
+        "name": "Chao Yi Wang",
         "age": null,
-        "rating": 5.807
+        "rating": 5.773
       },
       {
         "rank": 5,
-        "name": "Alix Truong",
+        "name": "Ting Chieh Wei",
         "age": null,
-        "rating": 5.774
+        "rating": 5.768
       },
       {
         "rank": 6,
-        "name": "Nicole Eugenio",
+        "name": "Marisa Ruiz",
         "age": null,
-        "rating": 5.685
+        "rating": 5.662
       },
       {
         "rank": 7,
-        "name": "Marisa Ruiz",
+        "name": "Yufei Long",
         "age": null,
-        "rating": 5.674
+        "rating": 5.652
       },
       {
         "rank": 8,
-        "name": "Kara Wheatley",
+        "name": "Trang Huynh",
         "age": null,
-        "rating": 5.673
+        "rating": 5.604
       },
       {
         "rank": 9,
-        "name": "Yufei Long",
+        "name": "Nicole Eugenio",
         "age": null,
-        "rating": 5.623
+        "rating": 5.528
       },
       {
         "rank": 10,
-        "name": "Vritti Sethi",
+        "name": "Yu-Chieh Hsieh",
         "age": null,
-        "rating": 5.599
+        "rating": 5.517
       },
       {
         "rank": 11,
-        "name": "Natalie Hur",
+        "name": "Tang Nok Yiu",
         "age": null,
-        "rating": 5.507
+        "rating": 5.496
       },
       {
         "rank": 12,
-        "name": "Kao Pei Chuan",
+        "name": "Natalie Hur",
         "age": null,
-        "rating": 5.479
+        "rating": 5.493
       },
       {
         "rank": 13,
-        "name": "Yu-Chieh Hsieh",
+        "name": "Lingwei Kong",
         "age": null,
-        "rating": 5.472
+        "rating": 5.471
       },
       {
         "rank": 14,
-        "name": "Tang Nok Yiu",
+        "name": "Kelsey Laurente",
         "age": null,
-        "rating": 5.463
+        "rating": 5.392
       },
       {
         "rank": 15,
-        "name": "Kelsey Laurente",
+        "name": "Sophia Huỳnh Trần Ngọc Nhi",
         "age": null,
-        "rating": 5.452
+        "rating": 5.389
       },
       {
         "rank": 16,
-        "name": "Mihae Kwon",
+        "name": "Kao Pei Chuan",
         "age": null,
-        "rating": 5.448
+        "rating": 5.388
       },
       {
         "rank": 17,
-        "name": "Lingwei Kong",
+        "name": "Kai Fen Yi",
         "age": null,
-        "rating": 5.446
+        "rating": 5.383
       },
       {
         "rank": 18,
-        "name": "Sarah Jane Lim",
+        "name": "Rika Fujiwara",
         "age": null,
-        "rating": 5.424
+        "rating": 5.378
       },
       {
         "rank": 19,
-        "name": "Kai Fen Yi",
+        "name": "Lyn Yuen Choo",
         "age": null,
-        "rating": 5.416
+        "rating": 5.366
       },
       {
         "rank": 20,
-        "name": "Xiao Yi Wang Beckvall",
+        "name": "Pearl Amalsadiwala",
         "age": null,
-        "rating": 5.387
+        "rating": 5.364
       },
       {
         "rank": 21,
-        "name": "Lyn Yuen Choo",
+        "name": "Vritti Sethi",
         "age": null,
-        "rating": 5.379
+        "rating": 5.329
       },
       {
         "rank": 22,
-        "name": "Pearl Amalsadiwala",
+        "name": "Ken Tam",
         "age": null,
-        "rating": 5.34
+        "rating": 5.322
       },
       {
         "rank": 23,
-        "name": "Emma Ruoyi Li",
+        "name": "Dionne Lim",
         "age": null,
-        "rating": 5.331
+        "rating": 5.316
       },
       {
         "rank": 24,
-        "name": "Sophia Huỳnh Trần Ngọc Nhi",
+        "name": "Kei Sawaki",
         "age": null,
-        "rating": 5.321
+        "rating": 5.306
       },
       {
         "rank": 25,
-        "name": "Naimi Mehta",
+        "name": "Aiko Yoshitomi",
         "age": null,
-        "rating": 5.287
+        "rating": 5.293
       }
     ],
     "mens-singles": [
@@ -1578,303 +1578,303 @@ export const DUPR_RANKINGS: Record<
         "rank": 1,
         "name": "Nam Ly Hoang",
         "age": null,
-        "rating": 6.245
+        "rating": 6.196
       },
       {
         "rank": 2,
         "name": "Phuc Huynh",
         "age": null,
-        "rating": 6.207
+        "rating": 6.07
       },
       {
         "rank": 3,
-        "name": "Truong Hien",
+        "name": "Luc Pham",
         "age": null,
-        "rating": 6.062
+        "rating": 6.011
       },
       {
         "rank": 4,
         "name": "Wong Hong Kit",
         "age": null,
-        "rating": 6.011
+        "rating": 5.935
       },
       {
         "rank": 5,
-        "name": "Luc Pham",
+        "name": "Truong Hien",
         "age": null,
-        "rating": 6.008
+        "rating": 5.931
       },
       {
         "rank": 6,
-        "name": "Armaan Bhatia",
+        "name": "Quang Duong",
         "age": null,
-        "rating": 5.942
+        "rating": 5.915
       },
       {
         "rank": 7,
-        "name": "Cheng En Tsai",
-        "age": null,
-        "rating": 5.892
-      },
-      {
-        "rank": 8,
         "name": "Dale Kim",
         "age": null,
         "rating": 5.892
       },
       {
-        "rank": 9,
-        "name": "Hoàng Nguyễn Việt",
+        "rank": 8,
+        "name": "Naveen Beasley",
         "age": null,
-        "rating": 5.873
+        "rating": 5.879
+      },
+      {
+        "rank": 9,
+        "name": "Nasa Hatakeyama",
+        "age": null,
+        "rating": 5.735
       },
       {
         "rank": 10,
-        "name": "Thomas Yu",
+        "name": "jimmy liong kai long",
         "age": null,
-        "rating": 5.856
+        "rating": 5.724
       },
       {
         "rank": 11,
-        "name": "Kenneth Lee",
+        "name": "nguyễn đắc tiến",
         "age": null,
-        "rating": 5.844
+        "rating": 5.675
       },
       {
         "rank": 12,
-        "name": "Nasa Hatakeyama",
+        "name": "Sarinreach Leng",
         "age": null,
-        "rating": 5.72
+        "rating": 5.651
       },
       {
         "rank": 13,
-        "name": "Naveen Beasley",
+        "name": "Kenta Miyoshi",
         "age": null,
-        "rating": 5.718
+        "rating": 5.645
       },
       {
         "rank": 14,
-        "name": "Kenta Miyoshi",
+        "name": "hoàng nguyễn việt",
         "age": null,
-        "rating": 5.68
+        "rating": 5.599
       },
       {
         "rank": 15,
-        "name": "Giang Trinh",
+        "name": "Aditya ruhela",
         "age": null,
-        "rating": 5.632
+        "rating": 5.564
       },
       {
         "rank": 16,
-        "name": "Nguyen Hung Anh",
+        "name": "Rashein Samuel",
         "age": null,
-        "rating": 5.605
+        "rating": 5.53
       },
       {
         "rank": 17,
-        "name": "Kento Tamaki",
+        "name": "Aryaan Bhatia",
         "age": null,
-        "rating": 5.603
+        "rating": 5.502
       },
       {
         "rank": 18,
-        "name": "Jimmy Liong Kai Long",
+        "name": "Kento Tamaki",
         "age": null,
-        "rating": 5.566
+        "rating": 5.494
       },
       {
         "rank": 19,
-        "name": "Rohin Rajani",
+        "name": "Vanshik Kapadia",
         "age": null,
-        "rating": 5.557
+        "rating": 5.493
       },
       {
         "rank": 20,
-        "name": "Vũ Phạm",
+        "name": "Hoai Anh Pham",
         "age": null,
-        "rating": 5.541
+        "rating": 5.467
       },
       {
         "rank": 21,
-        "name": "Minh Le",
+        "name": "Tuấn Long Phạm",
         "age": null,
-        "rating": 5.54
+        "rating": 5.446
       },
       {
         "rank": 22,
-        "name": "Marco Leung",
+        "name": "Jose Maria Pague",
         "age": null,
-        "rating": 5.468
+        "rating": 5.444
       },
       {
         "rank": 23,
         "name": "Timothy Foo Yi Thim",
         "age": null,
-        "rating": 5.447
+        "rating": 5.437
       },
       {
         "rank": 24,
-        "name": "Arjun Singh",
+        "name": "Kenneth Lee",
         "age": null,
-        "rating": 5.44
+        "rating": 5.434
       },
       {
         "rank": 25,
-        "name": "Heyonglin",
+        "name": "heyonglin",
         "age": null,
-        "rating": 5.404
+        "rating": 5.426
       }
     ],
     "womens-singles": [
       {
         "rank": 1,
-        "name": "Chao Yi Wang",
+        "name": "Yu-Chieh Hsieh",
         "age": null,
-        "rating": 5.664
+        "rating": 5.598
       },
       {
         "rank": 2,
-        "name": "Rika Fujiwara",
+        "name": "Trang Huynh",
         "age": null,
-        "rating": 5.607
+        "rating": 5.571
       },
       {
         "rank": 3,
-        "name": "Kao Pei Chuan",
+        "name": "Yufei Long",
         "age": null,
-        "rating": 5.586
+        "rating": 5.542
       },
       {
         "rank": 4,
-        "name": "Yufei Long",
+        "name": "Chao Yi Wang",
         "age": null,
-        "rating": 5.582
+        "rating": 5.517
       },
       {
         "rank": 5,
-        "name": "Yu-Chieh Hsieh",
+        "name": "Kao Pei Chuan",
         "age": null,
-        "rating": 5.536
+        "rating": 5.508
       },
       {
         "rank": 6,
         "name": "Kelsey Laurente",
         "age": null,
-        "rating": 5.387
+        "rating": 5.504
       },
       {
         "rank": 7,
-        "name": "Lingwei Kong",
+        "name": "Rika Fujiwara",
         "age": null,
-        "rating": 5.377
+        "rating": 5.461
       },
       {
         "rank": 8,
-        "name": "Mihika Yadav",
+        "name": "Lingwei Kong",
         "age": null,
-        "rating": 5.349
+        "rating": 5.345
       },
       {
         "rank": 9,
-        "name": "Aaliya Ebrahim",
+        "name": "Kei Sawaki",
         "age": null,
-        "rating": 5.34
+        "rating": 5.337
       },
       {
         "rank": 10,
         "name": "Ting Chieh Wei",
         "age": null,
-        "rating": 5.303
+        "rating": 5.278
       },
       {
         "rank": 11,
-        "name": "Mihae Kwon",
+        "name": "Alicia Lai",
         "age": null,
-        "rating": 5.236
+        "rating": 5.278
       },
       {
         "rank": 12,
-        "name": "Albie Huang",
+        "name": "aaliya ebrahim",
         "age": null,
-        "rating": 5.212
+        "rating": 5.271
       },
       {
         "rank": 13,
-        "name": "Kei Sawaki",
+        "name": "Tang Nok Yiu",
         "age": null,
-        "rating": 5.171
+        "rating": 5.223
       },
       {
         "rank": 14,
-        "name": "Ying Suet Lam",
+        "name": "Albie Huang",
         "age": null,
-        "rating": 5.087
+        "rating": 5.205
       },
       {
         "rank": 15,
-        "name": "Aiko Yoshitomi",
+        "name": "Virvienica Bejosano",
         "age": null,
-        "rating": 5.086
+        "rating": 5.195
       },
       {
         "rank": 16,
-        "name": "Tang Nok Yiu",
+        "name": "Mihika Yadav",
+        "age": null,
+        "rating": 5.162
+      },
+      {
+        "rank": 17,
+        "name": "Khushi Desai",
+        "age": null,
+        "rating": 5.12
+      },
+      {
+        "rank": 18,
+        "name": "Mihae Kwon",
+        "age": null,
+        "rating": 5.114
+      },
+      {
+        "rank": 19,
+        "name": "Yunqi He",
+        "age": null,
+        "rating": 5.093
+      },
+      {
+        "rank": 20,
+        "name": "Sophia Tran Phuong Anh",
+        "age": null,
+        "rating": 5.09
+      },
+      {
+        "rank": 21,
+        "name": "Seina Shima",
+        "age": null,
+        "rating": 5.08
+      },
+      {
+        "rank": 22,
+        "name": "Aiko Yoshitomi",
+        "age": null,
+        "rating": 5.074
+      },
+      {
+        "rank": 23,
+        "name": "Anni Xie",
         "age": null,
         "rating": 5.065
       },
       {
-        "rank": 17,
-        "name": "Anna Clarice Patrimonio",
-        "age": null,
-        "rating": 5.061
-      },
-      {
-        "rank": 18,
-        "name": "Ken Tam",
-        "age": null,
-        "rating": 5.037
-      },
-      {
-        "rank": 19,
-        "name": "Virvienica Bejosano",
-        "age": null,
-        "rating": 5.035
-      },
-      {
-        "rank": 20,
-        "name": "Yunqi He",
-        "age": null,
-        "rating": 5.02
-      },
-      {
-        "rank": 21,
-        "name": "Agnimitra Bhavatosh Bhattacharya",
-        "age": null,
-        "rating": 5.006
-      },
-      {
-        "rank": 22,
-        "name": "Lo Pay Jyue",
-        "age": null,
-        "rating": 4.993
-      },
-      {
-        "rank": 23,
-        "name": "Seina Shima",
-        "age": null,
-        "rating": 4.991
-      },
-      {
         "rank": 24,
-        "name": "Christy Sañosa",
+        "name": "Yuet Magdaleine Wong",
         "age": null,
-        "rating": 4.978
+        "rating": 5.064
       },
       {
         "rank": 25,
-        "name": "Sharmada Balu",
+        "name": "Huong Dan Linh",
         "age": null,
-        "rating": 4.958
+        "rating": 5.059
       }
     ]
   },
@@ -1882,153 +1882,153 @@ export const DUPR_RANKINGS: Record<
     "mens-doubles": [
       {
         "rank": 1,
-        "name": "Ben Johns",
+        "name": "JW Johnson",
         "age": null,
-        "rating": 7.118
+        "rating": 7.066
       },
       {
         "rank": 2,
-        "name": "Jw Johnson",
+        "name": "Ben Johns",
         "age": null,
-        "rating": 7.01
+        "rating": 7.023
       },
       {
         "rank": 3,
         "name": "Hayden Patriquin",
         "age": null,
-        "rating": 6.933
+        "rating": 6.905
       },
       {
         "rank": 4,
         "name": "Christian Alshon",
         "age": null,
-        "rating": 6.881
+        "rating": 6.888
       },
       {
         "rank": 5,
         "name": "Riley Newman",
         "age": null,
-        "rating": 6.688
+        "rating": 6.674
       },
       {
         "rank": 6,
-        "name": "Connor Garnett",
+        "name": "CJ Klinger",
         "age": null,
-        "rating": 6.614
+        "rating": 6.62
       },
       {
         "rank": 7,
-        "name": "Cj Klinger",
+        "name": "Connor Garnett",
         "age": null,
-        "rating": 6.579
+        "rating": 6.551
       },
       {
         "rank": 8,
         "name": "Will Howells",
         "age": null,
-        "rating": 6.555
+        "rating": 6.487
       },
       {
         "rank": 9,
         "name": "Jack Sock",
         "age": null,
-        "rating": 6.542
+        "rating": 6.45
       },
       {
         "rank": 10,
         "name": "Dylan Frazier",
         "age": null,
-        "rating": 6.488
+        "rating": 6.425
       },
       {
         "rank": 11,
         "name": "Hunter Johnson",
         "age": null,
-        "rating": 6.451
+        "rating": 6.396
       },
       {
         "rank": 12,
         "name": "Tyson Mcguffin",
         "age": null,
-        "rating": 6.34
+        "rating": 6.35
       },
       {
         "rank": 13,
-        "name": "Augustus Ge",
+        "name": "John Goins",
         "age": null,
-        "rating": 6.335
+        "rating": 6.327
       },
       {
         "rank": 14,
-        "name": "Jack Munro",
-        "age": null,
-        "rating": 6.323
-      },
-      {
-        "rank": 15,
-        "name": "Matt Wright",
+        "name": "Roscoe Bellamy",
         "age": null,
         "rating": 6.318
       },
       {
-        "rank": 16,
-        "name": "Wyatt Stone",
+        "rank": 15,
+        "name": "Augustus Ge",
         "age": null,
-        "rating": 6.292
+        "rating": 6.314
+      },
+      {
+        "rank": 16,
+        "name": "Casey Diamond",
+        "age": null,
+        "rating": 6.286
       },
       {
         "rank": 17,
-        "name": "Maxwell Freeman",
+        "name": "Blaine Hovenier",
         "age": null,
-        "rating": 6.287
+        "rating": 6.267
       },
       {
         "rank": 18,
-        "name": "Michael Loyd",
+        "name": "Richard Livornese Jr",
         "age": null,
-        "rating": 6.281
+        "rating": 6.267
       },
       {
         "rank": 19,
-        "name": "Roscoe Bellamy",
+        "name": "Zane Navratil",
         "age": null,
-        "rating": 6.28
+        "rating": 6.262
       },
       {
         "rank": 20,
-        "name": "Anderson Scarpa",
+        "name": "Jack Munro",
         "age": null,
-        "rating": 6.275
+        "rating": 6.258
       },
       {
         "rank": 21,
-        "name": "Tyler Loong",
+        "name": "Travis Rettenmaier",
         "age": null,
-        "rating": 6.275
+        "rating": 6.241
       },
       {
         "rank": 22,
-        "name": "Marshall Brown",
+        "name": "Maxwell Freeman",
         "age": null,
-        "rating": 6.272
+        "rating": 6.213
       },
       {
         "rank": 23,
-        "name": "Travis Rettenmaier",
+        "name": "Michael Loyd",
         "age": null,
-        "rating": 6.26
+        "rating": 6.213
       },
       {
         "rank": 24,
         "name": "Max Manthou",
         "age": null,
-        "rating": 6.26
+        "rating": 6.207
       },
       {
         "rank": 25,
-        "name": "Rafa Hewett",
+        "name": "Tyler Loong",
         "age": null,
-        "rating": 6.257
+        "rating": 6.205
       }
     ],
     "womens-doubles": [
@@ -2036,303 +2036,303 @@ export const DUPR_RANKINGS: Record<
         "rank": 1,
         "name": "Anna Leigh Waters",
         "age": null,
-        "rating": 6.987
+        "rating": 6.976
       },
       {
         "rank": 2,
         "name": "Anna Bright",
         "age": null,
-        "rating": 6.586
+        "rating": 6.605
       },
       {
         "rank": 3,
-        "name": "Jorja Johnson",
+        "name": "Hurricane Tyra Black",
         "age": null,
-        "rating": 6.299
+        "rating": 6.398
       },
       {
         "rank": 4,
-        "name": "Hurricane Tyra Black",
+        "name": "Jorja Johnson",
         "age": null,
-        "rating": 6.298
+        "rating": 6.35
       },
       {
         "rank": 5,
         "name": "Parris Todd",
         "age": null,
-        "rating": 6.261
+        "rating": 6.328
       },
       {
         "rank": 6,
-        "name": "Sofia Sewing",
+        "name": "Rachel Rohrabacher",
         "age": null,
-        "rating": 6.243
+        "rating": 6.292
       },
       {
         "rank": 7,
-        "name": "Rachel Rohrabacher",
+        "name": "Sofia Sewing",
         "age": null,
-        "rating": 6.238
+        "rating": 6.192
       },
       {
         "rank": 8,
         "name": "Jackie Kawamoto",
         "age": null,
-        "rating": 6.22
+        "rating": 6.189
       },
       {
         "rank": 9,
-        "name": "Jade Kawamoto",
+        "name": "Kate Fahey",
         "age": null,
-        "rating": 6.201
+        "rating": 6.184
       },
       {
         "rank": 10,
+        "name": "Catherine Parenteau",
+        "age": null,
+        "rating": 6.157
+      },
+      {
+        "rank": 11,
+        "name": "Jade Kawamoto",
+        "age": null,
+        "rating": 6.138
+      },
+      {
+        "rank": 12,
         "name": "Mariechristine Salvas",
         "age": null,
         "rating": 6.121
       },
       {
-        "rank": 11,
-        "name": "Kate Fahey",
-        "age": null,
-        "rating": 6.104
-      },
-      {
-        "rank": 12,
-        "name": "Katerina Stewart",
-        "age": null,
-        "rating": 6.103
-      },
-      {
         "rank": 13,
-        "name": "Catherine Parenteau",
+        "name": "Meghan Dizon",
         "age": null,
-        "rating": 6.09
+        "rating": 6.048
       },
       {
         "rank": 14,
-        "name": "Jillian Braverman",
+        "name": "Etta Tuionetoa",
         "age": null,
-        "rating": 6.007
+        "rating": 6.014
       },
       {
         "rank": 15,
-        "name": "Etta Tuionetoa",
+        "name": "Lacy Schneemann",
         "age": null,
-        "rating": 6.001
+        "rating": 6.01
       },
       {
         "rank": 16,
-        "name": "Vivian Glozman",
+        "name": "Audra Spielberger",
         "age": null,
-        "rating": 5.993
+        "rating": 6.002
       },
       {
         "rank": 17,
-        "name": "Bobbi Oshiro",
+        "name": "Jillian Braverman",
         "age": null,
-        "rating": 5.991
+        "rating": 5.989
       },
       {
         "rank": 18,
-        "name": "Lacy Schneemann",
+        "name": "Katerina Stewart",
         "age": null,
-        "rating": 5.959
+        "rating": 5.94
       },
       {
         "rank": 19,
-        "name": "Meghan Dizon",
+        "name": "Bobbi Oshiro",
         "age": null,
-        "rating": 5.935
+        "rating": 5.921
       },
       {
         "rank": 20,
-        "name": "Allison Harris",
+        "name": "Vivian Glozman",
         "age": null,
-        "rating": 5.902
+        "rating": 5.915
       },
       {
         "rank": 21,
-        "name": "Angela Simon",
+        "name": "Kiora Kunimoto",
         "age": null,
-        "rating": 5.894
+        "rating": 5.909
       },
       {
         "rank": 22,
-        "name": "Allyce Jones",
+        "name": "Brooke Buckner",
         "age": null,
         "rating": 5.888
       },
       {
         "rank": 23,
-        "name": "Christine Maddox",
+        "name": "Lauren Cole",
         "age": null,
-        "rating": 5.852
+        "rating": 5.875
       },
       {
         "rank": 24,
-        "name": "Kelsey Matthews",
+        "name": "Christine Maddox",
         "age": null,
-        "rating": 5.822
+        "rating": 5.869
       },
       {
         "rank": 25,
-        "name": "Pam Ruoff",
+        "name": "Allison Harris",
         "age": null,
-        "rating": 5.818
+        "rating": 5.857
       }
     ],
     "mens-singles": [
       {
         "rank": 1,
-        "name": "Christopher Haworth",
+        "name": "Hunter Johnson",
         "age": null,
-        "rating": 6.803
+        "rating": 6.761
       },
       {
         "rank": 2,
-        "name": "Hunter Johnson",
+        "name": "Christopher Haworth",
         "age": null,
-        "rating": 6.699
+        "rating": 6.704
       },
       {
         "rank": 3,
         "name": "Christian Alshon",
         "age": null,
-        "rating": 6.581
+        "rating": 6.542
       },
       {
         "rank": 4,
-        "name": "Ben Johns",
+        "name": "John Goins",
         "age": null,
-        "rating": 6.568
+        "rating": 6.527
       },
       {
         "rank": 5,
-        "name": "Jack Sock",
+        "name": "Roscoe Bellamy",
         "age": null,
-        "rating": 6.533
+        "rating": 6.504
       },
       {
         "rank": 6,
-        "name": "John Goins",
+        "name": "Jack Sock",
         "age": null,
-        "rating": 6.518
+        "rating": 6.477
       },
       {
         "rank": 7,
-        "name": "Roscoe Bellamy",
+        "name": "Ben Johns",
         "age": null,
-        "rating": 6.486
+        "rating": 6.437
       },
       {
         "rank": 8,
-        "name": "Zane Ford",
+        "name": "Ammar Wazir",
         "age": null,
-        "rating": 6.47
+        "rating": 6.385
       },
       {
         "rank": 9,
-        "name": "Connor Garnett",
+        "name": "Gabriel Joseph",
         "age": null,
-        "rating": 6.448
+        "rating": 6.299
       },
       {
         "rank": 10,
-        "name": "Dusty Boyer",
+        "name": "JW Johnson",
         "age": null,
-        "rating": 6.354
+        "rating": 6.28
       },
       {
         "rank": 11,
-        "name": "Jw Johnson",
+        "name": "Yates Johnson",
         "age": null,
-        "rating": 6.31
+        "rating": 6.268
       },
       {
         "rank": 12,
-        "name": "Tama Shimabukuro",
+        "name": "Connor Garnett",
         "age": null,
-        "rating": 6.289
+        "rating": 6.264
       },
       {
         "rank": 13,
-        "name": "Matthew Barlow",
+        "name": "Tama Shimabukuro",
         "age": null,
-        "rating": 6.285
+        "rating": 6.251
       },
       {
         "rank": 14,
-        "name": "Dylan Frazier",
+        "name": "Zane Ford",
         "age": null,
-        "rating": 6.269
+        "rating": 6.233
       },
       {
         "rank": 15,
         "name": "Adam Harvey",
         "age": null,
-        "rating": 6.259
+        "rating": 6.228
       },
       {
         "rank": 16,
-        "name": "Gabriel Joseph",
+        "name": "Camden Chaffin",
         "age": null,
-        "rating": 6.257
+        "rating": 6.188
       },
       {
         "rank": 17,
-        "name": "Donald Young",
+        "name": "Matthew Barlow",
         "age": null,
-        "rating": 6.237
+        "rating": 6.177
       },
       {
         "rank": 18,
-        "name": "Ronan Camron",
+        "name": "Dusty Boyer",
         "age": null,
-        "rating": 6.235
+        "rating": 6.155
       },
       {
         "rank": 19,
-        "name": "Grayson Goldin",
+        "name": "Dylan Frazier",
         "age": null,
-        "rating": 6.231
+        "rating": 6.117
       },
       {
         "rank": 20,
-        "name": "Yates Johnson",
+        "name": "Cason Campbell",
         "age": null,
-        "rating": 6.218
+        "rating": 6.107
       },
       {
         "rank": 21,
-        "name": "Camden Chaffin",
+        "name": "Connor Mogle",
         "age": null,
-        "rating": 6.217
+        "rating": 6.099
       },
       {
         "rank": 22,
-        "name": "Brandon French",
+        "name": "Youssef Bouzidi",
         "age": null,
-        "rating": 6.15
+        "rating": 6.079
       },
       {
         "rank": 23,
-        "name": "Andre Millet",
+        "name": "Augustus Ge",
         "age": null,
-        "rating": 6.128
+        "rating": 6.075
       },
       {
         "rank": 24,
-        "name": "Rafa Hewett",
+        "name": "Ronan Camron",
         "age": null,
-        "rating": 6.127
+        "rating": 6.057
       },
       {
         "rank": 25,
-        "name": "Alexander Crum",
+        "name": "Tristan Dussault",
         "age": null,
-        "rating": 6.121
+        "rating": 6.052
       }
     ],
     "womens-singles": [
@@ -2340,151 +2340,151 @@ export const DUPR_RANKINGS: Record<
         "rank": 1,
         "name": "Anna Leigh Waters",
         "age": null,
-        "rating": 6.453
+        "rating": 6.704
       },
       {
         "rank": 2,
         "name": "Kate Fahey",
         "age": null,
-        "rating": 6.175
+        "rating": 6.241
       },
       {
         "rank": 3,
-        "name": "Parris Todd",
+        "name": "Katerina Stewart",
         "age": null,
-        "rating": 6.105
+        "rating": 6.022
       },
       {
         "rank": 4,
-        "name": "Katerina Stewart",
+        "name": "Kaitlyn Christian",
         "age": null,
-        "rating": 6.043
+        "rating": 5.906
       },
       {
         "rank": 5,
         "name": "Sofia Sewing",
         "age": null,
-        "rating": 6.004
-      },
-      {
-        "rank": 6,
-        "name": "Lea Jansen",
-        "age": null,
         "rating": 5.882
       },
       {
-        "rank": 7,
+        "rank": 6,
         "name": "Brooke Buckner",
         "age": null,
-        "rating": 5.874
+        "rating": 5.862
+      },
+      {
+        "rank": 7,
+        "name": "Judit Castillo Gargallo",
+        "age": null,
+        "rating": 5.81
       },
       {
         "rank": 8,
-        "name": "Kaitlyn Christian",
+        "name": "Catherine Parenteau",
         "age": null,
-        "rating": 5.864
+        "rating": 5.802
       },
       {
         "rank": 9,
         "name": "Kiora Kunimoto",
         "age": null,
-        "rating": 5.815
+        "rating": 5.773
       },
       {
         "rank": 10,
-        "name": "Genie Bouchard",
+        "name": "Lea Jansen",
         "age": null,
-        "rating": 5.769
+        "rating": 5.755
       },
       {
         "rank": 11,
-        "name": "Catherine Parenteau",
+        "name": "Bobbi Oshiro",
         "age": null,
-        "rating": 5.759
+        "rating": 5.695
       },
       {
         "rank": 12,
-        "name": "Mary Brascia",
+        "name": "Keilly Ulery",
         "age": null,
-        "rating": 5.684
+        "rating": 5.663
       },
       {
         "rank": 13,
-        "name": "Cailyn Campbell",
+        "name": "Genie Bouchard",
         "age": null,
-        "rating": 5.678
+        "rating": 5.652
       },
       {
         "rank": 14,
-        "name": "Isabella Dunlap",
+        "name": "Cailyn Campbell",
         "age": null,
-        "rating": 5.636
+        "rating": 5.6
       },
       {
         "rank": 15,
-        "name": "Jorja Johnson",
+        "name": "Isabella Dunlap",
         "age": null,
-        "rating": 5.62
+        "rating": 5.596
       },
       {
         "rank": 16,
-        "name": "Bobbi Oshiro",
+        "name": "Amber Policare",
         "age": null,
-        "rating": 5.603
+        "rating": 5.582
       },
       {
         "rank": 17,
-        "name": "Amber Policare",
+        "name": "Maria Vyshkina",
         "age": null,
-        "rating": 5.578
+        "rating": 5.55
       },
       {
         "rank": 18,
-        "name": "Victoria Dimuzio",
+        "name": "Jessica Ho",
         "age": null,
-        "rating": 5.548
+        "rating": 5.545
       },
       {
         "rank": 19,
         "name": "Eileen Wang",
         "age": null,
-        "rating": 5.472
+        "rating": 5.517
       },
       {
         "rank": 20,
         "name": "Liz Truluck",
         "age": null,
-        "rating": 5.453
+        "rating": 5.502
       },
       {
         "rank": 21,
-        "name": "Karin Ptaszek-Kochis",
+        "name": "Jada Bui",
         "age": null,
-        "rating": 5.437
+        "rating": 5.463
       },
       {
         "rank": 22,
-        "name": "Jessica Ho",
+        "name": "Karin Ptaszek-Kochis",
         "age": null,
-        "rating": 5.436
+        "rating": 5.457
       },
       {
         "rank": 23,
-        "name": "Milan Rane",
+        "name": "Hannah Blatt",
         "age": null,
         "rating": 5.435
       },
       {
         "rank": 24,
-        "name": "Zoey Weil",
+        "name": "Jalina Ingram",
         "age": null,
-        "rating": 5.405
+        "rating": 5.427
       },
       {
         "rank": 25,
-        "name": "Jada Bui",
+        "name": "Jessica Evanier",
         "age": null,
-        "rating": 5.399
+        "rating": 5.376
       }
     ]
   },
@@ -2494,303 +2494,303 @@ export const DUPR_RANKINGS: Record<
         "rank": 1,
         "name": "Gabriel Tardio",
         "age": null,
-        "rating": 6.915
+        "rating": 6.824
       },
       {
         "rank": 2,
         "name": "Federico Staksrud",
         "age": null,
-        "rating": 6.71
+        "rating": 6.732
       },
       {
         "rank": 3,
-        "name": "Eric Oncins",
+        "name": "Nicolas Acevedo",
         "age": null,
-        "rating": 6.672
+        "rating": 6.664
       },
       {
         "rank": 4,
-        "name": "Nicolas Acevedo",
+        "name": "Eric Oncins",
         "age": null,
-        "rating": 6.536
+        "rating": 6.635
       },
       {
         "rank": 5,
         "name": "Pablo Tellez",
         "age": null,
-        "rating": 6.395
+        "rating": 6.322
       },
       {
         "rank": 6,
         "name": "Bruno Faletto",
         "age": null,
-        "rating": 6.142
+        "rating": 6.259
       },
       {
         "rank": 7,
-        "name": "Juan Benitez",
+        "name": "Jaime Oncins",
         "age": null,
-        "rating": 6.056
+        "rating": 6.135
       },
       {
         "rank": 8,
-        "name": "Jaime Oncins",
+        "name": "Rafael Lenhard",
         "age": null,
-        "rating": 6.054
+        "rating": 6.096
       },
       {
         "rank": 9,
-        "name": "Juan Varon",
+        "name": "Andre Millet",
         "age": null,
-        "rating": 6.009
+        "rating": 6.02
       },
       {
         "rank": 10,
-        "name": "Rafael Lenhard",
+        "name": "James Delgado",
         "age": null,
-        "rating": 5.985
+        "rating": 6.015
       },
       {
         "rank": 11,
-        "name": "Mario Barrientos",
+        "name": "Juan Varon",
         "age": null,
-        "rating": 5.864
+        "rating": 5.952
       },
       {
         "rank": 12,
+        "name": "Mario Barrientos",
+        "age": null,
+        "rating": 5.82
+      },
+      {
+        "rank": 13,
         "name": "Carlos Di Laura",
         "age": null,
         "rating": 5.781
       },
       {
-        "rank": 13,
+        "rank": 14,
         "name": "Patricio Pereyra",
         "age": null,
         "rating": 5.749
       },
       {
-        "rank": 14,
-        "name": "Caio Bardauil",
-        "age": null,
-        "rating": 5.692
-      },
-      {
         "rank": 15,
-        "name": "Tobias Golberg",
+        "name": "Kevin Dayan",
         "age": null,
-        "rating": 5.646
+        "rating": 5.636
       },
       {
         "rank": 16,
         "name": "Lucas Coutinho",
         "age": null,
-        "rating": 5.594
+        "rating": 5.596
       },
       {
         "rank": 17,
-        "name": "Miguel Alda",
+        "name": "Hugo Dojas",
         "age": null,
-        "rating": 5.572
+        "rating": 5.535
       },
       {
         "rank": 18,
-        "name": "Kym Sze",
+        "name": "Miguel Alda",
         "age": null,
-        "rating": 5.519
+        "rating": 5.524
       },
       {
         "rank": 19,
-        "name": "Alex Simon",
+        "name": "Andrew Angulo",
         "age": null,
-        "rating": 5.488
+        "rating": 5.505
       },
       {
         "rank": 20,
-        "name": "Armando Ferreira",
+        "name": "Tobias Golberg",
         "age": null,
-        "rating": 5.475
+        "rating": 5.497
       },
       {
         "rank": 21,
-        "name": "Michael Vallejo",
+        "name": "Mario Porcelli",
         "age": null,
-        "rating": 5.449
+        "rating": 5.421
       },
       {
         "rank": 22,
         "name": "Juan Medina",
         "age": null,
-        "rating": 5.445
+        "rating": 5.417
       },
       {
         "rank": 23,
-        "name": "Ignacio De Elia",
-        "age": null,
-        "rating": 5.421
-      },
-      {
-        "rank": 24,
         "name": "Federico Nani",
         "age": null,
         "rating": 5.414
       },
       {
-        "rank": 25,
-        "name": "Hugo Dojas",
+        "rank": 24,
+        "name": "Kym Sze",
         "age": null,
-        "rating": 5.367
+        "rating": 5.4
+      },
+      {
+        "rank": 25,
+        "name": "Michael Vallejo",
+        "age": null,
+        "rating": 5.395
       }
     ],
     "womens-doubles": [
       {
         "rank": 1,
-        "name": "Mariana Humberg",
+        "name": "Eugenia Carolina Lopez Ascarate",
         "age": null,
-        "rating": 6.028
+        "rating": 6.153
       },
       {
         "rank": 2,
-        "name": "Eugenia Carolina Lopez Ascarate",
+        "name": "Mariana Humberg",
         "age": null,
-        "rating": 6.024
+        "rating": 6.035
       },
       {
         "rank": 3,
         "name": "Lucia White",
         "age": null,
-        "rating": 5.694
+        "rating": 5.651
       },
       {
         "rank": 4,
-        "name": "Pierina Imparato",
+        "name": "Alexa Quintanilla",
         "age": null,
-        "rating": 5.452
+        "rating": 5.493
       },
       {
         "rank": 5,
-        "name": "Gabriela Katz",
+        "name": "Pierina Imparato",
         "age": null,
-        "rating": 5.37
+        "rating": 5.424
       },
       {
         "rank": 6,
-        "name": "Alexa Quintanilla",
+        "name": "Gabriela Katz",
         "age": null,
-        "rating": 5.301
+        "rating": 5.404
       },
       {
         "rank": 7,
-        "name": "Florencia Rossi Luque",
+        "name": "Namie Isago",
         "age": null,
-        "rating": 5.24
+        "rating": 5.349
       },
       {
         "rank": 8,
         "name": "Marcela Donatoni",
         "age": null,
-        "rating": 5.185
+        "rating": 5.273
       },
       {
         "rank": 9,
-        "name": "Nicole Lange Beidacki",
+        "name": "Carolina Mayorga Perry",
         "age": null,
-        "rating": 5.161
+        "rating": 5.211
       },
       {
         "rank": 10,
-        "name": "Raquel Amaro Veloso",
+        "name": "Nicole Lange Beidacki",
         "age": null,
-        "rating": 5.094
+        "rating": 5.162
       },
       {
         "rank": 11,
+        "name": "Raquel Amaro Veloso",
+        "age": null,
+        "rating": 5.077
+      },
+      {
+        "rank": 12,
         "name": "Bequi Barros Behar Luizelli",
         "age": null,
         "rating": 5.055
       },
       {
-        "rank": 12,
+        "rank": 13,
+        "name": "Ali Quintero",
+        "age": null,
+        "rating": 5.015
+      },
+      {
+        "rank": 14,
         "name": "Tatiana Ruhl",
         "age": null,
         "rating": 5.011
       },
       {
-        "rank": 13,
-        "name": "Barbara Lopez",
-        "age": null,
-        "rating": 4.958
-      },
-      {
-        "rank": 14,
-        "name": "Ali Quintero",
-        "age": null,
-        "rating": 4.935
-      },
-      {
         "rank": 15,
-        "name": "Dayana Fahey",
+        "name": "Ana Bergantini Burjaili",
         "age": null,
-        "rating": 4.916
+        "rating": 4.995
       },
       {
         "rank": 16,
-        "name": "Arianna Raga",
+        "name": "Dayana Fahey",
         "age": null,
-        "rating": 4.883
+        "rating": 4.988
       },
       {
         "rank": 17,
-        "name": "Patricia Medrado",
+        "name": "Eliza de Oliveira Rocha",
         "age": null,
-        "rating": 4.876
+        "rating": 4.96
       },
       {
         "rank": 18,
         "name": "Katherine Vanessa Serrano Lopez",
         "age": null,
-        "rating": 4.866
+        "rating": 4.947
       },
       {
         "rank": 19,
-        "name": "Valentina Martin",
+        "name": "patricia medrado",
         "age": null,
-        "rating": 4.833
+        "rating": 4.926
       },
       {
         "rank": 20,
-        "name": "Ana Bergantini Burjaili",
+        "name": "Arianna Raga",
         "age": null,
-        "rating": 4.833
+        "rating": 4.854
       },
       {
         "rank": 21,
-        "name": "Mariana Jimenez",
+        "name": "Lina Romero Alarcon",
         "age": null,
-        "rating": 4.83
+        "rating": 4.787
       },
       {
         "rank": 22,
-        "name": "Nathalia Garay",
+        "name": "Mariana Paredes",
         "age": null,
-        "rating": 4.819
+        "rating": 4.746
       },
       {
         "rank": 23,
-        "name": "Eliza  De Oliveira Rocha",
+        "name": "Marcelle Prates",
         "age": null,
-        "rating": 4.781
+        "rating": 4.734
       },
       {
         "rank": 24,
         "name": "Katie Neils",
         "age": null,
-        "rating": 4.754
+        "rating": 4.698
       },
       {
         "rank": 25,
-        "name": "Karina Salles",
+        "name": "Joana Amorim Cortez dos Santos",
         "age": null,
-        "rating": 4.752
+        "rating": 4.673
       }
     ],
     "mens-singles": [
@@ -2798,151 +2798,151 @@ export const DUPR_RANKINGS: Record<
         "rank": 1,
         "name": "Federico Staksrud",
         "age": null,
-        "rating": 6.772
+        "rating": 6.683
       },
       {
         "rank": 2,
         "name": "Rafael Lenhard",
         "age": null,
-        "rating": 6.208
+        "rating": 6.27
       },
       {
         "rank": 3,
         "name": "Eric Oncins",
         "age": null,
-        "rating": 6.204
+        "rating": 6.143
       },
       {
         "rank": 4,
-        "name": "Juan Benitez",
+        "name": "Andre Millet",
         "age": null,
-        "rating": 5.857
+        "rating": 6.09
       },
       {
         "rank": 5,
         "name": "Juan Varon",
         "age": null,
-        "rating": 5.84
+        "rating": 5.631
       },
       {
         "rank": 6,
-        "name": "Nicolas Almeida",
+        "name": "James Delgado",
         "age": null,
-        "rating": 5.467
+        "rating": 5.594
       },
       {
         "rank": 7,
-        "name": "Hugo Dojas",
+        "name": "Nicolas Almeida",
         "age": null,
-        "rating": 5.444
+        "rating": 5.498
       },
       {
         "rank": 8,
+        "name": "Hugo Dojas",
+        "age": null,
+        "rating": 5.472
+      },
+      {
+        "rank": 9,
         "name": "Lucas Coutinho",
         "age": null,
         "rating": 5.402
       },
       {
-        "rank": 9,
-        "name": "Nasser Pena Rios",
-        "age": null,
-        "rating": 5.289
-      },
-      {
         "rank": 10,
-        "name": "Michael Vallejo",
+        "name": "Mario Porcelli",
         "age": null,
-        "rating": 5.287
+        "rating": 5.396
       },
       {
         "rank": 11,
-        "name": "Armando Ferreira",
+        "name": "Michael Vallejo",
         "age": null,
-        "rating": 5.279
+        "rating": 5.382
       },
       {
         "rank": 12,
-        "name": "Rafael Munehide Kayo",
+        "name": "Nicolas Yannuzzi",
         "age": null,
-        "rating": 5.252
+        "rating": 5.302
       },
       {
         "rank": 13,
         "name": "Kym Sze",
         "age": null,
-        "rating": 5.251
+        "rating": 5.228
       },
       {
         "rank": 14,
-        "name": "Ayke Rodrigues",
+        "name": "ayke Rodrigues",
         "age": null,
-        "rating": 5.213
+        "rating": 5.216
       },
       {
         "rank": 15,
-        "name": "Lucas Severo",
+        "name": "Caio Silva",
         "age": null,
-        "rating": 5.163
+        "rating": 5.194
       },
       {
         "rank": 16,
-        "name": "Thiago Soto",
+        "name": "Cristobal Del Castillo",
         "age": null,
-        "rating": 5.143
+        "rating": 5.15
       },
       {
         "rank": 17,
-        "name": "Nicolas Yannuzzi",
+        "name": "Andrew Angulo",
         "age": null,
-        "rating": 5.119
+        "rating": 5.131
       },
       {
         "rank": 18,
-        "name": "João Pedro  Agulha Fernandes",
+        "name": "Gabriel Weffort hilbert",
         "age": null,
-        "rating": 5.102
+        "rating": 5.12
       },
       {
         "rank": 19,
+        "name": "THIAGO SOTO",
+        "age": null,
+        "rating": 5.114
+      },
+      {
+        "rank": 20,
+        "name": "João Pedro Agulha Fernandes",
+        "age": null,
+        "rating": 5.109
+      },
+      {
+        "rank": 21,
         "name": "Bruno Semino",
         "age": null,
         "rating": 5.087
       },
       {
-        "rank": 20,
+        "rank": 22,
+        "name": "Juan Pablo Pinilla",
+        "age": null,
+        "rating": 5.085
+      },
+      {
+        "rank": 23,
         "name": "Bernardo Valdes",
         "age": null,
         "rating": 5.068
       },
       {
-        "rank": 21,
+        "rank": 24,
         "name": "Tony Ottamendi",
         "age": null,
-        "rating": 5.043
-      },
-      {
-        "rank": 22,
-        "name": "Rodrigo  Borrero",
-        "age": null,
-        "rating": 5.017
-      },
-      {
-        "rank": 23,
-        "name": "Juan Pablo Pinilla",
-        "age": null,
-        "rating": 5.011
-      },
-      {
-        "rank": 24,
-        "name": "Eduardo Correia",
-        "age": null,
-        "rating": 5.006
+        "rating": 5.028
       },
       {
         "rank": 25,
-        "name": "Bernardo Gasparin",
+        "name": "Rodrigo Borrero",
         "age": null,
-        "rating": 5.002
+        "rating": 5.017
       }
     ],
     "womens-singles": [
@@ -2950,151 +2950,151 @@ export const DUPR_RANKINGS: Record<
         "rank": 1,
         "name": "Mariana Humberg",
         "age": null,
-        "rating": 5.273
+        "rating": 5.412
       },
       {
         "rank": 2,
-        "name": "Ana Bergantini Burjaili",
+        "name": "Eugenia Carolina Lopez Ascarate",
         "age": null,
-        "rating": 4.95
+        "rating": 5.336
       },
       {
         "rank": 3,
-        "name": "Marcela Donatoni",
+        "name": "Raquel Amaro Veloso",
         "age": null,
-        "rating": 4.782
+        "rating": 5.161
       },
       {
         "rank": 4,
-        "name": "Isadora Campi",
+        "name": "Ana Bergantini Burjaili",
         "age": null,
-        "rating": 4.748
+        "rating": 4.916
       },
       {
         "rank": 5,
-        "name": "Sofia Kelbert",
+        "name": "Camila Militao",
         "age": null,
-        "rating": 4.629
+        "rating": 4.761
       },
       {
         "rank": 6,
-        "name": "Míria Nascimento",
+        "name": "Marcela Donatoni",
         "age": null,
-        "rating": 4.551
+        "rating": 4.739
       },
       {
         "rank": 7,
-        "name": "Camila Militao",
+        "name": "Isadora Campi",
         "age": null,
-        "rating": 4.479
+        "rating": 4.734
       },
       {
         "rank": 8,
-        "name": "Ali Quintero",
+        "name": "Genesis Pinto",
+        "age": null,
+        "rating": 4.626
+      },
+      {
+        "rank": 9,
+        "name": "Sofia Kelbert",
+        "age": null,
+        "rating": 4.618
+      },
+      {
+        "rank": 10,
+        "name": "Ana Sánchez",
+        "age": null,
+        "rating": 4.598
+      },
+      {
+        "rank": 11,
+        "name": "Giovanna Mandon Grigioni",
+        "age": null,
+        "rating": 4.538
+      },
+      {
+        "rank": 12,
+        "name": "Sofia Daniela Rodriguez Camejo",
+        "age": null,
+        "rating": 4.488
+      },
+      {
+        "rank": 13,
+        "name": "Míria Nascimento",
         "age": null,
         "rating": 4.474
       },
       {
-        "rank": 9,
+        "rank": 14,
         "name": "Katherine Vanessa Serrano Lopez",
         "age": null,
         "rating": 4.402
       },
       {
-        "rank": 10,
+        "rank": 15,
+        "name": "Mia Alva",
+        "age": null,
+        "rating": 4.381
+      },
+      {
+        "rank": 16,
         "name": "Delfina Debenedetti",
         "age": null,
         "rating": 4.336
       },
       {
-        "rank": 11,
-        "name": "Ana Sánchez",
-        "age": null,
-        "rating": 4.274
-      },
-      {
-        "rank": 12,
-        "name": "Carolina Ledesma",
-        "age": null,
-        "rating": 4.256
-      },
-      {
-        "rank": 13,
-        "name": "Jennifer  Pedraza",
-        "age": null,
-        "rating": 4.239
-      },
-      {
-        "rank": 14,
-        "name": "Javiera Elena Escobar",
-        "age": null,
-        "rating": 4.219
-      },
-      {
-        "rank": 15,
-        "name": "Mariana Negreiros Mariano",
-        "age": null,
-        "rating": 4.207
-      },
-      {
-        "rank": 16,
-        "name": "Mia Alva",
-        "age": null,
-        "rating": 4.012
-      },
-      {
         "rank": 17,
-        "name": "Valeria Mayta",
+        "name": "Cristina Verta",
         "age": null,
-        "rating": 4.003
+        "rating": 4.268
       },
       {
         "rank": 18,
-        "name": "Viviane Rentroia",
+        "name": "carolina ledesma",
         "age": null,
-        "rating": 3.979
+        "rating": 4.266
       },
       {
         "rank": 19,
-        "name": "Alejandra Báez",
+        "name": "Ana Julia Menon Bosso",
         "age": null,
-        "rating": 3.957
+        "rating": 4.25
       },
       {
         "rank": 20,
-        "name": "Michelle Hasson",
+        "name": "Valeria Mayta",
         "age": null,
-        "rating": 3.956
+        "rating": 4.162
       },
       {
         "rank": 21,
-        "name": "Ana Paula Bergmann",
+        "name": "Mariana Negreiros Mariano",
         "age": null,
-        "rating": 3.905
+        "rating": 4.055
       },
       {
         "rank": 22,
-        "name": "Ana Frascheri",
+        "name": "Giulia Candeloro",
         "age": null,
-        "rating": 3.861
+        "rating": 4.05
       },
       {
         "rank": 23,
-        "name": "Gabriela Mayta Mallqui",
+        "name": "Monica Perez",
         "age": null,
-        "rating": 3.753
+        "rating": 4.034
       },
       {
         "rank": 24,
-        "name": "Mariele Cristina  Stamm",
+        "name": "Roberta Seidl",
         "age": null,
-        "rating": 3.752
+        "rating": 4.032
       },
       {
         "rank": 25,
-        "name": "Lilia Vogel De Castilho",
+        "name": "Viviane Rentroia",
         "age": null,
-        "rating": 3.697
+        "rating": 4.019
       }
     ]
   },
@@ -3104,151 +3104,151 @@ export const DUPR_RANKINGS: Record<
         "rank": 1,
         "name": "George Wall",
         "age": null,
-        "rating": 6.068
+        "rating": 6.018
       },
       {
         "rank": 2,
         "name": "Christopher Crouch",
         "age": null,
-        "rating": 6.026
+        "rating": 5.962
       },
       {
         "rank": 3,
-        "name": "Andre Mick",
+        "name": "Joseph Wild",
         "age": null,
-        "rating": 5.949
+        "rating": 5.862
       },
       {
         "rank": 4,
-        "name": "Joseph Wild",
+        "name": "Ryan Henry",
         "age": null,
-        "rating": 5.896
+        "rating": 5.721
       },
       {
         "rank": 5,
-        "name": "Mitchell Hargreaves",
+        "name": "Andre Mick",
         "age": null,
-        "rating": 5.774
+        "rating": 5.7
       },
       {
         "rank": 6,
-        "name": "Ryan Henry",
+        "name": "Mitchell Hargreaves",
         "age": null,
-        "rating": 5.745
+        "rating": 5.694
       },
       {
         "rank": 7,
-        "name": "Robert Claveria Stirling",
+        "name": "Lucas Pascoe",
         "age": null,
-        "rating": 5.734
+        "rating": 5.647
       },
       {
         "rank": 8,
-        "name": "Vuk Velickovic",
+        "name": "Harrison Brown",
         "age": null,
-        "rating": 5.674
+        "rating": 5.613
       },
       {
         "rank": 9,
-        "name": "Harrison Brown",
+        "name": "Morgan Evans",
         "age": null,
-        "rating": 5.66
+        "rating": 5.594
       },
       {
         "rank": 10,
-        "name": "Lucas Pascoe",
-        "age": null,
-        "rating": 5.653
-      },
-      {
-        "rank": 11,
-        "name": "Zachary Grabovic",
-        "age": null,
-        "rating": 5.597
-      },
-      {
-        "rank": 12,
-        "name": "Brian  Tran",
+        "name": "Robert Claveria Stirling",
         "age": null,
         "rating": 5.562
       },
       {
-        "rank": 13,
-        "name": "Morgan Evans",
+        "rank": 11,
+        "name": "Brian Tran",
         "age": null,
-        "rating": 5.543
+        "rating": 5.489
+      },
+      {
+        "rank": 12,
+        "name": "Tristan Stayt",
+        "age": null,
+        "rating": 5.488
+      },
+      {
+        "rank": 13,
+        "name": "Zachary Grabovic",
+        "age": null,
+        "rating": 5.463
       },
       {
         "rank": 14,
-        "name": "Ciaran Lavers",
+        "name": "Sahil Dang",
         "age": null,
-        "rating": 5.45
+        "rating": 5.421
       },
       {
         "rank": 15,
-        "name": "Martin Clark",
+        "name": "Conor Robertshawe",
         "age": null,
-        "rating": 5.448
+        "rating": 5.367
       },
       {
         "rank": 16,
-        "name": "Ryan Morris",
+        "name": "ethan butson",
         "age": null,
-        "rating": 5.394
+        "rating": 5.346
       },
       {
         "rank": 17,
-        "name": "Andrew Horridge",
+        "name": "Ciaran Lavers",
         "age": null,
-        "rating": 5.384
+        "rating": 5.311
       },
       {
         "rank": 18,
-        "name": "Chris Turvey",
+        "name": "Daiki Tanabe",
         "age": null,
-        "rating": 5.374
+        "rating": 5.29
       },
       {
         "rank": 19,
-        "name": "Conor Robertshawe",
+        "name": "Andrew Horridge",
         "age": null,
-        "rating": 5.366
+        "rating": 5.278
       },
       {
         "rank": 20,
-        "name": "Kyle Stoker",
+        "name": "Joshua Nipperess",
         "age": null,
-        "rating": 5.335
+        "rating": 5.274
       },
       {
         "rank": 21,
-        "name": "Jai Grewal",
+        "name": "Jason William Taylor",
         "age": null,
-        "rating": 5.312
+        "rating": 5.265
       },
       {
         "rank": 22,
-        "name": "Will Dewhirst",
+        "name": "Chris Turvey",
         "age": null,
-        "rating": 5.309
+        "rating": 5.259
       },
       {
         "rank": 23,
-        "name": "Tony Field",
+        "name": "Andrew Kratzmann",
         "age": null,
-        "rating": 5.298
+        "rating": 5.245
       },
       {
         "rank": 24,
-        "name": "Daiki Tanabe",
+        "name": "Andy van der Vyver",
         "age": null,
-        "rating": 5.292
+        "rating": 5.238
       },
       {
         "rank": 25,
-        "name": "Sahil Dang",
+        "name": "Ben Dawson",
         "age": null,
-        "rating": 5.292
+        "rating": 5.236
       }
     ],
     "womens-doubles": [
@@ -3256,29 +3256,29 @@ export const DUPR_RANKINGS: Record<
         "rank": 1,
         "name": "Danni-Elle Townsend",
         "age": null,
-        "rating": 6.049
+        "rating": 6.034
       },
       {
         "rank": 2,
         "name": "Emilia Schmidt",
         "age": null,
-        "rating": 5.92
+        "rating": 5.908
       },
       {
         "rank": 3,
-        "name": "Somer Dallabona",
+        "name": "Sahra Dennehy",
         "age": null,
-        "rating": 5.752
+        "rating": 5.814
       },
       {
         "rank": 4,
-        "name": "Sahra Dennehy",
+        "name": "Nicola Schoeman",
         "age": null,
-        "rating": 5.742
+        "rating": 5.753
       },
       {
         "rank": 5,
-        "name": "Seone Mendez",
+        "name": "Selina Turulja",
         "age": null,
         "rating": 5.728
       },
@@ -3290,269 +3290,269 @@ export const DUPR_RANKINGS: Record<
       },
       {
         "rank": 7,
-        "name": "Nicola Schoeman",
+        "name": "Somer DallaBona",
         "age": null,
-        "rating": 5.684
+        "rating": 5.663
       },
       {
         "rank": 8,
-        "name": "Selina Turulja",
+        "name": "Andie Dikosavljevic",
         "age": null,
-        "rating": 5.669
+        "rating": 5.618
       },
       {
         "rank": 9,
-        "name": "Andie Dikosavljevic",
+        "name": "Seone Mendez",
         "age": null,
-        "rating": 5.581
+        "rating": 5.597
       },
       {
         "rank": 10,
         "name": "Talia Saunders",
         "age": null,
-        "rating": 5.476
+        "rating": 5.528
       },
       {
         "rank": 11,
         "name": "Sarah Burr",
         "age": null,
-        "rating": 5.402
+        "rating": 5.398
       },
       {
         "rank": 12,
-        "name": "Kaitlynn Hart",
+        "name": "Brittany Yang",
         "age": null,
-        "rating": 5.325
+        "rating": 5.328
       },
       {
         "rank": 13,
-        "name": "Bernadette Massih",
+        "name": "Kaitlynn Hart",
         "age": null,
-        "rating": 5.32
+        "rating": 5.326
       },
       {
         "rank": 14,
         "name": "Michaela Haet",
         "age": null,
-        "rating": 5.269
+        "rating": 5.279
       },
       {
         "rank": 15,
         "name": "Katherine Westbury",
         "age": null,
-        "rating": 5.254
+        "rating": 5.266
       },
       {
         "rank": 16,
-        "name": "Karen Denman",
+        "name": "Bernadette Massih",
         "age": null,
         "rating": 5.231
       },
       {
         "rank": 17,
-        "name": "Crystal Mildwaters",
+        "name": "Ayesha Dang",
         "age": null,
-        "rating": 5.222
+        "rating": 5.145
       },
       {
         "rank": 18,
-        "name": "Brittany Yang",
-        "age": null,
-        "rating": 5.176
-      },
-      {
-        "rank": 19,
-        "name": "Lara Giltinan",
-        "age": null,
-        "rating": 5.109
-      },
-      {
-        "rank": 20,
-        "name": "Ayesha Dang",
-        "age": null,
-        "rating": 5.102
-      },
-      {
-        "rank": 21,
-        "name": "Ela I Puleni Vakaukamea",
-        "age": null,
-        "rating": 5.05
-      },
-      {
-        "rank": 22,
-        "name": "Belinda Crane",
-        "age": null,
-        "rating": 5.035
-      },
-      {
-        "rank": 23,
-        "name": "Tyra Calderwood",
-        "age": null,
-        "rating": 5.034
-      },
-      {
-        "rank": 24,
         "name": "Katerina Valos",
-        "age": null,
-        "rating": 5.017
-      },
-      {
-        "rank": 25,
-        "name": "Rosa Morris",
-        "age": null,
-        "rating": 5.005
-      }
-    ],
-    "mens-singles": [
-      {
-        "rank": 1,
-        "name": "Harrison Brown",
-        "age": null,
-        "rating": 5.747
-      },
-      {
-        "rank": 2,
-        "name": "Christopher Crouch",
-        "age": null,
-        "rating": 5.712
-      },
-      {
-        "rank": 3,
-        "name": "Mitchell Hargreaves",
-        "age": null,
-        "rating": 5.481
-      },
-      {
-        "rank": 4,
-        "name": "Andy Van Der Vyver",
-        "age": null,
-        "rating": 5.432
-      },
-      {
-        "rank": 5,
-        "name": "Brian  Tran",
-        "age": null,
-        "rating": 5.373
-      },
-      {
-        "rank": 6,
-        "name": "Sahil Dang",
-        "age": null,
-        "rating": 5.354
-      },
-      {
-        "rank": 7,
-        "name": "Lucas Pascoe",
-        "age": null,
-        "rating": 5.252
-      },
-      {
-        "rank": 8,
-        "name": "Ethan Chung",
-        "age": null,
-        "rating": 5.235
-      },
-      {
-        "rank": 9,
-        "name": "Zachary Grabovic",
-        "age": null,
-        "rating": 5.208
-      },
-      {
-        "rank": 10,
-        "name": "Daiki Tanabe",
-        "age": null,
-        "rating": 5.2
-      },
-      {
-        "rank": 11,
-        "name": "Matthew Kouznetsov",
-        "age": null,
-        "rating": 5.17
-      },
-      {
-        "rank": 12,
-        "name": "James Wilson",
-        "age": null,
-        "rating": 5.169
-      },
-      {
-        "rank": 13,
-        "name": "Henrik Traskin",
-        "age": null,
-        "rating": 5.153
-      },
-      {
-        "rank": 14,
-        "name": "Kyron Pinter",
         "age": null,
         "rating": 5.131
       },
       {
-        "rank": 15,
-        "name": "Ethan Butson",
-        "age": null,
-        "rating": 5.125
-      },
-      {
-        "rank": 16,
-        "name": "Joshua Barber",
-        "age": null,
-        "rating": 5.122
-      },
-      {
-        "rank": 17,
-        "name": "Kyle Stoker",
-        "age": null,
-        "rating": 5.101
-      },
-      {
-        "rank": 18,
-        "name": "Conor Robertshawe",
-        "age": null,
-        "rating": 5.061
-      },
-      {
         "rank": 19,
-        "name": "Andrew Horridge",
+        "name": "Crystal Mildwaters",
         "age": null,
-        "rating": 5.046
+        "rating": 5.128
       },
       {
         "rank": 20,
-        "name": "Joshua Chia",
+        "name": "Ela I Puleni Vakaukamea",
         "age": null,
-        "rating": 5.031
+        "rating": 5.105
       },
       {
         "rank": 21,
-        "name": "Ryan Morris",
+        "name": "Karen Denman",
         "age": null,
-        "rating": 5.03
+        "rating": 5.039
       },
       {
         "rank": 22,
-        "name": "Liam Lamb",
+        "name": "Tyra Calderwood",
         "age": null,
         "rating": 5.027
       },
       {
         "rank": 23,
-        "name": "Nigel Lee",
+        "name": "Shannon Spencer",
         "age": null,
-        "rating": 5.018
+        "rating": 5.007
       },
       {
         "rank": 24,
-        "name": "Sam Gibbs",
+        "name": "Tayah Cross",
         "age": null,
         "rating": 4.961
       },
       {
         "rank": 25,
-        "name": "Ashton Chan",
+        "name": "Nancy Ferguson",
         "age": null,
-        "rating": 4.955
+        "rating": 4.956
+      }
+    ],
+    "mens-singles": [
+      {
+        "rank": 1,
+        "name": "Christopher Crouch",
+        "age": null,
+        "rating": 5.967
+      },
+      {
+        "rank": 2,
+        "name": "Robbie lee",
+        "age": null,
+        "rating": 5.852
+      },
+      {
+        "rank": 3,
+        "name": "Harrison Brown",
+        "age": null,
+        "rating": 5.637
+      },
+      {
+        "rank": 4,
+        "name": "Sahil Dang",
+        "age": null,
+        "rating": 5.483
+      },
+      {
+        "rank": 5,
+        "name": "Mitchell Hargreaves",
+        "age": null,
+        "rating": 5.48
+      },
+      {
+        "rank": 6,
+        "name": "Andy van der Vyver",
+        "age": null,
+        "rating": 5.463
+      },
+      {
+        "rank": 7,
+        "name": "Zachary Grabovic",
+        "age": null,
+        "rating": 5.394
+      },
+      {
+        "rank": 8,
+        "name": "Brian Tran",
+        "age": null,
+        "rating": 5.366
+      },
+      {
+        "rank": 9,
+        "name": "Ryan Henry",
+        "age": null,
+        "rating": 5.346
+      },
+      {
+        "rank": 10,
+        "name": "Matthew Kouznetsov",
+        "age": null,
+        "rating": 5.313
+      },
+      {
+        "rank": 11,
+        "name": "Ryan Lee",
+        "age": null,
+        "rating": 5.308
+      },
+      {
+        "rank": 12,
+        "name": "Ethan Chung",
+        "age": null,
+        "rating": 5.293
+      },
+      {
+        "rank": 13,
+        "name": "Sam Aslanowicz",
+        "age": null,
+        "rating": 5.264
+      },
+      {
+        "rank": 14,
+        "name": "Michael Massih",
+        "age": null,
+        "rating": 5.264
+      },
+      {
+        "rank": 15,
+        "name": "Lucas Pascoe",
+        "age": null,
+        "rating": 5.212
+      },
+      {
+        "rank": 16,
+        "name": "Joshua Barber",
+        "age": null,
+        "rating": 5.17
+      },
+      {
+        "rank": 17,
+        "name": "James Wilson",
+        "age": null,
+        "rating": 5.156
+      },
+      {
+        "rank": 18,
+        "name": "Kyle Stoker",
+        "age": null,
+        "rating": 5.15
+      },
+      {
+        "rank": 19,
+        "name": "Daiki Tanabe",
+        "age": null,
+        "rating": 5.142
+      },
+      {
+        "rank": 20,
+        "name": "Kyron Pinter",
+        "age": null,
+        "rating": 5.121
+      },
+      {
+        "rank": 21,
+        "name": "feiloakitohi Tavalea",
+        "age": null,
+        "rating": 5.102
+      },
+      {
+        "rank": 22,
+        "name": "Nicholas Maleganeas",
+        "age": null,
+        "rating": 5.086
+      },
+      {
+        "rank": 23,
+        "name": "Nigel Lee",
+        "age": null,
+        "rating": 5.062
+      },
+      {
+        "rank": 24,
+        "name": "Sam Gibbs",
+        "age": null,
+        "rating": 5.058
+      },
+      {
+        "rank": 25,
+        "name": "Ben Murace",
+        "age": null,
+        "rating": 5.041
       }
     ],
     "womens-singles": [
@@ -3560,151 +3560,151 @@ export const DUPR_RANKINGS: Record<
         "rank": 1,
         "name": "Seone Mendez",
         "age": null,
-        "rating": 5.875
+        "rating": 5.902
       },
       {
         "rank": 2,
-        "name": "Sahra Dennehy",
+        "name": "Andie Dikosavljevic",
         "age": null,
-        "rating": 5.785
+        "rating": 5.76
       },
       {
         "rank": 3,
-        "name": "Andie Dikosavljevic",
+        "name": "Sahra Dennehy",
         "age": null,
-        "rating": 5.622
+        "rating": 5.731
       },
       {
         "rank": 4,
         "name": "Selina Turulja",
         "age": null,
-        "rating": 5.539
+        "rating": 5.435
       },
       {
         "rank": 5,
-        "name": "Lara Giltinan",
+        "name": "Michaela Haet",
         "age": null,
-        "rating": 5.426
+        "rating": 5.389
       },
       {
         "rank": 6,
         "name": "Emilia Schmidt",
         "age": null,
-        "rating": 5.388
+        "rating": 5.304
       },
       {
         "rank": 7,
-        "name": "Michaela Haet",
+        "name": "Danni-Elle Townsend",
         "age": null,
-        "rating": 5.331
+        "rating": 5.27
       },
       {
         "rank": 8,
         "name": "Nicola Schoeman",
         "age": null,
-        "rating": 5.293
+        "rating": 5.251
       },
       {
         "rank": 9,
-        "name": "Jasmine Almaguer",
+        "name": "Shannon Spencer",
         "age": null,
-        "rating": 5.166
+        "rating": 5.126
       },
       {
         "rank": 10,
-        "name": "Danni-Elle Townsend",
+        "name": "Katherine Westbury",
         "age": null,
-        "rating": 5.16
+        "rating": 5.104
       },
       {
         "rank": 11,
-        "name": "Helena Spiridis",
+        "name": "Jasmine Almaguer",
         "age": null,
-        "rating": 5.1
+        "rating": 5.096
       },
       {
         "rank": 12,
-        "name": "Crystal Mildwaters",
+        "name": "Ela I Puleni Vakaukamea",
         "age": null,
-        "rating": 5.046
+        "rating": 5.055
       },
       {
         "rank": 13,
-        "name": "Shannon Spencer",
+        "name": "Brittany Yang",
         "age": null,
-        "rating": 5.023
+        "rating": 4.993
       },
       {
         "rank": 14,
-        "name": "Ange Green",
+        "name": "Katerina Valos",
         "age": null,
-        "rating": 5.013
+        "rating": 4.988
       },
       {
         "rank": 15,
-        "name": "Bee Horsley",
+        "name": "Kaitlynn Hart",
         "age": null,
-        "rating": 4.957
+        "rating": 4.969
       },
       {
         "rank": 16,
-        "name": "Katherine Westbury",
+        "name": "Nives Baric",
         "age": null,
-        "rating": 4.949
+        "rating": 4.961
       },
       {
         "rank": 17,
-        "name": "Simone Kessell",
+        "name": "Crystal Mildwaters",
         "age": null,
-        "rating": 4.948
+        "rating": 4.936
       },
       {
         "rank": 18,
-        "name": "Brittany Yang",
+        "name": "Aria Henare",
         "age": null,
-        "rating": 4.934
+        "rating": 4.903
       },
       {
         "rank": 19,
-        "name": "Nives Baric",
+        "name": "Bernadette Massih",
         "age": null,
-        "rating": 4.931
+        "rating": 4.902
       },
       {
         "rank": 20,
-        "name": "Bernadette Massih",
-        "age": null,
-        "rating": 4.926
-      },
-      {
-        "rank": 21,
-        "name": "Kaitlynn Hart",
-        "age": null,
-        "rating": 4.914
-      },
-      {
-        "rank": 22,
         "name": "Karen Denman",
         "age": null,
         "rating": 4.875
       },
       {
-        "rank": 23,
-        "name": "Emily Martin",
+        "rank": 21,
+        "name": "Ange Green",
         "age": null,
-        "rating": 4.873
+        "rating": 4.867
+      },
+      {
+        "rank": 22,
+        "name": "Ayesha Dang",
+        "age": null,
+        "rating": 4.822
+      },
+      {
+        "rank": 23,
+        "name": "Tayah Cross",
+        "age": null,
+        "rating": 4.742
       },
       {
         "rank": 24,
-        "name": "Rosa Morris",
+        "name": "Louise Oxnevad",
         "age": null,
-        "rating": 4.861
+        "rating": 4.731
       },
       {
         "rank": 25,
-        "name": "Katerina Valos",
+        "name": "Hikaru Han",
         "age": null,
-        "rating": 4.81
+        "rating": 4.716
       }
     ]
   },
@@ -3714,25 +3714,25 @@ export const DUPR_RANKINGS: Record<
         "rank": 1,
         "name": "Andrei Daescu",
         "age": null,
-        "rating": 6.898
+        "rating": 6.855
       },
       {
         "rank": 2,
-        "name": "Jay Devilliers",
+        "name": "Noe Khlif",
         "age": null,
-        "rating": 6.629
+        "rating": 6.509
       },
       {
         "rank": 3,
-        "name": "Noe Khlif",
+        "name": "Jay Devilliers",
         "age": null,
-        "rating": 6.547
+        "rating": 6.457
       },
       {
         "rank": 4,
         "name": "Dekel Bar",
         "age": null,
-        "rating": 6.512
+        "rating": 6.444
       },
       {
         "rank": 5,
@@ -3744,121 +3744,121 @@ export const DUPR_RANKINGS: Record<
         "rank": 6,
         "name": "Martin Emmrich",
         "age": null,
-        "rating": 6.297
+        "rating": 6.191
       },
       {
         "rank": 7,
-        "name": "Luca Mack",
+        "name": "DJ Young",
         "age": null,
-        "rating": 6.227
+        "rating": 6.123
       },
       {
         "rank": 8,
-        "name": "Patrick Kawka",
+        "name": "Ivan Jakovljevic",
         "age": null,
-        "rating": 6.21
+        "rating": 6.104
       },
       {
         "rank": 9,
-        "name": "Dj Young",
+        "name": "Luca Mack",
         "age": null,
-        "rating": 6.094
+        "rating": 6.075
       },
       {
         "rank": 10,
-        "name": "Ivan Jakovljevic",
+        "name": "Patrick Kawka",
         "age": null,
-        "rating": 6.094
+        "rating": 6.058
       },
       {
         "rank": 11,
         "name": "Oscar Serra",
         "age": null,
-        "rating": 6.09
+        "rating": 6.045
       },
       {
         "rank": 12,
         "name": "Tom Protzek",
         "age": null,
-        "rating": 5.982
+        "rating": 6.015
       },
       {
         "rank": 13,
-        "name": "Henry Boyle",
+        "name": "Patrick Smith",
         "age": null,
-        "rating": 5.944
+        "rating": 5.953
       },
       {
         "rank": 14,
-        "name": "Jaime Lladro",
+        "name": "Freddie Powell",
         "age": null,
-        "rating": 5.919
+        "rating": 5.933
       },
       {
         "rank": 15,
-        "name": "Stefan Auvergne",
+        "name": "Oliver Frank",
         "age": null,
-        "rating": 5.913
+        "rating": 5.898
       },
       {
         "rank": 16,
-        "name": "Freddie Powell",
+        "name": "Jaime Lladro",
         "age": null,
-        "rating": 5.906
+        "rating": 5.86
       },
       {
         "rank": 17,
-        "name": "Domenico Geminiani",
+        "name": "Martin Stanchev",
         "age": null,
-        "rating": 5.859
+        "rating": 5.817
       },
       {
         "rank": 18,
-        "name": "Josep Canyadell",
+        "name": "Jhonnatan Medina Alvarez",
         "age": null,
-        "rating": 5.858
+        "rating": 5.814
       },
       {
         "rank": 19,
-        "name": "Louis Laville",
+        "name": "Ben Cawston",
         "age": null,
-        "rating": 5.846
+        "rating": 5.81
       },
       {
         "rank": 20,
-        "name": "Patrick Smith",
+        "name": "Alvaro Regalado",
         "age": null,
-        "rating": 5.837
+        "rating": 5.795
       },
       {
         "rank": 21,
-        "name": "Jhonnatan Medina Alvarez",
+        "name": "Marcello Paiva Jardim",
         "age": null,
-        "rating": 5.785
+        "rating": 5.755
       },
       {
         "rank": 22,
-        "name": "Oliver Frank",
+        "name": "Josep Canyadell",
         "age": null,
-        "rating": 5.783
+        "rating": 5.749
       },
       {
         "rank": 23,
-        "name": "Ben Cawston",
+        "name": "Mateusz Matysik",
         "age": null,
-        "rating": 5.78
+        "rating": 5.749
       },
       {
         "rank": 24,
-        "name": "Mark Growcott",
+        "name": "Bako Balint Gergo",
         "age": null,
-        "rating": 5.778
+        "rating": 5.733
       },
       {
         "rank": 25,
-        "name": "Mateusz Matysik",
+        "name": "Domenico Geminiani",
         "age": null,
-        "rating": 5.766
+        "rating": 5.732
       }
     ],
     "womens-doubles": [
@@ -3866,43 +3866,43 @@ export const DUPR_RANKINGS: Record<
         "rank": 1,
         "name": "Tina Pisnik",
         "age": null,
-        "rating": 6.215
+        "rating": 6.179
       },
       {
         "rank": 2,
         "name": "Roos Van Reek",
         "age": null,
-        "rating": 6.027
+        "rating": 6.097
       },
       {
         "rank": 3,
         "name": "Megan Fudge",
         "age": null,
-        "rating": 5.986
+        "rating": 5.934
       },
       {
         "rank": 4,
         "name": "Ewa Radzikowska",
         "age": null,
-        "rating": 5.855
+        "rating": 5.896
       },
       {
         "rank": 5,
         "name": "Domenika Turkovic",
         "age": null,
-        "rating": 5.74
+        "rating": 5.821
       },
       {
         "rank": 6,
-        "name": "Daria Walczak",
+        "name": "Estee widdershoven",
         "age": null,
-        "rating": 5.735
+        "rating": 5.761
       },
       {
         "rank": 7,
-        "name": "Estee Widdershoven",
+        "name": "Daria Walczak",
         "age": null,
-        "rating": 5.734
+        "rating": 5.754
       },
       {
         "rank": 8,
@@ -3912,105 +3912,105 @@ export const DUPR_RANKINGS: Record<
       },
       {
         "rank": 9,
-        "name": "Judit Castillo Gargallo",
+        "name": "Samantha Buyckx",
         "age": null,
-        "rating": 5.714
+        "rating": 5.689
       },
       {
         "rank": 10,
-        "name": "Samantha Buyckx",
+        "name": "Paula Rives Palau",
         "age": null,
-        "rating": 5.69
+        "rating": 5.68
       },
       {
         "rank": 11,
-        "name": "Lucy Kovalova",
+        "name": "Lina Padegimaite",
         "age": null,
-        "rating": 5.65
+        "rating": 5.616
       },
       {
         "rank": 12,
-        "name": "Paula Rives Palau",
+        "name": "Madalina Grigoriu",
         "age": null,
-        "rating": 5.635
+        "rating": 5.603
       },
       {
         "rank": 13,
-        "name": "Martina Frantova",
+        "name": "Andrea Olson",
         "age": null,
-        "rating": 5.585
+        "rating": 5.598
       },
       {
         "rank": 14,
-        "name": "Lina Padegimaite",
+        "name": "Lucy Kovalova",
         "age": null,
-        "rating": 5.58
+        "rating": 5.597
       },
       {
         "rank": 15,
-        "name": "Sabrina Mendez Dominguez",
+        "name": "Martina Frantova",
         "age": null,
-        "rating": 5.575
+        "rating": 5.568
       },
       {
         "rank": 16,
-        "name": "Maria Klokotzky",
+        "name": "Karolina Owczarek",
         "age": null,
-        "rating": 5.574
+        "rating": 5.561
       },
       {
         "rank": 17,
-        "name": "Karolina Owczarek",
-        "age": null,
-        "rating": 5.543
-      },
-      {
-        "rank": 18,
-        "name": "Andrea Olson",
-        "age": null,
-        "rating": 5.534
-      },
-      {
-        "rank": 19,
-        "name": "Molly Odonoghue",
+        "name": "Sabrina Mendez Dominguez",
         "age": null,
         "rating": 5.519
       },
       {
-        "rank": 20,
-        "name": "Klara Thell Lenntorp",
+        "rank": 18,
+        "name": "Molly ODonoghue",
         "age": null,
-        "rating": 5.472
+        "rating": 5.517
+      },
+      {
+        "rank": 19,
+        "name": "Glauka Carvajal Lane",
+        "age": null,
+        "rating": 5.479
+      },
+      {
+        "rank": 20,
+        "name": "Maria Klokotzky",
+        "age": null,
+        "rating": 5.479
       },
       {
         "rank": 21,
-        "name": "Glauka Carvajal Lane",
+        "name": "Klara Thell Lenntorp",
         "age": null,
-        "rating": 5.458
+        "rating": 5.423
       },
       {
         "rank": 22,
-        "name": "Madalina Grigoriu",
-        "age": null,
-        "rating": 5.448
-      },
-      {
-        "rank": 23,
-        "name": "Masa Grgan",
-        "age": null,
-        "rating": 5.448
-      },
-      {
-        "rank": 24,
-        "name": "Emma Van Hee",
-        "age": null,
-        "rating": 5.443
-      },
-      {
-        "rank": 25,
         "name": "Tea Pejic",
         "age": null,
         "rating": 5.413
+      },
+      {
+        "rank": 23,
+        "name": "Giorgia Vitale",
+        "age": null,
+        "rating": 5.412
+      },
+      {
+        "rank": 24,
+        "name": "Masa Grgan",
+        "age": null,
+        "rating": 5.408
+      },
+      {
+        "rank": 25,
+        "name": "Thaddea Lock",
+        "age": null,
+        "rating": 5.377
       }
     ],
     "mens-singles": [
@@ -4018,165 +4018,165 @@ export const DUPR_RANKINGS: Record<
         "rank": 1,
         "name": "Jaume Martinez Vich",
         "age": null,
-        "rating": 6.424
+        "rating": 6.431
       },
       {
         "rank": 2,
         "name": "Noe Khlif",
         "age": null,
-        "rating": 6.395
+        "rating": 6.404
       },
       {
         "rank": 3,
         "name": "Luca Mack",
         "age": null,
-        "rating": 6.244
+        "rating": 6.25
       },
       {
         "rank": 4,
-        "name": "Jay Devilliers",
+        "name": "Tom Protzek",
         "age": null,
-        "rating": 6.159
+        "rating": 6.033
       },
       {
         "rank": 5,
-        "name": "Tom Protzek",
+        "name": "Jhonnatan Medina Alvarez",
         "age": null,
-        "rating": 6.102
+        "rating": 6.027
       },
       {
         "rank": 6,
-        "name": "Jhonnatan Medina Alvarez",
+        "name": "Jay Devilliers",
         "age": null,
-        "rating": 6.023
+        "rating": 5.952
       },
       {
         "rank": 7,
-        "name": "Patrick Kawka",
+        "name": "Matthew Finnerty",
         "age": null,
-        "rating": 5.971
+        "rating": 5.943
       },
       {
         "rank": 8,
-        "name": "Emilien  Burnel",
+        "name": "Emilien Burnel",
         "age": null,
-        "rating": 5.966
+        "rating": 5.928
       },
       {
         "rank": 9,
-        "name": "Oliver Frank",
+        "name": "Bako Balint Gergo",
         "age": null,
-        "rating": 5.958
+        "rating": 5.927
       },
       {
         "rank": 10,
-        "name": "Ivan Jakovljevic",
+        "name": "Martin Stanchev",
         "age": null,
-        "rating": 5.881
+        "rating": 5.925
       },
       {
         "rank": 11,
-        "name": "Matthew Finnerty",
+        "name": "Oliver Frank",
         "age": null,
-        "rating": 5.864
+        "rating": 5.89
       },
       {
         "rank": 12,
-        "name": "Bako Balint Gergo",
+        "name": "Freddie Powell",
         "age": null,
-        "rating": 5.81
+        "rating": 5.74
       },
       {
         "rank": 13,
-        "name": "Mikar Fisher",
+        "name": "Claudio Quinones Garcia",
         "age": null,
-        "rating": 5.784
+        "rating": 5.732
       },
       {
         "rank": 14,
-        "name": "Shay Hugo",
+        "name": "Patrick Kawka",
         "age": null,
-        "rating": 5.661
+        "rating": 5.716
       },
       {
         "rank": 15,
         "name": "James Chaudry",
         "age": null,
-        "rating": 5.645
+        "rating": 5.695
       },
       {
         "rank": 16,
-        "name": "Josep Canyadell",
+        "name": "Mateusz Matysik",
         "age": null,
-        "rating": 5.642
+        "rating": 5.69
       },
       {
         "rank": 17,
-        "name": "Ignasi De Rueda",
+        "name": "ignasi de rueda",
         "age": null,
-        "rating": 5.64
+        "rating": 5.681
       },
       {
         "rank": 18,
-        "name": "Claudio Quinones Garcia",
+        "name": "Ben Cawston",
         "age": null,
-        "rating": 5.637
+        "rating": 5.671
       },
       {
         "rank": 19,
-        "name": "Jorge Rodríguez Agudo",
+        "name": "Marcello Paiva Jardim",
         "age": null,
-        "rating": 5.622
+        "rating": 5.663
       },
       {
         "rank": 20,
-        "name": "Mikołaj Biedermann",
+        "name": "vasyl yazadzhiev",
         "age": null,
-        "rating": 5.606
+        "rating": 5.645
       },
       {
         "rank": 21,
-        "name": "Marcello Paiva Jardim",
+        "name": "Mikołaj Biedermann",
         "age": null,
-        "rating": 5.602
+        "rating": 5.599
       },
       {
         "rank": 22,
-        "name": "Jasper Schaadt",
+        "name": "Bartosz Karbownik",
         "age": null,
-        "rating": 5.601
+        "rating": 5.599
       },
       {
         "rank": 23,
-        "name": "Bartosz Karbownik",
+        "name": "Mauro Garcia Sanchez",
         "age": null,
-        "rating": 5.566
+        "rating": 5.597
       },
       {
         "rank": 24,
-        "name": "Freddie Powell",
+        "name": "Mikar Fisher",
         "age": null,
-        "rating": 5.545
+        "rating": 5.595
       },
       {
         "rank": 25,
-        "name": "Mauro Garcia Sanchez",
+        "name": "James Ling",
         "age": null,
-        "rating": 5.543
+        "rating": 5.545
       }
     ],
     "womens-singles": [
       {
         "rank": 1,
-        "name": "Judit Castillo Gargallo",
+        "name": "Domenika Turkovic",
         "age": null,
-        "rating": 5.764
+        "rating": 5.678
       },
       {
         "rank": 2,
         "name": "Roos Van Reek",
         "age": null,
-        "rating": 5.64
+        "rating": 5.625
       },
       {
         "rank": 3,
@@ -4186,135 +4186,135 @@ export const DUPR_RANKINGS: Record<
       },
       {
         "rank": 4,
-        "name": "Domenika Turkovic",
+        "name": "Helena Jansen",
         "age": null,
-        "rating": 5.593
+        "rating": 5.596
       },
       {
         "rank": 5,
         "name": "Lina Padegimaite",
         "age": null,
-        "rating": 5.534
+        "rating": 5.525
       },
       {
         "rank": 6,
-        "name": "Katie Morris",
+        "name": "Samantha Buyckx",
         "age": null,
-        "rating": 5.49
+        "rating": 5.44
       },
       {
         "rank": 7,
-        "name": "Samantha Buyckx",
+        "name": "Sabrina Mendez Dominguez",
         "age": null,
-        "rating": 5.438
+        "rating": 5.37
       },
       {
         "rank": 8,
-        "name": "Sabrina Mendez Dominguez",
+        "name": "Masa Grgan",
         "age": null,
-        "rating": 5.43
+        "rating": 5.306
       },
       {
         "rank": 9,
-        "name": "Estee Widdershoven",
+        "name": "Caroline Nothnagel",
         "age": null,
-        "rating": 5.386
+        "rating": 5.295
       },
       {
         "rank": 10,
-        "name": "Caroline Nothnagel",
+        "name": "Katie Morris",
         "age": null,
-        "rating": 5.373
+        "rating": 5.262
       },
       {
         "rank": 11,
-        "name": "Masa Grgan",
+        "name": "Francesca Rumi",
         "age": null,
-        "rating": 5.309
+        "rating": 5.237
       },
       {
         "rank": 12,
         "name": "Emma Van Hee",
         "age": null,
-        "rating": 5.249
+        "rating": 5.215
       },
       {
         "rank": 13,
-        "name": "Maria Fernandez Costantino",
+        "name": "Naomi de Hart",
         "age": null,
-        "rating": 5.195
+        "rating": 5.191
       },
       {
         "rank": 14,
-        "name": "Alma Thell Lenntorp",
+        "name": "Thaddea Lock",
         "age": null,
-        "rating": 5.168
+        "rating": 5.172
       },
       {
         "rank": 15,
-        "name": "Madalina Grigoriu",
+        "name": "Estee widdershoven",
         "age": null,
-        "rating": 5.135
+        "rating": 5.169
       },
       {
         "rank": 16,
-        "name": "Francesca  Rumi",
+        "name": "Pialena Ander",
         "age": null,
-        "rating": 5.101
+        "rating": 5.163
       },
       {
         "rank": 17,
-        "name": "Karolina Owczarek",
+        "name": "Emilia Richter",
         "age": null,
-        "rating": 5.065
+        "rating": 5.141
       },
       {
         "rank": 18,
-        "name": "Thaddea Lock",
+        "name": "Madalina Grigoriu",
         "age": null,
-        "rating": 5.064
+        "rating": 5.063
       },
       {
         "rank": 19,
-        "name": "Naomi De Hart",
+        "name": "Myriam ENMER",
         "age": null,
-        "rating": 5.045
+        "rating": 5.053
       },
       {
         "rank": 20,
-        "name": "Klara Thell Lenntorp",
+        "name": "Maria Fernandez Costantino",
         "age": null,
-        "rating": 5.043
+        "rating": 5.041
       },
       {
         "rank": 21,
-        "name": "Pialena Ander",
+        "name": "Klara Thell Lenntorp",
         "age": null,
-        "rating": 5.037
+        "rating": 4.995
       },
       {
         "rank": 22,
-        "name": "Emilia Richter",
+        "name": "Frida Mudsam",
         "age": null,
-        "rating": 5.036
+        "rating": 4.988
       },
       {
         "rank": 23,
         "name": "Marina Alcaide",
         "age": null,
-        "rating": 5.018
+        "rating": 4.967
       },
       {
         "rank": 24,
-        "name": "Isabelle Papazyan",
+        "name": "Claudia Caymel",
         "age": null,
-        "rating": 5.006
+        "rating": 4.954
       },
       {
         "rank": 25,
-        "name": "Mireia Rh",
+        "name": "Paola Tampieri",
         "age": null,
-        "rating": 5.004
+        "rating": 4.929
       }
     ]
   }
@@ -4326,12 +4326,12 @@ export type DuprScopeGroup = "global" | "continent" | "national";
 export const DUPR_SCOPES: { key: DuprScope; labelEn: string; labelVi: string; group: DuprScopeGroup }[] = [
   // National scope first — most prominent for the ~95% Vietnamese userbase.
   { key: "vietnam",           labelEn: "Vietnam",             labelVi: "Việt Nam",        group: "national" },
-  { key: "open",              labelEn: "Open",                labelVi: "Hạng mở",         group: "global" },
+  { key: "open",              labelEn: "Open",                labelVi: "Mở rộng",         group: "global" },
   { key: "junior",            labelEn: "Junior",              labelVi: "Trẻ",             group: "global" },
   { key: "asia",              labelEn: "Asia",                labelVi: "Châu Á",          group: "continent" },
   { key: "north-america",     labelEn: "North America",       labelVi: "Bắc Mỹ",          group: "continent" },
   { key: "south-america",     labelEn: "South America",       labelVi: "Nam Mỹ",          group: "continent" },
-  { key: "australia-oceania", labelEn: "Australia / Oceania", labelVi: "Châu Đại Dương", group: "continent" },
+  { key: "australia-oceania", labelEn: "Australia / Oceania", labelVi: "Úc / Châu Đại Dương", group: "continent" },
   { key: "europe",            labelEn: "Europe",              labelVi: "Châu Âu",         group: "continent" },
 ];
 
@@ -4357,4 +4357,4 @@ export function defaultFormatForScope(scope: DuprScope): DuprFormat {
   return scope === "vietnam" ? "doubles" : "mens-doubles";
 }
 
-export const DUPR_LAST_UPDATED = "2026-07-20";
+export const DUPR_LAST_UPDATED = "2026-10-19";

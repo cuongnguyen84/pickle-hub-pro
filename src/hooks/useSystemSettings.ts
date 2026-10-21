@@ -48,6 +48,9 @@ export function useSystemSettings() {
     queryKey: ["system-settings"],
     queryFn: fetchSystemSettings,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    // Trang giải đang chờ query này xong mới bắt đầu tải bảng (ConditionalAuth).
+    // Giá trị mặc định cho hiện trang ngay; cài đặt thật về sau nếu khác.
+    placeholderData: DEFAULT_SETTINGS,
   });
 }
 

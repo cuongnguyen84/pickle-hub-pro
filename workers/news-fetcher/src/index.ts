@@ -1,8 +1,9 @@
 // ============================================================================
 // news-fetcher — Cloudflare Worker
 // ----------------------------------------------------------------------------
-// Pulls pickleball news from the active news_sources rows, parses RSS/Atom,
-// and writes deduped source material into the protected news_origins queue.
+// Pulls pickleball news from the active news_sources rows, parses RSS/Atom or
+// an explicitly allowlisted source API, and writes deduped source material
+// into the protected news_origins queue.
 //
 // Phase 2 of the news aggregator feature. See:
 //   - supabase/migrations/20260519000000_news_aggregator_phase_1.sql
@@ -30,6 +31,7 @@ export interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   SCRAPER_AUTH_SECRET: string;
+  PICKLE_ASIA_API_KEY?: string;
 }
 
 interface NewsSource {
@@ -37,7 +39,7 @@ interface NewsSource {
   name: string;
   base_url: string;
   feed_url: string | null;
-  feed_type: "rss" | "atom" | "html_scrape" | "manual";
+  feed_type: "rss" | "atom" | "html_scrape" | "json_api" | "manual";
   language: "en" | "vi";
   trust_tier: number;
   auto_publish: boolean;
@@ -50,6 +52,8 @@ interface ParsedItem {
   summary: string;
   image_url: string | null;
   published_at: string; // ISO
+  // undefined: fetch the article page; null: source API supplied no full body.
+  raw_body?: string | null;
 }
 
 interface SourceRunResult {
@@ -76,11 +80,12 @@ class IngestError extends Error {
 // the Workers free-plan subrequest ceiling on a scheduled invocation.
 const MAX_ITEMS_PER_FEED = 8;
 // Trần 50 subrequest/lần chạy của Workers free là ràng buộc thật, và nó tính
-// CẢ RUN chứ không tính theo nguồn. Chi phí cố định với 9 nguồn: 9 feed/listing
-// + ~9 dedupe + ~4 insert + 9 PATCH + 2 job-health ≈ 33. Phần còn lại chia cho
+// CẢ RUN chứ không tính theo nguồn. Chi phí cố định với 10 nguồn: 10 feed/listing/API
+// + ~10 dedupe + ~5 insert + 10 PATCH + 2 job-health ≈ 37. Phần còn lại chia cho
 // việc tải body bài — đếm chung một ngân sách để thêm nguồn không âm thầm
 // đẩy run qua trần. Bài vượt ngân sách KHÔNG insert (để lần chạy sau lấy đủ
-// body), backlog tự rút cạn qua các run 2h kế tiếp.
+// body), backlog tự rút cạn qua các run 2h kế tiếp. Pickle Asia trả body ngay
+// trong JSON nên không tiêu ngân sách fetch bài.
 const MAX_ARTICLE_FETCHES_PER_RUN = 10;
 // Thử lại feed tối đa 2 lần cho CẢ run (không phải mỗi nguồn) — nếu mỗi nguồn
 // được thử lại thì 9 nguồn cùng hỏng sẽ đẩy run qua trần 50 subrequest.
@@ -317,7 +322,7 @@ async function fetchActiveSources(env: Env): Promise<NewsSource[]> {
   const scrapeIds = Object.keys(HTML_SCRAPE_CONFIGS).join(",");
   const url =
     `${env.SUPABASE_URL}/rest/v1/news_sources` +
-    `?active=eq.true&or=(feed_type.in.(rss,atom),id.in.(${scrapeIds}))&select=*`;
+    `?active=eq.true&or=(feed_type.in.(rss,atom,json_api),id.in.(${scrapeIds}))&select=*`;
   const res = await fetch(url, { headers: pgHeaders(env) });
   if (!res.ok) throw new Error(`fetchActiveSources ${res.status}`);
   return (await res.json()) as NewsSource[];
@@ -448,24 +453,26 @@ async function ingestItems(
       dup += 1;
       continue;
     }
-    if (budget.left <= 0) {
-      // Hết ngân sách subrequest: bỏ qua, KHÔNG insert — run sau sẽ lấy lại
-      // bài này kèm body đầy đủ thay vì chôn nó thành brief vĩnh viễn.
-      console.log(`[${source.id}] hoãn ${item.link} — hết ngân sách fetch của run`);
-      break;
-    }
     const publishedMs = Date.parse(item.published_at);
 
-    let rawBody: string | null = null;
-    budget.left -= 1;
-    try {
-      rawBody = await fetchArticleBody(item.link);
-    } catch (error) {
-      console.warn(
-        `[${source.id}] full article unavailable for ${item.link}: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
+    let rawBody: string | null = item.raw_body ?? null;
+    if (item.raw_body === undefined) {
+      if (budget.left <= 0) {
+        // Hết ngân sách subrequest: bỏ qua, KHÔNG insert — run sau sẽ lấy lại
+        // bài này kèm body đầy đủ thay vì chôn nó thành brief vĩnh viễn.
+        console.log(`[${source.id}] hoãn ${item.link} — hết ngân sách fetch của run`);
+        break;
+      }
+      budget.left -= 1;
+      try {
+        rawBody = await fetchArticleBody(item.link);
+      } catch (error) {
+        console.warn(
+          `[${source.id}] full article unavailable for ${item.link}: ${
+            error instanceof Error ? error.message : String(error)
+          }`
+        );
+      }
     }
 
     originRows.push({
@@ -753,6 +760,7 @@ async function fetchAndParse(
   budget: FetchBudget
 ): Promise<ParsedItem[]> {
   if (source.feed_type === "html_scrape") return scrapeHtmlListing(env, source, budget);
+  if (source.feed_type === "json_api") return fetchPickleAsiaJson(source, env);
   if (!source.feed_url) throw new Error("source has no feed_url");
   if (!isSafePublicFeedUrl(source.feed_url)) {
     throw new Error(`unsafe feed_url rejected: ${source.feed_url}`);
@@ -766,6 +774,223 @@ async function fetchAndParse(
   if (source.feed_type === "rss") return parseRss(parsed);
   if (source.feed_type === "atom") return parseAtom(parsed);
   throw new Error(`Unsupported feed_type ${source.feed_type}`);
+}
+
+interface PickleAsiaPost {
+  slug?: unknown;
+  title?: unknown;
+  excerpt?: unknown;
+  content?: unknown;
+  hero_image_url?: unknown;
+  published_at?: unknown;
+  status?: unknown;
+}
+
+const PICKLE_ASIA_ORIGIN = "https://pickle.asia";
+const PICKLE_ASIA_API_HOST = "idepcrgxqnyexinwjqjj.supabase.co";
+const PICKLE_ASIA_API_URL = `https://${PICKLE_ASIA_API_HOST}/rest/v1/blog_posts`;
+const MAX_JSON_FEED_CHARS = 2_500_000;
+const MAX_PICKLE_POST_HTML_CHARS = 200_000;
+
+function isAsciiWhitespace(char: string): boolean {
+  return char === " " || char === "\n" || char === "\r" || char === "\t" || char === "\f";
+}
+
+function findTagEnd(html: string, start: number): number {
+  let quote = "";
+  for (let i = start; i < html.length; i += 1) {
+    const char = html[i];
+    if (quote) {
+      if (char === quote) quote = "";
+    } else if (char === '"' || char === "'") {
+      quote = char;
+    } else if (char === ">") {
+      return i;
+    }
+  }
+  return -1;
+}
+
+function startsWithAsciiIgnoreCase(value: string, needle: string, at: number): boolean {
+  if (at + needle.length > value.length) return false;
+  for (let i = 0; i < needle.length; i += 1) {
+    const code = value.charCodeAt(at + i);
+    const folded = code >= 65 && code <= 90 ? code + 32 : code;
+    if (folded !== needle.charCodeAt(i)) return false;
+  }
+  return true;
+}
+
+function findAsciiIgnoreCase(value: string, needle: string, from: number): number {
+  for (let i = from; i <= value.length - needle.length; i += 1) {
+    if (startsWithAsciiIgnoreCase(value, needle, i)) return i;
+  }
+  return -1;
+}
+
+function findClosingTag(value: string, name: string, from: number): number {
+  const needle = `</${name}`;
+  let cursor = from;
+  for (;;) {
+    const candidate = findAsciiIgnoreCase(value, needle, cursor);
+    if (candidate === -1) return -1;
+    const after = value[candidate + needle.length] ?? "";
+    if (after === ">" || isAsciiWhitespace(after)) return candidate;
+    cursor = candidate + 1;
+  }
+}
+
+// Pickle Asia supplies source-controlled HTML inside JSON. Parse it with a
+// bounded, single-pass scanner rather than feeding it into the legacy regex
+// extractor used by HTML pages. Script/style blocks and malformed trailing
+// tags are dropped; paragraph-like tags become plain-text separators.
+function pickleAsiaPlainText(html: string): string {
+  html = html.slice(0, MAX_PICKLE_POST_HTML_CHARS);
+  const pieces: string[] = [];
+  let cursor = 0;
+
+  while (cursor < html.length) {
+    if (html[cursor] !== "<") {
+      const nextTag = html.indexOf("<", cursor);
+      if (nextTag === -1) {
+        pieces.push(html.slice(cursor));
+        break;
+      }
+      pieces.push(html.slice(cursor, nextTag));
+      cursor = nextTag;
+      continue;
+    }
+    if (html.startsWith("<!--", cursor)) {
+      const commentEnd = html.indexOf("-->", cursor + 4);
+      if (commentEnd === -1) break;
+      cursor = commentEnd + 3;
+      continue;
+    }
+
+    const tagEnd = findTagEnd(html, cursor + 1);
+    if (tagEnd === -1) break;
+    let nameStart = cursor + 1;
+    while (nameStart < tagEnd && isAsciiWhitespace(html[nameStart])) nameStart += 1;
+    const closing = html[nameStart] === "/";
+    if (closing) nameStart += 1;
+    while (nameStart < tagEnd && isAsciiWhitespace(html[nameStart])) nameStart += 1;
+    let nameEnd = nameStart;
+    while (nameEnd < tagEnd) {
+      const code = html.charCodeAt(nameEnd);
+      if (!((code >= 65 && code <= 90) || (code >= 97 && code <= 122) || (code >= 48 && code <= 57))) {
+        break;
+      }
+      nameEnd += 1;
+    }
+    const name = html.slice(nameStart, nameEnd).toLowerCase();
+
+    if (!closing && (name === "script" || name === "style")) {
+      const closeStart = findClosingTag(html, name, tagEnd + 1);
+      if (closeStart === -1) break;
+      const closeEnd = findTagEnd(html, closeStart + name.length + 2);
+      if (closeEnd === -1) break;
+      cursor = closeEnd + 1;
+      continue;
+    }
+    if (["p", "h1", "h2", "h3", "h4", "li", "br", "blockquote"].includes(name)) {
+      pieces.push("\n\n");
+    }
+    cursor = tagEnd + 1;
+  }
+
+  const decoded = decodeEntities(pieces.join(""));
+  const normalized: string[] = [];
+  let pendingWhitespace = "";
+  for (const char of decoded) {
+    if (char === "\n" || char === "\r") {
+      pendingWhitespace = "\n\n";
+    } else if (isAsciiWhitespace(char)) {
+      if (!pendingWhitespace) pendingWhitespace = " ";
+    } else {
+      if (pendingWhitespace && normalized.length > 0) normalized.push(pendingWhitespace);
+      normalized.push(char);
+      pendingWhitespace = "";
+    }
+  }
+  return normalized.join("").trim().slice(0, 30_000);
+}
+
+export function parsePickleAsiaPosts(payload: unknown): ParsedItem[] {
+  if (!Array.isArray(payload)) return [];
+
+  const items: ParsedItem[] = [];
+  for (const value of payload) {
+    if (items.length >= MAX_ITEMS_PER_FEED) break;
+    if (!value || typeof value !== "object") continue;
+    const post = value as PickleAsiaPost;
+    if (post.status !== "published") continue;
+
+    const slug = typeof post.slug === "string" ? post.slug.trim() : "";
+    const title = typeof post.title === "string" ? pickleAsiaPlainText(post.title) : "";
+    const published = typeof post.published_at === "string" ? Date.parse(post.published_at) : NaN;
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || !title || !Number.isFinite(published)) {
+      continue;
+    }
+
+    const content = typeof post.content === "string" ? pickleAsiaPlainText(post.content) : "";
+    items.push({
+      title,
+      link: `${PICKLE_ASIA_ORIGIN}/blogs/${slug}`,
+      summary: typeof post.excerpt === "string" ? pickleAsiaPlainText(post.excerpt) : "",
+      image_url: typeof post.hero_image_url === "string" ? post.hero_image_url : null,
+      published_at: new Date(published).toISOString(),
+      raw_body: content.length >= MIN_FULL_BODY_CHARS ? content : null,
+    });
+  }
+  return items;
+}
+
+async function fetchPickleAsiaJson(source: NewsSource, env: Env): Promise<ParsedItem[]> {
+  if (source.id !== "pickle-asia") throw new Error("JSON API source is not allowlisted");
+  if (!env.PICKLE_ASIA_API_KEY) throw new Error("PICKLE_ASIA_API_KEY is not configured");
+
+  // The endpoint lives in code rather than news_sources so a database row
+  // cannot redirect this secret-bearing request to another host.
+  const url = new URL(PICKLE_ASIA_API_URL);
+  url.searchParams.set(
+    "select",
+    "slug,title,excerpt,content,hero_image_url,published_at,status",
+  );
+  url.searchParams.set("status", "eq.published");
+  url.searchParams.set("order", "published_at.desc");
+  url.searchParams.set("limit", String(MAX_ITEMS_PER_FEED));
+
+  const res = await fetch(url, {
+    headers: {
+      apikey: env.PICKLE_ASIA_API_KEY,
+      Accept: "application/json",
+      "User-Agent": NEWS_FETCHER_USER_AGENT,
+    },
+    redirect: "manual",
+    signal: AbortSignal.timeout(12_000),
+  });
+  if (!res.ok) throw new Error(`Pickle Asia API HTTP ${res.status}`);
+  if (new URL(res.url).hostname !== PICKLE_ASIA_API_HOST) {
+    throw new Error("Pickle Asia API redirected to an unexpected host");
+  }
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.toLowerCase().includes("application/json")) {
+    throw new Error(`unsupported Pickle Asia content-type ${contentType}`);
+  }
+  const body = await res.text();
+  if (body.length > MAX_JSON_FEED_CHARS) {
+    throw new Error(`Pickle Asia API response exceeds ${MAX_JSON_FEED_CHARS} characters`);
+  }
+
+  let payload: unknown;
+  try {
+    payload = JSON.parse(body);
+  } catch {
+    throw new Error("Pickle Asia API returned invalid JSON");
+  }
+  const items = parsePickleAsiaPosts(payload);
+  if (items.length === 0) throw new Error("Pickle Asia API returned no parseable published posts");
+  return items;
 }
 
 /** Lỗi mạng nhất thời (timeout / abort) — đáng thử lại; HTTP 4xx/5xx thì không. */

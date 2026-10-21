@@ -397,6 +397,35 @@ WHERE id = '<uuid>';   -- the link reply then goes out on the next tick
 missing their link reply after an hour. Anything above 0 means posts are live
 with no conversion path; check `link_comment_error` on those rows.
 
+## Shadow mode — bộ lọc quảng cáo (thử nghiệm, bắt đầu 21/09/2026)
+
+`promo-filter.ts` vẫn là thứ quyết định. Ngoài ra mỗi run hỏi thêm model Jev của
+TypeSafe xem chính những bài đó có phải quảng cáo không, rồi ghi CẢ HAI ý kiến
+vào bảng `promo_filter_shadow`. Không có gì đọc bảng đó — không quyết định nào
+thay đổi.
+
+Lý do: regex là nhị phân, tiêu đề không khớp pattern nào = "chắc chắn sạch". Đó
+là cách bài Six Zero lọt lên cả hai Page ngày 17/08. Jev trả xác suất, mà xác
+suất thì có vùng giữa.
+
+```sh
+# Bật
+wrangler secret put TYPESAFE_API_KEY   # trong workers/social-poster/
+wrangler deploy
+
+# Tắt — pipeline chạy y như trước
+wrangler secret delete TYPESAFE_API_KEY
+```
+
+Cách đọc kết quả sau 2 tuần: các câu SQL nằm sẵn trong comment đầu file
+`supabase/migrations/20260921090000_promo_filter_shadow.sql`. Thứ cần tìm là
+những dòng `regex_blocked = false` mà `jev_noul` cao — đúng hình dạng bài Six
+Zero. Hai pipeline ghi tách nhau (`x` = tiếng Anh, `facebook` = tiếng Việt) vì
+Jev mạnh nhất ở tiếng Anh; nửa tiếng Việt là thứ phải đo trước khi tin.
+
+Chi phí: $0.042/triệu token vào, tối đa 20 bài mỗi run, 1 request cho cả lô —
+cỡ vài cent một tháng. Xong thì xoá secret và `DROP TABLE promo_filter_shadow`.
+
 ## Known limits
 
 - **Image post:** dùng `image_url` của news_item. Nếu image link 404 hoặc

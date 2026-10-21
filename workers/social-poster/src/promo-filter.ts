@@ -12,22 +12,43 @@
  */
 
 /**
- * Categories that are commercial by definition. Measured over 60 days of the
- * feed rather than guessed:
+ * Categories are no longer a filter layer. Kept as an empty list rather than
+ * deleted, because the reason it is empty is the point.
+ *
+ * The original list blocked `equipment` and `business` on a 60-day sample that
+ * read:
  *
  *   (null) 256 · player 57 · tournament 44 · community 18 · business 12 · equipment 5
  *
- * The two blocked here are the two whose sample titles are adverts —
- *   equipment: "Six Zero Expands Gemstone Paddle Line With Boulder Opal Release"
- *   business:  "PB5star Launches Cross-Country Road Trip to Promote Brand"
- * `community` and `player` sample as instructional, so they stay.
+ * The same count over the 30 days to 2026-09-21:
  *
- * The Vietnamese child rows carry the same category as their English parent,
- * verified on production, so this layer works for both pipelines unchanged.
+ *   equipment 128 · tournament 93 · player 76 · community 34 · business 27 · (null) 0
+ *
+ * `equipment` went from the smallest category to the largest, and the nulls are
+ * gone: news-rewrite now assigns a category to every article, and its
+ * classifier files coaching and injury pieces under `equipment`. The blocklist
+ * was built on five paddle releases and ended up blocking a third of the feed.
+ *
+ * Measured, not guessed. The first 21 rows of promo_filter_shadow (see
+ * supabase/migrations/20260921090000_promo_filter_shadow.sql) are 20 blocked
+ * items, of which two are genuinely adverts:
+ *
+ *   CURREX ra mắt lót giày SUPPORTSTP ............ noul 0.82  advert
+ *   Tùy chỉnh vợt: tay cầm và trọng lượng ........ noul 0.67  borderline
+ *   Kỹ thuật dink / stacking / cú lob / scorpion .. noul 0.03-0.08  coaching
+ *   Khuỷu tay, khớp vai, phục hồi gân cơ ......... noul 0.05-0.06  coaching
+ *   Samin Odhwani rời ghế ủy viên MLP ............ noul 0.03  league news
+ *
+ * The last one is why `business` went too: a league executive stepping down is
+ * not marketing.
+ *
+ * ponytail: an empty array, not a deleted parameter. `isPromotionalSource`
+ * still takes a category so the call sites and the shadow log keep their
+ * shape, and putting a category back is a one-word change if the data ever
+ * argues for one.
  */
-const BLOCKED_CATEGORIES: ReadonlyArray<string> = ['equipment', 'business'];
+const BLOCKED_CATEGORIES: ReadonlyArray<string> = [];
 
-/** Publishers whose feed is mostly marketing. Add names as they show up. */
 const BLOCKED_SOURCES: ReadonlyArray<string> = [];
 
 /**
@@ -50,6 +71,11 @@ const PROMO_PATTERNS_EN: ReadonlyArray<RegExp> = [
   /\bpresented by\b/i,
   /\bpartners? with\b/i,
   /\bannounces? (?:a )?(?:partnership|sponsorship|collaboration)\b/i,
+  // Brand marketing written as an event. This was covered by the `business`
+  // category until that category turned out to carry real league news too;
+  // the shape is specific enough to name directly.
+  /\bto promote [^.]{0,30}\bbrand\b/i,
+  /\bbrand (?:tour|activation|ambassador program)\b/i,
   /\bnow available\b/i,
   /\btickets? (?:are )?on sale\b/i,
   /\b(?:use )?(?:promo|discount) code\b/i,

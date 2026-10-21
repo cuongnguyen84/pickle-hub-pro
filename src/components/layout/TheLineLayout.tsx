@@ -19,6 +19,7 @@ import "@/styles/the-line.css";
 
 export interface TheLineLayoutProps {
   title: string;
+  exactTitle?: boolean;
   description?: string;
   /** Optional — production homepage is indexed; pass true for noindex routes. */
   noindex?: boolean;
@@ -74,7 +75,7 @@ const sectionRootFor = (pathname: string): string => {
   return isVi ? `/vi${root}` : root;
 };
 
-export const TheLineLayout = ({ title, description, noindex = false, active, children }: TheLineLayoutProps) => {
+export const TheLineLayout = ({ title, exactTitle, description, noindex = false, active, children }: TheLineLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   usePresenceHeartbeat();
@@ -123,7 +124,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
   const onRootPath = ROOT_PATHS.has(location.pathname);
   // UX-08: no history (deep-link landing) no longer hides the affordance —
   // it renders as a Link to the section root instead (sectionRootFor).
-  const { language, setLanguage } = useI18n();
+  const { language, setLanguage, t } = useI18n();
 
   // Phase 4 news fix (2026-05-19): clicking EN/VI in the global toggle used
   // to only call setLanguage(), which mutated i18n state but kept the URL
@@ -433,7 +434,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
 
   return (
     <div className="tl-root">
-      <DynamicMeta title={title} description={description} noindex={noindex} url={canonicalUrl} />
+      <DynamicMeta title={title} exactTitle={exactTitle} description={description} noindex={noindex} url={canonicalUrl} />
 
       <div className="tl-scroll">
       <nav className="tl-nav">
@@ -626,7 +627,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
           <button
             className="tl-icon-btn"
             type="button"
-            aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label={mode === "dark" ? t.nav.toLight : t.nav.toDark}
             onClick={toggleMode}
           >
             {mode === "dark" ? (
@@ -641,11 +642,11 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
             )}
           </button>
 
-          <Link to="/tools" className="tl-nav-cta">
+          <Link to={localizedPath("/tools", language)} className="tl-nav-cta">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
               <path d="M12 5v14M5 12h14" />
             </svg>
-            <span>{language === "vi" ? "Tạo bracket" : "Create bracket"}</span>
+            <span>{t.nav.createTool}</span>
           </Link>
 
           {user ? (
@@ -661,7 +662,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                 <button
                   type="button"
                   className="tl-avatar"
-                  aria-label="Account menu"
+                  aria-label={t.nav.accountMenu}
                   aria-expanded={avatarOpen}
                   onClick={() => setAvatarOpen((p) => !p)}
                 >
@@ -1039,24 +1040,24 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
             <div className="tl-foot-col">
               <h4>{language === "vi" ? "XEM" : "Watch"}</h4>
               <ul>
-                <li><Link to="/live">{language === "vi" ? "Sân trực tiếp" : "Live courts"}</Link></li>
-                <li><Link to="/videos">{language === "vi" ? "Video" : "Videos"}</Link></li>
-                <li><Link to="/tournaments">{language === "vi" ? "Lịch thi đấu" : "Schedule"}</Link></li>
+                <li><Link to={localizedPath("/live", language)}>{language === "vi" ? "Sân trực tiếp" : "Live courts"}</Link></li>
+                <li><Link to={localizedPath("/videos", language)}>{language === "vi" ? "Video" : "Videos"}</Link></li>
+                <li><Link to={localizedPath("/tournaments", language)}>{language === "vi" ? "Lịch thi đấu" : "Schedule"}</Link></li>
               </ul>
             </div>
             <div className="tl-foot-col">
               <h4>{language === "vi" ? "THI ĐẤU" : "Compete"}</h4>
               <ul>
-                <li><Link to="/tournaments">{language === "vi" ? "Giải đấu" : "Tournaments"}</Link></li>
-                <li><Link to="/tools">{language === "vi" ? "Bracket Lab" : "Bracket Lab"}</Link></li>
-                <li><Link to="/forum">{language === "vi" ? "Diễn đàn" : "Forum"}</Link></li>
+                <li><Link to={localizedPath("/tournaments", language)}>{language === "vi" ? "Giải đấu" : "Tournaments"}</Link></li>
+                <li><Link to={localizedPath("/tools", language)}>{language === "vi" ? "Công cụ" : "Bracket Lab"}</Link></li>
+                <li><Link to={localizedPath("/forum", language)}>{language === "vi" ? "Diễn đàn" : "Forum"}</Link></li>
               </ul>
             </div>
             <div className="tl-foot-col">
               <h4>{language === "vi" ? "ĐỌC" : "Read"}</h4>
               <ul>
                 <li><Link to={language === "vi" ? "/vi/blog" : "/blog"}>{language === "vi" ? "Bài viết" : "Stories"}</Link></li>
-                <li><Link to="/news">{language === "vi" ? "Tin tức" : "News"}</Link></li>
+                <li><Link to={localizedPath("/news", language)}>{language === "vi" ? "Tin tức" : "News"}</Link></li>
               </ul>
             </div>
             {/* Chân trang là chỗ người mua đến sau khi cuộn hết một trang sản
@@ -1066,7 +1067,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
               <h4>{language === "vi" ? "MUA SẮM" : "Shop"}</h4>
               <ul>
                 <li><Link to={localizedPath("/shop", language)}>{language === "vi" ? "Chợ đồ pickleball" : "Marketplace"}</Link></li>
-                <li><Link to="/shop/sell">{language === "vi" ? "Mở shop" : "Sell with us"}</Link></li>
+                <li><Link to={localizedPath("/shop/sell", language)}>{language === "vi" ? "Mở shop" : "Sell with us"}</Link></li>
               </ul>
             </div>
           </div>
@@ -1120,11 +1121,11 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                 {language === "vi" ? "Liên hệ" : "Contact"}
               </Link>
               <span aria-hidden="true">·</span>
-              <Link to="/privacy" style={{ color: "inherit", textDecoration: "none" }}>
+              <Link to={localizedPath("/privacy", language)} style={{ color: "inherit", textDecoration: "none" }}>
                 {language === "vi" ? "Quyền riêng tư" : "Privacy"}
               </Link>
               {" · "}
-              <Link to="/terms" style={{ color: "inherit", textDecoration: "none" }}>
+              <Link to={localizedPath("/terms", language)} style={{ color: "inherit", textDecoration: "none" }}>
                 {language === "vi" ? "Điều khoản" : "Terms"}
               </Link>
             </span>

@@ -98,6 +98,8 @@ struct SupabaseShopRepository: ShopRepository {
             seller: ShopSellerSummary(slug: try validSlug(dto.shop.slug), name: dto.shop.name,
                                       isVerified: dto.shop.verified),
             priceMinVND: dto.priceMin, priceMaxVND: dto.priceMax,
+            discountPercentMax: dto.discountPercentMax,
+            compareAtMinVND: dto.compareAtMin,
             availability: dto.availability ?? .unknown,
             coverURL: try dto.cover?.publicURL(supabaseURL: supabaseURL),
             coverLabel: dto.cover?.altText ?? dto.title,
@@ -127,7 +129,8 @@ struct SupabaseShopRepository: ShopRepository {
         }
         let variants = dto.variants.map {
             ShopVariant(id: $0.id, sku: $0.sku, optionValues: $0.optionValues ?? [:],
-                        priceVND: $0.priceVND, stockOnHand: nil, mediaID: $0.mediaID,
+                        priceVND: $0.priceVND, compareAtPriceVND: $0.compareAtPriceVND,
+                        stockOnHand: nil, mediaID: $0.mediaID,
                         publicAvailability: $0.availability)
         }
         return ShopProduct(

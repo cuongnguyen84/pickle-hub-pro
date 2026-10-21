@@ -236,7 +236,9 @@ struct ShopSearchView: View {
                 ForEach(model.products) { product in
                     NavigationLink(value: ShopRoute.product(product.slug)) {
                         ShopProductCard(product: product)
+                            .frame(maxHeight: .infinity, alignment: .top)
                     }
+                    .frame(maxHeight: .infinity)
                     .buttonStyle(.plain)
                 }
             }

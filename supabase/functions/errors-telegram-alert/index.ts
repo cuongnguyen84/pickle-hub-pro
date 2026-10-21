@@ -30,6 +30,7 @@ import {
   type PgNetCronSnapshot,
 } from "../_shared/cron-health.ts";
 import { requireCronRequest } from "../_shared/cron-auth.ts";
+import { instantMarkdownV2, isCriticalText } from "./telegram-policy.ts";
 import {
   DEFAULT_BURN_CONFIG,
   burnMessageLines,
@@ -110,12 +111,16 @@ interface RunReport {
   unique_fingerprints: number;
   alerts_sent: number;
   alerts_suppressed: number;
+  /** Not payment/auth: left in client_errors for the Grok Bot digest. */
+  deferred_to_digest?: number;
 }
 
 interface JobFailureReport {
   scanned: number;
   alerts_sent: number;
   alerts_suppressed: number;
+  /** Not payment/auth: left in ops_job_runs for the Grok Bot digest. */
+  deferred_to_digest?: number;
 }
 
 interface FailedJobRun {
@@ -180,9 +185,16 @@ async function runAlert(): Promise<RunReport> {
 
   let sent = 0;
   let suppressed = 0;
+  let deferred = 0;
 
   for (const [fp, { sample, count }] of groups) {
     if (count < SPIKE_THRESHOLD) continue;
+    // 2026-10-20: only payment/auth spikes page instantly. Others stay in
+    // client_errors and are summarised in the 08:00/21:00 Grok Bot digest.
+    if (!isCriticalText(sample.message, sample.stack, sample.url)) {
+      deferred++;
+      continue;
+    }
 
     // Dedupe — alerted recently?
     const { data: dedup } = await supabase
@@ -220,7 +232,7 @@ async function runAlert(): Promise<RunReport> {
       `[Open admin dashboard](${adminLink})`,
     ].join("\n");
 
-    const ok = await sendTelegram(text);
+    const ok = await sendTelegram(instantMarkdownV2(text));
     if (ok) {
       sent++;
       // Upsert dedup row.
@@ -244,6 +256,7 @@ async function runAlert(): Promise<RunReport> {
     unique_fingerprints: groups.size,
     alerts_sent: sent,
     alerts_suppressed: suppressed,
+    deferred_to_digest: deferred,
   };
 }
 
@@ -310,7 +323,7 @@ async function runBurnAlert(): Promise<BurnReport> {
     if (d.alert) {
       const lines = burnMessageLines(d, DEFAULT_BURN_CONFIG).map((l) => escapeMarkdown(l));
       lines.push("", `[Open admin dashboard](${escapeMarkdown("https://www.thepicklehub.net/admin/errors")})`);
-      const ok = await sendTelegram(lines.join("\n"));
+      const ok = await sendTelegram(instantMarkdownV2(lines.join("\n"), d.newState === "ok" ? "resolved" : "alert"));
       if (!ok) {
         report.errors.push(`${d.sloKey}: telegram send failed`);
         continue; // don't persist a transition the operator never saw
@@ -337,6 +350,10 @@ async function runBurnAlert(): Promise<BurnReport> {
   return report;
 }
 
+/** One page per job per hour while it keeps failing; the admin dashboard
+ *  keeps every run. */
+const JOB_FAILURE_COOLDOWN_MS = 60 * 60_000;
+
 async function runJobFailureAlerts(): Promise<JobFailureReport> {
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
@@ -358,14 +375,30 @@ async function runJobFailureAlerts(): Promise<JobFailureReport> {
 
   let sent = 0;
   let suppressed = 0;
+  let deferred = 0;
   for (const run of (data ?? []) as FailedJobRun[]) {
-    const dedupeKey = `scheduled-job-failure:${run.id}`;
+    // Content/news/social jobs go to the Grok Bot digest; payment/auth page now.
+    if (!isCriticalText(run.job_key)) {
+      deferred++;
+      continue;
+    }
+    // Per-run key: never page twice for the same run row.
+    const runKey = `scheduled-job-failure:${run.id}`;
+    // Per-job key: a job that keeps failing pages once per cooldown, not
+    // once per run. pro-tour-scraper runs every minute on event days and
+    // paged 258 times in 24h (2026-09-11) before this existed.
+    const jobKey = `scheduled-job-failure:job:${run.job_key}`;
     const { data: existing } = await supabase
       .from("error_alert_dedup")
-      .select("fingerprint")
-      .eq("fingerprint", dedupeKey)
-      .maybeSingle();
-    if (existing) {
+      .select("fingerprint, last_alerted_at")
+      .in("fingerprint", [runKey, jobKey])
+      .returns<Array<{ fingerprint: string; last_alerted_at: string }>>();
+    const seenRun = existing?.some((row) => row.fingerprint === runKey);
+    const lastJobAlert = existing?.find((row) => row.fingerprint === jobKey)?.last_alerted_at;
+    const jobCoolingDown = lastJobAlert
+      ? Date.now() - new Date(lastJobAlert).getTime() < JOB_FAILURE_COOLDOWN_MS
+      : false;
+    if (seenRun || jobCoolingDown) {
       suppressed++;
       continue;
     }
@@ -383,17 +416,17 @@ async function runJobFailureAlerts(): Promise<JobFailureReport> {
       lines.push("", `[Open details](${escapeMarkdown(run.details_url)})`);
     }
 
-    if (await sendTelegram(lines.join("\n"), jobFixButtons(run.job_key))) {
+    if (await sendTelegram(instantMarkdownV2(lines.join("\n")), jobFixButtons(run.job_key))) {
       sent++;
-      await supabase.from("error_alert_dedup").upsert({
-        fingerprint: dedupeKey,
-        last_alerted_at: new Date().toISOString(),
-        alert_count: 1,
-      }, { onConflict: "fingerprint" });
+      const now = new Date().toISOString();
+      await supabase.from("error_alert_dedup").upsert([
+        { fingerprint: runKey, last_alerted_at: now, alert_count: 1 },
+        { fingerprint: jobKey, last_alerted_at: now, alert_count: 1 },
+      ], { onConflict: "fingerprint" });
     }
   }
 
-  return { scanned: data?.length ?? 0, alerts_sent: sent, alerts_suppressed: suppressed };
+  return { scanned: data?.length ?? 0, alerts_sent: sent, alerts_suppressed: suppressed, deferred_to_digest: deferred };
 }
 
 function formatCronHealthMessage(
@@ -532,11 +565,14 @@ async function runCronHealth(): Promise<CronHealthReport> {
     if (health.state === "pending") continue;
 
     const notification = shouldSendCronAlert(health, stored, now);
+    const jobKey = monitorToJob.get(health.monitorKey);
+    // Non-critical monitors still record incident/recovery below (the Grok Bot
+    // digest reads ops_cron_alert_state) but do not message Telegram.
+    const deliver = !!notification && isCriticalText(health.monitorKey, jobKey);
     let sent = false;
-    if (notification) {
-      const jobKey = monitorToJob.get(health.monitorKey);
+    if (deliver && notification) {
       sent = await sendTelegram(
-        formatCronHealthMessage(health, notification),
+        instantMarkdownV2(formatCronHealthMessage(health, notification), notification === "recovery" ? "resolved" : "alert"),
         notification === "incident" && jobKey ? jobFixButtons(jobKey) : undefined,
       );
       if (sent) report.alerts_sent++;
@@ -544,7 +580,7 @@ async function runCronHealth(): Promise<CronHealthReport> {
       report.alerts_suppressed++;
     }
 
-    if (notification && !sent) {
+    if (deliver && !sent) {
       report.errors.push(`${health.monitorKey}: Telegram send failed`);
       continue;
     }

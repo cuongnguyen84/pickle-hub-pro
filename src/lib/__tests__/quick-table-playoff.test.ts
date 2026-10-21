@@ -4,6 +4,8 @@ import {
   generateSeededPairings,
   resolveGroupConflicts,
   computeBest3rdAdjustedStats,
+  toBracketPairings,
+  BYE_PLAYER_ID,
   type SeededPlayer,
   type BracketPairing,
 } from '../quick-table-playoff';
@@ -411,5 +413,22 @@ describe('computeBest3rdAdjustedStats', () => {
     expect(qualified).toContain('g4-p3');
     expect(qualified).not.toContain('g5-p3');
     expect(qualified).not.toContain('g2-p3');
+  });
+});
+
+describe('toBracketPairings — bracket cổ điển → preview', () => {
+  it('giữ số trận, seed 1/2 theo bảng, slot trống thành BYE', () => {
+    const BYE = BYE_PLAYER_ID;
+    const a1 = { id: 'a1', name: 'A1', group_id: 'A', playoff_seed: 1, matches_won: 3, point_diff: 10, points_for: 33 } as QuickTablePlayer;
+    const b2 = { id: 'b2', name: 'B2', group_id: 'B', playoff_seed: 2, matches_won: 2, point_diff: 1, points_for: 30 } as QuickTablePlayer;
+    const pairings = toBracketPairings([
+      { player1: a1, player2: b2, matchNumber: 1 },
+      { player1: null, player2: b2, matchNumber: 2 },
+    ]);
+    expect(pairings).toHaveLength(2);
+    expect(pairings[0].player1).toMatchObject({ playerId: 'a1', seed: 1, sourceGroupId: 'A', tier: 'winner' });
+    expect(pairings[0].player2).toMatchObject({ playerId: 'b2', seed: 2, sourceGroupId: 'B', tier: 'runner_up' });
+    expect(pairings[1].player1.playerId).toBe(BYE);
+    expect(pairings[1].matchNumber).toBe(2);
   });
 });

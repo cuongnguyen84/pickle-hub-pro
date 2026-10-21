@@ -132,9 +132,11 @@ describe("renderLivestreamList — standing content (THIN-01)", () => {
     const html = await renderLiveHub([ENDED]);
 
     expect(html).not.toContain("Hiện chưa có livestream. Quay lại sau.");
-    // The replay is real, watchable content — surface it instead.
-    expect(html).toContain("Xem lại");
-    expect(html).toContain("Tứ kết đôi nam Đà Nẵng Open");
+    // Replays are hidden on purpose (16/09) — the standing copy, not the
+    // replay list, is what keeps a quiet day off the empty state now.
+    expect(html).not.toContain("Xem lại");
+    expect(html).not.toContain("Tứ kết đôi nam Đà Nẵng Open");
+    expect(bodyWords(html)).toBeGreaterThan(150);
   });
 
   it("survives a completely empty stream table and still carries the standing copy", async () => {
@@ -146,12 +148,13 @@ describe("renderLivestreamList — standing content (THIN-01)", () => {
     expect(bodyWords(html)).toBeGreaterThan(150);
   });
 
-  it("splits live, scheduled and ended into their own sections", async () => {
+  it("splits live and scheduled into their own sections, and lists no replays", async () => {
     const html = await renderLiveHub([LIVE, SCHEDULED, ENDED]);
 
     expect(html).toContain("Đang phát trực tiếp");
     expect(html).toContain("Sắp diễn ra");
-    expect(html).toContain("Xem lại");
+    expect(html).not.toContain("Xem lại");
+    expect(html).not.toContain("Tứ kết đôi nam Đà Nẵng Open");
     // The old renderer printed the raw enum next to the title.
     expect(html).not.toContain("(scheduled)");
   });
@@ -192,10 +195,12 @@ describe("renderLivestreamList — standing content (THIN-01)", () => {
   // _middleware.ts rule 1d now 301s to /live/:id — so the "localized" link was
   // a redirect hop to the page we actually index. Both locales link the
   // canonical URL; the stream page itself renders Vietnamese-first regardless.
-  it("links replays to the single canonical /live/:id from both clusters", async () => {
-    expect(await renderLiveHub([ENDED], "vi")).toContain(`${SITE}/live/cccc3333`);
-    expect(await renderLiveHub([ENDED], "vi")).not.toContain(`${SITE}/vi/live/cccc3333`);
-    expect(await renderLiveHub([ENDED], "en")).toContain(`${SITE}/live/cccc3333`);
+  // (Pinned on a live stream since 16/09 — the replay list this originally
+  // covered is no longer rendered, but every row uses the same href helper.)
+  it("links streams to the single canonical /live/:id from both clusters", async () => {
+    expect(await renderLiveHub([LIVE], "vi")).toContain(`${SITE}/live/aaaa1111`);
+    expect(await renderLiveHub([LIVE], "vi")).not.toContain(`${SITE}/vi/live/aaaa1111`);
+    expect(await renderLiveHub([LIVE], "en")).toContain(`${SITE}/live/aaaa1111`);
   });
 });
 
@@ -221,16 +226,16 @@ describe("renderLivestreamList — one query window per status", () => {
     return log;
   };
 
-  it("gives live, scheduled and ended their own limit", async () => {
+  it("gives live and scheduled their own limit, and never queries ended", async () => {
     const log = await shape([LIVE, SCHEDULED, ENDED]);
 
-    // Only the three livestream windows are under test here; the World Cup
+    // Only the livestream windows are under test here; the World Cup
     // livescore block adds its own wc_pro_matches query, which is not one of them.
     const streamStatuses = log.map((q) => q.status).filter((s) => ["live", "scheduled", "ended"].includes(s ?? ""));
-    expect(streamStatuses.sort()).toEqual(["ended", "live", "scheduled"]);
+    expect(streamStatuses.sort()).toEqual(["live", "scheduled"]);
     // No status may share a budget with another — that is the whole bug.
     for (const q of log) expect(q.limit).toBeGreaterThan(0);
-    expect(new Set(streamStatuses).size).toBe(3);
+    expect(new Set(streamStatuses).size).toBe(2);
   });
 
   it("orders upcoming by air time, not by when the row was created", async () => {

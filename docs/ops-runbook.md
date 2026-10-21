@@ -281,8 +281,8 @@ least yearly; record each run here.
 - **INITIAL** ≤ 280 KB — what the browser fetches on first paint (entry +
   modulepreloads + their recursive static imports). Catches a lazy chunk
   silently going eager (the recharts bug class).
-- **CODE** ≤ 1800 KB — all JS except `blog-post-*` chunks.
-- **CONTENT** — blog-post chunks, aggregate ≤ 600 KB plus a 20 KB per-chunk cap.
+- **CODE** ≤ 1900 KB — all JS except `blog-post-*` chunks (1800 until DEBT-09, 1/10/2026).
+- **CONTENT** — blog-post chunks, 20 KB per-chunk cap; the aggregate is reported only since DEBT-09.
 - Total gz JS is reported but **not** enforced since DEBT-01 (17/8/2026): it
   summed CODE + lazily-loaded blog content, so publishing posts turned the
   gate red instead of real regressions. CODE and INITIAL still ratchet DOWN only.

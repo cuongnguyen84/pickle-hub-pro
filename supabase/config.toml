@@ -456,3 +456,6 @@ verify_jwt = false
 [auth.mfa.totp]
 enroll_enabled = true
 verify_enabled = true
+
+[functions.quick-table-chat]
+verify_jwt = false

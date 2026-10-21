@@ -48,6 +48,10 @@ const post: BlogPost = {
               text: "Tickets, venues and how to watch on FPT Play",
               path: "/blog/pickleball-world-cup-2026-da-nang-how-to-watch",
             },
+            {
+              text: "What is next: every Vietnam pickleball tournament left in 2026",
+              path: "/blog/vietnam-pickleball-tournament-calendar-2026",
+            },
           ],
         },
         {
@@ -263,6 +267,10 @@ const post: BlogPost = {
             {
               text: "Vé, sân bãi và cách xem trên FPT Play",
               path: "/vi/blog/cam-nang-xem-pickleball-world-cup-2026-da-nang",
+            },
+            {
+              text: "Sắp tới đánh giải nào: lịch giải pickleball Việt Nam 2026 còn lại",
+              path: "/vi/blog/lich-giai-pickleball-viet-nam-2026",
             },
           ],
         },

@@ -306,15 +306,20 @@ return ({
               cacheableResponse: { statuses: [0, 200] },
             },
           },
-          // Navigation requests (HTML shell) — NetworkFirst with short
-          // timeout. Online users always see the latest shell, offline
-          // users still get a recent cached copy.
+          // Navigation requests (HTML shell) — NetworkFirst. The cached copy
+          // is for OFFLINE users only. 2026-09-08: the timeout was 3s, so a
+          // slow 5G navigation right after a deploy got the cached shell,
+          // whose chunk hashes had just been deleted from the origin (404) →
+          // chunk error → reload → same slow network → same stale shell:
+          // "Đang tải lại..." with no way out on mobile while desktop on
+          // Wi-Fi was fine. 20s is past any realistic mobile TTFB, so the
+          // cache only answers when the network is genuinely down.
           {
             urlPattern: ({ request }) => request.mode === "navigate",
             handler: "NetworkFirst",
             options: {
               cacheName: "html-shell",
-              networkTimeoutSeconds: 3,
+              networkTimeoutSeconds: 20,
               expiration: { maxEntries: 5, maxAgeSeconds: 24 * 60 * 60 },
               cacheableResponse: { statuses: [0, 200] },
             },
