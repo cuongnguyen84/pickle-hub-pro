@@ -48,12 +48,14 @@ const bytes = (s: string) => new TextEncoder().encode(s).length;
 /** Decode the handful of entities buildHtml escapes, so byte counts are
  *  measured on the text Google renders rather than on "&amp;". */
 function decodeEntities(s: string): string {
+  // Unescape &amp; last. Doing it first turns "&amp;lt;" into "&lt;" and then
+  // into "<", which is the double-unescape CodeQL flags (js/double-escaping).
   return s
-    .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&");
 }
 
 function extractTitle(html: string): string {
