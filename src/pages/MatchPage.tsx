@@ -22,6 +22,7 @@ import MatchVerifyBanner from "@/components/social/match/MatchVerifyBanner";
 import MatchActions from "@/components/social/match/MatchActions";
 import { CommentThread } from "@/components/social/comments/CommentThread";
 import type { MatchDetail } from "@/hooks/social";
+import { displayNotes } from "@/lib/social/match-notes";
 
 const SITE = "https://www.thepicklehub.net";
 
@@ -54,8 +55,12 @@ function buildSeo(match: MatchDetail, language: "vi" | "en") {
     language === "vi"
       ? `Trận pickleball ${fmtLabelVI} ngày ${date}${venue ? ` tại ${venue}` : ""}, kết quả ${score}.`
       : `${fmtLabelEN} pickleball match on ${date}${venue ? ` at ${venue}` : ""}, final score ${score}.`;
+  // Only claim a winner when there is one. winning_team is NULL on
+  // in-progress and TBD pro-tour rows, and the old ternary silently named
+  // team B in the schema. The bot renderer (functions/_lib/render/match-seo.ts)
+  // has always guarded this — the SPA was contradicting it on the same URL.
   const winnerName =
-    match.winning_team === "a" ? p1Name : p2Name;
+    match.winning_team === "a" ? p1Name : match.winning_team === "b" ? p2Name : null;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SportsEvent",
@@ -74,7 +79,7 @@ function buildSeo(match: MatchDetail, language: "vi" | "en") {
       { "@type": "Person", name: p1Name },
       { "@type": "Person", name: p2Name },
     ],
-    winner: { "@type": "Person", name: winnerName },
+    winner: winnerName ? { "@type": "Person", name: winnerName } : undefined,
   };
   return { title, description, jsonLd };
 }
@@ -211,12 +216,12 @@ const MatchPage = () => {
           <MatchScoreboard match={match} />
           <MatchVerifyBanner match={match} />
           <MatchActions match={match} />
-          {match.notes && (
+          {displayNotes(match.notes) && (
             <div className="rounded-xl border bg-card p-3 text-sm">
               <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">
                 {language === "vi" ? "Ghi chú" : "Notes"}
               </div>
-              <p className="whitespace-pre-wrap">{match.notes}</p>
+              <p className="whitespace-pre-wrap">{displayNotes(match.notes)}</p>
             </div>
           )}
           <CommentThread matchId={match.id} />
