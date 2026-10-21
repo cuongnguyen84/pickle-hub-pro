@@ -1326,7 +1326,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v136 (2026-10-20): the chat guide covers several photos and a Google Sheet link.
   // v137 (2026-10-20): the chat-draw guide hero has a 768w card, so its
   // article <img> now includes that srcset.
-  const cacheKey = `pr:v137:${url.pathname}`;
+  // v138 (2026-10-20): the English chat-draw guide uses English UI screenshots.
+  // The Vietnamese article keeps the Vietnamese images.
+  const cacheKey = `pr:v138:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
