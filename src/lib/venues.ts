@@ -395,3 +395,55 @@ const VENUE_CITY_SLUG_BY_NAME: Record<string, string> = Object.fromEntries(
 export function citySlugFromName(name: string | null | undefined): string | null {
   return name ? VENUE_CITY_SLUG_BY_NAME[name] ?? null : null;
 }
+
+/**
+ * Which parts of the "Price & opening hours" block actually have something to
+ * say. Extracted from VenueDetail.tsx as a pure function on purpose.
+ *
+ * The 2026-08-25 site audit found the section gated on the raw values
+ * (`priceText || weekHours || hours.length`) while every row inside it also
+ * required a *verified* source. On a 'default'-source venue that combination
+ * rendered the heading, an empty `rounded-md border` div — a stray 2px
+ * hairline — and then the disclaimer. 684 of 896 courts were in that state,
+ * because price_source/hours_source is 'default' on every row the Google
+ * Places import could not confirm.
+ *
+ * The gating was untested: the PRICE-01 tests all exercise the helpers below,
+ * and nothing rendered the component, so a condition that contradicted its own
+ * children passed review twice. Keeping the decision here means it can be
+ * asserted without mounting the page.
+ */
+export interface VenuePriceHoursVisibility {
+  /** The verified price row. */
+  priceRow: boolean;
+  /** The uniform-week line, or null when there is no verified uniform week. */
+  weekHoursRow: string | null;
+  /** The per-day rows. Verified sources only — see below. */
+  dayRows: boolean;
+  /** The bordered container. False means: render no box at all. */
+  box: boolean;
+  /** "No confirmed rate for this court yet…" */
+  disclaimer: boolean;
+  /** The whole section, heading included. */
+  section: boolean;
+}
+
+export function venuePriceHoursVisibility(input: {
+  priceText: string | null;
+  priceVerified: boolean;
+  weekHours: string | null;
+  hoursVerified: boolean;
+  dayRowCount: number;
+}): VenuePriceHoursVisibility {
+  const priceRow = Boolean(input.priceText) && input.priceVerified;
+  const weekHoursRow = input.hoursVerified ? input.weekHours : null;
+  // hoursVerified gates the per-day list too. #666 fixed the uniform-week line
+  // and left this one reading hours_json directly, so a non-uniform week on a
+  // 'default' source would still print unlabelled times — the exact claim that
+  // commit says it stopped making. Not reachable with today's import data; one
+  // hand-edited row away from being.
+  const dayRows = input.hoursVerified && input.dayRowCount > 0;
+  const box = priceRow || weekHoursRow != null || dayRows;
+  const disclaimer = Boolean(input.priceText) && !input.priceVerified;
+  return { priceRow, weekHoursRow, dayRows, box, disclaimer, section: box || disclaimer };
+}
