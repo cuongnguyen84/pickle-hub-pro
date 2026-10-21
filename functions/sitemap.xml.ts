@@ -34,7 +34,23 @@ const SEGMENT_PATHS = [
   "/sitemap-blog.xml",
   "/sitemap-news.xml",
   "/sitemap-tournaments.xml",
-  "/sitemap-matches.xml",
+  // /sitemap-matches.xml — DELISTED 2026-09-07, endpoint left answering 200.
+  //
+  // 266 URLs, and over the 90 days to 2026-09-04 the whole /tran-dau cluster
+  // returned 11 clicks on 536 impressions. Each page is a scraped pro result
+  // rendered from a template at ~270 words, and the slug is a pair of UUIDs,
+  // so there is no query a human types that these win. Two of them are sitting
+  // in the 2026-09-07 "Discovered – currently not indexed" export and five
+  // more in "Crawled – currently not indexed"; Google has priced the cluster
+  // and the sitemap was still asking it to re-price it on every read.
+  //
+  // Delisted rather than deleted, for the reason spelled out for the shop
+  // segment below: an index entry that 404s flags the whole index. The
+  // endpoint stays, matches keep their SSR handler (renderMatch in
+  // match-seo.ts), the URLs stay 200 and internally linked from tournament
+  // pages, and anything already indexed stays indexed. Relist it if a
+  // Vietnamese tournament ever puts real match reports behind these URLs —
+  // the traffic case, not the code, is what changed.
   "/sitemap-events.xml",
   // Sprint A4 (2026-05-27) — re-enabled. The orphan issue from May 2026
   // is now solved by the Vietnam leaderboard at /rankings + the

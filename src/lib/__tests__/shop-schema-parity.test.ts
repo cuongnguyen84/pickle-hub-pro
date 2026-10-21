@@ -16,6 +16,7 @@ import {
   SHOP_P3_TABLES,
   SHOP_P3_VIEWS,
   SHOP_P4_RPCS,
+  SHOP_REFUND_RPCS,
   SHOP_RPCS,
   SHOP_RULES_RPCS,
   SHOP_RULES_TABLES,
@@ -682,5 +683,38 @@ describe("shop schema parity with the Phase 4b migration", () => {
     }
     // And the optimistic-concurrency check it is easy to drop while retyping.
     expect(body).toContain("_row.version <> _expected_version");
+  });
+});
+
+// ── Pilot hardening — refund on a paid cancel, no manual stamp on a gateway
+// order (20260828150000). ────────────────────────────────────────────────────
+const REFUND_SQL = migrationByName("shop_order_refund_and_gateway_guard");
+
+describe("shop schema parity with the refund migration", () => {
+  it.each(SHOP_REFUND_RPCS)("the migration creates function %s", (fn) => {
+    expect(REFUND_SQL).toContain(`CREATE OR REPLACE FUNCTION public.${fn}(`);
+    const at = REFUND_SQL.indexOf(`CREATE OR REPLACE FUNCTION public.${fn}(`);
+    const head = REFUND_SQL.slice(at, at + 900);
+    expect(head, `${fn} must be SECURITY DEFINER`).toContain("SECURITY DEFINER");
+    expect(head, `${fn} must pin search_path`).toContain("SET search_path = public");
+  });
+
+  it("grants the two facts and never the uid, and restates the buyer view with them", () => {
+    expect(REFUND_SQL).toMatch(/GRANT SELECT \(refund_due_vnd, refunded_at\)\s+ON public\.shop_orders TO authenticated/);
+    expect(REFUND_SQL).not.toMatch(/GRANT SELECT \([^)]*refunded_by/);
+    const view = REFUND_SQL.slice(REFUND_SQL.indexOf("CREATE VIEW public.my_shop_orders"));
+    const cols = view.slice(0, view.indexOf("FROM public.shop_orders"));
+    expect(cols).toContain("o.refund_due_vnd, o.refunded_at");
+    expect(cols).not.toContain("refunded_by");
+  });
+
+  it("records the debt by trigger, so every cancel path is covered", () => {
+    expect(REFUND_SQL).toMatch(/BEFORE UPDATE OF status ON public\.shop_orders/);
+    expect(REFUND_SQL.replace(/--[^\n]*/g, "")).not.toContain("FUNCTION public.shop_order_transition");
+  });
+
+  it("refuses the manual confirm once a SePay invoice exists", () => {
+    const at = REFUND_SQL.indexOf("FUNCTION public.shop_order_confirm_payment(");
+    expect(REFUND_SQL.slice(at)).toContain("FROM public.shop_sepay_payment_attempts a WHERE a.order_id = _o.id");
   });
 });

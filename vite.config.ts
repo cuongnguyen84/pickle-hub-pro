@@ -128,7 +128,12 @@ return ({
         resolvedOutDir = path.resolve(resolved.root, resolved.build.outDir);
         copiesPublicDir = Boolean(resolved.build.copyPublicDir && resolved.publicDir);
       },
-      closeBundle() {
+      closeBundle(error?: Error) {
+        // Rollup also calls closeBundle when the BUILD failed — before
+        // prepareOutDir ever copied public/. Throwing "_headers is missing"
+        // here would replace the real compile error with a misleading one
+        // (the 2026-08-27 Cloudflare preview failures on feat/shop-unified).
+        if (error) return;
         // Nothing was copied, so there is nothing to rewrite and nothing to
         // ship wrong — the only branch where absence is genuinely fine.
         if (!copiesPublicDir) return;
@@ -301,15 +306,20 @@ return ({
               cacheableResponse: { statuses: [0, 200] },
             },
           },
-          // Navigation requests (HTML shell) — NetworkFirst with short
-          // timeout. Online users always see the latest shell, offline
-          // users still get a recent cached copy.
+          // Navigation requests (HTML shell) — NetworkFirst. The cached copy
+          // is for OFFLINE users only. 2026-09-08: the timeout was 3s, so a
+          // slow 5G navigation right after a deploy got the cached shell,
+          // whose chunk hashes had just been deleted from the origin (404) →
+          // chunk error → reload → same slow network → same stale shell:
+          // "Đang tải lại..." with no way out on mobile while desktop on
+          // Wi-Fi was fine. 20s is past any realistic mobile TTFB, so the
+          // cache only answers when the network is genuinely down.
           {
             urlPattern: ({ request }) => request.mode === "navigate",
             handler: "NetworkFirst",
             options: {
               cacheName: "html-shell",
-              networkTimeoutSeconds: 3,
+              networkTimeoutSeconds: 20,
               expiration: { maxEntries: 5, maxAgeSeconds: 24 * 60 * 60 },
               cacheableResponse: { statuses: [0, 200] },
             },
@@ -405,24 +415,11 @@ return ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // hls.js LIGHT build — 53 KB gz of the total budget (P2b.0).
-      // Nothing in src/ imports hls.js directly any more; the only importer is
-      // @mux/playback-core, which pulls the full build by specifier. Aliasing
-      // here catches that import too, so there is exactly one copy and it is
-      // the small one.
-      //
-      // Light drops subtitles/CEA-708, alternate audio, EME/DRM, CMCD and
-      // interstitials. This product uses none of them: there is no caption UI
-      // and no Mux transcription configured, match video is single-track, and
-      // mux-create-livestream's `playback_policy: "signed"` is a JWT on the
-      // URL — not Widevine/FairPlay (there is no drm_configuration anywhere).
-      //
-      // The failure mode if that ever changes is SILENT — the light build keeps
-      // the accessors and just reports no tracks. src/components/video/
-      // __tests__/hls-light-build.test.ts fails the moment captions or DRM are
-      // configured, so the trade has to be re-decided rather than discovered
-      // by a viewer.
-      "hls.js": path.resolve(__dirname, "./node_modules/hls.js/dist/hls.light.mjs"),
+      // hls.js: FULL build on purpose. The light build (P2b.0, 6210ece1) drops
+      // alternate-audio support, and Mux live streams carry audio as a separate
+      // EXT-X-MEDIA rendition — so every MSE browser (desktop Chrome/Firefox/
+      // Edge, Android) played live video with NO SOUND while iPhone (native
+      // HLS) was fine. Do not alias to hls.light.mjs again.
     },
   },
   build: {

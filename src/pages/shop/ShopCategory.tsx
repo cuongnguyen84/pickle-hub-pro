@@ -12,7 +12,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { SearchX } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
-import { usePublicCategories, usePublicSearch } from "@/hooks/shop/usePublicShop";
+import { usePublicCategories, usePublicSearchPages } from "@/hooks/shop/usePublicShop";
 import { ShopCartLink } from "@/components/shop/CartLink";
 import {
   DEFAULT_FILTERS,
@@ -39,14 +39,12 @@ export default function ShopCategory() {
   const category = (categories.data ?? []).find((c) => c.slug === slug) ?? null;
   const known = categories.isLoading || category !== null;
 
-  const results = usePublicSearch(
+  const results = usePublicSearchPages(
     {
       categorySlug: slug ?? null,
       condition: filters.condition,
       inStockOnly: filters.inStockOnly,
       sort: filters.sort,
-      cursorAt: params.get("after"),
-      cursorId: params.get("after_id"),
     },
     !!slug,
   );
@@ -57,12 +55,10 @@ export default function ShopCategory() {
       if (v === null) next.delete(k);
       else next.set(k, v);
     }
-    next.delete("after");
-    next.delete("after_id");
     setParams(next);
   };
 
-  const rows = results.data?.rows ?? [];
+  const rows = results.data?.pages.flatMap((pg) => pg.rows) ?? [];
 
   if (!categories.isLoading && !category) {
     // Disabled and never-existed give the SAME answer. Distinguishing them
@@ -88,14 +84,14 @@ export default function ShopCategory() {
           state, not a launch gate. */}
       <DynamicMeta title={category ? category.name : "Ngành hàng"} />
       <main className="tl-shop">
-        <div className="tl-shop-page">
+        <div className="tl-shop-page tl-shop-has-fab">
         <div className="tl-shop-topline">
           {/* The last crumb is the page's own <h1> one line below it, so it is
               dropped (R5 #14, chốt: giữ h1). The crumb row is the way back. */}
           <nav aria-label="Đường dẫn" className="tl-shop-crumbs">
             <Link to="/shop" className="tl-crumb">Chợ</Link>
           </nav>
-          <ShopCartLink />
+          <ShopCartLink floating />
         </div>
 
         <h1 className="tl-shop-h1">{category?.name ?? "Ngành hàng"}</h1>
@@ -122,13 +118,13 @@ export default function ShopCategory() {
           <div>
             <ResultsGrid
               rows={rows}
-              total={results.data?.total ?? 0}
-              hidePilotNote
+              total={results.data?.pages[0]?.total ?? 0}
+              hideSparseNote
               isLoading={results.isLoading || !known}
               isError={results.isError}
               onRetry={() => void results.refetch()}
               emptyTitle="Ngành hàng này chưa có sản phẩm nào"
-              emptyBody="Sàn đang ở giai đoạn thử nghiệm. Thử ngành hàng khác nhé."
+              emptyBody="Chưa có sản phẩm trong ngành hàng này. Thử ngành hàng khác nhé."
               emptyIcon={<SearchX size={28} aria-hidden="true" />}
               onClearFilters={
                 filters.condition || filters.inStockOnly || filters.sort !== DEFAULT_FILTERS.sort
@@ -137,20 +133,15 @@ export default function ShopCategory() {
               }
             />
 
-            {results.data?.has_more && rows.length > 0 && (
+            {results.hasNextPage && rows.length > 0 && (
               <div style={{ marginTop: 16, display: "flex", justifyContent: "center" }}>
                 <button
                   type="button"
                   className="tl-shop-btn"
-                  onClick={() => {
-                    const last = rows[rows.length - 1];
-                    const next = new URLSearchParams(params);
-                    next.set("after", last.created_at);
-                    next.set("after_id", last.id);
-                    setParams(next);
-                  }}
+                  onClick={() => void results.fetchNextPage()}
+                  disabled={results.isFetchingNextPage}
                 >
-                  Xem thêm
+                  {results.isFetchingNextPage ? "Đang tải…" : "Xem thêm"}
                 </button>
               </div>
             )}

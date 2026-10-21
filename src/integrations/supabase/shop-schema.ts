@@ -276,7 +276,7 @@ export interface ShopProfileMediaRow {
 export interface SellerProductRow extends ProductRow {
   product_variants: Pick<
     ProductVariantRow,
-    "id" | "price_vnd" | "stock_on_hand" | "position" | "sku" | "retired_at"
+    "id" | "price_vnd" | "compare_at_price_vnd" | "stock_on_hand" | "position" | "sku" | "retired_at"
   >[];
   product_media: Pick<ProductMediaRow, "id" | "position" | "public_path" | "draft_path">[];
 }
@@ -323,6 +323,8 @@ export interface ProductProjection {
     option_key: string | null;
     sku: string | null;
     price_vnd: number;
+    /** Giá gốc; null/vắng = không giảm. Migration 20260829120000. */
+    compare_at_price_vnd?: number | null;
     /** Derived by the server, so both surfaces agree what "còn hàng" means. */
     availability: "in_stock" | "out_of_stock" | "unknown";
     /** Seller-only; null for the public reader. */
@@ -630,6 +632,11 @@ export interface ShopOrderRow {
    *  counts, and it is deliberately independent of `status`: there is still no
    *  `awaiting_payment` (D2). */
   payment_confirmed_at: string | null;
+  /** Set by trigger when a PAID order is cancelled: what the seller owes the
+   *  buyer. NULL on every other order — there is no "0₫ owed". */
+  refund_due_vnd: number | null;
+  /** The seller said the money went back. Self-declared, like the two above. */
+  refunded_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -707,6 +714,10 @@ export const SHOP_P4_RPCS = [
   "shop_order_claim_payment",
   "shop_order_confirm_payment",
 ] as const;
+
+/** Pilot hardening (20260828150000) — a paid order that gets cancelled owes the
+ *  buyer its total; this is the one RPC that closes that debt. */
+export const SHOP_REFUND_RPCS = ["shop_order_mark_refunded"] as const;
 
 /** P4c (20260818170000) — người bán tự đăng bán. `product_submit` không nằm ở
  *  đây vì nó có từ trước và chỉ đổi trạng thái đích; hàm mới là đường quay lại

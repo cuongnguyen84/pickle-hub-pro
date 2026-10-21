@@ -39,6 +39,9 @@ let shopPage: Record<string, unknown> = { found: true, contacts: [], shop: { nam
 vi.mock("@/hooks/shop/usePublicShop", () => ({
   usePublicShopPage: () => ({ data: shopPage }),
 }));
+vi.mock("@/hooks/useSystemSettings", () => ({
+  useSystemSettings: () => ({ data: { shop_sepay_gateway_enabled: false } }),
+}));
 
 const refetchMock = vi.fn();
 const cartState: {

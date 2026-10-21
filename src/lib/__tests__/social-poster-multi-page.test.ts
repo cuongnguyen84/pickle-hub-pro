@@ -18,12 +18,13 @@ const env = {
 describe("social-poster multi-page rollout", () => {
   it("keeps the existing Page and adds TA Pickleball with a cutoff", () => {
     expect(configuredPages(env)).toEqual([
-      { key: "thepicklehub", id: "primary", accessToken: "primary-token", startAt: null },
+      { key: "thepicklehub", id: "primary", accessToken: "primary-token", startAt: null, viaBrowser: false },
       {
         key: "ta-pickleball",
         id: "secondary",
         accessToken: "secondary-token",
         startAt: "2026-07-31T10:04:31Z",
+        viaBrowser: false,
       },
     ]);
   });

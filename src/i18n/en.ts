@@ -91,23 +91,23 @@ export const en: Translations = {
       description: "If you have questions about this privacy policy, please contact:",
     },
     shop: {
-      title: "Shop data (closed pilot)",
+      title: "Shop data",
       description:
-        "If you apply to sell in the closed pilot, ThePickleHub processes the additional data below. The programme collects no identity documents, no bank account numbers and no payout details.",
+        "When you buy or sell through Shop, ThePickleHub processes the information needed to display products, create and deliver orders, confirm payments, support refunds, and resolve issues. ThePickleHub does not collect online-banking passwords or payment-card data.",
       groups: {
         public:
           "Public on your shop page: shop name, description, city, categories, logo and cover images, delivery and return policies, products and product images, and the contact channels you chose to declare and an administrator approved.",
         internal:
-          "Visible only to you and administrators: the full name, phone number and pickup address in your seller application. The pickup address is never shown publicly, and your account email or phone never becomes a public contact channel on its own.",
+          "Shown only to the parties who need it: the full name, phone number and pickup address in a seller application; the recipient name, phone number, delivery address, note and items in an order; and payout account details supplied by a shop. Pickup and delivery addresses are never shown publicly, and an account email or phone never becomes a public contact channel on its own.",
         consent:
           "Evidence that you accepted the seller rules: the version, the content hash and the time you agreed. No IP address and no device fingerprint — the system deliberately has nowhere to store either.",
         moderation:
-          "Moderation history: approvals and change requests, suspensions, administrator notes, and which type of contact channel changed. It never records the value of a phone number or contact channel, and internal administrator notes are not shown to the seller.",
+          "Operational history: moderation decisions, order-status changes, payment claim or confirmation times, gateway transaction references, and refunds. Contact-channel moderation records which channel type changed but never records the value; internal administrator notes are not shown to the seller.",
       },
       purpose:
-        "Used to review seller applications, display shop pages and products, moderate content, and handle complaints.",
+        "Used to review sellers, display shops and products, fulfil orders, reconcile payments, support delivery and refunds, prevent fraud, and handle complaints.",
       retention:
-        "Your seller application and your acceptance evidence are deleted with your account. Moderation history is retained for dispute resolution but is no longer tied to a deleted account. If you own a shop, the shop must be dealt with before the account can be deleted.",
+        "Your seller application and acceptance evidence are deleted with your account. Orders and records needed for delivery, payment, refunds, or reconciliation may be retained; when a buyer deletes an account, the account link is removed but delivery details already stored on an order remain for as long as needed. If you own a shop, the shop must be dealt with before the account can be deleted.",
     },
     effective: {
       text: "This policy was updated and is effective as of {date}.",
@@ -220,7 +220,7 @@ export const en: Translations = {
     deleteBlockedShopOwner:
       "This account owns a shop. To close the shop and the account safely, please send a request to tapickleballvn@gmail.com.",
     deleteBlockedShopOwnerWhy:
-      "The shop still holds products, images and moderation history. During the closed pilot ThePickleHub closes shops by hand so that nothing worth keeping is deleted by accident.",
+      "The shop still holds products, orders, images, and moderation history. ThePickleHub closes shops manually so records needed for reconciliation are preserved and retained content is not deleted by accident.",
     deleteBlockedShopOwnerNoAutoSend:
       "The button below only opens your email app — it does NOT send anything. Please write from the address you registered with; we will confirm before doing anything.",
     deleteBlockedShopOwnerCta: "Compose the request",
@@ -247,6 +247,10 @@ export const en: Translations = {
     admin: "Admin",
     openMenu: "Open menu",
     closeMenu: "Close menu",
+    toDark: "Switch to dark mode",
+    toLight: "Switch to light mode",
+    accountMenu: "Account menu",
+    createTool: "Create bracket",
   },
   tools: {
     title: "Free Pickleball Tournament Software & Bracket Generator",
@@ -1027,6 +1031,11 @@ export const en: Translations = {
       editScore: "Edit",
       openScoring: "Open scoring page",
       tieNotAllowed: "Tie scores not allowed",
+      swap: "Swap",
+      swapHint: "Pick the second team in another match to swap places",
+      swapCancel: "Cancel swap",
+      swapped: "Players swapped",
+      swapFailed: "Swap failed: {error}",
     },
     // Quota / soft launch
     quota: {
@@ -1105,6 +1114,11 @@ export const en: Translations = {
       startPlayoff: "Start Playoff",
       registrationTab: "Registration",
       playoffTab: "Playoff",
+      playoffLockedOneGroup: "One round-robin group has no knockout.",
+      playoffLockedWaiting: "The knockout opens after every group match has a result.",
+      playoffLockedReady: "The knockout has not been created yet. When the groups are done, the button is above.",
+      shareWith: "Share this tournament",
+      shareZalo: "Send on Zalo",
       standings: "Standings",
       player: "Player",
       wins: "Wins",
@@ -1175,8 +1189,8 @@ export const en: Translations = {
       addPlayerName: "Player name",
       addPlayerTeam: "Team (optional)",
       editInlineScore: "Edit",
-      inputInlineScore: "Input",
-      openScoringPage: "Score",
+      inputInlineScore: "Enter score",
+      openScoringPage: "Scoring screen",
       cancelEdit: "Cancel",
       saveScore: "Save",
       errorOccurred: "An error occurred",
@@ -1228,7 +1242,7 @@ export const en: Translations = {
     },
     playoffPreview: {
       title: "Playoff Bracket Preview",
-      subtitle: "16 teams qualified — review before confirming",
+      subtitle: "{count} teams qualified — review, tap two teams to swap, then confirm",
       seed: "Seed",
       fromGroup: "Group",
       conflictWarning: "Same-group matchups detected!",

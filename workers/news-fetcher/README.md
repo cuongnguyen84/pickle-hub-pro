@@ -1,7 +1,7 @@
 # news-fetcher
 
 Cloudflare Worker that pulls pickleball news from the active sources in
-`news_sources` and writes deduped rows into `news_items`.
+`news_sources` and writes deduped rows into the protected `news_origins` queue.
 
 ## Triggers
 
@@ -13,8 +13,9 @@ Cloudflare Worker that pulls pickleball news from the active sources in
 
 | Name | Purpose |
 |---|---|
-| `SUPABASE_SERVICE_ROLE_KEY` | PostgREST writes to `news_items`, reads `news_sources`. |
+| `SUPABASE_SERVICE_ROLE_KEY` | PostgREST writes to `news_origins`, reads/updates `news_sources`. |
 | `SCRAPER_AUTH_SECRET` | Gate the `/run` endpoint. |
+| `PICKLE_ASIA_API_KEY` | Public browser API key used by the allowlisted Pickle Asia adapter. Keep it as a secret so it can rotate independently. |
 
 ## Deploy
 
@@ -28,6 +29,7 @@ CLOUDFLARE_ACCOUNT_ID=7888e97076d4eadd9a8fa409d11dc281 \
 # One-time secrets (paste value when prompted, or pipe via stdin):
 echo -n "$SUPABASE_SERVICE_ROLE_KEY" | wrangler secret put SUPABASE_SERVICE_ROLE_KEY
 echo -n "$SCRAPER_AUTH_SECRET"        | wrangler secret put SCRAPER_AUTH_SECRET
+echo -n "$PICKLE_ASIA_API_KEY"        | wrangler secret put PICKLE_ASIA_API_KEY
 ```
 
 ## Smoke test
@@ -46,9 +48,14 @@ Each `results` row reports `fetched` (items in the feed window),
 
 ## Adding a new source
 
-Insert a row into `news_sources` (active=true, feed_type='rss' or 'atom').
-Next cron tick (or manual `/run`) picks it up automatically — no worker
-redeploy needed.
+Insert a row into `news_sources` (active=true, feed_type='rss' or 'atom'). Next
+cron tick (or manual `/run`) picks it up automatically — no worker redeploy
+needed.
+
+JSON APIs require an explicit, host-and-path allowlisted adapter in this Worker.
+For Pickle Asia, deploy the Worker and set `PICKLE_ASIA_API_KEY` before applying
+the migration that activates its `json_api` source row. Its items use
+`auto_publish=false`, so they remain in the editorial review queue.
 
 ## Per-source observability
 

@@ -26,6 +26,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Check, Plus, Trash2 } from "lucide-react";
 import { shopErrorMessage } from "@/lib/shop/errors";
 import { vnd } from "@/lib/shop/productState";
+import { discountPct, parseCompareAt } from "@/lib/shop/discount";
 import {
   VARIANT_LIMITS,
   applyBulk,
@@ -129,7 +130,11 @@ export default function VariantEditor({
         // The price is seeded so a new size is a number to confirm rather than
         // retype. The stock is NOT: 3 pairs of 39 are not also 3 pairs of 41,
         // and this number is saved as a stock correction.
-        reconcileRows(next, current, { priceVnd: current[0]?.priceVnd ?? "", stockOnHand: "" }),
+        reconcileRows(next, current, {
+          priceVnd: current[0]?.priceVnd ?? "",
+          compareAtVnd: current[0]?.compareAtVnd ?? "",
+          stockOnHand: "",
+        }),
       );
     },
     [],
@@ -278,6 +283,12 @@ export default function VariantEditor({
         disabled={disabled}
         onChange={setRow}
       />
+
+      {rows.some((r) => r.compareAtVnd.trim()) && (
+        <p className="tl-shop-hint">
+          Chỉ nhập giá shop thật sự từng bán món này. Giá gốc đặt cho có sẽ bị gỡ khi kiểm duyệt.
+        </p>
+      )}
 
       {!disabled && (
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginTop: 14 }}>
@@ -522,7 +533,7 @@ function BulkPanel({
   return (
     <div className="tl-shop-card" style={{ marginBottom: 14 }}>
       <p style={{ fontWeight: 600, marginBottom: 10 }}>
-        Đặt {field === "priceVnd" ? "giá" : "tồn kho"} cho {count} phiên bản cùng lúc
+        Đặt {field === "priceVnd" ? "giá" : field === "compareAtVnd" ? "giá gốc" : "tồn kho"} cho {count} phiên bản cùng lúc
       </p>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
         <div className="tl-shop-field" style={{ marginBottom: 0, flex: "1 1 150px" }}>
@@ -539,6 +550,7 @@ function BulkPanel({
             }}
           >
             <option value="priceVnd">Giá</option>
+            <option value="compareAtVnd">Giá gốc</option>
             <option value="stockOnHand">Tồn kho</option>
           </select>
         </div>
@@ -624,6 +636,16 @@ const RowCells = memo(function RowCells({ index, row, errors, disabled, label, o
       <input
         className="tl-shop-input"
         inputMode="numeric"
+        placeholder="không giảm"
+        aria-label={`Giá gốc ${label}`}
+        aria-invalid={!!errors.compareAtVnd}
+        disabled={disabled}
+        value={row.compareAtVnd}
+        onChange={(e) => onChange(index, "compareAtVnd", e.target.value)}
+      />
+      <input
+        className="tl-shop-input"
+        inputMode="numeric"
         placeholder="không đếm"
         aria-label={`Tồn kho ${label}`}
         aria-invalid={!!errors.stockOnHand}
@@ -635,12 +657,21 @@ const RowCells = memo(function RowCells({ index, row, errors, disabled, label, o
   );
 });
 
-const RowMessages = ({ errors }: { errors: RowErrors }) =>
-  errors.sku || errors.priceVnd || errors.stockOnHand ? (
-    <p className="tl-shop-error" role="alert">
-      {[errors.sku, errors.priceVnd, errors.stockOnHand].filter(Boolean).join(" · ")}
-    </p>
+const RowMessages = ({ errors, row }: { errors: RowErrors; row: VariantRow }) => {
+  if (errors.sku || errors.priceVnd || errors.compareAtVnd || errors.stockOnHand) {
+    return (
+      <p className="tl-shop-error" role="alert">
+        {[errors.sku, errors.priceVnd, errors.compareAtVnd, errors.stockOnHand].filter(Boolean).join(" · ")}
+      </p>
+    );
+  }
+  const pct = /^[0-9]+$/.test(row.priceVnd.trim())
+    ? discountPct(Number(row.priceVnd), parseCompareAt(row.compareAtVnd).value)
+    : null;
+  return pct != null ? (
+    <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--tl-fg-3)" }}>Người mua thấy -{pct}%</p>
   ) : null;
+};
 
 function MatrixTable({
   groups,
@@ -662,7 +693,7 @@ function MatrixTable({
       {/* Desktop table */}
       <div className="tl-shop-tablewrap" tabIndex={0} data-desktop-only>
         <table className="tl-shop-table">
-          <caption className="tl-shop-sr">Bảng phiên bản: mã hàng, giá và tồn kho</caption>
+          <caption className="tl-shop-sr">Bảng phiên bản: mã hàng, giá, giá gốc và tồn kho</caption>
           <thead>
             <tr>
               {names.map((n) => (
@@ -672,6 +703,7 @@ function MatrixTable({
               ))}
               <th scope="col">Mã hàng (SKU)</th>
               <th scope="col">Giá (₫)</th>
+              <th scope="col">Giá gốc (₫)</th>
               <th scope="col">Hàng đang có</th>
             </tr>
           </thead>
@@ -683,8 +715,8 @@ function MatrixTable({
                   {names.map((n) => (
                     <td key={n}>{row.optionValues[n] ?? "—"}</td>
                   ))}
-                  <td colSpan={3} style={{ padding: 0 }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, padding: "6px 10px" }}>
+                  <td colSpan={4} style={{ padding: 0 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6, padding: "6px 10px" }}>
                       <RowCells
                         index={i}
                         row={row}
@@ -695,7 +727,7 @@ function MatrixTable({
                       />
                     </div>
                     <div style={{ padding: "0 10px 6px" }}>
-                      <RowMessages errors={errors[i] ?? {}} />
+                      <RowMessages errors={errors[i] ?? {}} row={row} />
                     </div>
                   </td>
                 </tr>
@@ -723,7 +755,7 @@ function MatrixTable({
                   onChange={onChange}
                 />
               </div>
-              <RowMessages errors={errors[i] ?? {}} />
+              <RowMessages errors={errors[i] ?? {}} row={row} />
             </div>
           );
         })}

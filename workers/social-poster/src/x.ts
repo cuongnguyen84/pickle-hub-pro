@@ -27,9 +27,7 @@
  * Rows with no link_url are terminal at `posted`.
  */
 
-import { notifyPosted, type NotifyEnv } from './notify';
-
-export interface XEnv extends NotifyEnv {
+export interface XEnv {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   X_CLIENT_ID?: string;
@@ -37,6 +35,7 @@ export interface XEnv extends NotifyEnv {
   X_POST_MIN_GAP_MINUTES?: string;
   X_LINK_COMMENT_DELAY_SECONDS?: string;
   X_MAX_ATTEMPTS?: string;
+  X_VIA_BROWSER?: string;
 }
 
 export type XPostStatus =
@@ -472,6 +471,12 @@ export async function handleXRun(
   }
 
   const dryRun = body.dry_run === true;
+  // 19/10/2026: @thepicklehub is posted from Cuong's Chrome by
+  // scripts/ops/x_browser_post.py, which reads approved x_posts itself.
+  // Only dry runs get through here; set "0" to hand X back to the API.
+  if (env.X_VIA_BROWSER === '1' && !dryRun) {
+    return { ok: true, skipped: true, reason: 'x_via_browser' };
+  }
   const results: Record<string, unknown>[] = [];
 
   if (!body.post_id) {
@@ -587,16 +592,8 @@ async function publishNext(
       error_message: null,
     });
     const url = `https://x.com/thepicklehub/status/${publishedId}`;
-    // Announced after the row is finalized, never before: a notification for a
-    // post whose bookkeeping then failed is worse than no notification at all.
-    await notifyPosted(env, {
-      platform: 'X',
-      account: '@thepicklehub',
-      // The whole post, not its first line: an X post is at most 280
-      // characters, so the notification can show exactly what went out.
-      body: row.body,
-      url,
-    });
+    // 20/10/2026: no per-post Telegram. Published posts are counted in the
+    // Grok Bot digest (08:00/21:00) from x_posts.
     return {
       posted: true,
       post_id: row.id,

@@ -1,0 +1,203 @@
+interface ImagesBinding {
+  input(stream: ReadableStream): {
+    transform(options: { segment: "foreground" }): {
+      output(options: { format: "image/png" }): Promise<{ response(): Response }>;
+    };
+  };
+}
+
+interface Env {
+  IMAGES: ImagesBinding;
+  SUPABASE_URL: string;
+  SUPABASE_PUBLISHABLE_KEY: string;
+  ALLOWED_ORIGINS: string;
+}
+
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+
+// Every outbound fetch here is bounded and guarded. Without this, a refused
+// connection, DNS failure, TLS error or hang throws out of `export default
+// { fetch }`, the edge synthesises its own HTML 502 — and that 502 carries no
+// Access-Control-Allow-Origin, so the browser blocks it before the caller can
+// read `response.ok`. The seller sees a bare "Failed to fetch" instead of the
+// designed 503 auth_unavailable / 422 image_source_unavailable. Same
+// unguarded-await shape as 219da014 in functions/api/indexnow.ts.
+const AUTH_TIMEOUT_MS = 8_000;
+const IMAGE_FETCH_TIMEOUT_MS = 10_000;
+
+async function guardedFetch(
+  input: URL | string,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<Response | null> {
+  try {
+    return await fetch(input, { ...init, signal: AbortSignal.timeout(timeoutMs) });
+  } catch (error) {
+    console.warn("outbound fetch failed", String(input), error);
+    return null;
+  }
+}
+
+const corsHeaders = (origin: string) => ({
+  "Access-Control-Allow-Origin": origin,
+  "Access-Control-Allow-Headers": "authorization, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  Vary: "Origin",
+});
+
+function safeImageUrl(value: unknown): URL | null {
+  if (typeof value !== "string" || value.length > 2_000) return null;
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:" || url.username || url.password) return null;
+    const host = url.hostname.toLowerCase();
+    if (host === "localhost" || host.endsWith(".local") || host === "::1" ||
+        /^(?:127|10|0)\./.test(host) || /^192\.168\./.test(host) ||
+        /^169\.254\./.test(host) || /^172\.(?:1[6-9]|2\d|3[01])\./.test(host) ||
+        host.startsWith("fc") || host.startsWith("fd")) return null;
+    return url;
+  } catch {
+    return null;
+  }
+}
+
+type SellerAuthResult = "ok" | "session_invalid" | "seller_required" | "auth_unavailable";
+
+async function authorizeSeller(request: Request, env: Env): Promise<SellerAuthResult> {
+  const authorization = request.headers.get("authorization") ?? "";
+  if (!authorization.startsWith("Bearer ")) return "session_invalid";
+  const authHeaders = { authorization, apikey: env.SUPABASE_PUBLISHABLE_KEY };
+  const userResponse = await guardedFetch(
+    `${env.SUPABASE_URL}/auth/v1/user`,
+    { headers: authHeaders },
+    AUTH_TIMEOUT_MS,
+  );
+  if (!userResponse) return "auth_unavailable";
+  if (!userResponse.ok) {
+    console.warn("supabase user verification failed", userResponse.status);
+    return userResponse.status === 401 || userResponse.status === 403 ? "session_invalid" : "auth_unavailable";
+  }
+  const user = await userResponse.json() as { id?: string };
+  if (!user.id) return "session_invalid";
+  const membership = new URL(`${env.SUPABASE_URL}/rest/v1/shop_members`);
+  membership.searchParams.set("user_id", `eq.${user.id}`);
+  membership.searchParams.set("role", "in.(owner,manager)");
+  membership.searchParams.set("select", "shop_id");
+  membership.searchParams.set("limit", "1");
+  const memberResponse = await guardedFetch(membership, { headers: authHeaders }, AUTH_TIMEOUT_MS);
+  if (!memberResponse) return "auth_unavailable";
+  if (!memberResponse.ok) {
+    console.warn("seller membership lookup failed", memberResponse.status);
+    return "auth_unavailable";
+  }
+  const rows = await memberResponse.json() as unknown[];
+  return rows.length > 0 ? "ok" : "seller_required";
+}
+
+async function fetchPublicImage(initial: URL, referer: URL | null): Promise<Response | null> {
+  let current = initial;
+  for (let redirect = 0; redirect <= 4; redirect++) {
+    // The URL here is seller-supplied, so a dead or slow host is the normal
+    // case, not the exceptional one. `null` maps to the 422 the handler
+    // already has; the timeout stops a hanging source from holding the
+    // worker to its wall-clock limit.
+    const response = await guardedFetch(current, {
+      headers: {
+        Accept: "image/avif,image/webp,image/png,image/jpeg,*/*;q=0.8",
+        "user-agent": "Mozilla/5.0 (compatible; ThePickleHubImageBot/1.0)",
+        ...(referer ? { Referer: referer.toString() } : {}),
+      },
+      redirect: "manual",
+    }, IMAGE_FETCH_TIMEOUT_MS);
+    if (!response) return null;
+    if (response.status < 300 || response.status >= 400) return response;
+    const location = response.headers.get("location");
+    const next = location ? safeImageUrl(new URL(location, current).toString()) : null;
+    if (!next) return null;
+    current = next;
+  }
+  return null;
+}
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const origin = request.headers.get("origin") ?? "";
+    const allowed = new Set(env.ALLOWED_ORIGINS.split(",").map((item) => item.trim()));
+    if (!allowed.has(origin)) return new Response("Forbidden", { status: 403 });
+    const cors = corsHeaders(origin);
+    // Backstop: anything that still escapes below must leave here with CORS
+    // headers attached, or the browser blocks the response and the caller
+    // reports "Failed to fetch" with no way to tell what went wrong.
+    try {
+      return await handle(request, env, cors);
+    } catch (error) {
+      console.error("unhandled worker error", error);
+      return new Response("worker_error", { status: 500, headers: cors });
+    }
+  },
+};
+
+async function handle(
+  request: Request,
+  env: Env,
+  cors: Record<string, string>,
+): Promise<Response> {
+  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
+  if (request.method !== "POST") return new Response("Method not allowed", { status: 405, headers: cors });
+  const sellerAuth = await authorizeSeller(request, env);
+  if (sellerAuth !== "ok") {
+    const status = sellerAuth === "session_invalid" ? 401 : sellerAuth === "seller_required" ? 403 : 503;
+    return new Response(sellerAuth, { status, headers: cors });
+  }
+
+  // Two ways in: JSON { image_url, source_url } for a public image, or the
+  // image bytes themselves (Content-Type: image/*) for a file the seller
+  // picked on their device — nothing public to fetch in that case.
+  const requestType = request.headers.get("content-type") ?? "";
+  let bytes: ArrayBuffer;
+  let contentType: string;
+  if (/^image\/(jpeg|png|webp)/.test(requestType)) {
+    const declared = Number(request.headers.get("content-length") ?? 0);
+    if (declared > MAX_IMAGE_BYTES) return new Response("Image is too large", { status: 413, headers: cors });
+    bytes = await request.arrayBuffer();
+    contentType = requestType.split(";")[0].trim();
+  } else {
+    const payload = await request.json().catch(() => null) as {
+      image_url?: unknown;
+      source_url?: unknown;
+    } | null;
+    const source = safeImageUrl(payload?.image_url);
+    const referer = safeImageUrl(payload?.source_url);
+    if (!source) return new Response("Invalid image URL", { status: 400, headers: cors });
+    const imageResponse = await fetchPublicImage(source, referer);
+    if (!imageResponse) {
+      console.warn("image source redirect rejected", source.hostname);
+      return new Response("image_source_unavailable", { status: 422, headers: cors });
+    }
+    contentType = imageResponse.headers.get("content-type") ?? "";
+    const declaredSize = Number(imageResponse.headers.get("content-length") ?? 0);
+    if (!imageResponse.ok || !contentType.match(/^image\/(jpeg|png|webp)/) || declaredSize > MAX_IMAGE_BYTES) {
+      console.warn("image source rejected", source.hostname, imageResponse.status, contentType);
+      return new Response("image_source_unavailable", { status: 422, headers: cors });
+    }
+    bytes = await imageResponse.arrayBuffer();
+  }
+  if (bytes.byteLength === 0 || bytes.byteLength > MAX_IMAGE_BYTES) {
+    return new Response("Image is too large", { status: 413, headers: cors });
+  }
+
+  try {
+    const transformed = await env.IMAGES
+      .input(new Blob([bytes], { type: contentType }).stream())
+      .transform({ segment: "foreground" })
+      .output({ format: "image/png" });
+    const response = transformed.response();
+    return new Response(response.body, {
+      status: response.status,
+      headers: { ...cors, "Content-Type": "image/png", "Cache-Control": "no-store" },
+    });
+  } catch (error) {
+    console.error("background removal failed", error);
+    return new Response("background_model_failed", { status: 502, headers: cors });
+  }
+}

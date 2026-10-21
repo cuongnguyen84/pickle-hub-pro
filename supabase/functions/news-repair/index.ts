@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
   );
   if (!res.ok) {
     const detail = await res.text();
-    await sendTelegram(`⚠️ <b>news-repair</b> could not read the queue\n<code>${detail.slice(0, 200)}</code>`);
+    await sendTelegram(`[Grok Bot] 🔴 <b>news-repair</b> could not read the queue\n<code>${detail.slice(0, 200)}</code>`);
     return new Response(JSON.stringify({ error: "read_failed" }), { status: 500 });
   }
   const origins = await res.json() as Origin[];
@@ -156,9 +156,12 @@ Deno.serve(async (req) => {
   // nothing can be done about them, and naming them turns the channel into a
   // recurring list of things nobody will ever act on. The count stays in the
   // HTTP response and the reason stays on the row for anyone investigating.
-  if (repaired.length || left.length) {
+  // 2026-10-20 (Grok Bot digest): a run that only requeued rows is routine and
+  // shows up in the 08:00/21:00 digest via job health; Telegram only hears about
+  // rows that are genuinely stuck.
+  if (left.length) {
     const lines = [
-      `🛠 <b>news-repair</b> — ${origins.length} failed origin(s)`,
+      `[Grok Bot] 🔴 🛠 <b>news-repair</b> — ${origins.length} failed origin(s)`,
       repaired.length ? `\n<b>Requeued ${repaired.length}</b>\n${repaired.join("\n")}` : "",
       left.length ? `\n<b>Chưa xử lý được — ${left.length}</b>\n${left.join("\n")}` : "",
       dryRun ? "\n<i>dry run — nothing was written</i>" : "",

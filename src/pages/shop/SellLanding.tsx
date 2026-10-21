@@ -2,7 +2,7 @@
 // /shop/sell — prototype S01 in production.
 // ----------------------------------------------------------------------------
 // Requirements are readable BEFORE the user starts, and nothing here invents a
-// review SLA or a permanent fee promise — the pilot has measured neither.
+// review SLA or a permanent fee promise.
 // ============================================================================
 
 import { Link } from "react-router-dom";
@@ -63,7 +63,7 @@ export default function SellLanding() {
       <ShopHeader title="Bán hàng trên ThePickleHub" backTo="/" />
       <main className="tl-shop-page tl-shop-page--narrow">
         <div className="tl-shop-hero">
-          <p className="tl-shop-eyebrow">Thử nghiệm kín · Chưa thu phí</p>
+          <p className="tl-shop-eyebrow">Kênh người bán · Hiện chưa thu phí</p>
           <h1 className="tl-shop-h1">Bán đồ pickleball trên ThePickleHub</h1>
           <p className="tl-shop-sub">
             Người chơi đã ở đây để xem giải đấu và tìm sân. Đăng sản phẩm để họ tìm thấy anh/chị.
@@ -72,8 +72,8 @@ export default function SellLanding() {
           {user && !pilot.data && (
             <div className="tl-shop-notice tl-shop-notice--warn">
               <div>
-                <strong>Shop đang chạy thử nghiệm kín.</strong> Tài khoản của anh/chị chưa nằm
-                trong nhóm thử nghiệm. Nếu muốn tham gia, nhắn cho ThePickleHub.
+                <strong>Đăng ký mở shop hiện áp dụng theo lời mời.</strong> Nếu muốn hợp tác,
+                anh/chị nhắn cho ThePickleHub để được hướng dẫn.
               </div>
             </div>
           )}
@@ -105,8 +105,8 @@ export default function SellLanding() {
           <section aria-labelledby="s01-docs">
             <h2 className="tl-shop-h2" id="s01-docs">Giấy tờ</h2>
             <div>
-              <strong>Giai đoạn thử nghiệm không thu giấy tờ.</strong> Không cần ảnh CCCD, không
-              cần tài khoản ngân hàng. Nếu cần đối chiếu, quản trị viên liên hệ trực tiếp.
+              <strong>Hồ sơ ban đầu không yêu cầu giấy tờ.</strong> Không cần ảnh CCCD hoặc
+              tài khoản ngân hàng. Nếu cần đối chiếu, quản trị viên sẽ liên hệ trực tiếp.
             </div>
           </section>
 
@@ -116,8 +116,8 @@ export default function SellLanding() {
               Bao lâu thì được duyệt
             </h2>
             <div>
-              Hồ sơ do <strong>người</strong> xem, không phải máy tự duyệt. Chúng tôi chưa cam
-              kết thời gian cụ thể vì lượng hồ sơ còn ít và chưa đo được.
+              Hồ sơ do <strong>đội ngũ ThePickleHub</strong> xem, không phải máy tự duyệt.
+              Anh/chị sẽ nhận thông báo ngay khi có kết quả hoặc cần bổ sung thông tin.
             </div>
           </section>
 

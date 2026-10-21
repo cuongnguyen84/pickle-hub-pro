@@ -78,8 +78,9 @@ final class CreateTeamMatchModel {
         return f.string(from: d)
     }
 
+    /// Số tuỳ ý → bộ game của preset gần nhất (≤4 → 4, ≤6 → 6, còn lại → 8), giống web.
     static func defaultTemplates(_ roster: Int) -> [Template] {
-        switch roster {
+        switch roster <= 4 ? 4 : roster <= 6 ? 6 : 8 {
         case 6:
             return [.init(gameType: "WD", displayName: "WD", scoringType: "rally21"),
                     .init(gameType: "MD", displayName: "MD", scoringType: "rally21"),
@@ -182,7 +183,7 @@ final class CreateTeamMatchModel {
         hasEventDate = d.hasEventDate
         eventDate = d.eventDate
         location = d.location
-        if [4, 6, 8].contains(d.rosterSize) { rosterSize = d.rosterSize }
+        if (2...20).contains(d.rosterSize) { rosterSize = d.rosterSize }
         teamCount = min(max(2, d.teamCount), 32)
         requireRegistration = d.requireRegistration
         useDupr = d.useDupr
@@ -395,6 +396,13 @@ struct CreateTeamMatchView: View {
                         .buttonStyle(.plain)
                     }
                 }
+                // Số tuỳ ý 2–20 (khớp RPC create_team_match_atomic); 4/6/8 ở trên là lối tắt.
+                Stepper(value: Binding(get: { model.rosterSize }, set: { model.setRosterSize($0) }), in: 2...20) {
+                    Text("\(model.rosterSize) VĐV").font(TLFont.sans(15)).foregroundStyle(TLColor.fg)
+                }
+                .padding(.horizontal, 12).padding(.vertical, 6)
+                .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))
+                .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.border, lineWidth: 1))
             }
             field("Số đội") {
                 Stepper(value: Binding(get: { model.teamCount }, set: { model.teamCount = $0 }), in: 2...32) {

@@ -60,6 +60,11 @@ Every new blog post requires **4 simultaneous changes** in the same push, or bot
    - **Entity + year together**: "Ho Chi Minh City Open 2026 (6–9/8/2026)", not "(6–9/8)".
    - Calendar/list/living posts: add a visible **"last updated: <date>"** dateline in the opening AND bump `updatedDate` in the post + metadata.ts (feeds dateModified schema). Refresh stale statuses (completed events must say completed).
    - No pronoun-dependent openings ("chúng tôi", "công ty này") and no unverifiable superlatives without a number/source in the same passage.
+6. **Content effort** (owner rule since 2026-10-13, applies to every published post, whoever writes it). GSC 14/09→11/10: 18 generic guide posts × 2 languages earned 10 clicks; one PPA Chicago results post earned 241.
+   - The post must carry at least one thing a reader cannot easily get elsewhere: our own data (`venues`, results feed, calendars, rankings) or a sourced observation. Ask: with the site name removed, does the reader still get something hard to find on other pages? If not, add it or say so before publishing. Search Console 11–17/10/2026: clicks came from English results pages; the Vietnamese page for the same event earned a small fraction. The team's content job is that Vietnamese results page, not another generic guide.
+   - No padding sections: platform intro, sign-in/privacy, history, outlook, anything restating common knowledge or drifting off the query.
+   - Never print a placeholder as a measurement. `venues.price_source = 'default'` / `hours_source = 'default'` are filler ranges, not checked figures — write "not confirmed" instead.
+   - The team's copy of this rule lives in the editorial mission (`scripts/ops/team_roles.json`) and `WRIAI_BRIEF` (`team_supervisor.py`); change all three together.
 
 After `git push main` and Cloudflare deploy succeeds, **immediately request indexing**:
 - Google: open GSC URL Inspection → paste EN URL + VI URL → "Request Indexing". No public Google Indexing API for blog posts (only JobPosting + BroadcastEvent).
@@ -104,7 +109,7 @@ Root `/sitemap.xml` is a sitemap index served by `functions/sitemap.xml.ts` refe
 - `sitemap-static.xml`, `sitemap-blog.xml`, `sitemap-tournaments.xml`, `sitemap-matches.xml`, `sitemap-events.xml`, `sitemap-news.xml`
 - `sitemap-players.xml`, `sitemap-venues.xml`, `sitemap-livestreams.xml`, `sitemap-organizations.xml` are **enabled** in the index (venues: /san detail + /san/khu-vuc/<city> hub pairs; players: profiles with real content only — DUPR-linked, a synced DUPR rating, or a bio ≥30 chars; see `hasIndexableSubstance()` in `functions/sitemap-players.xml.ts`)
 
-`xhtml:link` hreflang (en, vi, x-default) is emitted only by the segments that genuinely have two URLs per entity: **blog, news, events, venues, static**. **tournaments, matches, players, livestreams, videos, organizations emit none, deliberately** — those entities are single-canonical (one URL serves both locales via the SPA language toggle), so `singleCanonicalHreflang()` in `functions/_lib/utils.ts` returns `""` and the sitemaps carry no `xhtml:link`. Google's rule: if only one URL is indexed across all locales, omit hreflang. Adding it back re-triggers Ahrefs' "no return-tag" + "referenced for more than one language" — the exact regression batches 6 and 9 fixed on 2026-05-28. `/vi/org/*`, `/vi/tournament/*` and `/vi/watch/*` additionally 301 to the EN path (`_middleware.ts` rule 1d).
+`xhtml:link` hreflang (en, vi, x-default) is emitted only by the segments that genuinely have two URLs per entity: **blog, events, venues, static**. **news emits `vi` + `x-default` only** — since C3 (`20260825120000_indexnow_news_vi_only.sql`) EN news articles are noindex and out of the sitemap, so `sitemap-news.xml` is 100% VI (919 URLs on 2026-09-04) and has no EN half to point at; do not "restore" it. **tournaments, matches, players, livestreams, videos, organizations emit none, deliberately** — those entities are single-canonical (one URL serves both locales via the SPA language toggle), so `singleCanonicalHreflang()` in `functions/_lib/utils.ts` returns `""` and the sitemaps carry no `xhtml:link`. Google's rule: if only one URL is indexed across all locales, omit hreflang. Adding it back re-triggers Ahrefs' "no return-tag" + "referenced for more than one language" — the exact regression batches 6 and 9 fixed on 2026-05-28. `/vi/org/*`, `/vi/tournament/*` and `/vi/watch/*` additionally 301 to the EN path (`_middleware.ts` rule 1d).
 
 ⚠️ **PostgREST caps every response at 1000 rows** and does it silently — `.limit(5000)` returns exactly 1000 rows, HTTP 200, `error = null`. sitemap-news served 500 of 709 EN articles that way for months (fixed 2026-08-23, #644). Every segment now pages through `fetchAllRows()` in `functions/_lib/sitemap-helpers.ts` (commit `f58aea3c`), each with a unique tie breaker in the ORDER BY, and `functions/__tests__/sitemap-row-cap.test.ts` fails any new segment that reintroduces a bare `.limit()`.
 
@@ -172,6 +177,31 @@ When verifying edge function deployments:
 - Hotfix: can merge directly via CLI if needed
 - DUPR integration PRs (PR1-PR7, #114-#122) are intentionally held out of main pending design review — do not auto-merge
 
+### 🔴 No long-lived branches — the lesson of `feat/shop-production-phase-1`
+
+That branch forked on 2026-08-11 and ran five weeks. By 15/09 each side held
+half the product: main had 438 web commits and most of the native app the
+branch never saw, while the branch held Shop screens, the World Cup board and
+the wildcard sheet main never saw. A TestFlight build from either side shipped
+a *worse* app than the one before it, and reuniting `apple/` alone took 66
+hand-resolved conflicts.
+
+Rules that follow from it:
+
+1. **A branch that cannot merge this week is too big.** Split it. `apple/` and
+   web can ship separately — they have no build-time dependency.
+2. **Merge main into the branch daily**, not at the end. The 66 conflicts were
+   five weeks of drift, not five weeks of work.
+3. **Never build a release off a feature branch.** `release_preflight.sh
+   --release-source` fails when HEAD omits `origin/main`; that gate exists
+   because 2.1.4 and 2.1.5 shipped from a branch and main kept saying 2.1.0.
+4. **A squash commit hides divergence.** `7c6fd802` ("ship native shop") is 310
+   files; nothing in it tells you which halves already existed on main. Prefer
+   a merge that keeps history, or land the work in reviewable PRs.
+5. Before any native release, run `git log origin/main..<branch> -- apple` and
+   `git log <branch>..origin/main -- apple`. **Both** directions. If the second
+   is non-empty you are about to ship a regression.
+
 ## Environment Variables
 
 Required in `.env`:
@@ -195,7 +225,7 @@ Function `send-push-notification` verifies the JWT internally and requires the a
 
 The admin role requires an **aal2 session** (TOTP via Supabase MFA) once the user has a verified factor — self-activating, enforced in `is_admin()`/`has_role()` (migrations `20260730090000` + `20260730100000` sweep) and in admin-privileged edge functions via `_shared/admin-aal.ts`. UI gate: `AdminMFAGate` (wraps `AdminLayout` + `RequireAuth requiredRole="admin"`). Lost authenticator → delete the row in `auth.mfa_factors` to unlock.
 
-## Supabase Edge Functions (82 active — count enforced by `npm run auth:registry`)
+## Supabase Edge Functions (86 active — count enforced by `npm run auth:registry`)
 
 Browse: `supabase/functions/`. Categories:
 

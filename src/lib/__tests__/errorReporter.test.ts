@@ -12,7 +12,7 @@
 // hold forever is "a non-empty string, no throw", not any given phrasing.
 // ============================================================================
 import { describe, expect, it } from "vitest";
-import { describeReason } from "../errorReporter";
+import { describeReason, isInjectedScriptError } from "../errorReporter";
 
 describe("describeReason survives every rejection reason", () => {
   it("prefers an Error's message, and falls back to its name", () => {
@@ -82,5 +82,44 @@ describe("describeReason survives every rejection reason", () => {
     expect(describeReason(() => undefined)).toBeTruthy();
     expect(() => describeReason(Symbol("tag"))).not.toThrow();
     expect(describeReason(Symbol("tag"))).toBeTruthy();
+  });
+});
+
+// ============================================================================
+// Cloudflare's injected bot probe (2026-08-30 site audit).
+// ----------------------------------------------------------------------------
+// The largest js_error group in client_errors was a SecurityError thrown by the
+// inline `__CF$cv$params` script Cloudflare appends to every HTML response, on
+// iOS Safari, reading contentDocument on a frame that had gone cross-origin.
+// It is not our code and there is nothing to fix in response to it.
+// ============================================================================
+describe("isInjectedScriptError blames the filename, not the message", () => {
+  const CF_MESSAGE =
+    'SecurityError: Blocked a frame with origin "https://www.thepicklehub.net" ' +
+    "from accessing a cross-origin frame. Protocols, domains, and ports must match.";
+
+  it("ignores the error when it comes from the document's own inline script", () => {
+    // Cloudflare's snippet is inline in the served HTML, so the ErrorEvent
+    // blames the page URL itself — never an /assets/ chunk.
+    expect(isInjectedScriptError(CF_MESSAGE, "https://www.thepicklehub.net/live/abc")).toBe(true);
+    expect(isInjectedScriptError(CF_MESSAGE, undefined)).toBe(true);
+  });
+
+  it("still reports the SAME message from our own code, built or in dev", () => {
+    // The whole safety of this filter. If our player or embed code ever throws
+    // this, we have to hear about it.
+    expect(isInjectedScriptError(
+      CF_MESSAGE,
+      "https://www.thepicklehub.net/assets/LiveWatch-Ck3s9.js",
+    )).toBe(false);
+    // `npm run dev` serves our modules unbundled from /src/ — the window in
+    // which a real cross-origin bug is easiest to catch.
+    expect(isInjectedScriptError(CF_MESSAGE, "http://localhost:8080/src/pages/Live.tsx"))
+      .toBe(false);
+  });
+
+  it("does not touch any other message", () => {
+    expect(isInjectedScriptError("TypeError: x is not a function", undefined)).toBe(false);
+    expect(isInjectedScriptError("", undefined)).toBe(false);
   });
 });

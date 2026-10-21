@@ -1,5 +1,5 @@
 import UIKit
-import GoogleSignIn
+@preconcurrency import GoogleSignIn
 
 /// Thin wrapper over GoogleSignIn-iOS. Returns the OIDC tokens needed by
 /// Supabase's `signInWithIdToken`. Client/server IDs come from Info.plist

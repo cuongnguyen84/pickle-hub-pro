@@ -36,6 +36,7 @@ const GROUPS: OptionGroup[] = [
 const row = (over: Partial<VariantRow> = {}): VariantRow => ({
   optionValues: {},
   priceVnd: "1290000",
+  compareAtVnd: "",
   stockOnHand: "",
   sku: "",
   ...over,
@@ -217,6 +218,15 @@ describe("reconcileRows — identity, not position", () => {
     expect(next.some((r) => r.id === "v0")).toBe(false);
   });
 
+  it("carries the single product's compare-at onto every new row, and only when seeded", () => {
+    const single = [row({ id: "v0", priceVnd: "1000000", compareAtVnd: "1250000", stockOnHand: "3" })];
+    const seeded = reconcileRows(GROUPS, single, { priceVnd: "1000000", compareAtVnd: "1250000", stockOnHand: "" });
+    expect(seeded).toHaveLength(4);
+    expect(seeded.every((r) => r.compareAtVnd === "1250000")).toBe(true);
+    const unseeded = reconcileRows(GROUPS, single, { priceVnd: "1000000", stockOnHand: "" });
+    expect(unseeded.every((r) => r.compareAtVnd === "")).toBe(true);
+  });
+
   it("collapsing to a single product keeps the first row's price", () => {
     const next = reconcileRows([], existing);
     expect(next).toHaveLength(1);
@@ -311,6 +321,30 @@ describe("the reconcile payload", () => {
 
   it("carries position, so the display order the seller sees is the one stored", () => {
     expect(toReconcilePayload([row(), row(), row()], false).map((p) => p.position)).toEqual([0, 1, 2]);
+  });
+});
+
+describe("giá gốc trong bảng", () => {
+  it("rỗng → null, có giá → số", () => {
+    expect(toReconcilePayload([row()], false)[0].compare_at_price_vnd).toBeNull();
+    expect(toReconcilePayload([row({ compareAtVnd: " 1500000 " })], false)[0].compare_at_price_vnd).toBe(1500000);
+  });
+  it("bằng hoặc thấp hơn giá bán, hoặc chữ → dòng bị đánh dấu và chặn lưu", () => {
+    const errors = validateRows([row({ compareAtVnd: "1290000" }), row({ compareAtVnd: "abc" }), row()]);
+    expect(errors[0].compareAtVnd).toBe("Giá gốc phải lớn hơn giá bán.");
+    expect(errors[1].compareAtVnd).toBe("Chỉ nhập số.");
+    expect(errors[2].compareAtVnd).toBeUndefined();
+    expect(hasRowErrors(errors)).toBe(true);
+  });
+  it("reconcile giữ giá gốc của dòng còn tồn tại", () => {
+    const kept = reconcileRows(GROUPS, [
+      row({ optionValues: { "Màu sắc": "Trắng", "Kích cỡ": "39" }, compareAtVnd: "2000000" }),
+    ]);
+    expect(kept[0].compareAtVnd).toBe("2000000");
+    expect(kept[1].compareAtVnd).toBe("");
+  });
+  it("bulk áp giá gốc như mọi ô khác", () => {
+    expect(applyBulk([row(), row()], "compareAtVnd", "1500000").rows.map((r) => r.compareAtVnd)).toEqual(["1500000", "1500000"]);
   });
 });
 

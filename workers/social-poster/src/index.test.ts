@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { buildPostedMessage } from './notify';
 import {
   buildAppComment,
   buildLinkComment,
+  configuredPages,
   facebookMaxItemAgeDays,
   laterOf,
   isFacebookPostingWindow,
+  isStaleTournamentNews,
   pickNextId,
   pickNextScanLimit,
   sanitizeCaption,
@@ -114,39 +115,38 @@ describe('Facebook staleness floor', () => {
   });
 });
 
-describe('Telegram post notice', () => {
-  const notice = {
-    platform: 'X',
-    account: '@thepicklehub',
-    body: 'Waters & Khlif were down 0-6 <b>and</b> won it 15-13.',
-    url: 'https://x.com/thepicklehub/status/123',
-  };
+describe('browser-mode page', () => {
+  const env = {
+    FB_PAGE_ID: '1',
+    FB_PAGE_ACCESS_TOKEN: 't',
+    FB_SECONDARY_PAGE_ID: '2',
+    FB_SECONDARY_PAGE_ACCESS_TOKEN: 't2',
+  } as unknown as Parameters<typeof configuredPages>[0];
 
-  // The first roundup posted to X reads "Waters & Khlif". Telegram parses the
-  // message as HTML, so that one ampersand returns 400 and the notification
-  // vanishes — silently, because notifyPosted swallows failures.
-  it('escapes HTML so an ampersand in the post cannot kill the message', () => {
-    const m = buildPostedMessage(notice);
-    expect(m).toContain('Waters &amp; Khlif');
-    expect(m).toContain('&lt;b&gt;and&lt;/b&gt;');
-    expect(m).not.toContain('<b>and</b>');
+  it('flags only the secondary page when FB_SECONDARY_VIA_BROWSER=1', () => {
+    const pages = configuredPages({ ...env, FB_SECONDARY_VIA_BROWSER: '1' });
+    expect(pages.map((p) => [p.key, p.viaBrowser])).toEqual([
+      ['thepicklehub', false],
+      ['ta-pickleball', true],
+    ]);
   });
 
-  it('keeps its own markup working while escaping the content', () => {
-    const m = buildPostedMessage(notice);
-    expect(m).toContain('<b>Đã đăng lên X</b>');
+  it('flags the primary page when FB_PRIMARY_VIA_BROWSER=1', () => {
+    const pages = configuredPages({ ...env, FB_PRIMARY_VIA_BROWSER: '1', FB_SECONDARY_VIA_BROWSER: '1' });
+    expect(pages.every((p) => p.viaBrowser)).toBe(true);
   });
 
-  it('names the platform and the account, and ends with the link', () => {
-    const m = buildPostedMessage(notice);
-    expect(m).toContain('@thepicklehub');
-    expect(m.trim().endsWith('https://x.com/thepicklehub/status/123')).toBe(true);
+  it('keeps both pages on the API when the flag is unset', () => {
+    expect(configuredPages(env).every((p) => !p.viaBrowser)).toBe(true);
   });
+});
 
-  it('escapes a Facebook headline the same way', () => {
-    const m = buildPostedMessage({ ...notice, platform: 'Facebook', account: 'TA Pickleball',
-      body: 'Dallas & Brooklyn vào bán kết' });
-    expect(m).toContain('Dallas &amp; Brooklyn');
-    expect(m).toContain('<b>Đã đăng lên Facebook</b> — TA Pickleball');
+describe('isStaleTournamentNews', () => {
+  const now = Date.parse('2026-10-19T12:00:00Z');
+  it('drops tournament news older than 24h, keeps other categories', () => {
+    expect(isStaleTournamentNews('tournament', '2026-10-18T11:00:00Z', now)).toBe(true);
+    expect(isStaleTournamentNews('tournament', '2026-10-18T13:00:00Z', now)).toBe(false);
+    expect(isStaleTournamentNews('player', '2026-10-16T12:00:00Z', now)).toBe(false);
+    expect(isStaleTournamentNews(null, '2026-10-16T12:00:00Z', now)).toBe(false);
   });
 });

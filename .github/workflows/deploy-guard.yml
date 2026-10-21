@@ -112,13 +112,6 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
-            echo "Telegram secrets missing — skipping alert"; exit 0
-          fi
-          MSG="🛡️ *Deploy guard FAILED on main*%0A%0A"
-          MSG="$MSG*Commit:* \`${GITHUB_SHA:0:7}\`%0A"
-          MSG="$MSG*Run:* https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}%0A"
-          MSG="$MSG_An edge function failed to deploy._"
-          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-            -d "chat_id=${TELEGRAM_CHAT_ID}" -d "text=${MSG}" \
-            -d "parse_mode=Markdown" -d "disable_web_page_preview=true" > /dev/null
+          scripts/ci/telegram-notify.sh always "Deploy guard FAILED on main: an edge function failed to deploy or migrations drifted
+          Commit: ${GITHUB_SHA:0:7}
+          Run: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"

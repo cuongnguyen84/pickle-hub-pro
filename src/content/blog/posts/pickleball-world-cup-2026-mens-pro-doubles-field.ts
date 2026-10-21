@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "pickleball-world-cup-2026-mens-pro-doubles-field",
   publishedDate: "2026-08-26",
-  updatedDate: "2026-08-26",
+  updatedDate: "2026-09-07",
   author: "Cuong Nguyen",
   tags: [
     "pickleball world cup 2026",
@@ -30,13 +30,17 @@ const post: BlogPost = {
         "Pickleball World Cup 2026 Men's Pro Doubles: The Final Field, Ranked by Combined DUPR",
       metaTitle: "World Cup 2026 Men's Pro Doubles: Field Ranked by DUPR",
       metaDescription:
-        "Men's Pro Doubles at the Pickleball World Cup 2026 Da Nang plays Tuesday Sep 1. The final field ranked by combined DUPR, with every pair broken down.",
+        "Men's Pro Doubles at the Pickleball World Cup 2026 Da Nang: Livornese Jr and Munro won it. The full field ranked by combined DUPR, every pair broken down.",
       sections: [
         {
-          heading: "The field is set — Men's Pro Doubles plays Tuesday, September 1",
+          heading: "The draw is done — Men's Pro Doubles played Tuesday, September 1",
           content:
-            "Last updated August 26, 2026 — the Men's Pro Doubles draw at the Heineken Pickleball World Cup 2026 in Da Nang, Vietnam (August 30 – September 6, 2026) is now final, and it plays on Tuesday, September 1, alongside Women's Pro Doubles. The Pro finals for every category close the tournament on Sunday, September 6 on court 1 at Tien Son Sports Palace. Ranked by combined DUPR, the top three pairs are Jack Munro and Richard Livornese Jr. (12.51), Jay Devilliers and Émilien Burnel (12.27), and Quang Duong and Harsh Mehta (12.18). This ThePickleHub breakdown ranks every published pair in the draw, explains what the ratings do and do not tell you, and flags the two Vietnamese pairs whose DUPR the organizers have not published. All times are Vietnam time (GMT+7).",
+            "Last updated Monday September 7, 2026 — Richard Livornese Jr. and Jack Munro won the Men's Pro Doubles title at the Heineken Pickleball World Cup 2026 in Da Nang, Vietnam, beating Ly Hoang Nam and Nguyen Anh Gia Huy 15-12, 15-13 in the Grand Final on Sunday September 6 on court 1 at Tien Son Sports Palace. Ly Hoang Nam played four of the day's eight finals and won one: he took the all-Vietnamese men's singles title over Phuc Huynh 6-15, 16-14, 15-10, and finished runner-up here, in mixed doubles with Roos Van Reek, and with Vietnam's Open team, which lost the national-team final 0-4 to the United States. Getting to that final, Ly Hoang Nam and Nguyen Anh Gia Huy, who competes as Robert Huy, dropped the opening game and took the next two to beat Quang Duong and Harsh Mehta 11-15, 15-11, 15-12 in Tuesday's semifinal. Munro and Livornese, the draw's top pair by combined DUPR, came through 15-12, 15-12 against Brandon Lane and Ryler DeHeart; Quang Duong and Harsh Mehta then took the bronze-medal match against that same Lane and DeHeart pair, 15-10 in the only game the bracket records. The whole draw played out on Tuesday, September 1 from 08:00 to 16:20 Vietnam time at Tien Son Center and Tuyen Son A&amp;D, alongside Women's Pro Doubles. Ranked by combined DUPR before the draw, the top three pairs were Jack Munro and Richard Livornese Jr. (12.51), Jay Devilliers and Émilien Burnel (12.27), and Quang Duong and Harsh Mehta (12.18) — the top seed won it. This ThePickleHub breakdown ranks every published pair in the draw, explains what the ratings do and do not tell you, and flags the two Vietnamese pairs whose DUPR the organizers never published. All times are Vietnam time (GMT+7).",
           internalLinks: [
+            {
+              text: "What the week was actually like, from the stands at Tien Son",
+              path: "/blog/pickleball-world-cup-2026-da-nang-from-the-stands",
+            },
             {
               text: "Full World Cup schedule, both tournaments day by day",
               path: "/blog/pickleball-world-cup-2026-da-nang-schedule",
@@ -111,12 +115,12 @@ const post: BlogPost = {
         {
           heading: "The match everyone is hoping the draw produces",
           content:
-            "Munro–Livornese against Duong–Mehta. The best pair in the world on current form against the pair that owns the Asian circuit, in Vietnam, in front of a Vietnamese crowd, with Quang Duong carrying home expectation. Nothing in the published bracket guarantees it happens — a draw is a draw, and either pair can lose before they meet. But if it lands, it is the match of the tournament, and it is the reason to be in the building on September 1 rather than watching the highlights later.",
+            "The draw did not produce it: Duong and Mehta lost the semifinal to Ly Hoang Nam and Nguyen Anh Gia Huy and took bronze instead, so the final was Munro–Livornese against the Vietnamese pair — and Munro and Livornese won it 15-12, 15-13. The case for wanting the other match stands as written. Munro–Livornese against Duong–Mehta. The best pair in the world on current form against the pair that owns the Asian circuit, in Vietnam, in front of a Vietnamese crowd, with Quang Duong carrying home expectation. Nothing in the published bracket guaranteed it, a draw is a draw, and in the end the semifinal took it off the table.",
         },
         {
           heading: "What is still not known",
           content:
-            "Three honest gaps, four days out. First, start times for individual Pro matches on September 1 were not published as of August 26 — the organizers' schedule marks day-by-day categories but the tournament states the schedule is subject to change, so check on the day. Second, the organizers have not confirmed whether FPT Play's World Cup coverage is free or behind a subscription; we are not going to write \"watch it free\" without a source. Third, DUPR ratings move. The figures in the table above are the ones printed on the official bracket as of August 26, 2026, and a rating that shifts after this page was updated will not be reflected until we refresh it.",
+            "A correction first, then what stayed open. Until September 2 this page said September 1 ran \"from 15:00 to 17:40\" and put the men's Pro Singles Grand Final at 18:20 on September 6. Both were seven hours late. The organizers' feed publishes Vietnam wall-clock times in a field labelled UTC, and we converted them to Vietnam time a second time; the correct reading of the feed put the singles final at 11:20, and September 1 ran 08:00 to 16:20. On the morning of September 6 the organisers published a labelled order of play that moved the singles final to 10:50, the mixed final to 12:40, the women's doubles final to 17:00 and the men's doubles final to 18:20. In the event the two evening Pro finals were played earlier than that list: the bracket records the women's doubles at about 15:45 and the men's doubles at about 17:05. Two things stayed unresolved to the end. The organizers never confirmed whether FPT Play's World Cup coverage was free or behind a subscription; we were not going to write \"watch it free\" without a source. And DUPR ratings move: the figures in the table above are the ones printed on the official bracket as of August 26, 2026, and any rating that shifted afterwards is not reflected here.",
           internalLinks: [
             {
               text: "Tickets, venues and how to watch",
@@ -130,7 +134,7 @@ const post: BlogPost = {
           question:
             "When does Men's Pro Doubles play at the Pickleball World Cup 2026?",
           answer:
-            "Men's Pro Doubles at the Heineken Pickleball World Cup 2026 in Da Nang plays on Tuesday, September 1, 2026, on the same day as Women's Pro Doubles. The Pro finals across all categories are held on Sunday, September 6 on court 1 at Tien Son Sports Palace. All times are Vietnam time (GMT+7), and the organizers list the schedule as subject to change.",
+            "Men's Pro Doubles at the Heineken Pickleball World Cup 2026 in Da Nang was played on Tuesday, September 1, 2026, from 08:00 to 16:20, on the same day as Women's Pro Doubles. The Pro finals across all categories were played on Sunday, September 6 on court 1 at Tien Son Sports Palace, where Richard Livornese Jr and Jack Munro beat Ly Hoang Nam and Nguyen Anh Gia Huy 15-12, 15-13 for the men's doubles title. All times are Vietnam time (GMT+7).",
         },
         {
           question:
@@ -139,9 +143,9 @@ const post: BlogPost = {
             "Jack Munro and Richard Livornese Jr. lead at 12.51 combined (6.323 + 6.187). Jay Devilliers and Émilien Burnel are second at 12.27, and Quang Duong and Harsh Mehta third at 12.18. Devilliers holds the highest individual rating in the field at 6.599.",
         },
         {
-          question: "Is Quang Duong playing at the Pickleball World Cup 2026?",
+          question: "How did Quang Duong do at the Pickleball World Cup 2026?",
           answer:
-            "Yes. Quang Duong plays Men's Pro Doubles with India's Harsh Mehta, a partnership with a combined DUPR of 12.18. The pair won the Men's Pro Doubles title at the Leapmotor APP Asia Penang Open 2026 and the men's doubles championship at the Asian Open Pickleball Championships 2026.",
+            "He took bronze in Men's Pro Doubles with India's Harsh Mehta, a partnership with a combined DUPR of 12.18. They lost the semifinal to Ly Hoang Nam and Nguyen Anh Gia Huy 15-11, 11-15, 12-15 and then beat Brandon Lane and Ryler DeHeart 15-10 in the bronze-medal match. He also reached the Pro men's singles semifinal, where the Da Nang city portal reported he had to stop with a wrist injury while trailing Ly Hoang Nam 8-15, 2-15. The pair had won the Men's Pro Doubles title at the Leapmotor APP Asia Penang Open 2026 and the men's doubles championship at the Asian Open Pickleball Championships 2026.",
         },
         {
           question:
@@ -166,8 +170,12 @@ const post: BlogPost = {
         {
           heading: "Danh sách đã chốt — đôi nam pro đấu thứ Ba 1/9",
           content:
-            "Cập nhật lần cuối 26/8/2026 — nhánh đấu Đôi nam chuyên nghiệp tại Heineken Pickleball World Cup 2026 ở Đà Nẵng (30/8 – 6/9/2026) đã chốt danh sách, và thi đấu vào thứ Ba 1/9, cùng ngày với Đôi nữ chuyên nghiệp. Chung kết toàn bộ nhóm Pro khép lại giải vào Chủ nhật 6/9 tại sân 1 Cung Thể thao Tiên Sơn. Xếp theo tổng DUPR, ba cặp dẫn đầu là Jack Munro – Richard Livornese Jr. (12,51), Jay Devilliers – Émilien Burnel (12,27) và Quang Dương – Harsh Mehta (12,18). Đây là bản phân tích do ThePickleHub thực hiện: xếp hạng từng cặp có công bố chỉ số, nói rõ DUPR đo được gì và không đo được gì, và chỉ ra hai cặp Việt Nam mà ban tổ chức chưa công bố DUPR. Mọi mốc giờ theo giờ Việt Nam (GMT+7).",
+            "Cập nhật thứ Hai 7/9/2026 — Richard Livornese Jr. và Jack Munro vô địch nội dung đôi nam Pro tại Heineken Pickleball World Cup 2026 ở Đà Nẵng, thắng Lý Hoàng Nam – Nguyễn Ảnh Gia Huy 15-12, 15-13 ở trận Chung kết Chủ nhật 6/9 trên sân 1 Cung Thể thao Tiên Sơn. Lý Hoàng Nam đánh bốn trong tám trận chung kết của ngày và thắng một: anh vô địch đơn nam trong trận nội bộ Việt Nam trước Phúc Huỳnh 6-15, 16-14, 15-10, và về nhì ở nội dung này, ở đôi nam nữ cùng Roos Van Reek, và cùng đội tuyển Open — đội thua chung kết Đồng đội 0-4 trước Mỹ. Trên đường vào chung kết, Lý Hoàng Nam – Nguyễn Ảnh Gia Huy (thi đấu với tên Robert Huy) thua ván đầu rồi thắng liền hai ván, hạ Quang Dương – Harsh Mehta 11-15, 15-11, 15-12 ở bán kết chiều thứ Ba. Munro – Livornese, cặp mạnh nhất nhánh theo tổng DUPR, vào chung kết sau khi thắng Brandon Lane – Ryler DeHeart 15-12, 15-12; còn Quang Dương – Harsh Mehta thắng chính cặp Lane – DeHeart ở trận tranh hạng ba, 15-10 ở ván duy nhất mà bảng đấu ghi lại. Toàn bộ nhánh đấu diễn ra gọn trong thứ Ba 1/9, từ 08:00 đến 16:20 giờ Việt Nam tại Tien Son Center và Tuyen Son A&amp;D, cùng ngày với Đôi nữ chuyên nghiệp. Xếp theo tổng DUPR trước khi bốc thăm, ba cặp dẫn đầu là Jack Munro – Richard Livornese Jr. (12,51), Jay Devilliers – Émilien Burnel (12,27) và Quang Dương – Harsh Mehta (12,18) — và hạt giống số 1 đã vô địch. Đây là bản phân tích do ThePickleHub thực hiện: xếp hạng từng cặp có công bố chỉ số, nói rõ DUPR đo được gì và không đo được gì, và chỉ ra hai cặp Việt Nam mà ban tổ chức chưa từng công bố DUPR. Mọi mốc giờ theo giờ Việt Nam (GMT+7).",
           internalLinks: [
+            {
+              text: "Một tuần ở Đà Nẵng nhìn từ khán đài — ghi chép tại chỗ",
+              path: "/vi/blog/nhat-ky-pickleball-world-cup-2026-da-nang",
+            },
             {
               text: "Lịch thi đấu World Cup đầy đủ, cả hai giải, từng ngày",
               path: "/vi/blog/lich-thi-dau-pickleball-world-cup-2026-da-nang",
@@ -241,12 +249,12 @@ const post: BlogPost = {
         {
           heading: "Trận đấu ai cũng mong lá thăm sẽ tạo ra",
           content:
-            "Munro – Livornese gặp Quang Dương – Mehta. Cặp đôi hay nhất thế giới ở thời điểm hiện tại đối đầu cặp đang thống trị đấu trường châu Á, trên đất Việt Nam, trước khán giả Việt Nam, với Quang Dương gánh kỳ vọng sân nhà. Không có gì trong bracket đã công bố đảm bảo trận đó sẽ diễn ra — lá thăm là lá thăm, và cả hai cặp đều có thể thua trước khi kịp gặp nhau. Nhưng nếu nó xảy ra, đó là trận hay nhất giải, và là lý do để có mặt trong nhà thi đấu ngày 1/9 thay vì xem highlight sau đó.",
+            "Nhánh đấu đã không cho ra trận này: Quang Dương – Mehta thua bán kết trước Lý Hoàng Nam – Nguyễn Ảnh Gia Huy và giành hạng ba, nên chung kết là Munro – Livornese gặp cặp Việt Nam — và Munro – Livornese đã thắng 15-12, 15-13. Lý do đáng mong chờ trận kia thì vẫn nguyên. Munro – Livornese gặp Quang Dương – Mehta. Cặp đôi hay nhất thế giới ở thời điểm hiện tại đối đầu cặp đang thống trị đấu trường châu Á, trên đất Việt Nam, trước khán giả Việt Nam, với Quang Dương gánh kỳ vọng sân nhà. Không có gì trong bracket đã công bố đảm bảo trận đó sẽ diễn ra — lá thăm là lá thăm — và cuối cùng trận bán kết đã gạt nó khỏi bàn.",
         },
         {
           heading: "Những gì vẫn chưa rõ",
           content:
-            "Ba khoảng trống, nói thẳng, khi chỉ còn 4 ngày. Thứ nhất, giờ thi đấu cụ thể của các trận Pro cá nhân ngày 1/9 tính tới 26/8 vẫn chưa được công bố — lịch của ban tổ chức mới chia hạng mục theo ngày, và chính họ ghi rõ lịch có thể thay đổi, nên hãy kiểm lại vào đúng ngày. Thứ hai, ban tổ chức chưa xác nhận sóng World Cup trên FPT Play là miễn phí hay cần thuê bao; chúng tôi sẽ không viết \"xem miễn phí\" khi chưa có nguồn. Thứ ba, chỉ số DUPR luôn thay đổi. Các con số trong bảng trên là con số in trên bracket chính thức tính tới ngày 26/8/2026; nếu một chỉ số đổi sau thời điểm cập nhật này thì phải chờ lần làm mới sau.",
+            "Trước hết là một đính chính, rồi tới những chỗ còn bỏ ngỏ đến phút cuối. Tới ngày 2/9, trang này vẫn ghi ngày 1/9 thi đấu \"từ 15:00 đến 17:40\" và đặt Chung kết đơn nam Pro vào 18:20 ngày 6/9. Cả hai đều trễ đúng bảy tiếng: dữ liệu của ban tổ chức phát giờ Việt Nam trong một trường gắn nhãn UTC, và chúng tôi đã quy đổi sang giờ Việt Nam thêm một lần nữa. Đọc đúng dữ liệu thì Chung kết đơn nam là 11:20, và ngày 1/9 thi đấu từ 08:00 đến 16:20. Sáng 6/9 ban tổ chức công bố lịch có dán nhãn, dời chung kết đơn nam sang 10:50, chung kết đôi nam nữ sang 12:40, chung kết đôi nữ 17:00 và chung kết đôi nam 18:20. Trên thực tế hai trận chung kết Pro buổi tối diễn ra sớm hơn lịch đó: bảng đấu ghi nhận đôi nữ khoảng 15:45 và đôi nam khoảng 17:05. Hai điều còn bỏ ngỏ tới hết giải: ban tổ chức chưa bao giờ xác nhận sóng World Cup trên FPT Play là miễn phí hay cần thuê bao — chúng tôi không viết \"xem miễn phí\" khi chưa có nguồn; và chỉ số DUPR luôn thay đổi, các con số trong bảng trên là con số in trên bracket chính thức tính tới ngày 26/8/2026, chỉ số nào đổi sau đó thì không phản ánh ở đây.",
           internalLinks: [
             {
               text: "Vé, địa điểm và cách xem World Cup",

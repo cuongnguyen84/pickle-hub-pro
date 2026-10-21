@@ -11,9 +11,9 @@ describe("layout-stable public content surfaces", () => {
     const news = source("src/components/home/HomeNewsFeed.tsx");
     const live = source("src/components/home/LiveSection.tsx");
 
-    expect(home).toContain(
-      "hasLiveData || scheduledStreams.length > 0 || recentEnded.length > 0",
-    );
+    // Replays left the home page on 16/09, and the seven-day replay window
+    // that used to keep this slot occupied went with them.
+    expect(home).toContain("hasLiveData || scheduledStreams.length > 0");
     expect(home).toContain("const liveNode = liveQueriesLoading");
     expect(home).toContain("priority");
     expect(home).toContain("viPostsLoading");
@@ -64,5 +64,18 @@ describe("layout-stable public content surfaces", () => {
     expect(venue).toContain("nearbyLoading");
     expect(viBlog).toContain('className="aspect-[3/2] w-full rounded-xl mb-8"');
     expect(enBlog).toContain('className="aspect-video w-full mb-10 rounded-xl"');
+  });
+
+  it("keeps shop cards and their content aligned when titles wrap differently", () => {
+    const shop = source("src/styles/shop.css");
+
+    // Grid rows stretch the <li>, so the card link must fill that row too.
+    expect(shop).toMatch(/\.tl-pgrid > li\s*\{[^}]*display:\s*flex/);
+    expect(shop).toMatch(/\.tl-pcard\s*\{[^}]*height:\s*100%/);
+    expect(shop).toMatch(/\.tl-pcard-body\s*\{[^}]*flex:\s*1/);
+
+    // The title is clamped to two lines; reserving both lines keeps the shop,
+    // price, and arrow on one baseline for one-line and two-line product names.
+    expect(shop).toMatch(/\.tl-pcard-title\s*\{[^}]*min-height:\s*2\.7em/);
   });
 });

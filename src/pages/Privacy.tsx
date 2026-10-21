@@ -89,7 +89,7 @@ const Privacy = () => {
               </ul>
             </section>
 
-            {/* Shop — closed pilot */}
+            {/* Shop */}
             <section>
               <h2 className="text-lg font-semibold text-foreground mb-3">{p.shop.title}</h2>
               <p className="mb-2">{p.shop.description}</p>
@@ -141,7 +141,7 @@ const Privacy = () => {
             {/* Effective Date */}
             <section className="pt-4 border-t border-border">
               <p className="text-sm text-foreground-muted">
-                {p.effective.text.replace("{date}", "14/08/2026")}
+                {p.effective.text.replace("{date}", "28/08/2026")}
               </p>
               <p className="text-sm text-foreground-muted mt-1">
                 {p.effective.update}

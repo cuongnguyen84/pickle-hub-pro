@@ -1,5 +1,5 @@
-import type { BlogPost, BlogPostMetadata } from "./types";
-import { blogMetadata } from "./metadata";
+import type { BlogPost } from "./types";
+
 
 /**
  * Dynamic imports — each blog post lives in its own chunk.
@@ -38,28 +38,7 @@ export async function getBlogPost(slug: string): Promise<BlogPost | undefined> {
   }
 }
 
-/**
- * Find related posts by shared tag count — operates on lightweight
- * metadata so no post content is loaded.
- */
-export function getRelatedPosts(
-  currentSlug: string,
-  limit: number = 3
-): BlogPostMetadata[] {
-  const current = blogMetadata.find((p) => p.slug === currentSlug);
-  if (!current) return [];
-
-  const currentTags = new Set(current.tags);
-  return blogMetadata
-    .filter((p) => p.slug !== currentSlug)
-    .map((p) => ({
-      post: p,
-      shared: p.tags.filter((t) => currentTags.has(t)).length,
-    }))
-    .sort((a, b) => b.shared - a.shared)
-    .slice(0, limit)
-    .map((item) => item.post);
-}
+export { getRelatedPosts } from "./related";
 
 export { blogMetadata } from "./metadata";
 export type { BlogPost, BlogPostMetadata, BlogSection, BlogPostContent } from "./types";

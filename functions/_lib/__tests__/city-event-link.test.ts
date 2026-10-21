@@ -8,9 +8,9 @@ import { cityEventLink } from "../render/venues";
 const SITE = "https://www.thepicklehub.net";
 
 describe("cityEventLink", () => {
-  it("links Da Nang to the World Cup article while the event is ahead", () => {
+  it("links Da Nang to the World Cup results recap", () => {
     const html = cityEventLink("da-nang", "vi", SITE, "2026-07-27");
-    expect(html).toContain(`${SITE}/vi/blog/cam-nang-xem-pickleball-world-cup-2026-da-nang`);
+    expect(html).toContain(`${SITE}/vi/blog/ket-qua-pickleball-world-cup-2026-da-nang`);
     expect(html).toContain("World Cup");
   });
 
@@ -27,9 +27,18 @@ describe("cityEventLink", () => {
     // HCMC Open finishes Aug 9.
     expect(cityEventLink("tp-hcm", "vi", SITE, "2026-08-10")).not.toBe("");
     expect(cityEventLink("tp-hcm", "vi", SITE, "2026-08-11")).toBe("");
-    // World Cup finishes Sep 6.
-    expect(cityEventLink("da-nang", "vi", SITE, "2026-09-07")).not.toBe("");
-    expect(cityEventLink("da-nang", "vi", SITE, "2026-09-08")).toBe("");
+    // World Cup finished Sep 6; from Sep 7 the da-nang link points at the
+    // results recap instead of the preview guide, and runs 30 more days so the
+    // city hub keeps a live destination while the event still has search
+    // demand. See WC-DANANG-RECAP in docs/milestones.md.
+    expect(cityEventLink("da-nang", "vi", SITE, "2026-09-07")).toContain(
+      "/vi/blog/ket-qua-pickleball-world-cup-2026-da-nang",
+    );
+    expect(cityEventLink("da-nang", "en", SITE, "2026-09-07")).toContain(
+      "/blog/pickleball-world-cup-2026-da-nang-results",
+    );
+    expect(cityEventLink("da-nang", "vi", SITE, "2026-10-07")).not.toBe("");
+    expect(cityEventLink("da-nang", "vi", SITE, "2026-10-08")).toBe("");
     // Well past both.
     expect(cityEventLink("da-nang", "vi", SITE, "2027-01-01")).toBe("");
   });

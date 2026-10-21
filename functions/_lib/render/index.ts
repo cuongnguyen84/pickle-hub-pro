@@ -62,3 +62,4 @@ export {
   renderShopProduct,
   renderShopStore,
 } from "./shop";
+export { renderProTourEvent } from "./pro-tour-event";

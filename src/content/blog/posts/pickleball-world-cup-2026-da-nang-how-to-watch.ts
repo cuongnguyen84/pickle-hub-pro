@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "pickleball-world-cup-2026-da-nang-how-to-watch",
   publishedDate: "2026-07-17",
-  updatedDate: "2026-08-27",
+  updatedDate: "2026-09-07",
   author: "The PickleHub Team",
   tags: [
     "world cup pickleball",
@@ -27,15 +27,19 @@ const post: BlogPost = {
     en: {
       title:
         "How to Watch — and Enter — the Heineken Pickleball World Cup 2026 in Da Nang",
-      metaTitle: "Pickleball World Cup 2026 Da Nang: How to Watch & Register",
+      metaTitle: "Pickleball World Cup 2026 Live Stream: Watch & Replay",
       metaDescription:
-        "Pickleball World Cup 2026 Da Nang: tickets, all 7 venues, FPT Play broadcast, hotels and the key dates. Aug 30-Sep 6, with Vietnam at home.",
+        "Pickleball World Cup 2026 Da Nang (Aug 30-Sep 6) streamed live on FPT Play. Where to find replays, the 7 venues, tickets, and how the Sep 6 finals ended.",
       sections: [
         {
           heading: "The Short Version",
           content:
-            "Last updated August 26, 2026 — the full schedule is published and play starts Sunday August 30. The Heineken Pickleball World Cup 2026 runs August 30 – September 6, 2026 across seven venues in Da Nang, Vietnam. Individual competition starts Sunday August 30; the national-team competition starts Thursday September 3; the Opening Ceremony is Wednesday September 2, 18:00–20:00, on Vietnam's National Day; and the finals close the event on Sunday September 6. The August 16 draw put Vietnam in Group A in the Open, Masters, Junior and Kids categories — Vietnam has no team in Seniors. Vietnam's Open squad is led by captain Quan Do and includes Hoang Nam Ly, Hien Truong, and Ken Tam and Sophia Huynh Tran, who won women's doubles gold in Shenzhen on August 23. This ThePickleHub companion is the practical guide — the day-by-day plan, where the courts actually are, what tickets exist, and how to watch if you are not in Da Nang. The headline fact for Vietnamese readers is unchanged: this is Vietnam's first appearance at the Pickleball World Cup, as hosts.",
+            "Last updated Monday September 7, 2026 — the Heineken Pickleball World Cup 2026 in Da Nang, Vietnam finished on Sunday September 6. The United States beat Vietnam 4-0 (21-17, 21-10, 21-16, 21-14) in the Open national-team final at 19:40 that closed the tournament, so Vietnam took silver; Ly Hoang Nam won Pro men's singles over his compatriot Phuc Huynh 6-15, 16-14, 15-10. The other Pro titles: Katerina Stewart in women's singles, Jack Munro and Nicola Schoeman in mixed doubles, Selina Turulja and Nicola Schoeman in women's doubles, Richard Livornese Jr and Jack Munro in men's doubles over Ly Hoang Nam and Nguyen Anh Gia Huy. Vietnam finished top of the medal table; Vietnamese outlets reported 106 golds at the close, the same figure carried for play through September 3, when the total was 244 medals. The tournament opened Sunday August 30 at 08:00 Vietnam time and ran through September 6; by the morning of August 31 the organizers' site listed champions in 12 of the 69 events, all amateur draws. Vietnam won Open Group A on September 3 by beating Chile, the Cayman Islands and Colombia 6-0 each, then beat South Africa and the Netherlands on September 4 and Australia 4-3 and Japan 4-0 on September 5. There were two ways to watch from home while it ran: FPT Play, the exclusive Vietnamese broadcaster, and the organizers' own Livestream Premium package at 250,000₫ for the 16 PRO and national-team courts. The Opening Ceremony was Wednesday September 2, on Vietnam's National Day. The August 16 draw put Vietnam in Group A in the Open, Masters, Junior and Kids categories — Vietnam had no team in Seniors. Vietnam's Open squad was led by captain Quan Do and included Ly Hoang Nam, Hien Truong, and Ken Tam and Sophia Huynh Tran, who won women's doubles gold in Shenzhen on August 23. This ThePickleHub companion was the practical guide — the day-by-day plan, where the courts actually were, what tickets existed, and how to watch from outside Da Nang — and is kept as the record of how the week ran. The headline fact for Vietnamese readers is unchanged: this was Vietnam's first appearance at the Pickleball World Cup, as hosts.",
           internalLinks: [
+            {
+              text: "What the week was actually like, from the stands at Tien Son",
+              path: "/blog/pickleball-world-cup-2026-da-nang-from-the-stands",
+            },
             {
               text: "Read the full Heineken Pickleball World Cup 2026 guide",
               path: "/blog/pickleball-world-cup-2026-da-nang",
@@ -73,7 +77,7 @@ const post: BlogPost = {
         {
           heading: "The Dates That Matter",
           content:
-            "Four milestones cover the whole week. The individual tournament — the open-entry one, bracketed by DUPR rating — starts Sunday August 30 and has the first four days to itself. The Opening Ceremony is Wednesday September 2, 18:00–20:00, on Vietnam's National Day. The national-team competition, the part with Vietnam in it, runs Thursday September 3 to Sunday September 6, and Vietnam opens against Colombia in the Open group stage at 08:00 on September 3. The All Pro Categories Finals close the individual tournament on Sunday September 6, 08:00–18:00 on Tien Son court 1. One gap to know about before booking travel: the Open final has no date, time or court in the published schedule at all — September 6 is expected, not confirmed. Competition days run 08:00 to 18:00 and the organizers mark the schedule subject to change.",
+            "Four milestones covered the whole week. The individual tournament — the open-entry one, bracketed by DUPR rating — started Sunday August 30 and had the first four days to itself. The Opening Ceremony was Wednesday September 2, 18:00–20:00, on Vietnam's National Day. The national-team competition, the part with Vietnam in it, ran Thursday September 3 to Sunday September 6; Vietnam played its whole Open group stage from 08:00 on September 3, opening against Chile and closing against Colombia, and won all three ties 6-0. The finals closed the event on Sunday September 6 at Tien Son: Juniors team final 08:00 Vietnam v United States, Pro women's singles 09:30, Pro men's singles 10:50, Pro mixed doubles 12:40, Seniors team final 14:00 Brazil v Spain, Pro women's doubles, Pro men's doubles, and the Open team final at 19:40, where the United States beat Vietnam 4-0. Competition days ran 08:00 to 18:00.",
           internalLinks: [
             {
               text: "Full day-by-day schedule for both tournaments, and Vietnam's dates",
@@ -104,12 +108,12 @@ const post: BlogPost = {
         {
           heading: "A Note on the Court Count",
           content:
-            'The event\'s own homepage advertises "97 courts across 7 venues", but the venue page itemises 87 (8 + 31 + 16 + 9 + 8 + 8 + 7), and adds that more venues are being considered. We list the per-venue numbers above rather than either headline total, because those are the figures you can actually plan around. A third number now exists: the venue filter on the schedule page itemises 76 courts across 8 clusters, and it is the only one of the three that names the clusters actually carrying matches. Expect the total to keep moving — this is a tournament still adding sites three days out.',
+            'The event\'s own homepage advertises "97 courts across 7 venues", but the venue page itemises 87 (8 + 31 + 16 + 9 + 8 + 8 + 7), and adds that more venues are being considered. We list the per-venue numbers above rather than either headline total, because those are the figures you can actually plan around. A third number now exists: the venue filter on the schedule page itemises 76 courts across the club sites, and it is the only one of the three that names the clusters actually carrying matches. Expect the total to keep moving — this is a tournament that was still adding sites the day before it started.',
         },
         {
           heading: "How to Watch if You're Not in Da Nang",
           content:
-            "Updated August 27, 2026, three days out. There are now two ways to watch from home, and the second one is new. The organizers have opened their own Livestream Premium package on sporttora.com/pwc2026/premium-live: 250,000 VND (about US$9.50) for the whole tournament, covering all 16 PRO and national-team courts across two venue clusters, with same-day replays, free court switching and playback on phone, desktop or TV. It is sold per account, requires a real Sporttora login, and the organizers state it is non-refundable. FPT Play is both a co-organizer of the tournament and its exclusive Vietnamese broadcaster, carrying the event on SmartTV, mobile, FPT Play Box and fptplay.vn — a subscription is required. FPT Play also holds exclusive Vietnamese rights to PPA Tour Asia 2026, so a single subscription covers most of the pro pickleball played in Vietnam this year. International broadcast arrangements have not been announced. For updates between now and August, the official Instagram (@pickleballworldcupofficial) and YouTube channel are the fastest sources, and ThePickleHub carries bilingual coverage and live match tracking.",
+            "Updated Monday September 7, 2026 — the tournament is over, and this section is kept as the record of how it was broadcast. There were two ways to watch from home. The organizers ran their own Livestream Premium package on sporttora.com/pwc2026/premium-live: 250,000 VND (about US$9.50) for the whole tournament, covering all 16 PRO and national-team courts across two venue clusters, with same-day replays, free court switching and playback on phone, desktop or TV. It was sold per account, required a real Sporttora login, and the organizers stated it was non-refundable. FPT Play was both a co-organizer of the tournament and its exclusive Vietnamese broadcaster: on August 28 it confirmed it would carry the whole tournament live and exclusively in Vietnam, on its Smart TV app, mobile, PC and laptop, FPT Play Box and fptplay.vn. What it never said is whether that coverage sat inside its free tier or behind a subscription. FPT Play also holds exclusive Vietnamese rights to PPA Tour Asia 2026, so one subscription covers most of the pro pickleball played in Vietnam this year. International broadcast arrangements were never announced. The official Instagram (@pickleballworldcupofficial) and YouTube channel carried day-to-day updates, and ThePickleHub carried bilingual coverage and live match tracking.",
           internalLinks: [
             { text: "Live pickleball on ThePickleHub", path: "/live" },
             {
@@ -123,9 +127,9 @@ const post: BlogPost = {
           ],
         },
         {
-          heading: "Tickets: Only Hospitality Packages Are on Sale",
+          heading: "Tickets: Hospitality Packages Were the Only Ones Published",
           content:
-            "This is the biggest surprise in the published information, and it will change plans for anyone budgeting a spectator trip. As of August 24 the official platform sells four hospitality packages and nothing else — there is no general-admission ticket listed at any price. If you were planning to buy a normal day ticket at the gate, that option has not been published, and we would not assume it exists until the organizers say so.",
+            "This is the biggest surprise in the published information, and it will change plans for anyone budgeting a spectator trip. As of August 24 the official platform sold four hospitality packages and nothing else — no general-admission ticket at any price. The ticket link then vanished from the event homepage for three days — we checked on August 27, 28 and 29 and found no ticket entry in the navigation, none in the footer and no mention of tickets in the page body, where a Livestream Premium banner sat instead — and on August 30, opening day, it is back: a \"Mua Vé — tickets on sale\" button pointing at /pwc2026/tickets. What sits behind that button we still cannot read. The ticket page renders client-side and returns an empty shell to a plain fetch, so we can confirm the link exists again but not what is on sale or at what price. The organizers have not explained the three-day gap. The table below is kept as a record of what was on sale on August 24, not as a live price list. If you are travelling to spectate, ask the organizers directly on Zalo at 0799438688 or support@sporttora.com before you assume you can get in.",
           table: {
             caption:
               "Heineken Pickleball World Cup 2026 — hospitality packages listed on the official platform, read August 24, 2026",
@@ -141,17 +145,17 @@ const post: BlogPost = {
         {
           heading: "Going in Person: Book Early, and Know Why",
           content:
-            "The tournament deliberately overlaps Vietnam's National Day holiday week (September 2) — which is exactly why you should book accommodation now rather than in August. That week is peak domestic tourism season in Da Nang, and the World Cup is landing on top of it. The organizers list official partner hotels from around $55–60 per night (Wink Hotel Danang Riverside and Danang Centre at $55, Wyndham Golden Bay Danang at $60), and Da Nang is served by 31 direct international routes from 15 countries — including Incheon, Busan, Narita, Osaka, Singapore, Kuala Lumpur, Bangkok, Manila and Bali — with easy domestic connections via Hanoi or Ho Chi Minh City.",
+            "The tournament deliberately overlaps Vietnam's National Day holiday week (September 2) — which is why accommodation was booked out early. That week is peak domestic tourism season in Da Nang, and the World Cup is landing on top of it. The organizers' partner-hotel prices have come down since we first listed them: as read on August 29 the featured rates are $35 per night at Nhu Minh Plaza Danang, $40 at Wink Hotel Danang Riverside and $45 at Wink Hotel Danang Centre — the earlier $55–60 band, including Wyndham Golden Bay at $60, is no longer what the page shows. Da Nang is served by 31 direct international routes from 15 countries — including Incheon, Busan, Narita, Osaka, Singapore, Kuala Lumpur, Bangkok, Manila and Bali — with easy domestic connections via Hanoi or Ho Chi Minh City.",
         },
         {
           heading: "Beyond the Matches",
           content:
-            "Three side events are open to people who are not competing, and for Vietnamese clubs and coaches they may outlast the medal table. There is a pickleball clinic with a professional player (the organizers say the pro will be named in the coming weeks), a Referee Masterclass — theoretical and practical officiating training run by experienced officials — and the Pickleball World Promoters Forum, expected to bring together representatives from more than 50 countries around the sport's push toward the Olympics. The wider programme also includes a trade exhibition with an OCOP showcase of Vietnamese regional products and a cultural exhibition introducing the participating nations.",
+            "Three side events are open to people who are not competing, and for Vietnamese clubs and coaches they may outlast the medal table. There is a pickleball clinic with a professional player (the organizers said the pro would be named closer to the event, but no name was ever published), a Referee Masterclass — theoretical and practical officiating training run by experienced officials — and the Pickleball World Promoters Forum, expected to bring together representatives from more than 50 countries around the sport's push toward the Olympics. The wider programme also includes a trade exhibition with an OCOP showcase of Vietnamese regional products and a cultural exhibition introducing the participating nations.",
         },
         {
           heading: "What Still Isn't Known",
           content:
-            "Being straight about the gaps, as of August 27, 2026. Three things on this list have now been answered: the day-by-day schedule is published, hospitality ticket prices are up, and there is at last a confirmed way to watch from home at a normal price — the organizers' own Livestream Premium package, 250,000 VND for all 16 PRO and team courts. What is still missing: the Open final has no date, time or court in the published schedule, so September 6 is inference rather than confirmation. No general-admission ticket has been published at any price — only the four hospitality packages. Individual match times and court assignments are not published either; the schedule gives each day's events and venues, and the organizers note that a listed time covers a whole event window from first match to last, not your match. Whether FPT Play carries the tournament inside its free tier or behind a subscription is still not stated, and how its coverage overlaps with the organizers' own 16-court stream is not stated either — buying one does not obviously make the other redundant. International broadcast arrangements have not been announced. The pro player leading the clinic has not been named. And team counts still disagree: federations and press report 156 registered teams, while the drawn brackets contain 152 — Juniors and Kids each lost two teams between registration and the draw. We will update this guide as each is confirmed.",
+            "Being straight about the gaps, as of Monday September 7, 2026, the day after the tournament ended. Tien Son Sports Palace was free to enter for Vietnam's team matches from September 3 to 5, per Tuoi Tre; finals day was ticketed. Several items on this list were closed out during the week. The September 6 finals got times and division labels when the organisers published the full order of play on the morning of the final day, and the Open team final was 19:40, Vietnam against the United States, which the United States won 4-0. FPT Play confirmed on August 28 that it would carry the whole tournament live and exclusively in Vietnam. What was never resolved: no general-admission ticket was ever published at any price — the ticket link returned to the event homepage on August 30 after three days away, but the page behind it renders client-side and we were never able to read what it sold. Individual match times and court assignments were never published; the schedule gave each day's events and venues, and the organizers noted that a listed time covered a whole event window from first match to last. Whether FPT Play carried the tournament inside its free tier or behind a subscription was never stated, and neither was how its coverage overlapped with the organizers' own 16-court stream. International broadcast arrangements were never announced. The pro player leading the clinic was never named. And team counts still disagree: federations and press reported 156 registered teams, while the drawn brackets contained 152 — Juniors and Kids each lost two teams between registration and the draw. Two results are still missing as of this update: no outlet has published the Juniors or Seniors national-team final result from September 6, and neither appears in the organizers' Pro bracket feed.",
         },
       ],
       faqItems: [
@@ -175,48 +179,52 @@ const post: BlogPost = {
           question:
             "How much are spectator tickets for the Pickleball World Cup 2026?",
           answer:
-            "As of August 24, 2026 the official platform sells four hospitality packages and has published no general-admission ticket at any price: Finals & Music Festival table for two on Sep 6 at $2,000; VVIP Finals single seat on Sep 6 at $1,000; Full Package for all five days Sep 2–6 at $3,600; and VVIP Special, a table of three across five days, at $5,400. We will update this if the organizers open general admission.",
+            "No general-admission ticket has ever been published at any price. On August 24, 2026 the official platform sold four hospitality packages and nothing else: Finals & Music Festival table for two on Sep 6 at $2,000; VVIP Finals single seat on Sep 6 at $1,000; Full Package for all five days Sep 2–6 at $3,600; and VVIP Special, a table of three across five days, at $5,400. The ticket link then disappeared from the event homepage for three days — no entry in the navigation, footer or page body on August 27, 28 or 29 — and returned on August 30, opening day, marked \"tickets on sale\". The page behind it renders client-side, so we cannot read what it currently offers. Treat those prices as a record of August 24, not a live list, and contact the organizers directly before travelling to spectate.",
         },
         {
-          question: "Where exactly are the matches played?",
+          question: "Where exactly were the matches played?",
           answer:
-            "Across seven venues in Da Nang. The main sites are Tien Son Sports Palace (8 courts, Phan Dang Luu street) and Tuyen Son Sports Complex (31 courts, Nai Nam 2 street). Five satellite club venues carry the rest: Trang Hoang (16 courts), AK (9), KingKong (8), Hop Thanh Phat (8) and Furama (7). All are roughly 10 minutes from Da Nang International Airport.",
+            "Across seven venues in Da Nang. The main sites were Tien Son Sports Palace (8 courts, Phan Dang Luu street) and Tuyen Son Sports Complex (31 courts, Nai Nam 2 street). Five satellite club venues carried the rest: Trang Hoang (16 courts), AK (9), KingKong (8), Hop Thanh Phat (8) and Furama (7). All are roughly 10 minutes from Da Nang International Airport, and the Pro finals were played on court 1 at Tien Son on September 6.",
         },
         {
           question: "When is the opening ceremony?",
           answer:
-            "The Opening Ceremony is scheduled for Wednesday September 2, 2026, 18:00–20:00 — Vietnam's National Day. Note that competition begins three days earlier, on August 30, and the national-team competition does not start until the day after the ceremony, on September 3. The All Pro Categories Finals run 08:00–18:00 on Sunday September 6 on Tien Son court 1. The organizers mark the schedule subject to change.",
+            "The Opening Ceremony was Wednesday September 2, 2026 at Tien Son Sports Palace — Vietnam's National Day. The organizers' schedule listed an 18:00–20:00 window; FPT Play, announcing its broadcast on August 28, gave the start as 17:30. Competition had begun three days earlier, on August 30, and the national-team competition started the day after the ceremony, on September 3. The finals were on Sunday September 6 at Tien Son, running from the Juniors team final at 08:00 to the Open team final at 19:40, which the United States won 4-0 over Vietnam.",
         },
         {
           question:
             "How can I watch the Pickleball World Cup 2026 from outside Da Nang?",
           answer:
-            "FPT Play is the exclusive Vietnamese broadcaster, carrying the event on SmartTV, mobile, FPT Play Box and fptplay.vn with a subscription. International broadcast arrangements have not been announced. Follow @pickleballworldcupofficial on Instagram and ThePickleHub for bilingual coverage.",
+            "Two routes. The organizers' own Livestream Premium package is 250,000₫ for the whole tournament, covering the 16 PRO and national-team courts. FPT Play is the exclusive Vietnamese broadcaster — it confirmed on August 28 that it will carry the whole tournament live and exclusively, on its Smart TV app, mobile, PC and laptop, FPT Play Box and fptplay.vn; it has not said whether that sits inside its free tier or behind a subscription. International broadcast arrangements have not been announced. Follow @pickleballworldcupofficial on Instagram and ThePickleHub for bilingual coverage.",
         },
         {
-          question: "When does Vietnam play at the Pickleball World Cup 2026?",
+          question: "How did Vietnam do at the Pickleball World Cup 2026?",
           answer:
-            "The national-team competition runs Thursday September 3 to Sunday September 6. Vietnam is the top seed in Group A in Open, Masters, Juniors and Kids, and has no team in Seniors. The Open group stage begins at 08:00 on September 3 with pools A–L. The Open squad is captained by Quan Do and includes Hoang Nam Ly, Quang Duong, Phuc Huynh, Hien Truong, Linh Giang Trinh, Ken Tam, Sophia Huynh Tran, Trang Huynh and Boi Ngoc Si.",
+            "The national-team competition ran Thursday September 3 to Sunday September 6. Vietnam was the top seed in Group A in Open, Masters, Juniors and Kids, and had no team in Seniors. In the Open group Vietnam was drawn with Colombia, the Cayman Islands and Chile. The Open group stage was played from 08:00 on September 3 with pools A–L, and Vietnam won all three of its ties 6-0 to top Group A, then reached the final and lost it 0-4 to the United States. The Open squad was captained by Quan Do and included Ly Hoang Nam, Quang Duong, Phuc Huynh, Hien Truong, Linh Giang Trinh, Ken Tam, Sophia Huynh Tran, Trang Huynh and Boi Ngoc Si.",
         },
         {
           question: "Where should I stay for the Pickleball World Cup 2026?",
           answer:
-            "Book early — the tournament overlaps Vietnam's National Day holiday week (September 2), already peak season in Da Nang. Official partner hotels start around $55–60 per night, including Wink Hotel Danang Riverside and Danang Centre ($55) and Wyndham Golden Bay Danang ($60). Da Nang airport is about 10 minutes from the venues. On tickets, be aware that only hospitality packages are on sale, from $1,000 to $5,400 — no general-admission ticket has been published.",
+            "Book early — the tournament overlaps Vietnam's National Day holiday week (September 2), already peak season in Da Nang. As read on August 29, the featured partner-hotel rates are $35 per night at Nhu Minh Plaza Danang, $40 at Wink Hotel Danang Riverside and $45 at Wink Hotel Danang Centre. Da Nang airport is about 10 minutes from the venues. On tickets, be aware that no general-admission ticket has ever been published, and the ticket link vanished from the event homepage for three days before returning on August 30 — contact the organizers before you travel to spectate.",
         },
       ],
     },
     vi: {
       title:
         "Cẩm nang xem và thi đấu Heineken Pickleball World Cup 2026 tại Đà Nẵng",
-      metaTitle: "World Cup Pickleball 2026 Đà Nẵng | Cách xem",
+      metaTitle: "Vé, giá vé & xem World Cup Pickleball 2026 Đà Nẵng",
       metaDescription:
-        "World Cup Pickleball 2026 Đà Nẵng: vé, 7 địa điểm, xem trên FPT Play, khách sạn và các mốc chính. 30/8-6/9, Việt Nam đá sân nhà.",
+        "Giá vé, 7 địa điểm, xem trực tiếp World Cup Pickleball 2026 Đà Nẵng trên FPT Play. Giải khép lại 6/9: Mỹ thắng Việt Nam 4-0.",
       sections: [
         {
           heading: "Tóm tắt nhanh",
           content:
-            'Cập nhật lần cuối 26/8/2026 — lịch thi đấu đã có đầy đủ, giải khởi tranh Chủ nhật 30/8. Heineken Pickleball World Cup 2026 diễn ra từ 30/8 đến 6/9/2026 tại bảy địa điểm ở Đà Nẵng. Giải Cá nhân khởi tranh Chủ nhật 30/8; Giải Đồng đội Quốc gia bắt đầu thứ Năm 3/9; lễ khai mạc vào thứ Tư 2/9, 18:00–20:00, đúng ngày Quốc khánh; và các trận chung kết khép lại giải Chủ nhật 6/9. Lễ bốc thăm 16/8 đưa Việt Nam vào bảng A ở Open, Masters, Junior và Kids — Việt Nam không có đội ở Seniors. Đội hình Open của Việt Nam do Đỗ Minh Quân làm đội trưởng, có Lý Hoàng Nam, Trương Vinh Hiển, cùng Ken Tâm và Sophia Huỳnh Trần — hai người vừa vô địch đôi nữ tại Thâm Quyến ngày 23/8. Bài trụ cột của ThePickleHub trả lời "giải này là gì"; bài này là phần thực tế đi kèm — lịch từng ngày, sân nằm ở đâu, có vé loại nào, và không ở Đà Nẵng thì xem bằng cách nào. Điều đáng chú ý nhất với người Việt không đổi: đây là lần đầu tiên Việt Nam góp mặt tại World Cup Pickleball, với tư cách chủ nhà.',
+            "Cập nhật lần cuối thứ Hai 7/9/2026 — Heineken Pickleball World Cup 2026 tại Đà Nẵng đã khép lại Chủ nhật 6/9. Mỹ thắng Việt Nam 4-0 (21-17, 21-10, 21-16, 21-14) ở chung kết Đồng đội Quốc gia Open lúc 19:40 — trận khép lại cả giải — nên Việt Nam giành huy chương bạc; Lý Hoàng Nam vô địch đơn nam Pro sau khi thắng đồng hương Phúc Huỳnh 6-15, 16-14, 15-10. Các ngôi vô địch Pro còn lại: Katerina Stewart đơn nữ, Jack Munro – Nicola Schoeman đôi nam nữ, Selina Turulja – Nicola Schoeman đôi nữ, Richard Livornese Jr – Jack Munro đôi nam sau khi thắng Lý Hoàng Nam – Nguyễn Ảnh Gia Huy. Việt Nam dẫn đầu bảng tổng sắp huy chương; báo trong nước ghi 106 HCV lúc kết thúc giải, đúng bằng con số của phần thi đấu tính tới hết 3/9, khi tổng là 244 huy chương. Giải khởi tranh Chủ nhật 30/8 lúc 08:00 giờ Việt Nam tại Đà Nẵng, ngày đầu có 47 nội dung trải trên 7 cụm sân, và kéo dài tới 6/9; tính đến sáng 31/8, trang ban tổ chức ghi nhận 12 trong 69 nội dung đã có nhà vô địch, đều là nhóm Amateur. Việt Nam nhất bảng A nội dung Open ngày 3/9 với ba trận thắng Chile, Quần đảo Cayman và Colombia cùng tỉ số 6-0, rồi thắng Nam Phi và Hà Lan ngày 4/9, thắng Australia 4-3 và Nhật Bản 4-0 ngày 5/9. Trong lúc giải diễn ra, ở nhà xem bằng hai đường: FPT Play — đơn vị phát sóng độc quyền tại Việt Nam — và gói Livestream Premium 250.000₫ của chính ban tổ chức, phủ 16 sân PRO và Đồng đội. Lễ khai mạc diễn ra thứ Tư 2/9, đúng ngày Quốc khánh. Lễ bốc thăm 16/8 đưa Việt Nam vào bảng A ở Open, Masters, Junior và Kids — Việt Nam không có đội ở Seniors. Đội hình Open của Việt Nam do Đỗ Minh Quân làm đội trưởng, có Lý Hoàng Nam, Trương Vinh Hiển, cùng Ken Tâm và Sophia Huỳnh Trần — hai người vừa vô địch đôi nữ tại Thâm Quyến ngày 23/8. Bài trụ cột của ThePickleHub trả lời “giải này là gì”; bài này là phần thực tế đi kèm — lịch từng ngày, sân nằm ở đâu, có vé loại nào, và không ở Đà Nẵng thì xem bằng cách nào — nay giữ lại như bản ghi cách tuần lễ đó đã diễn ra. Điều đáng chú ý nhất với người Việt không đổi: đây là lần đầu tiên Việt Nam góp mặt tại World Cup Pickleball, với tư cách chủ nhà.",
           internalLinks: [
+            {
+              text: "Một tuần ở Đà Nẵng nhìn từ khán đài — ghi chép tại chỗ",
+              path: "/vi/blog/nhat-ky-pickleball-world-cup-2026-da-nang",
+            },
             {
               text: "Đọc bài đầy đủ về Heineken Pickleball World Cup 2026",
               path: "/vi/blog/world-cup-pickleball-2026-da-nang",
@@ -255,7 +263,7 @@ const post: BlogPost = {
         {
           heading: "Những mốc thời gian cần nhớ",
           content:
-            "Bốn mốc là đủ cho cả tuần. Giải Cá nhân — giải mở đăng ký, chia bảng theo điểm DUPR — khởi tranh Chủ nhật 30/8 và chiếm trọn bốn ngày đầu. Lễ khai mạc vào thứ Tư 2/9, 18:00–20:00, đúng ngày Quốc khánh. Giải Đồng đội Quốc gia, phần có đội tuyển Việt Nam, đấu từ thứ Năm 3/9 đến Chủ nhật 6/9, và Việt Nam ra quân gặp Colombia ở vòng bảng Open lúc 08:00 ngày 3/9. Chung kết toàn bộ nhóm Pro khép lại Giải Cá nhân vào Chủ nhật 6/9, 08:00–18:00 tại Tiên Sơn sân 1. Một khoảng trống cần biết trước khi đặt vé: trận chung kết Open hoàn toàn chưa có ngày, giờ hay sân trong lịch đã công bố — 6/9 là dự kiến, chưa phải đã chốt. Ngày thi đấu chạy 08:00–18:00 và ban tổ chức ghi rõ lịch có thể thay đổi.",
+            "Bốn mốc là đủ cho cả tuần. Giải Cá nhân — giải mở đăng ký, chia bảng theo điểm DUPR — khởi tranh Chủ nhật 30/8 và chiếm trọn bốn ngày đầu. Lễ khai mạc vào thứ Tư 2/9, 18:00–20:00, đúng ngày Quốc khánh. Giải Đồng đội Quốc gia, phần có đội tuyển Việt Nam, đấu từ thứ Năm 3/9 đến Chủ nhật 6/9; Việt Nam đã đấu trọn vòng bảng Open từ 08:00 ngày 3/9 — mở màn gặp Chile, khép lại gặp Colombia — và thắng cả ba trận 6-0. Các trận chung kết khép lại giải Chủ nhật 6/9 tại Tiên Sơn: Đồng đội Junior 08:00 Việt Nam – Mỹ, đơn nữ Pro 09:30, đơn nam Pro 10:50, đôi nam nữ Pro 12:40, Đồng đội Senior 14:00 Brazil – Tây Ban Nha, đôi nữ Pro, đôi nam Pro, và chung kết Đồng đội Open 19:40, nơi Mỹ thắng Việt Nam 4-0. Ngày thi đấu chạy 08:00–18:00.",
           internalLinks: [
             {
               text: "Lịch thi đấu đầy đủ từng ngày của cả hai giải, và Việt Nam đấu ngày nào",
@@ -286,12 +294,12 @@ const post: BlogPost = {
         {
           heading: "Một lưu ý về con số sân",
           content:
-            'Trang chủ của giải quảng cáo "97 sân tại 7 địa điểm", nhưng trang địa điểm liệt kê ra 87 sân (8 + 31 + 16 + 9 + 8 + 8 + 7), và có ghi thêm rằng đang cân nhắc thêm địa điểm. Chúng tôi liệt kê số sân theo từng địa điểm ở trên thay vì lấy một trong hai con số tổng, vì đó mới là thứ bạn dùng để lên kế hoạch được. Nhiều khả năng con số này còn thay đổi: giải vẫn đang bổ sung địa điểm khi chỉ còn sáu tuần nữa là khai cuộc.',
+            'Trang chủ của giải quảng cáo "97 sân tại 7 địa điểm", nhưng trang địa điểm liệt kê ra 87 sân (8 + 31 + 16 + 9 + 8 + 8 + 7), và có ghi thêm rằng đang cân nhắc thêm địa điểm. Chúng tôi liệt kê số sân theo từng địa điểm ở trên thay vì lấy một trong hai con số tổng, vì đó mới là thứ bạn dùng để lên kế hoạch được. Nhiều khả năng con số này còn thay đổi: giải vẫn đang bổ sung địa điểm khi chỉ còn một ngày nữa là khai cuộc.',
         },
         {
           heading: "Không ở Đà Nẵng thì xem thế nào?",
           content:
-            "Cập nhật 27/8/2026, còn 3 ngày là bóng lăn. Giờ có hai cách xem tại nhà, và cách thứ hai là mới. Ban tổ chức đã mở gói Livestream Premium của chính họ tại sporttora.com/pwc2026/premium-live: 250.000₫ cho trọn giải, phủ đủ 16 sân PRO và Đồng đội trên 2 cụm sân, có xem lại trong ngày, đổi sân tự do, xem trên điện thoại — máy tính — TV. Gói gắn với tài khoản, cần đăng nhập bằng tài khoản thật, và ban tổ chức ghi rõ là không hoàn huỷ. FPT Play vừa là đơn vị đồng tổ chức vừa là đơn vị phát sóng độc quyền tại Việt Nam, phát trên SmartTV, di động, FPT Play Box và fptplay.vn — cần thuê bao. FPT Play cũng nắm bản quyền độc quyền PPA Tour Asia 2026, nên một thuê bao phủ gần như toàn bộ pickleball chuyên nghiệp diễn ra tại Việt Nam năm nay. Các thỏa thuận phát sóng quốc tế chưa được công bố. Từ nay tới tháng 8, kênh cập nhật nhanh nhất là Instagram chính thức (@pickleballworldcupofficial) và kênh YouTube của giải; ThePickleHub theo dõi song ngữ và cập nhật trận đấu trực tiếp.",
+            "Cập nhật thứ Hai 7/9/2026 — giải đã kết thúc, và mục này giữ lại như bản ghi về cách giải được phát sóng. Có hai cách xem tại nhà. Ban tổ chức mở gói Livestream Premium của chính họ tại sporttora.com/pwc2026/premium-live: 250.000₫ cho trọn giải, phủ đủ 16 sân PRO và Đồng đội trên 2 cụm sân, có xem lại trong ngày, đổi sân tự do, xem trên điện thoại — máy tính — TV. Gói gắn với tài khoản, cần đăng nhập bằng tài khoản thật, và ban tổ chức ghi rõ là không hoàn huỷ. FPT Play vừa là đơn vị đồng tổ chức vừa là đơn vị phát sóng độc quyền tại Việt Nam: ngày 28/8 FPT Play xác nhận phát trực tiếp và độc quyền toàn bộ giải tại Việt Nam, trên ứng dụng Smart TV, điện thoại, PC/laptop, FPT Play Box và website fptplay.vn. Điều họ chưa bao giờ nói rõ là giải nằm trong gói miễn phí hay sau thuê bao. FPT Play cũng nắm bản quyền độc quyền PPA Tour Asia 2026, nên một thuê bao phủ gần như toàn bộ pickleball chuyên nghiệp diễn ra tại Việt Nam năm nay. Các thỏa thuận phát sóng quốc tế không được công bố. Instagram chính thức (@pickleballworldcupofficial) và kênh YouTube của giải là nơi cập nhật từng ngày; ThePickleHub theo dõi song ngữ và cập nhật trận đấu trực tiếp.",
           internalLinks: [
             {
               text: "Xem pickleball trực tiếp trên ThePickleHub",
@@ -304,9 +312,9 @@ const post: BlogPost = {
           ],
         },
         {
-          heading: "Vé: chỉ bán gói hospitality, không có vé phổ thông",
+          heading: "Vé: tính tới 24/8 chỉ có gói hospitality, không có vé phổ thông",
           content:
-            "Đây là bất ngờ lớn nhất trong thông tin đã công bố, và nó thay đổi kế hoạch của bất kỳ ai đang tính đi xem. Tính tới 24/8, nền tảng chính thức chỉ bán bốn gói hospitality và không có gì khác — KHÔNG có vé vào cửa phổ thông ở bất kỳ mức giá nào. Nếu bạn định mua vé ngày bình thường ở cổng, phương án đó chưa được công bố, và chúng tôi sẽ không cho rằng nó tồn tại cho tới khi ban tổ chức nói vậy.",
+            "Đây là bất ngờ lớn nhất trong thông tin đã công bố, và nó thay đổi kế hoạch của bất kỳ ai đang tính đi xem. Tính tới 24/8, nền tảng chính thức chỉ bán bốn gói hospitality và không có gì khác — KHÔNG có vé vào cửa phổ thông ở bất kỳ mức giá nào. Sau đó đường link vé biến mất khỏi trang chủ giải suốt ba ngày — chúng tôi mở các ngày 27, 28 và 29/8 và không thấy mục vé ở thanh điều hướng, ở footer hay trong thân trang, chỗ cũ là banner Livestream Premium — rồi sáng 30/8, đúng ngày khai cuộc, nó quay lại: nút “Mua Vé — Vé xem giải đang mở bán” trỏ tới /pwc2026/tickets. Nhưng phía sau nút đó thì chúng tôi vẫn chưa đọc được: trang vé render bằng JavaScript và trả về vỏ trống khi tải thẳng, nên chỉ xác nhận được link đã trở lại, không xác nhận được đang bán gì và giá bao nhiêu. Ban tổ chức chưa giải thích ba ngày vắng mặt đó. Bảng dưới đây giữ lại như một bản ghi của ngày 24/8, KHÔNG phải bảng giá đang bán. Nếu bạn đi Đà Nẵng để xem, hãy hỏi thẳng ban tổ chức qua Zalo 0799438688 hoặc support@sporttora.com trước khi tin rằng mình vào được sân.",
           table: {
             caption:
               "Heineken Pickleball World Cup 2026 — các gói vé trên nền tảng chính thức, đọc ngày 24/8/2026",
@@ -322,17 +330,17 @@ const post: BlogPost = {
         {
           heading: "Đi xem trực tiếp: đặt phòng sớm, và đây là lý do",
           content:
-            "Giải cố ý trùng tuần lễ Quốc khánh 2/9 — và đó chính là lý do bạn nên đặt phòng ngay bây giờ thay vì đợi tới tháng 8. Tuần đó vốn đã là cao điểm du lịch nội địa của Đà Nẵng, giờ có thêm World Cup chồng lên. Ban tổ chức công bố danh sách khách sạn đối tác từ khoảng 55–60 USD/đêm (Wink Hotel Danang Riverside và Danang Centre 55 USD, Wyndham Golden Bay Danang 60 USD). Đà Nẵng hiện có 31 đường bay thẳng quốc tế từ 15 quốc gia — trong đó có Incheon, Busan, Narita, Osaka, Singapore, Kuala Lumpur, Bangkok, Manila và Bali — cùng các chuyến nội địa nối qua Hà Nội hoặc TP.HCM.",
+            "Giải cố ý trùng tuần lễ Quốc khánh 2/9 — và đó là lý do phòng khách sạn đã kín sớm. Tuần đó vốn đã là cao điểm du lịch nội địa của Đà Nẵng, giờ có thêm World Cup chồng lên. Giá khách sạn đối tác đã giảm so với lần chúng tôi ghi trước đây: đọc lại ngày 29/8, các mức được hiển thị là 35 USD/đêm tại Như Minh Plaza Danang, 40 USD tại Wink Hotel Danang Riverside và 45 USD tại Wink Hotel Danang Centre — khoảng 55–60 USD cũ, gồm cả Wyndham Golden Bay 60 USD, không còn là thứ trang này đang hiển thị. Đà Nẵng hiện có 31 đường bay thẳng quốc tế từ 15 quốc gia — trong đó có Incheon, Busan, Narita, Osaka, Singapore, Kuala Lumpur, Bangkok, Manila và Bali — cùng các chuyến nội địa nối qua Hà Nội hoặc TP.HCM.",
         },
         {
           heading: "Ngoài các trận đấu",
           content:
-            "Có ba hoạt động bên lề mở cho người không thi đấu, và với các CLB, HLV Việt Nam thì chúng có thể còn giá trị lâu hơn cả bảng huy chương. Thứ nhất là clinic pickleball cùng một tay vợt chuyên nghiệp (ban tổ chức nói sẽ công bố tên trong vài tuần tới). Thứ hai là Referee Masterclass — lớp tập huấn trọng tài cả lý thuyết lẫn thực hành do các trọng tài giàu kinh nghiệm đứng lớp. Thứ ba là Pickleball World Promoters Forum, dự kiến quy tụ đại diện hơn 50 quốc gia bàn về lộ trình đưa pickleball tới Olympic. Chương trình chung còn có triển lãm gian hàng kết hợp trưng bày sản phẩm OCOP của các địa phương và triển lãm văn hóa giới thiệu các nước tham dự.",
+            "Có ba hoạt động bên lề mở cho người không thi đấu, và với các CLB, HLV Việt Nam thì chúng có thể còn giá trị lâu hơn cả bảng huy chương. Thứ nhất là clinic pickleball cùng một tay vợt chuyên nghiệp (ban tổ chức nói sẽ công bố tên gần ngày thi đấu; tính tới 6/9, ngày thi đấu cuối, vẫn chưa có tên nào được công bố). Thứ hai là Referee Masterclass — lớp tập huấn trọng tài cả lý thuyết lẫn thực hành do các trọng tài giàu kinh nghiệm đứng lớp. Thứ ba là Pickleball World Promoters Forum, dự kiến quy tụ đại diện hơn 50 quốc gia bàn về lộ trình đưa pickleball tới Olympic. Chương trình chung còn có triển lãm gian hàng kết hợp trưng bày sản phẩm OCOP của các địa phương và triển lãm văn hóa giới thiệu các nước tham dự.",
         },
         {
           heading: "Những gì vẫn chưa biết",
           content:
-            "Nói thẳng về các khoảng trống, tính tới 27/8/2026. Ba mục trong danh sách này nay đã có lời giải: lịch từng ngày đã công bố, giá các gói vé đã lên, và cuối cùng cũng có một cách xem tại nhà với giá bình thường — gói Livestream Premium của chính ban tổ chức, 250.000₫ cho đủ 16 sân PRO và Đồng đội. Còn thiếu: trận chung kết Open chưa có ngày, giờ hay sân trong lịch công bố, nên 6/9 là suy ra chứ chưa phải xác nhận. Chưa có vé phổ thông nào được công bố ở bất kỳ mức giá nào — chỉ có bốn gói hospitality. Giờ từng trận và phân sân cũng chưa có; lịch chỉ cho biết mỗi ngày đấu nội dung gì ở sân nào, và ban tổ chức ghi rõ giờ trên lịch là khung của cả nội dung từ trận đầu tới trận cuối, không phải giờ trận của bạn. Việc FPT Play phát giải này trong gói miễn phí hay sau thuê bao vẫn chưa được nói rõ, và cũng chưa ai nói sóng FPT Play chồng lấn thế nào với gói 16 sân của ban tổ chức — mua cái này không hiển nhiên khiến cái kia thành thừa. Thỏa thuận phát sóng quốc tế chưa được công bố. Tay vợt chuyên nghiệp đứng lớp clinic chưa được nêu tên. Và số đội vẫn vênh nhau: liên đoàn và báo chí nói 156 đội đăng ký, trong khi bracket đã bốc thăm chỉ có 152 — Junior và Kids mỗi bên rụng 2 đội giữa lúc đăng ký và lúc bốc thăm. Chúng tôi sẽ cập nhật bài này khi từng mục được xác nhận.",
+            "Nói thẳng về các khoảng trống, tính tới thứ Hai 7/9/2026 — một ngày sau khi giải khép lại. Cung Thể thao Tiên Sơn mở cửa miễn phí cho khán giả cổ vũ tuyển Việt Nam từ 3/9 đến 5/9 theo Tuổi Trẻ; ngày chung kết có bán vé. Vài mục trong danh sách này đã được lấp trong tuần. Các trận chung kết ngày 6/9 có cả giờ lẫn tên nội dung khi ban tổ chức công bố lịch đầy đủ sáng ngày cuối, và chung kết Đồng đội Open là suất 19:40, Việt Nam gặp Mỹ — Mỹ thắng 4-0. Ngày 28/8 FPT Play xác nhận phát trực tiếp và độc quyền toàn bộ giải tại Việt Nam. Những gì không bao giờ được giải quyết: chưa từng có vé vào cửa phổ thông nào được công bố ở bất kỳ mức giá nào — đường link vé quay lại trang chủ giải ngày 30/8 sau ba ngày vắng, nhưng trang phía sau render bằng JavaScript nên chúng tôi không bao giờ đọc được nó bán gì. Giờ từng trận và phân sân cũng không được công bố; lịch chỉ cho biết mỗi ngày đấu nội dung gì ở sân nào, và ban tổ chức ghi rõ giờ trên lịch là khung của cả nội dung từ trận đầu tới trận cuối. Việc FPT Play phát giải trong gói miễn phí hay sau thuê bao không bao giờ được nói rõ, và cũng không ai nói sóng FPT Play chồng lấn thế nào với gói 16 sân của ban tổ chức. Thỏa thuận phát sóng quốc tế không được công bố. Tay vợt chuyên nghiệp đứng lớp clinic không được nêu tên. Và số đội vẫn vênh nhau: liên đoàn và báo chí nói 156 đội đăng ký, trong khi bracket đã bốc thăm chỉ có 152 — Junior và Kids mỗi bên rụng 2 đội giữa lúc đăng ký và lúc bốc thăm. Còn hai kết quả thiếu tính tới lần cập nhật này: chưa báo nào đăng kết quả chung kết Đồng đội Junior và Đồng đội Senior ngày 6/9, và cả hai cũng không có trong dữ liệu nhánh Pro của ban tổ chức.",
         },
       ],
       faqItems: [
@@ -355,7 +363,7 @@ const post: BlogPost = {
         {
           question: "Vé xem World Cup Pickleball 2026 giá bao nhiêu?",
           answer:
-            "Tính tới 24/8/2026, nền tảng chính thức chỉ bán bốn gói hospitality và chưa công bố vé vào cửa phổ thông ở bất kỳ mức giá nào: Finals & Music Festival bàn 2 khách ngày 6/9 giá 2.000 USD; VVIP Finals 1 ghế ngày 6/9 giá 1.000 USD; Full Package trọn 5 ngày 2–6/9 giá 3.600 USD; VVIP Special bàn 3 khách 5 ngày giá 5.400 USD. Chúng tôi sẽ cập nhật nếu ban tổ chức mở bán vé phổ thông.",
+            "Chưa từng có vé vào cửa phổ thông nào được công bố ở bất kỳ mức giá nào. Ngày 24/8/2026, nền tảng chính thức bán bốn gói hospitality và không gì khác: Finals & Music Festival bàn 2 khách ngày 6/9 giá 2.000 USD; VVIP Finals 1 ghế ngày 6/9 giá 1.000 USD; Full Package trọn 5 ngày 2–6/9 giá 3.600 USD; VVIP Special bàn 3 khách 5 ngày giá 5.400 USD. Sau đó đường link vé biến mất khỏi trang chủ giải ba ngày — không có ở thanh điều hướng, footer hay thân trang các ngày 27, 28 và 29/8 — rồi quay lại sáng 30/8 với dòng “Vé xem giải đang mở bán”. Trang vé render bằng JavaScript nên chúng tôi chưa đọc được nội dung đang bán. Hãy coi các mức giá trên là bản ghi ngày 24/8, không phải bảng giá đang bán, và liên hệ thẳng ban tổ chức trước khi đi xem.",
         },
         {
           question: "Các trận đấu diễn ra chính xác ở đâu?",
@@ -365,23 +373,23 @@ const post: BlogPost = {
         {
           question: "Lễ khai mạc diễn ra khi nào?",
           answer:
-            "Lễ khai mạc diễn ra thứ Tư 2/9/2026, 18:00–20:00 — đúng ngày Quốc khánh. Lưu ý thi đấu đã bắt đầu từ ba ngày trước đó (30/8), còn Giải Đồng đội Quốc gia thì tới hôm sau lễ khai mạc mới khởi tranh, ngày 3/9. Chung kết toàn bộ nhóm Pro đấu 08:00–18:00 Chủ nhật 6/9 tại Tiên Sơn sân 1. Ban tổ chức ghi rõ lịch có thể thay đổi.",
+            "Lễ khai mạc diễn ra thứ Tư 2/9/2026 tại Cung Thể thao Tiên Sơn — đúng ngày Quốc khánh. Lịch của ban tổ chức ghi khung 18:00–20:00; còn FPT Play, khi công bố bản quyền phát sóng ngày 28/8, cho biết lễ khai mạc bắt đầu lúc 17:30. Lưu ý thi đấu đã bắt đầu từ ba ngày trước đó (30/8), còn Giải Đồng đội Quốc gia thì tới hôm sau lễ khai mạc mới khởi tranh, ngày 3/9. Các trận chung kết đấu Chủ nhật 6/9 tại Tiên Sơn, chạy từ chung kết Đồng đội Junior lúc 08:00 tới chung kết Đồng đội Open lúc 19:40, nơi Mỹ thắng Việt Nam 4-0.",
         },
         {
           question:
             "Ở ngoài Đà Nẵng thì xem World Cup Pickleball 2026 bằng cách nào?",
           answer:
-            "FPT Play là đơn vị phát sóng độc quyền tại Việt Nam, phát trên SmartTV, di động, FPT Play Box và fptplay.vn (cần thuê bao). Các thỏa thuận phát sóng quốc tế chưa được công bố. Theo dõi Instagram @pickleballworldcupofficial và ThePickleHub để cập nhật song ngữ.",
+            "Có hai đường. Gói Livestream Premium của chính ban tổ chức giá 250.000₫ trọn giải, phủ 16 sân PRO và Đồng đội. FPT Play là đơn vị phát sóng trực tiếp và độc quyền tại Việt Nam — xác nhận ngày 28/8 — phát trên ứng dụng Smart TV, điện thoại, PC/laptop, FPT Play Box và fptplay.vn; họ chưa nói rõ giải nằm trong gói miễn phí hay sau thuê bao. Các thỏa thuận phát sóng quốc tế chưa được công bố. Theo dõi Instagram @pickleballworldcupofficial và ThePickleHub để cập nhật song ngữ.",
         },
         {
           question: "Đội tuyển Việt Nam thi đấu ngày nào?",
           answer:
-            "Giải Đồng đội Quốc gia đấu từ thứ Năm 3/9 đến Chủ nhật 6/9. Việt Nam là hạt giống số 1 bảng A ở Open, Masters, Junior và Kids, và không có đội ở Seniors. Vòng bảng Open bắt đầu 08:00 ngày 3/9 với các bảng A–L. Đội hình Open do Đỗ Minh Quân làm đội trưởng, gồm Lý Hoàng Nam, Quang Dương, Phúc Huỳnh, Trương Vinh Hiển, Trịnh Linh Giang, Ken Tâm, Sophia Huỳnh Trần, Trang Huỳnh và Sĩ Bội Ngọc.",
+            "Giải Đồng đội Quốc gia đấu từ thứ Năm 3/9 đến Chủ nhật 6/9. Việt Nam là hạt giống số 1 bảng A ở Open, Masters, Junior và Kids, và không có đội ở Seniors. Ở nội dung Open, Việt Nam chung bảng với Colombia, Quần đảo Cayman và Chile. Vòng bảng Open đấu từ 08:00 ngày 3/9 với các bảng A–L, và Việt Nam thắng cả ba trận 6-0 để nhất bảng A, rồi vào chung kết và thua Mỹ 0-4. Đội hình Open do Đỗ Minh Quân làm đội trưởng, gồm Lý Hoàng Nam, Quang Dương, Phúc Huỳnh, Trương Vinh Hiển, Trịnh Linh Giang, Ken Tâm, Sophia Huỳnh Trần, Trang Huỳnh và Sĩ Bội Ngọc.",
         },
         {
           question: "Nên ở khách sạn nào khi đi xem World Cup Pickleball 2026?",
           answer:
-            "Nên đặt sớm — giải trùng tuần lễ Quốc khánh 2/9, vốn đã là cao điểm du lịch Đà Nẵng. Khách sạn đối tác chính thức có giá từ khoảng 55–60 USD/đêm, gồm Wink Hotel Danang Riverside và Danang Centre (55 USD) và Wyndham Golden Bay Danang (60 USD). Sân bay Đà Nẵng cách các địa điểm thi đấu khoảng 10 phút. Về vé, lưu ý hiện chỉ bán các gói hospitality từ 1.000 đến 5.400 USD — chưa có vé vào cửa phổ thông nào được công bố.",
+            "Nên đặt sớm — giải trùng tuần lễ Quốc khánh 2/9, vốn đã là cao điểm du lịch Đà Nẵng. Đọc lại ngày 29/8, các mức khách sạn đối tác được hiển thị là 35 USD/đêm tại Như Minh Plaza Danang, 40 USD tại Wink Hotel Danang Riverside và 45 USD tại Wink Hotel Danang Centre. Sân bay Đà Nẵng cách các địa điểm thi đấu khoảng 10 phút. Về vé, lưu ý chưa từng có vé vào cửa phổ thông nào được công bố; đường link vé biến mất khỏi trang chủ giải ba ngày rồi quay lại ngày 30/8 — hãy hỏi ban tổ chức trước khi đi.",
         },
       ],
     },

@@ -22,7 +22,11 @@ concurrency:
 
 jobs:
   unit-tests:
-    timeout-minutes: 30
+    # 45, not 30: the job builds Debug + unsigned Release + runs the suite on a
+    # macos runner and has been finishing at 27' on main (08/09) — one more
+    # source file pushed it to 31'29" on 13/09 and GitHub cancelled it, which
+    # reads as a red gate with no failing test behind it.
+    timeout-minutes: 45
     runs-on: macos-15
 
     steps:

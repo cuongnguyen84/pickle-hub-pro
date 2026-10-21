@@ -41,7 +41,7 @@ const VIEWS: Record<ApplicationStatus, View> = {
   submitted: {
     title: "Đã gửi hồ sơ",
     tone: "--info", Icon: Check,
-    body: "Hồ sơ đã vào hàng chờ. Chúng tôi chưa cam kết thời gian duyệt vì lượng hồ sơ còn ít và chưa đo được — anh/chị sẽ nhận thông báo ngay khi có kết quả.",
+    body: "Hồ sơ đã vào hàng chờ. Anh/chị sẽ nhận thông báo ngay khi có kết quả hoặc khi cần bổ sung thông tin.",
     next: { label: "Về trang chủ", to: "/" },
   },
   under_review: {

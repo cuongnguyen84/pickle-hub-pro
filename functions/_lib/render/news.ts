@@ -8,6 +8,7 @@ import { buildHtml, htmlResponse } from "../html";
 import {
   escapeHtml,
   buildTitle,
+  SITE_NAME,
   buildMetaDescription,
   absImage,
   breadcrumb,
@@ -73,7 +74,7 @@ async function renderNewsArticleByLang(
   const { data: row } = await supabase
     .from("news_items")
     .select(
-      "id, title, summary, source, image_url, language, slug, published_at, updated_at, parent_news_id, ai_translated, content_html"
+      "id, title, summary, source, category, image_url, language, slug, published_at, updated_at, parent_news_id, ai_translated, content_html"
     )
     .eq("language", language)
     .eq("slug", slug)
@@ -152,9 +153,31 @@ async function renderNewsArticleByLang(
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
   };
 
+  const publishedIso = typeof r.published_at === "string" ? r.published_at : "";
+  const publishedLabel = formatNewsDate(publishedIso, language);
+
+  // GEO dateline (CLAUDE.md, rule since 2026-08-14). Two jobs:
+  //
+  //   1. Names ThePickleHub inside the opening passage. AI search cites
+  //      PASSAGES, not pages — a snippet lifted from the top of this article
+  //      previously carried no attributable brand, so an assistant quoting it
+  //      had nothing to credit. One mention, not stuffed.
+  //   2. Emits a visible, machine-readable date. dateModified already ships in
+  //      JSON-LD; a human-visible dateline is what freshness heuristics and
+  //      the reader both look for.
+  //
+  // The source stays PLAIN TEXT on purpose. The origin link is a private
+  // column, never selected on a public surface — see
+  // src/lib/__tests__/news-editorial-surfaces.test.ts, which pins both that
+  // and the no-outbound-CTA rule across the client and SSR surfaces. These
+  // articles are original rewrites, not syndicated copies, so they credit the
+  // publisher by name without shipping readers back out to it.
   const sourceLabel = language === "vi" ? "Nguồn" : "Source";
-  const sourceAttribution =
-    `<p><strong>${sourceLabel}:</strong> ${escapeHtml(r.source || "Wire")}</p>`;
+  const sourceName = escapeHtml(r.source || "Wire");
+  const dateline =
+    `<p class="dateline">${escapeHtml(SITE_NAME)}` +
+    (publishedLabel ? ` · <time datetime="${escapeHtml(publishedIso)}">${escapeHtml(publishedLabel)}</time>` : "") +
+    ` · ${sourceLabel}: ${sourceName}</p>`;
   const articleBody = r.content_html
     ? sanitizeBlogHtml(r.content_html)
     : `<p>${escapeHtml(r.summary)}</p>`;
@@ -167,19 +190,66 @@ async function renderNewsArticleByLang(
   // news items in the same language and rendering them as a linked
   // list at the bottom of every news SSR addresses both reports in
   // one place: each article now carries ~600 chars of extra body
-  // text and 7 internal links (6 related + 1 hub CTA), which means
-  // every news page is both substantial enough to clear the
-  // little-content threshold and inbound-linked from up to 6 other
-  // news pages.
-  const { data: relatedRows } = await supabase
-    .from("news_items")
-    .select("slug, title, published_at")
-    .eq("language", language)
-    .eq("status", "published")
-    .neq("slug", slug)
-    .order("published_at", { ascending: false })
-    .limit(6);
-  const related = (relatedRows || []) as Array<{ slug: string; title: string; published_at: string }>;
+  // text plus a hub CTA and a handful of sibling links.
+  //
+  // The inbound-link half of that claim did NOT hold as originally written —
+  // see below.
+  // 2026-08-28 — this strip used to be a bare `order(published_at desc)
+  // .limit(6)`, which meant EVERY article linked to the SAME six newest
+  // items. 843 VI articles pointed at six URLs; the other 837 received no
+  // inbound link at all, and Ahrefs reported 823 of them as orphans. Worse,
+  // it self-renewed: publishing anything demoted yesterday's six straight
+  // back into orphanhood, so the set could never accumulate.
+  //
+  // The fix is to make the neighbours RELATIVE to this article instead of
+  // absolute. prev/next by published_at chain every article to the ones
+  // either side of it, so each item is inbound-linked by its neighbours and
+  // no position in the timeline is ever stranded. Category matches add
+  // topical relevance, and a small freshness tail keeps the newest items
+  // reachable from anywhere. Everything is deduped against the current slug.
+  type NewsNeighbour = { slug: string; title: string; published_at: string };
+  const neighbourCols = "slug, title, published_at";
+  const baseQuery = () =>
+    supabase
+      .from("news_items")
+      .select(neighbourCols)
+      .eq("language", language)
+      .eq("status", "published")
+      .neq("slug", slug);
+
+  // Every bucket except `latest` is anchored to THIS article's position, and
+  // `latest` is capped at one. That cap matters: a freshness tail of three
+  // reintroduced the original failure in miniature — three of the eight slots
+  // on all 843 pages pointed at the same three URLs — which the "different
+  // neighbours" test catches by measuring the overlap between two articles
+  // far apart in the timeline. Category matches are drawn from BEFORE this
+  // article rather than from the global newest, for the same reason.
+  const [prevRes, nextRes, catRes, latestRes] = await Promise.all([
+    baseQuery().lt("published_at", r.published_at).order("published_at", { ascending: false }).limit(3),
+    baseQuery().gt("published_at", r.published_at).order("published_at", { ascending: true }).limit(3),
+    r.category
+      ? baseQuery()
+          .eq("category", r.category)
+          .lt("published_at", r.published_at)
+          .order("published_at", { ascending: false })
+          .limit(2)
+      : Promise.resolve({ data: [] as NewsNeighbour[] }),
+    baseQuery().order("published_at", { ascending: false }).limit(1),
+  ]);
+
+  const seen = new Set<string>([slug]);
+  const related: NewsNeighbour[] = [];
+  // Order matters: the prev/next chain is what actually removes orphans, so
+  // it is picked before the topical and freshness fillers compete for slots.
+  for (const bucket of [prevRes?.data, nextRes?.data, catRes?.data, latestRes?.data]) {
+    for (const row of (bucket || []) as NewsNeighbour[]) {
+      if (!row?.slug || seen.has(row.slug)) continue;
+      seen.add(row.slug);
+      related.push(row);
+      if (related.length >= 8) break;
+    }
+    if (related.length >= 8) break;
+  }
   const newsHub = language === "vi" ? `${siteUrl}/vi/news` : `${siteUrl}/news`;
   const newsBase = language === "vi" ? `${siteUrl}/vi/news/` : `${siteUrl}/news/`;
   const relatedHeading = language === "vi" ? "Tin pickleball mới nhất" : "Latest pickleball news";
@@ -201,7 +271,7 @@ async function renderNewsArticleByLang(
     extraMeta,
     jsonLd,
     lang: language,
-    bodyContent: `${bc}<article><h1>${escapeHtml(r.title)}</h1>${sourceAttribution}${articleBody}</article>${relatedSection}`,
+    bodyContent: `${bc}<article><h1>${escapeHtml(r.title)}</h1>${dateline}${articleBody}</article>${relatedSection}`,
     // The body already opens with its own <h1>; without this the shared
     // auto-header adds a second one titled "<title> | ThePickleHub".
     omitAutoHeader: true,
@@ -214,4 +284,26 @@ export async function renderNewsPost(supabase: SupabaseClient, slug: string, sit
 
 export async function renderViNewsPost(supabase: SupabaseClient, slug: string, siteUrl: string): Promise<Response> {
   return renderNewsArticleByLang(supabase, slug, "vi", siteUrl);
+}
+
+/**
+ * Visible dateline text. Deliberately not Intl: the prerender runs in a
+ * Workers isolate whose ICU data we do not control, and a dateline that
+ * silently renders differently there than in tests is worse than a plain one.
+ */
+const EN_MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+export function formatNewsDate(iso: string, language: "en" | "vi"): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const day = d.getUTCDate();
+  const month = d.getUTCMonth();
+  const year = d.getUTCFullYear();
+  return language === "vi"
+    ? `${String(day).padStart(2, "0")}/${String(month + 1).padStart(2, "0")}/${year}`
+    : `${EN_MONTHS[month]} ${day}, ${year}`;
 }

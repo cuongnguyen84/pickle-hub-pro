@@ -1,8 +1,11 @@
+import { authorIdentity } from "../../../src/content/authors";
+import { blogMetadata } from "../../../src/content/blog/metadata";
 /**
  * SSR render handlers — EN static blog + VI database blog pages.
  * SEO-04 — split from index.ts, code moved verbatim.
  */
 
+import { byEffectiveDateDesc } from "../../../src/lib/blogOrder";
 import type { SupabaseClient } from "../supabase";
 import { buildHtml, htmlResponse } from "../html";
 import { BLOG_POST_META } from "./blog-meta";
@@ -23,6 +26,17 @@ import {
 } from "../utils";
 import { blogImageDims } from "../../../src/content/blog/image-dims";
 import { render404 } from "./static-pages";
+import { fetchWcResultsBlock } from "./wc-results";
+
+// The two slugs whose body carries the live World Cup results block. Kept as
+// an explicit pair rather than "does the post declare a liveBlock" so that
+// rendering any other post never costs a wc_pro_matches round trip.
+export const WC_RESULTS_EN_SLUG = "pickleball-world-cup-2026-da-nang-results";
+export const WC_RESULTS_VI_SLUG = "ket-qua-pickleball-world-cup-2026-da-nang";
+/** Literal marker a VI post puts in content_html where the block goes. It
+ *  survives sanitizeBlogHtml as plain text, so substitution happens after
+ *  sanitising and the injected HTML is ours, never the database's. */
+export const WC_RESULTS_MARKER = "[[WC_RESULTS]]";
 
 // ─── Blog ─────────────────────��───────────────────────────
 
@@ -86,7 +100,7 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
     description: meta.description,
     image: blogImage,
     url: enUrl,
-    author: { "@type": "Person", name: "Cuong Nguyen", url: siteUrl },
+    author: authorIdentity(blogMetadata.find((post) => post.slug === slug)?.author ?? "ThePickleHub", siteUrl),
     publisher: {
       "@type": "Organization",
       name: "ThePickleHub",
@@ -105,11 +119,20 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
   // howToSteps. Those answers are now rendered in the body below, which is
   // what Google requires before the markup is eligible.
   const graph: Record<string, unknown>[] = [jsonLd, buildBreadcrumbJsonLd(crumbs)];
+  const wcBlock =
+    slug === WC_RESULTS_EN_SLUG ? await fetchWcResultsBlock(supabase, "en") : null;
   const [body, faqNode, howToNode] = await Promise.all([
-    renderEnBlogBody(slug, siteUrl),
+    renderEnBlogBody(slug, siteUrl, wcBlock?.html ? { "wc-results": wcBlock.html } : {}),
     enBlogFaqJsonLd(slug),
     enBlogHowToJsonLd(slug),
   ]);
+  // dateModified is the whole point of a live results page: the freshness
+  // signal has to come from the data, not from when the prose was last edited.
+  // Only ever moves it forward — a feed that briefly returns nothing must not
+  // rewind the page to its publish date.
+  if (wcBlock?.dataUpdatedAt && wcBlock.dataUpdatedAt > String(jsonLd.dateModified ?? "")) {
+    jsonLd.dateModified = wcBlock.dataUpdatedAt;
+  }
   if (faqNode) graph.push(faqNode);
   if (howToNode) graph.push(howToNode);
   const blogGraph = { "@context": "https://schema.org", "@graph": graph };
@@ -130,10 +153,20 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
 }
 
 export function renderBlog(siteUrl: string): Response {
-  // BLOG_POST_META is insertion-ordered newest-first (metadata.ts prepends new
-  // entries at the top; blog-meta.ts is generated from it), so Object.entries
-  // already yields the same DESC order the visible list renders in.
-  const entries = Object.entries(BLOG_POST_META);
+  // Ordered by the LATER of datePublished/dateModified so a refreshed post
+  // resurfaces, matching what Blog.tsx renders for readers. Relying on
+  // BLOG_POST_META's insertion order (metadata.ts prepends new entries) used to
+  // be equivalent to a publishedDate sort, but that is exactly the ordering the
+  // 2026-08-31 change moved away from — leaving it here would have shown
+  // Googlebot a different /blog order than readers get. dateModified is absent
+  // when it equals datePublished, and effectiveDateMs treats that as 0, so such
+  // posts fall back to their publish date. See src/lib/blogOrder.
+  const entries = Object.entries(BLOG_POST_META).sort(
+    byEffectiveDateDesc(
+      ([, m]) => m.datePublished,
+      ([, m]) => m.dateModified,
+    ),
+  );
   const blogLinks = entries.map(([slug, m]) => `<li><a href="${siteUrl}/blog/${slug}">${escapeHtml(m.title)}</a></li>`).join("");
 
   // SEO audit 2026-08-11 — the EN blog index emitted zero JSON-LD. Add an
@@ -208,7 +241,7 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
   const [postRes, relatedRes] = await Promise.all([
     supabase
       .from("vi_blog_posts")
-      .select("title, meta_title, meta_description, content_html, cover_image_url, faq_items, alternate_en_slug, published_at, updated_at")
+      .select("title, meta_title, meta_description, content_html, cover_image_url, faq_items, alternate_en_slug, published_at, updated_at, author_name")
       .eq("slug", slug)
       .eq("status", "published")
       .single(),
@@ -272,6 +305,18 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
   const p = post as any;
   const url = `${siteUrl}/vi/blog/${slug}`;
 
+  // Fetched here rather than next to the body it decorates: articleSchema is
+  // JSON.stringify'd into extraMeta a few lines below, so dateModified has to
+  // be settled before that. Only the results post pays for the query.
+  const wc =
+    slug === WC_RESULTS_VI_SLUG ? await fetchWcResultsBlock(supabase, "vi") : null;
+  // Freshness comes from the data. Only ever moves forward — an empty feed
+  // must not rewind the page to when the prose was last edited.
+  const viDateModified =
+    wc?.dataUpdatedAt && wc.dataUpdatedAt > String(p.updated_at ?? "")
+      ? wc.dataUpdatedAt
+      : p.updated_at;
+
   // VI-first posts (no EN counterpart) still need a self-referencing hreflang
   // set, mirroring the EN-side fallback in renderBlogPost. Without it, VI-first
   // pages (/vi/blog/san-pickleball-tphcm, .../san-pickleball-da-nang) emitted
@@ -287,8 +332,8 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
     description: p.meta_description,
     image: absImage(p.cover_image_url, siteUrl),
     datePublished: p.published_at,
-    dateModified: p.updated_at,
-    author: { "@type": "Person", name: "Cuong Nguyen", url: siteUrl },
+    dateModified: viDateModified,
+    author: authorIdentity(p.author_name || "ThePickleHub", siteUrl),
     publisher: { "@type": "Organization", name: "ThePickleHub", logo: { "@type": "ImageObject", url: DEFAULT_OG_IMAGE } },
     inLanguage: "vi-VN",
   };
@@ -307,12 +352,33 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
     extraMeta += `\n<script type="application/ld+json">${escapeJsonLd(JSON.stringify(faqSchema))}</script>`;
   }
 
+  // The FAQ has to be IN THE BODY, not only in the JSON-LD above. Google's
+  // structured-data policy requires the question and answer text to be visible
+  // on the page, and the prerendered HTML is the copy crawlers get — the React
+  // page (src/pages/ViBlogPost.tsx) has always rendered the accordion, so until
+  // 2026-09-10 the two paths disagreed and only the bot one was in breach.
+  // Heading text matches the React accordion so the two renders read the same.
+  const viFaqSection = (p.faq_items && Array.isArray(p.faq_items) && p.faq_items.length > 0)
+    ? `<section><h2>Câu hỏi thường gặp</h2>${(p.faq_items as { question: string; answer: string }[])
+        .map((f) => `<h3>${escapeHtml(f.question)}</h3><p>${escapeHtml(f.answer)}</p>`)
+        .join("")}</section>`
+    : "";
+
   const bc = breadcrumb([{ label: "Trang chủ", href: `${siteUrl}/vi` }, { label: "Blog", href: `${siteUrl}/vi/blog` }, { label: p.title }]);
 
   const relatedItems = (relatedRes.data || []) as { slug: string; title: string }[];
   const relatedSection = relatedItems.length > 0
     ? `<section><h2>Bài viết liên quan</h2><ul>${relatedItems.map((r) => `<li><a href="${siteUrl}/vi/blog/${r.slug}">${escapeHtml(r.title)}</a></li>`).join("")}</ul></section>`
     : "";
+
+  let viBody = withViCoverImage(
+    sanitizeBlogHtml(normalizeImagesInHtml(p.content_html)),
+    p.cover_image_url,
+    p.title,
+  );
+  // Marker substitution happens after sanitising: the block is our HTML, the
+  // database only says where it goes.
+  viBody = viBody.split(WC_RESULTS_MARKER).join(wc?.html ?? "");
 
   return htmlResponse(buildHtml({
     title: buildTitle(p.meta_title.replace(/ \| ThePickleHub$/, "")),
@@ -323,13 +389,23 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
     type: "article",
     lang: "vi",
     extraMeta,
-    bodyContent: `${bc}<article>${withViCoverImage(sanitizeBlogHtml(normalizeImagesInHtml(p.content_html)), p.cover_image_url, p.title)}</article>${relatedSection}`,
+    bodyContent: `${bc}<article>${viBody}${viFaqSection}</article>${relatedSection}`,
   }));
 }
 
 export async function renderViBlogIndex(supabase: SupabaseClient, siteUrl: string): Promise<Response> {
-  const { data: posts } = await supabase.from("vi_blog_posts").select("slug, title, excerpt").eq("status", "published").order("published_at", { ascending: false }).limit(20);
-  const rows = (posts || []) as { slug: string; title: string; excerpt: string | null }[];
+  // Ordered by the LATER of published/updated so a refreshed post resurfaces
+  // here the same way it does for readers. See src/lib/blogOrder.
+  const { data: posts } = await supabase.from("vi_blog_posts").select("slug, title, excerpt, published_at, updated_at").eq("status", "published").order("published_at", { ascending: false }).limit(60);
+  const rows = ((posts || []) as {
+    slug: string;
+    title: string;
+    excerpt: string | null;
+    published_at: string | null;
+    updated_at: string | null;
+  }[])
+    .sort(byEffectiveDateDesc((p) => p.published_at, (p) => p.updated_at))
+    .slice(0, 20);
   const items = rows.map((p) => `<li><a href="${siteUrl}/vi/blog/${p.slug}">${escapeHtml(p.title)}</a><p>${escapeHtml(p.excerpt || "")}</p></li>`).join("");
 
   // SEO audit 2026-08-11 — mirror the EN /blog fix: emit an ItemList of the

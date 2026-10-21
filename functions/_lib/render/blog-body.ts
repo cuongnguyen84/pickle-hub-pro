@@ -1,3 +1,4 @@
+import { authorIdentity } from "../../../src/content/authors";
 // ============================================================================
 // EN blog post body → bot-visible HTML + FAQPage schema.
 // ----------------------------------------------------------------------------
@@ -85,7 +86,11 @@ export function renderSectionLink(siteUrl: string, l: { text: string; path: stri
   return `<li><a href="${href}"${rel}>${escapeHtml(l.text)}</a></li>`;
 }
 
-function renderSections(content: BlogPostContent, siteUrl: string): string {
+function renderSections(
+  content: BlogPostContent,
+  siteUrl: string,
+  liveBlocks: Record<string, string> = {},
+): string {
   const out: string[] = [];
   for (const s of content.sections) {
     out.push(`<h2>${escapeHtml(s.heading)}</h2>`);
@@ -115,6 +120,14 @@ function renderSections(content: BlogPostContent, siteUrl: string): string {
         `<ul>${s.internalLinks.map(renderSectionLink.bind(null, siteUrl)).join("")}</ul>`,
       );
     }
+    // A live block is data the post cannot hold: the caller fetches it and
+    // passes the HTML in, so this module stays free of Supabase. Missing key
+    // (feed empty, or the query failed) renders nothing — the prose around it
+    // still stands on its own, which is why the block never carries the only
+    // copy of a fact the page claims.
+    if (s.liveBlock && liveBlocks[s.liveBlock]) {
+      out.push(liveBlocks[s.liveBlock]);
+    }
   }
   return out.join("\n");
 }
@@ -133,13 +146,19 @@ function renderFaq(content: BlogPostContent): string {
  * without a post file would otherwise 500 here — blog-sync.test.ts already
  * fails CI on that combination, this is belt-and-braces).
  */
-export async function renderEnBlogBody(slug: string, siteUrl: string): Promise<string> {
+export async function renderEnBlogBody(
+  slug: string,
+  siteUrl: string,
+  liveBlocks: Record<string, string> = {},
+): Promise<string> {
   const post: BlogPost | undefined = await loadBlogPost(slug);
   if (!post) return "";
   const en = post.content.en;
+  const identity = authorIdentity(post.author, siteUrl);
+  const byline = 'url' in identity ? `<a href="${escapeHtml(identity.url!)}">${escapeHtml(identity.name)}</a>` : escapeHtml(identity.name);
   return (
-    `<article><h1>${escapeHtml(en.title)}</h1>${heroFigure(post.heroImage)}` +
-    `${renderSections(en, siteUrl)}${renderFaq(en)}</article>`
+    `<article><h1>${escapeHtml(en.title)}</h1><p>By ${byline} · Updated <time datetime="${escapeHtml(post.updatedDate)}">${escapeHtml(post.updatedDate)}</time></p>${heroFigure(post.heroImage)}` +
+    `${renderSections(en, siteUrl, liveBlocks)}${renderFaq(en)}</article>`
   );
 }
 

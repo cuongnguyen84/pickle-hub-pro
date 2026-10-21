@@ -123,6 +123,9 @@ interface ScrapeRequestBody {
 interface ScrapeResult {
   ok: boolean;
   skipped?: boolean;
+  /** "event_not_active" (skipped) · "render_transient" (Browser Rendering
+   *  timeout / 5xx / empty payload — the next cron tick retries, nothing
+   *  for a human to do) · "scrape_failed" (parse/ingest error). */
   error_code?: string;
   log_id?: string;
   matches_extracted: number;
@@ -181,6 +184,14 @@ async function runScheduledBatch(env: Env): Promise<void> {
   const externalRunId = `scheduled:${startedAt.toISOString()}:${crypto.randomUUID()}`;
   try {
     const due = await fetchDueWatchlistRows(env);
+    // */15 cron: an empty tick is the common case outside event days.
+    // Recording 96 "No rows due" job-runs a day would bury real signal —
+    // keep the top-of-hour one as the alive heartbeat.
+    if (due.length === 0 && startedAt.getUTCMinutes() !== 0) return;
+    // Event days at a 1-minute cron would write ~1440 job-run rows/day.
+    // recordProTourJobRun below is gated the same way: hourly heartbeat
+    // or any failure — see recordGate.
+    const liveNow = await isLiveEventWindow(env);
     const results = await Promise.all(due.map(async (row) => {
       const result = await runScrape(
           {
@@ -203,30 +214,58 @@ async function runScheduledBatch(env: Env): Promise<void> {
           // upcoming event's first real scrape by +24h/+7d after it goes
           // live instead of catching it on the next 6h tick.
           if (result.ok && !result.skipped) {
-            await updateWatchlistAfterScrape(env, row.id, row.scrape_frequency);
-            return result;
+            await updateWatchlistAfterScrape(env, row.id, row.scrape_frequency, liveNow);
+            return { row, result };
           }
           console.error(
             `[scheduled] scrape failed for ${row.tournament_url}; ` +
               "next_scrape_at NOT advanced. Will retry next cron tick. " +
               `error: ${result.error ?? "unknown"}`,
           );
-          return result;
+          return { row, result };
     }));
 
-    const succeeded = results.filter((result) => result.ok && !result.skipped).length;
-    const skipped = results.filter((result) => result.skipped).length;
-    const failed = results.filter((result) => !result.ok).length;
-    const matches = results.reduce((sum, result) => sum + result.matches_extracted, 0);
+    const succeeded = results.filter(({ result }) => result.ok && !result.skipped).length;
+    const skipped = results.filter(({ result }) => result.skipped).length;
+    const matches = results.reduce((sum, { result }) => sum + result.matches_extracted, 0);
+    // 2026-09-11 alert storm (258 Telegram pages in 24h): every tick with
+    // one Browser Rendering timeout among 4 scrapes was recorded as a
+    // "warning" run, and errors-telegram-alert pages once per run. A
+    // transient render error on a row that succeeded a minute ago and
+    // will be retried a minute from now is not an incident. It only
+    // becomes one when the SAME row keeps failing — i.e. it has been
+    // sitting past due for WATCHLIST_STALL_MS (failures never advance
+    // next_scrape_at, so past-due age == failing streak).
+    const nowMs = Date.now();
+    const failures = results.filter(({ result }) => !result.ok);
+    const persistent = failures.filter(
+      ({ row, result }) => result.error_code !== "render_transient" || isRowStalled(row, nowMs),
+    );
+    const transient = failures.length - persistent.length;
+    const failed = persistent.length;
     const status = failed === 0 ? (skipped === due.length && due.length > 0 ? "skipped" : "success")
       : failed < due.length ? "warning" : "failed";
+    const minute = startedAt.getUTCMinutes();
+    // Hourly heartbeat, or a persistent failure on a 10-minute tick.
+    // Transient-only ticks are NOT recorded: pro_tour_ingestion_logs
+    // (admin Logs tab) still has the row-level failure for forensics.
+    const recordGate = minute === 0 || (failed > 0 && minute % STALL_RECORD_EVERY_MIN === 0);
+    if (!recordGate) return;
+    const stalledUrls = persistent.map(({ row }) => row.tournament_url);
     await recordProTourJobRun(env, {
       externalRunId, status, startedAt,
       summary: due.length === 0
         ? "No Pro Tour watchlist rows were due"
-        : `${succeeded} succeeded, ${skipped} skipped, ${failed} failed`,
-      metrics: { due: due.length, succeeded, skipped_inactive: skipped, failed, matches_imported: matches },
-      errorMessage: results.filter((result) => !result.ok).map((result) => result.error ?? "unknown").join("; ") || null,
+        : `${succeeded} succeeded, ${skipped} skipped, ${failed} failed` +
+          (transient > 0 ? `, ${transient} transient (auto-retry)` : ""),
+      metrics: {
+        due: due.length, succeeded, skipped_inactive: skipped, failed,
+        transient_failed: transient, matches_imported: matches,
+      },
+      errorMessage: failed > 0
+        ? `${failed} source(s) failing for over ${WATCHLIST_STALL_MS / 60_000} min: ` +
+          stalledUrls.map((url) => url.split("?")[0]).join(" ; ")
+        : null,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -317,6 +356,7 @@ async function runScrape(
       );
       return {
         ok: false,
+        error_code: "render_transient",
         matches_extracted: 0,
         players_extracted: 0,
         error: msg,
@@ -356,6 +396,7 @@ async function runScrape(
     // detail is in the log row above (admin Logs tab) + wrangler tail.
     return {
       ok: false,
+      error_code: isTransientRenderError(errMsg) ? "render_transient" : "scrape_failed",
       matches_extracted: 0,
       players_extracted: 0,
       error: "scrape_failed — see admin Logs tab",
@@ -636,6 +677,38 @@ interface WatchlistRow {
   id: string;
   tournament_url: string;
   scrape_frequency: "daily" | "weekly" | "on_event_end" | "manual";
+  /** Failed scrapes never advance this (see runScheduledBatch), so
+   *  "how far past due" == "how long this row has been failing". */
+  next_scrape_at: string | null;
+}
+
+/** A row still due this long after its slot has been failing on every
+ *  tick in between (1-minute cron) — that is a broken source, not a
+ *  Browser Rendering hiccup, and the only failure worth paging on. */
+const WATCHLIST_STALL_MS = 20 * 60_000;
+/** Persistent failures get a job-run row (→ Telegram) on these ticks only;
+ *  a 1-minute cron would otherwise write 1440 warning rows a day. */
+const STALL_RECORD_EVERY_MIN = 10;
+
+function isRowStalled(row: WatchlistRow, now: number): boolean {
+  if (!row.next_scrape_at) return false;
+  const due = new Date(row.next_scrape_at).getTime();
+  return Number.isFinite(due) && now - due >= WATCHLIST_STALL_MS;
+}
+
+/** Browser Rendering infrastructure errors (timeouts, target closed,
+ *  5xx, non-JSON bodies) and empty payloads: the same URL succeeds on
+ *  the next tick ~95% of the time (2026-09-10: 215 failed / 4453 ok,
+ *  every one of them a 6001/6002 timeout). Parse + ingest errors are
+ *  NOT transient — those need a code change. */
+function isTransientRenderError(message: string): boolean {
+  return (
+    message.includes("[render-http]") ||
+    message.includes("[render-fetch]") ||
+    message.includes("[render-parse]") ||
+    message.includes("render-fetch hit") ||
+    message.includes("Scrape returned 0 matchups")
+  );
 }
 
 async function fetchDueWatchlistRows(env: Env): Promise<WatchlistRow[]> {
@@ -656,9 +729,15 @@ async function fetchDueWatchlistRows(env: Env): Promise<WatchlistRow[]> {
   const nowIso = new Date().toISOString();
   const url =
     `${env.SUPABASE_URL}/rest/v1/pro_tour_watchlist` +
-    `?select=id,tournament_url,scrape_frequency` +
+    `?select=id,tournament_url,scrape_frequency,next_scrape_at` +
     `&status=eq.active` +
-    `&or=(and(next_scrape_at.is.null,scrape_frequency.in.(daily,weekly)),next_scrape_at.lte.${nowIso})`;
+    `&or=(and(next_scrape_at.is.null,scrape_frequency.in.(daily,weekly)),next_scrape_at.lte.${nowIso})` +
+    // 2026-09-09: no cap meant 10 due rows in one tick — each scrape costs
+    // several subrequests and Workers kill the invocation at 50 with no log
+    // (the 00:00 UTC run vanished without a job-run row). 4 per tick stays
+    // safely under the ceiling; oldest-due first so the rest rotate through
+    // on the following ticks instead of starving.
+    `&order=next_scrape_at.asc.nullsfirst&limit=4`;
   const res = await fetch(url, {
     headers: {
       apikey: env.SUPABASE_SERVICE_ROLE_KEY,
@@ -672,8 +751,35 @@ async function fetchDueWatchlistRows(env: Env): Promise<WatchlistRow[]> {
   return (await res.json()) as WatchlistRow[];
 }
 
-function nextScrapeAt(frequency: WatchlistRow["scrape_frequency"]): string | null {
+/** Any event in pro_tour_events live today (venue-local ≈ UTC+8)?
+ * Decides the scrape cadence: event days want ~20-minute updates
+ * (Cuong, 2026-09-09), quiet weeks want daily. */
+async function isLiveEventWindow(env: Env): Promise<boolean> {
+  const today = new Date(Date.now() + 8 * 3600_000).toISOString().slice(0, 10);
+  try {
+    const res = await fetch(
+      `${env.SUPABASE_URL}/rest/v1/pro_tour_events?select=slug&start_date=lte.${today}&end_date=gte.${today}&limit=1`,
+      { headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}` } },
+    );
+    if (!res.ok) return false;
+    return ((await res.json()) as unknown[]).length > 0;
+  } catch {
+    return false; // fail closed to the cheap daily cadence
+  }
+}
+
+function nextScrapeAt(
+  frequency: WatchlistRow["scrape_frequency"],
+  liveNow: boolean,
+): string | null {
   const now = Date.now();
+  // Event days: a daily row graduates to a ~20-minute cadence. The */15
+  // cron + limit=4 rotate ~12 sources/hour, comfortably under the
+  // 50-subrequest ceiling.
+  // 1-minute cron + limit=4 + a +2min per-source hold: each of ~10 sources
+  // re-scrapes roughly every 3 minutes during play — near-live without
+  // hammering the bracket site (~3-4 fetches/min total).
+  if (frequency === "daily" && liveNow) return new Date(now + 2 * 60_000).toISOString();
   if (frequency === "daily") return new Date(now + 24 * 3600_000).toISOString();
   if (frequency === "weekly") return new Date(now + 7 * 24 * 3600_000).toISOString();
   // 'on_event_end' + 'manual' → set to NULL so the cron stops touching them
@@ -685,8 +791,9 @@ async function updateWatchlistAfterScrape(
   env: Env,
   id: string,
   frequency: WatchlistRow["scrape_frequency"],
+  liveNow: boolean,
 ): Promise<void> {
-  const next = nextScrapeAt(frequency);
+  const next = nextScrapeAt(frequency, liveNow);
   await fetch(`${env.SUPABASE_URL}/rest/v1/pro_tour_watchlist?id=eq.${id}`, {
     method: "PATCH",
     headers: {

@@ -1085,11 +1085,11 @@ const CITY_EVENT_LINK: Record<
     { until: string; viText: string; enText: string; viSlug: string; enSlug: string }
   > = {
     "da-nang": {
-      until: "2026-09-07",
-      viText: "Heineken Pickleball World Cup 2026 tại Đà Nẵng (30/8 – 6/9) — lịch, địa điểm và cách xem",
-      enText: "Heineken Pickleball World Cup 2026 in Da Nang (Aug 30 – Sep 6) — schedule, venues and how to watch",
-      viSlug: "cam-nang-xem-pickleball-world-cup-2026-da-nang",
-      enSlug: "pickleball-world-cup-2026-da-nang-how-to-watch",
+      until: "2026-10-07",
+      viText: "Kết quả Heineken Pickleball World Cup 2026 tại Đà Nẵng (30/8 – 6/9) — toàn bộ chung kết và bảng huy chương",
+      enText: "Heineken Pickleball World Cup 2026 results in Da Nang (Aug 30 – Sep 6) — every final and the medal table",
+      viSlug: "ket-qua-pickleball-world-cup-2026-da-nang",
+      enSlug: "pickleball-world-cup-2026-da-nang-results",
     },
     "tp-hcm": {
       until: "2026-08-10",
