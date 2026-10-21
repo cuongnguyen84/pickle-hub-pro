@@ -123,6 +123,7 @@ export function seriesName(style: SeriesStyle | undefined, division: number, lan
     const named = (lang === "en" ? MEDAL_EN : MEDAL_VI)[division];
     if (named) return named;
   }
+  if (lang === "vi") return `Nhánh ${division + 1}`;
   return `Series ${seriesLetter(division)}`;
 }
 
@@ -286,10 +287,10 @@ export function seriesBracket(ordered: Ranked[]): BracketPairing[] {
   return Array.from({ length: size / 2 }, (_, m) => ({ player1: slots[2 * m], player2: slots[2 * m + 1], matchNumber: m + 1 }));
 }
 
-/** "Series B: 10 đội (6 miễn vòng 1)" — dùng chung chat + trang giải. */
+/** "Nhánh 2: 10 đội (6 được nghỉ vòng đầu)" — dùng chung chat + trang giải. */
 export function seriesLine(name: string, s: SeriesSlot, lang: "vi" | "en", unit?: string): string {
   return lang === "vi"
-    ? `${name}: ${s.size} ${unit ?? "đội"}${s.byes ? ` (${s.byes} miễn vòng 1)` : ""}`
+    ? `${name}: ${s.size} ${unit ?? "đội"}${s.byes ? ` (${s.byes} được nghỉ vòng đầu)` : ""}`
     : `${name}: ${s.size} ${unit ?? "teams"}${s.byes ? ` (${s.byes} byes)` : ""}`;
 }
 

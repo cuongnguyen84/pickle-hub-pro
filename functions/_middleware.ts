@@ -1330,7 +1330,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // The Vietnamese article keeps the Vietnamese images.
   // v139 (2026-10-21): those English cards were rebuilt. The first pass baked
   // in a broken <img>, so the article now points at the -en-v2 files.
-  const cacheKey = `pr:v139:${url.pathname}`;
+  // v140 (2026-10-21): quick-table share cards name the tournament in plain
+  // Vietnamese and declare the real 1024×1024 preview image size.
+  const cacheKey = `pr:v140:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
@@ -1629,7 +1631,7 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string, accep
 
   // Tool instances (noindex)
   match = path.match(/^\/tools\/quick-tables\/([^/]+)$/);
-  if (match) return await renderQuickTable(supabase, match[1], siteUrl);
+  if (match) return await renderQuickTable(supabase, match[1], siteUrl, { pageUrl: `${siteUrl}${rawPath}`, lang });
 
   match = path.match(/^\/tools\/team-match\/([^/]+)$/);
   if (match) return await renderTeamMatch(supabase, match[1], siteUrl);

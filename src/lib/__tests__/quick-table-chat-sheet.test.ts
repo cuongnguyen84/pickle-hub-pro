@@ -93,9 +93,9 @@ describe("Cuong's 44-team chat: 11 groups of 4, Gold 16, rest Silver + Bronze", 
   });
   it("facts carry the real numbers for the question 'how do 11 groups qualify?'", () => {
     const f = chatFacts({ ...base, group_count: 11 }, "vi");
-    expect(f).toContain("11 bảng × 4 đội: playoff 1 nhánh lấy nhất + nhì 11 bảng = 22 + 10 đội hạng 3 tốt nhất = 32 → cây 32; 12 đội bị loại.");
+    expect(f).toContain("11 bảng × 4 đội: vòng loại trực tiếp lấy nhất và nhì 11 bảng = 22 + 10 đội hạng 3 = 32 → 32 suất; 12 đội dừng ở vòng bảng.");
     expect(f).toContain("Đang chọn: 11 bảng × 4.");
-    expect(f).toContain("3 nhánh theo luật mặc định: KHÔNG chia được. Muốn 3 nhánh thì đặt cỡ tuỳ chỉnh, ví dụ Series A: 16 đội; Series B: 14 đội (2 miễn vòng 1); Series C: 14 đội (2 miễn vòng 1).");
+    expect(f).toContain("3 nhánh theo luật mặc định: KHÔNG chia được. Muốn 3 nhánh thì đặt cỡ tuỳ chỉnh, ví dụ Nhánh 1: 16 đội; Nhánh 2: 14 đội (2 được nghỉ vòng đầu); Nhánh 3: 14 đội (2 được nghỉ vòng đầu).");
   });
   it("a filename is not the user mentioning a time", () => {
     expect(trustPatch({ start_time: "10:44" }, "", "count")).toEqual({});
@@ -110,7 +110,7 @@ describe("Cuong's 44-team chat: 11 groups of 4, Gold 16, rest Silver + Bronze", 
     expect(d.series_sizes).toEqual([8, 8, 8, 8]);
     expect(d.series).toBe(4);
     expect(nextSlot(d)).toBe("roster");
-    expect(chatFacts({ is_doubles: true, player_count: 32, group_count: 8 }, "vi")).toContain("Mỗi hạng một nhánh: Series A: 8 đội; Series B: 8 đội; Series C: 8 đội; Series D: 8 đội.");
+    expect(chatFacts({ is_doubles: true, player_count: 32, group_count: 8 }, "vi")).toContain("Mỗi hạng một nhánh: Nhánh 1: 8 đội; Nhánh 2: 8 đội; Nhánh 3: 8 đội; Nhánh 4: 8 đội.");
   });
 });
 

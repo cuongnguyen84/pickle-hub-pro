@@ -892,6 +892,7 @@ const App = () => (
                     {/* Shop marketplace — Phase 1. Seller + admin surfaces are
                         auth-gated here and re-authorised server-side by RLS. */}
                     <Route path="/shop/sell" element={<SellLanding />} />
+                    <Route path="/vi/shop/sell" element={<ViLanguageWrapper><SellLanding /></ViLanguageWrapper>} />
                     <Route path="/seller" element={<RequireAuth><SellerHome /></RequireAuth>} />
                     <Route path="/seller/application" element={<RequireAuth><SellerApplication /></RequireAuth>} />
                     <Route path="/seller/application/status" element={<RequireAuth><SellerApplicationStatus /></RequireAuth>} />
