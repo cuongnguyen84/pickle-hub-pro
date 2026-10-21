@@ -129,7 +129,12 @@ export function cleanSpecs(input: Specs | null | undefined): Specs {
   if (!input) return {};
   const out: Specs = {};
   for (const key of Object.keys(input).sort()) {
-    const value = (input[key] ?? "").trim().slice(0, SPEC_VALUE_MAX);
+    // Dữ liệu ngoài biên TypeScript (AI/JSON/Postgres cũ) vẫn có thể trả số
+    // hoặc boolean. Chuẩn hoá primitive tại đây để mọi luồng lưu đều an toàn.
+    const rawValue: unknown = input[key];
+    if (rawValue === null || rawValue === undefined) continue;
+    if (!["string", "number", "boolean"].includes(typeof rawValue)) continue;
+    const value = String(rawValue).trim().slice(0, SPEC_VALUE_MAX);
     if (value) out[key] = value;
     if (Object.keys(out).length >= SPEC_MAX_FIELDS) break;
   }
@@ -155,6 +160,19 @@ export interface SpecRow {
  * hiện, xếp cuối, với chính khoá làm nhãn — dữ liệu người bán đã nhập không bị
  * một lần sửa từ điển làm biến mất khỏi trang.
  */
+/**
+ * AI bulk import wrote the USA Pickleball flag as the literal "true"; the
+ * product page then read "Chứng nhận USA Pickleball: true" (SEO audit
+ * 2026-08-29). Display-side only — the stored value stays what the seller or
+ * the importer wrote.
+ */
+const yesNo = (value: string, lang: "vi" | "en"): string => {
+  const v = value.trim().toLowerCase();
+  if (v === "true" || v === "yes") return lang === "en" ? "Yes" : "Có";
+  if (v === "false" || v === "no") return lang === "en" ? "No" : "Không";
+  return value;
+};
+
 export function specRows(
   categorySlug: string | null | undefined,
   specs: Specs | null | undefined,
@@ -176,7 +194,7 @@ export function specRows(
     rows.push({
       key: field.key,
       label: lang === "en" ? field.labelEn : field.label,
-      value: field.unit ? `${value} ${field.unit}` : value,
+      value: field.unit ? `${value} ${field.unit}` : yesNo(value, lang),
     });
   }
   for (const key of Object.keys(clean)) {

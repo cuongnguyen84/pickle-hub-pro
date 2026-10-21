@@ -13,7 +13,7 @@
 
 BEGIN;
 
-SELECT plan(73);
+SELECT plan(75);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 
@@ -523,6 +523,38 @@ SELECT is(
    FROM jsonb_object_keys((public.product_public_projection('62000001-0000-4000-8000-000000000001'::uuid, true)) -> 'shop') k),
   ARRAY['name','ordering_enabled','region','return_note','shipping_fee_vnd','shipping_note','slug','verified'],
   'đường _as_seller cũng vậy — hai đường không lệch khoá');
+
+-- ─── Giá gốc trên card tìm kiếm ─────────────────────────────────────────────
+-- 780000 / 1000000 → floor(100 - 78) = 22.
+
+SET LOCAL role postgres;
+SELECT set_config('shop.privileged_write', 'on', true);
+INSERT INTO public.products (id, shop_id, slug, title, description, category_slug, status, is_published, created_at)
+VALUES ('62000020-0000-4000-8000-000000000020'::uuid, '61000001-0000-4000-8000-000000000001'::uuid,
+        'vot-giam-gia', 'Vợt Giảm Giá', 'Đang giảm giá.', 'vot', 'approved', true, now());
+INSERT INTO public.product_variants (product_id, shop_id, price_vnd, compare_at_price_vnd, stock_on_hand, position)
+VALUES ('62000020-0000-4000-8000-000000000020'::uuid, '61000001-0000-4000-8000-000000000001'::uuid, 780000, 1000000, 2, 0);
+INSERT INTO public.product_media (product_id, shop_id, draft_path, rendition_source_path, public_path, state, verified_at, position)
+VALUES ('62000020-0000-4000-8000-000000000020'::uuid, '61000001-0000-4000-8000-000000000001'::uuid,
+        '61000001-0000-4000-8000-000000000001/62000020-0000-4000-8000-000000000020/orig.jpg',
+        '61000001-0000-4000-8000-000000000001/62000020-0000-4000-8000-000000000020/rendition.webp',
+        '61000001-0000-4000-8000-000000000001/62000020-0000-4000-8000-000000000020/pub-v1.webp',
+        'approved', now(), 0);
+SELECT set_config('shop.privileged_write', 'off', true);
+
+SET LOCAL role anon;
+SET LOCAL request.jwt.claims TO '{"role":"anon"}';
+
+SELECT is(
+  (SELECT (card ->> 'discount_pct_max')::int
+   FROM jsonb_array_elements((public.shop_public_search('Giảm Giá')) -> 'rows') card
+   WHERE card ->> 'slug' = 'vot-giam-gia'),
+  22, 'card mang discount_pct_max = 22 (floor, không làm tròn lên)');
+SELECT is(
+  (SELECT (card ->> 'compare_at_min')::int
+   FROM jsonb_array_elements((public.shop_public_search('Giảm Giá')) -> 'rows') card
+   WHERE card ->> 'slug' = 'vot-giam-gia'),
+  1000000, 'và compare_at_min là giá gốc của phiên bản rẻ nhất');
 
 SELECT * FROM finish();
 ROLLBACK;

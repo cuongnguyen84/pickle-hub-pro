@@ -34,6 +34,15 @@ struct DeepLinkTests {
         #expect(parse("https://www.thepicklehub.net/join/XYZ789") == .joinInvite(code: "XYZ789"))
     }
 
+    @Test func proTourResultLinksOpenNativeDetail() {
+        #expect(parse("https://www.thepicklehub.net/live/pro/ppa-asia-kuala-lumpur-2026") ==
+            .proTourEvent(slug: "ppa-asia-kuala-lumpur-2026"))
+        #expect(parse("https://thepicklehub.net/vi/live/pro/ppa-asia-kuala-lumpur-2026") ==
+            .proTourEvent(slug: "ppa-asia-kuala-lumpur-2026"))
+        #expect(parse("thepicklehub://live/pro/ppa-asia-kuala-lumpur-2026") ==
+            .proTourEvent(slug: "ppa-asia-kuala-lumpur-2026"))
+    }
+
     @Test func bracketLabUniversalLinksOpenNativeDetails() {
         let matchID = UUID(uuidString: "10000000-0000-4000-8000-000000000001")!
         #expect(parse("https://www.thepicklehub.net/tools/quick-tables/qt123") == .quickTable(shareID: "qt123"))
@@ -81,5 +90,24 @@ struct DeepLinkTests {
         #expect(RemoteNotificationRoute.deepLink(from: [
             "entity_type": "tournament", "related_id": "not-a-uuid",
         ]) == nil)
+    }
+
+    @Test func shopLinksOpenNativeBuyerSurfaces() {
+        #expect(parse("https://www.thepicklehub.net/shop") == .shopHome)
+        #expect(parse("https://www.thepicklehub.net/vi/shop/search?q=vot%20carbon") == .shopSearch(query: "vot carbon"))
+        #expect(parse("thepicklehub://shop/category/vot") == .shopCategory(.paddles))
+        #expect(parse("https://www.thepicklehub.net/shop/product/vot-carbon-16mm-control") == .shopProduct(slug: "vot-carbon-16mm-control"))
+        #expect(parse("https://www.thepicklehub.net/shop/store/pickle-gear-sai-gon") == .shopStore(slug: "pickle-gear-sai-gon"))
+        #expect(parse("https://www.thepicklehub.net/shop/order/TPH-260824-ABC") == .shopOrder(code: "TPH-260824-ABC"))
+        #expect(parse("https://www.thepicklehub.net/shop/category/khong-ton-tai") == nil)
+        #expect(parse("https://evil.com/shop") == nil)
+    }
+
+    @Test func shopStatusPushOpensBuyerOrder() {
+        #expect(RemoteNotificationRoute.deepLink(from: [
+            "type": "shop_order_status",
+            "order_code": "TPH-260824-ABC",
+            "url": "/shop/order/TPH-260824-ABC",
+        ]) == .shopOrder(code: "TPH-260824-ABC"))
     }
 }

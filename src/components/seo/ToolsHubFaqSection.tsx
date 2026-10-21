@@ -27,8 +27,9 @@ import {
  * Copy is imported from src/content/tools/hub-copy.ts — the same arrays the SSR
  * renderer uses — so the two paths cannot drift.
  */
-export const ToolsHubFaqSection = () => {
-  const { language } = useI18n();
+export const ToolsHubFaqSection = ({ language: routeLanguage }: { language?: "en" | "vi" }) => {
+  const { language: preferredLanguage } = useI18n();
+  const language = routeLanguage ?? preferredLanguage;
   const isVi = language === "vi";
   const meta = isVi ? TOOLS_HOWTO_META.vi : TOOLS_HOWTO_META.en;
   const steps = isVi ? TOOLS_HOWTO_VI : TOOLS_HOWTO_EN;

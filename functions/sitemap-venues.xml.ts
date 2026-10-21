@@ -13,6 +13,7 @@ import {
   SITEMAP_CACHE_HEADERS,
   URL_SAFE_SLUG_RE,
   buildUrlEntry,
+  fetchAllRows,
   toLastmod,
   today,
   wrapUrlset,
@@ -28,32 +29,43 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const siteUrl = context.env.CANONICAL_HOST || SITE_URL_DEFAULT;
   const TODAY = today();
 
+  type VenueSitemapRow = {
+    slug: string;
+    updated_at: string | null;
+    address: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    num_courts: number | null;
+    phone: string | null;
+  };
+
   try {
     const supabase = createSupabaseClient(context.env);
     // Guard-0: select the same content fields renderVenueDetail uses to judge
     // "thin" so a near-empty UGC stub is dropped here too (its detail page is
     // noindex). Keeping a noindex'd URL in the sitemap is a SEOnaut warning
     // ("noindex in sitemap") and wastes crawl budget.
-    const { data: venues, error } = await supabase
-      .from("venues")
-      .select("slug, updated_at, address, latitude, longitude, num_courts, phone")
-      .order("updated_at", { ascending: false })
-      .limit(5000);
+    //
+    // Paged, not `.limit(5000)`: PostgREST caps every response at 1000 rows and
+    // does it silently — status 200, error null, exactly 1000 rows back. That is
+    // how sitemap-news served 500 of 709 articles for months (#644). venues sat
+    // at 896 rows on 2026-08-25 and has been growing ~100/month since the Google
+    // Places enrichment run, so this table crosses the cap within weeks; at that
+    // point the oldest courts would drop out of the sitemap with nothing in the
+    // logs to say so. `slug` is the tie breaker — venues.updated_at is bulk-set
+    // by the enrichment scripts, so same-timestamp rows are the norm here and
+    // would otherwise shuffle between pages and get lost.
+    const venues = await fetchAllRows<VenueSitemapRow>((from, to) =>
+      supabase
+        .from("venues")
+        .select("slug, updated_at, address, latitude, longitude, num_courts, phone")
+        .order("updated_at", { ascending: false })
+        .order("slug", { ascending: true })
+        .range(from, to),
+    );
 
-    if (error) {
-      console.error("sitemap-venues: query error:", error);
-    }
-
-    type VenueSitemapRow = {
-      slug: string;
-      updated_at: string | null;
-      address: string | null;
-      latitude: number | null;
-      longitude: number | null;
-      num_courts: number | null;
-      phone: string | null;
-    };
-    const entries = (venues || [])
+    // fetchAllRows always resolves to an array, so no `|| []` guard here.
+    const entries = venues
       .filter(
         (v: VenueSitemapRow) => v.slug && URL_SAFE_SLUG_RE.test(v.slug) && !isThinVenue(v),
       )

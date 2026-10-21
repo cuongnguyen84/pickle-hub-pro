@@ -884,10 +884,57 @@ export async function renderVenueDetail(
         ? `${v.num_courts} sân`
         : `${v.num_courts} court${v.num_courts > 1 ? "s" : ""}`
       : "";
+  // GEO-01 (2026-08-24) — the old opening was
+  //   "<name> là sân pickleball <type> tại <address>. Xem địa chỉ, bản đồ,
+  //    chỉ đường và các sân pickleball khác tại <city> bên dưới."
+  // which breaks two rules in CLAUDE.md's GEO section, on all 896 pages:
+  //
+  //  - it never names ThePickleHub, so an AI answer quoting the passage has
+  //    nothing to attribute it to;
+  //  - it ENDS by promising the answer is further down. CLAUDE.md puts it
+  //    plainly: a passage that promises the answer loses to one that contains
+  //    it. "Xem địa chỉ, bản đồ, chỉ đường … bên dưới" is the whole
+  //    anti-pattern in one clause.
+  //
+  // Rewritten to front-load whatever concrete facts this row actually holds —
+  // courts, surface, indoor/outdoor, district, verified price, verified hours,
+  // booking phone — and to close on the phone rather than on a pointer. Every
+  // fact is optional, so the sentence degrades to the venue name plus location
+  // when the row is bare, instead of padding with boilerplate.
+  //
+  // This also raises how much of the page differs per venue: the old opening
+  // varied only by name and address, the new one varies by up to six fields.
+  const factsVn: string[] = [];
+  if (courtsWord) factsVn.push(courtsWord);
+  if (typeWord) factsVn.push(typeWord);
+  if (v.surface_type) factsVn.push(lang === "vi" ? `mặt ${v.surface_type}` : `${v.surface_type} surface`);
+  const openingPrice = isVerifiedSource(v.price_source)
+    ? priceRangeText(v.price_min_vnd, v.price_max_vnd, "long")
+    : null;
+  const openingHoursText = isVerifiedSource(v.hours_source) ? uniformHours(v.hours_json) : null;
+
   const intro =
     lang === "vi"
-      ? `${name} là sân pickleball${typeWord ? ` ${typeWord}` : ""}${addr ? ` tại ${addr}` : ""}${courtsWord ? ` với ${courtsWord}` : ""}${v.surface_type ? `, mặt sân ${v.surface_type}` : ""}. Xem địa chỉ, bản đồ, chỉ đường và các sân pickleball khác${v.city ? ` tại ${v.city}` : ""} bên dưới.`
-      : `${name} is a pickleball court${addr ? ` at ${addr}` : ""}${courtsWord ? ` with ${courtsWord}` : ""}${typeWord ? ` (${typeWord})` : ""}${v.surface_type ? `, ${v.surface_type} surface` : ""}. See the address, map, directions and other pickleball courts${v.city ? ` in ${v.city}` : ""} below.`;
+      ? [
+          `${name} là sân pickleball${factsVn.length ? ` ${factsVn.join(", ")}` : ""}` +
+            `${locationLine(v) ? ` ở ${locationLine(v)}` : ""}, có trên ThePickleHub.`,
+          openingPrice ? `Giá thuê ${openingPrice}/giờ.` : "",
+          openingHoursText ? `Mở cửa ${hoursLabel(openingHoursText, lang).toLowerCase()}.` : "",
+          addr ? `Địa chỉ ${addr}.` : "",
+          v.phone ? `Đặt sân gọi ${v.phone}.` : "",
+        ]
+          .filter(Boolean)
+          .join(" ")
+      : [
+          `${name} is a pickleball court${factsVn.length ? ` with ${factsVn.join(", ")}` : ""}` +
+            `${locationLine(v) ? ` in ${locationLine(v)}` : ""}, listed on ThePickleHub.`,
+          openingPrice ? `Courts rent for ${openingPrice} per hour.` : "",
+          openingHoursText ? `Open ${hoursLabel(openingHoursText, lang).toLowerCase()}.` : "",
+          addr ? `Address: ${addr}.` : "",
+          v.phone ? `Book by phone on ${v.phone}.` : "",
+        ]
+          .filter(Boolean)
+          .join(" ");
   parts.splice(2, 0, `<p>${escapeHtml(intro)}</p>`);
 
   if (v.city) {
@@ -1038,11 +1085,11 @@ const CITY_EVENT_LINK: Record<
     { until: string; viText: string; enText: string; viSlug: string; enSlug: string }
   > = {
     "da-nang": {
-      until: "2026-09-07",
-      viText: "Heineken Pickleball World Cup 2026 tại Đà Nẵng (30/8 – 6/9) — lịch, địa điểm và cách xem",
-      enText: "Heineken Pickleball World Cup 2026 in Da Nang (Aug 30 – Sep 6) — schedule, venues and how to watch",
-      viSlug: "cam-nang-xem-pickleball-world-cup-2026-da-nang",
-      enSlug: "pickleball-world-cup-2026-da-nang-how-to-watch",
+      until: "2026-10-07",
+      viText: "Kết quả Heineken Pickleball World Cup 2026 tại Đà Nẵng (30/8 – 6/9) — toàn bộ chung kết và bảng huy chương",
+      enText: "Heineken Pickleball World Cup 2026 results in Da Nang (Aug 30 – Sep 6) — every final and the medal table",
+      viSlug: "ket-qua-pickleball-world-cup-2026-da-nang",
+      enSlug: "pickleball-world-cup-2026-da-nang-results",
     },
     "tp-hcm": {
       until: "2026-08-10",

@@ -719,3 +719,157 @@ redeploy; probe trực tiếp và dùng CLI local khi blob-loss tái phát.
 len(s.encode('utf-8'))  # meta_title ≤60, meta_description ≤160
 ```
 Trim set-score parentheticals / drop the leading "Kết quả PPA Asia 500 …" prefix first — those buy the most bytes. The INSERT uses `WHERE NOT EXISTS` on slug, so a failed attempt leaves **no partial row** — just fix the two fields and re-run (idempotent).
+
+## Bump một dateline = phải grep MỌI câu phụ thuộc vào ngày đó (2026-08-30)
+
+**Occurrence (WC Đà Nẵng, ngày khai mạc):** Sau khi đưa `updatedDate` 3 bài World Cup từ 29/8 → 30/8, bước verify độc lập tìm ra ba câu sống sót, và một trong số đó bị bump làm cho **sai hẳn** chứ không chỉ cũ:
+- `"…đúng một ngày trước khi trang này được cập nhật"` (bài lịch, bản VI). Đúng khi trang ghi 24/8. Bump lên 30/8 → câu này khẳng định 29/8. Ngày thật là 23/8. Bản EN đã sửa từ commit trước, bản VI thì không.
+- `"the day before play starts"` / `"ngày mai là bóng lăn"` × 4 chỗ trong bài how-to-watch — hôm nay là ngày thi đấu, "ngày mai" đã thành quá khứ.
+
+**Rule:** ngày tương đối là một khẳng định **có hạn dùng**. Trước khi bump dateline, grep các cụm: `the day before|tomorrow|ngày mai|hôm qua|ngày trước|tuần tới|còn N ngày|trước khi trang này`. Và grep **cả hai ngôn ngữ + cả hàng Supabase**, vì bản VI trong `vi_blog_posts.content_html` là HTML soạn tay, **không sinh ra từ file .ts** — sửa .ts không đụng tới nó (finding A ngày 30/8: câu "tính tới 27/8 link vé đã không còn" chỉ tồn tại trong Supabase, grep trong repo trả 0).
+
+**Kèm theo:** `vi_blog_posts.updated_at` có trigger ghi đè `now()` — đặt tay giá trị này là vô nghĩa, đừng đưa vào payload.
+
+---
+
+## `tsc --noEmit` KHÔNG kiểm gì cả — phải dùng `tsc -b --noEmit` (2026-09-02)
+
+**Occurrence:** Trước hai commit sáng 2/9 em chạy `npx tsc --noEmit`, thấy sạch, và commit. CI `Quality gate` vẫn đỏ. Lý do: `tsconfig.json` gốc dùng `files: []` + project references, nên `tsc --noEmit` **type-check ĐÚNG 0 file và luôn pass** (silent no-op). Workflow `quality.yml` dùng `npx tsc -b --noEmit` (build mode) — chính comment trong workflow đã cảnh báo điều này từ trước.
+
+**Hệ quả thật:** `tsc -b` đã đỏ trên `main` từ `2e5527e` (1/9) — commit đó thêm field bắt buộc `completed` vào `WcProEventGroup` mà không cập nhật 4 fixture trong `WorldCupLiveCard.test.tsx`. Không ai thấy vì check "typecheck" nội bộ luôn xanh. Sửa ở `a32d6c0`.
+
+**LUẬT:** lệnh typecheck trước commit của repo này là **`npx tsc -b --noEmit`**. `tsc --noEmit` trần = vô nghĩa, đừng dùng làm bằng chứng "sạch" trong báo cáo.
+
+## `wc_pro_matches.scheduled_at` là GIỜ VIỆT NAM lưu trong cột UTC — KHÔNG BAO GIỜ `AT TIME ZONE` (2026-09-02)
+
+**Occurrence:** BTC World Cup phát `"scheduledAt":"2026-09-01T08:00:00"` — chuỗi naive, không timezone. Scraper ghi verbatim vào cột `timestamptz`, Postgres hiểu là UTC. Migration `20260831140000` ghi rõ ở dòng 70: `scheduled_at timestamptz, -- Vietnam time stored as UTC`.
+
+Em truy vấn bằng `scheduled_at AT TIME ZONE 'Asia/Ho_Chi_Minh'` → **cộng +7 lần thứ hai**. Mọi giờ đưa vào 5 bài World Cup ngày 31/8 và 1/9 đều **trễ 7 tiếng**: "1/9 từ 15:00–17:40" (thật: 08:00–16:20), "chung kết đơn nam 6/9 18:20" (thật: 11:20), "chung kết đôi nam 20:40" (thật: 13:40). Trang `/vi/blog/lich-thi-dau-...` — trang top toàn site — bảo độc giả đến muộn 7 tiếng.
+
+**Ba cách tự bắt lỗi này, dùng lần sau:**
+1. **Bài tự mâu thuẫn:** cùng bài đã ghi "đơn nam 11:20" (lấy từ lịch BTC công bố) lại vừa ghi "Grand Final 18:20" (quy đổi từ DB). Chênh đúng 7h = dấu vân tay.
+2. **`completed` mà `last_seen_at < scheduled_at`:** 322/532 hàng. Không thể thấy kết quả trước giờ bóng lăn.
+3. **Nhìn dải giờ thô:** 08:00–16:20 là một ngày thi đấu bình thường; 15:00–23:20 thì không.
+
+**LUẬT:** đọc `scheduled_at` **verbatim** (`.slice(0,10)` cho ngày, phần giờ lấy thẳng). Code đúng đã có sẵn: `matchDayKey()` trong `functions/_lib/render/wc-results.ts` + `src/hooks/useWcResults.ts`. `last_seen_at` thì NGƯỢC LẠI — đó là instant UTC thật, phải +7.
+
+## Thay "day four"→"day five" mà quên ngày đứng bên cạnh (2026-09-03)
+
+**Occurrence:** sed đổi `day four of competition` → `day five` ở 3 dateline bài how-to-watch, nhưng
+tiền tố `Updated September 2, 2026,` thì không đổi. Kết quả lên production: *"Updated September 2,
+2026, day five of competition"* — 30/8 là day one nên 2/9 là day four; câu **tự sai với chính nó**.
+Verify độc lập bắt được, không phải em.
+
+**LUẬT:** dateline là **một cặp** (ngày tuyệt đối + số thứ tự ngày). Sửa một nửa là tạo mâu thuẫn
+nội bộ, tệ hơn để nguyên cả hai vế cũ. Thay cả cụm, và grep lại bằng chính cặp mới
+(`grep -c "September 2, 2026, day five"` phải = 0).
+
+## Sửa .ts KHÔNG chạm vi_blog_posts — và drift đi được cả HAI CHIỀU (2026-09-03)
+
+Luật 30/8 đã ghi "sửa .ts không đụng hàng Supabase". Hôm nay gặp **cả hai chiều trong một buổi**:
+- **EN sửa, VI sót:** bản VI bài cẩm nang xem vẫn còn "chỉ còn ba ngày nữa là khai cuộc",
+  "Cập nhật 27/8/2026, còn 3 ngày là bóng lăn", "đây **sẽ là** lần đầu tiên Việt Nam góp mặt"
+  (thì tương lai, giải đã sang ngày thứ năm) — bản EN đã viết lại sang quá khứ từ nhiều ngày trước.
+- **VI sửa, EN sót:** cùng bài đó, dateline EN thì sai như mục trên còn VI đã đúng.
+
+**LUẬT:** mỗi lần sửa nội dung một bài song ngữ, chạy grep **trên production cả hai URL** với cùng
+bộ chuỗi, chứ không grep trong repo. Repo chỉ chứa một nửa sự thật.
+
+## Kiểm chứng phải được hỏi "tìm lỗi tôi CHƯA hỏi" (2026-09-03)
+
+Subagent verify PASS 8/8 trên toàn bộ danh sách em tự đưa ra — rồi mục mở "tự tìm lỗi tôi chưa hỏi"
+ra **7 phát hiện, 4 là lỗi thật vừa mới tạo ra**, gồm cả chuyện em **nói hụt chính câu chuyện của
+mình** (viết "hai trận chung kết" trong khi bài trụ cột của chính site đã đăng dữ kiện đủ để nói
+"có thể ba"). Danh sách kiểm do tác giả viết chỉ kiểm được thứ tác giả đã nghĩ tới.
+
+**LUẬT:** mọi lần verify phải có một mục cuối để mở, liệt kê sẵn các họ lỗi cần soi (tự mâu thuẫn ·
+ngày tương đối hết hạn · khẳng định vượt dữ liệu · loãng entity · suy luận bracket không nhất quán),
+và grep production sau khi deploy — lần sửa thứ nhất hôm nay sót một chuỗi cách chỗ đã sửa hai
+mệnh đề, chỉ grep prod mới thấy.
+
+## Bản VI có HAI nguồn sự thật, không phải một: `content_html` VÀ `faq_items` (2026-09-06)
+
+**Occurrence:** sáng 6/9 em viết lại cả 6 hàng `vi_blog_posts.content_html`, verify bằng predicate,
+`like '%19:40%'` = true trên cả 6. Rồi `curl -A Googlebot ...?nocache=1` vẫn trả về giờ chung kết CŨ
+(10:10–14:50) trên trang lịch VI và trang kết quả VI. Không phải cache — chuỗi cũ nằm trong khối
+`"@type":"FAQPage"` của JSON-LD, và khối đó **sinh từ cột `vi_blog_posts.faq_items` (jsonb)**, hoàn
+toàn tách rời `content_html`. Sửa `content_html` không đụng nó, y hệt cách sửa `.ts` không đụng
+`vi_blog_posts`.
+
+**LUẬT:** một bài song ngữ có **ba** nơi chứa cùng một dữ kiện, không phải hai:
+`posts/<slug>.ts` (EN) · `vi_blog_posts.content_html` (VI, HTML soạn tay) · `vi_blog_posts.faq_items`
+(VI, JSON-LD FAQ). Mỗi lần sửa một con số phải quét cả ba. Predicate kiểm nhanh:
+`select slug, faq_items::text like '%<chuỗi cũ>%' from vi_blog_posts where ...`.
+
+## Splice chuỗi bằng index thì phải đếm cả dấu nháy đóng (2026-09-06)
+
+`s = s[:i] + new + s[j+1:]` với `j = s.find('",\n        },', i)` — `j` trỏ vào dấu `"` đóng, nên
+`s[j+1:]` bắt đầu từ `,`. Nếu `new` không tự kết thúc bằng `"` thì chuỗi mất nắp. Lần này `tsc -b`
+bắt được (TS1002 Unterminated string literal). Nhưng lần thứ hai cùng buổi, một replace prefix cắt
+giữa câu lại **không** vỡ cú pháp — nó ship ra production nguyên văn `"both are supersed it."`,
+nằm trong FAQPage JSON-LD của trang top-traffic. `tsc` không bắt được câu văn vỡ.
+
+**LUẬT:** sau mọi lượt sửa nội dung, đọc lại **văn bản đã render** của chính đoạn vừa sửa (grep 200
+ký tự quanh chỗ thay), đừng chỉ tin typecheck. Và ưu tiên replace nguyên câu trọn vẹn thay vì
+splice theo index.
+
+## Ba lần liên tiếp: viết mở bài mới mà không đọc thân bài (2026-09-06)
+
+5/9: "mọi nội dung còn lại diễn ra vào ngày mai" trong khi bảng ngay dưới liệt kê 3 chung kết hôm đó.
+6/9: mục mới ghi "cả tám trận chung kết nay đều có giờ và tên nội dung", ba đoạn dưới vẫn còn
+"the three timed national-team matches are not labelled by division"; và hàng bảng "Thứ Bảy 5/9" vẫn
+ghi chung kết Junior trong khi hàng "Chủ nhật 6/9" ghi chung kết Junior 08:00.
+
+**LUẬT:** khi một mục đổi *kết luận* (từ "chưa biết X" sang "X = 19:40"), grep toàn bài theo **mệnh
+đề phủ định cũ** ("chưa", "không được ghi", "unlabelled", "still not", "chưa rõ", "no slot") chứ
+không grep theo con số mới. Con số mới có mặt không chứng minh câu cũ đã biến mất.
+
+## 2026-09-07 — ba bài học từ lượt "giải đã kết thúc"
+
+**1. Bản VI có BA nguồn sự thật, không phải hai.** Ngày 6/9 đã ghi "content_html VÀ faq_items". Hôm nay lộ thêm cái thứ ba: **`title` và `meta_description` trong `vi_blog_posts`**. Trang kết quả VI có `title` = "…cập nhật từng phút" và `meta_description` = "…cập nhật liên tục" — hai chuỗi đi thẳng vào SERP, sống sót qua cả lượt sửa content_html lẫn faq_items, và không nằm trong file TS nào. Ngoài ra `metadata.ts` giữ bản sao EN+VI của title/description và **có test canh drift** (`seo-byte-budget.test.ts`), nên sửa post file mà quên metadata.ts thì vitest bắt được; còn sửa Supabase mà quên metadata.ts thì **không ai bắt được**. Danh sách đầy đủ khi đổi tiêu đề/mô tả một bài song ngữ: `posts/<slug>.ts` → `metadata.ts` → `vi_blog_posts.title` → `vi_blog_posts.meta_description`.
+
+**2. Thay một đoạn theo CHỈ SỐ `<p>` thì phải kiểm tra đoạn đó có xuất hiện lại ở chỗ khác không.** Lượt sửa sáng nay thay `<p>` số 0 của bài đôi nam bằng đoạn mở mới, rồi lượt sau tìm-thay chuỗi "Cập nhật Chủ nhật 6/9…" và gặp một đoạn GIỐNG HỆT nằm sâu trong thân bài — kết quả là **cùng một đoạn mở in hai lần trên production**, do chính mình tạo ra. Lần sau: trước khi ghi, `assert content.count(new_paragraph) == 1`.
+
+**3. Grep tìm chuỗi cũ phải chạy trên BẢN RENDER, không phải trên file nguồn.** Ba vòng verify hôm nay tìm ra ba lớp khác nhau, và lớp nào cũng vô hình với lớp trước: (a) file TS EN sạch nhưng Supabase VI còn nguyên đoạn cũ; (b) cả hai sạch nhưng **`functions/_lib/render/wc-results.ts`** vẫn in "mọi trận Pro đang thi đấu" — chuỗi sinh ra ở tầng code, không ở tầng nội dung; (c) thân bài sạch nhưng **`faqItems`/`faq_items`** còn thì tương lai, và FAQ chính là thứ AI search trích. Quy trình đúng: `curl -A Googlebot "<URL>?nocache=1"` rồi grep trên HTML trả về, cho cả 12 URL, sau mỗi deploy — không phải `grep` trong `src/`.
+
+**4. Subagent verify có mục mở đáng giá hơn checklist.** Yêu cầu "tìm cả những lỗi tôi chưa hỏi tới" trả về đúng những thứ checklist không thể có: câu cụt giữa sở hữu cách ("beating Peru's"), đoạn mồ côi về đội trưởng Cayman nằm dưới heading về Việt Nam, danh sách "ba khoảng trống" mà mục 2 nói khoảng trống đó đã hết, và trang trụ EN **thiếu hẳn FAQ "ai vô địch"** trong khi bản VI đã có — một lệch EN/VI mà không grep nào bắt được vì nó là sự VẮNG MẶT.
+
+## Một VĐV có thể có BA cái tên, mỗi tên một nguồn — nêu cả ba, đừng chọn bừa (2026-09-10)
+
+**Occurrence:** site gọi Hồ Thị Trúc Tâm là **"Ken Tam"** ở các bài cũ (bài HCV Thâm Quyến dùng 29 lần, kể cả trong slug `sophia-huynh-ken-tam-womens-doubles-gold-2026` và trong `metaTitle` cả EN lẫn VI) nhưng là **"Ho Tam / Hồ Tâm"** ở hai bài KL Cup (16 và 26 lần), **không bài nào bắc cầu giữa hai tên**. Riêng bài KL preview nhắc "Ken Tam" đúng một lần — trong anchor link — nên người đọc bấm vào tưởng sang bài về người khác.
+
+**Ba tên đều có nguồn thật, không cái nào sai:**
+- `Hồ Thị Trúc Tâm` — tên thật
+- `HO Tam` — PPA Tour Asia đăng ký trong bảng hạt giống
+- `Ken Tam` — DUPR (`src/content/dupr-rankings.ts`, nữ đơn hạng 18, 5.037, parse từ dupr.com 20/7/2026)
+
+**LUẬT:**
+1. **Dạng chính cho nội dung MỚI: `Ho Tam` / `Hồ Tâm`** — khớp bảng đấu người đọc đang nhìn, và khớp cách người Việt tìm kiếm.
+2. **KHÔNG đổi slug và KHÔNG đổi `metaTitle` đã index** để chạy theo dạng chính. Slug `...ken-tam...` và hai metaTitle chứa "Ken Tam" giữ nguyên — đổi là churn SERP để lấy về đúng con số không.
+3. **Mọi trang nhắc tên cô phải nêu đủ ba tên MỘT lần ở lần nhắc đầu**, kèm nguồn: *"Ho Tam — Ho Thi Truc Tam, whom PPA Tour Asia enters as HO Tam and DUPR lists as Ken Tam"*. Đây vừa là chống nhầm cho người đọc, vừa là đoạn văn hợp nhất thực thể cho AI search — ba chuỗi cùng trỏ về một người, có nguồn cho từng chuỗi.
+4. Cùng họ vấn đề, chưa xử: `Sophia Nhi Huynh` (không dấu) đứng cạnh `Sophia Phương Anh Trần` (có dấu) trong cùng danh sách, và `metadata.ts` từng gọi người thắng HCV Thâm Quyến là `Sophia Huynh Tran` — trộn tên của **hai người khác nhau** mà chính bài KL Cup cảnh báo là hay bị nhầm.
+
+**Cách tự bắt lỗi này lần sau:** khi thêm một bài về VĐV đã có bài cũ, grep tên VĐV đó trên **toàn repo** trước khi viết, không chỉ trong bài đang soạn. Anchor link là chỗ lộ ra sớm nhất — nó mang tên theo bài đích trong khi thân bài mang tên theo bài nguồn.
+
+## Apply SQL qua Management API thì PHẢI ghi sổ ngay trong cùng phiên (2026-09-10)
+
+**Occurrence:** `Deploy guard` đỏ **8 run liên tiếp** từ 9/9 12:47 tới 10/9, và không ai để ý vì nó đỏ liên tục nên trông như "bình thường". Nguyên nhân: PR #760 (`9e11ad9`) thêm `supabase/migrations/20260909040000_pro_tour_events_registry.sql`, **đã chạy vào prod nhưng không ghi vào** `supabase_migrations.schema_migrations`. Sổ dừng ở `20260908120000`.
+
+**Đây KHÔNG phải migration chưa chạy.** Em đối chiếu từng câu lệnh với DB thật trước khi làm gì: bảng 20 cột ✓, RLS bật ✓, đúng 2 policy đúng tên/cmd/roles ✓, `GRANT SELECT TO anon` ✓, `GRANT INSERT,UPDATE,DELETE TO authenticated` ✓, 1 hàng seed từ `INSERT` ✓. Tức là **8/8 câu lệnh đã vào DB, chỉ thiếu đúng một dòng ghi sổ.**
+
+**Vì sao chuyện này sẽ LẶP:** trong Cowork, đường chuẩn để chạy SQL prod là Management API — đúng đường em dùng cả ngày cho `vi_blog_posts`. `docs/ops-runbook.md` §1 có ghi bước ghi sổ ngay sau bước apply, nhưng nó là bước *rời*, dễ quên, và không có gì chặn lúc chạy. Cái chặn duy nhất là `check-migration-drift.mjs` trong CI — **chạy SAU khi merge**, nên lỗi luôn được phát hiện muộn và luôn ở dạng "main đã đỏ sẵn".
+
+**LUẬT:**
+1. Apply migration qua Management API thì **gộp cả hai vào MỘT lệnh curl**, đừng tách:
+   ```sql
+   SELECT 1;  -- gotcha runbook: câu đầu hay bị nuốt
+   <DDL của migration>
+   INSERT INTO supabase_migrations.schema_migrations (version, name)
+   VALUES ('<version>', '<name>') ON CONFLICT (version) DO NOTHING;
+   ```
+2. `name` = tên file bỏ tiền tố version và bỏ `.sql` (`20260909040000_pro_tour_events_registry.sql` → `pro_tour_events_registry`).
+3. Verify bằng `DRIFT_STRICT=1 node scripts/check-migration-drift.mjs` — phải in `Local migrations: N · Applied on prod: N`.
+4. **Phân biệt cho rõ:** `UPDATE`/`INSERT` vào bảng dữ liệu (như `vi_blog_posts`) **không phải migration**, không ghi sổ. Chỉ DDL trong `supabase/migrations/*.sql` mới ghi.
+5. **CẤM `db push --include-all`** (runbook §1) — sổ remote còn drift lịch sử.
+
+**Bài học rộng hơn, đáng giá hơn cái fix:** một CI check đỏ thường trực còn tệ hơn không có check. Tám lần đỏ liên tiếp đã dạy mọi người (kể cả em, sáng nay em báo "CI 4/4 xanh" cho ba commit mà thật ra Deploy guard đang đỏ) rằng màu đỏ đó là nền. Lần sau thấy một check đỏ nhiều run liền: **truy xem nó đỏ từ commit nào** (`workflows/<id>/runs`) trước khi cho rằng đó là do mình hoặc là chuyện đã biết.

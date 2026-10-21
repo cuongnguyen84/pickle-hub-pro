@@ -569,3 +569,115 @@ describe("haversineKm / formatKm", () => {
     expect(formatKm(1.25, "en")).toBe("1.3 km");
   });
 });
+
+/**
+ * GEO-01 (2026-08-24) — the venue opening broke two rules from CLAUDE.md's GEO
+ * section on all 896 pages: it never named ThePickleHub, and it ENDED by
+ * pointing further down the page ("Xem địa chỉ, bản đồ, chỉ đường … bên dưới")
+ * instead of answering. CLAUDE.md is explicit that a passage which promises the
+ * answer loses to one that contains it.
+ *
+ * The rule had only ever been applied to blog posts. These tests hold it on the
+ * route that carries 68% of site impressions.
+ */
+describe("renderVenueDetail — GEO opening (GEO-01)", () => {
+  // Loop to a fixpoint rather than strip once: `<<b>b>` survives a single pass
+  // and reassembles into a tag. Harmless in a test helper, but CodeQL's
+  // js/incomplete-multi-character-sanitization cannot tell test code from the
+  // real sanitizer and failed the security gate on every PR — the same shape
+  // functions/_lib/utils.ts:238 already uses.
+  const stripTags = (text: string) => {
+    let out = text;
+    let prev: string;
+    do {
+      prev = out;
+      out = out.replace(/<[^>]+>/g, "");
+    } while (out !== prev);
+    return out;
+  };
+
+  const opening = (html: string) => {
+    const ps = [...html.matchAll(/<p>([\s\S]*?)<\/p>/g)].map((m) => stripTags(m[1]).trim());
+    return unescape(ps.find((p) => p.length > 40) ?? "");
+  };
+
+  const PRICED = {
+    ...BASE,
+    price_min_vnd: 100000,
+    price_max_vnd: 160000,
+    price_source: "partner",
+    hours_json: Object.fromEntries(
+      ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].map((d) => [d, "05:00-22:00"]),
+    ),
+    hours_source: "partner",
+  };
+
+  it("names ThePickleHub once, so an AI answer can attribute the passage", async () => {
+    const p = opening(await render(BASE));
+
+    expect(p).toContain("ThePickleHub");
+    expect(p.match(/ThePickleHub/g)).toHaveLength(1);
+    // The spaced variant dilutes the entity and is alternateName-only.
+    expect(p).not.toContain("The Pickle Hub");
+  });
+
+  it("no longer ends by pointing at content further down the page", async () => {
+    const p = opening(await render(BASE));
+
+    expect(p).not.toContain("bên dưới");
+    expect(p).not.toContain("Xem địa chỉ, bản đồ");
+  });
+
+  it("front-loads the facts the row actually holds", async () => {
+    const p = opening(await render(PRICED));
+
+    expect(p).toContain("4 sân");
+    expect(p).toContain("ngoài trời");
+    expect(p).toContain("Đống Đa, Hà Nội");
+    expect(p).toContain("Giá thuê 100.000đ–160.000đ/giờ.");
+    expect(p).toContain("Mở cửa 05:00-22:00.");
+    expect(p).toContain("0825 815 815");
+  });
+
+  it("keeps an unverified price out of the opening", async () => {
+    const p = opening(
+      await render({
+        ...PRICED,
+        price_min_vnd: 80000,
+        price_max_vnd: 200000,
+        price_source: "default",
+        hours_source: "default",
+      }),
+    );
+
+    expect(p).not.toContain("Giá thuê");
+    expect(p).not.toContain("80.000đ");
+    expect(p).not.toContain("Mở cửa");
+  });
+
+  it("degrades to name plus location on a bare row rather than padding", async () => {
+    const p = opening(
+      await render({
+        ...BASE,
+        num_courts: null,
+        is_indoor: null,
+        surface_type: null,
+        phone: null,
+        address: null,
+      }),
+    );
+
+    expect(p).toContain("Đảo Sen Pickleball là sân pickleball ở Đống Đa, Hà Nội, có trên ThePickleHub.");
+    expect(p).not.toMatch(/\.\s*\./);
+    expect(p).not.toContain("undefined");
+    expect(p).not.toContain("null");
+  });
+
+  it("says the same thing in English", async () => {
+    const p = opening(await render(PRICED, "en"));
+
+    expect(p).toContain("listed on ThePickleHub");
+    expect(p).toContain("Courts rent for 100.000đ–160.000đ per hour.");
+    expect(p).not.toContain("below.");
+  });
+});

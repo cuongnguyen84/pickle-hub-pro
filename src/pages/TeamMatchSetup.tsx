@@ -32,6 +32,9 @@ const ROSTER_SIZE_OPTIONS = [
   { value: 6, label: '6' },
   { value: 8, label: '8' },
 ];
+// Preset 4/6/8 vẫn là lối tắt; BTC nhập số khác trong khoảng này (khớp RPC create_team_match_atomic).
+const ROSTER_MIN = 2;
+const ROSTER_MAX = 20;
 
 // TM keeps its local heading/desc variants (26px serif + mono caps desc) —
 // the shared setup-styles tokens are the QT/Flex/DE 28px/prose variant.
@@ -109,7 +112,9 @@ export default function TeamMatchSetup() {
   const [name, setName] = useState('');
   const [eventDate, setEventDate] = useState('');
   const [location, setLocation] = useState('');
-  const [rosterSize, setRosterSize] = useState<4 | 6 | 8>(4);
+  const [rosterSize, setRosterSize] = useState(4);
+  // Chuỗi đang gõ — tách khỏi rosterSize để gõ "12" không bị chặn ở chữ "1".
+  const [rosterInput, setRosterInput] = useState('4');
   const [teamCount, setTeamCount] = useState(4);
   const [requireRegistration, setRequireRegistration] = useState(false);
   const [requireMinGames, setRequireMinGames] = useState(false);
@@ -217,7 +222,10 @@ export default function TeamMatchSetup() {
     setName(d.name);
     if (typeof d.eventDate === 'string') setEventDate(d.eventDate);
     if (typeof d.location === 'string') setLocation(d.location);
-    if ([4, 6, 8].includes(d.rosterSize)) setRosterSize(d.rosterSize);
+    if (Number.isInteger(d.rosterSize) && d.rosterSize >= ROSTER_MIN && d.rosterSize <= ROSTER_MAX) {
+      setRosterSize(d.rosterSize);
+      setRosterInput(String(d.rosterSize));
+    }
     if (typeof d.teamCount === 'number') setTeamCount(d.teamCount);
     if (typeof d.requireRegistration === 'boolean') setRequireRegistration(d.requireRegistration);
     if (typeof d.requireMinGames === 'boolean') setRequireMinGames(d.requireMinGames);
@@ -282,8 +290,9 @@ export default function TeamMatchSetup() {
     ? t.teamMatch.setup.invalidTeamCount
     : null;
 
-  const handleRosterSizeChange = (size: 4 | 6 | 8) => {
+  const handleRosterSizeChange = (size: number) => {
     setRosterSize(size);
+    setRosterInput(String(size));
     setTemplates(getDefaultTemplates(size));
   };
 
@@ -548,7 +557,7 @@ export default function TeamMatchSetup() {
                   </Label>
                   <RadioGroup
                     value={rosterSize.toString()}
-                    onValueChange={(v) => handleRosterSizeChange(Number(v) as 4 | 6 | 8)}
+                    onValueChange={(v) => handleRosterSizeChange(Number(v))}
                     className="grid grid-cols-3 gap-3"
                   >
                     {ROSTER_SIZE_OPTIONS.map(opt => {
@@ -604,6 +613,32 @@ export default function TeamMatchSetup() {
                       );
                     })}
                   </RadioGroup>
+                  <div className="flex items-center gap-3">
+                    <Label htmlFor="roster-custom" className="shrink-0">
+                      {language === 'vi' ? 'Hoặc nhập số khác' : 'Or enter a number'}
+                    </Label>
+                    <Input
+                      id="roster-custom"
+                      type="number"
+                      inputMode="numeric"
+                      min={ROSTER_MIN}
+                      max={ROSTER_MAX}
+                      className="w-24"
+                      value={rosterInput}
+                      onChange={(e) => {
+                        setRosterInput(e.target.value);
+                        const n = Number(e.target.value);
+                        if (Number.isInteger(n) && n >= ROSTER_MIN && n <= ROSTER_MAX && n !== rosterSize) {
+                          setRosterSize(n);
+                          setTemplates(getDefaultTemplates(n));
+                        }
+                      }}
+                      onBlur={() => setRosterInput(String(rosterSize))}
+                    />
+                    <span style={{ fontSize: 12.5, color: 'var(--tl-fg-3)' }}>
+                      {ROSTER_MIN}–{ROSTER_MAX} {language === 'vi' ? 'VĐV/đội' : 'players/team'}
+                    </span>
+                  </div>
                   <p
                     style={{
                       fontSize: 12.5,

@@ -203,6 +203,28 @@ struct FeedNews: Equatable {
     let aiTranslated: Bool
 }
 
+/// Full published news row used by the native reader. Some legacy items are
+/// briefs and intentionally have no `content_html`; the reader falls back to
+/// their editorial summary.
+struct NewsArticleDetail: Decodable, Equatable {
+    let title: String
+    let summary: String
+    let source: String?
+    let imageURL: String?
+    let category: String?
+    let contentHTML: String?
+    let publishedAt: String
+    let aiTranslated: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case title, summary, source, category
+        case imageURL = "image_url"
+        case contentHTML = "content_html"
+        case publishedAt = "published_at"
+        case aiTranslated = "ai_translated"
+    }
+}
+
 /// A `news_items` row. News is not part of `get_feed_timeline`; it is queried
 /// separately and merged into the stream by score, mirroring the web Trending
 /// feed (`src/hooks/social/useFeedNews.ts`).

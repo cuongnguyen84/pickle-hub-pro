@@ -11,6 +11,7 @@ import {
   SITE_URL_DEFAULT,
   SITEMAP_CACHE_HEADERS,
   buildUrlEntry,
+  fetchAllRows,
   toLastmod,
   today,
   wrapUrlset,
@@ -28,18 +29,28 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   try {
     const supabase = createSupabaseClient(context.env);
-    const { data: viPosts, error } = await supabase
-      .from("vi_blog_posts")
-      .select("slug, updated_at, alternate_en_slug")
-      .eq("status", "published")
-      .order("published_at", { ascending: false })
-      .limit(5000);
+    // CAP-01 (2026-08-25) — paged. PostgREST caps every response at 1000 rows
+    // silently: `.limit(5000)` returns 1000 rows, HTTP 200, error = null. This
+    // is the segment where that would hurt most — blog posts are the highest
+    // intent pages on the site and the ONLY thing that carries VI ↔ EN
+    // hreflang, so a truncated page would break reciprocity for every post
+    // below the cut, not merely de-list it. 66 URLs today. `slug` is the
+    // unique tie breaker.
+    const viPosts = await fetchAllRows<{
+      slug: string;
+      updated_at: string | null;
+      alternate_en_slug: string | null;
+    }>((from, to) =>
+      supabase
+        .from("vi_blog_posts")
+        .select("slug, updated_at, alternate_en_slug")
+        .eq("status", "published")
+        .order("published_at", { ascending: false })
+        .order("slug", { ascending: true })
+        .range(from, to),
+    );
 
-    if (error) {
-      console.error("sitemap-blog: query error:", error);
-    }
-
-    const entries = (viPosts || []).map((post: { slug: string; updated_at: string | null; alternate_en_slug: string | null }) => {
+    const entries = viPosts.map((post) => {
       const lastmod = toLastmod(post.updated_at, TODAY);
       const hreflang = post.alternate_en_slug
         ? [

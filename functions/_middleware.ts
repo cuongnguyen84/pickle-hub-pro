@@ -1,3 +1,4 @@
+import { renderAuthor } from "./_lib/render/author";
 /**
  * Cloudflare Pages Functions Middleware
  *
@@ -8,6 +9,7 @@
  */
 
 import { BOT_UA, detectLang, stripLangPrefix } from "./_lib/utils";
+import { isPublicContentPath, servePublicPage } from "./_lib/public-page";
 import { isKnownSpaPath } from "./_lib/spa-routes";
 import { createSupabaseClient } from "./_lib/supabase";
 import {
@@ -34,6 +36,7 @@ import {
   renderNotificationsShell,
   renderNoindexShell,
   render404,
+  renderProTourEvent,
 } from "./_lib/render";
 
 // ─── PR72 (SEO Phase 2A I-7) — noindex route patterns ────────
@@ -200,6 +203,68 @@ export const isPagesApiPath = (pathname: string) =>
 export const isWellKnownPath = (pathname: string) =>
   pathname === "/.well-known" || pathname.startsWith("/.well-known/");
 
+// ─── Static asset passthrough ──────────────────────────────────────────────
+// Anything that exists as a real file in public/ (or is emitted into the build
+// output) must reach `next()` untouched. A path that misses every rule below
+// falls all the way through to the SPA soft-404 guard and is served as an HTML
+// 404 — with a 200-looking file sitting in the deploy the whole time.
+//
+// That is not hypothetical: `/manifest.webmanifest` 404'd in production because
+// STATIC_EXACT still listed the pre-vite-plugin-pwa filename `/manifest.json`,
+// and `webmanifest` was missing from the extension list. Chrome could not read
+// the PWA manifest, so "Add to Home Screen" / install was unavailable sitewide
+// — silent, because nothing on the page fails visibly when a manifest 404s.
+//
+// Note the manifest is NOT in public/ — vite-plugin-pwa emits it into the build
+// output, which is exactly why it was easy to miss. So the drift guard in
+// `functions/__tests__/static-asset-passthrough.test.ts` covers both: it walks
+// public/ AND asserts the build-emitted filenames by name. Add a file type to
+// either and the test tells you here, not production months later.
+const STATIC_PREFIXES = [
+  "/og-images/",
+  "/assets/",
+  "/images/",
+  "/fonts/",
+  "/icons/",
+  "/static/",
+];
+
+const STATIC_EXT_RE =
+  /\.(jpg|jpeg|png|webp|gif|svg|ico|avif|css|js|mjs|woff2?|ttf|otf|eot|xml|txt|md|json|webmanifest|pdf|xlsx|xls|csv|docx|doc|pptx|ppt|mp4|webm|mp3|wav|zip|map)$/i;
+
+// `/manifest.json` is the pre-rename filename. `public/_routes.json` excludes
+// it from Functions entirely, so this entry is belt-and-braces — it only bites
+// if that exclude list is ever trimmed.
+const STATIC_EXACT = new Set([
+  "/favicon.ico",
+  "/robots.txt",
+  "/manifest.json",
+  "/manifest.webmanifest",
+  "/_worker.js",
+  "/_redirects",
+  "/_headers",
+]);
+
+// Site-ownership proof files that platforms fetch at the domain root. Zalo
+// (the messenger ~everyone in Vietnam uses) serves its verifier as .html, so
+// it looks exactly like an SPA route to every rule above. Matching the shape
+// rather than one token means a re-issued verifier keeps working.
+//
+// The extension is OPTIONAL, and that is the load-bearing part. Cloudflare
+// Pages applies `html_handling` to everything its asset handler serves, so a
+// request for `/zalo_verifier<token>.html` comes back as a 308 to the
+// extensionless `/zalo_verifier<token>`. Match only the `.html` form and the
+// redirect lands on a path this list does not recognise, which drops into the
+// SPA soft-404 guard and 404s — the redirect target has to be servable too.
+// (Both forms verified on preview builds a37fe065 / 37bf339e before this.)
+const ROOT_VERIFICATION_RE = /^\/(?:zalo_verifier|google[0-9a-f]{16}|BingSiteAuth|pinterest-)[A-Za-z0-9_-]*(?:\.(?:html|xml))?$/;
+
+export const isStaticAssetPath = (pathname: string): boolean =>
+  STATIC_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
+  STATIC_EXT_RE.test(pathname) ||
+  STATIC_EXACT.has(pathname) ||
+  ROOT_VERIFICATION_RE.test(pathname);
+
 export const isHtmlSpaFallback = (response: Response) =>
   response.status === 200 &&
   (response.headers.get("content-type") || "").includes("text/html");
@@ -243,7 +308,11 @@ const GONE_EXACT = new Set<string>([
   "/nguoi-choi/lecam-test", "/nguoi-choi/lyhoangnam-test",
   "/nguoi-choi/nguyenvana-test", "/nguoi-choi/phamquang-test",
   "/nguoi-choi/tranthib-test", "/nguoi-choi/vothanh-test",
-  "/clb/clb-test", "/clb/test-3", "/clb/test-5",
+  // 2026-08-27 site audit: "/clb/test" belongs to the same fixture family as
+  // the three below (name "test", description "test", archived 2026-07-28) and
+  // was the only one still answering 200 to a crawler. Removing it from
+  // sitemap-events.xml withdraws the recommendation; this removes the URL.
+  "/clb/clb-test", "/clb/test", "/clb/test-3", "/clb/test-5",
   "/tran-dau/nguyenvana-test-vs-lyhoangnam-test-20260504-37e3d1",
   "/tran-dau/nguyenvana-test-vs-tranthib-test-20260504-ad583f",
   "/tran-dau/lyhoangnam-test-vs-phamquang-test-20260507-4371a9",
@@ -254,11 +323,33 @@ const GONE_EXACT = new Set<string>([
   // Ended / deleted livestreams (last two Google truncated at the dash)
   "/live/612bd532-0751-4623-915b-2a13babc9a4e",
   "/live/81ff3365-0ccf-4ce3-bf19-e7d7829735c3",
+  "/live/80b73967", "/live/6277dca2", "/live/10779a7c",
   "/live/80b73967-", "/live/b083fc1f-",
   // Transactional app actions — never indexable content pages
   "/match/new", "/match/confirm",
   // Google-truncated blog URLs (no such slug; full posts live elsewhere)
   "/vi/blog/hop-", "/vi/blog/thuat-",
+  // Truncated news slug emitted by an old internal link; no unambiguous post.
+  "/vi/news/vi-sao-cu-",
+  // ─── 2026-09-07 sweep ────────────────────────────────────────────────────
+  // Re-crawling all 91 URLs from the GSC "Not found (404)" export showed the
+  // 2026-07-30 and 2026-08-27 passes had already handled 86 of them: 57 answer
+  // 410, 28 redirect, 1 is back to 200. These five were what remained on a
+  // bare 404, which is the one answer that keeps a URL in Google's retry
+  // queue indefinitely.
+  //
+  // Deleted Mux videos. /watch/:id has no tombstone path of its own — the SPA
+  // catch-all soft-404s it — so a removed asset looks identical to a typo.
+  // These three were crawled 2026-09-03..05, so they are recent removals, not
+  // ancient history.
+  "/watch/9439d561-5857-4b94-8304-7d787c5502c3",
+  "/watch/c2138621-6d0d-4bb1-82e4-7cb9ff249de0",
+  "/watch/c8e56c37-d405-4281-b66f-c5d925f89595",
+  // Two more Google-truncated URLs, same family as the entries above: a
+  // livestream id cut mid-UUID, and a news slug cut to two letters. Neither
+  // can be resolved to a real page, so 410 rather than a guessed redirect.
+  "/live/3e211e67-2caa-",
+  "/vi/news/ly",
 ]);
 const GONE_PATTERNS: RegExp[] = [
   // Old MLP-Dallas scraper double-"mlp-mlp-" slug bug (matches 001–025);
@@ -292,6 +383,24 @@ const SECURITY_HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "SAMEORIGIN",
   "Referrer-Policy": "strict-origin-when-cross-origin",
+  // Added 2026-09-08. public/_headers moved Permissions-Policy out of the
+  // homepage-only block and into /* on 2026-08-19 precisely so it would cover
+  // the whole site — but /* is a STATIC-asset rule, and this bot path builds
+  // its Responses in code, so the move covered every human response and no
+  // prerendered one. Verified against production the same day: a Googlebot
+  // request for / came back with HSTS, CSP, X-Frame-Options,
+  // X-Content-Type-Options and Referrer-Policy, and no Permissions-Policy;
+  // the identical request with a browser UA carried all six.
+  //
+  // The value is a copy of the /* line, which every human request has been
+  // served since 2026-08-19 — so this closes a gap in what the bot view
+  // advertises rather than tightening anything a reader can feel.
+  //
+  // Note the Report-Only policy is deliberately NOT mirrored here: its
+  // report-uri is rewritten at build time by the supabase-origin-in-static-
+  // assets plugin (vite.config.ts), which only ever touches the emitted
+  // _headers file, and a crawler runs no script to violate it with.
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
   "Content-Security-Policy":
     "default-src 'self'; " +
     // AdSense domains (pagead2/tpc googlesyndication, doubleclick, adtrafficquality)
@@ -302,7 +411,15 @@ const SECURITY_HEADERS: Record<string, string> = {
     // (34 csp_violation reports / 7d in client_errors). Google requires it in
     // script-src + frame-src. Kept in sync with public/_headers.
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://*.supabase.co https://www.gstatic.com https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://analytics.ahrefs.com https://challenges.cloudflare.com; " +
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    // 2026-08-29: Chrome's built-in Translate injects its stylesheet from
+    // www.gstatic.com into the main document, so it is subject to our page
+    // CSP. Without this the sheet is blocked (49 csp_violation reports / 3w)
+    // and Translate renders unstyled — visible to the ~95% Vietnamese
+    // audience whenever they translate an EN-only surface instead of using
+    // the language toggle. www.gstatic.com is already trusted in script-src
+    // above, a strictly higher-privilege directive, and style-src already
+    // carries 'unsafe-inline'. Kept in sync with public/_headers.
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; " +
     "font-src 'self' data: https://fonts.gstatic.com; " +
     "img-src 'self' data: blob: https:; " +
     "media-src 'self' data: blob: https:; " +
@@ -405,6 +522,17 @@ function pathCacheTtl(pathname: string): number {
   if (stripped === "/shop" || stripped.startsWith("/shop/")) {
     return HUB_LIST_TTL_SECONDS;
   }
+  // World Cup 2026 results pages carry a live table built from wc_pro_matches
+  // (functions/_lib/render/wc-results.ts). At the 6h default the bot view would
+  // show yesterday's scores on a page whose whole claim is that it is current,
+  // and dateModified would be a lie told to the crawler. Both language twins;
+  // the /vi prefix is already stripped above.
+  if (
+    stripped === "/blog/pickleball-world-cup-2026-da-nang-results" ||
+    stripped === "/blog/ket-qua-pickleball-world-cup-2026-da-nang"
+  ) {
+    return HUB_LIST_TTL_SECONDS;
+  }
   return DEFAULT_TTL_SECONDS;
 }
 
@@ -444,9 +572,48 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // URL's equity with a single permanent hop instead of returning a soft 404.
   if (url.pathname === "/live/10779a7c") {
     return secureRedirect(
-      `https://${url.hostname}/live/10779a7c-46f4-4501-a65e-e852eb2fb565`,
+      `https://${url.hostname}/live/10779a7c-46f4-4501-a65e-e852eb2fb565${url.search}`,
       301,
     );
+  }
+
+  // ─── 1c-bis. 2026-08-25 site audit — retired duplicate /san slugs.
+  //
+  //       Running scripts/data-fixes/import-alobo-venues.mjs three times on
+  //       2026-08-24 created six venues twice. The "slug already exists" guard
+  //       tested only the final slug while the disambiguation step rewrote that
+  //       slug on within-batch collisions, so a venue listed once in one export
+  //       and twice in the next arrived under two slugs and the guard saw
+  //       neither as a repeat. Root cause fixed in resolveNewVenueSlugs().
+  //
+  //       Each pair was two /san pages with identical titles and identical meta
+  //       descriptions, both in sitemap-venues.xml. The duplicate rows are
+  //       deleted; these 301s carry whatever equity the retired URLs picked up
+  //       in their one day of life, and keep any bot that already saw them off
+  //       a 404. The kept slug is the older one — it is also what the importer
+  //       generates for a venue listed once, so a future run stays idempotent.
+  //
+  //       public/_redirects carries the same six rules for humans; bots bypass
+  //       _redirects entirely, which is why they are mirrored here.
+  const RETIRED_VENUE_SLUGS: Record<string, string> = {
+    "lakeside-pickleball-coffe-rua-xe-da-nang": "lakeside-pickleball-coffe-rua-xe",
+    "ob-pickleball-quang-ngai": "ob-pickleball",
+    "pickleball-yen-hoa-ha-noi": "pickleball-yen-hoa",
+    "san-pickleball-quan-doi-tp-hcm": "san-pickleball-quan-doi",
+    "the-pickleball-lounge-ha-noi": "the-pickleball-lounge",
+    // Same court, listed twice under two names and two phone numbers. The
+    // kept row is "Sân Lê Ninh T.A" — the fuller name and the earlier insert.
+    "le-ninh-t-a": "san-le-ninh-t-a",
+  };
+  const sanMatch = url.pathname.match(/^\/(vi\/)?san\/([^/?#]+)$/);
+  if (sanMatch) {
+    const target = RETIRED_VENUE_SLUGS[sanMatch[2]];
+    if (target) {
+      return secureRedirect(
+        `https://${url.hostname}/${sanMatch[1] ?? ""}san/${target}${url.search}`,
+        301,
+      );
+    }
   }
 
   // ─── 1d. SEO audit batch 5 — collapse /vi/org/* + /vi/tournament/*
@@ -462,7 +629,18 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   //       VI rendering path the safer signal is a permanent redirect
   //       to the EN canonical — readers stay on one URL per entity
   //       and SEOnaut sees one indexable surface per organization.
-  const viOrgMatch = url.pathname.match(/^\/vi\/(org|tournament|watch)\/([^/?#]+)$/);
+  //
+  //       2026-08-25: extended to tran-dau, nguoi-choi and live/:id, which
+  //       were the other half of the same problem and had been left behind.
+  //       They served 200 with the EN canonical — the exact "hreflang to non
+  //       canonical" shape this rule exists to remove. /vi/tran-dau/* and
+  //       /vi/nguoi-choi/* were worse than duplicates: the SPA has no route
+  //       for either, so a human hard-navigating one got the NotFound page
+  //       while bots got a full render. Only the id form is matched, so the
+  //       real VI listing pages (/vi/live, /vi/tournaments) are untouched.
+  const viOrgMatch = url.pathname.match(
+    /^\/vi\/(org|tournament|watch|tran-dau|nguoi-choi|live)\/([^/?#]+)$/,
+  );
   if (viOrgMatch) {
     return secureRedirect(`https://${url.hostname}/${viOrgMatch[1]}/${viOrgMatch[2]}${url.search}`, 301);
   }
@@ -482,6 +660,22 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const viPrefix = livestreamMatch[1] || "";
     const tail = livestreamMatch[2] || "";
     return secureRedirect(`https://${url.hostname}/${viPrefix}live${tail}${url.search}`, 301);
+  }
+
+  // GSC 2026-08-25 — news rows were re-ingested under stable UUID-derived
+  // slugs after the first URLs had already been crawled. Preserve the accrued
+  // signals and send readers to the same surviving story instead of 404ing.
+  const NEWS_REDIRECTS: Record<string, string> = {
+    "/news/wong-sets-record-with-third-straight-gold-1f1um3": "/news/hong-kit-wong-makes-history-with-third-consecutive-singles-crown-at-singapore-op-58d5a53d",
+    "/vi/news/wong-lap-ky-luc-voi-h-hcv-lien-tiep-1f1um3": "/vi/news/hong-kit-wong-lap-ky-luc-voi-huy-chuong-vang-don-nam-lien-tiep-tai-singapore-58d5a53d",
+    "/news/the-dink-minor-league-pickleball-format-explained-every-way-to-play-1hfoe4": "/news/understanding-the-dink-minor-league-pickleball-structure-68400027",
+    "/vi/news/giai-ma-the-thuc-minor-league-pickleball-san-choi-dong-doi-dinh-cao-1hfoe4": "/vi/news/tim-hieu-cau-truc-giai-dau-pickleball-nghiep-du-68400027",
+    "/news/a-summer-to-remember-recapping-the-2026-joola-pops-summer-tour-1fp8r3": "/news/joola-concludes-nationwide-summer-tour-9e811e50",
+    "/vi/news/mua-he-dang-nho-nhin-lai-hanh-trinh-joola-pops-summer-tour-2026-1fp8r3": "/vi/news/hanh-trinh-xuyen-quoc-gia-cua-joola-khep-lai-thanh-cong-9e811e50",
+  };
+  const newsDestination = NEWS_REDIRECTS[url.pathname];
+  if (newsDestination) {
+    return secureRedirect(`https://${url.hostname}${newsDestination}${url.search}`, 301);
   }
 
   // ─── 1e. SEO audit batch 8 — /vi/blog/{slug} → /blog/{en-slug} 301.
@@ -564,7 +758,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const viBlogMatch = url.pathname.match(/^\/vi\/blog\/([^/?#]+)$/);
   if (viBlogMatch && VI_BLOG_DIRECT[viBlogMatch[1]]) {
     return secureRedirect(
-      `https://${url.hostname}${VI_BLOG_DIRECT[viBlogMatch[1]]}`,
+      `https://${url.hostname}${VI_BLOG_DIRECT[viBlogMatch[1]]}${url.search}`,
       301,
     );
   }
@@ -573,16 +767,16 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     // dedupe target — avoids a /vi/blog → /blog → /tools 301 chain.
     const enSlug = VI_BLOG_REDIRECTS[viBlogMatch[1]];
     const dest = BLOG_TO_TOOLS.has(enSlug) ? "tools" : `blog/${enSlug}`;
-    return secureRedirect(`https://${url.hostname}/${dest}`, 301);
+    return secureRedirect(`https://${url.hostname}/${dest}${url.search}`, 301);
   }
 
   const enBlogToTools = url.pathname.match(/^\/blog\/([^/?#]+)$/);
   if (enBlogToTools && BLOG_TO_TOOLS.has(enBlogToTools[1])) {
-    return secureRedirect(`https://${url.hostname}/tools`, 301);
+    return secureRedirect(`https://${url.hostname}/tools${url.search}`, 301);
   }
   if (enBlogToTools && BLOG_MERGED[enBlogToTools[1]]) {
     return secureRedirect(
-      `https://${url.hostname}/blog/${BLOG_MERGED[enBlogToTools[1]]}`,
+      `https://${url.hostname}/blog/${BLOG_MERGED[enBlogToTools[1]]}${url.search}`,
       301,
     );
   }
@@ -633,15 +827,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       : discoveryResponse;
   }
 
-  const STATIC_PREFIXES = ["/og-images/", "/assets/", "/images/", "/fonts/", "/icons/", "/static/"];
-  const STATIC_EXT_RE = /\.(jpg|jpeg|png|webp|gif|svg|ico|avif|css|js|mjs|woff2?|ttf|otf|eot|xml|txt|md|json|pdf|xlsx|xls|csv|docx|doc|pptx|ppt|mp4|webm|mp3|wav|zip|map)$/i;
-  const STATIC_EXACT = new Set(["/favicon.ico", "/robots.txt", "/manifest.json", "/_worker.js", "/_redirects", "/_headers"]);
-  if (
-    STATIC_PREFIXES.some((p) => pathname.startsWith(p)) ||
-    STATIC_EXT_RE.test(pathname) ||
-    STATIC_EXACT.has(pathname)
-  ) {
+  if (isStaticAssetPath(pathname)) {
     const assetResponse = await next();
+    // Root verification files really ARE text/html — Zalo, Google and Bing all
+    // serve their site-ownership proof as an HTML document. The guard below
+    // exists for hashed assets that came back as the SPA shell; applying it
+    // here would turn a correct 200 into a 404 and break verification, which
+    // is the whole reason the file exists.
+    if (ROOT_VERIFICATION_RE.test(pathname)) return assetResponse;
     // A hashed asset that no longer exists — a stale index.html (cached up to
     // 5 min) still pointing at a chunk the latest deploy replaced, a scanner,
     // or a half-propagated edge — otherwise falls through to the SPA rule
@@ -710,7 +903,15 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         headers,
       });
     }
-    // Normal user, public route → serve SPA
+    // Public editorial pages carry their own content and metadata before JS.
+    if (request.method === "GET" && isPublicContentPath(pathname)) {
+      const response = await servePublicPage(await next(), () => routeAndRender(
+        pathname, env, env.CANONICAL_HOST || "https://www.thepicklehub.net",
+      ));
+      const headers = new Headers(response.headers);
+      applySecurityHeaders(headers);
+      return new Response(response.body, { status: response.status, headers });
+    }
     return next();
   }
 
@@ -839,7 +1040,299 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // copy (/live 59 words -> ~354, /rankings 135 -> ~378) and /live now falls
   // back to replays instead of rendering its own empty state. Four cached URLs
   // (en/vi x 2 routes) would otherwise serve the thin version for the full TTL.
-  const cacheKey = `pr:v59:${url.pathname}`;
+  //
+  // v61 — /live query windowing (2026-08-25): live / scheduled / ended each get
+  // their own query and limit instead of sharing one 40-row created_at window,
+  // and upcoming is ordered by air time. Output is unchanged while nothing is
+  // live or scheduled, but the cached copy must not outlive the first stream
+  // that is.
+  //
+  // v62 — GEO-01 (2026-08-24, landed 2026-08-25): the opening paragraph on all
+  // /san pages is rewritten to front-load real facts and name ThePickleHub,
+  // replacing a template that ended by pointing further down the page. This
+  // branch had reserved v60, but /live windowing took v61 to production first,
+  // so it moves to v62 — CLAUDE.md's rule is that the number only has to differ
+  // from the one already deployed.
+  //
+  // v63 — CTR-03 + content refresh (2026-08-25). Three separate reasons the
+  // cached HTML is now wrong:
+  //   1. / and /vi carry new meta descriptions. The VI one was being cut
+  //      mid-word at the 160-BYTE budget ("…miễn…") because the string was 148
+  //      characters and 186 bytes; both now interpolate the venue count.
+  //   2. /blog/hcmc-open-2026-preview and /vi/blog/hcmc-open-2026 now open with
+  //      the result (the event finished on 2026-08-09) and carry new titles.
+  //   3. /blog/hong-kong-slam-2026-preview and /vi/blog/hong-kong-slam-2026
+  //      say registration is open rather than that it opens on August 10.
+  // v65 (2026-08-25, LOW sweep, #678) — /about and /vi/about carry new titles
+  // and meta descriptions. The old ones were the shortest on the site (18-char
+  // title, 49-char description).
+  //
+  // v66 (2026-08-25, C3, this branch) — every /news/:slug now carries
+  // <meta name="robots" content="noindex, follow"> and no hreflang, and every
+  // /vi/news/:slug self-references in hreflang instead of pairing with the EN
+  // URL. Without a bump, cached HTML would keep serving the indexable EN page
+  // and the old EN<->VI cluster for the full TTL.
+  //
+  // This branch originally took v64. #678 merged first with v65, so it moves
+  // to v66 — CLAUDE.md's rule for two open branches bumping the same number:
+  // take the higher and move on.
+  // v67 (2026-08-25, H1) — blog posts now render their hero image in the bot
+  // HTML: <figure><img> after the <h1> on the EN side (from metadata.ts
+  // heroImage) and after the content_html <h1> on the VI side (from
+  // vi_blog_posts.cover_image_url), both with real width/height. Cached HTML
+  // has no <img> at all, so without a bump Google Images keeps seeing the
+  // imageless version for the full TTL.
+  // v68 (2026-08-25) — the VI live hub links to /live/:id instead of
+  // /vi/live/:id, so its cached body would otherwise keep pointing at URLs
+  // that now 301.
+  // v69 (2026-08-28) — the Aug 20-23 PPA Asia stop is renamed from its
+  // placeholder "China Open 2" to the official "Skechers Shenzhen Open" on
+  // /tournaments + /vi/tournaments and in two blog bodies, and its status
+  // flips Upcoming -> Completed. Cached HTML would keep serving the wrong
+  // entity name and a finished event billed as upcoming.
+  // v70 (2026-08-28) — every news article changes shape: the related strip
+  // becomes prev/next neighbours instead of the same six newest items for all
+  // 843 URLs, and the source credit becomes a dateline naming ThePickleHub
+  // with a visible date. Cached HTML would keep serving the six-link version
+  // that produced the orphans.
+  // v72 (2026-08-29): follow-up — the "FPT Play requires a subscription" claim
+  // survived in the EN FAQ and both overview bullets; finals times added to the
+  // pillar post. v71 (2026-08-29): World Cup T-1 refresh — how-to-watch + schedule + overview
+  // now carry the Sep 6 final times, the withdrawn ticket link, current hotel
+  // rates and the confirmed 81-nation field. Old HTML would serve the stale
+  // "the Open final is not on the schedule" claim for the whole TTL.
+  // v74 (2026-08-29): category <title> also goes through fitTitle.
+  // v73 (2026-08-29): shop SEO audit — <img> gallery + card covers in bot HTML,
+  // price out of product <title>, x-default → VI, EN category names, Brand/sku
+  // in Product schema, Shop link in the shared <nav>.
+  // v75 (2026-08-30): World Cup opening day — the ticket link is BACK on the
+  // organizers' homepage after three days away, so the three posts no longer
+  // say it "has gone"; all three openings carry an Aug 30 dateline, and the
+  // pillar opening no longer frames the 80-nation target as still open.
+  // v76 (2026-08-30): follow-up to v75 — independent verify found three
+  // stale-dateline survivors the first pass missed: two "the day before
+  // play" lines in how-to-watch (EN+VI) and a VI relative date that the
+  // updatedDate bump made wrong ("the day before this page was updated").
+  // v77 (2026-08-31): day two. All three World Cup openings said play starts
+  // "today, August 30" / "sáng nay bóng lăn" — true yesterday, wrong today, and
+  // the opening is the passage AI search extracts. Openings now carry an Aug 31
+  // dateline with absolute dates only, plus the first verified day-one outcome:
+  // 12 of 69 events already have champions (organizers' own site, amateur draws).
+  // v78 (2026-08-31): the Group A article was the one World Cup post the day-two
+  // pass missed — still datelined August 20 while the tournament was live. Its
+  // opening now leads with the fact readers are actually searching for during
+  // the spike: Vietnam has NOT played a Group A match yet: the national-team
+  // competition it belongs to runs Sep 3-6, and 0 of its 222 ties were played
+  // as of Aug 31. Only the individual tournament is under way (12/69 events
+  // decided, all amateur). EN + FAQ updated here; VI body ships via SQL.
+  // v79 (2026-08-31): blog listings now order by the LATER of published/
+  // updated, so a post refreshed mid-event resurfaces instead of staying
+  // buried at its original publish date. Changes the SSR body of /vi,
+  // / (VI block) and /vi/blog, so the cached copies must be retired.
+  // v80 (2026-08-31): follow-up — /blog (EN) was still emitting the old
+  // insertion order to bots while readers got the new sort. Its cached
+  // copies and ItemList JSON-LD must be retired with it.
+  // v81 (2026-08-31): /live SSR now carries a World Cup livescore block —
+  // matches in progress + recent results with players and scores — so bots
+  // index real World Cup content on the hub during the tournament.
+  // v82 (2026-08-31): "World Cup" everywhere on the /live World Cup surface
+  // now reads "Pickleball World Cup" (disambiguation from football + the
+  // keyword), and /live title/description lead with it during the event.
+  // v83 (2026-08-31): World Cup livescore results now show the full scoreline
+  // (all finished games + the last-observed game) instead of a single game, so
+  // completed and bo3 matches read as "14-16, 16-14, 13-5" not "16-14".
+  // v84 (2026-09-01): day-three refresh of the five static World Cup posts.
+  // "day two of competition" was a bare relative claim in six openings and is
+  // wrong on day three; the Men's Pro Doubles page still carried an August 26
+  // dateline and "four days out" on the morning its own draw plays. Openings
+  // now carry the August 31 Pro Singles semifinal results and the September 1
+  // doubles start time, all read from wc_pro_matches. SSR body changes on all
+  // five EN posts, so the cached copies must be retired.
+  // v85 (2026-09-01): correction — the Men's Pro Doubles page said "13 men's
+  // Round-of-64 matches carry a time". wc_pro_matches holds 9; 13 came from
+  // subtracting the 15 men's qualifying matches from the day's 28 total, which
+  // also included the four women's matches. Now nine, with the qualifying
+  // split stated so the arithmetic is checkable from the sentence itself.
+  // v91 (2026-09-04): /tools* no longer falls through to the hub — unmatched
+  // /tools/<anything> now renders the 404 body instead of a 200 duplicate,
+  // so the cached copies of the hub under crawler-invented paths must go.
+  // v90 (2026-09-04): follow-up to v89 — the independent verification pass found
+  // the pillar post still asking, in body and FAQ, whether Phuc Huynh and Quang
+  // Duong "will play for Vietnam" and calling Da Nang 2026 something that "will be"
+  // Vietnam's first appearance, on the same page whose opening says they played on
+  // September 3. Both resolved, EN + VI.
+  // v89 (2026-09-04): World Cup day six — Vietnam swept Open Group A on Sep 3
+  // (three 6-0 ties vs Chile, Cayman Islands, Colombia; 18 individual matches to
+  // nil) and the Sep 6 men's singles Grand Final is confirmed all-Vietnamese
+  // (Ly Hoang Nam v Phuc Huynh), so the "second slot never filled" hedge is gone
+  // from all six World Cup openings; "day five"/Sep 3 datelines bumped; the Sep 3
+  // opening tie corrected from Colombia to Chile; Masters-team claim now flagged
+  // as source-disputed.
+  // v88 (2026-09-03): World Cup day five — Ly Hoang Nam's second Grand Final
+  // (mixed doubles, Sep 6 14:50, with Roos Van Reek) added to five openings; the
+  // Sep 2 mixed day corrected from "fifteen matches 08:00-10:40" to the 176 the
+  // feed actually recorded, 08:00-15:20; Group A opening no longer says Vietnam
+  // "will not play until September 3" on September 3.
+  // v87 (2026-09-02): follow-up to v86 — "men's doubles Grand Final" disambiguated
+  // in three openings, bronze scoreline scoped to the one game the bracket records.
+  // v86 (2026-09-02): World Cup day four — corrected a +7h timezone error in
+  // five posts (the organizers' feed carries Vietnam wall-clock in a UTC-labelled
+  // field; we had converted it twice), and added the men's Pro Doubles final result.
+  // v92 (2026-09-05): World Cup day seven — added the medal table (Vietnam 106
+  // golds / 244 medals through Sep 3, Korea 10, USA 9) with a day-by-day
+  // progression and the "why the lead is this wide" caveat, EN + VI, to the
+  // results post; replaced the unsourced 81-countries answer with the Guinness
+  // certification from the Sep 2 opening (66 delegations, 4,900+ athletes) in
+  // the pillar; added Vietnam's U18 mixed-doubles world title of Sep 3; bumped
+  // four datelines to day seven and flagged that Tien Son free entry ends today.
+  // v93 (2026-09-05): follow-up to v92 — three more day-six datelines in
+  // how-to-watch (the VI quick summary in the .ts, plus two in the Supabase copy
+  // whose wording differs from the source), and the clinic-pro line's "will be
+  // named in the coming weeks", which expires when the tournament ends tomorrow.
+  // v94 (2026-09-05): six more day-six datelines that two prior sweeps missed —
+  // how-to-watch EN x2 + VI x1, group-A EN + VI, men's-doubles EN + VI, plus the
+  // two matching vi_blog_posts rows. Cause was the sweep, not the edit: the
+  // greps used a fixed-width leading context (.{50}) so any match less than 50
+  // characters from the start of its line was invisible. Sweep unanchored.
+  // v95 (2026-09-05): results FAQ said the U18/U14 teams "start on Friday
+  // September 4" on September 5, and did not mention that Vietnam had already
+  // won the U18 mixed doubles world title on September 3; updatedDate for
+  // group-A and men's-doubles, whose openings changed in d22d4bc but whose
+  // metadata entries did not, so their dateModified was still September 4.
+  // v96 (2026-09-05): three corrections to this morning's own edits, found by
+  // independent verification against production, not by re-reading the source.
+  // (1) "Everything remaining happens tomorrow" was false and contradicted the
+  // schedule page's own Sep 5 row ten lines below it. (2) The two Guinness
+  // records were asserted as "66 delegations + 4,900 athletes"; sources
+  // disagree on both the count and on what record two is. (3) The results page
+  // claimed a minute-fresh feed that has returned nothing since Sep 2 17:10.
+  // v97 (2026-09-06): final day. The organisers published a labelled order of
+  // play on the morning of Sep 6 and it moves the finals: men's singles 10:50
+  // (was 11:20), mixed 12:40 (was 14:50), men's doubles 18:20 (was 13:40),
+  // women's doubles 17:00 (had no slot at all), and the Open team final is
+  // 19:40 Vietnam v United States — not the unlabelled 18:00 slot this site
+  // had flagged as the likely candidate, and not the 17:00 some outlets ran.
+  // All six World Cup posts rewritten EN + VI against that list. Also: seven
+  // court clusters, not eight (Tuoi Tre Sep 4, and the site's own venue
+  // section already said seven).
+  // v98 (2026-09-06): independent verification against production found 20+
+  // defects the morning's own edits left behind or created, including a typo
+  // ("both are supersed it") shipped straight into FAQPage schema, and two
+  // sections that still said the Open team final slot was unlabelled three
+  // paragraphs after the page said it is 19:40. Also: expired future tense
+  // (opening ceremony "is", "book accommodation now rather than in August",
+  // "be in the building on September 1"), Juniors final listed on both Sep 5
+  // and Sep 6, "156 teams drawn" vs 152, "all three of them" for five finals.
+  // v99 (2026-09-06): the organisers' bracket feed came back online mid-morning
+  // on finals day and disagrees with their own published order of play on three
+  // of the four remaining Pro finals (feed 11:20/13:40/14:50, published list
+  // 10:50/18:20/12:40; both agree on 09:30 for the women's singles). Schedule
+  // page now states the conflict instead of silently picking one.
+  // v106 (2026-09-07): SEO/GEO pass on the from-the-stands post — FAQ schema on
+  // the EN side (the VI row had it, EN had none), query-shaped meta, and an
+  // inbound link from all six World Cup posts, which had none.
+  // v105 (2026-09-07): Cuong's own photos replace the illustrated hero on the
+  // from-the-stands post and fill five section slots, so og:image changes too.
+  // v104 (2026-09-07): new post — a first-person account of the week in Da Nang
+  // (EN from-the-stands / VI nhat-ky-...), so the blog index and sitemap change.
+  // v103 (2026-09-07): the pillar page still asked, in the present tense, which
+  // country Phuc Huynh and Quang Duong would represent — answered on August 17.
+  // v102 (2026-09-07): second verification pass — FAQ answers, meta descriptions
+  // and section headings that the first two passes left in live/future tense,
+  // plus a truncated sentence and an orphaned paragraph in the Group A post.
+  // v101 (2026-09-07): the wc-results scope line no longer promises "every match
+  // on court now" once the feed has no live match, and the how-to-watch clinic
+  // line no longer says "as of September 6, the final day".
+  // v100 (2026-09-07): the tournament finished on September 6. All six World
+  // Cup pages moved from future/live tense to results — five Pro finals, the
+  // Open team final (USA 4-0 Vietnam) and the medal table — so every cached
+  // copy from finals day is now wrong about who won.
+  // v107 (2026-09-07): five URLs from the GSC "Not found (404)" export moved
+  // into GONE_EXACT — three deleted /watch videos and two Google-truncated
+  // paths. They currently have a cached 404 body; without the bump they would
+  // keep serving it instead of the 410. (Opened as v103; main claimed v103-v106
+  // for the World Cup content pass while this branch was in review, so this
+  // takes the higher number per CLAUDE.md.)
+  // v108 (2026-09-08): the results dateline. English served "6/9/2026" for
+  // 6 September, which an English reader takes for 9 June, and it still said
+  // "0 on court now" five days after the last ball.
+  // v109 (2026-09-08): the Leapmotor Kuala Lumpur Cup preview (EN + VI) goes
+  // live the day before the event, and the calendar row it links from changed
+  // name from "Kuala Lumpur Cup" to the official "Leapmotor Kuala Lumpur Cup".
+  // v110 (2026-09-08): hero image wired on the Kuala Lumpur Cup preview, so
+  // og:image moves off the site-wide fallback on both the EN and VI URLs.
+  // v111 (2026-09-08): the KL Cup hero was re-cut to 16:9, so the og:image
+  // dimensions cached under v110 no longer match the file being served.
+  // v112 (2026-09-09): the KL Cup preview said no ticket tiers or on-sale
+  // status were published. PPA had published both on a separate news page
+  // since August 7 — the body now names the four passes on both locales.
+  // v113 (2026-09-09): same post, defects independent verification found —
+  // it called KL the season's top-tier stop when MB Hanoi Cup in April was
+  // also a PPA Asia 1000 at the same ceiling; it promised eight seeds per
+  // event then listed four for Women's Doubles; "two weeks ago" for a
+  // August 23 result; and it read as a preview on day one of play.
+  // v114 (2026-09-09): post-World-Cup SEO pass. The how-to-watch post's meta
+  // title/description were rewritten for the "live stream" (EN) and "vé / giá
+  // vé" (VI) queries that were drawing 2.5% and 1.1% CTR at position 8-9, and
+  // the schedule post now links on to the Vietnam 2026 calendar so the traffic
+  // spike has somewhere to go now that the event is over.
+  // v115 (2026-09-09): new Kuala Lumpur Cup results post (EN + VI), and the
+  // preview post now links on to it in both locales.
+  // v116 (2026-09-09): the KL Cup results post gets its own hero — it had been
+  // sharing the preview post's image, so both shipped the same og:image.
+  // v117 (2026-09-10): /live/pro/<slug> and its /vi twin shipped two <h1>s —
+  // renderProTourEvent opened its bodyContent with a heading but never passed
+  // omitAutoHeader, so buildHtml() added the decorated title as a second one.
+  // v118 (2026-09-10): the pro calendar was missing the whole PPA Asia 125
+  // series (four stops, two of them still to play in October) and carried
+  // five events under names without their title sponsor, so /tournaments
+  // and its SportsEvent JSON-LD both served an incomplete season.
+  // v119 (2026-09-10): the Hong Kong Slam preview gained the prize and
+  // points table PPA published on September 1 — the page about the biggest
+  // purse in Asian pickleball had no breakdown of it at all.
+  // v120 (2026-09-10): new post ppa-tour-europe-2026-27-schedule (EN +
+  // VI) — first page outside the Asian beat, published 13 days before the
+  // tour's opening stop in Barcelona.
+  // v121 (2026-09-10): KL Cup results post refreshed for day two — the
+  // opening still said "qualifying today" and "no main-draw match has been
+  // played yet" a day after both stopped being true.
+  // v122 (2026-09-10): hero wired on the PPA Tour Europe post, so
+  // og:image moves off the site-wide fallback on both locales.
+  // v123 (2026-09-10): both Kuala Lumpur Cup posts now bridge the three
+  // names one player is filed under, so a reader following the link to the
+  // Shenzhen gold post does not think it is about someone else.
+  // v124 (2026-09-10): every VI post now renders its FAQ in the
+  // prerendered body, not only as FAQPage JSON-LD. Every cached VI blog
+  // page is missing that section and has to be re-rendered.
+  // v125: refreshed calendar/access copy, author identities and related links.
+  // v126 (2026-09-16): /live and /vi/live no longer list replays — the
+  // "Xem lại" section, its ItemList entries and the copy pointing at it are
+  // gone. Every cached live hub still carries them.
+  // v127 (2026-09-16): /live/<id> stops listing ended siblings too, and the
+  // World Cup 2026 results article is linked from both homes, the live hub
+  // and every stream page.
+  // v128 (2026-10-05): refresh the VI footwork article after its cover image
+  // was added to the published CMS row.
+  // v129 (2026-10-05): refresh the VI singles strategy cover image.
+  // v130 (2026-10-12): VI shop product titles/descriptions lead with the
+  // category keyword ("Vợt pickleball <tên>"); category pages gain a buying
+  // guide paragraph.
+  // v131 (2026-10-20): Hong Kong Slam results refresh, and the schedule plus
+  // preview now link to that results page.
+  // v132 (2026-10-20): new chat-draw guide on the blog index and sitemap.
+  // v133 (2026-10-20): the chat-draw guide title leads with AI.
+  // v134 (2026-10-20): English title is "AI pickleball round robin" plus a pasted list.
+  // v135 (2026-10-20): the chat guide example is 44 teams, 11 groups, 2 or 3 brackets.
+  // v136 (2026-10-20): the chat guide covers several photos and a Google Sheet link.
+  // v137 (2026-10-20): the chat-draw guide hero has a 768w card, so its
+  // article <img> now includes that srcset.
+  // v138 (2026-10-20): the English chat-draw guide uses English UI screenshots.
+  // The Vietnamese article keeps the Vietnamese images.
+  // v139 (2026-10-21): those English cards were rebuilt. The first pass baked
+  // in a broken <img>, so the article now points at the -en-v2 files.
+  // v140 (2026-10-21): quick-table share cards name the tournament in plain
+  // Vietnamese and declare the real 1024×1024 preview image size.
+  const cacheKey = `pr:v140:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
@@ -916,8 +1409,18 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         }
       } else {
         const ttl = pathCacheTtl(url.pathname);
+        // Guarded like the telemetry waitUntil above: KV throttles writes to
+        // ~1/sec per key, and a hot key (`pr:vN:/`) is written by every
+        // concurrent bot miss. An unguarded rejection here is the same
+        // unhandled-await shape that produced the Cloudflare 502 in 219da014
+        // (fix(indexnow): stop two unguarded awaits from turning into a 502).
+        // The response has already been returned, so a failed cache write
+        // should cost us a cache entry, not a log line and a stray alert.
         context.waitUntil(
-          env.PRERENDER_CACHE.put(cacheKey, html, { expirationTtl: ttl }),
+          env.PRERENDER_CACHE.put(cacheKey, html, { expirationTtl: ttl }).then(
+            () => {},
+            () => {},
+          ),
         );
       }
     }
@@ -979,6 +1482,8 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string, accep
   const supabase = createSupabaseClient(env);
   let match: RegExpMatchArray | null;
 
+  if (path === "/authors/cuong-nguyen") return renderAuthor(siteUrl, lang);
+
   // Vietnamese home
   if (lang === "vi" && (path === "/" || path === "")) {
     return await renderHomeVi(supabase, siteUrl);
@@ -1027,11 +1532,11 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string, accep
   // SHOP_PUBLIC_INDEXING=1 — otherwise `isNoindex` short-circuits to the
   // noindex shell long before here. /shop/search has no arm on purpose: it
   // is matched by NOINDEX_PATTERNS and never arrives.
-  if (path === "/shop") return await renderShopCatalog(supabase, siteUrl, lang);
+  if (path === "/shop") return await renderShopCatalog(supabase, siteUrl, lang, env.SUPABASE_URL);
   match = path.match(/^\/shop\/category\/([^/]+)$/);
-  if (match) return await renderShopCategory(supabase, match[1], siteUrl, lang);
+  if (match) return await renderShopCategory(supabase, match[1], siteUrl, lang, env.SUPABASE_URL);
   match = path.match(/^\/shop\/store\/([^/]+)$/);
-  if (match) return await renderShopStore(supabase, match[1], siteUrl, lang);
+  if (match) return await renderShopStore(supabase, match[1], siteUrl, lang, env.SUPABASE_URL);
   match = path.match(/^\/shop\/product\/([^/]+)$/);
   if (match) return await renderShopProduct(supabase, match[1], siteUrl, lang, env.SUPABASE_URL);
 
@@ -1126,7 +1631,7 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string, accep
 
   // Tool instances (noindex)
   match = path.match(/^\/tools\/quick-tables\/([^/]+)$/);
-  if (match) return await renderQuickTable(supabase, match[1], siteUrl);
+  if (match) return await renderQuickTable(supabase, match[1], siteUrl, { pageUrl: `${siteUrl}${rawPath}`, lang });
 
   match = path.match(/^\/tools\/team-match\/([^/]+)$/);
   if (match) return await renderTeamMatch(supabase, match[1], siteUrl);
@@ -1143,8 +1648,27 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string, accep
   if (path === "/tools/doubles-elimination") return renderToolPage("doubles-elimination", siteUrl, rawPath, lang);
   if (path === "/tools/flex-tournament") return renderToolPage("flex-tournament", siteUrl, rawPath, lang);
 
-  // Tools hub
-  if (path.startsWith("/tools")) return renderTools(siteUrl, rawPath, lang);
+  // Tools hub — exact match, plus the /tools/* routes the SPA genuinely
+  // owns but that have no dedicated renderer above (quick-tables parent /
+  // referee / setup views, the per-match scoring screens). This used to be
+  // a bare `startsWith("/tools")`, which handed a 200 copy of the hub to
+  // EVERY /tools* path: /tools/foo/bar, /tools/pickleball-bracket-generator
+  // and even /toolsPhone all rendered the hub for bots while humans got a
+  // 404 from the isKnownSpaPath gate on the user path. That is exactly the
+  // soft-404 the render404 fallback at the end of this function exists to
+  // prevent — and the /tools-prefixed duplicates were being written to KV
+  // under a passing canonical check, so crawler-invented URLs each got a
+  // cached 200. Bot and human now agree on every /tools* path that reaches
+  // this router. Two shapes still differ and are NOT fixed here, because
+  // they return from the isNoindex shortcut (~L891) long before
+  // routeAndRender runs: /tools/dashboard/a/b/c and /tools/foo/bar/setup
+  // give bots a noindex shell where humans get 404. Harmless (empty body,
+  // noindex+nofollow, dashboard is robots-Disallowed) but real — do not
+  // read the line above as a blanket invariant.
+  if (path === "/tools") return renderTools(siteUrl, rawPath, lang);
+  if (path.startsWith("/tools/") && isKnownSpaPath(path)) {
+    return renderTools(siteUrl, rawPath, lang);
+  }
 
   // Blog post
   match = path.match(/^\/blog\/([^/]+)$/);
@@ -1152,6 +1676,15 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string, accep
 
   // Blog index
   if (path === "/blog") return renderBlog(siteUrl);
+
+  // Pro-tour event results (/live/pro/<slug>) — registry-driven, DB-free
+  // bot summary; the SPA page polls live scores. Unknown slug falls
+  // through to the 404 fallback below.
+  match = path.match(/^\/live\/pro\/([^/]+)$/);
+  if (match) {
+    const proEvent = await renderProTourEvent(supabase, match[1], siteUrl, rawPath, lang);
+    if (proEvent) return proEvent;
+  }
 
   // Livestream listing
   if (path === "/livestream") return await renderLivestreamList(supabase, siteUrl, rawPath, lang);

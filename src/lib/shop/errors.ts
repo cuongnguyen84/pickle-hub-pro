@@ -11,6 +11,8 @@
 //     "không lưu được". So a Vietnamese message wins over the code mapping.
 // ============================================================================
 
+import { COMPARE_AT_NOT_ABOVE } from "@/lib/shop/discount";
+
 const VIETNAMESE = /[àáâãèéêìíòóôõùúýăđĩũơưạảấầẩẫậắằẳẵặẹẻẽếềể]/i;
 
 export function shopErrorMessage(error: unknown): string {
@@ -27,6 +29,9 @@ export function shopErrorMessage(error: unknown): string {
     case "23505":
       return "Giá trị này đã có nơi khác dùng.";
     case "23514":
+      // Giá gốc là CHECK duy nhất người bán hay vấp; nhận dạng qua raw, câu trả
+      // về không mang tên constraint.
+      if (raw.includes("product_variants_compare_range")) return COMPARE_AT_NOT_ABOVE;
       // A CHECK the client mirror should have caught first. Saying which one
       // would leak the constraint name; saying nothing at all leaves the seller
       // clicking Save again.

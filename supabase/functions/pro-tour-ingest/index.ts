@@ -26,6 +26,10 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2.89.0";
 import { proTourIngestCorsHeaders as corsHeaders } from "../_shared/cors.ts";
+import {
+  describeUnimportableSlots,
+  isPlaceholderExternalId,
+} from "./placeholder-slots.ts";
 import type {
   TournamentScrapeResult,
   ScrapedPlayer,
@@ -184,12 +188,20 @@ async function reconcilePlayers(
   externalIdToProfileId: Map<string, string>;
 }> {
   const out = new Map<string, string>();
-  if (players.length === 0) {
+
+  // Undecided bracket slots ("tbd", "bye") are not people. Minting a ghost
+  // profile for them puts a player called "Tbd" on the roster, and — because
+  // every such slot resolves to that ONE ghost — makes two slots on the same
+  // match collide on match_participants' UNIQUE (match_id, player_id).
+  // Dropping them here is what makes the skip in insertMatchWithParticipants
+  // reachable instead of a 23505.
+  const realPlayers = players.filter((p) => !isPlaceholderExternalId(p.external_id));
+  if (realPlayers.length === 0) {
     return { players_created: 0, players_matched: 0, externalIdToProfileId: out };
   }
 
   // Bulk lookup existing ghosts by (source_provider, external_id).
-  const externalIds = players.map((p) => p.external_id);
+  const externalIds = realPlayers.map((p) => p.external_id);
   const { data: existing, error } = await supabase
     .from("profiles")
     .select("id, external_id")
@@ -205,7 +217,7 @@ async function reconcilePlayers(
   let players_created = 0;
   let players_matched = 0;
 
-  for (const p of players) {
+  for (const p of realPlayers) {
     const hit = existingByExt.get(p.external_id);
     if (hit) {
       out.set(p.external_id, hit);
@@ -321,15 +333,23 @@ async function reconcileMatches(
   const externalIds = scrape.matches.map((m) => m.external_match_id);
   const { data: existing, error } = await supabase
     .from("matches")
-    .select("id, external_match_id, winning_team")
+    .select("id, external_match_id, winning_team, notes, round_name")
     .eq("source_provider", scrape.source_provider)
     .in("external_match_id", externalIds);
   if (error) throw new Error(`Match lookup: ${error.message}`);
 
-  const existingMap = new Map<string, { id: string; winning_team: string | null }>(
+  const existingMap = new Map<
+    string,
+    { id: string; winning_team: string | null; notes: string | null; round_name: string | null }
+  >(
     (existing ?? []).map((r) => [
       r.external_match_id as string,
-      { id: r.id as string, winning_team: r.winning_team as string | null },
+      {
+        id: r.id as string,
+        winning_team: r.winning_team as string | null,
+        notes: (r.notes as string | null) ?? null,
+        round_name: (r.round_name as string | null) ?? null,
+      },
     ]),
   );
 
@@ -341,8 +361,16 @@ async function reconcileMatches(
 
     const transitionedToResolved = prior?.winning_team == null && newWinner !== null;
     const hasRefreshableDetails = match.notes != null;
+    // Parser upgrades (e.g. "Round 64" → R64, 2026-09-09) leave old rows
+    // holding the coarse W/L/GS code forever unless a re-scrape may touch
+    // them — treat a changed round code as refresh-worthy.
+    const roundChanged = prior != null && prior.round_name !== match.round_name;
 
-    if (prior && newWinner !== null && (transitionedToResolved || hasRefreshableDetails)) {
+    if (
+      prior &&
+      newWinner !== null &&
+      (transitionedToResolved || hasRefreshableDetails || roundChanged)
+    ) {
       // Update a newly resolved row, or refresh adapter-supplied details on an
       // already resolved row. Keep verified_at stable for refreshes so a cron
       // re-scrape does not repeatedly republish an old result at the top of
@@ -366,7 +394,43 @@ async function reconcileMatches(
         .update(updateRow)
         .eq("id", prior.id);
       if (upErr) throw new Error(`Match update ${match.external_match_id}: ${upErr.message}`);
+      await topUpParticipants(supabase, prior.id, match, externalIdToProfileId);
       imported += 1;
+      continue;
+    }
+
+    // 2026-09-09 LIVE-REFRESH: an existing row with no winner used to be
+    // "leave it unchanged" — so a match that went LIVE on the source never
+    // received its notes {"live":true} nor its in-progress game points
+    // (the badge shipped in #766 was dead code on this path). Refresh when
+    // the source has anything new (live flag, points) or when a previously
+    // live row needs its flag cleared. Never touches winner/verification.
+    if (prior && newWinner === null) {
+      const priorLive = (prior.notes ?? "").includes('"live"');
+      const hasSignal =
+        match.notes != null ||
+        priorLive ||
+        prior.round_name !== match.round_name ||
+        (match.scores_team_one ?? []).some((n) => n > 0) ||
+        (match.scores_team_two ?? []).some((n) => n > 0);
+      if (hasSignal) {
+        const { error: liveErr } = await supabase
+          .from("matches")
+          .update({
+            team_a_score: match.scores_team_one,
+            team_b_score: match.scores_team_two,
+            court_number: match.court_number ?? match.court,
+            round_name: match.round_name,
+            notes: match.notes ?? null,
+          })
+          .eq("id", prior.id);
+        if (liveErr) {
+          console.error(
+            `[ingest] live refresh ${match.external_match_id} failed: ${liveErr.message}`,
+          );
+        }
+        await topUpParticipants(supabase, prior.id, match, externalIdToProfileId);
+      }
       continue;
     }
 
@@ -385,15 +449,58 @@ async function reconcileMatches(
   return imported;
 }
 
+/** A row inserted as "X vs TBD" gains its opponent later — updates never
+ * touched participants, so the slot stayed TBD forever. Resolve both sides
+ * and upsert with ignoreDuplicates: existing rows are untouched, the newly
+ * filled side appears. Unresolvable ids are skipped (next pass reconciles). */
+async function topUpParticipants(
+  supabase: ReturnType<typeof createClient>,
+  matchRowId: string,
+  match: ScrapedMatch,
+  externalIdToProfileId: Map<string, string>,
+): Promise<void> {
+  const rows: Array<{ match_id: string; player_id: string; team: string; position: number }> = [];
+  (["one", "two"] as const).forEach((side) => {
+    const ids = side === "one"
+      ? match.team_one.player_external_ids
+      : match.team_two.player_external_ids;
+    ids.forEach((eid, i) => {
+      const pid = externalIdToProfileId.get(eid);
+      if (pid) rows.push({ match_id: matchRowId, player_id: pid, team: side === "one" ? "a" : "b", position: i + 1 });
+    });
+  });
+  if (rows.length === 0) return;
+  const { error } = await supabase
+    .from("match_participants")
+    .upsert(rows, { onConflict: "match_id,player_id", ignoreDuplicates: true });
+  if (error) console.error(`[ingest] participants top-up ${match.external_match_id}: ${error.message}`);
+}
+
 async function insertMatchWithParticipants(
   supabase: ReturnType<typeof createClient>,
   scrape: TournamentScrapeResult,
   match: ScrapedMatch,
   externalIdToProfileId: Map<string, string>,
 ): Promise<boolean> {
-  // Resolve participant profile ids; bail if any player wasn't reconciled
-  // (would yield an orphan match — log via throw so the surrounding
-  // try/catch flips the log to failed).
+  // A bracket slot that is still "tbd"/"bye", or the same player listed
+  // twice, cannot become a match: both shapes end in two participant rows
+  // with the same (match_id, player_id), which violates
+  // match_participants_match_id_player_id_key and 500s the whole event.
+  // Skipping is recoverable — the next scheduled pass ingests the match once
+  // the draw resolves.
+  const unimportable = describeUnimportableSlots(
+    match.team_one.player_external_ids,
+    match.team_two.player_external_ids,
+  );
+  if (unimportable) {
+    console.log(
+      `pro-tour-ingest: skip match ${match.external_match_id} — ${unimportable}`,
+    );
+    return false;
+  }
+
+  // Resolve participant profile ids. Every slot must resolve: a partially
+  // resolved team would insert a doubles match holding one player.
   const teamAIds = match.team_one.player_external_ids
     .map((eid) => externalIdToProfileId.get(eid))
     .filter((id): id is string => Boolean(id));
@@ -401,8 +508,26 @@ async function insertMatchWithParticipants(
     .map((eid) => externalIdToProfileId.get(eid))
     .filter((id): id is string => Boolean(id));
 
-  if (teamAIds.length === 0 || teamBIds.length === 0) {
-    // Skip silently — this is recoverable; next ingest pass reconciles.
+  if (
+    teamAIds.length !== match.team_one.player_external_ids.length ||
+    teamBIds.length !== match.team_two.player_external_ids.length
+  ) {
+    // Recoverable: the scrape named a player it did not list in `players`, so
+    // the next ingest pass reconciles. Logged rather than silent — before this
+    // the half-resolved side was inserted anyway, producing a doubles match
+    // card with one player on it.
+    console.log(
+      `pro-tour-ingest: skip match ${match.external_match_id} — unresolved player slot`,
+    );
+    return false;
+  }
+
+  // Belt and braces: two distinct external ids can still map to one profile
+  // (an alias the source later merged). Same collision, so skip the same way.
+  if (new Set([...teamAIds, ...teamBIds]).size !== teamAIds.length + teamBIds.length) {
+    console.log(
+      `pro-tour-ingest: skip match ${match.external_match_id} — external ids share a profile`,
+    );
     return false;
   }
 
@@ -466,6 +591,43 @@ async function insertMatchWithParticipants(
     // status='failed' with the underlying error_message.
     const errCode = (matchErr as { code?: string } | null)?.code;
     if (errCode === "23505") {
+      // 2026-09-09 (live cadence, #761 follow-up): the row already exists —
+      // usually from an earlier pass that saw the pairing before it was
+      // played. Skipping forever means a live event never fills in its
+      // scores, so push the result fields forward when the incoming row
+      // knows more. Never blanks data: only fires when the source reports
+      // a winner or at least one real game score, and only tightens
+      // verification (pending → verified), never the reverse.
+      const hasNews =
+        winning_team !== null ||
+        match.notes != null ||
+        (match.scores_team_one ?? []).some((n) => n > 0) ||
+        (match.scores_team_two ?? []).some((n) => n > 0);
+      if (hasNews) {
+        const updateFields: Record<string, unknown> = {
+          team_a_score: match.scores_team_one,
+          team_b_score: match.scores_team_two,
+          winning_team,
+          round_name: match.round_name,
+          court_number: match.court_number ?? match.court,
+          // Live flag rides in notes; writing it here both sets it while a
+          // match runs and clears it on the pass that sees the final score.
+          notes: match.notes ?? null,
+        };
+        if (winning_team) updateFields.verification_status = "verified";
+        if (match.played_at) updateFields.played_at = match.played_at;
+        const { error: updErr } = await supabase
+          .from("matches")
+          .update(updateFields)
+          .eq("source_provider", scrape.source_provider)
+          .eq("external_match_id", match.external_match_id);
+        if (updErr) {
+          // One bad update must not void the batch (the 84-match lesson).
+          console.error(
+            `[ingest] score update for ${match.external_match_id} failed: ${updErr.message}`,
+          );
+        }
+      }
       return false;
     }
     throw new Error(
@@ -490,14 +652,30 @@ async function insertMatchWithParticipants(
     })),
   ];
 
+  // 2026-09-09: the KL Cup run died with 23505 on
+  // match_participants(match_id, player_id) — the player matcher can map two
+  // scraped names in ONE match to the same profile (near-identical names),
+  // and one bad row used to void the whole 84-match ingest. ON CONFLICT DO
+  // NOTHING keeps the healthy rows and also survives cross-run races.
   const { error: partErr } = await supabase
     .from("match_participants")
-    .insert(participants);
+    .upsert(participants, { onConflict: "match_id,player_id", ignoreDuplicates: true });
   if (partErr) {
-    // Insert participants failed — match row is orphan. Throw so the
-    // surrounding try/catch logs status='failed' with the reason.
+    // Insert participants failed. The match row is already committed (there is
+    // no transaction across these two statements), so without this it stays
+    // behind as a PUBLIC match with nobody in it — 9 such rows existed on
+    // production before this fix, rendering empty /tran-dau/<slug> pages that
+    // renderMatch happily served to crawlers. Remove it, then throw so the
+    // surrounding try/catch still logs status='failed' with the reason.
+    const { error: cleanupErr } = await supabase
+      .from("matches")
+      .delete()
+      .eq("id", matchRow.id);
+    const cleanupNote = cleanupErr
+      ? ` (orphan match row ${matchRow.id} could NOT be removed: ${cleanupErr.message})`
+      : " (orphan match row removed)";
     throw new Error(
-      `Insert participants for match ${matchRow.id} failed: ${partErr.message}`,
+      `Insert participants for match ${matchRow.id} failed: ${partErr.message}${cleanupNote}`,
     );
   }
   return true;

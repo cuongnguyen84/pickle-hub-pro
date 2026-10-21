@@ -35,6 +35,21 @@ describe("shopErrorMessage — the codes PostgREST answers in English", () => {
   });
 });
 
+describe("shopErrorMessage — giá gốc", () => {
+  it("23514 từ product_variants_compare_range → câu giá gốc, không lộ tên constraint", () => {
+    const out = shopErrorMessage({
+      code: "23514",
+      message: 'new row for relation "product_variants" violates check constraint "product_variants_compare_range"',
+    });
+    expect(out).toBe("Giá gốc phải lớn hơn giá bán.");
+    expect(out).not.toContain("product_variants_compare_range");
+  });
+  it("23514 khác vẫn là câu chung", () => {
+    expect(shopErrorMessage({ code: "23514", message: 'violates check constraint "product_variants_price_range"' }))
+      .toMatch(/giá, tồn kho/i);
+  });
+});
+
 describe("edgeErrorMessage — reading the worker's answer", () => {
   it("pulls the reason out of failed[] when the worker half-published", async () => {
     // The production shape: publishProfile answers 502 with each item's own

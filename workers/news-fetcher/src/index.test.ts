@@ -8,8 +8,10 @@ import {
   decodeEntities,
   HTML_SCRAPE_CONFIGS,
   isTransientFetchError,
+  NEWS_FETCHER_USER_AGENT,
   normalizeItemLink,
   parseListingCards,
+  parsePickleAsiaPosts,
 } from "./index";
 
 const listing = readFileSync(
@@ -107,5 +109,88 @@ describe("isTransientFetchError", () => {
     expect(isTransientFetchError(new TypeError("bad url"))).toBe(false);
     expect(isTransientFetchError(null)).toBe(false);
     expect(isTransientFetchError("timeout")).toBe(false);
+  });
+});
+
+// Bộ lọc bot của pickleball.com trả 403 cho User-Agent không theo khuôn
+// "Mozilla/5.0 (compatible; <bot>; +<url>)" — 1/9 nguồn chết âm thầm suốt 4
+// ngày (2026-08-28 → 09-01). Test này giữ CẢ HAI nửa của thoả thuận: đúng
+// khuôn để qua được WAF, VÀ vẫn tự khai danh tính thật để không thành giả
+// dạng trình duyệt.
+describe("NEWS_FETCHER_USER_AGENT", () => {
+  it("theo khuôn Mozilla/5.0 (compatible; …) mà bộ lọc bot mong đợi", () => {
+    expect(NEWS_FETCHER_USER_AGENT.startsWith("Mozilla/5.0 (compatible; ")).toBe(true);
+  });
+
+  it("vẫn tự khai đúng tên bot và URL liên hệ — không giả dạng trình duyệt", () => {
+    expect(NEWS_FETCHER_USER_AGENT).toContain("ThePickleHub-news-fetcher/1.0");
+    expect(NEWS_FETCHER_USER_AGENT).toContain("+https://www.thepicklehub.net");
+    // Không được mang dấu hiệu của một trình duyệt thật.
+    expect(NEWS_FETCHER_USER_AGENT).not.toMatch(/Chrome|Safari|Firefox|Gecko|AppleWebKit/);
+  });
+});
+
+describe("parsePickleAsiaPosts", () => {
+  it("maps a published post and keeps a sufficiently long API body", () => {
+    const paragraph = "Pickle Asia reports tournament facts and player context for readers. ".repeat(100);
+    const items = parsePickleAsiaPosts([
+      {
+        slug: "vietnam-pickleball-open-2026",
+        title: "<strong>Vietnam Pickleball Open 2026</strong>",
+        excerpt: "<p>A regional tournament recap.</p>",
+        content: `<article><p>${paragraph}</p></article>`,
+        hero_image_url: "https://cdn.example.com/pickle.jpg",
+        published_at: "2026-09-07T08:30:00+07:00",
+        status: "published",
+      },
+    ]);
+
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({
+      title: "Vietnam Pickleball Open 2026",
+      link: "https://pickle.asia/blogs/vietnam-pickleball-open-2026",
+      summary: "A regional tournament recap.",
+      image_url: "https://cdn.example.com/pickle.jpg",
+      published_at: "2026-09-07T01:30:00.000Z",
+    });
+    expect(items[0].raw_body?.length).toBeGreaterThanOrEqual(4_000);
+    expect(items[0].raw_body).not.toContain("<p>");
+  });
+
+  it("marks short content as a brief and rejects malformed or draft rows", () => {
+    const items = parsePickleAsiaPosts([
+      {
+        slug: "short-update",
+        title: "<script>ignore me</script>Short update",
+        excerpt: "One paragraph",
+        content: "<p>This body is intentionally shorter than the full-body threshold.</p>",
+        hero_image_url: null,
+        published_at: "2026-09-07T00:00:00Z",
+        status: "published",
+      },
+      {
+        slug: "../unsafe",
+        title: "Unsafe slug",
+        published_at: "2026-09-07T00:00:00Z",
+        status: "published",
+      },
+      {
+        slug: "bad-date",
+        title: "Bad date",
+        published_at: "not-a-date",
+        status: "published",
+      },
+      {
+        slug: "not-public",
+        title: "Draft",
+        published_at: "2026-09-07T00:00:00Z",
+        status: "draft",
+      },
+    ]);
+
+    expect(items).toHaveLength(1);
+    expect(items[0].title).toBe("Short update");
+    expect(items[0].link).toBe("https://pickle.asia/blogs/short-update");
+    expect(items[0].raw_body).toBeNull();
   });
 });

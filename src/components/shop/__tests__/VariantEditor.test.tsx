@@ -39,10 +39,10 @@ const groups = (): OptionGroup[] => [
 ];
 
 const rows = (): VariantRow[] => [
-  { id: "v1", optionValues: { "Màu sắc": "Trắng", Size: "39" }, priceVnd: "1000000", stockOnHand: "3", sku: "W39" },
-  { id: "v2", optionValues: { "Màu sắc": "Trắng", Size: "40" }, priceVnd: "1100000", stockOnHand: "4", sku: "W40" },
-  { id: "v3", optionValues: { "Màu sắc": "Đen", Size: "39" }, priceVnd: "1200000", stockOnHand: "5", sku: "B39" },
-  { id: "v4", optionValues: { "Màu sắc": "Đen", Size: "40" }, priceVnd: "1300000", stockOnHand: "6", sku: "B40" },
+  { id: "v1", optionValues: { "Màu sắc": "Trắng", Size: "39" }, priceVnd: "1000000", compareAtVnd: "", stockOnHand: "3", sku: "W39" },
+  { id: "v2", optionValues: { "Màu sắc": "Trắng", Size: "40" }, priceVnd: "1100000", compareAtVnd: "", stockOnHand: "4", sku: "W40" },
+  { id: "v3", optionValues: { "Màu sắc": "Đen", Size: "39" }, priceVnd: "1200000", compareAtVnd: "", stockOnHand: "5", sku: "B39" },
+  { id: "v4", optionValues: { "Màu sắc": "Đen", Size: "40" }, priceVnd: "1300000", compareAtVnd: "", stockOnHand: "6", sku: "B40" },
 ];
 
 const onSave = vi.fn();
@@ -64,7 +64,7 @@ const mount = (over: Partial<Parameters<typeof VariantEditor>[0]> = {}) =>
 // the same accessible names. Index 0 is the table, index 1 the card; that
 // duplication is itself an invariant (see "one state, two renderings").
 
-type Field = "Mã hàng" | "Giá" | "Tồn kho";
+type Field = "Mã hàng" | "Giá" | "Giá gốc" | "Tồn kho";
 
 const cell = (field: Field, combo: string, which = 0) =>
   screen.getAllByLabelText(`${field} ${combo}`)[which] as HTMLInputElement;
@@ -108,10 +108,10 @@ describe("a row is identified by its combination, never by where it sits", () =>
     // carries its own SKU, price and stock. An implementation keyed on the
     // array index would hand Đen · 39 the white shoe's stock count.
     expect(matrix()).toEqual([
-      { combo: "Đen · 39", cells: ["B39", "1200000", "5"] },
-      { combo: "Đen · 40", cells: ["B40", "1300000", "6"] },
-      { combo: "Trắng · 39", cells: ["W39", "1000000", "3"] },
-      { combo: "Trắng · 40", cells: ["W40", "1100000", "4"] },
+      { combo: "Đen · 39", cells: ["B39", "1200000", "", "5"] },
+      { combo: "Đen · 40", cells: ["B40", "1300000", "", "6"] },
+      { combo: "Trắng · 39", cells: ["W39", "1000000", "", "3"] },
+      { combo: "Trắng · 40", cells: ["W40", "1100000", "", "4"] },
     ]);
   });
 
@@ -128,8 +128,8 @@ describe("a row is identified by its combination, never by where it sits", () =>
     // A new size inherits a price to confirm, and NO stock: nobody has bought
     // 41s yet. A pre-filled count here is saved as a stock correction and puts
     // shoes that do not exist in front of a buyer.
-    expect(after[2].cells).toEqual(["", "1000000", ""]);
-    expect(after[5].cells).toEqual(["", "1000000", ""]);
+    expect(after[2].cells).toEqual(["", "1000000", "", ""]);
+    expect(after[5].cells).toEqual(["", "1000000", "", ""]);
     // The four that existed are untouched.
     expect(cell("Mã hàng", "Đen · 40").value).toBe("B40");
     expect(cell("Tồn kho", "Đen · 40").value).toBe("6");
@@ -138,7 +138,7 @@ describe("a row is identified by its combination, never by where it sits", () =>
   it("turning the matrix on for a simple product seeds the new rows from its price", () => {
     mount({
       initialGroups: [],
-      initialRows: [{ id: "v0", optionValues: {}, priceVnd: "990000", stockOnHand: "7", sku: "SOLO" }],
+      initialRows: [{ id: "v0", optionValues: {}, priceVnd: "990000", compareAtVnd: "", stockOnHand: "7", sku: "SOLO" }],
     });
     expect(screen.getByText(/Đang là sản phẩm đơn/)).toBeTruthy();
 
@@ -152,8 +152,8 @@ describe("a row is identified by its combination, never by where it sits", () =>
     // the difference between confirming a number and retyping it. The stock
     // does NOT come along: 7 pairs do not become 7 white and 7 black.
     expect(matrix()).toEqual([
-      { combo: "Trắng", cells: ["", "990000", ""] },
-      { combo: "Đen", cells: ["", "990000", ""] },
+      { combo: "Trắng", cells: ["", "990000", "", ""] },
+      { combo: "Đen", cells: ["", "990000", "", ""] },
     ]);
   });
 
@@ -178,10 +178,10 @@ describe("a row is identified by its combination, never by where it sits", () =>
     setValues(0, "Trắng, Đen");
 
     expect(matrix()).toEqual([
-      { combo: "Trắng · 39", cells: ["W39", "1000000", "3"] },
-      { combo: "Trắng · 40", cells: ["W40", "1100000", "4"] },
-      { combo: "Đen · 39", cells: ["B39", "1200000", "5"] },
-      { combo: "Đen · 40", cells: ["B40", "1300000", "6"] },
+      { combo: "Trắng · 39", cells: ["W39", "1000000", "", "3"] },
+      { combo: "Trắng · 40", cells: ["W40", "1100000", "", "4"] },
+      { combo: "Đen · 39", cells: ["B39", "1200000", "", "5"] },
+      { combo: "Đen · 40", cells: ["B40", "1300000", "", "6"] },
     ]);
   });
 
@@ -201,8 +201,8 @@ describe("a row is identified by its combination, never by where it sits", () =>
     mount({
       initialGroups: [{ name: "Size", values: ["39", "40"] }],
       initialRows: [
-        { id: "v1", optionValues: { Size: "39" }, priceVnd: "1", stockOnHand: "", sku: "" },
-        { id: "v2", optionValues: { Size: "40" }, priceVnd: "1", stockOnHand: "", sku: "" },
+        { id: "v1", optionValues: { Size: "39" }, priceVnd: "1", compareAtVnd: "", stockOnHand: "", sku: "" },
+        { id: "v2", optionValues: { Size: "40" }, priceVnd: "1", compareAtVnd: "", stockOnHand: "", sku: "" },
       ],
     });
 
@@ -270,8 +270,8 @@ describe("nothing disappears without being named first", () => {
     fireEvent.click(screen.getByRole("button", { name: "Vẫn đổi" }));
 
     expect(matrix()).toEqual([
-      { combo: "Trắng · 39", cells: ["W39", "1000000", "3"] },
-      { combo: "Trắng · 40", cells: ["W40", "1100000", "4"] },
+      { combo: "Trắng · 39", cells: ["W39", "1000000", "", "3"] },
+      { combo: "Trắng · 40", cells: ["W40", "1100000", "", "4"] },
     ]);
   });
 
@@ -371,7 +371,7 @@ describe("editing a cell", () => {
     type("Giá", "Trắng · 40", "1234567");
 
     const after = matrix();
-    expect(after[1].cells).toEqual(["W40", "1234567", "4"]);
+    expect(after[1].cells).toEqual(["W40", "1234567", "", "4"]);
     expect(after.filter((_, i) => i !== 1)).toEqual(before.filter((_, i) => i !== 1));
   });
 
@@ -451,11 +451,48 @@ describe("setting a value on every row at once", () => {
     bulk("10");
 
     expect(matrix().map((r) => r.cells)).toEqual([
-      ["W39", "1000000", "10"],
-      ["W40", "1100000", "10"],
-      ["B39", "1200000", "10"],
-      ["B40", "1300000", "10"],
+      ["W39", "1000000", "", "10"],
+      ["W40", "1100000", "", "10"],
+      ["B39", "1200000", "", "10"],
+      ["B40", "1300000", "", "10"],
     ]);
+  });
+});
+
+describe("giá gốc", () => {
+  it("có ô Giá gốc ở cả bảng lẫn thẻ, cột đầu bảng ghi Giá gốc (₫)", () => {
+    mount();
+    expect(screen.getAllByLabelText("Giá gốc Trắng · 39")).toHaveLength(2);
+    expect(screen.getByRole("columnheader", { name: "Giá gốc (₫)" })).toBeTruthy();
+  });
+
+  it("dòng có giá gốc thấp hơn giá bán bị đánh dấu và chặn Lưu; hợp lệ thì hiện % người mua thấy", () => {
+    mount();
+    type("Giá gốc", "Trắng · 39", "900000");
+
+    expect(cell("Giá gốc", "Trắng · 39").getAttribute("aria-invalid")).toBe("true");
+    expect(screen.getAllByText(/Giá gốc phải lớn hơn giá bán/).length).toBeGreaterThan(0);
+    expect(screen.getByText("Còn ô chưa hợp lệ")).toBeTruthy();
+    expect(saveButton().hasAttribute("disabled")).toBe(true);
+
+    type("Giá gốc", "Trắng · 39", "1250000");
+    expect(screen.queryByText("Còn ô chưa hợp lệ")).toBeNull();
+    // 100 - 80 = 20
+    expect(screen.getAllByText("Người mua thấy -20%").length).toBeGreaterThan(0);
+    expect(screen.getByText(/Giá gốc đặt cho có sẽ bị gỡ/)).toBeTruthy();
+  });
+
+  it("bulk Giá gốc áp cho mọi dòng và Hoàn tác trả lại", () => {
+    mount();
+    const before = matrix();
+    fireEvent.change(screen.getByLabelText("Đổi ô nào"), { target: { value: "compareAtVnd" } });
+    expect(screen.getByText(/Đặt giá gốc cho 4 phiên bản cùng lúc/)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Giá trị mới"), { target: { value: "2000000" } });
+    fireEvent.click(screen.getByRole("button", { name: "Áp cho tất cả" }));
+
+    expect(matrix().map((r) => r.cells[2])).toEqual(["2000000", "2000000", "2000000", "2000000"]);
+    fireEvent.click(screen.getByRole("button", { name: "Hoàn tác" }));
+    expect(matrix()).toEqual(before);
   });
 });
 

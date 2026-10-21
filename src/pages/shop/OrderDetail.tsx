@@ -15,7 +15,7 @@
 // SAME sentence. Telling them apart tells a stranger which codes are real.
 // ============================================================================
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { AlertTriangle, ExternalLink, Loader2, PackageX, Phone } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
@@ -26,8 +26,9 @@ import { OrderMoneyRows } from "@/components/shop/OrderMoneyRows";
 import { OrderStatusLine, type CancelActorKind } from "@/components/shop/OrderStatusLine";
 import { OrderTimeline } from "@/components/shop/OrderTimeline";
 import { OrderPaymentCard } from "@/components/shop/OrderPaymentCard";
+import { OrderRefundCard } from "@/components/shop/OrderRefundCard";
 import { useOrder, useOrderTransition } from "@/hooks/shop/useOrders";
-import { useClaimPayment, useOrderPaymentInfo } from "@/hooks/shop/useOrderPayment";
+import { useClaimPayment, useOrderPaymentInfo, useSePayCheckout } from "@/hooks/shop/useOrderPayment";
 import { usePublicShopPage } from "@/hooks/shop/usePublicShop";
 import { useConfirm } from "@/hooks/useConfirm";
 import { formatVnd } from "@/lib/shop/publicCatalog";
@@ -73,6 +74,8 @@ const COPY = {
   // details — the buttons are under "Người bán". ThePickleHub holds no money.
   placedBank: (shop: string) =>
     `Đã gửi đơn tới người bán. Anh/chị nhắn hoặc gọi ${shop} để nhận thông tin chuyển khoản — nút ở mục Người bán bên dưới. ThePickleHub không nhận và không giữ tiền.`,
+  placedSePay:
+    "Đã gửi đơn tới người bán. Quét mã bên dưới để thanh toán ngay; hệ thống sẽ tự xác nhận khi tiền về.",
   // EN: ThePickleHub isn't connected to any courier… check the code yourself.
   trackingNote:
     "ThePickleHub chưa nối với đơn vị vận chuyển nên không theo dõi được tự động — anh/chị tra mã này trên trang của hãng.",
@@ -81,6 +84,7 @@ const COPY = {
   payCod: "Trả khi nhận hàng.",
   payBank:
     "Chuyển khoản trước. Anh/chị trao đổi trực tiếp với shop; ThePickleHub không nhận và không giữ tiền của đơn này.",
+  paySePay: "Chuyển khoản bằng mã QR; hệ thống tự động đối soát.",
   noteLabel: "Ghi chú",
   confirmCancelTitle: "Huỷ đơn này?",
   confirmCancelBody:
@@ -91,6 +95,12 @@ const COPY = {
   confirmReceivedBody: "Đơn sẽ chuyển sang trạng thái đã giao.",
   confirmReceivedYes: "Đã nhận hàng",
   confirmReceivedNo: "Chưa nhận",
+  returnH: "Cần đổi hoặc trả hàng?",
+  returnBody:
+    "Anh/chị liên hệ trực tiếp với shop qua Zalo để trao đổi về tình trạng sản phẩm và cách xử lý.",
+  returnZalo: "Liên hệ Zalo của shop",
+  returnNoZalo:
+    "Shop chưa có Zalo được duyệt. Anh/chị dùng kênh liên hệ ở mục Người bán bên dưới.",
 };
 
 export default function OrderDetail() {
@@ -108,8 +118,25 @@ export default function OrderDetail() {
   // the RPC would answer `bank: null` after a round trip nobody reads.
   const paymentQ = useOrderPaymentInfo(code ?? null, order?.payment_method === "bank_transfer");
   const claim = useClaimPayment();
+  const sepay = useSePayCheckout();
   const shopQ = usePublicShopPage(order?.shop?.slug ?? null);
   const contacts = usableContacts(shopQ.data?.contacts as PublicContact[] | undefined);
+  const zalo = contacts.find((contact) => contact.type === "zalo") ?? null;
+  const zaloHref = zalo ? contactHref(zalo) : null;
+
+  // A bank-transfer buyer already chose to pay at checkout. As soon as the
+  // order and its party-scoped payment projection arrive, prepare the inline
+  // QR without asking for a second confirmation click.
+  useEffect(() => {
+    if (
+      order?.payment_method === "bank_transfer"
+      && paymentQ.data?.gateway?.enabled
+      && !paymentQ.data.confirmed_at
+      && sepay.isIdle
+    ) {
+      sepay.mutate(order.code);
+    }
+  }, [order?.code, order?.payment_method, paymentQ.data?.confirmed_at, paymentQ.data?.gateway?.enabled, sepay.isIdle, sepay.mutate]);
 
   const cancelEvent = [...(order?.events ?? [])].reverse().find((e) => e.action === "cancel");
   const cancelledBy = (cancelEvent?.metadata?.actor_kind as CancelActorKind | undefined) ?? null;
@@ -218,7 +245,7 @@ export default function OrderDetail() {
           <div>
             {order.payment_method === "cod"
               ? COPY.placedCod(shopName)
-              : COPY.placedBank(shopName)}
+              : paymentQ.data?.gateway?.enabled ? COPY.placedSePay : COPY.placedBank(shopName)}
           </div>
         </div>
       )}
@@ -232,6 +259,12 @@ export default function OrderDetail() {
         cancelReason={order.cancel_reason}
         cancelledAt={cancelEvent?.created_at ?? null}
         shopName={shopName}
+      />
+
+      <OrderRefundCard
+        refundDueVnd={order.refund_due_vnd}
+        refundedAt={order.refunded_at}
+        side="buyer"
       />
 
       {actionError && (
@@ -270,12 +303,38 @@ export default function OrderDetail() {
         </div>
       )}
 
+      {order.status === "delivered" && (
+        <section className="tl-shop-card" aria-labelledby="ord-return-help">
+          <h2 className="tl-shop-h2" id="ord-return-help">{COPY.returnH}</h2>
+          <p className="tl-shop-flush-t">{COPY.returnBody}</p>
+          {zaloHref ? (
+            <div className="tl-shop-cta-row">
+              <a
+                href={zaloHref}
+                className="tl-shop-btn tl-shop-btn--primary"
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+              >
+                <ExternalLink size={15} aria-hidden="true" />
+                {COPY.returnZalo}
+              </a>
+            </div>
+          ) : (
+            <p className="tl-shop-hint">{COPY.returnNoZalo}</p>
+          )}
+        </section>
+      )}
+
       {paymentQ.data && (
         <OrderPaymentCard
           info={paymentQ.data}
           side="buyer"
           cancelled={order.status === "cancelled"}
           onMark={() => claim.mutateAsync(order.code)}
+          onGatewayCheckout={() => sepay.mutateAsync(order.code)}
+          gatewayPayment={sepay.data}
+          gatewayLoading={sepay.isPending}
+          gatewayFailed={sepay.isError}
         />
       )}
 
@@ -369,7 +428,9 @@ export default function OrderDetail() {
       <section aria-labelledby="ord-pay">
         <h2 className="tl-shop-h2" id="ord-pay">{COPY.paymentH}</h2>
         <p className="tl-shop-flush">
-          {order.payment_method === "cod" ? <strong>{COPY.payCod}</strong> : COPY.payBank}
+          {order.payment_method === "cod"
+            ? <strong>{COPY.payCod}</strong>
+            : paymentQ.data?.gateway?.enabled ? COPY.paySePay : COPY.payBank}
         </p>
         <p className="tl-shop-hint">Đặt lúc {formatWhen(order.created_at)}</p>
       </section>

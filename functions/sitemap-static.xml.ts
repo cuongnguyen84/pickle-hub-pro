@@ -8,11 +8,12 @@
  */
 
 import { createSupabaseClient } from "./_lib/supabase";
-import { EN_BLOG_SLUGS } from "./_lib/static-blog-slugs";
+import { EN_BLOG_ENTRIES } from "./_lib/static-blog-slugs";
 import {
   SITE_URL_DEFAULT,
   SITEMAP_CACHE_HEADERS,
   buildUrlEntry,
+  fetchAllRows,
   today,
   wrapUrlset,
   type UrlEntry,
@@ -75,6 +76,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     { loc: "/tools/doubles-elimination", changefreq: "weekly", priority: "0.7", lastmod: TODAY, hreflang: enOnly("/tools/doubles-elimination") },
     { loc: "/tools/quick-tables", changefreq: "weekly", priority: "0.7", lastmod: TODAY, hreflang: enOnly("/tools/quick-tables") },
     { loc: "/tools/team-match", changefreq: "weekly", priority: "0.7", lastmod: TODAY, hreflang: enOnly("/tools/team-match") },
+    { loc: "/authors/cuong-nguyen", changefreq: "monthly", priority: "0.5", lastmod: "2026-09-14", hreflang: bilingual("/authors/cuong-nguyen", "/vi/authors/cuong-nguyen") },
+    { loc: "/vi/authors/cuong-nguyen", changefreq: "monthly", priority: "0.5", lastmod: "2026-09-14", hreflang: bilingual("/authors/cuong-nguyen", "/vi/authors/cuong-nguyen") },
     { loc: "/blog", changefreq: "weekly", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/blog", "/vi/blog") },
     { loc: "/vi/blog", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/blog", "/vi/blog") },
     // SEO-1.1 (2026-05-28) — Sprint A Vietnam DUPR leaderboard SSR
@@ -101,18 +104,34 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     { loc: "/vi/terms", changefreq: "monthly", priority: "0.3", lastmod: TODAY, hreflang: bilingual("/terms", "/vi/terms") },
     { loc: "/advertise", changefreq: "monthly", priority: "0.4", lastmod: TODAY, hreflang: bilingual("/advertise", "/vi/advertise") },
     { loc: "/vi/advertise", changefreq: "monthly", priority: "0.4", lastmod: TODAY, hreflang: bilingual("/advertise", "/vi/advertise") },
-    { loc: "/rss.xml", changefreq: "hourly", priority: "0.3" },
+    // /rss.xml is deliberately NOT here. It is an RSS feed, not a page: the
+    // 2026-08-25 audit found it was the only crawled URL on the site with no
+    // <title>, no canonical, no H1 and no meta description, because there is
+    // nothing there to have them. A sitemap lists indexable pages; the feed is
+    // discovered through <link rel="alternate" type="application/rss+xml">.
   ];
 
   // Build EN blog post entries with optional bilingual hreflang
   const enToViSlug = new Map<string, string>();
   try {
     const supabase = createSupabaseClient(context.env);
-    const { data: viPosts } = await supabase
-      .from("vi_blog_posts")
-      .select("slug, alternate_en_slug")
-      .eq("status", "published");
-    for (const p of viPosts || []) {
+    // CAP-01 (2026-08-25) — paged. This query had no .limit() at all, which
+    // does not mean "no cap": PostgREST applies max-rows = 1000 by default and
+    // reports nothing. The consequence here is quieter than a missing URL —
+    // the EN entries would still be emitted, just stripped of their VI
+    // hreflang, so EN and VI would compete instead of pairing. 66 rows today.
+    // `slug` is the unique tie breaker.
+    const viPosts = await fetchAllRows<{ slug: string; alternate_en_slug: string | null }>(
+      (from, to) =>
+        supabase
+          .from("vi_blog_posts")
+          .select("slug, alternate_en_slug")
+          .eq("status", "published")
+          .order("published_at", { ascending: false })
+          .order("slug", { ascending: true })
+          .range(from, to),
+    );
+    for (const p of viPosts) {
       if (p.alternate_en_slug) enToViSlug.set(p.alternate_en_slug, p.slug);
     }
   } catch (err) {
@@ -123,12 +142,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     buildUrlEntry({ loc: `${siteUrl}${u.loc}`, lastmod: u.lastmod, changefreq: u.changefreq, priority: u.priority, hreflang: u.hreflang }),
   );
 
-  const enBlogEntries = EN_BLOG_SLUGS.map((slug) => {
+  const enBlogEntries = EN_BLOG_ENTRIES.map(({ slug, lastmod }) => {
     const viSlug = enToViSlug.get(slug);
     const hreflang = viSlug
       ? bilingual(`/blog/${slug}`, `/vi/blog/${viSlug}`)
       : enOnly(`/blog/${slug}`);
-    return buildUrlEntry({ loc: `${siteUrl}/blog/${slug}`, changefreq: "monthly", priority: "0.7", hreflang });
+    // lastmod is the post's own updatedDate/publishedDate, never TODAY — see
+    // the note on EN_BLOG_ENTRIES. These 58 URLs carried no lastmod at all.
+    return buildUrlEntry({ loc: `${siteUrl}/blog/${slug}`, lastmod, changefreq: "monthly", priority: "0.7", hreflang });
   });
 
   const xml = wrapUrlset([...staticEntries, ...enBlogEntries]);

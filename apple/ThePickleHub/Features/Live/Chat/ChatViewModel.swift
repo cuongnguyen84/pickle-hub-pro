@@ -21,6 +21,10 @@ final class ChatViewModel {
     var isLoading = true
     var hasOlder = false
     var realtimeErrorText: String?
+    var nicknameErrorText: String?
+    var isSavingNickname = false
+    private(set) var currentNickname = "User"
+    private(set) var nextNicknameEditDate: Date?
 
     private(set) var userID: String?
     private var displayName = "User"
@@ -84,7 +88,13 @@ final class ChatViewModel {
             isModerator = await modTask
             let p = await profTask
             displayName = p.displayName ?? "User"
+            currentNickname = displayName
             avatarURL = p.avatarURL
+            if let raw = p.displayNameUpdatedAt,
+               let changedAt = Self.parseTimestamp(raw) {
+                let next = changedAt.addingTimeInterval(7 * 24 * 60 * 60)
+                nextNicknameEditDate = next > Date() ? next : nil
+            }
         }
 
         await refreshLeaderboard()
@@ -197,6 +207,37 @@ final class ChatViewModel {
     }
 
     // MARK: Send
+
+    var canEditNickname: Bool { nextNicknameEditDate == nil }
+
+    func updateNickname(_ nickname: String) async -> Bool {
+        let trimmed = nickname.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard userID != nil, canEditNickname else { return false }
+        guard (2...30).contains(trimmed.count) else {
+            nicknameErrorText = String(localized: "Nickname phải có từ 2 đến 30 ký tự.")
+            return false
+        }
+        nicknameErrorText = nil
+        isSavingNickname = true
+        defer { isSavingNickname = false }
+        let now = Date()
+        do {
+            try await repo.updateDisplayName(displayName: trimmed)
+            displayName = trimmed
+            currentNickname = trimmed
+            nextNicknameEditDate = now.addingTimeInterval(7 * 24 * 60 * 60)
+            return true
+        } catch {
+            nicknameErrorText = String(localized: "Không thể đổi nickname. Vui lòng thử lại.")
+            return false
+        }
+    }
+
+    private static func parseTimestamp(_ raw: String) -> Date? {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.date(from: raw) ?? ISO8601DateFormatter().date(from: raw)
+    }
 
     func send(_ text: String) async {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)

@@ -1,3 +1,4 @@
+import { PublicSeoHandoff } from "./components/seo/PublicSeoHandoff";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/toaster";
@@ -51,6 +52,7 @@ const AuthCallback = lazyRetry(() => import("./pages/AuthCallback"));
 const ResetPassword = lazyRetry(() => import("./pages/ResetPassword"));
 const WatchVideo = lazyRetry(() => import("./pages/WatchVideo"));
 const WatchLive = lazyRetry(() => import("./pages/WatchLive"));
+const LiveProEvent = lazyRetry(() => import("./pages/LiveProEvent"));
 const Account = lazyRetry(() => import("./pages/Account"));
 const DuprConnect = lazyRetry(() => import("./pages/DuprConnect"));
 const MatchNewPage = lazyRetry(() => import("./pages/MatchNew"));
@@ -86,6 +88,7 @@ const SellerApplicationStatus = lazyRetry(() => import("./pages/shop/SellerAppli
 const SellerShopSettings = lazyRetry(() => import("./pages/shop/SellerShopSettings"));
 const SellerHome = lazyRetry(() => import("./pages/shop/SellerHome"));
 const SellerProducts = lazyRetry(() => import("./pages/shop/SellerProducts"));
+const SellerBulkImport = lazyRetry(() => import("./pages/shop/BulkImport"));
 // One component behind two routes: create and edit differ in three places and
 // agree everywhere else, so they share a chunk as well as a file.
 const SellerProductForm = lazyRetry(() => import("./pages/shop/SellerProductForm"));
@@ -118,6 +121,7 @@ const SellerOrderDetail = lazyRetry(() => import("./pages/shop/SellerOrderDetail
 const Tools = lazyRetry(() => import("./pages/Tools"));
 const QuickTables = lazyRetry(() => import("./pages/QuickTables"));
 const QuickTableSetup = lazyRetry(() => import("./pages/QuickTableSetup"));
+const QuickTableChat = lazyRetry(() => import("./pages/QuickTableChat"));
 const QuickTableView = lazyRetry(() => import("./pages/QuickTableView"));
 const ParentTournamentPage = lazyRetry(() => import("./pages/ParentTournamentPage"));
 const QuickTableRefereeScoring = lazyRetry(() => import("./pages/QuickTableRefereeScoring"));
@@ -125,6 +129,7 @@ const TeamMatchScoring = lazyRetry(() => import("./pages/TeamMatchScoring"));
 const JoinTeam = lazyRetry(() => import("./pages/JoinTeam"));
 const Privacy = lazyRetry(() => import("./pages/Privacy"));
 const Terms = lazyRetry(() => import("./pages/Terms"));
+const Author = lazyRetry(() => import("./pages/Author"));
 const About = lazyRetry(() => import("./pages/About"));
 const Contact = lazyRetry(() => import("./pages/Contact"));
 const Advertise = lazyRetry(() => import("./pages/Advertise"));
@@ -337,6 +342,22 @@ import { isChunkErrorMessage } from "@/lib/chunkError";
 import { reportCaughtError } from "@/lib/errorReporter";
 
 // Error boundary for lazy-loaded chunks (handles stale cache after deploy)
+/**
+ * Refresh the HTTP-cache entry for the current document before reloading.
+ * A stale shell (cached index.html referencing chunk hashes the new deploy
+ * deleted) is the thing we are trying to escape; `location.reload()` alone
+ * can be answered from that same cache while it is still fresh, which turns
+ * the recovery into a loop. `cache: "reload"` forces a network round-trip and
+ * stores the fresh copy, so the reload that follows picks it up.
+ */
+async function refetchShellBypassingCache(): Promise<void> {
+  try {
+    await fetch(window.location.href, { cache: "reload", credentials: "same-origin" });
+  } catch {
+    // Offline or blocked — reload anyway; the SW NetworkFirst path handles it.
+  }
+}
+
 class ChunkErrorBoundary extends Component<
   { children: ReactNode },
   { hasError: boolean; error: Error | null; giveUp: boolean }
@@ -368,7 +389,11 @@ class ChunkErrorBoundary extends Component<
     // OLD chunk hashes — when the SW serves stale HTML, browser fetches
     // OLD chunk URLs, CDN SPA-fallback returns NEW HTML, parser hits "<"
     // → loop. Blowing the cache breaks the loop after one reload.
-    try {
+    // Bounded: on iOS Safari the CacheStorage / SW registration promises
+    // can stall; the page must never sit on "Đang tải lại..." waiting for
+    // them. Whatever finished within the budget is enough — the reload
+    // below re-fetches the shell past the HTTP cache anyway.
+    const purge = (async () => {
       if (typeof caches !== "undefined") {
         const keys = await caches.keys();
         await Promise.all(keys.map((k) => caches.delete(k)));
@@ -377,6 +402,10 @@ class ChunkErrorBoundary extends Component<
         const regs = await navigator.serviceWorker.getRegistrations();
         await Promise.all(regs.map((r) => r.unregister()));
       }
+    })();
+    const budget = new Promise<void>((resolve) => setTimeout(resolve, 2500));
+    try {
+      await Promise.race([purge, budget]);
     } catch {
       // Storage may be disabled (private mode, quota) — fall through to reload anyway.
     }
@@ -413,6 +442,7 @@ class ChunkErrorBoundary extends Component<
       sessionStorage.setItem(KEY, String(count + 1));
       sessionStorage.setItem(TS_KEY, String(first));
     } catch { /* ignore */ }
+    await refetchShellBypassingCache();
     window.location.reload();
   }
   render() {
@@ -603,6 +633,7 @@ const MIRRORED: MirroredRoute[] = [
   { path: "/shop/order/:code", element: <RequireAuth><ShopOrderDetail /></RequireAuth> },
   { path: "/shop/orders", element: <RequireAuth><ShopOrders /></RequireAuth> },
   { path: "/live", element: <Live /> },
+  { path: "/live/pro/:slug", element: <LiveProEvent /> },
   { path: "/live/:id", element: <WatchLive /> },
   { path: "/videos", element: <Videos /> },
   { path: "/watch/:id", element: <WatchVideo /> },
@@ -642,9 +673,11 @@ const MIRRORED: MirroredRoute[] = [
   { path: "/forum/new", element: <ForumPostCreate /> },
   { path: "/tools", element: <Tools /> },
   { path: "/tools/quick-tables", element: <QuickTables /> },
+  { path: "/tools/quick-tables/chat", element: <QuickTableChat /> },
   { path: "/tools/quick-tables/parent/:shareId", element: <ParentTournamentPage /> },
   { path: "/tools/quick-tables/:shareId", element: <ConditionalAuth><QuickTableView /></ConditionalAuth> },
   { path: "/tools/quick-tables/:shareId/setup", element: <QuickTableSetup /> },
+  { path: "/tools/quick-tables/referee/:matchId", element: <QuickTableRefereeScoring /> },
   { path: "/tools/team-match", element: <TeamMatchList /> },
   { path: "/tools/team-match/new", element: <TeamMatchSetup /> },
   { path: "/tools/team-match/match/:matchId/score", element: <TeamMatchScoring /> },
@@ -660,6 +693,7 @@ const MIRRORED: MirroredRoute[] = [
   { path: "/tools/dashboard/:type/:id", element: <TournamentDashboard /> },
   { path: "/privacy", element: <Privacy /> },
   { path: "/terms", element: <Terms /> },
+  { path: "/authors/cuong-nguyen", element: <Author /> },
   { path: "/about", element: <About /> },
   { path: "/contact", element: <Contact /> },
   { path: "/advertise", element: <Advertise /> },
@@ -681,6 +715,7 @@ const App = () => (
               <PageTracker />
               <LivestreamGateAttribution />
               <ScrollToTop />
+              <PublicSeoHandoff />
 
               <SkipToContent />
               <BottomNav />
@@ -803,7 +838,6 @@ const App = () => (
                     <Route path="/share/live/:id" element={<ShareRedirect type="live" />} />
                     <Route path="/share/video/:id" element={<ShareRedirect type="video" />} />
                     {/* Tools routes */}
-                    <Route path="/tools/quick-tables/referee/:matchId" element={<QuickTableRefereeScoring />} />
                     {/* Team Match routes */}
                     {/* Doubles Elimination routes */}
                     {/* Flex Tournament routes */}
@@ -858,11 +892,13 @@ const App = () => (
                     {/* Shop marketplace — Phase 1. Seller + admin surfaces are
                         auth-gated here and re-authorised server-side by RLS. */}
                     <Route path="/shop/sell" element={<SellLanding />} />
+                    <Route path="/vi/shop/sell" element={<ViLanguageWrapper><SellLanding /></ViLanguageWrapper>} />
                     <Route path="/seller" element={<RequireAuth><SellerHome /></RequireAuth>} />
                     <Route path="/seller/application" element={<RequireAuth><SellerApplication /></RequireAuth>} />
                     <Route path="/seller/application/status" element={<RequireAuth><SellerApplicationStatus /></RequireAuth>} />
                     <Route path="/seller/settings" element={<RequireAuth><SellerShopSettings /></RequireAuth>} />
                     <Route path="/seller/products" element={<RequireAuth><SellerProducts /></RequireAuth>} />
+                    <Route path="/seller/products/import" element={<RequireAuth><SellerBulkImport /></RequireAuth>} />
                     <Route path="/seller/products/new" element={<RequireAuth><SellerProductForm /></RequireAuth>} />
                     <Route path="/seller/products/:id/edit" element={<RequireAuth><SellerProductForm /></RequireAuth>} />
                     <Route path="/seller/orders" element={<RequireAuth><SellerOrders /></RequireAuth>} />

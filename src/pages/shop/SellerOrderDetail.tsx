@@ -36,9 +36,14 @@ import { OrderMoneyRows } from "@/components/shop/OrderMoneyRows";
 import { OrderStatusLine, type CancelActorKind } from "@/components/shop/OrderStatusLine";
 import { OrderTimeline } from "@/components/shop/OrderTimeline";
 import { OrderPaymentCard } from "@/components/shop/OrderPaymentCard";
+import { OrderRefundCard } from "@/components/shop/OrderRefundCard";
 import { useMyShopMembership, useShopProfile } from "@/hooks/shop/useShopProfile";
 import { useOrder, useOrderTransition } from "@/hooks/shop/useOrders";
-import { useConfirmPayment, useOrderPaymentInfo } from "@/hooks/shop/useOrderPayment";
+import {
+  useConfirmPayment,
+  useMarkRefunded,
+  useOrderPaymentInfo,
+} from "@/hooks/shop/useOrderPayment";
 import { shopErrorReason, shopReasonMessage } from "@/lib/shop/errors";
 import { formatVnd } from "@/lib/shop/publicCatalog";
 import { addressForClipboard, formatWhen, telHref } from "@/lib/shop/orderFormat";
@@ -103,11 +108,10 @@ const COPY = {
 
   payCod:
     "Trả khi nhận hàng. Anh/chị thu tiền trực tiếp; ThePickleHub không giữ tiền của đơn này.",
-  // P4b — the account number is no longer something the seller sends by hand:
-  // the buyer sees a QR built from the shop's own bank fields. What has NOT
-  // changed is who holds the money, and that sentence stays.
-  payBank:
+  payBankManual:
     "Người mua chọn chuyển khoản trước và thấy mã QR dựng từ tài khoản của shop. Tiền đi thẳng vào tài khoản anh/chị — ThePickleHub không nhận, không giữ và không đối soát khoản nào.",
+  payBankGateway:
+    "Người mua thanh toán bằng mã QR của nền tảng. Hệ thống tự động đối soát và cập nhật đơn khi nhận được giao dịch.",
 
   // EN: This order was just updated somewhere else — the buyer may have
   // cancelled. The page has reloaded.
@@ -130,6 +134,7 @@ export default function SellerOrderDetail() {
     q.data?.payment_method === "bank_transfer",
   );
   const confirmPayment = useConfirmPayment();
+  const markRefunded = useMarkRefunded();
 
   const [pending, setPending] = useState<Pending>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -302,6 +307,13 @@ export default function SellerOrderDetail() {
           cancelledAt={cancelEvent?.created_at ?? null}
         />
       )}
+
+      <OrderRefundCard
+        refundDueVnd={order.refund_due_vnd}
+        refundedAt={order.refunded_at}
+        side="seller"
+        onMark={canAct ? () => markRefunded.mutateAsync(order.code) : undefined}
+      />
 
       {/* ── 1. What to do ──────────────────────────────────────────────── */}
       <section aria-labelledby="sod-todo">
@@ -485,11 +497,13 @@ export default function SellerOrderDetail() {
         />
       </section>
 
-      {/* ── 4. Who holds the money (nobody here) ───────────────────────── */}
+      {/* ── 4. Payment summary ─────────────────────────────────────────── */}
       <section aria-labelledby="sod-pay">
         <h2 className="tl-shop-h2" id="sod-pay">{COPY.paymentH}</h2>
         <p style={{ marginTop: 0 }}>
-          {order.payment_method === "cod" ? COPY.payCod : COPY.payBank}
+          {order.payment_method === "cod"
+            ? COPY.payCod
+            : paymentQ.data?.gateway?.enabled ? COPY.payBankGateway : COPY.payBankManual}
         </p>
       </section>
 

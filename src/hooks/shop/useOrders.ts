@@ -36,7 +36,7 @@ const ORDER_SELECT =
   "id,code,status,payment_method,recipient_name,recipient_phone,shipping_address," +
   "delivery_note,items_total_vnd,shipping_fee_vnd,total_vnd,confirm_due_at," +
   "tracking_code,cancel_reason,payment_claimed_at,payment_confirmed_at," +
-  "created_at,updated_at," +
+  "refund_due_vnd,refunded_at,created_at,updated_at," +
   "shop:shops(slug,name,state)," +
   "items:shop_order_items(id,product_id,variant_id,qty,product_title,variant_label,sku,unit_price_vnd,line_total_vnd)," +
   "events:shop_order_events(id,action,from_status,to_status,metadata,created_at)";
@@ -102,7 +102,7 @@ export interface OrderListRow {
 
 const LIST_SELECT =
   "id,code,shop_id,status,payment_method,recipient_name,total_vnd,confirm_due_at," +
-  "cancel_reason,created_at," +
+  "cancel_reason,refund_due_vnd,refunded_at,created_at," +
   "shop:shops(slug,name)," +
   "items:shop_order_items(id,product_title,qty)," +
   "events:shop_order_events(action,metadata,created_at)";
@@ -261,6 +261,10 @@ export const useOrderTransition = () => {
       }),
     onSuccess: (order) => {
       qc.setQueryData(orderKeys.one(order.code), order);
+      // The buyer may return through "Đơn của tôi" immediately after marking
+      // a parcel received. Keep that list (and the seller's tabs) from showing
+      // the old action/status until its 30-second stale window expires.
+      void qc.invalidateQueries({ queryKey: ["shop", "orders"] });
     },
   });
 };

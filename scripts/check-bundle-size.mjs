@@ -9,7 +9,10 @@
 //            every published article; counting them as "code" made the budget
 //            creep on each post. Each content chunk still has its own cap so a
 //            bloated article stays red.
-//   CONTENT  gz of the blog-post-* chunks.
+//   CONTENT  gz of the blog-post-* chunks. Only the per-chunk cap is enforced;
+//            the aggregate is reported (DEBT-09, 2026-10-01, owner-approved): chunks
+//            load lazily one slug at a time, so the sum is what the archive weighs,
+//            not what any reader downloads, and it blocked every new post at 596.5/600.
 //   INITIAL  gz the browser actually fetches on first paint: entry <script>
 //            + <link rel="modulepreload"> in dist/index.html + their static
 //            imports, resolved recursively. An aggregate can stay flat while a
@@ -21,9 +24,8 @@
 // PWAs on offline launch).
 //
 // Env:
-//   BUNDLE_CODE_BUDGET_KB      CODE budget (default 1800)
+//   BUNDLE_CODE_BUDGET_KB      CODE budget (default 1900; 1800 until DEBT-09)
 //   BUNDLE_INITIAL_BUDGET_KB   INITIAL budget (default 280)
-//   BUNDLE_CONTENT_BUDGET_KB   CONTENT aggregate budget (default 600)
 //   BUNDLE_CONTENT_CHUNK_KB    per blog-post chunk cap (default 20)
 //   BUNDLE_STRICT              "1" => exit 1 on any breach
 //
@@ -43,9 +45,10 @@ import { gzipSync } from "node:zlib";
 import { join, dirname, resolve } from "node:path";
 
 const BUDGETS = {
-  code: Number(process.env.BUNDLE_CODE_BUDGET_KB || 1800),
+  // 1800 -> 1900 (2026-10-01, DEBT-09, owner-approved): the blog metadata chunk grows
+  // with every post and held CODE at 1799.7/1800. Paid back when /blog stops shipping it whole.
+  code: Number(process.env.BUNDLE_CODE_BUDGET_KB || 1900),
   initial: Number(process.env.BUNDLE_INITIAL_BUDGET_KB || 280),
-  content: Number(process.env.BUNDLE_CONTENT_BUDGET_KB || 600),
   contentChunk: Number(process.env.BUNDLE_CONTENT_CHUNK_KB || 20),
 };
 const STRICT = process.env.BUNDLE_STRICT === "1";
@@ -150,7 +153,7 @@ function main() {
     "",
     `**INITIAL (first-paint) gz: ${kb(totals.initial)} KB** / budget ${BUDGETS.initial} KB — ${initialRows.length} critical-path requests`,
     `**CODE gz: ${kb(totals.code)} KB** / budget ${BUDGETS.code} KB`,
-    `**CONTENT (blog) gz: ${kb(totals.content)} KB** / budget ${BUDGETS.content} KB across ${contentRows.length} chunks (cap ${BUDGETS.contentChunk} KB each)`,
+    `**CONTENT (blog) gz: ${kb(totals.content)} KB** (aggregate reported, not enforced — DEBT-09) across ${contentRows.length} chunks (cap ${BUDGETS.contentChunk} KB each)`,
     `**Total gz JS: ${kb(totals.total)} KB** (reported, not enforced — see DEBT-01)`,
   ];
   console.log(lines.join("\n"));
@@ -167,8 +170,6 @@ function main() {
     breaches.push(`INITIAL ${kb(totals.initial)} KB > ${BUDGETS.initial} KB`);
   if (totals.code > BUDGETS.code * 1024)
     breaches.push(`CODE ${kb(totals.code)} KB > ${BUDGETS.code} KB`);
-  if (totals.content > BUDGETS.content * 1024)
-    breaches.push(`CONTENT ${kb(totals.content)} KB > ${BUDGETS.content} KB`);
   for (const r of contentRows)
     if (r.gz > BUDGETS.contentChunk * 1024)
       breaches.push(`content chunk ${r.file} ${kb(r.gz)} KB > ${BUDGETS.contentChunk} KB`);

@@ -11,6 +11,6 @@
 | Tuần (end) | Clicks | Impr | Pos | WoW clicks | Ghi chú |
 |---|---|---|---|---|---|
 | 2026-07-31 | 93 | 7543 | 7.8 | +4.5% | Baseline TRƯỚC PR #533 (chạy tay 03/08) |
-| 2026-08-08 | 126 | 8056 | 7.8 | +41.6% | W33 (chạy 11/08, trễ 1d): hồi mạnh sau lull t7 — HCMC Open 6–9/8 + PR #574 deep-links (11/8, chưa ảnh hưởng window này) |
-| 2026-08-14 | 106 | 7776 | 8.3 | −10.2% | W34 (chạy 17/08 đúng hạn): hạ nhiệt sau spike HCMC Open 6–9/8 (W33 126) nhưng vẫn > nền 31/07 (93); impr −3,1%, pos 7.8→8.3. Dưới ngưỡng cảnh báo −20% → KHÔNG hành động. |
-| 2026-08-21 | 119 | 8671 | 8.9 | +12.3% | W35 (chạy 24/08 đúng hạn): bật lại trên nền — clicks 106→119, impr 7776→8671 (+11,5%), pos 8.3→8.9. Trên ngưỡng cảnh báo, KHÔNG hành động. Top trang vẫn là /vi/san/* (baca-pickleballs-nguyen-chanh-ha-noi 11 click). Chưa tách được hiệu ứng PR #533/#574 khỏi mùa giải — bắt đầu ghi nhận từ W36. |
+| 2026-09-10 | 100 | 7144 | 8.0 | -23.1% | Đọc 13/09, kỳ 04–10/09; tuần trước 130 clicks/7792 impressions. Đã cảnh báo Telegram receipt 3991. Chưa quy nguyên nhân cho PR #533 hoặc noindex; cần kiểm tra riêng. |
+| 2026-09-20 | 102 | 7558 | 7.7 | +13.3% | Đọc 23/09 (daily-growth), kỳ 14–20/09; tuần trước 90 clicks/7088 impr. Hồi lại sau cú -23% kỳ 04–10/09 → không có dấu hiệu sự cố noindex. Top page: /vi/san/hnmu-pickleball-ha-noi 4 click. |
+| 2026-09-25 | 133 | 7117 | 7.5 | +56.5% | Đọc 28/09 (daily-growth), kỳ 19–25/09; tuần trước 85 clicks/7423 impr. Tăng mạnh, không cảnh báo (ngưỡng -20%). Top page: /vi/san/the-pyar-pickleball-club 5 click. |

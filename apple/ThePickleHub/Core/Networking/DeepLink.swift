@@ -16,6 +16,8 @@ enum DeepLink: Identifiable, Equatable {
     case socialEvent(slug: String)
     /// `/live/:id` — livestream (từ notification "Nhắc tôi" hoặc link).
     case livestream(id: UUID)
+    /// `/live/pro/:slug` — kết quả một giải chuyên nghiệp.
+    case proTourEvent(slug: String)
     case quickTable(shareID: String)
     case quickTableScore(matchID: UUID)
     case parentTournament(shareID: String)
@@ -31,6 +33,12 @@ enum DeepLink: Identifiable, Equatable {
     case createFlexTournament
     case dashboardPicker
     case tournamentDashboard(type: String, id: String)
+    case shopHome
+    case shopSearch(query: String?)
+    case shopCategory(ShopCategory)
+    case shopProduct(slug: String)
+    case shopStore(slug: String)
+    case shopOrder(code: String)
 
     var id: String {
         switch self {
@@ -38,6 +46,7 @@ enum DeepLink: Identifiable, Equatable {
         case .joinInvite(let c): "join/\(c)"
         case .socialEvent(let s): "social/\(s)"
         case .livestream(let i): "live/\(i.uuidString)"
+        case .proTourEvent(let slug): "live/pro/\(slug)"
         case .quickTable(let shareID): "tools/quick-tables/\(shareID)"
         case .quickTableScore(let matchID): "tools/quick-tables/referee/\(matchID.uuidString)"
         case .parentTournament(let shareID): "tools/quick-tables/parent/\(shareID)"
@@ -53,6 +62,12 @@ enum DeepLink: Identifiable, Equatable {
         case .createFlexTournament: "tools/flex-tournament/new"
         case .dashboardPicker: "tools/dashboard"
         case .tournamentDashboard(let type, let id): "tools/dashboard/\(type)/\(id)"
+        case .shopHome: "shop"
+        case .shopSearch(let query): "shop/search?query=\(query ?? "")"
+        case .shopCategory(let category): "shop/category/\(category.rawValue)"
+        case .shopProduct(let slug): "shop/product/\(slug)"
+        case .shopStore(let slug): "shop/store/\(slug)"
+        case .shopOrder(let code): "shop/order/\(code)"
         }
     }
 
@@ -75,6 +90,8 @@ enum DeepLink: Identifiable, Equatable {
         // Bỏ prefix /vi
         if segments.first == "vi" { segments.removeFirst() }
 
+        if segments.first == "shop" { return parseShop(segments, url: url) }
+
         switch (segments.first, segments.count) {
         case ("dang-ky", 2):
             let token = segments[1].lowercased()
@@ -88,8 +105,30 @@ enum DeepLink: Identifiable, Equatable {
         case ("live", 2):
             guard let uuid = UUID(uuidString: segments[1]) else { return nil }
             return .livestream(id: uuid)
+        case ("live", 3) where segments[1] == "pro":
+            guard !segments[2].isEmpty else { return nil }
+            return .proTourEvent(slug: segments[2])
         default:
             return parseTools(segments)
+        }
+    }
+
+    private static func parseShop(_ segments: [String], url: URL) -> DeepLink? {
+        if segments == ["shop"] { return .shopHome }
+        if segments == ["shop", "search"] {
+            let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+                .queryItems?.first(where: { $0.name == "q" })?.value
+            return .shopSearch(query: query?.isEmpty == false ? query : nil)
+        }
+        guard segments.count == 3 else { return nil }
+        let slug = segments[2]
+        guard !slug.isEmpty else { return nil }
+        switch segments[1] {
+        case "category": return ShopCategory(rawValue: slug).map(DeepLink.shopCategory)
+        case "product": return .shopProduct(slug: slug)
+        case "store": return .shopStore(slug: slug)
+        case "order": return .shopOrder(code: slug)
+        default: return nil
         }
     }
 

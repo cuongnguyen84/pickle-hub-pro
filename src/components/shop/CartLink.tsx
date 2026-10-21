@@ -14,36 +14,63 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ShoppingBag, X } from "lucide-react";
+import { ClipboardList, ShoppingBag, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCartCount } from "@/hooks/shop/useCart";
 
-// EN: "Cart" / "Cart, {n} item(s)"
+// EN: "My orders" / "Cart" / "Cart, {n} item(s)"
+const ORDERS_LABEL = "Đơn của tôi";
+const CART_LABEL = "Giỏ hàng";
 const CART_ARIA = (count: number | null) =>
   count && count > 0 ? `Giỏ hàng, ${count} món` : "Giỏ hàng";
 
 /**
- * Signed out renders nothing at all: the cart is the buyer's own data, and an
- * empty badge on a page they cannot use is a promise of a screen that will
- * bounce them to /login.
+ * Signed out renders nothing at all: orders and the cart are the buyer's own
+ * data, and links to screens that immediately bounce to /login are noise.
  *
  * A null count (loading, or the query failed) renders the link WITHOUT the
  * number. A wrong badge is worse than no badge.
  */
-export function ShopCartLink() {
+export function ShopCartLink({ floating = false }: { floating?: boolean } = {}) {
   const { user } = useAuth();
   const count = useCartCount();
   if (!user) return null;
-  return (
-    <Link to="/shop/cart" className="tl-shop-iconbtn" aria-label={CART_ARIA(count)}>
-      <ShoppingBag size={20} aria-hidden="true" />
-      {count !== null && count > 0 && (
-        <span className="tl-shop-cart-count" aria-hidden="true">
-          {count > 99 ? "99+" : count}
-        </span>
+  const hasItems = count !== null && count > 0;
+  // `is-lit` là hook cho hiệu ứng "2 light" — chỉ trên FAB mobile, chỉ khi có hàng.
+  const cartClass = [
+    "tl-shop-iconbtn",
+    floating && "tl-shop-fab-cart",
+    floating && hasItems && "is-lit",
+  ].filter(Boolean).join(" ");
+  const links = (
+    <>
+      {floating ? (
+        // FAB mobile: icon-only (PO 29/08: chữ làm cụm rộng). Desktop ≥900px:
+        // cùng markup nhưng CSS mở nhãn ra thành nút pill — hai icon trần trên
+        // web "thiếu nổi bật, quá bé" (PO chiều 29/08).
+        <Link to="/shop/orders" className="tl-shop-iconbtn" aria-label={ORDERS_LABEL}>
+          <ClipboardList size={24} aria-hidden="true" />
+          <span className="tl-shop-fab-label" aria-hidden="true">{ORDERS_LABEL}</span>
+        </Link>
+      ) : (
+        <Link to="/shop/orders" className="tl-shop-btn tl-shop-btn--sm">
+          <ClipboardList size={17} aria-hidden="true" />
+          {ORDERS_LABEL}
+        </Link>
       )}
-    </Link>
+      <Link to="/shop/cart" className={cartClass} aria-label={CART_ARIA(count)}>
+        <ShoppingBag size={floating ? 26 : 20} aria-hidden="true" />
+        {floating && <span className="tl-shop-fab-label" aria-hidden="true">{CART_LABEL}</span>}
+        {hasItems && (
+          <span className="tl-shop-cart-count" aria-hidden="true">
+            {count > 99 ? "99+" : count}
+          </span>
+        )}
+      </Link>
+    </>
   );
+  // Mobile (<900px): cụm nổi cố định trên BottomNav. Desktop: wrapper flex trong topline.
+  return floating ? <div className="tl-shop-fab">{links}</div> : links;
 }
 
 // EN: "Added to cart" / "View cart" / "Dismiss"

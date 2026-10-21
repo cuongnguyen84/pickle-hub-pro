@@ -314,7 +314,14 @@ test("first URL of every sitemap segment renders for Googlebot", async () => {
   // When the launch flag goes to "1" on production, this entry should come
   // back OUT and a floor should go into SEGMENT_MIN_URLS instead — an empty
   // shop sitemap after launch means the generator broke.
-  const MAY_BE_EMPTY = new Set<string>(["sitemap-shop.xml"]);
+  //
+  // 2026-09-07: that launch has happened. SHOP_PUBLIC_INDEXING is on,
+  // SHOP_PUBLIC_OPEN is true, and /sitemap-shop.xml answers with 62 URLs, so
+  // the exemption above was still telling CI that zero was acceptable for a
+  // live catalogue. Emptied per its own instructions; the floor is in
+  // SEGMENT_MIN_URLS below. Kept as an empty Set rather than deleted so the
+  // next segment that legitimately needs the exemption has somewhere to go.
+  const MAY_BE_EMPTY = new Set<string>([]);
 
   // Segments whose detail pages must carry a specific article schema.
   // (sitemap-blog.xml lists /vi/blog/* pages; both blog handlers emit
@@ -333,10 +340,31 @@ test("first URL of every sitemap segment renders for Googlebot", async () => {
   // matches 246. Floors are ~10-20% below that — inventory naturally grows,
   // so a floor breach means deliberate pruning (update the floor in the same
   // PR, with the before/after counts) or a broken generator.
+  //
+  // 2026-09-07 — news floor lowered 700 → 450, deliberate pruning, counts as
+  // this gate measured them: 937 before, 696 after. sitemap-news.xml now
+  // advertises a 90-day publish window instead of the whole archive, because
+  // 206 of the 419 URLs in that day's "Discovered – currently not indexed"
+  // export were /vi/news/* and the crawled ones returned 116 clicks in 90 days
+  // across 695 URLs.
+  //
+  // 450 rather than ~620 (the usual 10-20% under): the count is now bounded by
+  // publishing rate, not by archive size. At the current ~290 VI articles a
+  // month the window holds ~700-900, but a month where the aggregator stalls
+  // legitimately drops it to ~450 with nothing broken. Below that, the window
+  // arithmetic cannot explain it and the generator is the suspect — which is
+  // the failure this floor exists to catch.
+  //
+  // matches removed: the segment is no longer referenced by sitemap.xml (see
+  // the delisting note there), so this sweep — which walks the index — never
+  // reaches it and the entry was dead. The endpoint still answers 200.
   const SEGMENT_MIN_URLS: Record<string, number> = {
     "sitemap-venues.xml": 1500,
-    "sitemap-news.xml": 700,
-    "sitemap-matches.xml": 200,
+    "sitemap-news.xml": 450,
+    // Shop, live since the Q4 launch: 62 URLs on 2026-09-07. 40 leaves room
+    // for sellers delisting stock without weakening the "generator broke"
+    // signal an empty catalogue would now be.
+    "sitemap-shop.xml": 40,
   };
 
   // A title that ends in a separator + ellipsis ("… – Hà Nội |…") is the

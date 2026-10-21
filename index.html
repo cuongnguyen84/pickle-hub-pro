@@ -103,6 +103,19 @@
       href="/fonts/geist-latin.woff2" />
     <link rel="preload" as="font" type="font/woff2" crossorigin
       href="/fonts/geist-vietnamese.woff2" />
+    <!-- Inter is the base body stack (html{} below, and body{} in index.css),
+         so .tl-story-summary and every unstyled run of copy render in it.
+         Its Vietnamese subset is font-display:swap and was NOT preloaded, so
+         on /vi it landed after first paint and reflowed the page: Lighthouse
+         mobile CLS was 0.419 on /vi against 0.015 on / (2026-08-25). The EN
+         page is clean because inter-latin is font-display:optional and never
+         swaps — which isolates the shift to this one 10 KB file. Preloading
+         only the Vietnamese subset closes the swap window without spending
+         another 47 KB of critical bandwidth on the latin one, which does not
+         need it. If inter-latin is ever moved off `optional`, preload it here
+         too or the same shift comes back on the EN page. -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin
+      href="/fonts/inter-vietnamese.woff2" />
     <title>ThePickleHub – Pickleball Asia: Live & Tournaments</title>
     <meta name="description" content="The only bilingual pickleball platform built for Asia. Tournaments, livestream, and news in Vietnamese and English — free for organizers and players.">
     <meta name="author" content="ThePickleHub" />

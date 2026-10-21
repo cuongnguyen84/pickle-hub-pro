@@ -46,7 +46,8 @@ type MutationName =
   | 'updateTableCourtSettings'
   | 'reassignCourtsAndTimes'
   | 'deleteTable'
-  | 'updateCourtName';
+  | 'updateCourtName'
+  | 'swapPlayoffPlayers';
 
 export type QuickTableMutationsPending = Record<MutationName, boolean>;
 
@@ -65,6 +66,7 @@ const EMPTY_PENDING: QuickTableMutationsPending = {
   reassignCourtsAndTimes: false,
   deleteTable: false,
   updateCourtName: false,
+  swapPlayoffPlayers: false,
 };
 
 export function useQuickTableMutations() {
@@ -587,6 +589,32 @@ export function useQuickTableMutations() {
     }
   }, [setPendingFor]);
 
+  /** Đổi chỗ 2 người giữa 2 trận vòng 1 playoff chưa có điểm (RPC kiểm tra chủ giải + trạng thái). */
+  const swapPlayoffPlayers = useCallback(async (
+    tableId: string,
+    a: { matchId: string; slot: 1 | 2 },
+    b: { matchId: string; slot: 1 | 2 },
+  ): Promise<{ success: boolean; error?: string }> => {
+    setPendingFor('swapPlayoffPlayers', true);
+    try {
+      const { data, error } = await supabase.rpc('swap_quick_table_playoff_players', {
+        p_table_id: tableId,
+        p_match_a: a.matchId,
+        p_slot_a: a.slot,
+        p_match_b: b.matchId,
+        p_slot_b: b.slot,
+      });
+      if (error) throw error;
+      const result = (data ?? {}) as { success?: boolean; error?: string };
+      return { success: !!result.success, error: result.error };
+    } catch (error) {
+      console.error('[useQuickTableMutations] swapPlayoffPlayers:', error);
+      return { success: false, error: 'RPC_FAILED' };
+    } finally {
+      setPendingFor('swapPlayoffPlayers', false);
+    }
+  }, [setPendingFor]);
+
   return {
     setupRosterAtomic,
     updateMatchScore,
@@ -602,6 +630,7 @@ export function useQuickTableMutations() {
     reassignCourtsAndTimes,
     deleteTable,
     updateCourtName,
+    swapPlayoffPlayers,
     // W1.2 — per-mutation pending state. Backward compatible: existing
     // consumers that only destructure callbacks keep working. New
     // consumers can wire `disabled={pending.deleteTable}` etc on

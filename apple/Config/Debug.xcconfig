@@ -8,8 +8,8 @@ APS_ENVIRONMENT = development
 // audience. Supabase production is configured for the shipping App ID, so
 // device builds used for production QA must share that identity.
 PRODUCT_BUNDLE_IDENTIFIER = net.thepicklehub.app
-MARKETING_VERSION = 2.0.3
-CURRENT_PROJECT_VERSION = 8
+MARKETING_VERSION = 2.1.9
+CURRENT_PROJECT_VERSION = 17
 
 // Native registration mirrors production: Turnstile protects the email OTP
 // endpoint before any delivery attempt.
@@ -19,3 +19,9 @@ NATIVE_EVENT_REGISTRATION_ENABLED = YES
 // isolated development bundle off until it has its own Firebase app record.
 REMOTE_PUSH_ENABLED = NO
 CAPACITOR_AUTH_RESET_APPROVED = NO
+
+// Chợ mở công khai cho người mua thật từ 29/08/2026 (#709) nên Debug bật như
+// Release: bấm Run trong Xcode phải ra đúng thanh tab người dùng đang thấy.
+// Luật cũ (Debug tắt) có từ thời chợ còn là pilot đóng, nay hết hiệu lực.
+SHOP_NATIVE_BUILT_IN = YES
+SHOP_NATIVE_PILOT_ENABLED = YES

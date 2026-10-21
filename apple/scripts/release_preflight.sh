@@ -5,6 +5,7 @@ apple_root="$(cd "$(dirname "$0")/.." && pwd)"
 archive_path=""
 ipa_path=""
 shipping=false
+release_source=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -20,6 +21,11 @@ while [[ $# -gt 0 ]]; do
       ;;
     --shipping)
       shipping=true
+      release_source=true
+      shift
+      ;;
+    --release-source)
+      release_source=true
       shift
       ;;
     *)
@@ -37,6 +43,31 @@ for command_name in xcodegen xcodebuild plutil sips rg jq unzip codesign securit
 done
 
 cd "$apple_root"
+
+if [[ "$release_source" == true ]]; then
+  command -v git >/dev/null || fail "missing command: git"
+  git rev-parse --is-inside-work-tree >/dev/null 2>&1 || fail "release source is not inside a Git worktree"
+  git fetch origin main --prune >/dev/null 2>&1 || fail "cannot fetch origin/main; release freshness is unverified"
+
+  release_base="refs/remotes/origin/main"
+  git show-ref --verify --quiet "$release_base" || fail "missing origin/main after fetch"
+  if ! git merge-base --is-ancestor "$release_base" HEAD; then
+    divergence="$(git rev-list --left-right --count HEAD..."$release_base")"
+    ahead_count="${divergence%%[[:space:]]*}"
+    behind_count="${divergence##*[[:space:]]}"
+    fail "release HEAD omits origin/main ($behind_count commit(s) behind, $ahead_count local commit(s) ahead); rebase/merge from the latest main before building"
+  fi
+
+  if [[ -n "$(git status --porcelain --untracked-files=normal)" ]]; then
+    fail "release worktree is dirty; commit the exact source to make the build reproducible"
+  fi
+
+  upstream_ref="$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)"
+  [[ -n "$upstream_ref" ]] || fail "release branch has no upstream; push it before building"
+  [[ "$(git rev-parse HEAD)" == "$(git rev-parse "$upstream_ref")" ]] \
+    || fail "release HEAD differs from $upstream_ref; push/pull before building"
+  pass "release source contains latest origin/main, is clean, and is pushed at $(git rev-parse --short HEAD)"
+fi
 
 plutil -lint ThePickleHub/App/Info.plist >/dev/null
 plutil -lint ThePickleHub/App/PrivacyInfo.xcprivacy >/dev/null
@@ -110,6 +141,8 @@ build_number="$(setting_from "$release_settings" CURRENT_PROJECT_VERSION)"
 environment_name="$(setting_from "$release_settings" APP_ENVIRONMENT)"
 activation_flag="$(setting_from "$release_settings" NATIVE_EVENT_REGISTRATION_ENABLED)"
 remote_push_flag="$(setting_from "$release_settings" REMOTE_PUSH_ENABLED)"
+shop_built_in_flag="$(setting_from "$release_settings" SHOP_NATIVE_BUILT_IN)"
+shop_pilot_flag="$(setting_from "$release_settings" SHOP_NATIVE_PILOT_ENABLED)"
 auth_reset_approval="$(setting_from "$release_settings" CAPACITOR_AUTH_RESET_APPROVED)"
 aps_environment="$(setting_from "$release_settings" APS_ENVIRONMENT)"
 turnstile_key="$(setting_from "$release_settings" TURNSTILE_SITE_KEY)"
@@ -128,6 +161,8 @@ debug_build="$(setting_from "$debug_settings" CURRENT_PROJECT_VERSION)"
 debug_environment="$(setting_from "$debug_settings" APP_ENVIRONMENT)"
 debug_aps_environment="$(setting_from "$debug_settings" APS_ENVIRONMENT)"
 debug_remote_push_flag="$(setting_from "$debug_settings" REMOTE_PUSH_ENABLED)"
+debug_shop_built_in_flag="$(setting_from "$debug_settings" SHOP_NATIVE_BUILT_IN)"
+debug_shop_pilot_flag="$(setting_from "$debug_settings" SHOP_NATIVE_PILOT_ENABLED)"
 
 version_at_least() {
   local actual="$1"
@@ -170,7 +205,18 @@ fi
 
 remote_push_normalized="$(printf '%s' "$remote_push_flag" | tr '[:upper:]' '[:lower:]')"
 debug_remote_push_normalized="$(printf '%s' "$debug_remote_push_flag" | tr '[:upper:]' '[:lower:]')"
+shop_built_in_normalized="$(printf '%s' "$shop_built_in_flag" | tr '[:upper:]' '[:lower:]')"
+shop_pilot_normalized="$(printf '%s' "$shop_pilot_flag" | tr '[:upper:]' '[:lower:]')"
+debug_shop_built_in_normalized="$(printf '%s' "$debug_shop_built_in_flag" | tr '[:upper:]' '[:lower:]')"
+debug_shop_pilot_normalized="$(printf '%s' "$debug_shop_pilot_flag" | tr '[:upper:]' '[:lower:]')"
 [[ ! "$debug_remote_push_normalized" =~ ^(yes|true|1)$ ]] || fail "Debug push cannot use the production Firebase app"
+[[ "$shop_built_in_normalized" =~ ^(yes|true|1)$ ]] || fail "Release candidate must compile the native Shop surface"
+[[ "$shop_pilot_normalized" =~ ^(yes|true|1)$ ]] || fail "Release candidate must enable the controlled Shop pilot"
+[[ "$debug_shop_built_in_normalized" =~ ^(yes|true|1)$ ]] || fail "Debug must compile the native Shop surface for QA parity"
+[[ "$debug_shop_pilot_normalized" =~ ^(yes|true|1)$ ]] || fail "Debug must enable Shop as well — QA has to see the tab bar real buyers see"
+version_at_least "$marketing_version" "2.1.0" || fail "Shop MVP requires marketing version 2.1.0 or later"
+[[ "$build_number" -ge 9 ]] || fail "Shop MVP requires build number 9 or later"
+pass "Shop is built in and enabled in both Debug and Release"
 
 firebase_config_is_valid() {
   [[ "$firebase_google_app_id" =~ ^1:[0-9]{6,}:ios:[A-Fa-f0-9]{8,}$ ]] &&
@@ -221,6 +267,10 @@ if [[ -n "$archive_path" ]]; then
   [[ "$(printf '%s' "$embedded_activation" | tr '[:upper:]' '[:lower:]')" == "$(printf '%s' "$activation_flag" | tr '[:upper:]' '[:lower:]')" ]] || fail "archive activation flag differs from Release settings"
   embedded_remote_push="$(/usr/libexec/PlistBuddy -c 'Print :RemotePushEnabled' "$embedded_info")"
   [[ "$(printf '%s' "$embedded_remote_push" | tr '[:upper:]' '[:lower:]')" == "$remote_push_normalized" ]] || fail "archive remote-push flag differs from Release settings"
+  embedded_shop_built_in="$(/usr/libexec/PlistBuddy -c 'Print :ShopNativeBuiltIn' "$embedded_info")"
+  embedded_shop_pilot="$(/usr/libexec/PlistBuddy -c 'Print :ShopNativePilotEnabled' "$embedded_info")"
+  [[ "$(printf '%s' "$embedded_shop_built_in" | tr '[:upper:]' '[:lower:]')" == "$shop_built_in_normalized" ]] || fail "archive Shop built-in flag differs from Release settings"
+  [[ "$(printf '%s' "$embedded_shop_pilot" | tr '[:upper:]' '[:lower:]')" == "$shop_pilot_normalized" ]] || fail "archive Shop pilot flag differs from Release settings"
   embedded_auth_reset="$(/usr/libexec/PlistBuddy -c 'Print :CapacitorAuthResetApproved' "$embedded_info")"
   [[ "$(printf '%s' "$embedded_auth_reset" | tr '[:upper:]' '[:lower:]')" == "$auth_reset_normalized" ]] || fail "archive auth-reset approval differs from Release settings"
   [[ "$(/usr/libexec/PlistBuddy -c 'Print :ITSAppUsesNonExemptEncryption' "$embedded_info")" == "false" ]] || fail "archive export-compliance flag is missing or incorrect"
@@ -258,6 +308,8 @@ if [[ -n "$ipa_path" ]]; then
   plutil -extract 'UISupportedInterfaceOrientations~ipad' json -o - "$ipa_info" | jq -e 'length == 4' >/dev/null || fail "IPA lacks complete iPad orientation support"
   [[ "$(printf '%s' "$(/usr/libexec/PlistBuddy -c 'Print :NativeEventRegistrationEnabled' "$ipa_info")" | tr '[:upper:]' '[:lower:]')" == "$activation_normalized" ]] || fail "IPA activation flag differs from Release settings"
   [[ "$(printf '%s' "$(/usr/libexec/PlistBuddy -c 'Print :RemotePushEnabled' "$ipa_info")" | tr '[:upper:]' '[:lower:]')" == "$remote_push_normalized" ]] || fail "IPA remote-push flag differs from Release settings"
+  [[ "$(printf '%s' "$(/usr/libexec/PlistBuddy -c 'Print :ShopNativeBuiltIn' "$ipa_info")" | tr '[:upper:]' '[:lower:]')" == "$shop_built_in_normalized" ]] || fail "IPA Shop built-in flag differs from Release settings"
+  [[ "$(printf '%s' "$(/usr/libexec/PlistBuddy -c 'Print :ShopNativePilotEnabled' "$ipa_info")" | tr '[:upper:]' '[:lower:]')" == "$shop_pilot_normalized" ]] || fail "IPA Shop pilot flag differs from Release settings"
   [[ "$(printf '%s' "$(/usr/libexec/PlistBuddy -c 'Print :CapacitorAuthResetApproved' "$ipa_info")" | tr '[:upper:]' '[:lower:]')" == "$auth_reset_normalized" ]] || fail "IPA auth-reset approval differs from Release settings"
   [[ "$(/usr/libexec/PlistBuddy -c 'Print :FirebaseGoogleAppID' "$ipa_info")" == "$firebase_google_app_id" ]] || fail "IPA Firebase Google app ID differs from Release settings"
   [[ "$(/usr/libexec/PlistBuddy -c 'Print :FirebaseGCMSenderID' "$ipa_info")" == "$firebase_sender_id" ]] || fail "IPA Firebase sender ID differs from Release settings"
@@ -271,9 +323,11 @@ if [[ -n "$ipa_path" ]]; then
   ipa_entitlements="$(codesign -d --entitlements :- "$ipa_app_path" 2>/dev/null || true)"
   ipa_aps_environment="$(printf '%s' "$ipa_entitlements" | plutil -extract aps-environment raw -o - - 2>/dev/null || true)"
   [[ "$ipa_aps_environment" == "production" ]] || fail "IPA lacks production APNs entitlement"
+  # plutil -extract treats dots as key-path separators, so a dotted entitlement key
+  # can only be read after converting the whole plist to JSON.
   printf '%s' "$ipa_entitlements" \
-    | plutil -extract 'com.apple.developer.applesignin' json -o - - 2>/dev/null \
-    | jq -e 'index("Default") != null' >/dev/null \
+    | plutil -convert json -o - - 2>/dev/null \
+    | jq -e '.["com.apple.developer.applesignin"] | index("Default") != null' >/dev/null \
     || fail "IPA lacks Sign in with Apple entitlement"
 
   ipa_profile="$ipa_extract_dir/embedded-profile.plist"

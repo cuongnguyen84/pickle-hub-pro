@@ -60,7 +60,11 @@ function installChunkErrorRecovery(): void {
       // multiple reloads inside this same JS execution.
       return;
     }
-    window.location.reload();
+    // Refresh the cached document first so the reload cannot be answered by
+    // the same stale shell (see ChunkErrorBoundary in App.tsx).
+    fetch(window.location.href, { cache: "reload", credentials: "same-origin" })
+      .catch(() => undefined)
+      .finally(() => window.location.reload());
   };
 
   window.addEventListener("error", (e) => {

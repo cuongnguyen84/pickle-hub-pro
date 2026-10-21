@@ -144,11 +144,10 @@ export const ORDER_STATUS_TONE: Record<OrderStatus, "ok" | "warn" | "danger" | "
 };
 
 /** COD is not "unpaid" (§G): nothing is owed yet, so saying so invents a debt.
- *  bank_transfer promises no QR, no bank details and no reconciliation — the
- *  shop sends its own instructions. */
+ *  The detail screen explains whether bank transfer is automatic or manual. */
 export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
   cod: "Trả khi nhận hàng",
-  bank_transfer: "Chuyển khoản trước — shop sẽ gửi thông tin",
+  bank_transfer: "Chuyển khoản trước",
 };
 
 /**

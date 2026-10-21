@@ -6,6 +6,11 @@ export interface BlogSection {
   internalLinks?: { text: string; path: string }[];
   table?: { caption?: string; headers: string[]; rows: string[][] };
   image?: { src: string; alt: string; caption?: string };
+  /** Mount a live data block under this section instead of static content.
+   *  "wc-results" renders the World Cup 2026 results table from
+   *  wc_pro_matches — React on the human path, server-rendered HTML on the
+   *  bot path (functions/_lib/render/wc-results.ts). */
+  liveBlock?: "wc-results";
 }
 
 export interface BlogPostContent {

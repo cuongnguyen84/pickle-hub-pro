@@ -17,7 +17,7 @@ import { useSearchParams } from "react-router-dom";
 import { Search, SearchX } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
-import { usePublicCategories, usePublicSearch } from "@/hooks/shop/usePublicShop";
+import { usePublicCategories, usePublicSearchPages } from "@/hooks/shop/usePublicShop";
 import { ShopCartLink } from "@/components/shop/CartLink";
 import {
   CategoryChips,
@@ -55,8 +55,6 @@ export default function ShopSearch() {
       const next = new URLSearchParams(params);
       if (draft.trim()) next.set("q", draft.trim());
       else next.delete("q");
-      next.delete("after");
-      next.delete("after_id");
       // replace: typing should not fill the history with one entry per letter.
       setParams(next, { replace: true });
     }, DEBOUNCE_MS);
@@ -70,35 +68,31 @@ export default function ShopSearch() {
       else next.set(k, v);
     }
     // Any change to the working set invalidates the cursor.
-    next.delete("after");
-    next.delete("after_id");
     setParams(next, { replace });
   };
 
   const categories = usePublicCategories();
-  const results = usePublicSearch({
+  const results = usePublicSearchPages({
     q,
     categorySlug: category,
     condition: filters.condition,
     inStockOnly: filters.inStockOnly,
     sort: filters.sort,
-    cursorAt: params.get("after"),
-    cursorId: params.get("after_id"),
   });
 
-  const rows = results.data?.rows ?? [];
+  const rows = results.data?.pages.flatMap((pg) => pg.rows) ?? [];
 
   return (
     <TheLineLayout title="Tìm sản phẩm">
       <DynamicMeta title={q ? `Tìm: ${q}` : "Tìm sản phẩm"} noindex />
       <main className="tl-shop">
         {/* R5 #1 — the page frame: gutters + max-width + BottomNav clearance. */}
-        <div className="tl-shop-page">
+        <div className="tl-shop-page tl-shop-has-fab">
         {/* No breadcrumb on this screen, so the topline carries the cart badge
             alone. It must NOT go in TheLineLayout's tl-nav — that nav is
             shared with /live, /feed and /blog. */}
         <div className="tl-shop-topline">
-          <ShopCartLink />
+          <ShopCartLink floating />
         </div>
         <h1 className="tl-shop-h1">Tìm sản phẩm</h1>
 
@@ -146,8 +140,8 @@ export default function ShopSearch() {
           <div>
             <ResultsGrid
               rows={rows}
-              total={results.data?.total ?? 0}
-              hidePilotNote
+              total={results.data?.pages[0]?.total ?? 0}
+              hideSparseNote
               isLoading={results.isLoading}
               isError={results.isError}
               onRetry={() => void results.refetch()}
@@ -157,20 +151,15 @@ export default function ShopSearch() {
               onClearFilters={() => patch({ condition: null, stock: null, sort: null, cat: null })}
             />
 
-            {results.data?.has_more && rows.length > 0 && (
+            {results.hasNextPage && rows.length > 0 && (
               <div style={{ marginTop: 16, display: "flex", justifyContent: "center" }}>
                 <button
                   type="button"
                   className="tl-shop-btn"
-                  onClick={() => {
-                    const last = rows[rows.length - 1];
-                    const next = new URLSearchParams(params);
-                    next.set("after", last.created_at);
-                    next.set("after_id", last.id);
-                    setParams(next);   // a real history entry: Back returns here
-                  }}
+                  onClick={() => void results.fetchNextPage()}
+                  disabled={results.isFetchingNextPage}
                 >
-                  Xem thêm
+                  {results.isFetchingNextPage ? "Đang tải…" : "Xem thêm"}
                 </button>
               </div>
             )}

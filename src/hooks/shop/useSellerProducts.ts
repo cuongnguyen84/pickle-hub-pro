@@ -20,6 +20,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { escapeLike, shopFrom, shopRpc } from "@/integrations/supabase/shop-client";
+import { parseCompareAt } from "@/lib/shop/discount";
 import type {
   ProductMediaRow,
   ProductRow,
@@ -81,7 +82,7 @@ const PRODUCT_COLUMNS =
   "requested_fields,version,client_token,option_groups,specs,created_at,updated_at";
 
 const LIST_COLUMNS =
-  `${PRODUCT_COLUMNS},product_variants(id,price_vnd,stock_on_hand,position,sku,retired_at),product_media(id,position,public_path,draft_path)`;
+  `${PRODUCT_COLUMNS},product_variants(id,price_vnd,compare_at_price_vnd,stock_on_hand,position,sku,retired_at),product_media(id,position,public_path,draft_path)`;
 
 export interface ProductListResult {
   rows: SellerProductRow[];
@@ -193,6 +194,8 @@ export interface ProductDraft {
   /** Kept as the seller typed it. Parsed and validated in Postgres, which is
    *  the only place that may decide what a price is. */
   price_vnd: string;
+  /** Giá gốc; "" gửi thành null. */
+  compare_at_price_vnd: string;
   stock_on_hand: string;
 }
 
@@ -218,6 +221,7 @@ export const useCreateProduct = (shopId: string | null) => {
           category_slug: input.draft.category_slug,
           condition: input.draft.condition,
           price_vnd: input.draft.price_vnd,
+          compare_at_price_vnd: parseCompareAt(input.draft.compare_at_price_vnd).value,
           stock_on_hand: input.draft.stock_on_hand,
         },
       }),
@@ -285,6 +289,33 @@ export const useArchiveProduct = () => {
         _product_id: input.productId,
       }),
     onSuccess: (_data, input) => {
+      void qc.invalidateQueries({ queryKey: productKeys.one(input.productId) });
+      void qc.invalidateQueries({ queryKey: productKeys.all });
+    },
+  });
+};
+
+export const useDeleteProducts = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (productIds: string[]) =>
+      await shopRpc<string[]>("products_delete", { _product_ids: productIds }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: productKeys.all });
+    },
+  });
+};
+
+/**
+ * % giảm trên sản phẩm đang bán, từ danh sách — không phải gỡ xuống sửa.
+ * Server trừ thẳng vào giá bán, lấy giá gốc làm neo; 0 là bỏ giảm, giá về neo.
+ */
+export const useSetProductDiscount = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { productId: string; pct: number }) =>
+      await shopRpc<ProductRow>("product_discount_set", { _product_id: input.productId, _pct: input.pct }),
+    onSuccess: (_row, input) => {
       void qc.invalidateQueries({ queryKey: productKeys.one(input.productId) });
       void qc.invalidateQueries({ queryKey: productKeys.all });
     },

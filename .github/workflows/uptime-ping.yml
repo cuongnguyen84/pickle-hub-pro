@@ -9,7 +9,11 @@
 # Also the WATCHDOG for milestone-due.yml (D1 convergence, proposal
 # auto-milestone-run-2026-07): if the daily milestone dispatcher hasn't had a
 # successful run in >26h, say so — a dead reminder must not die silently.
-# ponytail: no state/recovery messages in v1 — pings stop when the site is
+# 2026-10-20: one Telegram per outage (first red run) plus one "back up"
+# message; a down site fails the run so the next run knows the streak. The
+# Mac team-v2 dispatches this workflow when its own probe fails twice, so
+# GitHub is the independent second opinion before anything pages.
+# (old v1 note) ponytail: no state/recovery messages in v1 — pings stop when the site is
 # back; stateful healthy→breached transitions arrive with the burn-alert
 # (OPS-04 inc2, deferred until funnel events are queryable).
 # ============================================================================
@@ -32,7 +36,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7 # function list for the blob sweep below
         with:
-          sparse-checkout: supabase # heal only needs supabase/; skip the heavy web+native trees
+          # heal only needs supabase/, alerts need scripts/ci; skip the heavy web+native trees
+          sparse-checkout: |
+            supabase
+            scripts/ci
 
       - name: Probe routes (double-check before alerting)
         id: probe
@@ -50,24 +57,31 @@ jobs:
           echo "failed=${FAILED# }" >> "$GITHUB_OUTPUT"
           if [ -n "$FAILED" ]; then echo "DOWN:$FAILED"; fi
 
-      - name: Alert Telegram if down
+      - name: Alert Telegram if down (once per outage)
         if: steps.probe.outputs.failed != ''
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GH_TOKEN: ${{ github.token }}
+          FAILED_ROUTES: ${{ steps.probe.outputs.failed }}
         run: |
-          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
-            echo "Telegram secrets missing — skipping alert"; exit 0
-          fi
           # First line carries the whole meaning — it is all a lock screen shows.
-          MSG="🔴 P1 · www.thepicklehub.net KHÔNG phản hồi 200: ${{ steps.probe.outputs.failed }}%0A"
-          MSG="$MSG%0AKiểm 2 lần cách 30s, vẫn lỗi. Ảnh hưởng: người dùng không mở được trang."
-          MSG="$MSG%0AViệc cần làm: mở site kiểm tra, xem deploy gần nhất trên Cloudflare Pages, cân nhắc rollback."
-          MSG="$MSG%0ARun: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-            -d "chat_id=${TELEGRAM_CHAT_ID}" \
-            -d "text=${MSG}" \
-            -d "parse_mode=Markdown" >/dev/null || true
+          # first-failure: later red runs of the same outage stay quiet; the
+          # "Fail run while site is down" step below keeps the streak visible.
+          scripts/ci/telegram-notify.sh first-failure "P1 · www.thepicklehub.net KHÔNG phản hồi 200: ${FAILED_ROUTES}
+          Kiểm 2 lần cách 30s từ GitHub, vẫn lỗi. Ảnh hưởng: người dùng không mở được trang.
+          Việc cần làm: mở site kiểm tra, xem deploy gần nhất trên Cloudflare Pages, cân nhắc rollback.
+          Run: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+      - name: Telegram when the site is back
+        if: steps.probe.outputs.failed == ''
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          scripts/ci/telegram-notify.sh recovered "www.thepicklehub.net trả 200 trở lại (/ và /feed, kiểm từ GitHub).
+          Run: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
 
       - name: Watchdog — milestone-due.yml alive?
         env:
@@ -100,10 +114,14 @@ jobs:
           if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
             echo "Telegram secrets missing — skipping watchdog alert"; exit 0
           fi
-          MSG="🟠 P2 · Watchdog: milestone-due.yml ${CONCLUSION}, chạy lần cuối ${AGE_H}h trước%0A"
-          MSG="$MSG%0ANhắc mốc theo ngày có thể đang TRỄ — kiểm tra Actions."
-          MSG="$MSG%0Ahttps://github.com/${GITHUB_REPOSITORY}/actions/workflows/milestone-due.yml"
-          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-            -d "chat_id=${TELEGRAM_CHAT_ID}" \
-            -d "text=${MSG}" \
-            -d "parse_mode=Markdown" >/dev/null || true
+          scripts/ci/telegram-notify.sh always "[Grok Bot] 🟠 P2 · Watchdog: milestone-due.yml ${CONCLUSION}, chạy lần cuối ${AGE_H}h trước
+          Mốc theo ngày nằm trong bản tổng hợp 08:00 của Grok Bot; workflow này chết thì kiểm tra Actions.
+          https://github.com/${GITHUB_REPOSITORY}/actions/workflows/milestone-due.yml"
+
+      # Last step: a down site makes the run red, so the next run can tell
+      # "still down" (stay quiet) from "back up" (send one recovery message).
+      - name: Fail run while site is down
+        if: steps.probe.outputs.failed != ''
+        run: |
+          echo "::error::site down: ${{ steps.probe.outputs.failed }}"
+          exit 1

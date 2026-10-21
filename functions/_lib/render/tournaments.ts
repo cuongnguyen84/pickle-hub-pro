@@ -359,21 +359,39 @@ export async function renderTournaments(supabase: SupabaseClient, siteUrl: strin
 
 // ─── Tool instance pages (noindex) ────────────────────────
 
-export async function renderQuickTable(supabase: SupabaseClient, shareId: string, siteUrl: string): Promise<Response> {
-  const { data: qt } = await supabase.from("quick_tables").select("id, name, format, player_count, status, share_id, is_public, champion_name").eq("share_id", shareId).single();
+export async function renderQuickTable(
+  supabase: SupabaseClient,
+  shareId: string,
+  siteUrl: string,
+  opts?: { pageUrl?: string; lang?: "vi" | "en" },
+): Promise<Response> {
+  const { data: qt } = await supabase.from("quick_tables").select("id, name, format, player_count, status, share_id, is_public, champion_name, is_doubles, group_count").eq("share_id", shareId).single();
   // Client service-role bypass RLS — bảng private phải 404 y hệt không tồn tại.
   if (!qt || !qt.is_public) return render404(`/tools/quick-tables/${shareId}`, siteUrl);
 
   const title = buildTitle(qt.name, " | Bảng đấu Pickleball");
   // Champion đứng ĐẦU description để sống sót khi Zalo cắt ngắn; không vào
-  // <title> (budget 60 byte, tên VN có dấu ăn hết). Không champion → chuỗi cũ.
+  // <title> (budget 60 byte, tên VN có dấu ăn hết).
   const champion = displayChampionName(qt.champion_name);
+  const who = qt.is_doubles ? "đội" : "người";
+  const groups = qt.group_count && qt.group_count > 1 ? `, ${qt.group_count} bảng` : "";
   const desc = (champion
-    ? `Vô địch: ${champion}. Bảng đấu ${qt.name} – ${qt.player_count} VĐV. Xem kết quả trên ThePickleHub.`
-    : `Bảng đấu ${qt.name} – ${qt.player_count} VĐV, ${qt.format}. Xem kết quả trực tiếp trên ThePickleHub.`).slice(0, 160);
-  const bc = breadcrumb([{ label: "Trang chủ", href: siteUrl }, { label: "Công cụ", href: `${siteUrl}/tools` }, { label: "Quick Tables", href: `${siteUrl}/tools/quick-tables` }, { label: qt.name }]);
+    ? `Vô địch: ${champion}. ${qt.name}: ${qt.player_count} ${who}. Xem lịch và kết quả trên ThePickleHub.`
+    : `${qt.name}: ${qt.player_count} ${who}, thi đấu vòng tròn${groups}. Xem lịch và kết quả trên ThePickleHub.`).slice(0, 160);
+  const pageUrl = opts?.pageUrl ?? `${siteUrl}/tools/quick-tables/${shareId}`;
+  const lang = opts?.lang ?? "vi";
+  const bc = breadcrumb([{ label: "Trang chủ", href: siteUrl }, { label: "Công cụ", href: `${siteUrl}/tools` }, { label: "Bảng đấu", href: `${siteUrl}/tools/quick-tables` }, { label: qt.name }]);
 
-  return htmlResponse(buildHtml({ title, description: desc, url: `${siteUrl}/tools/quick-tables/${shareId}`, siteUrl, extraMeta: `<meta name="robots" content="noindex, follow"/>`, bodyContent: `${bc}${relatedToolLinks("quick-tables", siteUrl)}` }));
+  return htmlResponse(buildHtml({
+    title,
+    description: desc,
+    url: pageUrl,
+    siteUrl,
+    lang,
+    // Ảnh chia sẻ mặc định là 1024×1024. Khai đúng kích thước để Zalo không bỏ ảnh.
+    extraMeta: `<meta name="robots" content="noindex, follow"/>\n<meta property="og:image:width" content="1024"/>\n<meta property="og:image:height" content="1024"/>`,
+    bodyContent: `${bc}${relatedToolLinks("quick-tables", siteUrl)}`,
+  }));
 }
 
 export async function renderTeamMatch(supabase: SupabaseClient, id: string, siteUrl: string): Promise<Response> {

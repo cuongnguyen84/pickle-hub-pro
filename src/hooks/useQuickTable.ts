@@ -6,6 +6,7 @@ import { tStandalone } from '@/lib/i18n-standalone';
 import { sanitizeString } from '@/lib/validation';
 import { useQuickTableMutations } from './useQuickTableMutations';
 import type { Json } from '@/integrations/supabase/types';
+import { BYE_PLAYER_ID, type BracketPairing } from '@/lib/quick-table-playoff';
 import {
   suggestGroupConfigs,
   generateRoundRobinMatches,
@@ -54,6 +55,11 @@ export interface QuickTable {
   start_time: string | null;
   is_doubles: boolean;
   parent_tournament_id: string | null;
+  // Series A/B/C sau vòng bảng (2026-10-19): số nhánh dự kiến + kiểu tên.
+  playoff_series?: number;
+  playoff_series_style?: "series" | "medal";
+  /** cỡ từng nhánh đặt lúc tạo giải (chat), null = luật mặc định */
+  playoff_series_sizes?: number[] | null;
 }
 
 export interface QuickTableGroup {
@@ -96,6 +102,8 @@ export interface QuickTableMatch {
   is_playoff: boolean;
   playoff_round: number | null;
   playoff_match_number: number | null;
+  /** 0 = Series A / nhánh Vàng, 1 = B / Bạc, 2 = C / Đồng */
+  playoff_division?: number;
   bracket_position: string | null;
   large_playoff_round: number | null;
   player1_id: string | null;
@@ -284,7 +292,8 @@ export function useQuickTable() {
         .filter(p => p.group_id === group.id)
         .sort((a, b) => {
           if (b.matches_won !== a.matches_won) return b.matches_won - a.matches_won;
-          return b.point_diff - a.point_diff;
+          if (b.point_diff !== a.point_diff) return b.point_diff - a.point_diff;
+          return b.points_for - a.points_for; // cùng khoá với bảng xếp hạng hiển thị (getGroupStandings) + native
         });
 
       groupPlayers.slice(0, topPerGroup).forEach((p, idx) => {
@@ -422,6 +431,29 @@ export function useQuickTable() {
     }
   }, []);
 
+  /** Nhiều nhánh (Series A/B/C) trong MỘT lần gọi RPC: phần tử d = cặp vòng 1 của nhánh d (có BYE). */
+  const createSeriesPlayoffAtomic = useCallback(async (tableId: string, series: BracketPairing[][]): Promise<void> => {
+    const real = (id: string) => (id === BYE_PLAYER_ID ? null : id);
+    const { data, error } = await supabase.rpc('create_quick_table_playoff_atomic', {
+      p_table_id: tableId,
+      p_qualifiers: series.flatMap((pairs, division) => pairs
+        .flatMap((p) => [p.player1, p.player2])
+        .filter((sp) => sp.playerId !== BYE_PLAYER_ID)
+        .map((sp) => ({ player_id: sp.playerId, playoff_seed: sp.seed, is_wildcard: false, division }))) as Json,
+      p_first_round: series.flatMap((pairs, division) => pairs.map((p) => ({
+        player1_id: real(p.player1.playerId),
+        player2_id: real(p.player2.playerId),
+        bracket_position: p.matchNumber <= pairs.length / 2 ? 'upper' : 'lower',
+        match_number: p.matchNumber,
+        division,
+      }))) as Json,
+    });
+    const result = (data ?? {}) as Record<string, unknown>;
+    if (error || result.success !== true) {
+      throw error ?? new Error(String(result.error ?? 'PLAYOFF_CREATE_FAILED'));
+    }
+  }, []);
+
   const isGroupStageComplete = useCallback((matches: QuickTableMatch[]): boolean => {
     const groupMatches = matches.filter(m => !m.is_playoff);
     return groupMatches.length > 0 && groupMatches.every(m => m.status === 'completed');
@@ -466,6 +498,7 @@ export function useQuickTable() {
     getQualifiedPlayers,
     generatePlayoffBracket,
     createPlayoffAtomic,
+    createSeriesPlayoffAtomic,
     isGroupStageComplete,
     getWildcardCount,
     // Spread mutations

@@ -13,6 +13,8 @@
 // reorders the columns it starts pointing at a different product's stock.
 // ============================================================================
 
+import { compareAtError, parseCompareAt } from "@/lib/shop/discount";
+
 /** Pilot operational limits. Same numbers as product_option_groups_valid(). */
 export const VARIANT_LIMITS = {
   groups: 3,
@@ -32,6 +34,8 @@ export interface VariantRow {
   /** {"Màu sắc":"Trắng"} — an object, so a value is addressed by its group. */
   optionValues: Record<string, string>;
   priceVnd: string;
+  /** Giá gốc; "" là không có (null). */
+  compareAtVnd: string;
   stockOnHand: string;
   sku: string;
 }
@@ -133,12 +137,13 @@ export function cartesian(groups: OptionGroup[]): Record<string, string>[] {
  * the groups a display change rather than a data migration.
  *
  * `seed` fills a brand-new row: on the switch from a single product it is the
- * default variant's price, so the seller does not retype it six times.
+ * default variant's price (and compare-at, if any), so the seller does not
+ * retype it six times.
  */
 export function reconcileRows(
   groups: OptionGroup[],
   existing: VariantRow[],
-  seed?: Pick<VariantRow, "priceVnd" | "stockOnHand">,
+  seed?: Pick<VariantRow, "priceVnd" | "stockOnHand"> & Partial<Pick<VariantRow, "compareAtVnd">>,
 ): VariantRow[] {
   if (groups.length === 0) {
     // Single mode: keep the first row if there is one, so its price survives
@@ -149,6 +154,7 @@ export function reconcileRows(
         id: first?.id,
         optionValues: {},
         priceVnd: first?.priceVnd ?? seed?.priceVnd ?? "",
+        compareAtVnd: first?.compareAtVnd ?? seed?.compareAtVnd ?? "",
         stockOnHand: first?.stockOnHand ?? seed?.stockOnHand ?? "",
         sku: first?.sku ?? "",
       },
@@ -168,6 +174,7 @@ export function reconcileRows(
       id: kept?.id,
       optionValues,
       priceVnd: kept?.priceVnd ?? seed?.priceVnd ?? "",
+      compareAtVnd: kept?.compareAtVnd ?? seed?.compareAtVnd ?? "",
       stockOnHand: kept?.stockOnHand ?? seed?.stockOnHand ?? "",
       sku: kept?.sku ?? "",
     };
@@ -194,6 +201,7 @@ export const comboLabel = (groups: OptionGroup[], values: Record<string, string>
 
 export interface RowErrors {
   priceVnd?: string;
+  compareAtVnd?: string;
   stockOnHand?: string;
   sku?: string;
 }
@@ -219,6 +227,9 @@ export function validateRows(rows: VariantRow[]): RowErrors[] {
     else if (!INT.test(price)) errors[i].priceVnd = "Chỉ nhập số, không dấu chấm";
     else if (Number(price) > 2_000_000_000) errors[i].priceVnd = "Giá vượt mức cho phép";
 
+    const compare = compareAtError(row.compareAtVnd, price, "Chỉ nhập số.");
+    if (compare) errors[i].compareAtVnd = compare;
+
     const stock = row.stockOnHand.trim();
     if (stock && !INT.test(stock)) errors[i].stockOnHand = "Số nguyên, để trống nếu không đếm";
     else if (stock && Number(stock) > 1_000_000) errors[i].stockOnHand = "Tồn kho vượt mức cho phép";
@@ -242,11 +253,11 @@ export function validateRows(rows: VariantRow[]): RowErrors[] {
 }
 
 export const hasRowErrors = (errors: RowErrors[]) =>
-  errors.some((e) => e.priceVnd || e.stockOnHand || e.sku);
+  errors.some((e) => e.priceVnd || e.compareAtVnd || e.stockOnHand || e.sku);
 
 // ─── Bulk ───────────────────────────────────────────────────────────────────
 
-export type BulkField = "priceVnd" | "stockOnHand";
+export type BulkField = "priceVnd" | "compareAtVnd" | "stockOnHand";
 
 /**
  * Apply one value to the rows the seller chose.
@@ -277,6 +288,7 @@ export const toReconcilePayload = (rows: VariantRow[], multi: boolean) =>
   rows.map((row, i) => ({
     option_values: multi ? row.optionValues : undefined,
     price_vnd: row.priceVnd.trim(),
+    compare_at_price_vnd: parseCompareAt(row.compareAtVnd).value,
     stock_on_hand: row.stockOnHand.trim() === "" ? null : row.stockOnHand.trim(),
     sku: row.sku.trim() || null,
     position: i,

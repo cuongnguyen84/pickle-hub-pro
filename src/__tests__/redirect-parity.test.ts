@@ -160,6 +160,20 @@ describe("_redirects rule ordering", () => {
   });
 });
 
+describe("redirect parity: replaced news slugs", () => {
+  const middlewareNews = parseDict("NEWS_REDIRECTS");
+  const fileNews: Record<string, string> = {};
+  for (const line of redirectsFile.split("\n")) {
+    const match = line.trim().match(/^(\/(?:vi\/)?news\/\S+)\s+(\/(?:vi\/)?news\/\S+)\s+301\b/);
+    if (match) fileNews[match[1]] = match[2];
+  }
+
+  it("keeps human and bot news redirects identical", () => {
+    expect(Object.keys(middlewareNews).length).toBeGreaterThan(0);
+    expect(fileNews).toEqual(middlewareNews);
+  });
+});
+
 describe("redirect parity: merged /blog/* posts between _redirects and _middleware.ts", () => {
   const redirects = parseRedirectsEnBlog();
   const merged = parseDict("BLOG_MERGED");
@@ -184,5 +198,72 @@ describe("redirect parity: merged /blog/* posts between _redirects and _middlewa
     for (const [source, target] of Object.entries(merged)) {
       expect(target in merged, `chained merge: ${source} → ${target}, which itself redirects`).toBe(false);
     }
+  });
+});
+
+// ============================================================================
+// Retired duplicate /san slugs — same parity rule, different block.
+// ----------------------------------------------------------------------------
+// 2026-08-25 site audit: the alobo importer ran three times on 2026-08-24 and
+// created six venues twice, each pair a set of /san pages with identical titles
+// and identical meta descriptions, both in sitemap-venues.xml. The duplicate
+// rows are deleted and the retired URLs 301 to the surviving slug.
+//
+// Both files must carry every rule, and _redirects must carry the /vi twin as
+// well: the middleware handles the `/vi/` prefix with one regex, while
+// _redirects has no wildcard for it and needs the pair spelled out. A rule
+// present on only one side means users 301 and Googlebot 404s.
+// ============================================================================
+function parseMiddlewareRetiredVenues(): Record<string, string> {
+  const block = middlewareSource.match(
+    /RETIRED_VENUE_SLUGS:\s*Record<string,\s*string>\s*=\s*\{([\s\S]*?)\};/,
+  );
+  if (!block) throw new Error("RETIRED_VENUE_SLUGS dict not found in _middleware.ts");
+  const out: Record<string, string> = {};
+  for (const m of block[1].matchAll(/"([^"]+)":\s*"([^"]+)"/g)) out[m[1]] = m[2];
+  return out;
+}
+
+function parseRedirectsSan(): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const line of redirectsFile.split("\n")) {
+    const t = line.trim();
+    if (!t || t.startsWith("#")) continue;
+    const m = t.match(/^(\/(?:vi\/)?san\/\S+)\s+(\S+)\s+301\b/);
+    if (m) out[m[1]] = m[2];
+  }
+  return out;
+}
+
+describe("retired /san slugs: _redirects ↔ RETIRED_VENUE_SLUGS", () => {
+  const mw = parseMiddlewareRetiredVenues();
+  const file = parseRedirectsSan();
+
+  it("has at least the six venues the 2026-08-24 import duplicated", () => {
+    expect(Object.keys(mw).length).toBeGreaterThanOrEqual(6);
+  });
+
+  it("carries every middleware rule in _redirects, EN and VI", () => {
+    for (const [from, to] of Object.entries(mw)) {
+      expect(file[`/san/${from}`]).toBe(`/san/${to}`);
+      expect(file[`/vi/san/${from}`]).toBe(`/vi/san/${to}`);
+    }
+  });
+
+  it("carries every _redirects rule in the middleware", () => {
+    for (const from of Object.keys(file)) {
+      const slug = from.replace(/^\/(?:vi\/)?san\//, "");
+      expect(mw).toHaveProperty(slug);
+    }
+  });
+
+  it("never points a retired slug at another retired slug", () => {
+    // A chained 301 costs a hop and Google only follows so many. The target
+    // must be a slug that survives.
+    for (const to of Object.values(mw)) expect(mw).not.toHaveProperty(to);
+  });
+
+  it("never redirects a slug to itself", () => {
+    for (const [from, to] of Object.entries(mw)) expect(from).not.toBe(to);
   });
 });

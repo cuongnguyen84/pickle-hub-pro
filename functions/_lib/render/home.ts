@@ -3,22 +3,67 @@
  * SEO-04 — split from index.ts, code moved verbatim.
  */
 
+import { byEffectiveDateDesc } from "../../../src/lib/blogOrder";
+import { wcResultsPath } from "../../../src/lib/wc-results";
 import type { SupabaseClient } from "../supabase";
 import { buildHtml, htmlResponse } from "../html";
 import { escapeHtml, DEFAULT_OG_IMAGE } from "../utils";
 
 // ─── Home ───────────────────────────���─────────────────────
 
+/**
+ * CTR-03 (2026-08-25) — the court count, floored to the nearest 50.
+ *
+ * Both home descriptions used to be claims ("the only bilingual pickleball
+ * platform built for Asia") rather than facts, and a claim is the weakest
+ * thing to put in front of a searcher deciding which of ten results to open.
+ * The court count is the largest concrete number the site holds — 896 on
+ * 2026-08-25 — so it goes in the snippet instead.
+ *
+ * Floored to 50 and phrased as "hơn X" / "X+" so the string stays true between
+ * deploys as venues are added, and so the copy doesn't churn on every import.
+ * Returns null when the count is unavailable; callers then fall back to a
+ * number-free sentence rather than printing "hơn 0 sân". A meta description is
+ * not worth failing a page render over.
+ */
+async function flooredVenueCount(supabase: SupabaseClient): Promise<number | null> {
+  try {
+    const { count, error } = await supabase
+      .from("venues")
+      .select("slug", { count: "exact", head: true });
+    if (error || count == null || count < 50) return null;
+    return Math.floor(count / 50) * 50;
+  } catch {
+    return null;
+  }
+}
+
+type ViBlogListRow = {
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  published_at: string | null;
+  updated_at: string | null;
+};
+
 export async function renderHome(supabase: SupabaseClient, siteUrl: string): Promise<Response> {
-  const [liveRes, videoRes, viBlogRes] = await Promise.all([
+  const [liveRes, videoRes, viBlogRes, venueCount] = await Promise.all([
     supabase.from("public_livestreams").select("id, title, status").in("status", ["live", "scheduled"]).order("created_at", { ascending: false }).limit(10),
     supabase.from("videos").select("id, title").eq("status", "published").order("published_at", { ascending: false }).limit(10),
-    supabase.from("vi_blog_posts").select("slug, title, excerpt").eq("status", "published").order("published_at", { ascending: false }).limit(3),
+    // Fetch wide, then order by the LATER of published/updated and take 3.
+    // A refreshed post can sit well below the top 3 by published_at (the Group
+    // A article was 8th on 2026-08-31), so slicing at the query would drop the
+    // very post the listing is meant to surface. See src/lib/blogOrder.
+    supabase.from("vi_blog_posts").select("slug, title, excerpt, published_at, updated_at").eq("status", "published").order("published_at", { ascending: false }).limit(30),
+    flooredVenueCount(supabase),
   ]);
 
   const liveItems = (liveRes.data || []).map((l) => `<li><a href="${siteUrl}/live/${l.id}">${escapeHtml(l.title)}</a> (${l.status})</li>`).join("");
   const videoItems = (videoRes.data || []).map((v) => `<li><a href="${siteUrl}/watch/${v.id}">${escapeHtml(v.title)}</a></li>`).join("");
-  const viBlogItems = (viBlogRes.data || []).map((b) => `<li><a href="${siteUrl}/vi/blog/${b.slug}" hreflang="vi">${escapeHtml(b.title)}</a></li>`).join("");
+  const viBlogItems = ((viBlogRes.data || []) as ViBlogListRow[])
+    .sort(byEffectiveDateDesc((b) => b.published_at, (b) => b.updated_at))
+    .slice(0, 3)
+    .map((b) => `<li><a href="${siteUrl}/vi/blog/${b.slug}" hreflang="vi">${escapeHtml(b.title)}</a></li>`).join("");
 
   const viBlogSection = viBlogItems
     ? `<h2>Pickleball in Vietnam</h2><p>Vietnamese pickleball content from our local team:</p><ul>${viBlogItems}</ul><p><a href="${siteUrl}/vi" hreflang="vi">Visit Vietnamese site</a></p>`
@@ -30,7 +75,21 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
   // app-name comparison — same pattern /vi has shipped since launch with
   // no OAuth issue. Mirrors the VI title for hreflang-pair consistency.
   const title = "ThePickleHub – Pickleball Asia: Live & Tournaments";
-  const description = "The only bilingual pickleball platform built for Asia. Tournaments, livestream, and news in Vietnamese and English — free for organizers and players.";
+  // CTR-03 (2026-08-25) — description rewritten; title deliberately untouched.
+  //
+  // GSC 16–22/08: this page took 381 impressions at avg position 8.4 for 4
+  // clicks (1.05% CTR). The old snippet spent its whole budget on a
+  // self-description ("The only bilingual pickleball platform built for Asia")
+  // and named not one thing a searcher could be looking for. Replaced with the
+  // four surfaces people actually arrive for — streams, schedules, rankings,
+  // courts — leading with the count.
+  //
+  // The TITLE is left exactly as it was. It was changed on 2026-08-14 and 11
+  // days is not enough signal to judge it; changing both at once would mean
+  // never learning which one moved the number.
+  const description = venueCount
+    ? `Live pickleball streams, PPA Tour Asia schedules, DUPR rankings and ${venueCount}+ courts across Vietnam — updated daily on ThePickleHub.`
+    : "Live pickleball streams, PPA Tour Asia schedules, DUPR rankings and pickleball courts across Vietnam — updated daily on ThePickleHub.";
 
   return htmlResponse(buildHtml({
     title,
@@ -162,7 +221,9 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
         <li><a href="${siteUrl}/blog">Stories</a> — Match reports and longform coverage</li>
         <li><a href="${siteUrl}/news">News</a> — Daily pickleball updates</li>
         <li><a href="${siteUrl}/videos">Videos</a> — Match highlights (Courtside)</li>
+        <li><a href="${siteUrl}${wcResultsPath("en")}">World Cup 2026 results</a> — Every final and every Pro match from Da Nang</li>
         <li><a href="${siteUrl}/forum">Forum</a> — Community discussions</li>
+        <li><a href="${siteUrl}/shop">Shop</a> — Paddles, shoes and gear from verified Vietnamese sellers</li>
         <li><a href="${siteUrl}/openapi.json">API specification</a> — Machine-readable OpenAPI 3.1 contract</li>
       </ul>
       <h2>Find pickleball courts by city</h2>
@@ -182,21 +243,40 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
 }
 
 export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): Promise<Response> {
-  const [liveRes, videoRes, blogRes] = await Promise.all([
+  const [liveRes, videoRes, blogRes, venueCount] = await Promise.all([
     supabase.from("public_livestreams").select("id, title, status").in("status", ["live", "scheduled"]).order("created_at", { ascending: false }).limit(10),
     supabase.from("videos").select("id, title").eq("status", "published").order("published_at", { ascending: false }).limit(10),
-    supabase.from("vi_blog_posts").select("slug, title, excerpt").eq("status", "published").order("published_at", { ascending: false }).limit(6),
+    // Same widen-then-sort as renderHome — see src/lib/blogOrder.
+    supabase.from("vi_blog_posts").select("slug, title, excerpt, published_at, updated_at").eq("status", "published").order("published_at", { ascending: false }).limit(30),
+    flooredVenueCount(supabase),
   ]);
 
   const liveItems = (liveRes.data || []).map((l) => `<li><a href="${siteUrl}/live/${l.id}">${escapeHtml(l.title)}</a> (${l.status})</li>`).join("");
   const videoItems = (videoRes.data || []).map((v) => `<li><a href="${siteUrl}/watch/${v.id}">${escapeHtml(v.title)}</a></li>`).join("");
-  const blogItems = (blogRes.data || []).map((b) => `<li><a href="${siteUrl}/vi/blog/${b.slug}"><h3>${escapeHtml(b.title)}</h3><p>${escapeHtml(b.excerpt || "")}</p></a></li>`).join("");
+  const blogItems = ((blogRes.data || []) as ViBlogListRow[])
+    .sort(byEffectiveDateDesc((b) => b.published_at, (b) => b.updated_at))
+    .slice(0, 6)
+    .map((b) => `<li><a href="${siteUrl}/vi/blog/${b.slug}"><h3>${escapeHtml(b.title)}</h3><p>${escapeHtml(b.excerpt || "")}</p></a></li>`).join("");
 
   const blogSection = blogItems ? `<h2>Bài viết mới nhất</h2><ul>${blogItems}</ul><p><a href="${siteUrl}/vi/blog">Xem tất cả bài viết</a></p>` : "";
 
   return htmlResponse(buildHtml({
     title: "ThePickleHub – Pickleball Châu Á: Live & Giải đấu",
-    description: "Nền tảng pickleball song ngữ duy nhất xây cho châu Á. Giải đấu, livestream và tin tức bằng tiếng Việt và tiếng Anh — miễn phí cho BTC và người chơi.",
+    // CTR-03 (2026-08-25) — this description was being TRUNCATED in production.
+    // At 186 UTF-8 bytes it blew pickMetaDescription's 160-byte budget, and the
+    // live page was serving "…miễn…" — the sentence stopped mid-word. Nobody
+    // noticed because the string is 148 characters, which looks safely inside
+    // 160 until you remember Vietnamese diacritics cost 2-3 bytes each. Same
+    // unit confusion as buildTitle #468 and the venue snippets in CTR-01.
+    //
+    // The replacement is 156 bytes with the count, 146 without, and it leads
+    // with what VI searchers actually query — lịch giải, xem trực tiếp, bảng
+    // xếp hạng, sân — instead of a claim about the platform. Byte budget is
+    // enforced by functions/_lib/render/__tests__/home-meta.test.ts; do not
+    // edit this string without running it.
+    description: venueCount
+      ? `Lịch giải pickleball, link xem trực tiếp, bảng xếp hạng DUPR và hơn ${venueCount} sân khắp Việt Nam. Cập nhật hằng ngày trên ThePickleHub.`
+      : "Lịch giải pickleball, link xem trực tiếp, bảng xếp hạng DUPR và sân chơi khắp Việt Nam. Cập nhật hằng ngày trên ThePickleHub.",
     url: `${siteUrl}/vi`,
     siteUrl,
     lang: "vi",
@@ -317,7 +397,9 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
         <li><a href="${siteUrl}/vi/blog">Bài viết</a> — Tường thuật và bài chuyên sâu</li>
         <li><a href="${siteUrl}/vi/news">Tin tức</a> — Cập nhật pickleball hàng ngày</li>
         <li><a href="${siteUrl}/vi/videos">Video</a> — Highlights trận đấu</li>
+        <li><a href="${siteUrl}${wcResultsPath("vi")}">Kết quả World Cup 2026</a> — Toàn bộ chung kết, mọi trận Pro tại Đà Nẵng</li>
         <li><a href="${siteUrl}/vi/forum">Diễn đàn</a> — Thảo luận cộng đồng</li>
+        <li><a href="${siteUrl}/vi/shop">Chợ pickleball</a> — Vợt, giày, phụ kiện từ shop đã xác minh</li>
         <li><a href="${siteUrl}/openapi.json">Đặc tả API</a> — Hợp đồng OpenAPI 3.1 dành cho máy đọc</li>
       </ul>
       <h2>Tìm sân pickleball theo khu vực</h2>

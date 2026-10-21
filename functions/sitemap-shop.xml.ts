@@ -96,7 +96,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       const hreflang = [
         { lang: "en", href: enLoc },
         { lang: "vi", href: viLoc },
-        { lang: "x-default", href: enLoc },
+        { lang: "x-default", href: viLoc }, // must match localePair() in render/shop.ts
       ];
       return [
         buildUrlEntry({ loc: enLoc, lastmod, changefreq, priority, hreflang }),

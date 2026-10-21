@@ -9,7 +9,7 @@
 
 BEGIN;
 
-SELECT plan(90);
+SELECT plan(105);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 
@@ -559,6 +559,87 @@ SELECT lives_ok(
 SELECT ok(
   (SELECT jsonb_array_length(option_groups) FROM public.products WHERE id=(SELECT v FROM t_var WHERE k='p1')) = 1,
   '…nhưng bộ tuỳ chọn vẫn còn nguyên — cột bị ghim, không phải bị chặn');
+
+-- ─── Giá gốc (compare_at_price_vnd) qua product_update ─────────────────────
+-- p2 là sản phẩm đơn (giá 990000), chủ shop 1 đang đăng nhập ở trên.
+
+SET LOCAL role authenticated;
+SET LOCAL request.jwt.claims TO '{"sub":"50060001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
+
+SELECT lives_ok(
+  format($$ SELECT public.product_update(%L::uuid,
+      (SELECT version FROM public.products WHERE id = %L::uuid),
+      '{}'::jsonb, '{"compare_at_price_vnd":1500000}'::jsonb) $$,
+    (SELECT v FROM t_var WHERE k='p2'), (SELECT v FROM t_var WHERE k='p2')),
+  'giá gốc lớn hơn giá bán được nhận');
+SELECT is(
+  (SELECT compare_at_price_vnd FROM public.product_variants
+   WHERE product_id=(SELECT v FROM t_var WHERE k='p2') AND retired_at IS NULL),
+  1500000, 'và ghi đúng vào cột compare_at_price_vnd');
+
+SELECT lives_ok(
+  format($$ SELECT public.product_update(%L::uuid,
+      (SELECT version FROM public.products WHERE id = %L::uuid),
+      '{}'::jsonb, '{"compare_at_price_vnd":null}'::jsonb) $$,
+    (SELECT v FROM t_var WHERE k='p2'), (SELECT v FROM t_var WHERE k='p2')),
+  'gửi null là xoá giá gốc');
+SELECT is(
+  (SELECT compare_at_price_vnd FROM public.product_variants
+   WHERE product_id=(SELECT v FROM t_var WHERE k='p2') AND retired_at IS NULL),
+  NULL, 'cột về NULL');
+
+SELECT throws_ok(
+  format($$ SELECT public.product_update(%L::uuid,
+      (SELECT version FROM public.products WHERE id = %L::uuid),
+      '{}'::jsonb, '{"compare_at_price_vnd":990000}'::jsonb) $$,
+    (SELECT v FROM t_var WHERE k='p2'), (SELECT v FROM t_var WHERE k='p2')),
+  '23514', NULL, 'giá gốc bằng hoặc thấp hơn giá bán bị constraint chặn');
+
+-- ─── % giảm trên sản phẩm ĐANG BÁN qua product_discount_set ────────────────
+-- Đặt p2 lên kệ như admin đã duyệt, rồi chủ shop đặt giảm giá không cần gỡ.
+SET LOCAL role postgres;
+SELECT set_config('shop.privileged_write', 'on', true); -- cột status bị trigger ghim, kể cả với postgres
+UPDATE public.products SET status = 'approved', is_published = true
+ WHERE id = (SELECT v FROM t_var WHERE k='p2');
+SELECT set_config('shop.privileged_write', 'off', true);
+SET LOCAL role authenticated;
+SET LOCAL request.jwt.claims TO '{"sub":"50060001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
+
+SELECT lives_ok(
+  format($$ SELECT public.product_discount_set(%L::uuid, 50) $$, (SELECT v FROM t_var WHERE k='p2')),
+  'sản phẩm đang bán vẫn đặt được % giảm');
+SELECT is(
+  (SELECT price_vnd FROM public.product_variants
+   WHERE product_id=(SELECT v FROM t_var WHERE k='p2') AND retired_at IS NULL),
+  495000, '50% trên giá 990000 → giá bán còn 495000, trừ thẳng chứ không thổi giá gốc');
+SELECT is(
+  (SELECT compare_at_price_vnd FROM public.product_variants
+   WHERE product_id=(SELECT v FROM t_var WHERE k='p2') AND retired_at IS NULL),
+  990000, 'và giá gốc gạch ngang là giá cũ 990000');
+SELECT is(
+  (SELECT status::text FROM public.products WHERE id=(SELECT v FROM t_var WHERE k='p2')),
+  'approved', 'và sản phẩm vẫn ở trên kệ, không bị kéo về nháp');
+SELECT lives_ok(
+  format($$ SELECT public.product_discount_set(%L::uuid, 20) $$, (SELECT v FROM t_var WHERE k='p2')),
+  'đổi sang % khác vẫn chạy');
+SELECT is(
+  (SELECT price_vnd FROM public.product_variants
+   WHERE product_id=(SELECT v FROM t_var WHERE k='p2') AND retired_at IS NULL),
+  792000, 'và tính lại từ giá gốc 990000 chứ không giảm chồng giảm');
+SELECT lives_ok(
+  format($$ SELECT public.product_discount_set(%L::uuid, 0) $$, (SELECT v FROM t_var WHERE k='p2')),
+  '0% là bỏ giảm giá');
+SELECT is(
+  (SELECT price_vnd FROM public.product_variants
+   WHERE product_id=(SELECT v FROM t_var WHERE k='p2') AND retired_at IS NULL),
+  990000, 'giá bán quay lại đúng giá gốc cũ');
+SELECT is(
+  (SELECT compare_at_price_vnd FROM public.product_variants
+   WHERE product_id=(SELECT v FROM t_var WHERE k='p2') AND retired_at IS NULL),
+  NULL, 'giá gốc về NULL');
+SELECT throws_ok(
+  format($$ SELECT public.product_discount_set(%L::uuid, 95) $$, (SELECT v FROM t_var WHERE k='p2')),
+  '22023', NULL, 'ngoài 0–90 bị từ chối');
 
 -- …but the shop itself must still be deletable, cascade and all. A ledger that
 -- makes its own shop undeletable is not protecting history, it is a leak: it
