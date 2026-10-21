@@ -299,3 +299,48 @@ describe('newsLinkUrl', () => {
     expect(newsLinkUrl(null)).toBeNull();
   });
 });
+
+// Owner rule 2026-10-21: no posts about products at all, paddles included. The
+// first case is the Selkirk ball/warranty post that reached TA Pickleball that
+// morning; the rest are the gear pieces from the two weeks before it.
+describe('gear and product pieces (owner rule 2026-10-21)', () => {
+  it.each([
+    'Bóng Pickleball Selkirk S2 Pro Ra Mắt Bảo Hành',
+    'Selkirk S2 Pro Pickleball Ball Launches With Warranty',
+    'Đánh giá vợt Gearbox Pressure X',
+    'Gearbox Pressure X Paddle Review',
+    'Chris Olson Hướng Dẫn Cách Chọn Vợt Pickleball',
+    'Chris Olson Shares Pickleball Paddle Buying Strategy',
+    'Cách nhận biết vợt pickleball hỏng',
+    'How to Tell If Your Pickleball Paddle Is Dead',
+    'Vợt pickleball tốt nhất cho nữ: Lựa chọn hàng đầu',
+    'Best pickleball paddles for women: Top choices for 2026',
+    'Giày Pickleball SQAIRZ XRZ2 Đánh Giá Độ Bền Và Độ Ổn Định',
+    'Hướng Dẫn Chọn Mua Vợt Honolulu',
+    'Volair và 11SIX24 hợp tác công nghệ vợt',
+    'Dylan Frazier Kết Hợp Volair Ra Mắt Dụng Cụ Pickleball Star Wars',
+    'Cảnh báo bóng Life Time giả mạo',
+    'Ed Ju Warns Pickleball Community About Suspected Fake Life Time Balls',
+    'So sánh vợt Joola Perseus và Selkirk Vanguard',
+    'Franklin X-40 vs Dura Fast 40: which outdoor ball wins on price',
+    'Best portable pickleball nets for your driveway',
+    'Top pickleball gear deals this week',
+  ])('blocks: %s', (title) => {
+    expect(isPromotionalSource(title, null, null, 'equipment')).toBe(true);
+  });
+
+  it.each([
+    ['Kỹ thuật sửa lỗi góc mặt vợt đánh topspin pickleball hiệu quả', 'equipment'],
+    ['Chiến thuật pickleball: Quan sát vợt thay vì bóng', 'equipment'],
+    ['Mastering Pickleball Strategy: Watch the Paddle Not the Ball', 'equipment'],
+    ['Kỹ thuật đứng chờ và hạ đầu vợt tấn công bóng dink', 'equipment'],
+    ['Quy định pháp lý vợt pickleball và danh sách phê duyệt', 'equipment'],
+    ['Quy tắc trang phục và giày dép khi chơi pickleball', 'equipment'],
+    ['Lựa chọn vị trí đánh đôi pickleball', 'equipment'],
+    ['Elliott Schupp vô địch đôi nam PPA Tour tại Virginia Beach', 'player'],
+    ['Selkirk Red Rock Open: Ben Johns wins the men\'s singles', 'tournament'],
+    ['DUPR Ra Mắt Gói DUPR+ Cung Cấp Thống Kê Nâng Cao', 'equipment'],
+  ])('keeps coaching, rules and results: %s', (title, category) => {
+    expect(isPromotionalSource(title, null, null, category)).toBe(false);
+  });
+});
