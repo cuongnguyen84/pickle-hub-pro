@@ -660,6 +660,10 @@
     "element": "<SellLanding />"
   },
   {
+    "path": "/vi/shop/sell",
+    "element": "<ViLanguageWrapper><SellLanding /></ViLanguageWrapper>"
+  },
+  {
     "path": "/seller",
     "element": "<RequireAuth><SellerHome /></RequireAuth>"
   },
