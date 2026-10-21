@@ -10,7 +10,17 @@ export const authorProfile = {
 
 /** Use the actual byline; never attribute every team/guest article to one person. */
 export function authorIdentity(name: string, siteUrl = 'https://www.thepicklehub.net') {
-  if (name === authorProfile.name) return { '@type': 'Person', name, url: `${siteUrl}${AUTHOR_PATH}`, '@id': `${siteUrl}${AUTHOR_PATH}#person` };
+  if (name === authorProfile.name) return {
+    '@type': 'Person',
+    name,
+    jobTitle: 'Founder',
+    url: `${siteUrl}${AUTHOR_PATH}`,
+    '@id': `${siteUrl}${AUTHOR_PATH}#person`,
+    sameAs: [
+      'https://www.facebook.com/thepicklehubnet',
+      'https://x.com/thepicklehub',
+    ],
+  };
   const organization = /team|pickle\s*hub/i.test(name) || !name;
   return organization
     ? { '@type': 'Organization', name: 'ThePickleHub', url: `${siteUrl}/about` }

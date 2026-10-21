@@ -51,9 +51,11 @@ export function blogImageAttrs(src: string): string {
  */
 export function heroFigure(image: { src: string; alt: string } | undefined): string {
   if (!image?.src) return "";
+  const dims = blogImageDims(image.src);
+  const box = dims ? ` style="aspect-ratio:${dims[0]} / ${dims[1]};width:100%"` : "";
   return (
-    `<figure><img src="${escapeHtml(image.src)}" alt="${escapeHtml(image.alt)}"` +
-    `${blogImageAttrs(image.src)} loading="eager" fetchpriority="high" decoding="async"/></figure>`
+    `<figure${box}><img src="${escapeHtml(image.src)}" alt="${escapeHtml(image.alt)}"` +
+    `${blogImageAttrs(image.src)} loading="eager" fetchpriority="high" decoding="async" style="width:100%;height:auto;display:block"/></figure>`
   );
 }
 

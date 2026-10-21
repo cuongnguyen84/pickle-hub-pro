@@ -248,7 +248,7 @@ const QuickTables = () => {
         description={language === "vi" ? "Chia bảng vòng tròn và vòng loại trực tiếp, miễn phí, cho câu lạc bộ và giải cuối tuần." : "Free pickleball bracket generator for clubs and tournaments. Create round robin groups, playoff brackets, and elimination formats in seconds."}
         active="lab"
       >
-        <HreflangTags enPath="/tools/quick-tables" />
+        <HreflangTags enPath="/tools/quick-tables" viPath="/vi/tools/quick-tables" />
         <WebApplicationSchema
           name="Quick Tables - Pickleball Bracket Generator"
           description="Free pickleball bracket generator. Create round robin brackets with automatic group balancing, playoff brackets, and elimination formats in seconds."
@@ -347,7 +347,7 @@ const QuickTables = () => {
       description={language === "vi" ? "Chia bảng vòng tròn và vòng loại trực tiếp, miễn phí, cho câu lạc bộ và giải cuối tuần." : "Free pickleball bracket generator for clubs and tournaments."}
       active="lab"
     >
-      <HreflangTags enPath="/tools/quick-tables" />
+      <HreflangTags enPath="/tools/quick-tables" viPath="/vi/tools/quick-tables" />
       <WebApplicationSchema
         name="Quick Tables - Pickleball Bracket Generator"
         description="Free pickleball bracket generator. Create round robin brackets with automatic group balancing, playoff brackets, and elimination formats in seconds."

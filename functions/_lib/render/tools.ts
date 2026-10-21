@@ -4,7 +4,7 @@
  */
 
 import { buildHtml, htmlResponse } from "../html";
-import { bilingualHreflang } from "../utils";
+import { bilingualHreflang, escapeHtml } from "../utils";
 import {
   TOOLS_HUB_META,
   TOOLS_FAQ_EN,
@@ -195,48 +195,98 @@ ${TOOLS_FAQ_EN.map(([q, a]) => `<p><strong>${q}</strong> ${a}</p>`).join("\n")}
   }));
 }
 
-const TOOL_PAGE_META: Record<string, { en: { title: string; description: string }; vi: { title: string; description: string } }> = {
+type ToolCopy = { title: string; description: string; h1: string; h2: string };
+
+const TOOL_PAGE_META: Record<string, { en: ToolCopy; vi: ToolCopy }> = {
   "quick-tables": {
     en: {
-      title: "Quick Tables – Round Robin & Single Elimination | ThePickleHub",
+      title: "Round Robin Generator | ThePickleHub",
       description: "Free round-robin & single elimination bracket generator. Auto-scheduling, real-time scoring, shareable links. Sign in to create; public viewing is free.",
+      h1: "Round Robin Generator",
+      h2: "Round-robin groups and a single-elimination bracket",
     },
     vi: {
-      title: "Chia bảng — đánh vòng tròn và loại trực tiếp | ThePickleHub",
+      title: "Chia bảng vòng tròn | ThePickleHub",
       description: "Công cụ miễn phí chia bảng vòng tròn và vòng loại trực tiếp. Tự xếp lịch, chấm điểm, gửi link. Đăng nhập để tạo giải.",
+      h1: "Chia bảng vòng tròn",
+      h2: "Tự xếp lịch, chấm điểm và gửi link",
     },
   },
   "team-match": {
     en: {
       title: "Team Match – MLP Format Pickleball | ThePickleHub",
       description: "Free MLP-style team match pickleball bracket tool. Manage team lineups, track singles and doubles results, and generate instant standings. Account required to create; public viewing needs no login.",
+      h1: "Team Match",
+      h2: "MLP-style lineups, singles, doubles and standings",
     },
     vi: {
       title: "Đấu đồng đội | ThePickleHub",
       description: "Công cụ miễn phí cho hai đội đấu với nhau. Xếp cặp, chấm điểm và xem thứ hạng. Đăng nhập để tạo trận.",
+      h1: "Đấu đồng đội",
+      h2: "Xếp cặp, chấm điểm và xem thứ hạng",
     },
   },
   "doubles-elimination": {
     en: {
       title: "Doubles Elimination Bracket Generator | ThePickleHub",
       description: "Free doubles elimination bracket generator. Auto bracket draw, live scoring, shareable results. Sign in to create; public viewing is free.",
+      h1: "Doubles Elimination Bracket",
+      h2: "Auto draw, live scoring and a shareable result",
     },
     vi: {
       title: "Loại trực tiếp đôi | ThePickleHub",
       description: "Công cụ miễn phí loại trực tiếp đôi. Bốc thăm, chấm điểm, gửi kết quả. Đăng nhập để tạo giải.",
+      h1: "Loại trực tiếp đôi",
+      h2: "Bốc thăm, chấm điểm và gửi kết quả",
     },
   },
   "flex-tournament": {
     en: {
-      title: "Flex Tournament Generator – Flexible Bracket | ThePickleHub",
+      title: "Flex Tournament Bracket | ThePickleHub",
       description: "Free flex-format tournament generator. Custom groups, flexible scheduling, live scoring. Perfect for clubs — ThePickleHub.",
+      h1: "Flex Tournament Bracket",
+      h2: "Custom groups and a flexible club schedule",
     },
     vi: {
       title: "Giải linh hoạt | ThePickleHub",
       description: "Công cụ miễn phí cho giải tự chọn vòng và bảng. Chấm điểm trực tiếp. Đăng nhập để tạo giải.",
+      h1: "Giải linh hoạt",
+      h2: "Tự chọn vòng, bảng và chấm điểm trực tiếp",
     },
   },
 };
+
+function renderToolShell(
+  meta: ToolCopy,
+  siteUrl: string,
+  rawPath: string,
+  lang: "en" | "vi",
+  enPath: string,
+  backHref: string,
+  backLabel: string,
+): Response {
+  return htmlResponse(buildHtml({
+    title: meta.title,
+    description: meta.description,
+    url: `${siteUrl}${rawPath}`,
+    siteUrl,
+    lang,
+    omitAutoHeader: true,
+    extraMeta: bilingualHreflang(`${siteUrl}${enPath}`, `${siteUrl}/vi${enPath}`),
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      name: meta.h1,
+      applicationCategory: "SportsApplication",
+      operatingSystem: "Web",
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    },
+    bodyContent: `<h1>${escapeHtml(meta.h1)}</h1>
+<h2>${escapeHtml(meta.h2)}</h2>
+<p>${escapeHtml(meta.description)}</p>
+<p><a href="${backHref}">${escapeHtml(backLabel)}</a></p>`,
+  }));
+}
 
 export function renderToolPage(toolSlug: string, siteUrl: string, rawPath: string, lang: "en" | "vi" = "en"): Response {
   const entry = TOOL_PAGE_META[toolSlug];
@@ -244,24 +294,7 @@ export function renderToolPage(toolSlug: string, siteUrl: string, rawPath: strin
   const meta = entry[lang] ?? entry.en;
   const back = lang === "vi" ? `${siteUrl}/vi/tools` : `${siteUrl}/tools`;
   const backLabel = lang === "vi" ? "← Tất cả công cụ" : "← All Tournament Tools";
-
-  return htmlResponse(buildHtml({
-    title: meta.title,
-    description: meta.description,
-    url: `${siteUrl}${rawPath}`,
-    siteUrl,
-    lang,
-    jsonLd: {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      name: meta.title,
-      applicationCategory: "SportsApplication",
-      operatingSystem: "Web",
-      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-    },
-    bodyContent: `<h2>${meta.title}</h2><p>${meta.description}</p>
-      <p><a href="${back}">${backLabel}</a></p>`,
-  }));
+  return renderToolShell(meta, siteUrl, rawPath, lang, `/tools/${toolSlug}`, back, backLabel);
 }
 
 // W1.1 (2026-05-15) — page-specific metadata for /tools/{tool}/new
@@ -272,38 +305,47 @@ export function renderToolPage(toolSlug: string, siteUrl: string, rawPath: strin
 // SoftwareApplication-typed shell with create-flow copy. Quick Tables
 // has no /new variant (the list page IS the create flow), so only 3
 // tools are mapped here.
-const TOOL_NEW_PAGE_META: Record<string, {
-  en: { title: string; description: string };
-  vi: { title: string; description: string };
-}> = {
+const TOOL_NEW_PAGE_META: Record<string, { en: ToolCopy; vi: ToolCopy }> = {
   "doubles-elimination": {
     en: {
       title: "Create Doubles Elimination Bracket | ThePickleHub",
       description: "Free doubles elimination bracket generator. Auto bracket draw, live scoring, shareable results. Sign in to create; public viewing is free.",
+      h1: "Create a doubles bracket",
+      h2: "Draw, score and share the result",
     },
     vi: {
       title: "Tạo Doubles Elimination Bracket | ThePickleHub",
       description: "Công cụ miễn phí tạo bracket loại kép pickleball. Bốc thăm tự động, chấm điểm trực tiếp, chia sẻ kết quả qua link. Không cần đăng ký — ThePickleHub.",
+      h1: "Tạo nhánh loại trực tiếp đôi",
+      h2: "Bốc thăm, chấm điểm và chia sẻ link",
     },
   },
   "flex-tournament": {
     en: {
       title: "Create Flex Tournament | ThePickleHub",
       description: "Free flexible tournament generator. Custom groups, brackets, and match formats. Sign in to create; public viewing is free.",
+      h1: "Create a flex tournament",
+      h2: "Groups, brackets and match formats you choose",
     },
     vi: {
       title: "Tạo Flex Tournament | ThePickleHub",
       description: "Công cụ miễn phí tạo giải đấu pickleball với cấu trúc tự do. Tự thiết kế nhóm, bracket, và thể thức trận đấu. Không cần đăng ký — ThePickleHub.",
+      h1: "Tạo giải linh hoạt",
+      h2: "Tự thiết kế nhóm, nhánh và thể thức",
     },
   },
   "team-match": {
     en: {
       title: "Create MLP Team Match | ThePickleHub",
       description: "Free MLP-style team match software. Lineup management, multi-round scoring, dreambreaker support. Sign in to create; public viewing is free.",
+      h1: "Create an MLP team match",
+      h2: "Lineups, multi-round scoring and a dreambreaker",
     },
     vi: {
       title: "Tạo Team Match (MLP) | ThePickleHub",
       description: "Phần mềm miễn phí cho đấu đồng đội theo format MLP. Quản lý lineup, chấm điểm nhiều ván, hỗ trợ dreambreaker. Không cần đăng ký — ThePickleHub.",
+      h1: "Tạo trận đồng đội",
+      h2: "Lineup, nhiều ván và dreambreaker",
     },
   },
 };
@@ -315,21 +357,7 @@ export function renderToolNewPage(toolSlug: string, siteUrl: string, rawPath: st
   // link; better to signal noindex than serve a thin 200.
   if (!entry) return renderNoindexShell(siteUrl, rawPath, lang);
   const meta = entry[lang] || entry.en;
-
-  return htmlResponse(buildHtml({
-    title: meta.title,
-    description: meta.description,
-    url: `${siteUrl}${rawPath}`,
-    siteUrl,
-    jsonLd: {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      name: meta.title,
-      applicationCategory: "SportsApplication",
-      operatingSystem: "Web",
-      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-    },
-    bodyContent: `<h2>${meta.title}</h2><p>${meta.description}</p>
-      <p><a href="${siteUrl}/tools/${toolSlug}">← ${lang === "vi" ? "Quay lại" : "Back to"} ${toolSlug}</a></p>`,
-  }));
+  const back = lang === "vi" ? `${siteUrl}/vi/tools/${toolSlug}` : `${siteUrl}/tools/${toolSlug}`;
+  const backLabel = lang === "vi" ? "← Quay lại" : "← Back";
+  return renderToolShell(meta, siteUrl, rawPath, lang, `/tools/${toolSlug}/new`, back, backLabel);
 }

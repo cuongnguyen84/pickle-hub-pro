@@ -26,8 +26,11 @@ ThePickleHub is built and operated in Vietnam. It covers Vietnamese pickleball �
 - [What Is DUPR?](https://www.thepicklehub.net/blog/what-is-dupr-pickleball-rating-system): rating system explainer (3-part series)
 - [Pickleball Rules 2026](https://www.thepicklehub.net/blog/pickleball-rules-complete-guide): complete rulebook with disputed calls in Asian tournaments
 - [How to Organize a Pickleball Tournament](https://www.thepicklehub.net/blog/how-to-organize-pickleball-tournament): step-by-step organizer guide
+- [Sân pickleball Hà Nội](https://www.thepicklehub.net/vi/blog/top-san-pickleball-ha-noi-2026): Hanoi court guide
+- [Sân pickleball TP.HCM](https://www.thepicklehub.net/vi/blog/san-pickleball-tphcm): Ho Chi Minh City court guide
+- [Lịch giải pickleball Việt Nam 2026](https://www.thepicklehub.net/vi/blog/lich-giai-pickleball-viet-nam-2026): Vietnamese tournament calendar
 
 ## Optional
 
 - [Sitemap](https://www.thepicklehub.net/sitemap.xml): full URL index with en/vi hreflang alternates
-- Contact: https://www.thepicklehub.net/ (community feed and club pages)
+- Contact: https://www.thepicklehub.net/contact

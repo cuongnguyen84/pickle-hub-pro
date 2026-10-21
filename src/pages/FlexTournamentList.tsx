@@ -33,10 +33,11 @@ const FlexTournamentList = () => {
   const { user } = useAuth();
   const location = useLocation();
 
-  // EN route — force English regardless of persisted language state
+  // EN route forces English. /vi/tools/... is a real Vietnamese page.
   useEffect(() => {
+    if (location.pathname === "/vi" || location.pathname.startsWith("/vi/")) return;
     setLanguageFromUrl("en");
-  }, [setLanguageFromUrl]);
+  }, [location.pathname, setLanguageFromUrl]);
   const { myTournaments, isLoadingTournaments, publicTournaments, isLoadingPublic, deleteTournament, isDeleting } = useFlexTournament();
   const { quota, used: totalUsed } = useUserCreateQuota();
   const navigate = useNavigate();
@@ -70,7 +71,7 @@ const FlexTournamentList = () => {
       description="Create flexible pickleball tournament brackets with custom groups, team play, singles, doubles, and mixed formats."
       active="lab"
     >
-      <HreflangTags enPath="/tools/flex-tournament" />
+      <HreflangTags enPath="/tools/flex-tournament" viPath="/vi/tools/flex-tournament" />
       <WebApplicationSchema
         name="Flex Tournament - Custom Pickleball Bracket Maker"
         description="Create flexible pickleball tournament brackets with custom groups, team play, singles, doubles, and mixed formats. Real-time scoring and live standings."

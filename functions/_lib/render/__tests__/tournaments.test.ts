@@ -93,6 +93,12 @@ describe("renderTournamentDetail", () => {
     expect(html.match(/<h1[\s>]/g)?.length).toBe(1);
   });
 
+  it("marks the Vietnamese body as Vietnamese", async () => {
+    const html = await render(ENDED_ROW);
+    expect(html).toContain('<html lang="vi">');
+    expect(html).toContain('property="og:locale" content="vi_VN"');
+  });
+
   it("gives each tournament a distinct meta description instead of the generic fallback", async () => {
     const html = await render(ENDED_ROW);
     const desc = metaDescription(html);

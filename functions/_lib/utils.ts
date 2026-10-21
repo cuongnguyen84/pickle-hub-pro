@@ -6,6 +6,18 @@ import { getRelatedPosts } from "../../src/content/blog/related";
 export const SITE_NAME = "ThePickleHub";
 export const DEFAULT_OG_IMAGE = "https://www.thepicklehub.net/og-image.png";
 
+/** Square mark for Organization / publisher logo. og-image.png is a wide share card (and a JPEG), not a logo. */
+export const ORGANIZATION_LOGO_PATH = "/android-chrome-512x512.png";
+
+export function organizationLogo(siteUrl: string) {
+  return {
+    "@type": "ImageObject" as const,
+    url: `${siteUrl}${ORGANIZATION_LOGO_PATH}`,
+    width: 512,
+    height: 512,
+  };
+}
+
 /**
  * Escape strings for safe inclusion in JSON-LD <script> tags.
  * Prevents HTML-looking text (like `<Live>`) from breaking JSON-LD parsing.
