@@ -18,8 +18,8 @@ export const blogMetadata: BlogPostMetadata[] = [
     "ctaPath": "/tools/quick-tables/chat",
     "ctaLabel": { "en": "Open the chat", "vi": "Mở chat tạo giải" },
     "heroImage": {
-      "src": "/images/blog/create-tournament-by-chat-hero.webp",
-      "alt": "ThePickleHub chat screen ready to create a club draw, with two groups and a Create button"
+      "src": "/images/blog/create-tournament-by-chat-hero-en.webp",
+      "alt": "ThePickleHub chat review for Saturday Night Club, with groups A and B and a Create tournament button"
     },
     "titleEn": "AI Pickleball Round Robin: Paste a List in Chat, Up to 48 Teams",
     "titleVi": "Tạo giải pickleball bằng AI: dán danh sách Zalo, tối đa 48 đội",
