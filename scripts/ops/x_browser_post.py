@@ -23,6 +23,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import fb_browser_post as fb  # noqa: E402  — dùng chung secret/rest/tele/run_claude
+import social_promo_filter as promo  # noqa: E402
 
 fb.LOG = Path.home() / "Library/Logs/PickleHub/x-browser.log"
 log = fb.log
@@ -90,6 +91,19 @@ Dòng CUỐI cùng của câu trả lời phải là đúng một JSON, không g
 lý do cụ thể vào error."""
 
 
+def park_if_promo(row: dict) -> bool:
+    """Owner rule 21/10/2026: product/gear/brand posts never go out on X.
+
+    The row goes back to 'draft' (held for a human, never picked by this job or
+    the Worker); re-approving it is the undo.
+    """
+    if not promo.is_promotional(row.get("body") or ""):
+        return False
+    patch(row["id"], {"status": "draft", "error_message": promo.SKIP_REASON}, "approved")
+    log(f"SKIP quảng cáo sản phẩm {row['id']}: {(row.get('body') or '')[:60]!r}")
+    return True
+
+
 def post_one(row: dict) -> int:
     attempt = (row.get("attempt_count") or 0) + 1
     # Claim như worker: chỉ thắng khi row vẫn approved.
@@ -146,6 +160,8 @@ def main() -> int:
         if not row:
             log("không có bài mới")
             return 0
+        if park_if_promo(row):
+            continue
         if post_one(row) != 0:
             return 1
     return 0

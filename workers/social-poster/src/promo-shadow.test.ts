@@ -57,8 +57,9 @@ describe('shadowRowsFrom', () => {
       [
         // Matches PROMO_PATTERNS_EN (`paddle ... line`): the regex blocks it.
         candidate('blocked', 'Six Zero expands Gemstone paddle line with Boulder Opal'),
-        // Matches nothing: the regex lets it through, which is the Six Zero shape.
-        candidate('missed', 'Joola and Ben Johns reveal what comes after the Perseus'),
+        // Matches nothing: the regex lets it through. (The old example, a Joola
+        // paddle teaser, is blocked by brand since the 2026-10-21 gear rule.)
+        candidate('missed', 'Ben Johns hints at what comes after the Perseus'),
       ],
       { blocked: { noul: 0.88 }, missed: { noul: 0.64 } },
       'x',

@@ -26,6 +26,9 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import social_promo_filter as promo  # noqa: E402
+
 REPO = Path(os.environ.get("PICKLEHUB_REPO", Path(__file__).resolve().parents[2]))
 SECRETS = Path(os.environ.get("SECRETS_FILE", REPO / ".claude/secrets.local.md"))
 CLAUDE_BIN = os.environ.get("CLAUDE_BIN", str(Path.home() / ".local/bin/claude"))
@@ -124,14 +127,30 @@ def posted_notice(platform: str, title: str, url: str | None, note: str = "") ->
     return "\n".join(ln for ln in lines if ln)
 
 
+def news_text(news_id: str) -> tuple[str, str]:
+    """(title, summary) of the news item; best-effort, never raises."""
+    try:
+        rows = rest("GET", f"news_items?select=title,summary&id=eq.{news_id}") or []
+        if not rows:
+            return "", ""
+        return (rows[0].get("title") or "").strip(), (rows[0].get("summary") or "").strip()
+    except Exception as e:  # noqa: BLE001 - a notice must never fail a live post
+        log(f"news_text lỗi: {e}")
+        return "", ""
+
+
 def news_title(news_id: str) -> str:
     """Headline of the news item for the post notice; best-effort, never raises."""
-    try:
-        rows = rest("GET", f"news_items?select=title&id=eq.{news_id}") or []
-        return (rows[0].get("title") or "").strip() if rows else ""
-    except Exception as e:  # noqa: BLE001 - a notice must never fail a live post
-        log(f"news_title lỗi: {e}")
-        return ""
+    return news_text(news_id)[0]
+
+
+def is_promo_item(title: str, summary: str, caption: str) -> bool:
+    """Owner rule 21/10/2026: never post product/gear/brand pieces (see social_promo_filter)."""
+    if title:
+        return promo.is_promotional(title, summary)
+    # News row unreadable: judge the caption headline rather than post blind.
+    first = next((ln.strip() for ln in (caption or "").splitlines() if ln.strip()), "")
+    return promo.is_promotional(first, caption)
 
 
 def failure_streak(path: Path, failed: bool) -> int:
@@ -319,6 +338,15 @@ def post_one(page: dict, item: dict) -> int:
         tele(f"⚠️ fb-browser [{page['key']}]: worker trả lại bài ĐÃ đăng ({item.get('slug')}), job dừng.\n"
              f"Xoá {STOP_FILE} sau khi sửa picker.")
         return 1
+
+    title, summary = news_text(news_id)
+    if is_promo_item(title, summary, caption):
+        # Reversible: 'skipped' only means "do not post"; set it back to 'failed'
+        # and the Worker offers the item again.
+        upsert_log(page, {"news_item_id": news_id, "status": "skipped", "caption": caption,
+                          "error_message": promo.SKIP_REASON})
+        log(f"[{page['key']}] SKIP quảng cáo sản phẩm: {item.get('slug')}")
+        return 0
 
     payload = item.get("fb_payload") or {}
     image_url = payload.get("body", {}).get("url") if payload.get("endpoint") == "photos" else None

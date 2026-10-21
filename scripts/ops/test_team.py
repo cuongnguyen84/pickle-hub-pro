@@ -598,5 +598,59 @@ class TelegramPolicyTests(unittest.TestCase):
         self.assertTrue(team.labelled("payment-resolved:1", "x").startswith("[Grok Bot] ✅"))
 
 
+class SocialPromoFilterTests(unittest.TestCase):
+    """Owner rule 21/10/2026: no product/gear/brand posts on FB pages or X."""
+
+    def test_blocks_gear_pieces(self):
+        import social_promo_filter as promo
+        for title in (
+            "Bóng Pickleball Selkirk S2 Pro Ra Mắt Bảo Hành",
+            "Selkirk S2 Pro Pickleball Ball Launches With Warranty",
+            "Đánh giá vợt Gearbox Pressure X",
+            "Chris Olson Hướng Dẫn Cách Chọn Vợt Pickleball",
+            "Cách nhận biết vợt pickleball hỏng",
+            "Best pickleball paddles for women: Top choices for 2026",
+            "Giày Pickleball SQAIRZ XRZ2 Đánh Giá Độ Bền Và Độ Ổn Định",
+            "Six Zero Ra Mắt Vợt Pickleball Boulder Opal Mới",
+        ):
+            self.assertTrue(promo.is_promotional(title), title)
+
+    def test_keeps_news_tips_and_rules(self):
+        import social_promo_filter as promo
+        for title in (
+            "Elliott Schupp vô địch đôi nam PPA Tour tại Virginia Beach",
+            "Kỹ thuật sửa lỗi góc mặt vợt đánh topspin pickleball hiệu quả",
+            "Chiến thuật pickleball: Quan sát vợt thay vì bóng",
+            "Quy định pháp lý vợt pickleball và danh sách phê duyệt",
+            "Selkirk Red Rock Open: Ben Johns wins the men's singles",
+            "Doanh thu sân pickleball và những rủi ro tài chính tiềm ẩn",
+        ):
+            self.assertFalse(promo.is_promotional(title), title)
+
+    def test_fb_job_skips_promo_without_opening_chrome(self):
+        import fb_browser_post as fb
+        page = fb.PAGES[0]
+        item = {"caption": "c", "link": "l", "news_item_id": "n1", "slug": "selkirk"}
+        writes = []
+        with patch.object(fb, "rest", return_value=[]), \
+             patch.object(fb, "news_text", return_value=("Đánh giá vợt Gearbox Pressure X", "")), \
+             patch.object(fb, "upsert_log", side_effect=lambda p, row: writes.append(row)), \
+             patch.object(fb, "log"), \
+             patch.object(fb, "run_claude") as claude:
+            self.assertEqual(fb.post_one(page, item), 0)
+        claude.assert_not_called()
+        self.assertEqual([w["status"] for w in writes], ["skipped"])
+
+    def test_x_job_parks_promo_as_draft(self):
+        import x_browser_post as xb
+        calls = []
+        with patch.object(xb, "patch", side_effect=lambda *a: calls.append(a) or [{}]), \
+             patch.object(xb, "log"):
+            self.assertTrue(xb.park_if_promo({"id": "x1", "body": "Gearbox Pressure X Paddle Review"}))
+            self.assertFalse(xb.park_if_promo({"id": "x2", "body": "Ben Johns wins PPA Virginia Beach"}))
+        self.assertEqual(calls[0][1]["status"], "draft")
+        self.assertEqual(calls[0][2], "approved")
+
+
 if __name__ == "__main__":
     unittest.main()
