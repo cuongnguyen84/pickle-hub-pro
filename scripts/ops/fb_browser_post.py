@@ -110,6 +110,30 @@ def tele(text: str) -> None:
         log(f"telegram lỗi: {e}")
 
 
+def posted_notice(platform: str, title: str, url: str | None, note: str = "") -> str:
+    """Instant Telegram for one published post (owner rule 21/10/2026).
+
+    notify_telegram.py adds the "[Grok Bot]" label, so the first line reads
+    "[Grok Bot] Đã đăng bài". Then the platform, the headline (first line) and
+    the link.
+    """
+    first = next((ln.strip() for ln in (title or "").splitlines() if ln.strip()), "")
+    if len(first) > 200:
+        first = first[:199].rstrip() + "…"
+    lines = ["Đã đăng bài", platform, first, url or "", note]
+    return "\n".join(ln for ln in lines if ln)
+
+
+def news_title(news_id: str) -> str:
+    """Headline of the news item for the post notice; best-effort, never raises."""
+    try:
+        rows = rest("GET", f"news_items?select=title&id=eq.{news_id}") or []
+        return (rows[0].get("title") or "").strip() if rows else ""
+    except Exception as e:  # noqa: BLE001 - a notice must never fail a live post
+        log(f"news_title lỗi: {e}")
+        return ""
+
+
 def failure_streak(path: Path, failed: bool) -> int:
     """Count consecutive posting failures in a small state file; success resets it."""
     if not failed:
@@ -302,8 +326,11 @@ def post_one(page: dict, item: dict) -> int:
                     "raw_response": {"via": "chrome", **res}})
         log(f"OK {res.get('permalink')}")
         failure_streak(FAIL_STREAK_FILE, False)
-        # 20/10/2026: successful posts are counted in the Grok Bot digest
-        # (fb_post_log); only failures message Telegram.
+        # 21/10/2026 (Cuong): every successful post messages Telegram at once
+        # again; the Grok Bot digest still counts fb_post_log.
+        tele(posted_notice(f"Facebook · {page['name']}",
+                           news_title(news_id) or caption or item.get("slug") or "",
+                           res.get("permalink")))
         return 0
 
     # failed (không phải pending) để worker/lượt sau có thể thử lại; lỗi lạ thì báo.

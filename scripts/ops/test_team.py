@@ -537,6 +537,20 @@ class TelegramPolicyTests(unittest.TestCase):
         self.assertEqual(fb.failure_streak(path, True), 1)
         self.assertEqual(fb.failure_streak(path, True), fb.FAIL_STREAK_ALERT)
 
+    def test_successful_post_notice_is_labelled_with_platform_headline_and_link(self):
+        import fb_browser_post as fb
+        msg = fb.posted_notice("Facebook · TA Pickleball", "\n  Dallas & Brooklyn vào bán kết\nchi tiết...",
+                               "https://www.facebook.com/tapickleballvn/posts/1")
+        self.assertEqual(msg.splitlines(), ["Đã đăng bài", "Facebook · TA Pickleball",
+                                            "Dallas & Brooklyn vào bán kết",
+                                            "https://www.facebook.com/tapickleballvn/posts/1"])
+        import notify_telegram as nt
+        self.assertTrue(nt.labelled(msg, False).startswith("[Grok Bot] Đã đăng bài\n"))
+        x = fb.posted_notice("X · @thepicklehub", "a" * 300, None, "⚠️ Đã đăng nhưng — CHƯA reply link: x")
+        lines = x.splitlines()
+        self.assertEqual(len(lines[2]), 200)
+        self.assertTrue(lines[-1].startswith("⚠️"))
+
     def test_evening_digest_has_no_milestones_and_survives_feed_errors(self):
         with patch.object(team, "command", return_value=(1, "", "")), \
              patch.object(team, "rest", side_effect=urllib.error.URLError("down")):
