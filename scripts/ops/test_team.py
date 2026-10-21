@@ -656,5 +656,32 @@ class SocialPromoFilterTests(unittest.TestCase):
         self.assertEqual(calls[0][2], "approved")
 
 
+class FbBrowserScheduleTests(unittest.TestCase):
+    """21/10/2026: TA Pickleball posted 8 times in 40 min while ThePickleHub starved."""
+
+    def test_page_that_waited_longest_goes_first(self):
+        import fb_browser_post as fb
+        from datetime import datetime, timezone
+        last = {"ta-pickleball": datetime(2026, 10, 21, 1, 30, tzinfo=timezone.utc),
+                "thepicklehub": datetime(2026, 10, 20, 12, 58, tzinfo=timezone.utc)}
+        self.assertEqual([p["key"] for p in fb.page_order(fb.PAGES, last)][0], "thepicklehub")
+        self.assertEqual(fb.page_order(fb.PAGES, {"ta-pickleball": last["ta-pickleball"]})[0]["key"],
+                         "thepicklehub")
+
+    def test_gap_and_daily_cap_hold_a_page_back(self):
+        import fb_browser_post as fb
+        from datetime import datetime, timedelta, timezone
+        now = datetime(2026, 10, 21, 1, 40, tzinfo=timezone.utc)
+        recent = {"ta-pickleball": now - timedelta(minutes=5), "thepicklehub": now - timedelta(hours=13)}
+        with patch.object(fb, "MIN_GAP_MIN", 60), patch.object(fb, "DAILY_CAP", 12), \
+             patch.object(fb, "last_posted", side_effect=lambda p: recent[p["key"]]), \
+             patch.object(fb, "posted_today", return_value=0):
+            self.assertEqual([p["key"] for p in fb.due_pages(fb.PAGES, now)], ["thepicklehub"])
+        with patch.object(fb, "MIN_GAP_MIN", 60), patch.object(fb, "DAILY_CAP", 12), \
+             patch.object(fb, "last_posted", return_value=None), \
+             patch.object(fb, "posted_today", side_effect=lambda p: 12 if p["key"] == "ta-pickleball" else 3):
+            self.assertEqual([p["key"] for p in fb.due_pages(fb.PAGES, now)], ["thepicklehub"])
+
+
 if __name__ == "__main__":
     unittest.main()

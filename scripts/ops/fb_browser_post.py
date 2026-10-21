@@ -57,8 +57,12 @@ PAGES = [
 ]
 ICT = timezone(timedelta(hours=7))
 WINDOW = (7, 21)  # giờ VN, giống FB_POST_WINDOW_VN của worker
-# Cuong 18/10: có bài là đăng, không giãn nhịp. Đặt env >0 nếu cần giãn lại.
-MIN_GAP_MIN = int(os.environ.get("FB_BROWSER_MIN_GAP_MINUTES", "0"))
+# 18/10 Cuong chose "có bài là đăng, không giãn nhịp" (gap 0). 21/10 that burst
+# 8 TA posts in 40 min while ThePickleHub never got a turn, so each page now
+# waits MIN_GAP_MIN after its own last post and stops at DAILY_CAP per VN day.
+# Set FB_BROWSER_MIN_GAP_MINUTES=0 / FB_BROWSER_DAILY_CAP=0 to go back.
+MIN_GAP_MIN = int(os.environ.get("FB_BROWSER_MIN_GAP_MINUTES", "60"))
+DAILY_CAP = int(os.environ.get("FB_BROWSER_DAILY_CAP", "12"))
 # ponytail: trần mỗi lượt để một lượt không chạy vô hạn khi backlog lớn.
 MAX_PER_RUN = 10
 CLAUDE_TIMEOUT_S = 15 * 60
@@ -180,13 +184,49 @@ def parse_ts(value: str) -> datetime:
     return datetime.fromisoformat(value)
 
 
-def gap_ok(page: dict) -> bool:
+def last_posted(page: dict) -> datetime | None:
     rows = rest("GET", f"fb_post_log?select=posted_at&status=eq.posted&page_id=eq.{page['id']}"
-                       "&order=posted_at.desc&limit=1") or []
-    if not rows or not rows[0]["posted_at"]:
+                       "&posted_at=not.is.null&order=posted_at.desc&limit=1") or []
+    return parse_ts(rows[0]["posted_at"]) if rows and rows[0].get("posted_at") else None
+
+
+def posted_today(page: dict) -> int:
+    start = datetime.now(ICT).replace(hour=0, minute=0, second=0, microsecond=0)
+    since = start.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    rows = rest("GET", f"fb_post_log?select=id&status=eq.posted&page_id=eq.{page['id']}"
+                       f"&posted_at=gte.{since}") or []
+    return len(rows)
+
+
+def gap_ok(page: dict, last: datetime | None = None, now: datetime | None = None) -> bool:
+    last = last if last is not None else last_posted(page)
+    if last is None:
         return True
-    last = parse_ts(rows[0]["posted_at"])
-    return datetime.now(timezone.utc) - last >= timedelta(minutes=MIN_GAP_MIN)
+    now = now or datetime.now(timezone.utc)
+    return now - last >= timedelta(minutes=MIN_GAP_MIN)
+
+
+def page_order(pages: list, last: dict) -> list:
+    """Page that waited longest goes first; a page that never posted beats all.
+
+    The old loop drained TA Pickleball completely before ThePickleHub was even
+    asked, so a TA backlog starved the other page for a whole day (20-21/10).
+    """
+    floor = datetime.min.replace(tzinfo=timezone.utc)
+    return sorted(pages, key=lambda p: last.get(p["key"]) or floor)
+
+
+def due_pages(pages: list, now: datetime | None = None) -> list:
+    """Pages allowed to post now, oldest-last-post first (gap + daily cap)."""
+    last = {p["key"]: last_posted(p) for p in pages}
+    out = []
+    for p in page_order(pages, last):
+        if not gap_ok(p, last[p["key"]], now):
+            continue
+        if DAILY_CAP > 0 and posted_today(p) >= DAILY_CAP:
+            continue
+        out.append(p)
+    return out
 
 
 def next_item(page: dict) -> dict | None:
@@ -313,17 +353,23 @@ def main() -> int:
         for page in PAGES:
             print(page["key"], json.dumps(next_item(page), ensure_ascii=False, indent=2))
         return 0
-    # Lần lượt từng page; lỗi ở page nào cũng dừng cả job (Chrome/FB dùng chung).
-    for page in PAGES:
-        for _ in range(MAX_PER_RUN):
-            if not (WINDOW[0] <= datetime.now(ICT).hour < WINDOW[1]) or not gap_ok(page):
-                break
-            item = next_item(page)
-            if not item:
-                log(f"[{page['key']}] không có bài mới")
-                break
-            if post_one(page, item) != 0:
-                return 1
+    # Round-robin: each pass offers one post to every due page, the page that
+    # waited longest first. Lỗi ở page nào cũng dừng cả job (Chrome/FB dùng chung).
+    empty: set = set()
+    for _ in range(MAX_PER_RUN):
+        if not (WINDOW[0] <= datetime.now(ICT).hour < WINDOW[1]):
+            break
+        pages = [p for p in due_pages(PAGES) if p["key"] not in empty]
+        if not pages:
+            break
+        page = pages[0]
+        item = next_item(page)
+        if not item:
+            log(f"[{page['key']}] không có bài mới")
+            empty.add(page["key"])
+            continue
+        if post_one(page, item) != 0:
+            return 1
     return 0
 
 
