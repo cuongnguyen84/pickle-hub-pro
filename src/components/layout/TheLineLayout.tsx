@@ -642,7 +642,7 @@ export const TheLineLayout = ({ title, exactTitle, description, noindex = false,
             )}
           </button>
 
-          <Link to="/tools" className="tl-nav-cta">
+          <Link to={localizedPath("/tools", language)} className="tl-nav-cta">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
               <path d="M12 5v14M5 12h14" />
             </svg>
@@ -1040,24 +1040,24 @@ export const TheLineLayout = ({ title, exactTitle, description, noindex = false,
             <div className="tl-foot-col">
               <h4>{language === "vi" ? "XEM" : "Watch"}</h4>
               <ul>
-                <li><Link to="/live">{language === "vi" ? "Sân trực tiếp" : "Live courts"}</Link></li>
-                <li><Link to="/videos">{language === "vi" ? "Video" : "Videos"}</Link></li>
-                <li><Link to="/tournaments">{language === "vi" ? "Lịch thi đấu" : "Schedule"}</Link></li>
+                <li><Link to={localizedPath("/live", language)}>{language === "vi" ? "Sân trực tiếp" : "Live courts"}</Link></li>
+                <li><Link to={localizedPath("/videos", language)}>{language === "vi" ? "Video" : "Videos"}</Link></li>
+                <li><Link to={localizedPath("/tournaments", language)}>{language === "vi" ? "Lịch thi đấu" : "Schedule"}</Link></li>
               </ul>
             </div>
             <div className="tl-foot-col">
               <h4>{language === "vi" ? "THI ĐẤU" : "Compete"}</h4>
               <ul>
-                <li><Link to="/tournaments">{language === "vi" ? "Giải đấu" : "Tournaments"}</Link></li>
-                <li><Link to={language === "vi" ? "/vi/tools" : "/tools"}>{language === "vi" ? "Công cụ" : "Bracket Lab"}</Link></li>
-                <li><Link to="/forum">{language === "vi" ? "Diễn đàn" : "Forum"}</Link></li>
+                <li><Link to={localizedPath("/tournaments", language)}>{language === "vi" ? "Giải đấu" : "Tournaments"}</Link></li>
+                <li><Link to={localizedPath("/tools", language)}>{language === "vi" ? "Công cụ" : "Bracket Lab"}</Link></li>
+                <li><Link to={localizedPath("/forum", language)}>{language === "vi" ? "Diễn đàn" : "Forum"}</Link></li>
               </ul>
             </div>
             <div className="tl-foot-col">
               <h4>{language === "vi" ? "ĐỌC" : "Read"}</h4>
               <ul>
                 <li><Link to={language === "vi" ? "/vi/blog" : "/blog"}>{language === "vi" ? "Bài viết" : "Stories"}</Link></li>
-                <li><Link to="/news">{language === "vi" ? "Tin tức" : "News"}</Link></li>
+                <li><Link to={localizedPath("/news", language)}>{language === "vi" ? "Tin tức" : "News"}</Link></li>
               </ul>
             </div>
             {/* Chân trang là chỗ người mua đến sau khi cuộn hết một trang sản
@@ -1067,7 +1067,7 @@ export const TheLineLayout = ({ title, exactTitle, description, noindex = false,
               <h4>{language === "vi" ? "MUA SẮM" : "Shop"}</h4>
               <ul>
                 <li><Link to={localizedPath("/shop", language)}>{language === "vi" ? "Chợ đồ pickleball" : "Marketplace"}</Link></li>
-                <li><Link to="/shop/sell">{language === "vi" ? "Mở shop" : "Sell with us"}</Link></li>
+                <li><Link to={localizedPath("/shop/sell", language)}>{language === "vi" ? "Mở shop" : "Sell with us"}</Link></li>
               </ul>
             </div>
           </div>
@@ -1121,11 +1121,11 @@ export const TheLineLayout = ({ title, exactTitle, description, noindex = false,
                 {language === "vi" ? "Liên hệ" : "Contact"}
               </Link>
               <span aria-hidden="true">·</span>
-              <Link to="/privacy" style={{ color: "inherit", textDecoration: "none" }}>
+              <Link to={localizedPath("/privacy", language)} style={{ color: "inherit", textDecoration: "none" }}>
                 {language === "vi" ? "Quyền riêng tư" : "Privacy"}
               </Link>
               {" · "}
-              <Link to="/terms" style={{ color: "inherit", textDecoration: "none" }}>
+              <Link to={localizedPath("/terms", language)} style={{ color: "inherit", textDecoration: "none" }}>
                 {language === "vi" ? "Điều khoản" : "Terms"}
               </Link>
             </span>

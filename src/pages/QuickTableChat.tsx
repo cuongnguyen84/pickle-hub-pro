@@ -58,8 +58,8 @@ const COPY = {
     loginDesc: "Kể cho trợ lý nghe về giải hoặc dán danh sách từ Zalo — vài giây là có bảng đấu.",
     toolLabel: "Chia bảng",
     welcome: "Chào bạn 👋 Kể mình nghe về giải nhé, ví dụ: “Giải CLB tối thứ 7, 16 đôi, chia 4 bảng”. Hoặc dán danh sách, gửi link Google Sheet, tải vài ảnh hay một file Excel.",
-    unit: (d: Draft): string => (d.is_doubles === false ? "VĐV" : "đội"),
-    format: "Giải đánh đôi hay đánh đơn?",
+    unit: (d: Draft): string => (d.is_doubles === false ? "người" : "đội"),
+    format: "Đánh đôi hay đánh đơn? Đôi là 2 người một đội, đơn là từng vận động viên.",
     doubles: "Đôi", singles: "Đơn",
     count: (u: string) => `Có bao nhiêu ${u}? Hoặc dán luôn danh sách vào đây.`,
     pasteList: "Dán danh sách",
@@ -69,7 +69,7 @@ const COPY = {
     fileTooBig: "File lớn quá, tối đa 4 MB.",
     fileTooMany: "Mỗi lần tối đa 4 ảnh. Mình lấy 4 ảnh đầu; ảnh còn lại gửi tiếp cũng được.",
     oneFile: "Mỗi lần một file bảng tính. Ảnh thì chọn nhiều một lúc.",
-    fileNotList: "Mình chưa thấy hai tên đứng cạnh nhau. Đánh đôi thì mỗi dòng hai VĐV, kiểu Nam - Hùng hoặc hai cột tên. Không cần cột tên đội.",
+    fileNotList: "Mình chưa thấy hai tên đứng cạnh nhau. Đánh đôi thì mỗi dòng hai người, kiểu Nam - Hùng hoặc hai cột tên. Không cần cột tên đội.",
     sheetPrivate: "Mình không mở được Google Sheet này. Hãy để quyền “Bất kỳ ai có đường liên kết”, rồi gửi lại link. Hoặc tải file Excel xuống.",
     sheetUnreadable: "Link này không mở được, hoặc sheet đang trống.",
     sheetLabel: "📊 Google Sheet",
@@ -91,23 +91,21 @@ const COPY = {
     groupsInvalid: (k: number, u: string) => `Không chia được ${k} bảng (mỗi bảng 3–8 ${u}, tối đa 16 bảng). Chọn một cách dưới đây nhé:`,
     groupsBig: " Giải đông, nhiều bảng sẽ xong nhanh hơn.",
     groupLabel: (o: GroupOption) => (o.groupCount === 1 ? "1 bảng vòng tròn" : `${o.groupCount} bảng × ${o.sizes[0] === o.sizes[o.sizes.length - 1] ? o.sizes[0] : `${o.sizes[o.sizes.length - 1]}–${o.sizes[0]}`}`),
-    groupSub: (o: GroupOption) =>
+    groupSub: (o: GroupOption, u: string) =>
       o.groupCount === 1
-        ? "Ai cũng gặp nhau, xếp hạng theo thắng–thua"
-        : o.wildcards === 0
-          ? `2 đội đứng đầu mỗi bảng vào ${ROUND_VI[o.playoffSize] ?? "vòng knockout"}`
-          : `Vòng knockout cần thêm ${o.wildcards} đội hạng 3`,
+        ? "Ai cũng gặp nhau, xếp theo thắng và thua"
+        : `2 ${u} đứng đầu mỗi bảng đi tiếp`,
     recommended: "Khuyên dùng",
-    series: "Hết vòng bảng, đội đi tiếp đánh thế nào? Một bảng đấu lấy đúng 2 đội đứng đầu mỗi bảng. Nhiều bảng đấu: đội mạnh vào bảng đầu, đội còn lại vào bảng sau — số lẻ thì đội xếp cao được nghỉ vòng đầu. Hoặc mỗi thứ hạng một bảng đấu riêng.",
-    seriesOne: "Một bảng đấu", seriesOneSub: "Đúng 2 đội đứng đầu mỗi bảng",
-    seriesMany: (names: string[]) => `${names.length} bảng đấu: ${names.join(" + ")}`,
-    seriesByRank: "Mỗi thứ hạng một bảng đấu",
-    optStyle: (s: SeriesStyle): string => (s === "medal" ? "Đổi tên: bảng A, B" : "Đổi tên: Vàng, Bạc"),
-    roster: (u: string) => `Có danh sách ${u} chưa? Dán vào là mình xếp bảng luôn.`,
-    pasteNow: "Dán ngay",
-    openRegistration: "Mở cho người chơi tự đăng ký",
-    later: "Để sau, tự nhập",
-    paste: (d: Draft) => `Dán danh sách vào ô bên dưới nhé — mỗi dòng 1 ${d.is_doubles === false ? "VĐV" : "đội, kiểu “Nam - Hùng”"}. Ảnh (nhiều ảnh một lần), file Excel hoặc link Google Sheet cũng được.`,
+    series: (u: string) => `Hết vòng bảng thì sao? Một vòng loại: lấy 2 ${u} đứng đầu mỗi bảng. Nhiều vòng: ${u} mạnh vào vòng đầu, ${u} còn lại vào vòng sau. Số không chẵn thì ${u} xếp cao được nghỉ vòng đầu.`,
+    seriesOne: "Một vòng loại", seriesOneSub: (u: string) => `2 ${u} đứng đầu mỗi bảng đi tiếp`,
+    seriesMany: (names: string[]) => `${names.length} vòng: ${names.join(" + ")}`,
+    seriesByRank: "Mỗi thứ hạng một vòng riêng",
+    optStyle: (s: SeriesStyle): string => (s === "medal" ? "Đổi tên: Nhánh 1, 2" : "Đổi tên: Vàng, Bạc"),
+    roster: (u: string) => `Bạn đã có tên từng ${u} chưa? Chưa có thì tạo giải rồi nhập sau.`,
+    pasteNow: "Dán danh sách tên",
+    openRegistration: "Để người chơi tự đăng ký",
+    later: "Tạo giải, nhập tên sau",
+    paste: (d: Draft) => `Dán danh sách vào ô bên dưới nhé — mỗi dòng 1 ${d.is_doubles === false ? "người" : "đội, kiểu “Nam - Hùng”"}. Ảnh (nhiều ảnh một lần), file Excel hoặc link Google Sheet cũng được.`,
     name: "Đặt tên giải là gì?",
     courtsQ: "Có bao nhiêu sân thi đấu? Mình sẽ tự xếp sân và giờ cho từng trận.",
     courtN: (k: number) => `${k} sân`,
@@ -122,10 +120,10 @@ const COPY = {
     resetOk: "Làm lại",
     customName: "Gõ tên khác ở ô bên dưới",
     options: "Gần xong rồi! Muốn thêm gì nữa không?",
-    optSeed: "Tách đội mạnh", optSets: (s: number) => (s === 1 ? "Mỗi trận 1 set" : `Thắng ${Math.ceil(s / 2)} trong ${s} set`), optTeam: "Tách đội cùng CLB",
+    optSeed: "Xếp người giỏi khác bảng", optSets: (s: number) => (s === 1 ? "Mỗi trận 1 set" : `Thắng ${Math.ceil(s / 2)} trong ${s} set`), optTeam: "Xếp cùng câu lạc bộ khác bảng",
     optDone: "Xong, xem lại",
-    hintSeed: (u: string) => `Gõ các ${u} mạnh theo thứ tự, ví dụ: “đội mạnh: Nam - Hùng, Tú - Long”. Họ sẽ vào các bảng khác nhau.`,
-    hintTeam: "Gõ những đội cùng CLB, ví dụ: “Nam - Hùng, Tú - Long cùng CLB Hà Đông”. Mình sẽ xếp họ vào các bảng khác nhau.",
+    hintSeed: (u: string) => `Gõ các ${u} giỏi theo thứ tự, ví dụ: “người giỏi: Nam, Hùng”. Họ sẽ vào các bảng khác nhau.`,
+    hintTeam: "Gõ những người cùng câu lạc bộ, ví dụ: “Nam, Hùng cùng câu lạc bộ Hà Đông”. Mình xếp họ vào các bảng khác nhau.",
     setsQ: "Mỗi trận đánh mấy set?",
     set1: "1 set", set3: "Thắng 2 trong 3 set", set5: "Thắng 3 trong 5 set",
     confirm: "Mọi thứ đã sẵn sàng. Kiểm tra lại rồi bấm Tạo giải nhé.",
@@ -144,15 +142,17 @@ const COPY = {
     pasted: (n: number) => `📋 Đã dán ${n} dòng`,
     showAll: "Xem hết", collapse: "Thu gọn",
     draft: "Bản nháp",
+    draftReady: "Đã đủ",
+    draftMissing: (n: number) => `Còn thiếu ${n}`,
     fFormat: "Thể thức", fCount: "Số lượng", fGroups: "Chia bảng", fRoster: "Danh sách", fName: "Tên giải", fExtra: "Tuỳ chọn",
     rosterReg: "Người chơi tự đăng ký", rosterLater: "Nhập sau",
     empty: "—",
     edit: "Sửa",
     removeDup: (n: number) => `Xoá ${n} dòng trùng`,
     addRow: "+ Thêm dòng",
-    p1: "VĐV 1", p2: "VĐV 2",
+    p1: "Người 1", p2: "Người 2",
     group: (i: number) => `Bảng ${GROUP_LETTERS[i]}`,
-    reshuffle: "Xáo lại bảng",
+    reshuffle: "Trộn lại bảng",
     create: "Tạo giải",
     creating: "Đang xếp bảng và lịch…",
     confirmReg: "Người chơi tự đăng ký qua link giải — bạn duyệt rồi xếp bảng sau.",
@@ -160,8 +160,8 @@ const COPY = {
     created: (name: string) => `🎉 Đã tạo “${name}”!`,
     openTable: "Mở giải",
     enterRoster: "Nhập danh sách",
-    copyLink: "Copy link",
-    copyZalo: "Copy tin nhắn Zalo",
+    copyLink: "Sao chép đường dẫn",
+    copyZalo: "Sao chép tin nhắn Zalo",
     copied: "Đã copy",
     another: "Tạo giải khác",
     rosterFailed: "Giải đã tạo nhưng chưa xếp được bảng. Mở trang nhập danh sách để thử lại.",
@@ -210,15 +210,13 @@ const COPY = {
     groupsInvalid: (k: number, u: string) => `${k} groups won't work (3–8 ${u} per group, up to 16 groups). Pick one of these:`,
     groupsBig: " Big field — more groups finish faster.",
     groupLabel: (o: GroupOption) => (o.groupCount === 1 ? "1 round-robin group" : `${o.groupCount} groups × ${o.sizes[0] === o.sizes[o.sizes.length - 1] ? o.sizes[0] : `${o.sizes[o.sizes.length - 1]}–${o.sizes[0]}`}`),
-    groupSub: (o: GroupOption) =>
+    groupSub: (o: GroupOption, u: string) =>
       o.groupCount === 1
         ? "Everyone plays everyone, ranked by wins"
-        : o.wildcards === 0
-          ? `Top 2 per group go straight to the ${ROUND_EN[o.playoffSize] ?? "playoff"}`
-          : `${ROUND_EN[o.playoffSize] ?? "Playoff"} needs ${o.wildcards} wildcard spots`,
+        : `Top 2 ${u} from each group go on`,
     recommended: "Recommended",
-    series: "After the groups, how many brackets? Series A takes each group's top 2; the next bracket takes everyone else, with byes for the best seeds when the count is uneven. Or one bracket per place: 1st to A, 2nd to B, 3rd to C.",
-    seriesOne: "1 bracket", seriesOneSub: "Only the top 2 of each group go to the playoff",
+    series: (u: string) => `After the groups, what next? One playoff takes the top 2 ${u} from each group. More than one: the stronger ${u} go to the first, everyone else to the next. If the count is uneven, the best ${u} rest the first round.`,
+    seriesOne: "One playoff", seriesOneSub: (u: string) => `Top 2 ${u} from each group go on`,
     seriesMany: (names: string[]) => `${names.length} brackets: ${names.join(" + ")}`,
     seriesByRank: "One bracket per place",
     optStyle: (s: SeriesStyle): string => (s === "medal" ? "Rename: Series A, B" : "Rename: Gold, Silver"),
@@ -263,6 +261,8 @@ const COPY = {
     pasted: (n: number) => `📋 Pasted ${n} lines`,
     showAll: "Show all", collapse: "Collapse",
     draft: "Draft",
+    draftReady: "Ready",
+    draftMissing: (n: number) => `${n} still missing`,
     fFormat: "Format", fCount: "Entries", fGroups: "Groups", fRoster: "List", fName: "Name", fExtra: "Options",
     rosterReg: "Players sign up", rosterLater: "Add later",
     empty: "—",
@@ -289,9 +289,6 @@ const COPY = {
     reload: "This chat is saved on this device — reloading won't lose it.",
   },
 };
-const ROUND_VI: Record<number, string> = { 4: "bán kết", 8: "tứ kết", 16: "vòng 1/8", 32: "vòng 1/16" };
-const ROUND_EN: Record<number, string> = { 4: "semifinals", 8: "quarterfinals", 16: "round of 16", 32: "round of 32" };
-
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 const QT_CHAT_CSS = `
@@ -407,6 +404,11 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   }, [getUserQuotaInfo]);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages, busy, slot, subMenu, created]);
+  // Trang giải là chunk riêng. Tải trước lúc người dùng sắp bấm "Mở giải",
+  // để không ngồi chờ spinner của lazy import.
+  useEffect(() => {
+    if (slot === "confirm" || created) void import("@/pages/QuickTableView");
+  }, [slot, created]);
 
   // Đổi chỗ / đổi tên giữ nguyên bảng. Đổi số bảng thì chia lại theo thứ tự hiện tại, không xáo.
   const rosterKey = JSON.stringify([draft.entries, draft.group_count]);
@@ -432,7 +434,8 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     setDraft(locked);
     setSubMenu(null);
     const q = questionFor(c, locked, nextSlot(locked));
-    setMessages((m) => [...m, { id: uid(), role: "bot", text: [ack?.trim(), q].filter(Boolean).join(" ") }]);
+    const text = [ack?.trim(), q].filter(Boolean).join(" ").replace(/\.\s+\./g, ".").replace(/[ \t]{2,}/g, " ");
+    setMessages((m) => [...m, { id: uid(), role: "bot", text }]);
   }, [c]);
 
   // Quay lại: ảnh chụp nháp + hội thoại trước mỗi lượt người dùng (chỉ trong phiên).
@@ -576,9 +579,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       const before = draft.entries?.length ?? 0;
       const entries = mergeRoster(draft.entries, incoming);
       const next = applyPatch(draft, { entries, roster_mode: "now" });
-      const fresh = entries.slice(before);
       let ack = rosterAck(c, c.unit(next), before, entries.length, incoming.length, next.entries);
-      if (fresh.length) ack += ` ${fresh.slice(0, 6).map(entryLabel).join(", ")}${fresh.length > 6 ? ` +${fresh.length - 6}` : ""}`;
       if (missed) ack += c.photoMissed(missed);
       advance(next, ack);
       return;
@@ -624,6 +625,11 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     if (created || quotaFull != null || busy) return [];
     if (failed) return [{ label: c.retry, onClick: () => send(failed, true) }];
     const n = entryCount(draft);
+    const switchFormat: Chip[] = draft.is_doubles === undefined ? [] : [
+      draft.is_doubles
+        ? { label: c.singles, sub: lang === "vi" ? "Đổi sang đánh đơn" : "Switch to singles", onClick: () => choose(c.singles, { is_doubles: false, pairing_done: false }) }
+        : { label: c.doubles, sub: lang === "vi" ? "Đổi sang đánh đôi" : "Switch to doubles", onClick: () => choose(c.doubles, { is_doubles: true }) },
+    ];
     switch (slot) {
       case "format":
         return [
@@ -665,12 +671,15 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           { label: c.upload, onClick: () => fileRef.current?.click() },
         ];
       case "groups":
-        return groupChoices(n).map((o) => ({
-          label: c.groupLabel(o),
-          sub: c.groupSub(o),
-          recommended: o.recommended,
-          onClick: () => choose(c.groupLabel(o), { group_count: o.groupCount }),
-        }));
+        return [
+          ...groupChoices(n).map((o) => ({
+            label: c.groupLabel(o),
+            sub: c.groupSub(o, unit),
+            recommended: o.recommended,
+            onClick: () => choose(c.groupLabel(o), { group_count: o.groupCount }),
+          })),
+          ...switchFormat,
+        ];
       case "series": {
         const style = draft.series_style ?? "series";
         const sizes = groupSizes(draft);
@@ -679,7 +688,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           const label = k === 1 ? c.seriesOne : c.seriesMany(names);
           return {
             label,
-            sub: k === 1 ? c.seriesOneSub : (seriesPlan(sizes, k) ?? []).map((sl, d) => seriesLine(names[d], sl, lang, unit)).join(" · "),
+            sub: k === 1 ? c.seriesOneSub(unit) : (seriesPlan(sizes, k) ?? []).map((sl, d) => seriesLine(names[d], sl, lang, unit)).join(" · "),
             recommended: k === seriesCap(draft),
             onClick: () => choose(label, { series: k, series_sizes: undefined, advance_per_group: undefined }),
           };
@@ -687,9 +696,10 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
         const ranks = rankSeriesSizes(sizes);
         const rankKey = ranks?.join();
         const already = ranks != null && bundled.some((_, i) => seriesPlan(sizes, i + 1)?.map((sl) => sl.size).join() === rankKey);
-        if (!ranks || already) return bundled;
+        if (!ranks || already) return [...bundled, ...switchFormat];
         return [
           ...bundled,
+          ...switchFormat,
           {
             label: c.seriesByRank,
             sub: ranks.map((n, d) => seriesLine(seriesName("series", d, lang), seriesSlot(n), lang, unit)).join(" · "),
@@ -702,6 +712,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           { label: c.pasteNow, onClick: () => choose(c.pasteNow, { roster_mode: "now" }) },
           { label: c.openRegistration, onClick: () => choose(c.openRegistration, { roster_mode: "registration" }) },
           { label: c.later, onClick: () => choose(c.later, { roster_mode: "later" }) },
+          ...switchFormat,
         ];
       case "paste":
         return [
@@ -916,7 +927,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
                   <span key={i} style={{ width: 8, height: 8, borderRadius: 4, background: i < filled ? "var(--tl-green)" : "var(--tl-border)" }} />
                 ))}
               </span>
-              <span style={{ fontSize: 13, color: "var(--tl-fg-3)" }}>{filled}/4</span>
+              <span style={{ fontSize: 13, color: "var(--tl-fg-3)" }}>{filled === 4 ? c.draftReady : c.draftMissing(4 - filled)}</span>
               <span style={{ flex: 1, textAlign: "left", fontSize: 13, color: "var(--tl-fg-2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {draft.name ?? ""}
               </span>
@@ -1045,7 +1056,7 @@ function questionFor(c: C, d: Draft, s: Slot): string {
     case "mismatch": return c.mismatch(d.entries!.length, d.player_count!, u);
     case "groups":
       return (d.group_count ? c.groupsInvalid(d.group_count, u) : c.groups(n, u)) + (n > 32 ? c.groupsBig : "");
-    case "series": return c.series;
+    case "series": return c.series(u);
     case "roster": return c.roster(u);
     case "paste": return c.paste(d);
     case "name": return c.name;
@@ -1091,7 +1102,10 @@ class UploadError extends Error {
 }
 
 function rosterAck(c: C, unit: string, before: number, after: number, incoming: number, entries?: Entry[]): string {
-  let ack = before === 0 ? c.received(after, unit) : after > before ? c.added(after - before, after, unit) : c.alreadyThere;
+  const shown = (entries ?? []).slice(0, 6).map(entryLabel);
+  const more = entries && entries.length > 6 ? ` +${entries.length - 6}` : "";
+  const preview = shown.length ? `: ${shown.join(", ")}${more}` : "";
+  let ack = before === 0 ? `${c.received(after, unit).replace(/\.$/, "")}${preview}.` : after > before ? c.added(after - before, after, unit) : c.alreadyThere;
   if (entries) {
     const dups = duplicateIndexes(entries).size;
     if (dups) ack += c.dupWarn(dups);

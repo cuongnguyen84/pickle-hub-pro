@@ -4,6 +4,8 @@ import {
   applySpokenEdit,
   dropInventedRoster,
   factualAck,
+  findGroupOption,
+  messageNeedsModel,
   keepOrAssign,
   lockAdvance,
   nextSlot,
@@ -13,6 +15,7 @@ import {
   type Draft,
   type Entry,
 } from "@/lib/quick-table-chat";
+import { generateCircleMethodMatches, scheduleMatches } from "@/lib/round-robin";
 
 const teams = (names: string[]): Entry[] => names.map((p1) => ({ p1 }));
 
@@ -52,23 +55,23 @@ describe("lockAdvance", () => {
 describe("applySpokenEdit", () => {
   const start: Draft = {
     is_doubles: false,
-    player_count: 4,
-    group_count: 3,
-    entries: teams(["An", "Bình", "Chi", "Dũng"]),
+    player_count: 8,
+    group_count: 1,
+    entries: teams(["An", "Bình", "Chi", "Dũng", "Em", "Phong", "Giang", "Hà"]),
   };
 
   it("swaps two players and a later regroup keeps that order", () => {
     const swapped = applySpokenEdit(start, "đổi chỗ An với Bình");
-    expect(swapped?.entries?.map((e) => e.p1)).toEqual(["Bình", "An", "Chi", "Dũng"]);
-    expect(swapped?.group_count).toBe(3);
+    expect(swapped?.entries?.map((e) => e.p1)).toEqual(["Bình", "An", "Chi", "Dũng", "Em", "Phong", "Giang", "Hà"]);
+    expect(swapped?.group_count).toBe(1);
     const regrouped = applySpokenEdit(swapped!, "chia 2 bảng");
-    expect(regrouped?.entries?.map((e) => e.p1)).toEqual(["Bình", "An", "Chi", "Dũng"]);
+    expect(regrouped?.entries?.map((e) => e.p1)).toEqual(["Bình", "An", "Chi", "Dũng", "Em", "Phong", "Giang", "Hà"]);
     expect(regrouped?.group_count).toBe(2);
   });
 
   it("renames without reshuffling the rest", () => {
     const next = applySpokenEdit(start, "đổi tên Chi thành Lan");
-    expect(next?.entries?.map((e) => e.p1)).toEqual(["An", "Bình", "Lan", "Dũng"]);
+    expect(next?.entries?.map((e) => e.p1)).toEqual(["An", "Bình", "Lan", "Dũng", "Em", "Phong", "Giang", "Hà"]);
   });
 });
 
@@ -105,6 +108,81 @@ describe("factual replies", () => {
     expect(patch.entries).toBeUndefined();
     expect(patch.player_count).toBeUndefined();
     expect(patch.group_count).toBeUndefined();
+  });
+});
+
+describe("opening sentence", () => {
+  const text = "Giải TEST Grok 1, 6 người đánh đơn, 1 bảng, 2 sân, đánh vòng tròn";
+  const bare = "giai TEST Grok 1, 6 nguoi danh don, 1 bang, 2 san, danh vong tron";
+
+  it("keeps the name, singles, one group and two courts", () => {
+    for (const line of [text, bare]) {
+      const facts = readUserFacts(line);
+      expect(facts.name).toBe("TEST Grok 1");
+      expect(facts.is_doubles).toBe(false);
+      expect(facts.player_count).toBe(6);
+      expect(facts.group_count).toBe(1);
+      expect(facts.courts).toEqual([1, 2]);
+      expect(facts.time_done).toBe(true);
+      expect(facts.start_time).toBeUndefined();
+      expect(messageNeedsModel(line)).toBe(false);
+    }
+  });
+
+  it("accepts one group of 6 and does not claim a split it rejected", () => {
+    const next = applySpokenEdit({}, text)!;
+    expect(next.group_count).toBe(1);
+    expect(next.name).toBe("TEST Grok 1");
+    expect(findGroupOption(6, 1)?.sizes).toEqual([6]);
+    expect(nextSlot(next)).toBe("roster");
+    const ack = factualAck({}, next, "vi", text);
+    expect(ack).toContain("Đã chia 1 bảng");
+    expect(ack).toContain("TEST Grok 1");
+    expect(ack).toContain("6 người");
+    expect(ack).not.toContain("Không chia được");
+    expect(ack).not.toContain("VĐV");
+    expect(ack).not.toMatch(/\.\s+\./);
+    const ids = ["An", "Bình", "Chi", "Dũng", "Em", "Phong"];
+    const matches = generateCircleMethodMatches(ids).map((m, i) => ({
+      matchId: `m${i}`, player1: m.player1, player2: m.player2, groupIndex: 0,
+    }));
+    const sched = scheduleMatches(matches, next.courts!, 1, null);
+    expect(new Set(sched.map((s) => s.court))).toEqual(new Set([1, 2]));
+  });
+
+  it("does not store 3 groups of 6 people, and does not say it did", () => {
+    const line = "6 người, 3 bảng";
+    const next = applySpokenEdit({ is_doubles: false }, line)!;
+    expect(next.group_count).toBeUndefined();
+    const ack = factualAck({ is_doubles: false }, next, "vi", line);
+    expect(ack).toContain("Không chia được 3 bảng");
+    expect(ack).not.toContain("Đã chia");
+    const again = applySpokenEdit(next, line)!;
+    const second = factualAck(next, again, "vi", line);
+    expect(second).toContain("Không chia được 3 bảng");
+    expect(second).not.toBe("Bản nháp chưa đổi.");
+  });
+
+  it("reads 3 groups of 6 as 18 people", () => {
+    const next = applySpokenEdit({}, "18 người đánh đơn, 3 bảng, mỗi bảng 6 người")!;
+    expect(next.player_count).toBe(18);
+    expect(next.group_count).toBe(3);
+    expect(findGroupOption(18, 3)?.sizes).toEqual([6, 6, 6]);
+    const ack = factualAck({}, next, "vi", "18 người đánh đơn, 3 bảng, mỗi bảng 6 người");
+    expect(ack).toContain("Đã chia 3 bảng");
+    expect(ack).not.toContain("Không chia được");
+  });
+
+  it("lists the names it actually received", () => {
+    const line = "An\nBình\nChi\nDũng\nEm\nPhong";
+    const entries = line.split("\n").map((p1) => ({ p1 }));
+    const next = applyPatch({ is_doubles: false }, { entries });
+    const ack = factualAck({ is_doubles: false }, next, "vi", line);
+    expect(ack).toContain("An");
+    expect(ack).toContain("Phong");
+    expect(ack).not.toMatch(/\.\s+\./);
+    const reply = replyFromDraft({ is_doubles: false }, next, "Đã nhận 6 người.", "vi", line);
+    expect(reply).not.toMatch(/\.\s+\./);
   });
 });
 

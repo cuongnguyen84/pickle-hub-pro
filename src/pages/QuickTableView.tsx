@@ -132,11 +132,13 @@ const QuickTableView = () => {
   const loadData = useCallback(async () => {
     if (!shareId) return;
     const data = await getTableByShareId(shareId);
-    if (data) {
+      if (data) {
       setTable(data.table);
       setGroups(data.groups);
       setPlayers(data.players);
       setMatches(data.matches);
+      // Hiện bảng ngay. Đăng ký là truy vấn thêm, không được giữ màn "Đang tải".
+      setLoading(false);
 
       if (data.table.requires_registration && user) {
         if (data.table.is_doubles) {
@@ -893,7 +895,7 @@ const QuickTableView = () => {
 
         <header className="tl-page-head">
           <div className="kicker">
-            ◆ {table.format === 'round_robin' ? (language === 'vi' ? 'Vòng bảng' : 'Round robin') : (language === 'vi' ? 'Vòng knockout' : 'Playoff')}
+            ◆ {table.format === 'round_robin' ? (language === 'vi' ? 'Vòng bảng' : 'Round robin') : (language === 'vi' ? 'Vòng loại trực tiếp' : 'Playoff')}
             <span style={{ color: 'var(--tl-fg-4)', margin: '0 8px' }}>·</span>
             {players.length} {t.quickTable.players}
             {groups.length > 0 && (
@@ -997,7 +999,7 @@ const QuickTableView = () => {
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <Button type="button" variant="outline" onClick={copyShareUrl} style={{ minHeight: 44 }}>{language === 'vi' ? 'Sao chép link' : 'Copy link'}</Button>
               <Button variant="outline" asChild style={{ minHeight: 44 }}>
-                <a href={`https://zalo.me/share/url?url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer">{t.quickTable.view.shareZalo}</a>
+                <a href={`https://sp.zalo.me/share?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(table.name)}`} target="_blank" rel="noopener noreferrer">{t.quickTable.view.shareZalo}</a>
               </Button>
             </div>
           </section>

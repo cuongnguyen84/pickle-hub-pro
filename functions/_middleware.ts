@@ -1326,7 +1326,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v136 (2026-10-20): the chat guide covers several photos and a Google Sheet link.
   // v137 (2026-10-20): the chat-draw guide hero has a 768w card, so its
   // article <img> now includes that srcset.
-  const cacheKey = `pr:v137:${url.pathname}`;
+  // v138 (2026-10-21): quick-table share cards name the tournament in plain
+  // Vietnamese and declare the real 1024×1024 preview image size.
+  const cacheKey = `pr:v138:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
@@ -1625,7 +1627,7 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string, accep
 
   // Tool instances (noindex)
   match = path.match(/^\/tools\/quick-tables\/([^/]+)$/);
-  if (match) return await renderQuickTable(supabase, match[1], siteUrl);
+  if (match) return await renderQuickTable(supabase, match[1], siteUrl, { pageUrl: `${siteUrl}${rawPath}`, lang });
 
   match = path.match(/^\/tools\/team-match\/([^/]+)$/);
   if (match) return await renderTeamMatch(supabase, match[1], siteUrl);
