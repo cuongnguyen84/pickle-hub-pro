@@ -104,9 +104,18 @@ def summarise(feed):
             win, lose = split(m)
             if win.get("seed") and lose.get("seed") and lose["seed"] <= 8 and win["seed"] - lose["seed"] >= 8:
                 upsets.append((m["roundLabel"], win, lose))
+        # The last round can pair a gold match with a bronze match. Name the
+        # champion from the single completed gold-labelled match, not from
+        # "whatever match sits at the highest round number".
+        gold_labels = {"Finals", "Final", "Gold Medal Match"}
+        gold = [m for m in ms if m["roundLabel"] in gold_labels and m["status"] == "final"]
+        gold_top = [m for m in gold if m["roundNumber"] == max(x["roundNumber"] for x in gold)] if gold else []
         top = max(rounds)[0] if rounds else 0
         finals = [m for m in ms if m["roundNumber"] == top and m["status"] == "final"]
-        champion = split(finals[0])[0] if len(rounds) and not pending and len(finals) == 1 else None
+        if len(gold_top) == 1:
+            champion = split(gold_top[0])[0]
+        else:
+            champion = split(finals[0])[0] if len(rounds) and not pending and len(finals) == 1 else None
         lineup = [m for m in ms if nxt and m["roundNumber"] == nxt[0] and known(m)]
         out[div] = {"done": done, "next": nxt[1] if nxt else None, "lineup": lineup, "upsets": upsets,
                     "champion": champion, "live": sum(m["status"] == "live" for m in ms)}
@@ -139,6 +148,63 @@ def vn_lines(feed, vi):
             state = ("đang thi đấu với" if m["status"] == "live" else "gặp") if vi else ("playing" if m["status"] == "live" else "next faces")
             lines.append(f"{div}, {rnd}: {who(me, vi)} {state} {who(opp, vi)}.")
     return lines
+
+
+def _doubles_finals(feed):
+    """(won_wd, won_mx) once both of Waters' doubles finals are final, else None."""
+    won = []
+    for div in ("Women's Doubles", "Mixed Doubles"):
+        rows = [m for m in feed["matches"] if m["division"] == div and m["roundLabel"] in ("Finals", "Final", "Gold Medal Match")
+                and any(EVENT["tracker"] in t["players"] for t in m["teams"])]
+        if len(rows) != 1 or rows[0]["status"] != "final":
+            return None
+        me = next(t for t in rows[0]["teams"] if EVENT["tracker"] in t["players"])
+        won.append(bool(me["winner"]))
+    return tuple(won)
+
+
+def title_200(feed, vi):
+    """Whether Waters reached career title 200. None until both doubles finals are final.
+
+    The standing editorial frame (she arrived two doubles titles away, and she
+    is not playing singles) plus the two final results is the whole claim.
+    """
+    outcome = _doubles_finals(feed)
+    if outcome is None:
+        return ""
+    wd, mx = outcome
+    if wd and mx:
+        return ("Cô vô địch cả đôi nữ lẫn đôi nam nữ ở Las Vegas, tức danh hiệu thứ 200 trên PPA Tour." if vi else
+                "She won both doubles titles in Las Vegas, which is career title No. 200 on the PPA Tour.")
+    if wd and not mx:
+        return ("Cô vô địch đôi nữ và thua chung kết đôi nam nữ, nên danh hiệu thứ 200 vẫn còn thiếu một danh hiệu đôi." if vi else
+                "She won the women's doubles title and lost the mixed doubles final, so career title No. 200 is still one doubles title away.")
+    if mx and not wd:
+        return ("Cô vô địch đôi nam nữ và thua chung kết đôi nữ, nên danh hiệu thứ 200 vẫn còn thiếu một danh hiệu đôi." if vi else
+                "She won the mixed doubles title and lost the women's doubles final, so career title No. 200 is still one doubles title away.")
+    return ("Cô không vô địch nội dung đôi nào ở Las Vegas, nên danh hiệu thứ 200 vẫn còn thiếu hai danh hiệu." if vi else
+            "She won neither doubles title in Las Vegas, so career title No. 200 is still two titles away.")
+
+
+def meta_200(feed):
+    """Short SERP descriptions once the doubles finals are in. Empty until then."""
+    outcome = _doubles_finals(feed)
+    if outcome is None:
+        return "", ""
+    wd, mx = outcome
+    if wd and mx:
+        en = "Final Rate Las Vegas Open 2026 results: five champions. Anna Leigh Waters won both doubles titles, career No. 200."
+        vi = "Kết quả chung cuộc PPA Las Vegas Open 2026. Anna Leigh Waters vô địch cả hai nội dung đôi, cán mốc danh hiệu 200."
+    elif wd:
+        en = "Final Rate Las Vegas Open 2026 results: five champions. Anna Leigh Waters won women's doubles, one short of title 200."
+        vi = "Kết quả chung cuộc PPA Las Vegas Open 2026. Anna Leigh Waters vô địch đôi nữ, thua đôi nam nữ, chưa cán mốc 200."
+    elif mx:
+        en = "Final Rate Las Vegas Open 2026 results: five champions. Anna Leigh Waters won mixed doubles, one short of title 200."
+        vi = "Kết quả chung cuộc PPA Las Vegas Open 2026. Anna Leigh Waters vô địch đôi nam nữ, thua đôi nữ, chưa cán mốc 200."
+    else:
+        en = "Final Rate Las Vegas Open 2026 results: five champions. Anna Leigh Waters won neither doubles title, still short of No. 200."
+        vi = "Kết quả chung cuộc PPA Las Vegas Open 2026. Anna Leigh Waters không vô địch nội dung đôi nào, chưa cán mốc 200."
+    return en, vi
 
 
 def tracker_lines(feed, vi):
@@ -190,11 +256,14 @@ def build_pkg(feed, now):
 
     tl_en, tl_vi = tracker_lines(feed, False), tracker_lines(feed, True)
     vn_en, vn_vi = vn_lines(feed, False), vn_lines(feed, True)
+    t200_en, t200_vi = title_200(feed, False), title_200(feed, True)
     en_sections = [
         {"heading": f"{EVENT['name']} results: where every draw stands",
          "content": f"Last updated: {stamp_en}.\n\n"
                     f"The {EVENT['name']} runs {EVENT['dates_en']} at the {EVENT['venue']}, a PPA Tour Open worth 1,000 ranking points per title. "
-                    f"This ThePickleHub results page is updated every day from the official PPA Tour scores: {stage_en}.\n\n"
+                    f"This ThePickleHub results page is updated every day from the official PPA Tour scores: {stage_en}."
+                    + (f" {t200_en}" if t200_en else "")
+                    + "\n\n"
                     "Scores are listed game by game from the side of the player or team named first. Seeds are in brackets. Match times and the remaining schedule "
                     "in Vietnam time are in our schedule guide, and Vietnamese and Vietnamese-origin players are tracked in their own section below.",
          "internalLinks": [{"text": "Rate Las Vegas Open 2026 schedule in Vietnam time", "path": EVENT["schedule_en"]}]},
@@ -206,7 +275,9 @@ def build_pkg(feed, now):
          "internalLinks": [{"text": "PPA Tour world rankings (WPR)", "path": "/rankings"}]},
         {"heading": f"{EVENT['tracker']} and title No. 200",
          "content": (f"{EVENT['tracker']} arrived two doubles titles away from career title No. 200 on the PPA Tour and is not playing singles, "
-                     "so she needs both women's doubles and mixed doubles. Her matches so far:"),
+                     "so she needs both women's doubles and mixed doubles. "
+                     + (f"{t200_en} " if t200_en else "")
+                     + "Her matches:"),
          **({"listItems": tl_en} if tl_en else {})},
         *[div_section(d, False) for d in DIV_ORDER],
     ]
@@ -214,7 +285,9 @@ def build_pkg(feed, now):
         {"heading": f"Kết quả {EVENT['name']}: tình hình từng nội dung",
          "content": f"Cập nhật: {stamp_vi}.\n\n"
                     f"{EVENT['name']} diễn ra {EVENT['dates_vi']} tại {EVENT['venue']}, giải PPA Tour hạng Open, mỗi nhà vô địch nhận 1.000 điểm xếp hạng. "
-                    f"Trang kết quả này của ThePickleHub được cập nhật hằng ngày theo bảng điểm chính thức của PPA Tour: {stage_vi}.\n\n"
+                    f"Trang kết quả này của ThePickleHub được cập nhật hằng ngày theo bảng điểm chính thức của PPA Tour: {stage_vi}."
+                    + (f" {t200_vi}" if t200_vi else "")
+                    + "\n\n"
                     "Tỷ số ghi theo từng ván, tính từ phía tay vợt hoặc cặp được nêu trước; số trong ngoặc là hạt giống. Giờ thi đấu các vòng còn lại theo giờ Việt Nam có trong bài lịch thi đấu, "
                     "còn các tay vợt Việt Nam và gốc Việt được theo dõi riêng ở mục ngay dưới đây.",
          "internalLinks": [{"text": "Lịch thi đấu Rate Las Vegas Open 2026 theo giờ Việt Nam", "path": EVENT["schedule_vi"]}]},
@@ -226,7 +299,9 @@ def build_pkg(feed, now):
          "internalLinks": [{"text": "Bảng xếp hạng thế giới PPA (WPR)", "path": "/vi/rankings"}]},
         {"heading": f"{EVENT['tracker']} và danh hiệu thứ 200",
          "content": (f"{EVENT['tracker']} đến Las Vegas khi chỉ còn thiếu hai danh hiệu đôi để cán mốc danh hiệu thứ 200 trên PPA Tour, "
-                     "và cô không đánh đơn, nên phải vô địch cả đôi nữ lẫn đôi nam nữ. Các trận của cô tới lúc này:"),
+                     "và cô không đánh đơn, nên phải vô địch cả đôi nữ lẫn đôi nam nữ. "
+                     + (f"{t200_vi} " if t200_vi else "")
+                     + "Các trận của cô:"),
          **({"listItems": tl_vi} if tl_vi else {})},
         *[div_section(d, True) for d in DIV_ORDER],
     ]
@@ -249,11 +324,11 @@ def build_pkg(feed, now):
         "heroImage": EVENT["hero"],
         "en": {"title": f"Rate Las Vegas Open 2026 Results: {state_en}, Vietnamese Players",
                "metaTitle": f"Rate Las Vegas Open 2026 Results ({'Final' if finished else 'Daily'})",
-               "metaDescription": "Rate Las Vegas Open 2026 results, updated daily: every draw's stage, upsets, Anna Leigh Waters' title 200 and the Vietnamese players.",
+               "metaDescription": meta_200(feed)[0] or "Rate Las Vegas Open 2026 results, updated daily: every draw's stage, upsets, Anna Leigh Waters' title 200 and the Vietnamese players.",
                "sections": en_sections, "faqItems": faq_en},
         "vi": {"slug": EVENT["vi_slug"], "title": f"Kết quả Rate Las Vegas Open 2026: {state_vi}, tay vợt Việt Nam",
-               "metaTitle": "Kết quả PPA Las Vegas Open 2026 mỗi ngày",
-               "metaDescription": "Kết quả Rate Las Vegas Open 2026 cập nhật hằng ngày: từng nội dung, kết quả bất ngờ, Anna Leigh Waters và tay vợt Việt Nam.",
+               "metaTitle": "Kết quả chung cuộc Las Vegas Open 2026" if finished else "Kết quả PPA Las Vegas Open 2026 mỗi ngày",
+               "metaDescription": meta_200(feed)[1] or "Kết quả Rate Las Vegas Open 2026 cập nhật hằng ngày: từng nội dung, kết quả bất ngờ, Anna Leigh Waters và tay vợt Việt Nam.",
                "excerpt": f"Kết quả Rate Las Vegas Open 2026 ({EVENT['dates_vi']}) cập nhật hằng ngày: {stage_vi}.",
                "focusKeyword": "kết quả las vegas open 2026", "sections": vi_sections, "faqItems": faq_vi},
     }
