@@ -225,7 +225,12 @@ const ViBlogPost = () => {
               database holds can become markup. Bots get the same block from
               functions/_lib/render/blog.ts. */}
           {(() => {
-            const clean = DOMPurify.sanitize(normalizeImagesInHtml(post.content_html));
+            // Audit 2026-10-21 — the page header above already renders the
+            // post title as the single <h1>; some stored content_html rows
+            // carry their own <h1>, which produced two H1s (and a repeated
+            // title heading). Demote body H1s to H2, mirroring
+            // demoteContentH1 in functions/_lib/render/blog.ts.
+            const clean = DOMPurify.sanitize(normalizeImagesInHtml(post.content_html)).replace(/<(\/?)h1(?=[\s>])/gi, "<$1h2");
             const parts = clean.split(WC_RESULTS_MARKER);
             return parts.map((chunk, i) => (
               <div key={i}>

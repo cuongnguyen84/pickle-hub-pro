@@ -323,7 +323,17 @@ export async function renderClub(
   // generic platform copy instead of the location/CTA-specific
   // fallbackDesc built right above. pickMetaDescription routes to
   // fallback when the description is empty/too-short.
-  const description = pickMetaDescription(club.description, fallbackDesc);
+  // Audit 2026-10-21 — pickMetaDescription's 30-char threshold let very
+  // short club descriptions ship as the whole meta description
+  // (e.g. /clb/plx: 37 chars, nothing about events or the platform).
+  // Enrich a short-but-real description with the event/CTA tail instead
+  // of discarding it; long descriptions pass through untouched.
+  const rawClubDesc = (club.description ?? "").trim();
+  const enrichedClubDesc =
+    rawClubDesc && rawClubDesc.length < 100
+      ? `${rawClubDesc} — lịch sự kiện, đăng ký & kết quả trên ThePickleHub.`
+      : rawClubDesc;
+  const description = pickMetaDescription(enrichedClubDesc || null, fallbackDesc);
 
   // List a snapshot of upcoming events as bot-readable links.
   const { data: events } = await supabase

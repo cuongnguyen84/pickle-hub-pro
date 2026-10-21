@@ -236,6 +236,19 @@ export function withViCoverImage(
     : `${contentHtml.slice(0, afterH1 + 5)}${figure}${contentHtml.slice(afterH1 + 5)}`;
 }
 
+/**
+ * Audit 2026-10-21 — buildHtml auto-emits `<h1>{title}</h1>` for the page,
+ * and some vi_blog_posts rows also carry their own <h1> inside
+ * content_html (e.g. tao-giai-pickleball-bang-ai shipped two H1s: the
+ * meta title plus the body's own heading). Demote body H1s to H2 so the
+ * page always has exactly one H1 — the title — no matter what the
+ * stored content contains. Only the tag name changes; attributes and
+ * content are preserved.
+ */
+export function demoteContentH1(contentHtml: string): string {
+  return contentHtml.replace(/<(\/?)h1(?=[\s>])/gi, "<$1h2");
+}
+
 /** EN twin's byline when we have one. Empty or "ThePickleHub" VI bylines become Cuong Nguyen so the article matches the EN Person author. A real guest name stays a Person. "The PickleHub Team" on the EN twin stays Organization. */
 function viPostAuthor(authorName: string | null | undefined, alternateEnSlug: string | null | undefined): string {
   if (alternateEnSlug) {
@@ -391,10 +404,12 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
     ? `<section><h2>Bài viết liên quan</h2><ul>${relatedItems.map((r) => `<li><a href="${siteUrl}/vi/blog/${r.slug}">${escapeHtml(r.title)}</a></li>`).join("")}</ul></section>`
     : "";
 
-  let viBody = withViCoverImage(
-    sanitizeBlogHtml(normalizeImagesInHtml(p.content_html)),
-    p.cover_image_url,
-    p.title,
+  let viBody = demoteContentH1(
+    withViCoverImage(
+      sanitizeBlogHtml(normalizeImagesInHtml(p.content_html)),
+      p.cover_image_url,
+      p.title,
+    ),
   );
   // Marker substitution happens after sanitising: the block is our HTML, the
   // database only says where it goes.

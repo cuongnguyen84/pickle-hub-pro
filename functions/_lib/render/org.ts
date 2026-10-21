@@ -7,11 +7,11 @@ import type { SupabaseClient } from "../supabase";
 import { buildHtml, htmlResponse } from "../html";
 import {
   buildTitle,
-  buildMetaDescription,
   absImage,
   singleCanonicalHreflang,
   buildBreadcrumbJsonLd,
 } from "../utils";
+import { pickMetaDescription } from "../seo-helpers";
 import { render404 } from "./static-pages";
 
 // ─── Organization ──────────────────────���──────────────────
@@ -22,7 +22,21 @@ export async function renderOrgDetail(supabase: SupabaseClient, slug: string, si
   if (!org) return render404(`/org/${slug}`, siteUrl);
 
   const title = buildTitle(org.name, " | Pickleball Creator");
-  const desc = buildMetaDescription(org.description, { type: "default", title: org.name });
+  // Audit 2026-10-21 — buildMetaDescription's "default" fallback made
+  // every org without a 120+ char description ship the identical
+  // platform boilerplate ("…là nền tảng pickleball hàng đầu Việt Nam…"),
+  // differing only by name. Use an org-specific fallback via
+  // pickMetaDescription (the renderClub pattern), and enrich a
+  // short-but-real description instead of discarding it.
+  const fallbackDesc =
+    `${org.name} — creator pickleball trên ThePickleHub: video, livestream, ` +
+    "hướng dẫn và tin tức pickleball Việt Nam & quốc tế.";
+  const rawOrgDesc = (org.description ?? "").trim();
+  const enrichedOrgDesc =
+    rawOrgDesc && rawOrgDesc.length < 100
+      ? `${rawOrgDesc} — video, livestream & nội dung pickleball trên ThePickleHub.`
+      : rawOrgDesc;
+  const desc = pickMetaDescription(enrichedOrgDesc || null, fallbackDesc);
 
   return htmlResponse(buildHtml({
     title,

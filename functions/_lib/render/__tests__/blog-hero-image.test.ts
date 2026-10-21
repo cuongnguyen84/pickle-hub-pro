@@ -10,7 +10,7 @@
 
 import { describe, expect, it } from "vitest";
 import { renderEnBlogBody, blogImageAttrs, heroFigure } from "../blog-body";
-import { withViCoverImage } from "../blog";
+import { withViCoverImage, demoteContentH1 } from "../blog";
 import { blogMetadata } from "../../../../src/content/blog/metadata";
 
 const SITE = "https://www.thepicklehub.net";
@@ -74,6 +74,18 @@ describe("VI blog cover image", () => {
 
   it("is a no-op for a post with no cover", () => {
     expect(withViCoverImage("<p>x</p>", null, "Luật")).toBe("<p>x</p>");
+  });
+
+  it("demotes a body <h1> to <h2> so the page keeps a single H1", () => {
+    const body = "<h1>Tạo giải bằng AI</h1><p>x</p><h1 class=\"sub\">Hai</h1>";
+    const out = demoteContentH1(body);
+    expect(out).toBe("<h2>Tạo giải bằng AI</h2><p>x</p><h2 class=\"sub\">Hai</h2>");
+    expect(out).not.toContain("<h1");
+  });
+
+  it("leaves content without an <h1> untouched", () => {
+    const body = "<h2>Mục</h2><p>x</p>";
+    expect(demoteContentH1(body)).toBe(body);
   });
 
   it("escapes the title it uses as alt text", () => {
