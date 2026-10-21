@@ -31,7 +31,8 @@ const post: BlogPost = {
             "ThePickleHub.net — the bilingual Vietnamese-English pickleball platform: bracket tools, livestreaming, news, and editorial coverage of PPA Tour Asia and the Vietnamese pickleball scene."
           ],
           internalLinks: [
-            { text: "What Is DUPR? — the global rating system explained for Vietnamese players (Part 1 of 3)", path: "/blog/what-is-dupr-pickleball-rating-system" }
+            { text: "What Is DUPR? — the global rating system explained for Vietnamese players (Part 1 of 3)", path: "/blog/what-is-dupr-pickleball-rating-system" },
+            { text: "Free bracket & round-robin generator — seed by DUPR, live scoring, no signup", path: "/tools" }
           ]
         },
         {
@@ -104,7 +105,8 @@ const post: BlogPost = {
             "ThePickleHub.net — nền tảng pickleball song ngữ Việt-Anh: công cụ bốc thăm bracket, livestream, tin tức và bài viết chuyên sâu về PPA Tour Asia và cộng đồng pickleball Việt Nam."
           ],
           internalLinks: [
-            { text: "DUPR là gì? — giải thích hệ thống xếp hạng toàn cầu cho người chơi Việt Nam (Phần 1/3)", path: "/vi/blog/dupr-la-gi-huong-dan-cho-nguoi-choi-viet-nam" }
+            { text: "DUPR là gì? — giải thích hệ thống xếp hạng toàn cầu cho người chơi Việt Nam (Phần 1/3)", path: "/vi/blog/dupr-la-gi-huong-dan-cho-nguoi-choi-viet-nam" },
+            { text: "Công cụ tạo bảng đấu & vòng tròn miễn phí — seed theo DUPR, chấm điểm trực tiếp", path: "/vi/tools" }
           ]
         },
         {

@@ -1,0 +1,108 @@
+{
+  "slug": "telegram-fix-agent",
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "Nút Fix nên gọi AI agent local hay chỉ mở rộng nhánh fix cứng + map lỗi tiếng Việt?",
+      "positions": {
+        "solution-architect": "Option B: daemon local chạy claude -p theo runbook, staged (runbook→daemon→nút), vì cả 3 lỗi 05/08 thuộc lớp 'chạy được nhưng sai' mà nhánh cứng không với tới; nhánh cứng (Option C) chỉ đỡ triệu chứng.",
+        "risk-auditor": "RED — bỏ hẳn hướng agent: bề mặt prompt-injection + credential escalation (Management PAT superuser) + không rollback. Làm nhánh cứng cloudflare_worker qua GitHub Actions (concurrency/timeout/audit sẵn) + map mã lỗi sang tiếng Việt; yêu cầu gốc của Cuong không cần AI."
+      },
+      "rebuttals": [
+        {
+          "agent": "solution-architect",
+          "stance": "CONCEDE",
+          "evidence": ".claude/settings.local.json:11 (`Read(//Users/cm10/**)`) + :20 (PAT sbp_ inline trong allow rule, không có block deny); .github/workflows/edge-function-repair.yml:1-60 (dispatch+APPROVED+concurrency+timeout+checkout sạch đã có sẵn)",
+          "reasoning": "Hai dữ kiện chưa mở ở vòng 1 lật cả hai trụ: (1) 'permission model là hàng rào' sai — daemon đọc được secrets + đã pre-approve lệnh mang PAT superuser; 3 chốt của tôi đều ở tầng prompt, không chạm tầng credential; (2) nhánh cứng không phải 2.5 half-days — hình dạng đã có sẵn, thêm cloudflare_worker ~0.5 half-day. RÚT daemon + nút-gọi-agent (Inc 2/3). GIỮ Inc 1 (runbook + claude -p Cuong tự gõ tay — không tạo bề mặt mới so với phiên Claude Code hiện tại; cả 5 cơ chế rủi ro cần quyền tự trị mới kích được)."
+        },
+        {
+          "agent": "risk-auditor",
+          "stance": "REFINE",
+          "evidence": "secrets.local.md:15-102 (6 credential plaintext cùng UID daemon); settings.local.json:20 (PAT sbp_ inline); types.ts:6858-6871 (telegram_commands KHÔNG có cột action có kiểu); ops-job-control:43-44 (callback_data 64 byte); :230,324 (/diagnose sẵn có); redeploy-edge-functions.sh:32-33 (guard đã live — blocker vòng 1 ĐÓNG)",
+          "reasoning": "Giữ RED, thu hẹp phạm vi: 'bỏ hẳn' quá rộng ở Inc 1 (Cuong tự gõ claude -p = hiện trạng, không phải bề mặt mới). RED áp đúng vào: (a) LLM chạy không người trực trên máy còn secrets plaintext, (b) mọi đường 'duyệt' thực thi chuỗi do agent viết. Chấp nhận MỘT hình dạng hạ xuống điều-tra-only: agent env SẠCH 0 token, cwd scratch, không tool mạng; output {opcode,args} thuộc danh sách đóng; daemon (cầm key) thực thi opcode qua code cũ — tập opcode CHÍNH LÀ Option C, agent chỉ chọn giùm. Mọi biến thể agent cầm key/chạy lệnh tự sinh: vẫn RED."
+        }
+      ],
+      "resolution": "RESOLVED_CONVERGED: architect CONCEDE (bằng chứng settings.local.json + repair-workflow sẵn có); risk REFINE chấp nhận duy nhất hình dạng điều-tra-only/0-credential/opcode-đóng. Chu kỳ này: nút Fix KHÔNG gọi agent — ship nhánh cứng + map lỗi VI + nút trên tin cảnh báo. Agent opcode-only là giai đoạn sau, RED, cần Cuong duyệt riêng."
+    },
+    {
+      "id": "D2",
+      "topic": "Nếu có agent: agent được TỰ ghi/sửa gì mà không cần Cuong duyệt?",
+      "positions": {
+        "solution-architect": "Được sửa ops trong allowlist (retry, redeploy từ main qua worktree sạch, bật workflow, sửa data monitor sai) với 3 chốt: worktree cấm push, chỉ nhận job_key, coi dữ liệu DB là data không phải chỉ thị.",
+        "pre-mortem": "Cấm tuyệt đối các hành động dập-cảnh-báo: UPDATE ... SET active/enabled=false, INSERT ops_job_runs, functions delete — tắt thứ đang kêu là cách rẻ nhất để 'hết lỗi'; muốn tắt gì phải đề xuất chờ duyệt.",
+        "risk-auditor": "Hẹp hơn nữa: agent không được GHI bất kỳ bảng monitor nào (monitor sai → mở PR sửa evaluator), không được đụng Management API (SELECT-only grant hiện tại ép leo thang superuser); nếu cần ghi thì viết RPC SECURITY DEFINER hẹp."
+      },
+      "rebuttals": [
+        {
+          "agent": "solution-architect",
+          "stance": "CONCEDE",
+          "evidence": "supabase/migrations/20260715130000_ops_cron_health.sql:65 — GRANT SELECT (không UPDATE) ops_cron_monitors cho service_role; 67-69 chỉ cấp INSERT/UPDATE cho ops_cron_dispatches + ops_cron_alert_state",
+          "reasoning": "'Sửa data monitor sai' trong allowlist vòng 1 KHÔNG implement được bằng service_role — bắt buộc leo Management API PAT superuser, tức vô tình kê quyền nhỏ thành DROP TABLE. Chốt theo risk-auditor + pre-mortem: agent chỉ ĐỌC và soạn đề xuất; không ghi bảng monitor/ops, không Management API, không active=false, không INSERT ops_job_runs, không functions delete; cần ghi hẹp thì RPC SECURITY DEFINER một cột."
+        },
+        {
+          "agent": "pre-mortem",
+          "stance": "REFINE",
+          "evidence": "ops-job-control/index.ts:331-332 (cổng duy nhất = chatId, from_id ghi :342 nhưng không bao giờ kiểm); 20260802131500:107+:147 (ops_record_job_run SECURITY DEFINER nhận status='success', GRANT EXECUTE service_role — ghi xanh giả không cần Management API); 20260715130000:65 (SELECT-only → nhượng nửa UPDATE-monitor cho risk-auditor); news_sources KHÔNG phải bảng monitor → luật 'cấm ghi bảng monitor' không phủ kill switch active=false; redeploy-edge-functions.sh:32 guard mới + :73-83 một-probe→delete đều do launchd kích, không người trong vòng lặp",
+          "reasoning": "Giữ deny-list, chỉnh 3 điểm: (1) nhượng nửa UPDATE monitor — cấm PAT là đủ; (2) 'cấm INSERT ops_job_runs' phải viết lại thành 'cấm gọi ops_record_job_run với status != running/failed' — cấm ở tầng SQL là cấm hụt vì đường ghi thật là RPC đã GRANT sẵn; (3) duyệt-từng-thao-tác KHÔNG giết được cả 3 postmortem: sự cố 1+2 tác nhân là launchd (độ phủ nút Duyệt = 0%), sự cố 3 chỉ bị chặn khi nhãn nút gọi đúng hậu quả mà nhãn do chính agent bị kiểm soạn; nút Duyệt hôm nay xác thực CHAT không xác thực NGƯỜI (from_id không kiểm). Duyệt-đích-danh = lớp BỔ SUNG cho thao tác đảo ngược được, không THAY THẾ deny-list cho thao tác dập-cảnh-báo."
+        },
+        {
+          "agent": "risk-auditor",
+          "stance": "HOLD",
+          "evidence": "20260715130000:62,65 (GRANT SELECT-only ops_cron_monitors); news-fetcher:267 + 20260519000000:112 (kill switch active có thật); ops-job-control:21,342 (gate chỉ chat_id, from_id không bao giờ kiểm)",
+          "reasoning": "Không dữ kiện mới nào lật D2. Deny-list của pre-mortem là điều kiện CẦN nhưng không phải ranh giới — chỉ là chữ trong prompt nếu tiến trình cầm SERVICE_ROLE_KEY (UPDATE bị cấm phát được bằng curl PostgREST). Ranh giới phải hình credential (agent 0 key), không hình luật lệ. Monitor: SELECT-only nên 'sửa monitor' không có đường hợp lệ — cấm tuyệt đối, monitor sai thì PR sửa evaluator. Nút Duyệt không đổi được gì: leo thang quyết định bởi credential trong tiến trình, không phải ai bấm."
+        }
+      ],
+      "resolution": "RESOLVED_CONVERGED: architect CONCEDE; pre-mortem REFINE tương thích risk HOLD. Ranh giới hình credential: agent 0 key, 0 Management API, 0 ghi monitor; deny-list (active=false, ops_record_job_run status success, functions delete) là lớp BỔ SUNG trong daemon/opcode, không phải ranh giới chính."
+    }
+  ],
+  "new_disagreements": [
+    {
+      "topic": "Nhánh cứng không được báo ✅ cho lớp lỗi data (ppa-tour)",
+      "with": "risk-auditor",
+      "myPosition": "Ship nhánh cứng trước, nhưng spec phải: cấm verdict ✅ khi run mới fail cùng mã lỗi; trả câu chỉ việc ('Nguồn PPA 404 từ <ngày>, cần đổi URL — việc của anh'); thêm dòng sản lượng `📰 Nguồn tin: 4/5 active` vào jobsText() theo khuôn facebookCountsToday. Thiếu 2 thứ đó = đổi ⛔ lấy ❌ lịch sự hơn, lớp 'chạy được nhưng sai' vẫn vô chủ.",
+      "agent": "solution-architect"
+    },
+    {
+      "topic": "PAT superuser trong settings.local.json là P0 độc lập",
+      "with": "risk-auditor",
+      "myPosition": "Nó phơi HÔM NAY cho mọi phiên Claude Code, không phụ thuộc đề xuất. Hotfix riêng, làm trước, làm dù đề xuất bị bỏ: rotate PAT sbp_, gỡ allow :20, thu hẹp Read(//Users/cm10/**), thêm deny cho secrets + Management API.",
+      "agent": "solution-architect"
+    },
+    {
+      "topic": "Xác nhận claim-CAS #6 của risk-auditor",
+      "with": "risk-auditor",
+      "myPosition": "telegram_queue.py:113 PATCH không predicate status=eq.pending — đúng, fix 1 dòng; và from_id chỉ dùng làm nhãn, không nơi nào kiểm — 10 dòng. Làm luôn trong PR nhánh cứng.",
+      "agent": "solution-architect"
+    },
+    {
+      "topic": "'RPC SECURITY DEFINER hẹp' không tự động an toàn — ops_record_job_run ĐÃ là đường xanh-giả",
+      "with": "risk-auditor",
+      "myPosition": "Độ an toàn đo bằng NHỮNG GÌ RPC GHI ĐƯỢC, không bằng hình dạng GRANT. Nếu agent giữ service_role key: REVOKE EXECUTE ops_record_job_run khỏi vai agent hoặc dùng key riêng.",
+      "agent": "pre-mortem"
+    },
+    {
+      "topic": "Nhãn nút Duyệt do agent tự sinh = bên bị kiểm viết bản cáo trạng của mình",
+      "with": "ui-ux-critic",
+      "myPosition": "Nhãn duyệt phải sinh từ bảng ánh xạ CỐ ĐỊNH theo loại thao tác (người viết trước, trong repo), không từ văn bản agent. Tối thiểu: kiểm from.id (10 dòng, làm dù bỏ hướng agent) — không thì 'CẦN ANH DUYỆT' hứa một bảo đảm code không có.",
+      "agent": "pre-mortem"
+    },
+    {
+      "topic": "'👍 Duyệt đích danh' là an toàn giả nếu payload free-text do agent viết",
+      "with": "ui-ux-critic",
+      "myPosition": "Không có cột action có kiểu + callback_data 64 byte → Cuong duyệt cái NHÃN, daemon chạy cái PAYLOAD. Muốn nút có giá trị phòng thủ: action enum đóng + một nhánh code mỗi opcode — và khi đó nút Duyệt chính là Option C.",
+      "agent": "risk-auditor"
+    },
+    {
+      "topic": "'worktree cấm push + git diff --exit-code' không phải ranh giới phòng thủ",
+      "with": "solution-architect",
+      "myPosition": "Side effect thật (deploy, wrangler, gh, PATCH, tin đã gửi) không để lại diff. Chốt tương xứng: agent 0 secret trong env + 0 tool mạng; daemon mới cầm key và chỉ chạy opcode đã đăng ký.",
+      "agent": "risk-auditor"
+    },
+    {
+      "topic": "Điều kiện mở Inc 3 phải là cấu trúc, không phải 'sống ổn 1 tuần'",
+      "with": "solution-architect",
+      "myPosition": "1 tuần đo availability, không đo cái hỏng đắt nhất (dập cảnh báo — phát hiện 3-8 tuần). Điều kiện: action enum đóng + 0 credential trong agent + dòng sản lượng 📰 Nguồn tin x/y trong jobsText(). Đủ 3 → AMBER; thiếu 1 → RED bất kể chạy êm bao lâu.",
+      "agent": "risk-auditor"
+    }
+  ]
+}

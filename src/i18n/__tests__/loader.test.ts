@@ -25,8 +25,8 @@ describe("isVietnamesePath", () => {
 
 describe("loadTranslations", () => {
   it.each<[Language, string, string]>([
-    ["en", "The PickleHub", "Loading..."],
-    ["vi", "The PickleHub", "Đang tải..."],
+    ["en", "ThePickleHub", "Loading..."],
+    ["vi", "ThePickleHub", "Đang tải..."],
   ])("loads the %s dictionary on demand", async (language, appName, loading) => {
     const translations = await loadTranslations(language);
 

@@ -241,7 +241,7 @@ BEGIN
   END IF;
 
   SELECT net.http_post(
-    url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/dupr-sync',
+    url := public.ops_project_url() || '/functions/v1/dupr-sync',
     headers := jsonb_build_object(
       'Authorization', 'Bearer ' || v_secret,
       'Content-Type', 'application/json'
@@ -279,7 +279,7 @@ BEGIN
   END IF;
 
   SELECT net.http_post(
-    url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/mux-sync-assets',
+    url := public.ops_project_url() || '/functions/v1/mux-sync-assets',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'x-cron-secret', v_secret
@@ -316,7 +316,7 @@ BEGIN
   END IF;
 
   PERFORM net.http_post(
-    url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/match-expire',
+    url := public.ops_project_url() || '/functions/v1/match-expire',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'x-cron-secret', v_secret
@@ -350,7 +350,7 @@ BEGIN
   END IF;
 
   PERFORM net.http_post(
-    url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/auto-cancel-unpaid-registrations',
+    url := public.ops_project_url() || '/functions/v1/auto-cancel-unpaid-registrations',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'x-cron-secret', v_secret
@@ -393,7 +393,7 @@ BEGIN
   END IF;
 
   PERFORM net.http_post(
-    url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/errors-telegram-alert',
+    url := public.ops_project_url() || '/functions/v1/errors-telegram-alert',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'Authorization', 'Bearer ' || v_anon_key,

@@ -26,7 +26,7 @@ interface SharedPresence {
   disposed: boolean;
   /** Base payload tracked at join — reused verbatim on re-track so
    * joined_at never resets when only `gated` changes. */
-  payload: { joined_at: string; user_id: string | null; user_agent: string } | null;
+  payload: { joined_at: string; user_id: string | null } | null;
   /** Latest gate state for this client; SUBSCRIBED handler reads it so a
    * reconnect after the gate fired still reports gated: true. */
   gated: boolean;
@@ -37,9 +37,15 @@ const sharedEntries = new Map<string, SharedPresence>();
 const MAX_RETRIES = 10;
 const getRetryDelay = (attempt: number) => Math.min(2000 * Math.pow(1.5, attempt), 30000);
 
-/** Đếm viewer thật — bỏ admin đang mở bảng theo dõi (key `admin_watcher_*`). */
+/** Đếm viewer thật — bỏ admin đang mở bảng theo dõi (key `admin_watcher_*`)
+ * và người đang kẹt ở cổng đăng nhập (meta `gated: true` — họ chưa xem gì cả;
+ * admin list vẫn thấy đủ vì useLiveViewerList đọc thẳng state, không qua đây). */
 function countViewers(channel: RealtimeChannel): number {
-  return Object.keys(channel.presenceState()).filter((k) => !k.startsWith("admin_watcher_")).length;
+  return Object.entries(channel.presenceState()).filter(([key, presences]) => {
+    if (key.startsWith("admin_watcher_")) return false;
+    const meta = (presences as Array<{ gated?: boolean }>)[0];
+    return meta?.gated !== true;
+  }).length;
 }
 
 function notify(entry: SharedPresence) {
@@ -102,7 +108,6 @@ async function connect(livestreamId: string, entry: SharedPresence, userId: stri
           entry.payload ??= {
             joined_at: new Date().toISOString(),
             user_id: userId,
-            user_agent: navigator.userAgent.slice(0, 100),
           };
           await channel.track({ ...entry.payload, gated: entry.gated });
         } catch (trackErr) {

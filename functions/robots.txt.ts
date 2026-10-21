@@ -4,10 +4,34 @@
 
 interface Env {
   CANONICAL_HOST: string;
+  /** Q4 launch gate — see functions/_middleware.ts. "1" opens the public
+   *  Shop; anything else keeps the pilot catalogue out of the crawl. */
+  SHOP_PUBLIC_INDEXING?: string;
 }
 
 export const onRequest: PagesFunction<Env> = async (context) => {
   const siteUrl = context.env.CANONICAL_HOST || "https://www.thepicklehub.net";
+  // The buyer catalogue is Disallowed for the whole closed pilot. /shop/sell
+  // and /seller stay Disallowed in BOTH states — they are seller surfaces and
+  // the launch gate has nothing to do with them. So do /shop/cart,
+  // /shop/checkout and /shop/order: those are one buyer's own data, and no
+  // launch gate ever makes them crawlable.
+  //
+  // /shop/search left the gated block at the Phase 4 launch: a result page
+  // per query string is thin duplicate content whatever the gate says, so it
+  // is Disallowed unconditionally alongside the buyer surfaces below.
+  const shopPilotDisallow =
+    context.env.SHOP_PUBLIC_INDEXING === "1"
+      ? ""
+      : `
+Disallow: /shop$
+Disallow: /shop/category
+Disallow: /shop/product
+Disallow: /shop/store
+Disallow: /vi/shop$
+Disallow: /vi/shop/category
+Disallow: /vi/shop/product
+Disallow: /vi/shop/store`;
 
   const body = `User-agent: *
 Allow: /
@@ -16,6 +40,22 @@ Disallow: /admin
 Disallow: /admin/
 Disallow: /creator
 Disallow: /creator/
+Disallow: /proto
+Disallow: /proto/
+Disallow: /seller
+Disallow: /seller/
+Disallow: /vi/seller
+Disallow: /shop/sell
+Disallow: /shop/search
+Disallow: /vi/shop/search
+Disallow: /shop/cart
+Disallow: /shop/checkout
+Disallow: /shop/order
+Disallow: /shop/orders
+Disallow: /vi/shop/cart
+Disallow: /vi/shop/checkout
+Disallow: /vi/shop/order
+Disallow: /vi/shop/orders${shopPilotDisallow}
 Disallow: /auth/
 Disallow: /login
 Disallow: /vi/login

@@ -219,6 +219,9 @@ ${bioLine}
       bodyContent,
       extraMeta,
       lang: "vi",
+      // The body already opens with the player's own <h1>; without this the
+      // shared auto-header adds a second one titled "<name> | ThePickleHub".
+      omitAutoHeader: true,
     }),
   );
 }

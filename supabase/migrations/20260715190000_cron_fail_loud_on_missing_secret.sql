@@ -34,7 +34,7 @@ BEGIN
     RAISE EXCEPTION 'cron_secret missing from vault — feed-embeds-sync aborted';
   END IF;
   PERFORM net.http_post(
-    url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/feed-embeds-sync',
+    url := public.ops_project_url() || '/functions/v1/feed-embeds-sync',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'x-cron-secret', v_secret
@@ -66,7 +66,7 @@ BEGIN
     RAISE EXCEPTION 'cron_secret missing from vault — feed-generate aborted';
   END IF;
   PERFORM net.http_post(
-    url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/feed-generate',
+    url := public.ops_project_url() || '/functions/v1/feed-generate',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'x-cron-secret', v_secret
@@ -98,7 +98,7 @@ BEGIN
     RAISE EXCEPTION 'cron_secret missing from vault — news-translate aborted';
   END IF;
   PERFORM net.http_post(
-    url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/news-translate',
+    url := public.ops_project_url() || '/functions/v1/news-translate',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'x-cron-secret', v_secret

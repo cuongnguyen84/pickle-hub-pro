@@ -7,12 +7,59 @@ import { buildHtml, htmlResponse } from "../html";
 import { escapeHtml, detectLang, type Lang } from "../utils";
 
 export function renderPrivacy(siteUrl: string, rawPath: string, lang: Lang): Response {
+  const isVi = lang === "vi";
+  const bodyContent = isVi
+    ? `
+      <h1>Chính sách bảo mật – ThePickleHub</h1>
+      <p>ThePickleHub là nền tảng pickleball dành cho người chơi theo dõi tin tức và livestream, tìm người chơi và sân, đồng thời tạo hoặc tham gia giải đấu và sự kiện cộng đồng.</p>
+      <h2>Thông tin chúng tôi thu thập</h2>
+      <p>Chúng tôi thu thập email, tên hiển thị, ảnh đại diện và dữ liệu sử dụng cần thiết để xác thực tài khoản, vận hành hồ sơ, giải đấu, bảng xếp hạng, video và livestream.</p>
+      <h2>Dữ liệu từ Google Sign-In</h2>
+      <p>Khi bạn chọn đăng nhập bằng Google, ThePickleHub chỉ truy cập tên, địa chỉ email và ảnh đại diện từ tài khoản Google của bạn. Chúng tôi dùng dữ liệu này để xác thực danh tính, tạo và bảo vệ tài khoản ThePickleHub, đồng thời cá nhân hóa hồ sơ của bạn.</p>
+      <p>Dữ liệu tài khoản được lưu trên hạ tầng đám mây bảo mật trong thời gian tài khoản hoạt động hoặc khi pháp luật yêu cầu. Dữ liệu chỉ được xử lý bởi Google, nhà cung cấp xác thực và hạ tầng dịch vụ cần thiết để vận hành đăng nhập. Chúng tôi không bán dữ liệu Google và không dùng dữ liệu Google Sign-In cho quảng cáo cá nhân hóa, nhắm mục tiêu quảng cáo hoặc đánh giá tín dụng.</p>
+      <h2>Chia sẻ và bảo mật dữ liệu</h2>
+      <p>Chúng tôi không bán dữ liệu cá nhân. Dữ liệu chỉ được chia sẻ khi cần để cung cấp dịch vụ hoặc tuân thủ yêu cầu pháp lý hợp lệ. Chúng tôi áp dụng các biện pháp bảo mật tiêu chuẩn ngành và giới hạn quyền truy cập cho nhân sự cần thiết.</p>
+      <h2>Quyền và xóa dữ liệu</h2>
+      <p>Bạn có thể xem, chỉnh sửa hoặc yêu cầu xóa tài khoản và dữ liệu cá nhân bằng cách gửi email tới <a href="mailto:tapickleballvn@gmail.com">tapickleballvn@gmail.com</a>. Dữ liệu được xóa theo yêu cầu, trừ khi pháp luật yêu cầu lưu giữ lâu hơn.</p>
+      <p>Chính sách này được cập nhật và có hiệu lực từ ngày 08/08/2026.</p>
+      <p><a href="${siteUrl}/">Về trang chủ ThePickleHub</a></p>`
+    : `
+      <h1>Privacy Policy – ThePickleHub</h1>
+      <p>ThePickleHub is a pickleball platform where players follow news and livestreams, find players and courts, and create or join tournaments and community events.</p>
+      <h2>Information We Collect</h2>
+      <p>We collect the email address, display name, profile photo, and service usage data needed to authenticate accounts and operate profiles, tournaments, leaderboards, videos, and livestreams.</p>
+      <h2>Google Sign-In Data</h2>
+      <p>When you choose Google Sign-In, ThePickleHub accesses only your name, email address, and profile photo from your Google Account. We use this information to authenticate you, create and secure your ThePickleHub account, and personalize your profile.</p>
+      <p>Account data is stored on secure cloud infrastructure while your account remains active or as required by law. It is processed only by Google, our authentication provider, and service infrastructure needed to operate sign-in. We do not sell Google user data or use Google Sign-In data for personalized advertising, ad targeting, or credit-worthiness decisions.</p>
+      <h2>Data Sharing and Security</h2>
+      <p>We do not sell personal data. We disclose it only when needed to provide the service or comply with a valid legal request. We apply industry-standard safeguards and limit access to essential personnel.</p>
+      <h2>Your Rights and Data Deletion</h2>
+      <p>You may view, correct, or request deletion of your account and personal data by emailing <a href="mailto:tapickleballvn@gmail.com">tapickleballvn@gmail.com</a>. Data is deleted on request unless a longer retention period is required by law.</p>
+      <p>This policy was updated and is effective as of August 8, 2026.</p>
+      <p><a href="${siteUrl}/">Return to ThePickleHub</a></p>`;
+
+  // sitemap-static has always submitted /privacy + /vi/privacy as a bilingual
+  // pair, but the head emitted no alternates — sitemap and page disagreed.
+  // Both locales already self-reference via rawPath, so the alternates point
+  // at distinct URLs and the signal is valid.
   return htmlResponse(buildHtml({
-    title: lang === "vi" ? "Chính sách bảo mật | ThePickleHub" : "Privacy Policy | ThePickleHub",
-    description: "Chính sách bảo mật ThePickleHub — cách thu thập, lưu trữ, sử dụng dữ liệu cá nhân, cookie và quyền của người dùng pickleball Việt Nam.",
+    title: isVi ? "Chính sách bảo mật | ThePickleHub" : "Privacy Policy | ThePickleHub",
+    description: isVi
+      ? "Chính sách bảo mật ThePickleHub — cách truy cập, sử dụng, lưu trữ và chia sẻ dữ liệu cá nhân, bao gồm dữ liệu Google Sign-In."
+      : "ThePickleHub Privacy Policy — how we access, use, store, and share personal data, including Google Sign-In data.",
     url: `${siteUrl}${rawPath}`,
     siteUrl,
     lang,
+    bodyContent,
+    // renderPrivacy's bodyContent opens with its own <h1>; the auto-header
+    // was adding a second. renderTerms below passes NO bodyContent and needs
+    // the auto-header for its only h1 — do not copy this flag there.
+    omitAutoHeader: true,
+    alternates: [
+      { hreflang: "en", href: `${siteUrl}/privacy` },
+      { hreflang: "vi", href: `${siteUrl}/vi/privacy` },
+      { hreflang: "x-default", href: `${siteUrl}/privacy` },
+    ],
   }));
 }
 
@@ -23,6 +70,78 @@ export function renderTerms(siteUrl: string, rawPath: string, lang: Lang): Respo
     url: `${siteUrl}${rawPath}`,
     siteUrl,
     lang,
+    // Same sitemap/head mismatch as renderPrivacy above.
+    alternates: [
+      { hreflang: "en", href: `${siteUrl}/terms` },
+      { hreflang: "vi", href: `${siteUrl}/vi/terms` },
+      { hreflang: "x-default", href: `${siteUrl}/terms` },
+    ],
+  }));
+}
+
+export function renderAdvertise(siteUrl: string, rawPath: string, lang: Lang): Response {
+  const enUrl = `${siteUrl}/advertise`;
+  const viUrl = `${siteUrl}/vi/advertise`;
+  const isVi = lang === "vi";
+
+  return htmlResponse(buildHtml({
+    title: isVi ? "Quảng cáo cùng ThePickleHub" : "Advertise with ThePickleHub",
+    description: isVi
+      ? "Tiếp cận cộng đồng pickleball song ngữ tại Việt Nam và châu Á qua tài trợ, nội dung thương hiệu và các gói quảng cáo phù hợp."
+      : "Reach an engaged bilingual pickleball audience across Vietnam and Asia through sponsorships, branded content, and tailored advertising packages.",
+    url: `${siteUrl}${rawPath}`,
+    siteUrl,
+    lang,
+    alternates: [
+      { hreflang: "en", href: enUrl },
+      { hreflang: "vi", href: viUrl },
+      { hreflang: "x-default", href: enUrl },
+    ],
+    bodyContent: isVi
+      ? "<h2>Hợp tác cùng chúng tôi</h2><p>Đưa thương hiệu của bạn đến với người chơi, nhà tổ chức và người hâm mộ pickleball tại Việt Nam và châu Á.</p><p>Liên hệ: <a href=\"mailto:thecuong@gmail.com\">thecuong@gmail.com</a></p>"
+      : "<h2>Partner with us</h2><p>Put your brand in front of pickleball players, organizers, and fans across Vietnam and Asia.</p><p>Contact: <a href=\"mailto:thecuong@gmail.com\">thecuong@gmail.com</a></p>",
+  }));
+}
+
+export function renderAbout(siteUrl: string, rawPath: string, lang: Lang): Response {
+  const isVi = lang === "vi";
+  return htmlResponse(buildHtml({
+    // /about is the E-E-A-T landing page, so its own meta has to carry the
+    // entity. The 2026-08-25 audit found it was the shortest on the site: an
+    // 18-character title and a 49-character description, against a 60/160
+    // BYTE budget that buildHtml enforces (truncateForSeo). Vietnamese
+    // diacritics cost 2-3 bytes each, so both VI strings are measured, not
+    // eyeballed — VI title 56B, VI description 152B.
+    title: isVi ? "Về ThePickleHub — Nền tảng pickleball song ngữ" : "About ThePickleHub — Bilingual Pickleball Platform",
+    description: isVi
+      ? "ThePickleHub — nền tảng pickleball song ngữ Việt–Anh: phần mềm giải đấu miễn phí, livestream, xếp hạng DUPR, danh bạ sân."
+      : "ThePickleHub is Vietnam's bilingual pickleball platform: free tournament software, livestreams, DUPR rankings, a court directory and news. Based in HCMC.",
+    url: `${siteUrl}${rawPath}`, siteUrl, lang,
+    alternates: [
+      { hreflang: "en", href: `${siteUrl}/about` },
+      { hreflang: "vi", href: `${siteUrl}/vi/about` },
+      { hreflang: "x-default", href: `${siteUrl}/about` },
+    ],
+    bodyContent: isVi
+      ? `<section><h2>Chúng tôi làm gì</h2><p>ThePickleHub tập hợp công cụ quản lý giải đấu miễn phí, lịch và kết quả thi đấu, livestream, video, tin tức, bảng xếp hạng DUPR, danh bạ sân và hoạt động cộng đồng trong một nền tảng song ngữ Việt–Anh. Người tổ chức đăng nhập để tạo và quản lý giải. Khán giả xem bảng đấu công khai không cần tài khoản.</p><h2>Chúng tôi phục vụ ai</h2><p>Nền tảng dành cho người chơi, câu lạc bộ và ban tổ chức. Đội ngũ đặt tại TP.HCM và tập trung đặc biệt vào hệ sinh thái pickleball Việt Nam và châu Á.</p><h2>Người xây dựng</h2><p><a href="${siteUrl}/vi/authors/cuong-nguyen">Cuong Nguyen</a> xây dựng nền tảng và đóng góp nội dung về pickleball Việt Nam, châu Á.</p><h2>Nguyên tắc biên tập</h2><p>Chúng tôi ưu tiên thông tin có nguồn, cập nhật rõ ràng và nội dung hữu ích từ trải nghiệm thực tế của cộng đồng địa phương.</p></section>`
+      : `<section><h2>What we do</h2><p>ThePickleHub brings together free tournament-management tools, schedules and results, livestreams, video, news, DUPR rankings, court discovery, and community events in one Vietnamese–English platform. Organizers sign in to create and manage round-robin, elimination, and team tournaments. Spectators can view public brackets without an account.</p><h2>Who we serve</h2><p>The platform serves players, clubs, and tournament organizers. Our team is based in Ho Chi Minh City with a particular focus on pickleball in Vietnam and Asia.</p><h2>Who builds ThePickleHub</h2><p><a href="${siteUrl}/authors/cuong-nguyen">Cuong Nguyen</a> builds the platform and contributes coverage of pickleball in Vietnam and Asia.</p><h2>Editorial principles</h2><p>We prioritize sourced information, transparent updates, and useful coverage grounded in first-hand local community experience.</p></section>`,
+  }));
+}
+
+export function renderContact(siteUrl: string, rawPath: string, lang: Lang): Response {
+  const isVi = lang === "vi";
+  return htmlResponse(buildHtml({
+    title: isVi ? "Liên hệ ThePickleHub" : "Contact ThePickleHub",
+    description: isVi ? "Hỗ trợ, nội dung, giải đấu và hợp tác." : "Support, editorial, tournaments, and partnerships.",
+    url: `${siteUrl}${rawPath}`, siteUrl, lang,
+    alternates: [
+      { hreflang: "en", href: `${siteUrl}/contact` },
+      { hreflang: "vi", href: `${siteUrl}/vi/contact` },
+      { hreflang: "x-default", href: `${siteUrl}/contact` },
+    ],
+    bodyContent: isVi
+      ? `<section><h2>Hỗ trợ và phản hồi</h2><p>Đội ngũ ThePickleHub hỗ trợ người chơi, câu lạc bộ và ban tổ chức về tài khoản, công cụ giải đấu, livestream, nội dung và dữ liệu công khai. Khi báo lỗi, vui lòng gửi URL, thiết bị và các bước dẫn đến lỗi.</p><h2>Nội dung và hợp tác</h2><p>Ban tổ chức, câu lạc bộ, vận động viên và đối tác truyền thông có thể gửi lịch thi đấu, yêu cầu chỉnh sửa, thông cáo hoặc đề xuất hợp tác.</p><h2>Thông tin liên hệ</h2><p>Email: <a href="mailto:tapickleballvn@gmail.com">tapickleballvn@gmail.com</a>. Đội ngũ vận hành tại TP.HCM, Việt Nam. Không gửi mật khẩu hoặc mã đăng nhập qua email.</p></section>`
+      : `<section><h2>Support and feedback</h2><p>ThePickleHub helps players, clubs, and organizers with accounts, tournament tools, livestreams, editorial content, and public information. When reporting a problem, include the URL, device, and steps that produced it.</p><h2>Editorial and partnerships</h2><p>Organizers, clubs, athletes, and media partners may send schedule updates, correction requests, press information, or partnership proposals.</p><h2>Contact details</h2><p>Email: <a href="mailto:tapickleballvn@gmail.com">tapickleballvn@gmail.com</a>. The team operates from Ho Chi Minh City, Vietnam. Do not send passwords or login codes by email.</p></section>`,
   }));
 }
 
@@ -88,16 +207,31 @@ export function renderDefault(path: string, siteUrl: string, lang: Lang): Respon
 
 // ─── 404 ──────────────────────────────��───────────────────
 
-export function render404(path: string, siteUrl: string): Response {
+export function render404(path: string, siteUrl: string, accept = ""): Response {
   const isVi = detectLang(path) === "vi";
+  const isArticle = /^\/(?:vi\/)?blog\/[^/]+$/.test(path);
   const title = isVi
-    ? "404 - Không tìm thấy trang | ThePickleHub"
-    : "404 - Page Not Found | ThePickleHub";
+    ? `404 - ${isArticle ? "Không tìm thấy bài viết" : "Không tìm thấy trang"} | ThePickleHub`
+    : `404 - ${isArticle ? "Article not found" : "Page Not Found"} | ThePickleHub`;
   const description = isVi
     ? "Trang bạn tìm không tồn tại. Quay lại trang chủ ThePickleHub để khám phá giải đấu, livestream và cộng đồng pickleball Việt Nam."
     : "The page you're looking for doesn't exist. Return to ThePickleHub for pickleball tournaments, livestreams, and Vietnam's pickleball community.";
-  const homeHref = isVi ? `${siteUrl}/vi/` : `${siteUrl}/`;
+  const homeHref = isVi ? `${siteUrl}/vi` : `${siteUrl}/`;
   const homeLabel = isVi ? "Quay lại trang chủ" : "Return to home";
+  if (accept.includes("text/markdown")) {
+    const markdown = isVi
+      ? `# 404 — Không tìm thấy trang\n\nTài nguyên \`${path}\` không tồn tại.\n\n- [Trang chủ](${siteUrl}/vi)\n- [Hướng dẫn cho AI agent](${siteUrl}/llms.txt)\n- [Đặc tả OpenAPI](${siteUrl}/openapi.json)\n- [Sitemap](${siteUrl}/sitemap.xml)\n`
+      : `# 404 — Page not found\n\nThe resource \`${path}\` does not exist.\n\n- [Homepage](${siteUrl}/)\n- [AI agent guide](${siteUrl}/llms.txt)\n- [OpenAPI specification](${siteUrl}/openapi.json)\n- [Sitemap](${siteUrl}/sitemap.xml)\n`;
+    return new Response(markdown, {
+      status: 404,
+      headers: {
+        "Content-Type": "text/markdown; charset=utf-8",
+        "Cache-Control": "no-store",
+        "X-Robots-Tag": "noindex, nofollow",
+        Vary: "Accept",
+      },
+    });
+  }
   // No canonical or og:url — emitting a canonical on a 404 sends a
   // contradictory signal (canonical = "this URL is authoritative" vs.
   // noindex = "don't index this"). Omitting both is correct for 404s.
@@ -121,7 +255,12 @@ export function render404(path: string, siteUrl: string): Response {
 <body>
 <h1>${escapeHtml(title)}</h1>
 <p>${escapeHtml(description)}</p>
-<p><a href="${escapeHtml(homeHref)}">${escapeHtml(homeLabel)}</a></p>
+<ul>
+<li><a href="${escapeHtml(homeHref)}">${escapeHtml(homeLabel)}</a></li>
+<li><a href="${escapeHtml(siteUrl)}/llms.txt">AI agent guide</a></li>
+<li><a href="${escapeHtml(siteUrl)}/openapi.json">OpenAPI specification</a></li>
+<li><a href="${escapeHtml(siteUrl)}/sitemap.xml">Sitemap</a></li>
+</ul>
 </body>
 </html>`;
   return htmlResponse(html, 404);

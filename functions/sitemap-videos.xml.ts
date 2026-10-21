@@ -21,6 +21,7 @@ import {
   SITE_URL_DEFAULT,
   SITEMAP_CACHE_HEADERS,
   buildUrlEntry,
+  fetchAllRows,
   toLastmod,
   today,
   wrapUrlset,
@@ -46,18 +47,22 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const supabase = createSupabaseClient(context.env);
     // Note: videos table has no `updated_at` column — only `created_at`
     // and `published_at`. Fall back to created_at when published_at null.
-    const { data, error } = await supabase
-      .from("videos")
-      .select("id, published_at, created_at")
-      .eq("status", "published")
-      .order("published_at", { ascending: false })
-      .limit(5000);
+    //
+    // CAP-01 (2026-08-25) — paged. PostgREST caps every response at 1000 rows
+    // silently: `.limit(5000)` returns 1000 rows, HTTP 200, error = null (#644).
+    // 6 videos today. `id` is the unique tie breaker; `published_at` is null on
+    // some rows, and nulls sort together.
+    const videos = await fetchAllRows<VideoRow>((from, to) =>
+      supabase
+        .from("videos")
+        .select("id, published_at, created_at")
+        .eq("status", "published")
+        .order("published_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
 
-    if (error) {
-      console.error("sitemap-videos: query error:", error);
-    }
-
-    const entries = ((data ?? []) as VideoRow[]).map((v) => {
+    const entries = videos.map((v) => {
       const lastmod = toLastmod(v.published_at || v.created_at, TODAY);
       const url = `${siteUrl}/watch/${v.id}`;
       return buildUrlEntry({

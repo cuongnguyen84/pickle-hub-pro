@@ -576,3 +576,300 @@ redeploy; probe trực tiếp và dùng CLI local khi blob-loss tái phát.
 - **Regex format-specifier: flag class không được chứa dấu cách** — "75% of players" bị đọc thành %o, chặn oan 4 bản dịch (scripts/native-i18n-gates.mjs đã fix).
 - **Đòn bẩy đổi signature đo thật +457 key** (ước lượng vòng 2 +143~156) — LocalizedStringKey lan qua helper mở khóa nhiều call site hơn census AST-lite thấy; đo bằng export thật > mọi ước lượng.
 - **`xcodebuild test` CÀI ĐÈ app lên sim đích** — test host (CODE_SIGNING_ALLOWED=NO) thay mất bản có ký đã cài tay → Cuong mở app dính "Auth session missing"/"keychain error" dù trước đó login tốt (28/07, sau merge #495). Luật: sau MỌI lần chạy test trên sim mà Cuong đang test tay, cài lại bản có ký (`xcodebuild build` không flag + `simctl install`); hoặc chạy test trên sim khác.
+- **Python urllib/requests treo hàng phút trên máy này với call curl làm <1s** (đo 03/08: requests treo 449s, urllib treo >8 phút fetch sitemap; curl luôn ≤7.5s). Script mới đụng network → shell qua `curl --max-time` (index_coverage.py là mẫu). Script scripts/seo/ cũ dùng requests vẫn có nguy cơ treo.
+- **GSC trả chuỗi bản địa hoá, không phải enum** — `coverageState` đổi theo languageCode ('vi' → "Đã được gửi và lập chỉ mục"), header CSV export theo ngôn ngữ UI ("Trang hàng đầu" chứ không phải "Trang"). Mọi parser GSC phải pin languageCode=en-US + normalize enum + hard-fail chuỗi lạ; so sánh chuỗi thô = đếm ra 0 âm thầm.
+- **Gate khoá HÀM không khoá CALLER thì bug tái phát qua đường vòng** — #468 khoá buildTitle byte-safe nhưng venues.ts:306-309 tiền-kiểm `.length` rồi né hàm → 5/10 title venue prod cụt mà utils.test.ts vẫn xanh. Sửa xong một bug đếm-đơn-vị: grep mọi caller và mọi tiền-kiểm cùng hằng số.
+- **Gate SEO lấy mẫu hàng khoẻ nhất là gate mù** — sweep lấy `<loc>` đầu tiên + segment sort updated_at DESC = luôn test bản ghi vừa được chăm. Floor số lượng + sample first/middle/last (ship PR #530) là thuốc; mọi gate sampling mới phải tự hỏi "mẫu này có bias về phía khoẻ không".
+- **Soak baseline 24h pha loãng bởi giờ đêm — so với GIỜ LIỀN KỀ, không so trung bình 24h** (03/08: 0.23/phút nhìn như spike 6x vs baseline 24h nhưng THẤP hơn 3 giờ trước merge; repo từng revert oan vì đúng lỗi này 27/07).
+
+## notification-bell-not-clickable (2026-07-23, PR #454 / 9e77431a)
+- **Pseudo-element hit-area nuốt click**: `.tl-icon-btn::after {position:absolute; inset:-4px}` (PR #300, mở hit-area 44px) hit-test NHƯ element gốc + đè trên con trong paint order. Khi class nằm trên `<div>` bọc (UnifiedNotificationBell truyền className vào div, KHÔNG vào Button) → pseudo của div nuốt mọi pointer click, button bên trong không bao giờ nhận. Chuông chết click 2 TUẦN, không ai bắt. Keyboard vẫn sống. Fix scoped 1 dòng: `div.tl-icon-btn::after {pointer-events:none}` (chỉ div, 5 nút `<button>` thật giữ 44px). Bẫy chẩn đoán: `button.click()` JS LUÔN mở panel (bỏ qua hit-test) — chỉ click chuột thật / Playwright click mới lộ. Test regression PHẢI là e2e click thật (J11), jsdom vô dụng.
+- **Coupling chí mạng: GitHub Actions artifact-storage-quota giết luôn self-heal blob-loss**. Khi quota artifact hết → job Visual/Security đỏ ở bước UPLOAD (gate thực chất vẫn success) VÀ các workflow self-heal blob (deploy-guard poll + uptime-ping) KHÔNG chạy được → Supabase blob-loss flap không được tự vá. Trong phiên này blob-loss chết 68/76 fn 2 lần (lúc ship + giữa soak), phải `supabase functions deploy --use-api` vá tay cả 2 lần (heal ~2', idempotent, 0/76 sau đó). Bài học: khi thấy blob-loss KHÔNG tự lành sau 10-15', nghi ngay Actions quota — self-heal đang chết. Fix gốc = Cuong tắt integration "Deploy to production" + giải phóng Actions storage.
+- **/idea thiếu script**: `scripts/agents/debate-ledger.mjs` + `risk-tier.mjs` không tồn tại trong repo — cưỡng chế luật vòng 2 thủ công (mọi CONCEDE/REFINE kèm file:line), ghi chú trung thực vào proposal.
+
+## 2026-08-04 — audit fact-check + đóng lỗ RLS + dựng soak-watch/risk-tier (PR #538, #539)
+
+- **Bảng audit "khắt khe" vẫn phải fact-check từng số.** 23 claim → 12 đúng, 4 đúng-hướng-sai-số
+  (i18n thật 1686 ternary chứ không phải 1017; xcstrings 1764 needs_review chứ không phải 851 —
+  TỆ HƠN báo cáo), 3 sai/stale (types.ts KHÔNG thiếu bảng; coverage đã 85.92% từ CLOSE-03 nên đề
+  xuất "re-base ngưỡng" là thuốc sai bệnh). Mẫu lỗi: chỗ sai đều là **trạng thái cũ** — audit viết
+  một phần từ ghi chú thay vì đo tươi. Luật: điểm số của audit vô nghĩa, danh sách việc mới có giá.
+- **Grep repo KHÔNG đủ để quyết định REVOKE một grant.** Trước khi revoke phải hỏi DB:
+  RPC nào ghi bảng, `prosecdef` DEFINER hay INVOKER, và **INVOKER thì EXECUTE cấp cho role nào**.
+  `social_event_guest_register` là INVOKER + có INSERT — nếu authenticated có EXECUTE thì REVOKE đã
+  giết luồng guest OTP. Thoát vì EXECUTE chỉ cấp service_role. Chi tiết: [[event-registrations-insert-hole-closed]].
+- **Drop policy phải drop CẢ CỤM, không chỉ cái thủng.** Policy còn lại mà không có grant hiện ra
+  như "thiếu grant" dưới sweep `pg_policies × has_table_privilege` → lần sweep sau tự cấp lại grant,
+  mở lại đúng lỗ vừa vá.
+- **`scripts/agents/` chưa từng tồn tại** dù release-pilot.md + risk-auditor.md gọi 4 script trong đó
+  từ lúc viết. Mọi "soak 30p 🟢" trước 04/08 là lệnh KHÔNG THỂ chạy. Bài học rộng hơn: **agent doc mô tả
+  một lệnh không có thật thì agent sẽ ứng biến im lặng thay vì báo lỗi** — định kỳ kiểm mọi đường dẫn
+  script trong .claude/agents/*.md có thật hay không.
+- **Công cụ chống-xanh-giả tự tạo xanh giả.** qa-verifier bắt: `--minutes 0` hoặc gõ nhầm
+  `--minutes abc` (`Number("abc")=NaN`) làm `while (Date.now() < deadline)` false ngay → 0 lần poll,
+  0 lần gọi API, vẫn in "🟢 soak clean" exit 0. Luật cho MỌI gate mới: test trường hợp **gate không chạy**,
+  không chỉ trường hợp gate pass/fail. Alarm chưa từng thấy kêu = alarm chưa tồn tại — phải ép nó kêu
+  (baseline rỗng → exit 1 với 14 signature) trước khi tin.
+- **ESLint không phủ `.mjs`** (`eslint.config.js` chỉ match `**/*.{ts,tsx}`) — `npx eslint file.mjs`
+  exit 0 vì KHÔNG MATCH CONFIG, không phải vì sạch. Đúng cho mọi script trong scripts/.
+- **`fast-xml-parser` là dep của worker con** (`workers/news-fetcher/package.json`), root `npm install`
+  không kéo về → `tsc -b` + 1 suite vitest đỏ local trong khi CI xanh. Worktree còn cần symlink riêng
+  `workers/news-fetcher/node_modules`. Đỏ local ≠ đỏ thật; kiểm CI trước khi đi sửa.
+
+## 2026-08-04 (b) — DS-04 error states cho Live/News/TournamentDetail (PR #540)
+
+- **Thêm test có thể LÀM TỤT coverage.** Test import 3 page lớn → lần đầu kéo cả cây con vào
+  MẪU SỐ v8 (DoublesEliminationBracket ~280 stmt @6%, useDoublesElimination 111 @0.9%) →
+  1334 test pass nhưng statements 85.92%→72.22%, gate 83% đỏ. Local chạy `vitest run` KHÔNG thấy.
+  **Luật: test nào import component lớn phải chạy `--coverage` trước khi push.** Cách sửa đúng là
+  stub barrel con mà test không dùng (`@/components/tournament`, `@/components/content`) → 84.32%;
+  KHÔNG hạ ngưỡng, KHÔNG blanket exclude.
+- **`hidden={...}` là xanh giả kiểu CSS.** `.tl-filters` có `display:flex` từ author stylesheet, đè
+  `[hidden]` của UA → phần tử VẪN HIỆN trên màn hình nhưng BIẾN MẤT khỏi cây a11y, nên
+  `queryByRole(...)` trả null và test PASS. jsdom không đọc stylesheet nên không unit test nào phân
+  biệt được. **Muốn ẩn thì unmount, đừng dùng `hidden`** — ghi lý do vào cả component lẫn test.
+- **`.single()` là bẫy của convention DS-04**: PGRST116 khi 0 dòng làm "slug không tồn tại" và
+  "mạng chết" tới trang dưới cùng một `isError` → chỉ hiện được 1 thông báo cho 2 chuyện ngược nhau
+  (not-found bảo người ta bỏ cuộc, network error bảo thử lại). Dùng `.maybeSingle()`. Đã ghi vào
+  docs/state-patterns.md.
+- **Luôn thử gỡ bản vá xem test có đỏ không.** Làm với cả 4 test ở PR này — đỏ cả 4. Test state mà
+  pass ở cả hai chiều là đồ trang trí. Cùng họ với bài học soak-watch: alarm chưa thấy kêu = chưa có.
+- **Checkout chính có thể đứng sau main hàng chục commit** (04/08: nhánh phiên khác, sau main 32
+  commit) → mọi phép đếm/audit chạy ở đó đo nhầm cây. Audit/fact-check phải ghi rõ **commit SHA**
+  mình đứng, và đo trên worktree tạo từ `origin/main` khi kết luận về "repo hiện tại".
+
+## 2026-08-05 — `git pull` in "Updating X..Y" rồi vẫn FAIL, và deploy từ tree cũ (dính 2 lần trong 1 ngày)
+- `git pull --ff-only` khi tree bẩn: in dòng `Updating <old>..<new>` TRƯỚC rồi mới abort vì "local changes would be overwritten" — `tail -1` nuốt mất lỗi, ref KHÔNG nhích. Hậu quả thật 05/08: deploy 3 edge function từ tree cũ ngay sau khi merge PR #549 (phát hiện nhờ `git log -1` in ra SHA cũ; đã redeploy đúng trong vài phút).
+- LUẬT: mọi lệnh deploy-from-tree phải assert cùng câu lệnh: `[ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] && <deploy>` — đúng guard đã thêm vào redeploy-edge-functions.sh, áp cả cho deploy tay.
+- `git checkout <branch> -- <file>` GHI ĐÈ patch chưa commit trong working tree (mất patch ops-job-control 1 lần, phải gõ lại).
+- Commit với path tường minh vẫn cuốn theo file ĐANG STAGED từ trước (stash pop tự stage) — `git restore --staged .` trước khi commit có chủ đích.
+
+## 2026-08-06 (b) — live-viewer-count-comparison: /idea + ship Option A' (PR #555)
+
+- **Recon đếm consumer bằng grep tên file mà KHÔNG truy barrel + git log = sai 3-thành-1.** Vòng 1
+  recon báo useLivePresence có 3 consumer; thật ra LiveBroadcastHero bị gỡ khỏi trang chủ từ #251 và
+  LiveCardWithPresence chỉ còn trong barrel không ai lấy — 2 agent phải CONCEDE ở vòng 2 sau khi tự
+  truy `components/content/index.ts` qua cả 6 caller và `git log -S`. LUẬT: kết luận "X có N consumer"
+  phải truy barrel re-export tới caller thật + git log -S trước khi cho vào proposal.
+- **`scripts/agents/debate-ledger.mjs` vẫn không tồn tại** — lần /idea thứ 2 liên tiếp orchestrator
+  phải cưỡng chế luật vòng 2 bằng tay (ghi vào debate.json khoá `ledger_enforcement`). Viết nó hoặc
+  xoá khỏi skill /idea.
+- **Worktree guard chặn CẢ Bash compound** (`for`/`until`/`;` dài) trong session worktree — poll dài
+  phải ghi script ra scratchpad rồi `bash script.sh` (1 lệnh đơn). Và worktree KHÔNG có node_modules:
+  npx fallback lên node_modules repo chính (stale) gây lỗi ma (`fast-xml-parser` thiếu dù
+  package.json@main có) — `npm ci` trong worktree (~4s nhờ cache) là bắt buộc trước tsc/build.
+- **Bot PAT bị classifier chặn cả 2 đường (file + env) → release-pilot dừng đúng luật, KHÔNG mượn
+  keyring user.** Đường thoát đã dùng: soạn sẵn PR body ra file + đưa Cuong lệnh `! gh pr create/merge`
+  — user tự bấm bằng danh tính thật, agent chỉ watch CI/smoke/soak (đọc-only). Soak chuẩn
+  (soak-watch.mjs) cũng cần PAT → chỉ chạy được soak giảm cấp uptime-poll; ghi rõ "giảm cấp" vào
+  close-out, đừng để dòng soak xanh nói quá điều nó chứng minh.
+
+---
+
+## Venue directory data-source policy (Cường approved 2026-07-28)
+
+**Rule:** Build the `/san` venue directory ONLY from legit sources:
+- **OSM** (Overpass, license ODbL — reusable with attribution) — primary bulk source.
+- **Community submissions** (`/san/them`) — how the 691 VN venues were built; owned data, no ToS risk. The real moat.
+- Public association/listicle pages — selective, factual, with care.
+
+**NEVER scrape / reproduce for the directory:**
+- **Google Maps / Places API** — ToS forbids storing/caching place data to build a permanent directory. Risk: Google penalty/deindex of the whole site (would nuke the organic SEO we're building).
+- **Pickleheads / PlayPickleball** (and similar) — direct competitors; their compiled venue DB is their core asset. Scraping = ToS breach + database-rights/legal risk (cease-and-desist).
+
+**Court count / other fields:** fill ONLY when a public source states it. Never fabricate.
+
+**Context:** OSM coverage of pickleball in Asia is very uneven (2026-07 scan: MY 24, PH 30, TH 8 workable; KR 0, ID 1, TW 2, JP rate-limited = near-empty). Comprehensive data for the empty countries lives in Pickleheads/Google → off-limits. Grow those via community submissions, not scraping.
+
+---
+
+## Cowork: read/edit code from a FRESH github clone, NEVER the stale mount (reinforced 2026-07-30, Cuong)
+
+**Occurrence:** Misdiagnosed "2 newest VI posts missing from homepage" as a prerender-cache issue by reading `src/pages/Index.tsx` from the mounted repo, which sat on commit `b3569523` (a side branch whose homepage sources stories from Supabase `vi_blog_posts`). Deployed `main` actually builds homepage "Tuần này" stories from `blogMetadata` (static bilingual manifest) — a different code path that structurally cannot show VI-only posts. The stale read produced a wrong root-cause and cost a round.
+
+**Rule:** Before reasoning about DEPLOYED behavior or editing any source file, fetch it fresh from `origin/main` (GitHub API `contents?ref=main`, or `git clone --depth 1`). The mount `/Users/cm10/pickle-hub-pro` is frequently on a stale/side branch (git HEAD may be far from `main`). Do edits in the fresh clone and push from there. Verify `git rev-parse HEAD` of the clone matches `main` before trusting any file.
+
+**Also:** homepage VI stories (deployed main) = `blogMetadata` manifest only (EN+VI titles). VI-only Supabase posts appear on `/vi/blog` (Bảng tin) but NOT the homepage unless the homepage is changed to read `usePublishedViBlogPosts()` (branch `fix-home-vi-stories-supabase`, PR 2026-07-30).
+
+---
+
+## US growth: task tracker + báo cáo sau MỖI task (Cường yêu cầu 2026-08-07)
+
+**Rule:**
+- Mọi task phát triển US ghi ở **`growth-tasks/US-GROWTH-TASKS.md`** (tracker sống: STATUS + OWNER + ngày + "Nhật ký task"). Đây là nguồn sự thật cho tiến độ US; đừng để task trôi trong session.
+- **Báo cáo sau MỖI task US hoàn thành** — thêm 1 dòng "Nhật ký task" (kết quả + link commit/verify) + notify Cường ngắn gọn. **KHÔNG gộp im lặng** nhiều task rồi mới báo.
+- Owner: **em** (Claude) = on-page/đo GSC/content; **anh** (Cường) = backlink outreach + duyệt keyword. Đo GSC US **hàng tuần** khi Cường mở browser → ghi `US-CLICKS-GROWTH-PLAN`.
+- Chiến lược: `US-GROWTH-SPRINT-2026-08-07.md` (sprint 30 lồng 90 ngày). Đòn bẩy #1 = backlink trỏ `/tools` (cụm generator đã tự leo pos ~15 không cần link).
+
+**Cập nhật 2026-08-07 (Cường chốt):**
+- Báo cáo per-task = **CHAT** là đủ (không tạo file report riêng mỗi task). Mục "Nhật ký task" trong `US-GROWTH-TASKS.md` vẫn cập nhật làm bản lưu bền.
+- **Backlink**: Cường tự làm toàn bộ + **chủ động cung cấp thông tin** (đã gửi link nào, ở đâu) khi agent cần đo/theo dõi. Agent không tự đọc được hoạt động outreach → không đoán, chờ Cường đưa dữ liệu.
+
+## VI blog posts: meta_title ≤60 bytes, meta_description ≤160 BYTES (not chars) — Vietnamese is multi-byte
+
+**Occurrence (1 — HCMC recap VI insert, 2026-08-10):** First `vi_blog_posts` INSERT for `hcmc-open-2026-ket-qua` failed `23514` check constraint `vi_blog_posts_meta_description_seo_bytes`. meta_description was 154 chars but **176 bytes** (Vietnamese diacritics + `Đ`/`ế`/`ị`… are 2–3 UTF-8 bytes each). meta_title similarly capped.
+
+**Constraints (live on `public.vi_blog_posts`):**
+- `vi_blog_posts_meta_title_seo_bytes` → `octet_length(meta_title) <= 60`
+- `vi_blog_posts_meta_description_seo_bytes` → `octet_length(meta_description) <= 160`
+- `title` (the H1) has **no** byte cap — only meta_title/meta_description do.
+
+**Rule:** When composing a VI post, size meta_title/meta_description in **bytes**, not characters. Rule of thumb: a VN string with typical diacritics runs ~1.15–1.25 bytes/char, so keep meta_title ≲ 48–50 chars and meta_description ≲ 128–135 chars, then verify:
+```python
+len(s.encode('utf-8'))  # meta_title ≤60, meta_description ≤160
+```
+Trim set-score parentheticals / drop the leading "Kết quả PPA Asia 500 …" prefix first — those buy the most bytes. The INSERT uses `WHERE NOT EXISTS` on slug, so a failed attempt leaves **no partial row** — just fix the two fields and re-run (idempotent).
+
+## Bump một dateline = phải grep MỌI câu phụ thuộc vào ngày đó (2026-08-30)
+
+**Occurrence (WC Đà Nẵng, ngày khai mạc):** Sau khi đưa `updatedDate` 3 bài World Cup từ 29/8 → 30/8, bước verify độc lập tìm ra ba câu sống sót, và một trong số đó bị bump làm cho **sai hẳn** chứ không chỉ cũ:
+- `"…đúng một ngày trước khi trang này được cập nhật"` (bài lịch, bản VI). Đúng khi trang ghi 24/8. Bump lên 30/8 → câu này khẳng định 29/8. Ngày thật là 23/8. Bản EN đã sửa từ commit trước, bản VI thì không.
+- `"the day before play starts"` / `"ngày mai là bóng lăn"` × 4 chỗ trong bài how-to-watch — hôm nay là ngày thi đấu, "ngày mai" đã thành quá khứ.
+
+**Rule:** ngày tương đối là một khẳng định **có hạn dùng**. Trước khi bump dateline, grep các cụm: `the day before|tomorrow|ngày mai|hôm qua|ngày trước|tuần tới|còn N ngày|trước khi trang này`. Và grep **cả hai ngôn ngữ + cả hàng Supabase**, vì bản VI trong `vi_blog_posts.content_html` là HTML soạn tay, **không sinh ra từ file .ts** — sửa .ts không đụng tới nó (finding A ngày 30/8: câu "tính tới 27/8 link vé đã không còn" chỉ tồn tại trong Supabase, grep trong repo trả 0).
+
+**Kèm theo:** `vi_blog_posts.updated_at` có trigger ghi đè `now()` — đặt tay giá trị này là vô nghĩa, đừng đưa vào payload.
+
+---
+
+## `tsc --noEmit` KHÔNG kiểm gì cả — phải dùng `tsc -b --noEmit` (2026-09-02)
+
+**Occurrence:** Trước hai commit sáng 2/9 em chạy `npx tsc --noEmit`, thấy sạch, và commit. CI `Quality gate` vẫn đỏ. Lý do: `tsconfig.json` gốc dùng `files: []` + project references, nên `tsc --noEmit` **type-check ĐÚNG 0 file và luôn pass** (silent no-op). Workflow `quality.yml` dùng `npx tsc -b --noEmit` (build mode) — chính comment trong workflow đã cảnh báo điều này từ trước.
+
+**Hệ quả thật:** `tsc -b` đã đỏ trên `main` từ `2e5527e` (1/9) — commit đó thêm field bắt buộc `completed` vào `WcProEventGroup` mà không cập nhật 4 fixture trong `WorldCupLiveCard.test.tsx`. Không ai thấy vì check "typecheck" nội bộ luôn xanh. Sửa ở `a32d6c0`.
+
+**LUẬT:** lệnh typecheck trước commit của repo này là **`npx tsc -b --noEmit`**. `tsc --noEmit` trần = vô nghĩa, đừng dùng làm bằng chứng "sạch" trong báo cáo.
+
+## `wc_pro_matches.scheduled_at` là GIỜ VIỆT NAM lưu trong cột UTC — KHÔNG BAO GIỜ `AT TIME ZONE` (2026-09-02)
+
+**Occurrence:** BTC World Cup phát `"scheduledAt":"2026-09-01T08:00:00"` — chuỗi naive, không timezone. Scraper ghi verbatim vào cột `timestamptz`, Postgres hiểu là UTC. Migration `20260831140000` ghi rõ ở dòng 70: `scheduled_at timestamptz, -- Vietnam time stored as UTC`.
+
+Em truy vấn bằng `scheduled_at AT TIME ZONE 'Asia/Ho_Chi_Minh'` → **cộng +7 lần thứ hai**. Mọi giờ đưa vào 5 bài World Cup ngày 31/8 và 1/9 đều **trễ 7 tiếng**: "1/9 từ 15:00–17:40" (thật: 08:00–16:20), "chung kết đơn nam 6/9 18:20" (thật: 11:20), "chung kết đôi nam 20:40" (thật: 13:40). Trang `/vi/blog/lich-thi-dau-...` — trang top toàn site — bảo độc giả đến muộn 7 tiếng.
+
+**Ba cách tự bắt lỗi này, dùng lần sau:**
+1. **Bài tự mâu thuẫn:** cùng bài đã ghi "đơn nam 11:20" (lấy từ lịch BTC công bố) lại vừa ghi "Grand Final 18:20" (quy đổi từ DB). Chênh đúng 7h = dấu vân tay.
+2. **`completed` mà `last_seen_at < scheduled_at`:** 322/532 hàng. Không thể thấy kết quả trước giờ bóng lăn.
+3. **Nhìn dải giờ thô:** 08:00–16:20 là một ngày thi đấu bình thường; 15:00–23:20 thì không.
+
+**LUẬT:** đọc `scheduled_at` **verbatim** (`.slice(0,10)` cho ngày, phần giờ lấy thẳng). Code đúng đã có sẵn: `matchDayKey()` trong `functions/_lib/render/wc-results.ts` + `src/hooks/useWcResults.ts`. `last_seen_at` thì NGƯỢC LẠI — đó là instant UTC thật, phải +7.
+
+## Thay "day four"→"day five" mà quên ngày đứng bên cạnh (2026-09-03)
+
+**Occurrence:** sed đổi `day four of competition` → `day five` ở 3 dateline bài how-to-watch, nhưng
+tiền tố `Updated September 2, 2026,` thì không đổi. Kết quả lên production: *"Updated September 2,
+2026, day five of competition"* — 30/8 là day one nên 2/9 là day four; câu **tự sai với chính nó**.
+Verify độc lập bắt được, không phải em.
+
+**LUẬT:** dateline là **một cặp** (ngày tuyệt đối + số thứ tự ngày). Sửa một nửa là tạo mâu thuẫn
+nội bộ, tệ hơn để nguyên cả hai vế cũ. Thay cả cụm, và grep lại bằng chính cặp mới
+(`grep -c "September 2, 2026, day five"` phải = 0).
+
+## Sửa .ts KHÔNG chạm vi_blog_posts — và drift đi được cả HAI CHIỀU (2026-09-03)
+
+Luật 30/8 đã ghi "sửa .ts không đụng hàng Supabase". Hôm nay gặp **cả hai chiều trong một buổi**:
+- **EN sửa, VI sót:** bản VI bài cẩm nang xem vẫn còn "chỉ còn ba ngày nữa là khai cuộc",
+  "Cập nhật 27/8/2026, còn 3 ngày là bóng lăn", "đây **sẽ là** lần đầu tiên Việt Nam góp mặt"
+  (thì tương lai, giải đã sang ngày thứ năm) — bản EN đã viết lại sang quá khứ từ nhiều ngày trước.
+- **VI sửa, EN sót:** cùng bài đó, dateline EN thì sai như mục trên còn VI đã đúng.
+
+**LUẬT:** mỗi lần sửa nội dung một bài song ngữ, chạy grep **trên production cả hai URL** với cùng
+bộ chuỗi, chứ không grep trong repo. Repo chỉ chứa một nửa sự thật.
+
+## Kiểm chứng phải được hỏi "tìm lỗi tôi CHƯA hỏi" (2026-09-03)
+
+Subagent verify PASS 8/8 trên toàn bộ danh sách em tự đưa ra — rồi mục mở "tự tìm lỗi tôi chưa hỏi"
+ra **7 phát hiện, 4 là lỗi thật vừa mới tạo ra**, gồm cả chuyện em **nói hụt chính câu chuyện của
+mình** (viết "hai trận chung kết" trong khi bài trụ cột của chính site đã đăng dữ kiện đủ để nói
+"có thể ba"). Danh sách kiểm do tác giả viết chỉ kiểm được thứ tác giả đã nghĩ tới.
+
+**LUẬT:** mọi lần verify phải có một mục cuối để mở, liệt kê sẵn các họ lỗi cần soi (tự mâu thuẫn ·
+ngày tương đối hết hạn · khẳng định vượt dữ liệu · loãng entity · suy luận bracket không nhất quán),
+và grep production sau khi deploy — lần sửa thứ nhất hôm nay sót một chuỗi cách chỗ đã sửa hai
+mệnh đề, chỉ grep prod mới thấy.
+
+## Bản VI có HAI nguồn sự thật, không phải một: `content_html` VÀ `faq_items` (2026-09-06)
+
+**Occurrence:** sáng 6/9 em viết lại cả 6 hàng `vi_blog_posts.content_html`, verify bằng predicate,
+`like '%19:40%'` = true trên cả 6. Rồi `curl -A Googlebot ...?nocache=1` vẫn trả về giờ chung kết CŨ
+(10:10–14:50) trên trang lịch VI và trang kết quả VI. Không phải cache — chuỗi cũ nằm trong khối
+`"@type":"FAQPage"` của JSON-LD, và khối đó **sinh từ cột `vi_blog_posts.faq_items` (jsonb)**, hoàn
+toàn tách rời `content_html`. Sửa `content_html` không đụng nó, y hệt cách sửa `.ts` không đụng
+`vi_blog_posts`.
+
+**LUẬT:** một bài song ngữ có **ba** nơi chứa cùng một dữ kiện, không phải hai:
+`posts/<slug>.ts` (EN) · `vi_blog_posts.content_html` (VI, HTML soạn tay) · `vi_blog_posts.faq_items`
+(VI, JSON-LD FAQ). Mỗi lần sửa một con số phải quét cả ba. Predicate kiểm nhanh:
+`select slug, faq_items::text like '%<chuỗi cũ>%' from vi_blog_posts where ...`.
+
+## Splice chuỗi bằng index thì phải đếm cả dấu nháy đóng (2026-09-06)
+
+`s = s[:i] + new + s[j+1:]` với `j = s.find('",\n        },', i)` — `j` trỏ vào dấu `"` đóng, nên
+`s[j+1:]` bắt đầu từ `,`. Nếu `new` không tự kết thúc bằng `"` thì chuỗi mất nắp. Lần này `tsc -b`
+bắt được (TS1002 Unterminated string literal). Nhưng lần thứ hai cùng buổi, một replace prefix cắt
+giữa câu lại **không** vỡ cú pháp — nó ship ra production nguyên văn `"both are supersed it."`,
+nằm trong FAQPage JSON-LD của trang top-traffic. `tsc` không bắt được câu văn vỡ.
+
+**LUẬT:** sau mọi lượt sửa nội dung, đọc lại **văn bản đã render** của chính đoạn vừa sửa (grep 200
+ký tự quanh chỗ thay), đừng chỉ tin typecheck. Và ưu tiên replace nguyên câu trọn vẹn thay vì
+splice theo index.
+
+## Ba lần liên tiếp: viết mở bài mới mà không đọc thân bài (2026-09-06)
+
+5/9: "mọi nội dung còn lại diễn ra vào ngày mai" trong khi bảng ngay dưới liệt kê 3 chung kết hôm đó.
+6/9: mục mới ghi "cả tám trận chung kết nay đều có giờ và tên nội dung", ba đoạn dưới vẫn còn
+"the three timed national-team matches are not labelled by division"; và hàng bảng "Thứ Bảy 5/9" vẫn
+ghi chung kết Junior trong khi hàng "Chủ nhật 6/9" ghi chung kết Junior 08:00.
+
+**LUẬT:** khi một mục đổi *kết luận* (từ "chưa biết X" sang "X = 19:40"), grep toàn bài theo **mệnh
+đề phủ định cũ** ("chưa", "không được ghi", "unlabelled", "still not", "chưa rõ", "no slot") chứ
+không grep theo con số mới. Con số mới có mặt không chứng minh câu cũ đã biến mất.
+
+## 2026-09-07 — ba bài học từ lượt "giải đã kết thúc"
+
+**1. Bản VI có BA nguồn sự thật, không phải hai.** Ngày 6/9 đã ghi "content_html VÀ faq_items". Hôm nay lộ thêm cái thứ ba: **`title` và `meta_description` trong `vi_blog_posts`**. Trang kết quả VI có `title` = "…cập nhật từng phút" và `meta_description` = "…cập nhật liên tục" — hai chuỗi đi thẳng vào SERP, sống sót qua cả lượt sửa content_html lẫn faq_items, và không nằm trong file TS nào. Ngoài ra `metadata.ts` giữ bản sao EN+VI của title/description và **có test canh drift** (`seo-byte-budget.test.ts`), nên sửa post file mà quên metadata.ts thì vitest bắt được; còn sửa Supabase mà quên metadata.ts thì **không ai bắt được**. Danh sách đầy đủ khi đổi tiêu đề/mô tả một bài song ngữ: `posts/<slug>.ts` → `metadata.ts` → `vi_blog_posts.title` → `vi_blog_posts.meta_description`.
+
+**2. Thay một đoạn theo CHỈ SỐ `<p>` thì phải kiểm tra đoạn đó có xuất hiện lại ở chỗ khác không.** Lượt sửa sáng nay thay `<p>` số 0 của bài đôi nam bằng đoạn mở mới, rồi lượt sau tìm-thay chuỗi "Cập nhật Chủ nhật 6/9…" và gặp một đoạn GIỐNG HỆT nằm sâu trong thân bài — kết quả là **cùng một đoạn mở in hai lần trên production**, do chính mình tạo ra. Lần sau: trước khi ghi, `assert content.count(new_paragraph) == 1`.
+
+**3. Grep tìm chuỗi cũ phải chạy trên BẢN RENDER, không phải trên file nguồn.** Ba vòng verify hôm nay tìm ra ba lớp khác nhau, và lớp nào cũng vô hình với lớp trước: (a) file TS EN sạch nhưng Supabase VI còn nguyên đoạn cũ; (b) cả hai sạch nhưng **`functions/_lib/render/wc-results.ts`** vẫn in "mọi trận Pro đang thi đấu" — chuỗi sinh ra ở tầng code, không ở tầng nội dung; (c) thân bài sạch nhưng **`faqItems`/`faq_items`** còn thì tương lai, và FAQ chính là thứ AI search trích. Quy trình đúng: `curl -A Googlebot "<URL>?nocache=1"` rồi grep trên HTML trả về, cho cả 12 URL, sau mỗi deploy — không phải `grep` trong `src/`.
+
+**4. Subagent verify có mục mở đáng giá hơn checklist.** Yêu cầu "tìm cả những lỗi tôi chưa hỏi tới" trả về đúng những thứ checklist không thể có: câu cụt giữa sở hữu cách ("beating Peru's"), đoạn mồ côi về đội trưởng Cayman nằm dưới heading về Việt Nam, danh sách "ba khoảng trống" mà mục 2 nói khoảng trống đó đã hết, và trang trụ EN **thiếu hẳn FAQ "ai vô địch"** trong khi bản VI đã có — một lệch EN/VI mà không grep nào bắt được vì nó là sự VẮNG MẶT.
+
+## Một VĐV có thể có BA cái tên, mỗi tên một nguồn — nêu cả ba, đừng chọn bừa (2026-09-10)
+
+**Occurrence:** site gọi Hồ Thị Trúc Tâm là **"Ken Tam"** ở các bài cũ (bài HCV Thâm Quyến dùng 29 lần, kể cả trong slug `sophia-huynh-ken-tam-womens-doubles-gold-2026` và trong `metaTitle` cả EN lẫn VI) nhưng là **"Ho Tam / Hồ Tâm"** ở hai bài KL Cup (16 và 26 lần), **không bài nào bắc cầu giữa hai tên**. Riêng bài KL preview nhắc "Ken Tam" đúng một lần — trong anchor link — nên người đọc bấm vào tưởng sang bài về người khác.
+
+**Ba tên đều có nguồn thật, không cái nào sai:**
+- `Hồ Thị Trúc Tâm` — tên thật
+- `HO Tam` — PPA Tour Asia đăng ký trong bảng hạt giống
+- `Ken Tam` — DUPR (`src/content/dupr-rankings.ts`, nữ đơn hạng 18, 5.037, parse từ dupr.com 20/7/2026)
+
+**LUẬT:**
+1. **Dạng chính cho nội dung MỚI: `Ho Tam` / `Hồ Tâm`** — khớp bảng đấu người đọc đang nhìn, và khớp cách người Việt tìm kiếm.
+2. **KHÔNG đổi slug và KHÔNG đổi `metaTitle` đã index** để chạy theo dạng chính. Slug `...ken-tam...` và hai metaTitle chứa "Ken Tam" giữ nguyên — đổi là churn SERP để lấy về đúng con số không.
+3. **Mọi trang nhắc tên cô phải nêu đủ ba tên MỘT lần ở lần nhắc đầu**, kèm nguồn: *"Ho Tam — Ho Thi Truc Tam, whom PPA Tour Asia enters as HO Tam and DUPR lists as Ken Tam"*. Đây vừa là chống nhầm cho người đọc, vừa là đoạn văn hợp nhất thực thể cho AI search — ba chuỗi cùng trỏ về một người, có nguồn cho từng chuỗi.
+4. Cùng họ vấn đề, chưa xử: `Sophia Nhi Huynh` (không dấu) đứng cạnh `Sophia Phương Anh Trần` (có dấu) trong cùng danh sách, và `metadata.ts` từng gọi người thắng HCV Thâm Quyến là `Sophia Huynh Tran` — trộn tên của **hai người khác nhau** mà chính bài KL Cup cảnh báo là hay bị nhầm.
+
+**Cách tự bắt lỗi này lần sau:** khi thêm một bài về VĐV đã có bài cũ, grep tên VĐV đó trên **toàn repo** trước khi viết, không chỉ trong bài đang soạn. Anchor link là chỗ lộ ra sớm nhất — nó mang tên theo bài đích trong khi thân bài mang tên theo bài nguồn.
+
+## Apply SQL qua Management API thì PHẢI ghi sổ ngay trong cùng phiên (2026-09-10)
+
+**Occurrence:** `Deploy guard` đỏ **8 run liên tiếp** từ 9/9 12:47 tới 10/9, và không ai để ý vì nó đỏ liên tục nên trông như "bình thường". Nguyên nhân: PR #760 (`9e11ad9`) thêm `supabase/migrations/20260909040000_pro_tour_events_registry.sql`, **đã chạy vào prod nhưng không ghi vào** `supabase_migrations.schema_migrations`. Sổ dừng ở `20260908120000`.
+
+**Đây KHÔNG phải migration chưa chạy.** Em đối chiếu từng câu lệnh với DB thật trước khi làm gì: bảng 20 cột ✓, RLS bật ✓, đúng 2 policy đúng tên/cmd/roles ✓, `GRANT SELECT TO anon` ✓, `GRANT INSERT,UPDATE,DELETE TO authenticated` ✓, 1 hàng seed từ `INSERT` ✓. Tức là **8/8 câu lệnh đã vào DB, chỉ thiếu đúng một dòng ghi sổ.**
+
+**Vì sao chuyện này sẽ LẶP:** trong Cowork, đường chuẩn để chạy SQL prod là Management API — đúng đường em dùng cả ngày cho `vi_blog_posts`. `docs/ops-runbook.md` §1 có ghi bước ghi sổ ngay sau bước apply, nhưng nó là bước *rời*, dễ quên, và không có gì chặn lúc chạy. Cái chặn duy nhất là `check-migration-drift.mjs` trong CI — **chạy SAU khi merge**, nên lỗi luôn được phát hiện muộn và luôn ở dạng "main đã đỏ sẵn".
+
+**LUẬT:**
+1. Apply migration qua Management API thì **gộp cả hai vào MỘT lệnh curl**, đừng tách:
+   ```sql
+   SELECT 1;  -- gotcha runbook: câu đầu hay bị nuốt
+   <DDL của migration>
+   INSERT INTO supabase_migrations.schema_migrations (version, name)
+   VALUES ('<version>', '<name>') ON CONFLICT (version) DO NOTHING;
+   ```
+2. `name` = tên file bỏ tiền tố version và bỏ `.sql` (`20260909040000_pro_tour_events_registry.sql` → `pro_tour_events_registry`).
+3. Verify bằng `DRIFT_STRICT=1 node scripts/check-migration-drift.mjs` — phải in `Local migrations: N · Applied on prod: N`.
+4. **Phân biệt cho rõ:** `UPDATE`/`INSERT` vào bảng dữ liệu (như `vi_blog_posts`) **không phải migration**, không ghi sổ. Chỉ DDL trong `supabase/migrations/*.sql` mới ghi.
+5. **CẤM `db push --include-all`** (runbook §1) — sổ remote còn drift lịch sử.
+
+**Bài học rộng hơn, đáng giá hơn cái fix:** một CI check đỏ thường trực còn tệ hơn không có check. Tám lần đỏ liên tiếp đã dạy mọi người (kể cả em, sáng nay em báo "CI 4/4 xanh" cho ba commit mà thật ra Deploy guard đang đỏ) rằng màu đỏ đó là nền. Lần sau thấy một check đỏ nhiều run liền: **truy xem nó đỏ từ commit nào** (`workflows/<id>/runs`) trước khi cho rằng đó là do mình hoặc là chuyện đã biết.

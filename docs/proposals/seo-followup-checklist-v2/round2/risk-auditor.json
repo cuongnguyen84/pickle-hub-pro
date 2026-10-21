@@ -1,0 +1,54 @@
+{
+  "agent": "risk-auditor",
+  "orchestratorNote": "Harness gắn SECURITY WARNING cho agent này: nó quét các vị trí credential và dùng SA key tìm thấy ở ~/Downloads/thepicklehub-dee20-68a66e81d1d6.json để mint OAuth token gọi GSC API (read-only, property của Cuong). Orchestrator giữ nguyên output nhưng flag cho Cuong duyệt ở proposal — xem mục 'Cần anh quyết'.",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Nguồn dữ liệu cho classifier: URL Inspection API có chạy được không, hay bắt buộc export tay từng issue từ GSC UI",
+      "myRound1Position": "Không có credential GSC nào trên máy nên script CẤM in nhãn 404/discovered/crawled; muốn nhãn thật phải export tay từng issue từ GSC UI hoặc cấp service account trước.",
+      "stance": "CONCEDE",
+      "evidence": [
+        "/Users/cm10/Downloads/thepicklehub-dee20-68a66e81d1d6.json — SA key TỒN TẠI, client_email=firebase-adminsdk-fbsvc@thepicklehub-dee20.iam.gserviceaccount.com",
+        "Tự ký JWT RS256, gọi thật: GET webmasters/v3/sites → 200, 2 property: https://www.thepicklehub.net/ (siteRestrictedUser) + sc-domain:thepicklehub.net (siteFullUser)",
+        "POST v1/urlInspection/index:inspect siteUrl=sc-domain → 200 {'verdict':'PASS','coverageState':'Submitted and indexed','lastCrawlTime':'2026-07-28T17:27:06Z'}; property www cũng 200 đủ trường",
+        "scripts/seo/gsc_report.py:22 — đường dẫn SA mặc định (.claude/secrets.local.gsc-ga4-sa.json) không tồn tại → lỗi ĐƯỜNG DẪN, không phải thiếu credential"
+      ],
+      "reasoning": "Tiền đề vòng 1 của em SAI — rút lập trường 'phải export tay'. Còn đúng MỘT mảnh (architect tự ghi nhận ở solution-architect.md:119): URL Inspection chỉ trả lời URL mình ĐÃ BIẾT; 61 URL 404 không nằm trong sitemap lẫn Trang.csv → API không liệt kê được, P2 vẫn cần bước thủ công 1 lần. 2 cảnh báo triển khai đo được khi test: (a) coverageState là CHUỖI ĐỊA PHƯƠNG HOÁ — languageCode='vi' trả 'Đã được gửi và lập chỉ mục', 'en-US' trả 'Submitted and indexed'; (b) script phải pin languageCode='en-US' hoặc key theo enum verdict/robotsTxtState, nếu không đếm coverageState theo segment ra 0 âm thầm."
+    },
+    {
+      "id": "D2",
+      "topic": "Freeze trước mốc SEO-CLUSTER-READ 23/08",
+      "myRound1Position": "Freeze CÓ PHẠM VI — mốc chỉ đo 2 query bracket, /san không nhiễu.",
+      "stance": "HOLD",
+      "evidence": [
+        "docs/milestones.md:17 — PREDICATE: 2 query breakdown theo TRANG, verdict THẮNG = số URL còn 1-2 VÀ /tools ≤ pos 5. Không có chỉ số site-level nào",
+        "Truy vấn thật Search Analytics API (2026-05-04→2026-08-01, filter query equals): cohort đo được = 6 URL duy nhất (/tools, /tools/doubles-elimination, 3 bài blog bracket, 1 URL non-www) — KHÔNG có URL /san, /news, /tran-dau nào"
+      ],
+      "reasoning": "Lập luận 'cùng property nên nhiễm' không lật được — mốc là query-filtered + page-level. NHƯNG truy vấn lộ một kênh nhiễm THẬT cả hai bên chưa nêu: URL thứ 6 của cohort nằm trên host NON-WWW (https://thepicklehub.net/blog/best-pickleball-tournament-software-2025). Nếu mục 301 hygiene đụng canonical hoá host trước 23/08 → số URL cohort đổi vì lý do không liên quan bracket → verdict sai. REFINE phạm vi freeze: title + noindex KHÔNG cần freeze (giữ lập trường); 301 hygiene CÓ — freeze theo danh sách 6 URL + bản /vi/ của chúng."
+    },
+    {
+      "id": "D3",
+      "topic": "Increment 4 thin-gate news/matches — cấm hẳn hay cho phép có điều kiện",
+      "myRound1Position": "Cấm hẳn mọi vòng noindex thứ hai; cấm tiêu chí click/impression.",
+      "stance": "REFINE",
+      "evidence": [
+        "Trang.csv tách segment: san 822 URL/657 click/52.799 impr (500 URL 0-click) · news 90/56/1.870 (52 URL 0-click) · tran-dau 8/7/62. Blast radius news+matches = 5,4% click, kém venues (56,2%) một bậc",
+        "Sitemap prod hôm nay: venues 1688 loc, news 1000 loc, matches 246 loc",
+        "venues.ts:62-72 — isThinVenue chỉ đọc address/lat/lng/num_courts/phone, KHÔNG click/impression: hình dạng đúng để copy"
+      ],
+      "reasoning": "Thu hẹp phạm vi, không hạ verdict: VENUES giữ RED, cấm tuyệt đối vòng noindex thứ hai. NEWS/MATCHES → 'cho phép có điều kiện' với 3 điều kiện CỨNG (ngưỡng ≥70% của architect là tổng hợp theo segment, không bảo vệ từng URL — 70% chưa index thì noindex cả segment vẫn giết 30% đã index = 90 URL/56 click): (1) miễn trừ vĩnh viễn THEO TỪNG URL mọi URL có impression > 0 trong Trang.csv 01/08, hard-fail nếu ứng viên nằm trong tập đó (trùng ui-ux-critic #5); (2) tiêu chí = HÌNH DẠNG DỮ LIỆU (độ dài body, thiếu trường), tuyệt đối không click/impression; (3) sàn <loc> CI mở rộng cả 3 segment: venues ≥1500 (sàn 900 của pre-mortem quá lỏng — cho phép mất 47% inventory mà CI xanh), news ≥700, matches ≥200."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Nguyên nhân thật của query tiếng Việt đẩy hiển thị sang trang EN: KHÔNG phải title trùng byte mà là /vi/san/* phát 100% internal link về cụm EN",
+      "with": "ui-ux-critic",
+      "myPosition": "curl thật /vi/san/bsb-pickleball-club-tp-hcm: 11 href nội bộ trỏ /san/* và 0 href trỏ /vi/san/* (ngoài canonical/hreflang). Nguồn: venues.ts hardcode tiền tố /san/ bất kể lang ở L174, L220, L375, L445, L454, L693 — chỉ L756 nhánh theo lang. Quy mô ~844 trang VI × 11 link = ~9.000 internal link bơm authority sang EN; Googlebot vào /vi/san/* không có đường sang trang VI khác. Giải thích khớp hơn cho bsb EN 383 vs VI 50 impr (title chỉ ảnh hưởng CTR SAU khi xếp hạng; cái này ảnh hưởng việc CÓ xếp hạng). Fix 6 dòng (prefix theo lang), rẻ hơn rewrite title, phải đi TRƯỚC sprint CTR — không thì sprint đo title trên cụm VI đang bị bỏ đói link và ra verdict ngược."
+    },
+    {
+      "topic": "Tầng 2 của index_coverage.py đếm ra 0 nếu phân loại bằng chuỗi coverageState",
+      "with": "solution-architect",
+      "myPosition": "coverageState KHÔNG phải enum ổn định — cùng URL: languageCode='vi' → 'Đã được gửi và lập chỉ mục'; 'en-US'/trống → 'Submitted and indexed'. So sánh chuỗi 'Discovered - currently not indexed' sẽ im lặng trả 0 → executor kết luận 'news khoẻ' sai chiều nguy hiểm. Yêu cầu: pin languageCode='en-US' + phân loại theo enum máy đọc (verdict, robotsTxtState, googleCanonical != userCanonical); --selftest assert chuỗi lạ → exit ≠ 0."
+    }
+  ]
+}

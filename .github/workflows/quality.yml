@@ -20,6 +20,9 @@ jobs:
   quality:
     timeout-minutes: 15
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read # telegram-notify.sh reads the previous run to report once per red streak
     steps:
       - uses: actions/checkout@v7
         with:
@@ -94,22 +97,31 @@ jobs:
         # regressions without flapping on normal growth.
         env:
           BUNDLE_STRICT: "1"
-          BUNDLE_BUDGET_KB: "1970" # bumped from 1950 (hit exactly 1950.0 on 2026-07-16, blocking SQL-only PRs); PERF-01 must set a real budget and PERF-02 must claw back headroom (TeamMatchView 241KB chunk is the known lever)
+          # DEBT-09 (2026-10-01, owner-approved): CONTENT aggregate no longer enforced (per-chunk 20 KB cap stays); CODE default 1800 -> 1900 in check-bundle-size.mjs.
+          # DEBT-01 (2026-08-17): replaced the total-gz backstop, which summed CODE + lazy per-slug blog chunks and so went red on ordinary blog posts rather than on real regressions. CONTENT was 408.0 KB across 54 chunks when this landed. CODE (1800) and INITIAL (280) still gate app-code and first-paint; PERF-02 still owns clawing back CODE headroom (TeamMatchView 241KB chunk is the known lever).
         run: node scripts/check-bundle-size.mjs
 
-      - name: Notify Telegram on failure
+      - name: Notify Telegram on failure (first red run on main only)
         if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GH_TOKEN: ${{ github.token }}
+          NOTIFY_EVENT: push
         run: |
-          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
-            echo "Telegram secrets missing — skipping alert"; exit 0
-          fi
-          MSG="🧪 *Quality gate FAILED on main*%0A%0A"
-          MSG="$MSG*Commit:* \`${GITHUB_SHA:0:7}\`%0A"
-          MSG="$MSG*Run:* https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}%0A"
-          MSG="$MSG_lint / typecheck / unit tests / build broke._"
-          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-            -d "chat_id=${TELEGRAM_CHAT_ID}" -d "text=${MSG}" \
-            -d "parse_mode=Markdown" -d "disable_web_page_preview=true" > /dev/null
+          scripts/ci/telegram-notify.sh first-failure "Quality gate FAILED on main (lint / typecheck / unit tests / build)
+          Commit: ${GITHUB_SHA:0:7}
+          Run: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+          Later red runs on main stay quiet until it is green again."
+
+      - name: Notify Telegram when main is green again
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GH_TOKEN: ${{ github.token }}
+          NOTIFY_EVENT: push
+        run: |
+          scripts/ci/telegram-notify.sh recovered "Quality gate green again on main
+          Commit: ${GITHUB_SHA:0:7}
+          Run: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, RotateCcw, Dice5, ArrowLeftRight, StickyNote, Timer, Cross } from 'lucide-react';
+import { ArrowLeft, RotateCcw, Dice5, ArrowLeftRight, StickyNote, Timer, Cross, X } from 'lucide-react';
 import {
   startState, applyRally, callout, isGameOver, scoreOf,
   servingPlayer, receivingPlayer, servingSideRight, sideSwitchPoint,
@@ -95,6 +96,13 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
   // game
   const [state, setState] = useState<ScoreState | null>(null);
   const [history, setHistory] = useState<ScoreState[]>([]);
+  // A reused screen (new persistKey, same instance) must not keep the previous board.
+  const [scoreKey, setScoreKey] = useState(storeKey);
+  if (scoreKey !== storeKey) {
+    setScoreKey(storeKey);
+    setState(null);
+    setHistory([]);
+  }
   const [switchAnnounced, setSwitchAnnounced] = useState(false);
   const [showSwitch, setShowSwitch] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -129,7 +137,8 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
   // device switches resume with undo stack, timeouts and notes intact.
   const restoredFromDb = useRef(false);
   useEffect(() => {
-    if (state) return;
+    restoredFromDb.current = false;
+    finishedRef.current = false;
     const env = parseLiveState(initialLiveState);
     if (env) {
       restoredFromDb.current = true;
@@ -141,14 +150,17 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
       setNoteA(env.notes.a); setNoteB(env.notes.b);
       return;
     }
+    let restored = false;
     try {
       const raw = localStorage.getItem(storeKey);
       if (raw) {
+        restored = true;
         const s = JSON.parse(raw) as ScoreState;
         setState(s); setMode(s.mode); setTarget(s.winTarget);
         setSwitchAnnounced(Math.max(s.a, s.b) >= sideSwitchPoint(s.winTarget));
       }
     } catch { /* ignore */ }
+    if (!restored) setState(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeKey]);
   useEffect(() => { if (state && !readOnly) localStorage.setItem(storeKey, JSON.stringify(state)); }, [state, storeKey, readOnly]);
@@ -184,6 +196,8 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
   const liveStateTimer = useRef<number | null>(null);
   const onLiveStateRef = useRef(onLiveState);
   onLiveStateRef.current = onLiveState;
+  // The write that was scheduled belongs to the match that scheduled it.
+  const flushCallbackRef = useRef(onLiveState);
   const pendingEnvRef = useRef<RefereeLiveState | null>(null);
   const finishedRef = useRef(false);
   // readOnlyRef mirrors the derived lockout — the timer, the unmount flush
@@ -200,9 +214,11 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
       regularTO,
     });
     if (liveStateTimer.current) window.clearTimeout(liveStateTimer.current);
+    const callback = onLiveState;
+    flushCallbackRef.current = callback;
     liveStateTimer.current = window.setTimeout(() => {
       liveStateTimer.current = null;
-      if (!finishedRef.current && !readOnlyRef.current && pendingEnvRef.current) onLiveStateRef.current?.(pendingEnvRef.current);
+      if (!finishedRef.current && !readOnlyRef.current && pendingEnvRef.current) callback(pendingEnvRef.current);
     }, 400);
     return () => { if (liveStateTimer.current) window.clearTimeout(liveStateTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -210,7 +226,7 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
   // Unmount flush — a rally scored right before closing must still land.
   useEffect(() => () => {
     if (!finishedRef.current && !readOnlyRef.current && liveStateTimer.current && pendingEnvRef.current) {
-      onLiveStateRef.current?.(pendingEnvRef.current);
+      flushCallbackRef.current?.(pendingEnvRef.current);
     }
   }, []);
 
@@ -359,12 +375,19 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
     } finally { setSaving(false); }
   }, [storeKey, noteKey, exitLandscape, onFinish, combinedNote, onLiveState, readOnly]);
 
+  const exit = useCallback(() => { if (onBack) onBack(); else navigate(loaded.backHref); }, [onBack, navigate, loaded.backHref]);
+
   const inner = (
     <div style={{ flex: 1, minWidth: 0, background: 'var(--tl-bg)', color: 'var(--tl-fg)', display: 'flex', flexDirection: 'column' }}>
       <header style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--tl-border)' }}>
-        <button type="button" className="tl-btn" style={{ padding: '6px 10px' }} onClick={() => (onBack ? onBack() : navigate(loaded.backHref))}>
-          <ArrowLeft className="w-4 h-4" />
-        </button>
+        {/* Board phase moves the exit button down to the action bar (next to
+            UNDO / END) — in the CSS-rotated portrait layout the header sits
+            sideways along the screen edge, where referees never found it. */}
+        {!state && (
+          <button type="button" className="tl-btn" style={{ padding: '6px 10px' }} onClick={exit}>
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+        )}
         <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 12, color: 'var(--tl-fg-3)' }}>{vi ? 'CHẤM TRỰC TIẾP' : 'LIVE SCORING'}</span>
         <div style={{ flex: 1 }} />
         {readOnly && (
@@ -409,7 +432,7 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
           onManualServe={() => manualAct(manualNextServe)}
           onManualToggleServer={() => manualAct(manualToggleServer)}
           onManualEndSet={() => manualAct(manualEndSet)}
-          regularTO={regularTO} usedReg={usedReg} usedMed={usedMed} onTimeout={startTO} />
+          regularTO={regularTO} usedReg={usedReg} usedMed={usedMed} onTimeout={startTO} onExit={exit} />
       )}
 
       {showNote && <NoteOverlay vi={vi} loaded={loaded} noteA={noteA} noteB={noteB} setNoteA={setNoteA} setNoteB={setNoteB} onClose={() => setShowNote(false)} />}
@@ -472,6 +495,37 @@ function Setup(props: {
       {mode !== 'manual' ? (
         <Field label={vi ? 'Điểm thắng' : 'Win target'}>
           <Segmented options={[[11, '11'], [15, '15'], [21, '21']]} value={target} onChange={(v) => setTarget(v as number)} />
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ flex: 1, fontSize: 12, color: 'var(--tl-fg-3)' }}>
+              {vi ? 'Hoặc nhập số điểm' : 'Or enter a score'}
+            </span>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={999}
+              step={1}
+              value={target}
+              aria-label={vi ? 'Nhập điểm thắng' : 'Enter win target'}
+              onFocus={(event) => event.currentTarget.select()}
+              onChange={(event) => {
+                const next = Number(event.currentTarget.value);
+                if (Number.isInteger(next) && next >= 1 && next <= 999) setTarget(next);
+              }}
+              style={{
+                width: 92,
+                padding: '10px 12px',
+                borderRadius: 'var(--tl-radius)',
+                border: '1px solid var(--tl-border)',
+                background: 'var(--tl-bg)',
+                color: 'var(--tl-fg)',
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 16,
+                fontWeight: 700,
+                textAlign: 'center',
+              }}
+            />
+          </label>
         </Field>
       ) : (
         <Field label={vi ? 'Số ván' : 'Sets'}>
@@ -516,6 +570,7 @@ function Board(props: {
   onManualAdjust: (side: ServeSide, delta: number) => void;
   onManualServe: () => void; onManualToggleServer: () => void; onManualEndSet: () => void;
   regularTO: number; usedReg: Sides; usedMed: Sides; onTimeout: (s: ServeSide, k: 'reg' | 'med') => void;
+  onExit: () => void;
 }) {
   const { vi, loaded, state, target } = props;
   const mode = state.mode; // authoritative (survives localStorage resume; React `mode` may be stale)
@@ -543,6 +598,10 @@ function Board(props: {
 
   const bottom = (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, background: 'var(--tl-surface)' }}>
+      <Button variant="outline" size="icon" onClick={props.onExit} style={{ height: 46, width: 46, flexShrink: 0 }}
+        aria-label={vi ? 'Thoát khỏi màn chấm điểm' : 'Exit scoring screen'} title={vi ? 'Thoát' : 'Exit'}>
+        <X className="w-4 h-4" />
+      </Button>
       <button type="button" className="tl-btn" style={{ flex: 1, justifyContent: 'center', padding: 13, opacity: props.canUndo ? 1 : 0.4 }} disabled={!props.canUndo} onClick={props.onUndo}>
         <RotateCcw className="w-4 h-4" /> {vi ? 'HOÀN TÁC' : 'UNDO'}
       </button>

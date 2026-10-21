@@ -16,11 +16,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Users, Trophy, Zap, Check, ArrowRight, LogIn, Calendar, Eye, Shield, ClipboardList, ChevronDown, Layers, Monitor } from "lucide-react";
+import { Users, Trophy, Zap, Check, ArrowRight, LogIn, Calendar, Eye, Shield, ClipboardList, ChevronDown, Layers, Monitor, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import { localePath } from "@/lib/locale-path";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { HreflangTags, ToolsInternalLinks, WebApplicationSchema, QuickTablesSeoContent, FAQSchema } from "@/components/seo";
@@ -58,6 +59,7 @@ const stepDescStyle: React.CSSProperties = {
 
 const QuickTables = () => {
   const { t, language } = useI18n();
+  const lp = (path: string) => localePath(path, language === "vi" ? "vi" : "en");
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -214,9 +216,9 @@ const QuickTables = () => {
         await attachEventsToParent(parentIdFromUrl, [table.id]);
       }
       if (requiresRegistration) {
-        navigate(`/tools/quick-tables/${table.share_id}`);
+        navigate(lp(`/tools/quick-tables/${table.share_id}`));
       } else {
-        navigate(`/tools/quick-tables/${table.share_id}/setup`);
+        navigate(lp(`/tools/quick-tables/${table.share_id}/setup`));
       }
     }
   };
@@ -242,8 +244,8 @@ const QuickTables = () => {
   if (!user) {
     return (
       <TheLineLayout
-        title="Pickleball Bracket Generator & Round Robin Tool"
-        description="Free pickleball bracket generator for clubs and tournaments. Create round robin groups, playoff brackets, and elimination formats in seconds."
+        title={language === "vi" ? "Chia bảng — đánh vòng tròn" : "Pickleball Bracket Generator & Round Robin Tool"}
+        description={language === "vi" ? "Chia bảng vòng tròn và vòng loại trực tiếp, miễn phí, cho câu lạc bộ và giải cuối tuần." : "Free pickleball bracket generator for clubs and tournaments. Create round robin groups, playoff brackets, and elimination formats in seconds."}
         active="lab"
       >
         <HreflangTags enPath="/tools/quick-tables" />
@@ -261,12 +263,12 @@ const QuickTables = () => {
             "Real-time scoring",
           ]}
         />
-        <FAQSchema items={faqItems} />
+        {language !== "vi" && <FAQSchema items={faqItems} />}
         <div className="tl-shell">
           <nav className="tl-breadcrumb">
-            <Link to="/tools">{language === "vi" ? "Bracket Lab" : "Bracket Lab"}</Link>
+            <Link to={localePath("/tools", language === "vi" ? "vi" : "en")}>{language === "vi" ? "Công cụ" : "Bracket Lab"}</Link>
             <span className="sep">/</span>
-            <span className="current">Quick Tables</span>
+            <span className="current">{language === "vi" ? "Chia bảng" : "Quick Tables"}</span>
           </nav>
 
           <header className="tl-page-head">
@@ -276,7 +278,11 @@ const QuickTables = () => {
                 : "◆ Round robin · Singles & doubles · Free"}
             </div>
             <h1>
-              <em className="tl-serif">Quick</em> <span className="sans">Tables.</span>
+              {language === "vi" ? (
+                <><em className="tl-serif">Chia</em> <span className="sans">bảng.</span></>
+              ) : (
+                <><em className="tl-serif">Quick</em> <span className="sans">Tables.</span></>
+              )}
             </h1>
             <p>{t.quickTable.seo.pageSubtitle}</p>
           </header>
@@ -311,7 +317,7 @@ const QuickTables = () => {
               <p style={{ ...stepDescStyle, marginTop: 0, marginBottom: 24, fontSize: 14 }}>
                 {t.quickTable.loginRequired}
               </p>
-              <Link to={getLoginUrl('/tools/quick-tables')} className="tl-btn green">
+              <Link to={getLoginUrl(lp('/tools/quick-tables'))} className="tl-btn green">
                 <LogIn className="w-4 h-4" />
                 {t.nav.login}
               </Link>
@@ -320,9 +326,11 @@ const QuickTables = () => {
             <div style={{ marginTop: 56 }}>
               <ToolsInternalLinks currentTool="quick-tables" />
             </div>
-            <div style={{ marginTop: 32 }}>
-              <QuickTablesSeoContent />
-            </div>
+            {language !== "vi" && (
+              <div style={{ marginTop: 32 }}>
+                <QuickTablesSeoContent />
+              </div>
+            )}
           </section>
         </div>
       </TheLineLayout>
@@ -335,8 +343,8 @@ const QuickTables = () => {
 
   return (
     <TheLineLayout
-      title="Pickleball Bracket Generator & Round Robin Tool"
-      description="Free pickleball bracket generator for clubs and tournaments."
+      title={language === "vi" ? "Chia bảng — đánh vòng tròn" : "Pickleball Bracket Generator & Round Robin Tool"}
+      description={language === "vi" ? "Chia bảng vòng tròn và vòng loại trực tiếp, miễn phí, cho câu lạc bộ và giải cuối tuần." : "Free pickleball bracket generator for clubs and tournaments."}
       active="lab"
     >
       <HreflangTags enPath="/tools/quick-tables" />
@@ -354,13 +362,13 @@ const QuickTables = () => {
           "Real-time scoring",
         ]}
       />
-      <FAQSchema items={faqItems} />
+      {language !== "vi" && <FAQSchema items={faqItems} />}
 
       <div className="tl-shell">
         <nav className="tl-breadcrumb">
-          <Link to="/tools">{language === "vi" ? "Bracket Lab" : "Bracket Lab"}</Link>
+          <Link to={localePath("/tools", language === "vi" ? "vi" : "en")}>{language === "vi" ? "Công cụ" : "Bracket Lab"}</Link>
           <span className="sep">/</span>
-          <span className="current">Quick Tables</span>
+          <span className="current">{language === "vi" ? "Chia bảng" : "Quick Tables"}</span>
         </nav>
 
         <header className="tl-page-head">
@@ -370,12 +378,22 @@ const QuickTables = () => {
               : "◆ Round robin · Singles & doubles · Free"}
           </div>
           <h1>
-            <em className="tl-serif">Quick</em> <span className="sans">Tables.</span>
+            {language === "vi" ? (
+              <><em className="tl-serif">Chia</em> <span className="sans">bảng.</span></>
+            ) : (
+              <><em className="tl-serif">Quick</em> <span className="sans">Tables.</span></>
+            )}
           </h1>
           <p>{t.quickTable.seo.pageSubtitle}</p>
 
           {step === "count" && (
             <div style={{ display: "flex", gap: 10, marginTop: 28, flexWrap: "wrap" }}>
+              <Button asChild variant="default">
+                <Link to={localePath("/tools/quick-tables/chat", language === "vi" ? "vi" : "en")}>
+                  <Sparkles className="w-4 h-4" />
+                  {language === "vi" ? "Tạo bằng chat AI" : "Create by AI chat"}
+                </Link>
+              </Button>
               <button
                 type="button"
                 className="tl-btn"
@@ -906,6 +924,11 @@ const QuickTables = () => {
                   </em>{" "}
                   <span className="sans">{userTables.length}</span>
                 </h2>
+                {userTables[0] && (
+                  <Link to={lp(userTables[0].status === "setup" ? `/tools/quick-tables/${userTables[0].share_id}/setup` : `/tools/quick-tables/${userTables[0].share_id}`)}>
+                    {language === "vi" ? "Giải gần đây" : "Recent tournament"}: {userTables[0].name}
+                  </Link>
+                )}
               </div>
 
               {userTables.length > 0 ? (
@@ -950,11 +973,11 @@ const QuickTables = () => {
                         {visible.map((tbl) => (
                           <TournamentRow
                             key={tbl.id}
-                            href={
+                            href={lp(
                               tbl.status === "setup"
                                 ? `/tools/quick-tables/${tbl.share_id}/setup`
-                                : `/tools/quick-tables/${tbl.share_id}`
-                            }
+                                : `/tools/quick-tables/${tbl.share_id}`,
+                            )}
                             name={tbl.name}
                             createdAt={tbl.created_at}
                             playerCount={tbl.player_count}
@@ -964,7 +987,7 @@ const QuickTables = () => {
                             statusClass={statusPillClass(tbl.status)}
                             dashboardHref={
                               tbl.status === "group_stage" || tbl.status === "playoff"
-                                ? `/tools/dashboard/quick-table/${tbl.share_id}`
+                                ? lp(`/tools/dashboard/quick-table/${tbl.share_id}`)
                                 : undefined
                             }
                           />
@@ -1072,11 +1095,11 @@ const QuickTables = () => {
                         {visible.map((tbl) => (
                           <TournamentRow
                             key={tbl.id}
-                            href={
+                            href={lp(
                               tbl.status === "setup"
                                 ? `/tools/quick-tables/${tbl.share_id}/setup`
-                                : `/tools/quick-tables/${tbl.share_id}`
-                            }
+                                : `/tools/quick-tables/${tbl.share_id}`,
+                            )}
                             name={tbl.name}
                             createdAt={tbl.created_at}
                             playerCount={tbl.player_count}
@@ -1086,7 +1109,7 @@ const QuickTables = () => {
                             statusClass={statusPillClass(tbl.status)}
                             dashboardHref={
                               tbl.status === "group_stage" || tbl.status === "playoff"
-                                ? `/tools/dashboard/quick-table/${tbl.share_id}`
+                                ? lp(`/tools/dashboard/quick-table/${tbl.share_id}`)
                                 : undefined
                             }
                             extraBadge={
@@ -1173,9 +1196,11 @@ const QuickTables = () => {
 
         <section style={{ marginBottom: 80 }}>
           <ToolsInternalLinks currentTool="quick-tables" />
-          <div style={{ marginTop: 40 }}>
-            <QuickTablesSeoContent />
-          </div>
+          {language !== "vi" && (
+            <div style={{ marginTop: 40 }}>
+              <QuickTablesSeoContent />
+            </div>
+          )}
         </section>
       </div>
 

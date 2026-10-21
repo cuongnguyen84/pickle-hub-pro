@@ -142,6 +142,12 @@ Deno.serve(async (req) => {
 
       console.log(`Updating livestream with mux_stream_id=${liveStreamId}, asset_id=${assetId}, playback_id=${assetPlaybackId}`);
 
+      // Fill-only: Mux retries webhooks (hours later after an outage) and a
+      // reconnecting encoder emits one asset.ready per segment, in arbitrary
+      // order — a blind overwrite lets the last retry win (2026-08-03: a 24m
+      // stub clobbered a manually stitched 3h55m replay). The webhook only
+      // fills empty rows; repointing rows with a bad/short asset is
+      // mux-sync-assets' job, which verifies status and duration against Mux.
       const { data, error } = await supabase
         .from("livestreams")
         .update({
@@ -149,6 +155,7 @@ Deno.serve(async (req) => {
           mux_asset_playback_id: assetPlaybackId,
         })
         .eq("mux_live_stream_id", liveStreamId)
+        .is("mux_asset_playback_id", null)
         .select();
 
       if (error) {

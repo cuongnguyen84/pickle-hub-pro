@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildFbPayload,
   configuredPages,
+  isFacebookPostingWindow,
   sanitizeCaption,
   type Env,
 } from "../../../workers/social-poster/src/index";
@@ -17,12 +18,13 @@ const env = {
 describe("social-poster multi-page rollout", () => {
   it("keeps the existing Page and adds TA Pickleball with a cutoff", () => {
     expect(configuredPages(env)).toEqual([
-      { key: "thepicklehub", id: "primary", accessToken: "primary-token", startAt: null },
+      { key: "thepicklehub", id: "primary", accessToken: "primary-token", startAt: null, viaBrowser: false },
       {
         key: "ta-pickleball",
         id: "secondary",
         accessToken: "secondary-token",
         startAt: "2026-07-31T10:04:31Z",
+        viaBrowser: false,
       },
     ]);
   });
@@ -45,5 +47,12 @@ describe("social-poster multi-page rollout", () => {
         published: "true",
       },
     });
+  });
+
+  it("posts only from 07:00 until before 20:00 in Vietnam", () => {
+    expect(isFacebookPostingWindow(new Date("2026-08-03T00:00:00Z"))).toBe(true); // 07:00 ICT
+    expect(isFacebookPostingWindow(new Date("2026-08-03T12:59:59Z"))).toBe(true); // 19:59 ICT
+    expect(isFacebookPostingWindow(new Date("2026-08-03T13:00:00Z"))).toBe(false); // 20:00 ICT
+    expect(isFacebookPostingWindow(new Date("2026-08-03T23:59:59Z"))).toBe(false); // 06:59 ICT
   });
 });

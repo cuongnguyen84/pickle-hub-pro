@@ -11,9 +11,9 @@ const HomeLivePlayer = lazy(() => import("./HomeLivePlayer"));
 interface LiveSectionProps {
   liveStreams: Livestream[];
   scheduledStreams?: Livestream[];
-  /** Luồng vừa kết thúc (Index đã lọc ≤7 ngày) — hiện dạng replay rows. */
-  endedStreams?: Livestream[];
   language: "en" | "vi";
+  /** True when live/upcoming makes this the first feed section. */
+  priority?: boolean;
 }
 
 /**
@@ -30,7 +30,7 @@ interface LiveSectionProps {
  */
 const streamThumb = (
   s: Livestream,
-  size: { width: number; height: number },
+  size: { width: number; height: number; fit?: "cover" | "contain" },
 ): string | undefined =>
   homepageThumbnailUrl(
     s.thumbnail_url
@@ -63,7 +63,72 @@ const rowTime = (iso: string | null | undefined): string => {
 
 const MAX_ROWS = 5;
 
-export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams = [], language }: LiveSectionProps) {
+// CLS INC3 (proposal cls-attribution): Index renders this while the live
+// queries resolve and the previous navigation said live leads the page —
+// the hero section inserting itself after data arrived was the home page's
+// main layout shift. Same section/head/media classes as the real render,
+// so geometry (incl. the 16/9 media box) is reserved, not approximated.
+/**
+ * Reserves the geometry of a loaded LiveSection, not a token of it.
+ *
+ * Measured on production /vi at 390px on 2026-08-25: this skeleton was 319px
+ * while the section it stands in for resolved to 598px. The 279px it did not
+ * reserve pushed the entire page below it down on resolve — one 0.208 layout
+ * shift, which a throttled Chrome trace showed was the whole of the VI home
+ * page's measurable CLS (0.2238 total, of which the ticker is 0.0002).
+ *
+ * The earlier version reserved a bare head plus one 16/9 media box. Three
+ * things were missing and all three are height: the head's "see all" link
+ * (min-height 44px), the main card's body under the thumb (130px), and the
+ * schedule list (85px). It also used .tl-live-main-media (aspect-ratio 16/9)
+ * where a loaded card uses .tl-live-main-thumb (16/10), so even the part it
+ * did reserve was the wrong size.
+ *
+ * Every box below therefore carries the loaded element's own class, so its
+ * height is computed by the same CSS that lays out the real thing and cannot
+ * drift when the section is restyled. Do not give this component heights of
+ * its own — that is the failure mode it exists to avoid. Same rule as the
+ * /news and /san skeletons; see src/pages/__tests__/hub-list-cls.test.ts.
+ *
+ * It reserves the common shape: one featured stream plus one schedule row.
+ * A quieter week resolves shorter and collapses a little, which is the trade
+ * src/lib/home-live-lead.ts already documents and accepts.
+ */
+export function LiveSectionSkeleton() {
+  return (
+    <section className="tl-section tl-live-sec" aria-hidden="true">
+      <div className="tl-shell">
+        <div className="tl-live-head">
+          <h2 className="tl-live-title">&nbsp;</h2>
+          <span className="tl-live-all">&nbsp;</span>
+        </div>
+        <div className="tl-live-main">
+          <div className="tl-live-main-thumb">
+            <span className="tl-live-thumb-ph" />
+          </div>
+          <div className="tl-live-main-body">
+            {/* Two lines: .tl-live-main-name is line-clamped to 2 and real
+                stream titles wrap to both more often than not. */}
+            <div className="tl-live-main-name">&nbsp;<br />&nbsp;</div>
+            <div className="tl-live-meta">&nbsp;</div>
+          </div>
+        </div>
+        <div className="tl-live-list">
+          <div className="tl-live-row">
+            <div className="tl-live-row-thumb" />
+            <div>
+              <div className="tl-live-row-name">&nbsp;</div>
+              <div className="tl-live-row-meta">&nbsp;</div>
+            </div>
+            <div className="tl-live-row-when">&nbsp;</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function LiveSection({ liveStreams, scheduledStreams = [], language, priority = false }: LiveSectionProps) {
   const [inlinePlaybackRequested, setInlinePlaybackRequested] = useState(false);
   const isLive = liveStreams.length > 0;
   // Live courts first, then the schedule soonest-first — one merged lineup
@@ -74,12 +139,19 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
     return aT - bT;
   });
   const streams = [...liveStreams, ...upcoming];
-  if (streams.length === 0 && endedStreams.length === 0) return null;
+  // Replays no longer appear on the home page (16/09), so a week with nothing
+  // live or scheduled has no section at all.
+  if (streams.length === 0) return null;
 
   const [main, ...restAll] = streams;
   const rest = restAll.slice(0, MAX_ROWS);
   const overflow = restAll.length - rest.length;
-  const mainThumb = main ? streamThumb(main, { width: 1280, height: 720 }) : undefined;
+  // The hero renders at ~374px on mobile and at most ~768px in the feed.
+  // Asking Google Drive for 1280x720 transferred a 1.3MB image even while the
+  // section was below the fold; the 768px derivative remains sharp at 2x DPR.
+  const mainThumb = main
+    ? streamThumb(main, { width: 768, height: 432, fit: "contain" })
+    : undefined;
   const mainIsLive = main?.status === "live";
   const fallbackTitle = isLive
     ? (language === "vi" ? "Trận đang trực tiếp" : "Live match")
@@ -87,11 +159,11 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
   const mainTitle = main?.title ?? fallbackTitle;
   const broadcastLabel = language === "vi" ? "Phát sóng" : "Broadcast";
   const upcomingBadge = language === "vi" ? "SẮP PHÁT" : "UPCOMING";
+  // Nothing else can reach here: the section returns null when `streams` is
+  // empty, so the old "Vừa phát sóng" (replay-only) heading is gone with it.
   const headTitle = isLive
     ? (language === "vi" ? "Đang trực tiếp" : "Live now")
-    : streams.length > 0
-      ? (language === "vi" ? "Sắp phát sóng" : "Upcoming broadcast")
-      : (language === "vi" ? "Vừa phát sóng" : "Recently live");
+    : (language === "vi" ? "Sắp phát sóng" : "Upcoming broadcast");
 
   return (
     <section className="tl-section tl-live-sec tl-deferred-section" aria-labelledby="home-live-heading">
@@ -131,10 +203,10 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
                     <img
                       src={mainThumb}
                       alt=""
-                      width={1280}
-                      height={720}
-                      loading="lazy"
-                      fetchPriority="low"
+                      width={768}
+                      height={432}
+                      loading={priority ? "eager" : "lazy"}
+                      fetchPriority={priority ? "high" : "low"}
                       decoding="async"
                     />
                   ) : (
@@ -166,10 +238,10 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
                 <img
                   src={mainThumb}
                   alt=""
-                  width={1280}
-                  height={720}
-                  loading="lazy"
-                  fetchPriority="low"
+                  width={768}
+                  height={432}
+                  loading={priority ? "eager" : "lazy"}
+                  fetchPriority={priority ? "high" : "low"}
                   decoding="async"
                 />
               ) : (
@@ -200,7 +272,7 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
           </Link>
         ))}
 
-        {(rest.length > 0 || endedStreams.length > 0) && (
+        {rest.length > 0 && (
           <div
             className="tl-live-list"
             role="list"
@@ -252,56 +324,6 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
                         />
                       </>
                     )}
-                  </div>
-                </Link>
-              );
-            })}
-            {/* Vừa kết thúc (≤7 ngày) — chung list, nhận diện bằng chip
-                "XEM LẠI" highlight thay vì heading riêng chiếm chỗ. */}
-            {endedStreams.map((stream) => {
-              const thumb = streamThumb(stream, { width: 224, height: 126 });
-              const title = stream.title ?? (language === "vi" ? "Buổi phát sóng" : "Broadcast");
-              return (
-                <Link
-                  key={stream.id}
-                  to={`/live/${stream.id}`}
-                  className="tl-live-row"
-                  role="listitem"
-                >
-                  <div className="tl-live-row-thumb">
-                    {thumb ? (
-                      <img
-                        src={thumb}
-                        alt=""
-                        width={224}
-                        height={126}
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    ) : (
-                      <div className="tl-live-thumb-ph" aria-hidden="true" />
-                    )}
-                  </div>
-                  <div className="tl-live-row-body">
-                    <div className="tl-live-row-name">{title}</div>
-                    <div className="tl-live-row-meta">
-                      {stream.organization?.name ?? broadcastLabel}
-                    </div>
-                  </div>
-                  <div className="tl-live-row-when">
-                    <span className="t">{rowTime(stream.ended_at)}</span>
-                    <span
-                      className="cd"
-                      style={{
-                        color: "var(--tl-bg)",
-                        background: "var(--tl-green)",
-                        borderRadius: 4,
-                        padding: "2px 6px",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {language === "vi" ? "XEM LẠI" : "REPLAY"}
-                    </span>
                   </div>
                 </Link>
               );

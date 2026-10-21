@@ -4,8 +4,76 @@
     "element": "<Index />"
   },
   {
+    "path": "/shop",
+    "element": "<ShopGate><ShopHome /></ShopGate>"
+  },
+  {
+    "path": "/vi/shop",
+    "element": "<ViLanguageWrapper><ShopGate><ShopHome /></ShopGate></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/search",
+    "element": "<ShopGate><ShopSearch /></ShopGate>"
+  },
+  {
+    "path": "/vi/shop/search",
+    "element": "<ViLanguageWrapper><ShopGate><ShopSearch /></ShopGate></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/category/:slug",
+    "element": "<ShopGate><ShopCategory /></ShopGate>"
+  },
+  {
+    "path": "/shop/product/:slug",
+    "element": "<ShopGate><ProductDetail /></ShopGate>"
+  },
+  {
+    "path": "/vi/shop/product/:slug",
+    "element": "<ViLanguageWrapper><ShopGate><ProductDetail /></ShopGate></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/store/:slug",
+    "element": "<ShopGate><ShopStore /></ShopGate>"
+  },
+  {
+    "path": "/vi/shop/store/:slug",
+    "element": "<ViLanguageWrapper><ShopGate><ShopStore /></ShopGate></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/shop/category/:slug",
+    "element": "<ViLanguageWrapper><ShopGate><ShopCategory /></ShopGate></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/cart",
+    "element": "<ShopGate><RequireAuth><ShopCart /></RequireAuth></ShopGate>"
+  },
+  {
+    "path": "/vi/shop/cart",
+    "element": "<ViLanguageWrapper><ShopGate><RequireAuth><ShopCart /></RequireAuth></ShopGate></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/checkout/:shopSlug",
+    "element": "<ShopGate><RequireAuth><ShopCheckout /></RequireAuth></ShopGate>"
+  },
+  {
+    "path": "/vi/shop/checkout/:shopSlug",
+    "element": "<ViLanguageWrapper><ShopGate><RequireAuth><ShopCheckout /></RequireAuth></ShopGate></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/order/:code",
+    "element": "<RequireAuth><ShopOrderDetail /></RequireAuth>"
+  },
+  {
+    "path": "/vi/shop/order/:code",
+    "element": "<ViLanguageWrapper><RequireAuth><ShopOrderDetail /></RequireAuth></ViLanguageWrapper>"
+  },
+  {
     "path": "/live",
     "element": "<Live />"
+  },
+  {
+    "path": "/live/pro/:slug",
+    "element": "<LiveProEvent />"
   },
   {
     "path": "/live/:id",
@@ -376,6 +444,10 @@
     "element": "<QuickTableRefereeScoring />"
   },
   {
+    "path": "/vi/tools/quick-tables/referee/:matchId",
+    "element": "<ViLanguageWrapper><QuickTableRefereeScoring /></ViLanguageWrapper>"
+  },
+  {
     "path": "/tools/team-match",
     "element": "<TeamMatchList />"
   },
@@ -492,6 +564,10 @@
     "element": "<AdminNews />"
   },
   {
+    "path": "/admin/reviews",
+    "element": "<AdminReviews />"
+  },
+  {
     "path": "/admin/embeds",
     "element": "<AdminEmbeds />"
   },
@@ -530,6 +606,10 @@
   {
     "path": "/admin/analytics",
     "element": "<AdminAnalytics />"
+  },
+  {
+    "path": "/admin/jobs",
+    "element": "<AdminJobs />"
   },
   {
     "path": "/creator",
@@ -572,6 +652,70 @@
     "element": "<CreatorTournaments />"
   },
   {
+    "path": "/proto/shop/*",
+    "element": "<ProtoShopApp />"
+  },
+  {
+    "path": "/shop/sell",
+    "element": "<SellLanding />"
+  },
+  {
+    "path": "/vi/shop/sell",
+    "element": "<ViLanguageWrapper><SellLanding /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/seller",
+    "element": "<RequireAuth><SellerHome /></RequireAuth>"
+  },
+  {
+    "path": "/seller/application",
+    "element": "<RequireAuth><SellerApplication /></RequireAuth>"
+  },
+  {
+    "path": "/seller/application/status",
+    "element": "<RequireAuth><SellerApplicationStatus /></RequireAuth>"
+  },
+  {
+    "path": "/seller/settings",
+    "element": "<RequireAuth><SellerShopSettings /></RequireAuth>"
+  },
+  {
+    "path": "/seller/products",
+    "element": "<RequireAuth><SellerProducts /></RequireAuth>"
+  },
+  {
+    "path": "/seller/products/import",
+    "element": "<RequireAuth><SellerBulkImport /></RequireAuth>"
+  },
+  {
+    "path": "/seller/products/new",
+    "element": "<RequireAuth><SellerProductForm /></RequireAuth>"
+  },
+  {
+    "path": "/seller/products/:id/edit",
+    "element": "<RequireAuth><SellerProductForm /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/applications",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopApplications /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/applications/:id",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopApplicationReview /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/products",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopProducts /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/products/:id",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopProductReview /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/contacts",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopContacts /></RequireAuth>"
+  },
+  {
     "path": "/privacy",
     "element": "<Privacy />"
   },
@@ -594,6 +738,10 @@
   {
     "path": "/vi/live",
     "element": "<ViLanguageWrapper><Live /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/live/pro/:slug",
+    "element": "<ViLanguageWrapper><LiveProEvent /></ViLanguageWrapper>"
   },
   {
     "path": "/vi/live/:id",
@@ -770,5 +918,61 @@
   {
     "path": "/vi/*",
     "element": "<ViLanguageWrapper><NotFound /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/rankings/ppa-tour",
+    "element": "<PpaRankings />"
+  },
+  {
+    "path": "/vi/rankings/ppa-tour",
+    "element": "<ViLanguageWrapper><PpaRankings /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/seller/orders",
+    "element": "<RequireAuth><SellerOrders /></RequireAuth>"
+  },
+  {
+    "path": "/seller/orders/:code",
+    "element": "<RequireAuth><SellerOrderDetail /></RequireAuth>"
+  },
+  {
+    "path": "/shop/orders",
+    "element": "<RequireAuth><ShopOrders /></RequireAuth>"
+  },
+  {
+    "path": "/vi/shop/orders",
+    "element": "<ViLanguageWrapper><RequireAuth><ShopOrders /></RequireAuth></ViLanguageWrapper>"
+  },
+  {
+    "path": "/about",
+    "element": "<About />"
+  },
+  {
+    "path": "/contact",
+    "element": "<Contact />"
+  },
+  {
+    "path": "/vi/about",
+    "element": "<ViLanguageWrapper><About /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/contact",
+    "element": "<ViLanguageWrapper><Contact /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/authors/cuong-nguyen",
+    "element": "<Author />"
+  },
+  {
+    "path": "/vi/authors/cuong-nguyen",
+    "element": "<ViLanguageWrapper><Author /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/tools/quick-tables/chat",
+    "element": "<QuickTableChat />"
+  },
+  {
+    "path": "/vi/tools/quick-tables/chat",
+    "element": "<ViLanguageWrapper><QuickTableChat /></ViLanguageWrapper>"
   }
 ]

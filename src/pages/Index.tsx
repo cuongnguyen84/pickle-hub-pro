@@ -1,10 +1,11 @@
-import { useMemo, useState, Fragment, FormEvent, ReactNode } from "react";
+import { useEffect, useMemo, useState, Fragment, FormEvent, ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Clock, Diamond, CircleDot, Target, Check } from "lucide-react";
+import { Clock, Diamond, CircleDot, Target, Check, Trophy } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { useLivestreams, useTournaments, useVideos } from "@/hooks/useSupabaseData";
 import { useLiveStatusRealtime } from "@/hooks/useLiveStatusRealtime";
-import { LiveSection } from "@/components/home/LiveSection";
+import { LiveSection, LiveSectionSkeleton } from "@/components/home/LiveSection";
+import { ProTourEventsStrip } from "@/components/live/ProTourEventsStrip";
 import { HomeNewsFeed } from "@/components/home/HomeNewsFeed";
 import { useHomepageStats } from "@/hooks/useHomepageStats";
 import { useNewsletterSubscribe } from "@/hooks/useNewsletterSubscribe";
@@ -13,15 +14,20 @@ import { usePublishedViBlogPosts } from "@/hooks/useViBlogPosts";
 import { normalizeImageUrl } from "@/lib/url-utils";
 import { blogHeroSrcSet } from "@/lib/image-utils";
 import { PPA_ASIA_STOPS } from "@/lib/constants";
+import { wcResultsPath, wcResultsLabel } from "@/lib/wc-results";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Countdown } from "@/components/Countdown";
-import { formatDate, formatTime } from "@/lib/format-datetime";
+import { formatDate, formatRelative, formatTime } from "@/lib/format-datetime";
+import { byEffectiveDateDesc, effectiveDateIso, isRefreshed, pinWorldCupResults } from "@/lib/blogOrder";
+import { shouldReserveLiveSlot, writeLiveLeadHint } from "@/lib/home-live-lead";
 import { HreflangTags } from "@/components/seo";
 import { VideoThumbnail } from "@/components/video/VideoThumbnail";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
+import { WorldCupLiveCard } from "@/components/live/WorldCupLiveCard";
 import { HomeLogMatchCTA } from "@/components/home/HomeLogMatchCTA";
+import { HomeQuickTableChatCTA } from "@/components/home/HomeQuickTableChatCTA";
 import { useTickerData } from "@/hooks/useTickerData";
 import { useNewsItems } from "@/hooks/useNewsItems";
 
@@ -44,54 +50,92 @@ const isoWeekNumber = (d = new Date()): number => {
   return 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
 };
 
-const formatRelative = (iso: string | null | undefined, lang: "en" | "vi" = "en"): string => {
-  if (!iso) return "";
-  const dt = new Date(iso).getTime();
-  if (Number.isNaN(dt)) return "";
-  const diff = dt - Date.now();
-  const absMin = Math.abs(Math.round(diff / 60000));
-  const isVi = lang === "vi";
-  if (absMin < 1) return isVi ? "vừa xong" : "now";
-  if (absMin < 60) {
-    return isVi
-      ? (diff > 0 ? `trong ${absMin} phút` : `${absMin} phút trước`)
-      : (diff > 0 ? `in ${absMin}m` : `${absMin}m ago`);
-  }
-  const hrs = Math.round(absMin / 60);
-  if (hrs < 24) {
-    return isVi
-      ? (diff > 0 ? `trong ${hrs} giờ` : `${hrs} giờ trước`)
-      : (diff > 0 ? `in ${hrs}h` : `${hrs}h ago`);
-  }
-  const days = Math.round(hrs / 24);
-  return isVi
-    ? (diff > 0 ? `trong ${days} ngày` : `${days} ngày trước`)
-    : (diff > 0 ? `in ${days}d` : `${days}d ago`);
-};
-
 const HOME_NEWS_LIMIT = 4;
+
+/* Featured story image with graceful degradation. The card src defaults to
+   the -768 responsive variant and mobile srcSet picks the 768w candidate; if
+   that 404s (e.g. a hero committed without its -768 sibling, as happened
+   2026-08-03) onError falls back to the full-size image, then to a branded
+   placeholder. A null/empty cover renders the placeholder directly instead of
+   a bare dark gradient. Mirrors Blog.tsx's per-image onError guard. */
+const StoryImage = ({
+  story,
+  index,
+}: {
+  story: { image: string | null; imageAlt: string };
+  index: number;
+}) => {
+  const image = normalizeImageUrl(story.image);
+  // 0 = responsive (-768 + srcSet) | 1 = full image only | 2 = placeholder
+  const [stage, setStage] = useState(0);
+  if (!image || stage >= 2) {
+    return <div className="tl-blog-card-img-placeholder" aria-hidden="true" />;
+  }
+  const responsive = stage === 0 ? blogHeroSrcSet(image) : undefined;
+  return (
+    <img
+      src={responsive?.small ?? image}
+      srcSet={responsive?.srcSet}
+      sizes={
+        responsive
+          ? index === 0
+            ? "(min-width: 1100px) 800px, (min-width: 640px) 50vw, calc(100vw - 32px)"
+            : "(min-width: 1100px) 390px, (min-width: 640px) 50vw, calc(100vw - 32px)"
+          : undefined
+      }
+      alt={story.imageAlt}
+      width={1600}
+      height={900}
+      loading={index === 0 ? "eager" : "lazy"}
+      fetchPriority={index === 0 ? "high" : "auto"}
+      decoding="async"
+      onError={() => setStage((s) => s + 1)}
+    />
+  );
+};
 
 const Index = () => {
   const { language } = useI18n();
   const liveQuery = useLivestreams("live");
   const scheduledQuery = useLivestreams("scheduled");
-  // Luồng vừa kết thúc — giữ trên home 7 ngày, tối đa 4 dòng replay.
-  const endedQuery = useLivestreams("ended", 8);
   const liveStreams = useMemo(() => liveQuery.data ?? [], [liveQuery.data]);
   const scheduledStreams = useMemo(
     () => scheduledQuery.data ?? [],
     [scheduledQuery.data],
   );
-  const endedStreams = useMemo(() => endedQuery.data ?? [], [endedQuery.data]);
-  const recentEnded = endedStreams
-    .filter((s) => s.ended_at && Date.now() - new Date(s.ended_at).getTime() < 7 * 86_400_000)
-    .slice(0, 4);
+  // CLS INC3: remember whether live led the page last time so the hero slot is
+  // reserved from first paint (skeleton) instead of inserting itself above the
+  // editorial section when the queries resolve.
+  //
+  // 2026-08-19 — the hint moved from sessionStorage to localStorage. Session
+  // scope reserved the slot only on repeat navigations, leaving the first
+  // pageview of every session unreserved, and that is the pageview CrUX
+  // weights most: field CLS was p75 0.37 on mobile with 37.5% of users above
+  // 0.25. Device scope narrowed that to the first ever visit.
+  //
+  // Later the same day: even that residual was the wrong default. The slot
+  // leads whenever a stream is on air, scheduled, OR ended within seven days,
+  // so an occupied slot is the ordinary state here and an empty one is the
+  // exception. shouldReserveLiveSlot therefore reserves unless the hint
+  // positively says otherwise — a first visit now reserves too. The cost is a
+  // collapse shift on a genuinely quiet week; the thing it buys back is the
+  // insertion shift that was hitting every new reader and every lab run.
+  // See src/lib/home-live-lead.ts for the TTL and the failure modes.
+  const liveQueriesLoading =
+    liveQuery.isLoading || scheduledQuery.isLoading;
+  const [expectLiveLead] = useState<boolean>(() => shouldReserveLiveSlot());
+  useEffect(() => {
+    if (liveQueriesLoading) return;
+    const leads =
+      liveStreams.length > 0 || scheduledStreams.length > 0;
+    writeLiveLeadHint(leads);
+  }, [liveQueriesLoading, liveStreams.length, scheduledStreams.length]);
   const { data: allTournaments = [] } = useTournaments();
   const { data: videos = [] } = useVideos({ limit: 6 });
   const { data: homeStats } = useHomepageStats();
   // VI homepage stories come from Supabase vi_blog_posts (mirrors /vi/blog) so
   // VI-only posts without an EN manifest entry still surface on the homepage.
-  const { data: viPosts = [] } = usePublishedViBlogPosts();
+  const { data: viPosts = [], isLoading: viPostsLoading } = usePublishedViBlogPosts();
 
   const homeNewsQuery = useNewsItems({
     limit: HOME_NEWS_LIMIT + 6,
@@ -122,7 +166,9 @@ const Index = () => {
     image: string | null;
     imageAlt: string;
     author: string;
+    /** The LATER of publish/update — see lib/blogOrder. */
     date: string | null;
+    refreshed: boolean;
     href: string;
   };
 
@@ -131,20 +177,28 @@ const Index = () => {
     // without an EN manifest entry still surface here. EN keeps the synchronous
     // bilingual manifest for immediate LCP.
     if (language === "vi") {
-      return viPosts.slice(0, 6).map((p) => ({
+      return pinWorldCupResults(
+        [...viPosts].sort(byEffectiveDateDesc((p) => p.published_at, (p) => p.updated_at)),
+        (p) => p.slug,
+      )
+        .slice(0, 6)
+        .map((p) => ({
         slug: p.slug,
         title: p.title,
         summary: p.excerpt ?? "",
         tag: p.category ?? p.tags?.[0] ?? null,
         image: p.cover_image_url,
         imageAlt: p.title,
-        author: "The PickleHub",
-        date: p.published_at,
+        author: "ThePickleHub",
+        date: effectiveDateIso(p.published_at, p.updated_at),
+        refreshed: isRefreshed(p.published_at, p.updated_at),
         href: `/vi/blog/${p.slug}`,
       }));
     }
-    return [...blogMetadata]
-      .sort((a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime())
+    return pinWorldCupResults(
+      [...blogMetadata].sort(byEffectiveDateDesc((p) => p.publishedDate, (p) => p.updatedDate)),
+      (p) => p.slug,
+    )
       .slice(0, 6)
       .map((p) => ({
         slug: p.slug,
@@ -154,7 +208,8 @@ const Index = () => {
         image: p.heroImage?.src ?? null,
         imageAlt: p.heroImage?.alt ?? p.titleEn,
         author: p.author,
-        date: p.publishedDate,
+        date: effectiveDateIso(p.publishedDate, p.updatedDate),
+        refreshed: isRefreshed(p.publishedDate, p.updatedDate),
         href: `/blog/${p.slug}`,
       }));
   }, [language, viPosts]);
@@ -302,8 +357,8 @@ const Index = () => {
   return (
     <TheLineLayout
       title={language === "vi"
-        ? "Pickleball Việt Nam — Giải đấu, Livestream & Tin tức"
-        : "Pickleball Asia: Live, Brackets & News"}
+        ? "ThePickleHub – Pickleball Châu Á: Live & Giải đấu"
+        : "ThePickleHub – Pickleball Asia: Live & Tournaments"}
       description={language === "vi"
         ? "ThePickleHub — Đưa tin pickleball chuyên nghiệp toàn cầu. Tin tức PPA, APP, MLP, lịch giải, livestream, và bracket miễn phí. Trụ sở tại TP.HCM."
         : "ThePickleHub — Editorial coverage of professional pickleball. PPA, APP, MLP news, schedules, livestreams, and free bracket tools. Headquartered in Ho Chi Minh City."}
@@ -415,7 +470,7 @@ const Index = () => {
                   width={2400}
                   height={600}
                   loading="eager"
-                  fetchPriority="high"
+                  fetchPriority="auto"
                   className="block h-auto w-full"
                 />
               </picture>
@@ -462,12 +517,18 @@ const Index = () => {
         );
       })()}
 
+      {/* Lối tắt nổi bật vào "Tạo giải bằng chat AI" — ngay dưới dải DUPR, trước nội dung. */}
+      <HomeQuickTableChatCTA />
+
+      {/* World Cup strip — below the ticker and the DUPR partnership band.
+          Live scores when a match is on, else today's results. Self-hides
+          when there is nothing live and no result today, and after Sep 7. */}
+      <WorldCupLiveCard language={language} />
+
       {/* ── Priority feed — Live (on air / upcoming) → Editorial → News ──
-          When a stream is live or scheduled, LiveSection leads the cluster;
-          otherwise Editorial renders synchronously and anchors the first
-          viewport (Editorial → Live → News), so on quiet days async query
-          completion cannot push the LCP candidate around or create a large
-          layout shift. useLiveStatusRealtime re-orders without a reload. */}
+          Product priority wins while a broadcast is live or scheduled.
+          Replay-only days keep editorial first. Reserved editorial/news
+          skeletons still stabilize the async content inside each slot. */}
       {(() => {
         const editorialNode = stories.length > 0 ? (
           <section className="tl-section">
@@ -494,29 +555,10 @@ const Index = () => {
               {/* Only the 2 most recent on the home feed — the rest live
                   behind the "see all stories" button below. */}
               <div className="tl-stories-grid">
-                {stories.slice(0, 2).map((story, index) => {
-                  const image = normalizeImageUrl(story.image);
-                  const responsive = blogHeroSrcSet(image);
-                  return (
+                {stories.slice(0, 2).map((story, index) => (
                     <Link key={story.slug} to={story.href} className="tl-story">
                       <div className="tl-story-img">
-                        {image ? (
-                          <img
-                            src={responsive?.small ?? image}
-                            srcSet={responsive?.srcSet}
-                            sizes={
-                              index === 0
-                                ? "(min-width: 1100px) 800px, (min-width: 640px) 50vw, calc(100vw - 32px)"
-                                : "(min-width: 1100px) 390px, (min-width: 640px) 50vw, calc(100vw - 32px)"
-                            }
-                            alt={story.imageAlt}
-                            width={1600}
-                            height={900}
-                            loading={index === 0 ? "eager" : "lazy"}
-                            fetchPriority={index === 0 ? "high" : "auto"}
-                            decoding="async"
-                          />
-                        ) : null}
+                        <StoryImage story={story} index={index} />
                         {story.tag && <span className="tl-story-tag">{story.tag}</span>}
                       </div>
                       <div className="tl-story-body">
@@ -527,14 +569,17 @@ const Index = () => {
                           {story.date && (
                             <>
                               <span>·</span>
-                              <span>{formatDate(story.date).full}</span>
+                              <span>
+                                {story.refreshed
+                                  ? `${language === "vi" ? "Cập nhật" : "Updated"} ${formatDate(story.date).full}`
+                                  : formatDate(story.date).full}
+                              </span>
                             </>
                           )}
                         </div>
                       </div>
                     </Link>
-                  );
-                })}
+                ))}
               </div>
 
               <div style={{ textAlign: "center", marginTop: 32 }}>
@@ -544,33 +589,69 @@ const Index = () => {
               </div>
             </div>
           </section>
+        ) : language === "vi" && viPostsLoading ? (
+          <section className="tl-section tl-editorial-skeleton" aria-busy="true" aria-label="Đang tải bài viết">
+            <div className="tl-shell">
+              <div className="tl-sec-head" aria-hidden="true">
+                <span className="tl-feed-skeleton tl-feed-skeleton--heading" />
+                <span className="tl-feed-skeleton tl-feed-skeleton--summary" />
+              </div>
+              {/* 3 placeholders — ui-ux-verifier 09/08 measured the 2-story
+                  skeleton 324px short of the resolved section on mobile,
+                  which made THIS skeleton the home page's largest remaining
+                  layout shift for VI users. */}
+              <div className="tl-stories-grid" aria-hidden="true">
+                {Array.from({ length: 3 }, (_, index) => (
+                  <div className="tl-story" key={index}>
+                    <div className="tl-story-img tl-feed-skeleton" />
+                    <div className="tl-story-body">
+                      <span className="tl-feed-skeleton tl-feed-skeleton--title" />
+                      <span className="tl-feed-skeleton tl-feed-skeleton--summary" />
+                      <span className="tl-feed-skeleton tl-feed-skeleton--meta" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
         ) : null;
 
-        const liveNode =
-          hasLiveData || scheduledStreams.length > 0 || recentEnded.length > 0
+        // Live leads whenever a stream is on air or scheduled. The seven-day
+        // replay window that used to hold this slot went with the replay rows
+        // (16/09) — a quiet week now collapses the section instead.
+        const liveLeads =
+          hasLiveData || scheduledStreams.length > 0;
+        const liveNode = liveQueriesLoading
+          ? expectLiveLead
+            ? { key: "live", node: <LiveSectionSkeleton /> }
+            : null
+          : liveLeads
             ? {
                 key: "live",
                 node: (
                   <LiveSection
                     liveStreams={liveStreams}
                     scheduledStreams={scheduledStreams}
-                    endedStreams={recentEnded}
                     language={language}
+                    priority
                   />
                 ),
               }
             : null;
 
-        // Live leads whenever a stream is on air OR scheduled (restores
-        // #251/#284 behavior dropped by 48a94353). Replay-only days keep
-        // editorial first, so the stable-order CLS win still holds on
-        // fully quiet broadcast days. The one-time shift when the async
-        // live query resolves is an accepted trade-off (owner call, PR #501).
-        const liveLeads = hasLiveData || scheduledStreams.length > 0;
         const cluster: Array<{ key: string; node: ReactNode }> = [
-          liveLeads ? liveNode : null,
+          liveNode,
+          {
+            // Pro-tour tournaments in season — same registry-driven strip as
+            // /live (zero requests, self-hides out of season).
+            key: "protour",
+            node: (
+              <section className="tl-shell">
+                <ProTourEventsStrip language={language} surface="home" />
+              </section>
+            ),
+          },
           editorialNode ? { key: "editorial", node: editorialNode } : null,
-          liveLeads ? null : liveNode,
           {
             key: "news",
             node: (
@@ -578,6 +659,7 @@ const Index = () => {
                 language={language}
                 limit={HOME_NEWS_LIMIT}
                 news={homeNewsQuery.data ?? []}
+                isLoading={homeNewsQuery.isLoading}
               />
             ),
           },
@@ -639,6 +721,12 @@ const Index = () => {
             <span className="tl-pulse-value">{PPA_ASIA_STOPS}</span>
             <span className="tl-pulse-label">PPA ASIA · 2026</span>
           </div>
+          {/* Kết quả World Cup 2026 — bài tổng hợp vẫn là trang đích chính cho
+              "kết quả pickleball world cup", nên chip này không tự rút lui. */}
+          <Link to={wcResultsPath(language)} className="tl-pulse-chip" role="listitem">
+            <span className="tl-pulse-ico" aria-hidden="true"><Trophy size={12} /></span>
+            <span className="tl-pulse-label">{wcResultsLabel(language).toUpperCase()}</span>
+          </Link>
         </div>
       </section>
 
@@ -677,8 +765,13 @@ const Index = () => {
                   <div className="item">
                     <h3>03 / Dành cho người chơi</h3>
                     <p>
-                      Tìm bạn đánh, đặt sân, theo dõi DUPR. Tất cả những gì người chơi cần —{" "}
-                      <em>và không có thứ gì họ không cần.</em>
+                      ThePickleHub là nền tảng pickleball dành cho người chơi trên toàn thế giới
+                      theo dõi tin tức và livestream, tìm bạn chơi và sân, đồng thời tạo hoặc tham
+                      gia giải đấu và sự kiện cộng đồng.
+                    </p>
+                    <p className="data-note">
+                      Khi đăng nhập bằng Google, chúng tôi chỉ dùng tên, email và ảnh đại diện để
+                      tạo, bảo vệ và cá nhân hóa tài khoản của bạn. <Link to="/privacy">Cách chúng tôi bảo vệ dữ liệu →</Link>
                     </p>
                   </div>
                 </div>
@@ -712,8 +805,13 @@ const Index = () => {
                   <div className="item">
                     <h3>03 / Built for players</h3>
                     <p>
-                      Find a partner, book a court, track your DUPR. Everything a player needs —{" "}
-                      <em>and nothing they don't.</em>
+                      ThePickleHub is a pickleball platform for players to follow news and
+                      livestreams, find players and courts, and create or join tournaments and
+                      community events.
+                    </p>
+                    <p className="data-note">
+                      Google Sign-In uses only your name, email address, and profile photo to create,
+                      secure, and personalize your account. <Link to="/privacy">How we protect your data →</Link>
                     </p>
                   </div>
                 </div>

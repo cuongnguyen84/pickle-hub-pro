@@ -7,6 +7,11 @@ struct HomeView: View {
     @State private var model = HomeViewModel()
     @State private var openURL: IdentifiedURL?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let openLiveTab: () -> Void
+
+    init(openLiveTab: @escaping () -> Void = {}) {
+        self.openLiveTab = openLiveTab
+    }
 
     var body: some View {
         ScrollView {
@@ -17,15 +22,20 @@ struct HomeView: View {
 
                 VStack(alignment: .leading, spacing: 34) {
                     VStack(alignment: .leading, spacing: 18) {
+                        WorldCupHomeLiveCard(openLiveTab: openLiveTab)
+                        ProTourEventsStrip(surface: .home)
                         partnerCard
+                        if ShopFeatureGate.isEnabled {
+                            shopEntry
+                        }
                         if !model.live.isEmpty {
                             liveBar
                         }
                     }
 
-                    // Mirrors web Index.tsx: live/upcoming streams lead the feed;
-                    // replay-only days keep editorial first.
-                    if !model.live.isEmpty || !model.scheduled.isEmpty {
+                    // Mirrors web Index.tsx: live/upcoming/replay-≤7d streams
+                    // lead the feed; fully quiet days keep editorial first.
+                    if !model.live.isEmpty || !model.scheduled.isEmpty || !model.recentEnded.isEmpty {
                         livestreamSection
                     }
 
@@ -34,9 +44,6 @@ struct HomeView: View {
                     }
                     if model.posts.count > 1 {
                         HomeFeatureSection(posts: Array(model.posts.dropFirst()))
-                    }
-                    if model.live.isEmpty && model.scheduled.isEmpty && !model.recentEnded.isEmpty {
-                        livestreamSection
                     }
                     if !model.news.isEmpty {
                         HomeNewsSection(items: model.news)
@@ -65,6 +72,34 @@ struct HomeView: View {
         .task { await model.load() }
         .refreshable { await model.load() }
         .sheet(item: $openURL) { SafariView(url: $0.url).ignoresSafeArea() }
+    }
+
+    private var shopEntry: some View {
+        NavigationLink(value: HomeRoute.shop) {
+            HStack(spacing: TLSpacing.md) {
+                Image(systemName: "bag.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(TLColor.accentInk)
+                    .frame(width: 44, height: 44)
+                    .background(TLColor.accent, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("SHOP")
+                        .font(TLType.eyebrowMono(9)).tracking(1)
+                        .foregroundStyle(TLColor.accentText)
+                    Text("Đồ pickleball từ người bán trong nước")
+                        .font(TLType.titleSans(14))
+                        .foregroundStyle(TLColor.fg)
+                        .lineLimit(2)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "arrow.up.right").foregroundStyle(TLColor.fg3)
+            }
+            .padding(TLSpacing.md)
+            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: TLRadius.lg).strokeBorder(TLColor.border2, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Mở Shop ThePickleHub")
     }
 
     private var livestreamSection: some View {
@@ -285,6 +320,7 @@ struct HomeView: View {
 /// Destinations reached from the Home toolbar menu (the native stand-in for the
 /// web header nav).
 enum HomeRoute: Hashable {
+    case shop
     case tournaments
     case rankings
     case notifications

@@ -2,7 +2,8 @@
 // edgeInvoke — supabase.functions.invoke with automatic retry on the Supabase
 // "blob-loss" fault: the platform intermittently drops an edge function's code
 // blob and the gateway answers 404 { code: "NOT_FOUND_FUNCTION_BLOB" } until a
-// redeploy (or the CF edge-blob-watchdog) heals it. The blob usually flickers
+// redeploy heals it (the CF edge-blob-watchdog that auto-healed was retired
+// 2026-08-06 after Supabase confirmed the fix). The blob usually flickers
 // back within seconds, so a couple of retries turn a user-visible "Connection
 // error" into a transparent success — exactly the "click a few times" workaround
 // users hit during the 2026-07-26 incident, automated.

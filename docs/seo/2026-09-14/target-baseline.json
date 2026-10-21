@@ -1,0 +1,93 @@
+{
+  "calendar": {
+    "cluster": "vietnam-pickleball-tournament-calendar-2026",
+    "window": {
+      "start": "2026-08-15",
+      "end": "2026-09-11",
+      "days": 28
+    },
+    "clicks": 76,
+    "impressions": 1172,
+    "position": 6.8,
+    "top_pages": [
+      {
+        "page": "https://www.thepicklehub.net/blog/vietnam-pickleball-tournament-calendar-2026",
+        "clicks": 76,
+        "impressions": 1172
+      }
+    ],
+    "previous": {
+      "clicks_prev": 11,
+      "impressions_prev": 195
+    }
+  },
+  "comparison": {
+    "cluster": "best-pickleball-tournament-software-2026",
+    "window": {
+      "start": "2026-08-15",
+      "end": "2026-09-11",
+      "days": 28
+    },
+    "clicks": 1,
+    "impressions": 27,
+    "position": 16.4,
+    "top_pages": [
+      {
+        "page": "https://www.thepicklehub.net/blog/best-pickleball-tournament-software-2026",
+        "clicks": 1,
+        "impressions": 27
+      }
+    ],
+    "previous": {
+      "clicks_prev": 0,
+      "impressions_prev": 6
+    }
+  },
+  "tools": {
+    "cluster": "/tools",
+    "window": {
+      "start": "2026-08-15",
+      "end": "2026-09-11",
+      "days": 28
+    },
+    "clicks": 58,
+    "impressions": 1141,
+    "position": 11.3,
+    "top_pages": [
+      {
+        "page": "https://www.thepicklehub.net/tools",
+        "clicks": 42,
+        "impressions": 914
+      },
+      {
+        "page": "https://www.thepicklehub.net/vi/tools",
+        "clicks": 15,
+        "impressions": 184
+      },
+      {
+        "page": "https://thepicklehub.net/tools",
+        "clicks": 1,
+        "impressions": 3
+      },
+      {
+        "page": "https://thepicklehub.net/tools/team-match",
+        "clicks": 0,
+        "impressions": 20
+      },
+      {
+        "page": "https://www.thepicklehub.net/tools/doubles-elimination",
+        "clicks": 0,
+        "impressions": 9
+      },
+      {
+        "page": "https://www.thepicklehub.net/tools/team-match",
+        "clicks": 0,
+        "impressions": 11
+      }
+    ],
+    "previous": {
+      "clicks_prev": 47,
+      "impressions_prev": 759
+    }
+  }
+}

@@ -15,6 +15,14 @@ import { DuprConnectButton } from "./DuprConnectButton";
  * disappears for good (driven by useDuprConnection).
  */
 const SESSION_KEY = "tph.dupr-banner-dismissed";
+// CLS INC2 (proposal cls-attribution): the banner sits ABOVE {children} on
+// every page, so late-mounting it after auth+conn resolve pushed the whole
+// page down (~60-80px) on each navigation for signed-in unlinked users.
+// Remember last decision per session: when it said "show", render the same
+// markup invisible during loading so the slot is reserved from first paint.
+// Ceiling: the very first impression of a session still shifts once —
+// per-navigation shifts (the repeated case) go to zero.
+const SHOWN_KEY = "tph.dupr-banner-shown";
 
 export function ConnectDuprBanner() {
   const { user, loading } = useAuth();
@@ -28,6 +36,13 @@ export function ConnectDuprBanner() {
       return false;
     }
   });
+  const [expectBanner] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem(SHOWN_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     if (dismissed) {
@@ -37,14 +52,24 @@ export function ConnectDuprBanner() {
     }
   }, [dismissed]);
 
-  if (loading || connLoading || dismissed) return null;
-  if (!user) return null;
-  if (conn?.ssoConnected) return null;
+  const pending = loading || connLoading;
+  const show = !pending && !dismissed && !!user && !conn?.ssoConnected;
+
+  useEffect(() => {
+    if (pending) return;
+    try {
+      sessionStorage.setItem(SHOWN_KEY, show ? "1" : "0");
+    } catch { /* ignore */ }
+  }, [pending, show]);
+
+  if (pending ? !expectBanner : !show) return null;
+  const reserving = pending && expectBanner;
 
   return (
     <div
       role="region"
       aria-label={vi ? "Lời mời kết nối DUPR" : "Connect DUPR prompt"}
+      aria-hidden={reserving || undefined}
       style={{
         display: "grid",
         gridTemplateColumns: "auto 1fr auto auto",
@@ -54,6 +79,8 @@ export function ConnectDuprBanner() {
         background: "var(--tl-bg)",
         borderTop: "1px solid var(--tl-border)",
         borderBottom: "1px solid var(--tl-border)",
+        // Reserved slot while auth/conn resolve — same markup, no paint.
+        visibility: reserving ? "hidden" : undefined,
       }}
     >
       <span

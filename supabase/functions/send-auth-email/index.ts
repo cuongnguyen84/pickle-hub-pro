@@ -437,10 +437,28 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Auth Hook only ever POSTs. Watchdog canary probes are GETs with no body —
+  // without these guards they fell through JSON.parse into the catch-all 500
+  // (~7k/day of probe noise drowning real 5xx).
+  if (req.method !== "POST") {
+    return new Response(
+      JSON.stringify({ error: "Method not allowed" }),
+      { status: 405, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
+  }
+
   try {
     const rawBody = await req.text();
-    const body = JSON.parse(rawBody);
-    
+    let body: unknown;
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON body" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     // SECURITY: Only accept Auth Hook requests from Supabase
     if (!isAuthHookRequest(body)) {
       console.error("Rejected non-Auth-Hook request");

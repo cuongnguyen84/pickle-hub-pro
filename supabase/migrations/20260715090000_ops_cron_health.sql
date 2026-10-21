@@ -89,7 +89,7 @@ SELECT cron.schedule(
       RETURN;
     END IF;
     PERFORM net.http_post(
-      url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/cron-health-alert',
+      url := public.ops_project_url() || '/functions/v1/cron-health-alert',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
         'Authorization', 'Bearer ' || v_key,

@@ -1,0 +1,33 @@
+# ThePickleHub
+
+> ThePickleHub (thepicklehub.net) is Vietnam's bilingual (Vietnamese-English) pickleball platform: free tournament management software, live streaming, video replays, pro tour news (PPA, MLP, APP, PPA Tour Asia), the Vietnam DUPR leaderboard, and a community feed. ~95% of users are Vietnamese; all key content is available in both English and Vietnamese (/vi/ routes).
+
+ThePickleHub is built and operated in Vietnam. It covers Vietnamese pickleball — tournaments, players, venues, federation news — plus PPA Tour Asia and the global pro scene. Tournament tools (round robin, single/double elimination brackets, MLP-style team match, live scoring) are free and require no signup for organizers to try.
+
+## Key Pages
+
+- [Home (EN)](https://www.thepicklehub.net/): platform overview
+- [Trang chủ (VI)](https://www.thepicklehub.net/vi): Vietnamese homepage
+- [Blog (EN)](https://www.thepicklehub.net/blog): guides on rules, technique, DUPR, tournaments, pro tours
+- [Blog (VI)](https://www.thepicklehub.net/vi/blog): Vietnamese guides and venue directories
+- [News](https://www.thepicklehub.net/news): aggregated pickleball news, translated EN↔VI
+- [Vietnam DUPR Rankings](https://www.thepicklehub.net/rankings): live Vietnam DUPR leaderboard
+- [Live](https://www.thepicklehub.net/live): livestreams of Vietnamese tournaments and matches
+- [Tournament Tools](https://www.thepicklehub.net/tools): free bracket generator, round robin, team match, live scoring
+- [About](https://www.thepicklehub.net/about): who operates ThePickleHub, what it does, and who it serves
+- [Contact](https://www.thepicklehub.net/contact): support, corrections, tournament coverage, and partnerships
+- [OpenAPI specification](https://www.thepicklehub.net/openapi.json): machine-readable contract for the public HTTP API
+- [Agent instructions](https://www.thepicklehub.net/agents.md): when to use this source, citation guidance, data boundaries, and permitted agent behavior
+
+## Notable Guides
+
+- [Vietnam Pickleball Tournament Calendar 2026](https://www.thepicklehub.net/blog/vietnam-pickleball-tournament-calendar-2026): every major event incl. Pickleball World Cup Da Nang
+- [PPA Tour Asia 2026 Complete Guide](https://www.thepicklehub.net/blog/ppa-tour-asia-2026-complete-guide): schedule, prize money, how to play
+- [What Is DUPR?](https://www.thepicklehub.net/blog/what-is-dupr-pickleball-rating-system): rating system explainer (3-part series)
+- [Pickleball Rules 2026](https://www.thepicklehub.net/blog/pickleball-rules-complete-guide): complete rulebook with disputed calls in Asian tournaments
+- [How to Organize a Pickleball Tournament](https://www.thepicklehub.net/blog/how-to-organize-pickleball-tournament): step-by-step organizer guide
+
+## Optional
+
+- [Sitemap](https://www.thepicklehub.net/sitemap.xml): full URL index with en/vi hreflang alternates
+- Contact: https://www.thepicklehub.net/ (community feed and club pages)

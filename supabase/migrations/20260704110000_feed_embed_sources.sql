@@ -74,7 +74,7 @@ SELECT cron.schedule(
   '20 * * * *',
   $cron$
     SELECT net.http_post(
-      url     := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/feed-embeds-sync',
+      url     := public.ops_project_url() || '/functions/v1/feed-embeds-sync',
       headers := jsonb_build_object(
                    'Content-Type', 'application/json',
                    'x-auth-secret', (SELECT decrypted_secret FROM vault.decrypted_secrets

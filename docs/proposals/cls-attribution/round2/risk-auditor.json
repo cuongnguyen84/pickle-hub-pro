@@ -1,0 +1,47 @@
+{
+  "agent": "risk-auditor",
+  "rebuttals": [
+    {
+      "id": "D2",
+      "topic": "Predicate thành công: %good toàn cục ≥75% (architect) vs %good riêng pagePath /live/* n≥100 (auditor)",
+      "myRound1Position": "R5 — predicate %good toàn cục ≥75% về mặt số học KHÔNG thể đạt; phải đo riêng /live/* với n≥100.",
+      "move": "REFINE",
+      "evidence": "src/components/layout/TheLineLayout.tsx:1052 + src/components/dupr/ConnectDuprBanner.tsx:41-43 — banner render trên MỌI route nên fix của nó nâng cả bucket non-live; docs/proposals/cls-attribution/00-data-ga4-raw.txt (BỔ SUNG 09/08) — auth_state = 100% '(not set)' trên event web_vital; src/lib/webVitalsRum.ts:146-174 — buildWebVitalEvent KHÔNG gửi param auth_state; src/lib/webVitalsRum.ts:126-134 normalizeRumRoute() gộp /live/<uuid> → /live/:id và strip prefix /vi.",
+      "note": "Ba chỉnh, không hạ lập trường. (1) RÚT chữ 'không thể đạt' — em sai ở chỗ đó: R5 tính dưới giả định chỉ sửa /live. Architect đúng, ConnectDuprBanner nằm ngay trên {children} ở TheLineLayout.tsx:1052 nên nếu nó là thủ phạm thì cả 197 event non-live cũng được nâng, và ≥75% toàn cục là ĐẠT ĐƯỢC. (2) Nhưng kết luận 'predicate toàn cục không dùng được' KHÔNG bị lật — nó bị lập luận của architect làm MẠNH THÊM. Em chạy lại số (docs/proposals/cls-attribution/00-data-ga4-raw.txt): LIVE = 23 good/260 = 8,8%; NON-LIVE = 125 good/197 = 63,5%. Giả sử một fix chuyển được ĐỀU 50% số event non-good ở cả hai bucket: tuần KHÔNG có buổi phát lớn → 81,3% = ĐẠT; tuần CÓ buổi phát như cửa sổ hiện tại → 66,0% = TRƯỢT. Cùng một fix, cùng một hiệu quả, verdict lật 15,3 điểm chỉ vì lịch phát sóng của Cuong. Ở f=0,3 còn tệ hơn: 74,2% vs 52,6% (21,6 điểm). Một buổi phát duy nhất chiếm 209/457 = 45,7% toàn mẫu — %good toàn cục đo lịch livestream trước, đo chất lượng fix sau. (3) NHƯỢNG BỘ về phạm vi: predicate của em vòng 1 chỉ có bucket /live là THIẾU. Vì banner phủ mọi trang, non-live phải là gate thứ hai — đó chính là nơi INC1 buộc phải hiện ra. (4) BÁC bỏ công thức lai 'per-route /live ≥75%': từ nền 8,8% lên 75% đòi chuyển 87% số event non-good của /live — đó là cái bẫy hoàn-hảo-hoặc-thua y hệt cái em phàn nàn ở R5, chỉ đổi mẫu số. Ngưỡng phải theo BIÊN ĐỘ DỊCH CHUYỂN từ baseline, không theo con số tròn mượn từ CWV. (5) Trả lời (b): 260 live event/11 ngày = 23,6/ngày → 7 ngày ≈ 165, thừa n≥100. NHƯNG 209/260 đến từ một stream; bỏ nó ra còn 4,6/ngày → 7 ngày ≈ 32, và cần ~22 ngày mới tới 100. Nên n≥100 trong 7 ngày đạt được KHI VÀ CHỈ KHI có ít nhất một buổi phát đáng kể rơi vào cửa sổ. Đừng đoán 7 hay 14 — gate bằng chính n, tự gia hạn. (6) Bắt buộc dùng pagePath (built-in) làm khoá bucket, KHÔNG dùng customEvent:route: dim route chưa đăng ký nên không hồi cứu, tức predicate dựng trên nó sẽ KHÔNG CÓ BASELINE để so. pagePath có baseline 29/07-08/08 sẵn trong 00-data-ga4-raw.txt.",
+      "predicate_đề_xuất": {
+        "tên_mốc": "PERF-05C — CLS attribution verdict (thay cho việc đọc lại PERF-05B toàn cục)",
+        "nguồn": "GA4 Data API runReport, property p522556358",
+        "query": "dimensions=[pagePath, customEvent:metric_rating]; metrics=[eventCount]; dimensionFilter = eventName=='web_vital' AND customEvent:metric_name=='CLS' AND deviceCategory=='mobile' AND countryId=='VN'; dateRange = [ngày deploy INC cuối .. ngày đọc]",
+        "bucket": {
+          "LIVE": "pagePath khớp regex ^(/vi)?/live",
+          "NONLIVE": "phần còn lại"
+        },
+        "baseline_29-07_đến_08-08": {
+          "LIVE": "23 good / 260 = 8,8%",
+          "NONLIVE": "125 good / 197 = 63,5%",
+          "GLOBAL": "148 good / 457 = 32,4%"
+        },
+        "gates": [
+          "G0 (cổng mẫu, chạy TRƯỚC mọi phán quyết): nếu n_LIVE < 100 → verdict = 'CHƯA ĐỦ MẪU', gia hạn +7 ngày, KHÔNG sửa thêm dòng code nào, KHÔNG tuyên đạt/trượt. Trần 3 lần gia hạn (T+21). Quá trần mà n_LIVE vẫn <100 → verdict /live HOÃN, chỉ đọc G2.",
+          "G1 (/live, mục tiêu thật): %good_LIVE ≥ 50% với n_LIVE ≥ 100 — tức chuyển ≥44% số event non-good của /live, gấp 5,7 lần baseline 8,8%. Không dùng 75%.",
+          "G2 (non-live, nơi INC1/ConnectDuprBanner buộc phải hiện): %good_NONLIVE ≥ 80% với n_NONLIVE ≥ 100 (nhịp hiện tại 17,9/ngày → 7 ngày ≈ 125, cổng này an toàn), so baseline 63,5%.",
+          "G3 (toàn cục): CHỈ BÁO CÁO, KHÔNG GATE. Ghi %good_GLOBAL kèm n_LIVE, n_NONLIVE và số buổi livestream trong cửa sổ, để người đọc thấy ngay mix. Không được dùng con số này để tuyên đạt/trượt."
+        ],
+        "verdict_hợp_lệ": "ĐẠT (G1 và G2 cùng xanh) | MỘT PHẦN (đúng một gate xanh → nêu rõ gate nào, không revert gate xanh) | TRƯỢT (cả hai đỏ, n đủ) | CHƯA ĐỦ MẪU (+7 ngày)",
+        "điều_kiện_tiên_quyết_ngày_0": "Thêm param auth_state vào buildWebVitalEvent (src/lib/webVitalsRum.ts:146-174) CÙNG PR với việc đăng ký dims. Không có nó, G2 xanh vẫn không chứng minh được ConnectDuprBanner là nguyên nhân — dim auth_state đã đăng ký nhưng client chưa gửi, 100% '(not set)'."
+      }
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "INC1 (ConnectDuprBanner) là fix giá trị nhất của architect nhưng KHÔNG thể chứng minh bằng field data hiện có — thêm param auth_state phải là INC0, không phải ghi chú bên lề",
+      "with": "solution-architect",
+      "myPosition": "Increments 1-7 ở round1/solution-architect.md không có bước nào thêm auth_state vào event web_vital. src/lib/webVitalsRum.ts:146-174 xác nhận buildWebVitalEvent không gửi param này, và 00-data-ga4-raw.txt (BỔ SUNG 09/08) cho thấy 100% event là '(not set)'. Hệ quả cụ thể: giả thuyết trung tâm của architect — 'banner bẩn vì chỉ render cho user đã đăng nhập, nên /login sạch' — là giả thuyết KHÔNG THỂ BÁC BỎ với instrumentation hôm nay. Nếu %good non-live nhích lên trong một tuần vắng buổi phát, panel sẽ ghi công cho INC1 mà không có một dòng bằng chứng nào. Đây là đúng cơ chế 'kết luận sai rồi sửa nhầm chỗ' mà verdict AMBER vòng 1 của em nói tới. Yêu cầu: 1 dòng param auth_state vào INC0, cùng PR đăng ký dims. Không phải 'cân nhắc', là điều kiện để INC1 có nghĩa."
+    },
+    {
+      "topic": "INC2 nâng ngưỡng useKeyboardHeight 80→150 mang rủi ro hồi quy native cho ZERO lợi ích CLS đo được trên native",
+      "with": "solution-architect",
+      "myPosition": "Dữ liệu mới 00-data-ga4-raw.txt (BỔ SUNG 2, 09/08): app_surface × rating cho 291 poor / 148 good / 18 ni — 100% là 'web', native WebView (capacitor_ios/capacitor_android) đóng góp ĐÚNG 0 event CLS trong cut này. Chính architect đã tự nêu rủi ro ở round1 mục 'Điều em không chắc' #7: useKeyboardHeight chạy khác trong WKWebView, đổi 80→150 'có thể làm native không còn nhận ra bàn phím'. Cộng hai dữ kiện lại: một thay đổi có thể làm ô nhập chat chui xuống dưới bàn phím trong app iOS, đổi lấy phần cải thiện CLS mà field data cho thấy bằng 0 trên bề mặt đó. Và hồi quy native đi qua app-store review — không có nút revert. Lập trường: INC2 tách khỏi INC1/INC3, không vào cùng cửa sổ đo, và chỉ merge sau khi Cuong test tay trên iPhone THẬT cả Safari lẫn app native (đúng như architect yêu cầu ở increment 3) — nếu bước test tay đó không xảy ra thì INC2 không được merge, kể cả khi CI xanh."
+    }
+  ]
+}

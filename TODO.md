@@ -31,7 +31,7 @@ Sau migration hoàn tất (14/04/2026). Các task còn lại không urgent, prio
 
 **Verification:**
 - Login Apple trên www.thepicklehub.net → expect success
-- Test trên iOS Capacitor app → verify Universal Links flow
+- Test trên app iOS native (`/apple`) → verify Universal Links flow
 - Check Supabase logs: Authentication → Logs → tìm Apple provider events
 
 ---
@@ -61,6 +61,14 @@ Sau migration hoàn tất (14/04/2026). Các task còn lại không urgent, prio
 ---
 
 ## 🟡 Priority 2 — Trong 2 tuần (sau khi stable)
+
+### SEO follow-up sau PR #515 → docs/seo-followup-2026-08.md
+
+Checklist chi tiết (đã qua panel /idea 02/08, sửa 6 lỗi kỹ thuật của bản nháp cũ):
+xem [docs/seo-followup-2026-08.md](./docs/seo-followup-2026-08.md). Baseline GSC 01/08.
+Nhánh nháp cũ `docs/seo-followup-checklist` (f4c20b19) đã được thay thế — đóng không merge.
+
+---
 
 ### 3. Firebase Service Account Key Cleanup
 

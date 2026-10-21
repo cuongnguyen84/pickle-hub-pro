@@ -38,7 +38,8 @@ const post: BlogPost = {
           ],
           internalLinks: [
             { text: "Pickleball World Cup 2026 in Da Nang — why DUPR matters for the Vietnamese team", path: "/blog/pickleball-world-cup-2026-da-nang" },
-            { text: "PPA Tour Asia 2026 schedule and how DUPR factors into seeding", path: "/blog/ppa-tour-asia-2026-complete-guide" }
+            { text: "PPA Tour Asia 2026 schedule and how DUPR factors into seeding", path: "/blog/ppa-tour-asia-2026-complete-guide" },
+            { text: "Free pickleball bracket generator — auto snake-seeds your draw by DUPR rating", path: "/tools" }
           ]
         },
         {
@@ -125,7 +126,8 @@ const post: BlogPost = {
           ],
           internalLinks: [
             { text: "Pickleball World Cup 2026 tại Đà Nẵng — vì sao DUPR quan trọng với đội tuyển Việt Nam", path: "/blog/pickleball-world-cup-2026-da-nang" },
-            { text: "PPA Tour Asia 2026 — lịch thi đấu và cách DUPR ảnh hưởng đến seeding", path: "/blog/ppa-tour-asia-2026-complete-guide" }
+            { text: "PPA Tour Asia 2026 — lịch thi đấu và cách DUPR ảnh hưởng đến seeding", path: "/blog/ppa-tour-asia-2026-complete-guide" },
+            { text: "Công cụ tạo bảng đấu pickleball miễn phí — tự động seed theo điểm DUPR", path: "/vi/tools" }
           ]
         },
         {

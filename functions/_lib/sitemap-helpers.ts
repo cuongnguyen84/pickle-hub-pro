@@ -90,3 +90,37 @@ export const URL_SAFE_SLUG_RE = /^[a-z0-9-]+$/;
 
 /** Username allowlist for profile URLs (alphanumeric + underscore + dot). */
 export const URL_SAFE_USERNAME_RE = /^[a-z0-9._-]+$/i;
+
+/**
+ * Page through a PostgREST query 1000 rows at a time.
+ *
+ * PostgREST caps every response at `max-rows = 1000` and does it silently:
+ * `.limit(5000)` returns exactly 1000 rows, status 200, no error. On
+ * 2026-08-23 sitemap-news.xml was found serving 500 of 709 EN articles that
+ * way — everything published before 2026-07-31 had quietly fallen out of the
+ * sitemap, with no internal links to those pages either.
+ *
+ * `page` must apply `.range(from, to)` and an ORDER BY with a unique tie
+ * breaker, otherwise rows can repeat or vanish across page boundaries.
+ */
+export async function fetchAllRows<T>(
+  page: (
+    from: number,
+    to: number
+  ) => PromiseLike<{ data: T[] | null; error: unknown }>,
+  maxRows = 20000
+): Promise<T[]> {
+  const PAGE_SIZE = 1000;
+  const out: T[] = [];
+  for (let from = 0; from < maxRows; from += PAGE_SIZE) {
+    const { data, error } = await page(from, from + PAGE_SIZE - 1);
+    if (error) {
+      console.error("sitemap: page query error:", error);
+      break;
+    }
+    const rows = data || [];
+    out.push(...rows);
+    if (rows.length < PAGE_SIZE) break;
+  }
+  return out;
+}

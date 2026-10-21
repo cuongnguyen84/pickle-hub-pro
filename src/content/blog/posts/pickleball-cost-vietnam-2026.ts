@@ -322,7 +322,7 @@ const post: BlogPost = {
             },
             {
               text: "Tạo bracket và live scoring miễn phí với ThePickleHub Tools",
-              path: "/tools",
+              path: "/vi/tools",
             },
           ],
         },

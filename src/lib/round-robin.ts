@@ -333,11 +333,11 @@ export function scheduleMatches(
         (roundRobinMeta.get(b.matchId)?.rrMatchIndex ?? 999),
   );
 
-  // 1 group = 1 home court (priority); courts beyond #groups are shared spares.
+  // Home court is only a tie-break. Every chosen court is a candidate, so two
+  // courts run in parallel — including two matches from the same group.
   const homeCount = Math.min(numGroups, courts.length);
   const homeCourtByGroup = new Map<number, number>();
   for (let i = 0; i < homeCount; i++) homeCourtByGroup.set(i, courts[i]);
-  const spareCourts = courts.slice(homeCount);
 
   const courtSlotBusy = new Set<string>();         // `${court}:${slot}`
   const playerSlots = new Map<string, Set<number>>(); // playerId → slots played
@@ -353,34 +353,42 @@ export function scheduleMatches(
     const h = (x: number) => set.has(x);
     return (h(s - 1) && h(s - 2)) || (h(s - 1) && h(s + 1)) || (h(s + 1) && h(s + 2));
   };
-  const slotOk = (court: number, slot: number, p1: string | null, p2: string | null) =>
+  const freeAt = (court: number, slot: number, p1: string | null, p2: string | null) =>
     !courtSlotBusy.has(`${court}:${slot}`) &&
-    !(p1 && playerSlots.get(p1)?.has(slot)) &&   // not double-booked this slot
-    !(p2 && playerSlots.get(p2)?.has(slot)) &&
-    !wouldRun3(p1, slot) && !wouldRun3(p2, slot); // not a 3rd consecutive match
+    !(p1 && playerSlots.get(p1)?.has(slot)) &&
+    !(p2 && playerSlots.get(p2)?.has(slot));
 
   const picked = new Map<string, { court: number; slot: number }>();
 
   for (const m of roundOrdered) {
     const home = homeCourtByGroup.get(m.groupIndex);
-    // Home court first, then shared spares (preserves "ưu tiên 1 bảng/sân").
-    const candidates = home !== undefined ? [home, ...spareCourts] : courts;
+    const candidates = home !== undefined ? [home, ...courts.filter((c) => c !== home)] : courts;
 
-    let best: { court: number; slot: number } | null = null;
-    for (const court of candidates) {
-      let slot = 0;
-      while (!slotOk(court, slot, m.player1, m.player2)) slot++;
-      // Prefer earliest slot; tie → least-loaded court; tie → candidate order (home first).
-      if (
-        best === null ||
-        slot < best.slot ||
-        (slot === best.slot && (load.get(court) ?? 0) < (load.get(best.court) ?? 0))
-      ) {
-        best = { court, slot };
+    // rest=true refuses a 3rd match in a row. rest=false only refuses a
+    // double-book. Prefer rest, but take the earlier free court when rest
+    // would leave this match waiting while another court is empty.
+    const earliest = (rest: boolean) => {
+      let best: { court: number; slot: number } | null = null;
+      for (const court of candidates) {
+        let slot = 0;
+        while (
+          !freeAt(court, slot, m.player1, m.player2) ||
+          (rest && (wouldRun3(m.player1, slot) || wouldRun3(m.player2, slot)))
+        ) slot++;
+        if (
+          best === null ||
+          slot < best.slot ||
+          (slot === best.slot && (load.get(court) ?? 0) < (load.get(best.court) ?? 0))
+        ) {
+          best = { court, slot };
+        }
       }
-    }
+      return best!;
+    };
 
-    const chosen = best!;
+    const rested = earliest(true);
+    const sooner = earliest(false);
+    const chosen = sooner.slot < rested.slot ? sooner : rested;
     picked.set(m.matchId, chosen);
     courtSlotBusy.add(`${chosen.court}:${chosen.slot}`);
     for (const p of [m.player1, m.player2]) {

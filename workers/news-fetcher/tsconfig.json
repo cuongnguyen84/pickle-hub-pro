@@ -13,5 +13,8 @@
     "isolatedModules": true
   },
   "include": ["./src/**/*.ts"],
-  "exclude": ["node_modules"]
+  // Test chạy trong Node (vitest, đọc fixture bằng node:fs) chứ không trong
+  // runtime Worker. Soi nó bằng tsconfig này thì phải kéo @types/node vào
+  // "types", tức là mở cửa cho code Worker dùng nhầm global của Node.
+  "exclude": ["node_modules", "src/**/*.test.ts"]
 }

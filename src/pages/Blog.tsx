@@ -5,10 +5,12 @@ import { blogMetadata } from "@/content/blog";
 import { usePublishedViBlogPosts } from "@/hooks/useViBlogPosts";
 import { useBlogPostViewCountsBatch, pairKey } from "@/hooks/useBlogPostViewCountsBatch";
 import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
+import { useCanSeeViewCounts } from "@/hooks/useCanSeeViewCounts";
 import { normalizeImageUrl } from "@/lib/url-utils";
 import { blogHeroSrcSet } from "@/lib/image-utils";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { formatDate } from "@/lib/format-datetime";
+import { byEffectiveDateDesc, effectiveDateIso, isRefreshed } from "@/lib/blogOrder";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
@@ -24,6 +26,8 @@ interface UnifiedPost {
   coverImageUrl: string | null;
   category: string;
   publishedAt: string;
+  /** publishedAt is the LATER of publish/update — true when it is an update. */
+  refreshed: boolean;
   author: string;
   href: string;
 }
@@ -42,11 +46,7 @@ const Blog = () => {
   const posts: UnifiedPost[] = useMemo(() => {
     if (language === "vi") {
       return [...viPosts]
-        .sort((a, b) => {
-          const ta = a.published_at ? new Date(a.published_at).getTime() : 0;
-          const tb = b.published_at ? new Date(b.published_at).getTime() : 0;
-          return tb - ta;
-        })
+        .sort(byEffectiveDateDesc((p) => p.published_at, (p) => p.updated_at))
         .map((p) => ({
           id: `vi-${p.slug}`,
           slug: p.slug,
@@ -55,13 +55,14 @@ const Blog = () => {
           summary: p.excerpt ?? "",
           coverImageUrl: p.cover_image_url ? normalizeImageUrl(p.cover_image_url) : null,
           category: p.category ?? (p.tags?.[0] ?? "story"),
-          publishedAt: p.published_at ?? "",
+          publishedAt: effectiveDateIso(p.published_at, p.updated_at) ?? "",
+          refreshed: isRefreshed(p.published_at, p.updated_at),
           author: "The PickleHub",
           href: `/vi/blog/${p.slug}`,
         }));
     }
     return [...blogMetadata]
-      .sort((a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime())
+      .sort(byEffectiveDateDesc((m) => m.publishedDate, (m) => m.updatedDate))
       .map((m) => ({
         id: `en-${m.slug}`,
         slug: m.slug,
@@ -70,7 +71,8 @@ const Blog = () => {
         summary: m.metaDescriptionEn,
         coverImageUrl: m.heroImage?.src ?? null,
         category: m.tags[0] ?? "story",
-        publishedAt: m.publishedDate,
+        publishedAt: effectiveDateIso(m.publishedDate, m.updatedDate) ?? "",
+        refreshed: isRefreshed(m.publishedDate, m.updatedDate),
         author: m.author,
         href: `/blog/${m.slug}`,
       }));
@@ -96,9 +98,12 @@ const Blog = () => {
   const rest = visiblePosts.slice(1);
 
   // Batch fetch view counts for all visible posts in one query
-  const viewCounts = useBlogPostViewCountsBatch(
+  const allViewCounts = useBlogPostViewCountsBatch(
     visiblePosts.map((p) => ({ lang: p.lang, slug: p.slug })),
   );
+  // Lượt xem chỉ hiện cho creator/admin — map rỗng để ẩn luôn dấu "·" đi kèm.
+  const canSeeViews = useCanSeeViewCounts();
+  const viewCounts: typeof allViewCounts = canSeeViews ? allViewCounts : {};
 
   return (
     <TheLineLayout
@@ -188,7 +193,7 @@ const Blog = () => {
                     <div className="meta">
                       <b>{featured.author}</b>
                       <span>·</span>
-                      <span>{formatDate(featured.publishedAt).full}</span>
+                      <span>{featured.refreshed ? `${language === "vi" ? "Cập nhật" : "Updated"} ${formatDate(featured.publishedAt).full}` : formatDate(featured.publishedAt).full}</span>
                       {viewCounts[pairKey(featured.lang, featured.slug)] !== undefined && (
                         <>
                           <span>·</span>
@@ -238,7 +243,7 @@ const FeaturedImage = ({ src, alt }: { src: string | null; alt: string }) => {
       srcSet={blogHeroSrcSet(src)?.srcSet}
       sizes="(max-width: 900px) 100vw, 45vw"
       alt={alt}
-      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }}
       loading="eager"
       onError={() => setFailed(true)}
     />
@@ -246,6 +251,11 @@ const FeaturedImage = ({ src, alt }: { src: string | null; alt: string }) => {
 };
 
 const BlogCard = ({ post, viewCount }: { post: UnifiedPost; viewCount: number }) => {
+  // `language` was read here without being in scope — the "Cập nhật/Updated"
+  // label is inside the truthy branch of `post.refreshed`, so it only throws
+  // once a post is refreshed rather than on every render, which is why it
+  // survived. Caught by tsc while adding the World Cup results post.
+  const { language } = useI18n();
   const [failed, setFailed] = useState(false);
   const showImg = post.coverImageUrl && !failed;
   return (
@@ -270,7 +280,7 @@ const BlogCard = ({ post, viewCount }: { post: UnifiedPost; viewCount: number })
         <div className="foot">
           <b>{post.author}</b>
           <span>·</span>
-          <span>{formatDate(post.publishedAt).full}</span>
+          <span>{post.refreshed ? `${language === "vi" ? "Cập nhật" : "Updated"} ${formatDate(post.publishedAt).full}` : formatDate(post.publishedAt).full}</span>
           {viewCount > 0 && (
             <>
               <span>·</span>

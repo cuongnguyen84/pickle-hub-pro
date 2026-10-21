@@ -28,6 +28,7 @@ struct RefereeScoringView: View {
     @State private var state: ScoreState?
     @State private var history: [ScoreState] = []
     @State private var confirming = false
+    @State private var exiting = false
 
     // Setup
     @State private var setupServer: ServeSide?
@@ -80,6 +81,7 @@ struct RefereeScoringView: View {
                     if showSideSwitch { sideSwitchOverlay }
                     if showNote { noteOverlay }
                     if confirming { confirmOverlay(s) }
+                    if exiting { exitOverlay }
                 } else {
                     setup
                 }
@@ -407,6 +409,18 @@ struct RefereeScoringView: View {
 
     private func bottomBar(_ s: ScoreState) -> some View {
         HStack(spacing: 10) {
+            // Đường thoát duy nhất khi đang chấm: chế độ rally vào bảng ngay từ
+            // onAppear nên nút "Hủy" ở màn setup không bao giờ hiện ra.
+            Button { Haptics.light(); exiting = true } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(TLColor.fg2)
+                    .frame(width: 44, height: 44)
+                    .background(TLColor.surface2, in: RoundedRectangle(cornerRadius: 11))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Thoát khỏi màn chấm điểm")
+
             Button {
                 guard let last = history.popLast() else { return }
                 Haptics.light(); state = last; confirming = false
@@ -511,6 +525,34 @@ struct RefereeScoringView: View {
         if !noteA.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { parts.append("\(teamAName): \(noteA)") }
         if !noteB.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { parts.append("\(teamBName): \(noteB)") }
         return parts.isEmpty ? nil : parts.joined(separator: "\n")
+    }
+
+    // MARK: Xác nhận thoát giữa trận
+
+    private var exitOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.6).ignoresSafeArea()
+            VStack(spacing: 16) {
+                Text("THOÁT KHỎI MÀN CHẤM ĐIỂM?").font(TLFont.mono(13, .bold)).tracking(1).foregroundStyle(TLColor.fg)
+                Text("Điểm đang chấm sẽ không được lưu.")
+                    .font(TLFont.sans(13)).foregroundStyle(TLColor.fg3).multilineTextAlignment(.center)
+                HStack(spacing: 12) {
+                    Button("Tiếp tục chấm") { exiting = false }
+                        .font(TLFont.mono(13, .bold)).foregroundStyle(TLColor.accentInk)
+                        .frame(maxWidth: .infinity).padding(.vertical, 13)
+                        .background(TLColor.accent, in: RoundedRectangle(cornerRadius: 11))
+
+                    Button("Thoát") { exiting = false; dismiss() }
+                        .font(TLFont.mono(13, .bold)).foregroundStyle(TLColor.fg2)
+                        .frame(maxWidth: .infinity).padding(.vertical, 13)
+                        .background(TLColor.surface2, in: RoundedRectangle(cornerRadius: 11))
+                }
+            }
+            .padding(24)
+            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.xl))
+            .overlay(RoundedRectangle(cornerRadius: TLRadius.xl).strokeBorder(TLColor.border, lineWidth: 1))
+            .padding(40)
+        }
     }
 
     // MARK: Xác nhận kết thúc

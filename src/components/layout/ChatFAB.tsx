@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useI18n } from "@/i18n";
-import { isNativeApp, isIOS, isAndroid } from "@/lib/capacitor-utils";
+import { withoutLocale } from "@/lib/locale-path";
+import { isIOS } from "@/lib/platform";
 
 /**
  * Floating chat-with-admin buttons (Messenger + Zalo) anchored to the
@@ -36,9 +37,20 @@ const HIDDEN_PREFIXES = [
   "/embed",
   "/onboarding",
   "/tools/quick-tables/referee", // full-screen live-scoring tool
+  "/tools/quick-tables/chat", // tạo giải bằng chat — FAB đè nút gửi
   "/tools/team-match/match/", // team-match referee scoring (matchId)/score
   "/live/", // trang xem live — FAB đè lên nút gửi chat (trang danh sách /live vẫn hiện)
   "/vi/live/",
+  "/rankings", // bảng xếp hạng — FAB che cột điểm 2-3 dòng cuối viewport (covers /rankings/ppa-tour)
+  "/vi/rankings",
+  // Shop — FAB đè lên nút chính của thanh hành động dính ("Thêm vào giỏ",
+  // "Đặt đơn", "Gửi quyết định") ở 375px. Trên trang thương mại nút chat cộng
+  // đồng cũng thừa: liên hệ người bán nằm trong đơn hàng.
+  "/proto/shop", // bản mẫu màn hình
+  "/shop",
+  "/vi/shop",
+  "/seller",
+  "/admin/shop",
 ];
 
 const DESKTOP_BREAKPOINT = "(min-width: 768px)";
@@ -92,30 +104,24 @@ const ChatFAB = () => {
     return () => document.removeEventListener("scroll", onScroll, { capture: true });
   }, []);
 
-  const shouldHide = HIDDEN_PREFIXES.some((prefix) =>
-    location.pathname.startsWith(prefix),
-  );
+  const barePath = withoutLocale(location.pathname);
+  const shouldHide = HIDDEN_PREFIXES.some((prefix) => barePath.startsWith(prefix));
 
   if (shouldHide) {
     return null;
   }
 
   const isVi = language === "vi";
-  const messengerLabel = "MESSENGER";
-  const zaloLabel = "ZALO";
   const messengerAria = isVi ? "Chat qua Messenger" : "Chat on Messenger";
   const zaloAria = isVi ? "Chat qua Zalo" : "Chat on Zalo";
+  const messengerLabel = messengerAria;
+  const zaloLabel = zaloAria;
 
   // Clear BottomNav on mobile — match the height logic used by BottomNav.
   const isIOSDevice = isIOS();
-  const isAndroidDevice = isAndroid();
-  const isNative = isNativeApp();
 
   const getBottomOffset = (): string => {
     if (isDesktop) return "24px";
-    if (isAndroidDevice && isNative) {
-      return "calc(72px + max(env(safe-area-inset-bottom, 14px), 14px) + 12px)";
-    }
     if (isIOSDevice) {
       return "calc(68px + env(safe-area-inset-bottom, 0px) + 12px)";
     }

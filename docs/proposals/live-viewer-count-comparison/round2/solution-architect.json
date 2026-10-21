@@ -1,0 +1,46 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "LiveBroadcastHero.tsx + LiveCardWithPresence.tsx có đang mount trên prod không — 'hero tự track mọi khách trang chủ' là bug sống hay dead code?",
+      "myRound1Position": "Cả hai là dead code: 0 importer cho LiveBroadcastHero, LiveCardWithPresence chỉ được re-export ở barrel và không caller nào lấy — nên Presence hiện cộng 0 connection.",
+      "move": "HOLD",
+      "evidence": "src/pages/Index.tsx:7 — trang chủ import { LiveSection } from \"@/components/home/LiveSection\", KHÔNG import LiveBroadcastHero; grep \"LiveBroadcastHero\" trên src/+functions/+apple/ chỉ ra 2 hit trong chính file định nghĩa (LiveBroadcastHero.tsx:146) + 1 comment CSS (src/styles/the-line.css:1150); `git log -S LiveBroadcastHero -- src/pages/Index.tsx` → d4a7d12b (#251) là commit GỠ nó khỏi trang chủ; src/components/home/LiveSection.tsx grep \"viewer|presence\" = 0 hit; grep useLivePresence toàn src/ = đúng 3 file (LiveBroadcastHero, LiveCardWithPresence, WatchLive.tsx:75).",
+      "note": "Em tự mở lại và kết luận không đổi: hero bị thay bằng LiveSection ở #251, LiveSection không có một dòng presence nào — trang chủ hôm nay KHÔNG hiển thị số người xem và KHÔNG mở channel. Trích dẫn lessons-learned.md:247-260 của risk-auditor là TODO ghi ngày 2026-05-02, trước đợt redesign 2026-07 (comment ngay trong LiveSection.tsx); nó mô tả một cấu hình code không còn tồn tại → A2 là mìn CÀI SẴN, không phải rủi ro đang sống, và bảng hiện trạng của ui-ux-critic sai ở đúng dòng 'Hero trang chủ = Presence thật'. Phần lớn giá trị của D1 vẫn giữ cho ui-ux-critic ở chỗ khác: em đã tự verify Blocker #1 là THẬT và đang sống (TournamentDetail.tsx:166, OrganizationDetail.tsx:236, WatchLive.tsx:564 truyền viewerCount={0}; LiveCard.tsx:107 gate bằng `viewerCount !== undefined` nên 0 lọt qua → in '0 đang xem' trên card LIVE). Hệ quả cho kế hoạch: blocker list co lại còn #1 + #3 (a11y), và A2 chỉ sống lại đúng lúc ta gắn số vào trang chủ/list — nên nó là RÀNG BUỘC THIẾT KẾ của bước snapshot, không phải việc phải vá gấp."
+    },
+    {
+      "id": "D2",
+      "topic": "Ai ghi con số xuống DB — client leader election hay server-side?",
+      "myRound1Position": "Client có presence key nhỏ nhất làm leader, gọi RPC mỗi 60s với count nó đang thấy, ON CONFLICT DO NOTHING; 1 INSERT/phút/stream, không cần hạ tầng server mới.",
+      "move": "CONCEDE",
+      "evidence": "supabase/migrations/20260804090000_close_event_registrations_insert_bypass.sql:1-30 — repo vừa ĐÓNG đúng lớp lỗ này ngày 04/08: một đường ghi client gọi được, mang giá trị do client tự khai (payment_status='paid'), server không kiểm chứng được. RPC leader-election của em có đúng hình dạng đó: `count` do một client ẩn danh khai, không có bất kỳ dữ kiện server-side nào để đối chiếu → social proof forge được bằng một lệnh curl, đúng B2 của risk-auditor. Bổ sung: src/hooks/useLivePresence.ts:41-43 `countViewers()` đã lọc sẵn key có tiền tố `admin_watcher_` — một observer phía server dùng tiền tố đó tự loại mình khỏi số đếm, MIỄN PHÍ, không cần sửa hook.",
+      "note": "Nhượng cơ chế ghi cho ui-ux-critic (subscriber phía server), GIỮ hình dạng của em (snapshot 1 dòng/phút, KHÔNG bảng heartbeat, viewer không bao giờ ghi DB). Hai chỗ em không nhượng: (a) tần suất là 60s chứ không phải 30s — pg_cron granularity 1 phút, repo đã dùng `* * * * *` ở supabase/migrations/20260802143000_ops_job_retry_control.sql:111, muốn 30s phải 2 job lệch pha và em không đổi độ phức tạp đó lấy 30 giây; (b) lập luận 'một con số cho mọi bề mặt kể cả native' KHÔNG theo từ việc ghi server-side — observer chỉ thấy ai TRACK vào channel, nên native chỉ-đọc vẫn vô hình trong cả hai thiết kế; muốn native được đếm thì native phải join presence (2-3 half-day supabase-swift), đó là quyết định riêng. Giá thật của việc nhượng bộ này: +1 edge function + 1 cron phải vào roster ops_cron_monitors (docs/slo.md:14 — SLO 5 'expand roster when new crons land'), đẩy effort 1 → ~2 half-day và biến bước này thành RED. Vì vậy nó vẫn phải nằm SAU điểm STOP & LOOK, không đi cùng đợt vá miễn phí."
+    },
+    {
+      "id": "D3",
+      "topic": "Lợi thế 'phát hiện rời đi tức thì' của Presence có thật trên mobile VN không?",
+      "myRound1Position": "'Tức thì vs 60-85s' là luận điểm đầu bảng chống Cách B.",
+      "move": "REFINE",
+      "evidence": "src/hooks/useLivePresence.ts:186-188 — release() gọi untrack() + removeChannel() khi refcount về 0, tức TỨC THÌ nhưng chỉ trên đường điều hướng SPA sạch (bấm back từ /live/:id); mọi đường còn lại (khoá màn hình, chuyển Zalo, kill app) rơi về timeout server ~25-50s như chính bảng 1.5 vòng 1 của em đã ghi.",
+      "note": "Thu hẹp: giữ luận điểm nhưng HẠ nó xuống hàng hai và nói rõ phạm vi — 'tức thì' chỉ đúng cho điều hướng trong SPA, còn app-switch/khoá màn hình (rất phổ biến ở 95% mobile) đã trễ hàng chục giây sẵn, nên khoảng cách thực tế với Cách B nhỏ hơn nhiều so với cách em trình bày vòng 1. Luận điểm ĐẦU BẢNG đúng phải là thứ khác và mạnh hơn: đường đếm của Cách A không chạm một câu query Postgres nào, chạy trên service Realtime tách biệt với PostgREST — trong sự cố kiểu PGRST002 02/08, Cách A vẫn đếm đúng còn mọi bộ đếm dựa trên DB sẽ hiện 0 giữa lúc stream đang phát. Kết luận cuối (giữ Presence cho trang xem) không đổi, chỉ đổi thứ tự lý lẽ."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Ngưỡng ẩn 'n < 3' phải là quy tắc RENDER, không được áp vào giá trị lưu. Nếu snapshot lưu số đã bị kẹp/ẩn thì lịch sử + peak — lý do duy nhất để tồn tại cái bảng đó — bị hỏng vĩnh viễn và không phục hồi được. Tương tự với 'optimistic +1': chỉ được cộng ở tầng hiển thị của chính client đó, không bao giờ đi vào payload ghi.",
+      "with": "ui-ux-critic",
+      "myPosition": "Đồng ý ngưỡng 3 và optimistic +1 ở tầng UI; yêu cầu kiến trúc: cột/bảng snapshot lưu số THÔ chính xác, mọi làm đẹp (sàn 3, +1, giữ số cũ khi mất kết nối, tối thiểu 10s giữa 2 lần đổi) nằm trong component, và có 1 test khẳng định giá trị ghi xuống DB không bị kẹp."
+    },
+    {
+      "topic": "Thứ tự thi hành: ui-ux-critic gọi #1 và #2 đều là Blocker và gộp chúng vào 'sửa trước'. Sau D1 thì #2 nằm trên dead code, nên gói 'sửa trước' thực chất chỉ còn #1 (bỏ 3 chỗ viewerCount={0}) + #3 (a11y tooltip) — cả hai đều GREEN, 0 migration, ~0.5 half-day và không phụ thuộc kết quả A/B.",
+      "with": "ui-ux-critic",
+      "myPosition": "Ship gói GREEN đó độc lập và NGAY, trước mọi tranh luận A/B. Bước snapshot server-side (giờ đã là RED vì migration + cron) chỉ mở lại sau khi đo được V đỉnh thật của một buổi live — nếu V đỉnh vài chục thì một cột số người xem trên trang list có thể không đáng một cron trong roster SLO 5 của một người."
+    },
+    {
+      "topic": "risk-auditor xếp Cách A là AMBER một phần vì A2 'đang sống'. Sau D1, cơ sở của A2 không còn; A5 (đụng topic giữa useLivePresence và useLiveViewerList) thì chính risk-auditor đã ghi đúng là 'chưa sống'. AMBER của Cách A nên tựa vào A1 (quota Realtime chưa ai đo) và A3 (enrichViewers query mỗi sync) — hai thứ đo được và vá được.",
+      "with": "risk-auditor",
+      "myPosition": "Không tranh verdict RED của kịch bản (b) — em đồng ý và chính em cũng xếp mọi migration là RED. Chỉ đề nghị hạ cơ sở của AMBER Cách A xuống còn A1 + A3, và ghi A2/A5 là 'mìn cài sẵn, kích hoạt khi gắn số vào trang chủ/list' thay vì rủi ro đang chạy."
+    }
+  ]
+}

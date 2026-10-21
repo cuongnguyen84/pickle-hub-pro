@@ -1,3 +1,4 @@
+import { authorIdentity } from "../../../src/content/authors";
 // ============================================================================
 // EN blog post body → bot-visible HTML + FAQPage schema.
 // ----------------------------------------------------------------------------
@@ -17,7 +18,44 @@
 
 import type { BlogPost, BlogPostContent } from "../../../src/content/blog/types";
 import { loadBlogPost } from "../../../src/content/blog/posts/all";
+import { BLOG_IMAGE_DIMS, blogImageDims } from "../../../src/content/blog/image-dims";
 import { escapeHtml } from "../utils";
+
+// Audit 2026-08-25, H1: the bot HTML carried no <img> at all — 132 of 135
+// crawled pages, because the prerender ships no app JS and every image on the
+// site is mounted by React. An image that never reaches the crawler cannot be
+// indexed by Google Images and cannot carry a post into Discover, so the two
+// surfaces where we own a real asset (the EN hero from metadata.ts, the VI
+// cover from vi_blog_posts.cover_image_url) now render server-side.
+//
+// width/height come from the generated map, never from a constant: the assets
+// range from 1024x1536 to 1731x909 and a wrong ratio is worse than none.
+
+/** `<img>` attributes for a blog asset — dimensions + responsive candidates. */
+export function blogImageAttrs(src: string): string {
+  const dims = blogImageDims(src);
+  const sized = dims ? ` width="${dims[0]}" height="${dims[1]}"` : "";
+  const small = src.replace(/\.webp$/, "-768.webp");
+  const responsive =
+    src !== small && BLOG_IMAGE_DIMS[small]
+      ? ` srcset="${escapeHtml(small)} 768w, ${escapeHtml(src)} ${dims ? dims[0] : 1600}w"` +
+        ` sizes="(max-width: 900px) 100vw, 832px"`
+      : "";
+  return `${sized}${responsive}`;
+}
+
+/**
+ * Hero `<figure>` for the top of an article. `loading="eager"` +
+ * `fetchpriority="high"` because this is the LCP candidate on the human path
+ * too — the same markup shape the SPA renders.
+ */
+export function heroFigure(image: { src: string; alt: string } | undefined): string {
+  if (!image?.src) return "";
+  return (
+    `<figure><img src="${escapeHtml(image.src)}" alt="${escapeHtml(image.alt)}"` +
+    `${blogImageAttrs(image.src)} loading="eager" fetchpriority="high" decoding="async"/></figure>`
+  );
+}
 
 /** A list item is written as "Label — rest"; bold the label like the SPA does. */
 function renderListItem(item: string): string {
@@ -48,7 +86,11 @@ export function renderSectionLink(siteUrl: string, l: { text: string; path: stri
   return `<li><a href="${href}"${rel}>${escapeHtml(l.text)}</a></li>`;
 }
 
-function renderSections(content: BlogPostContent, siteUrl: string): string {
+function renderSections(
+  content: BlogPostContent,
+  siteUrl: string,
+  liveBlocks: Record<string, string> = {},
+): string {
   const out: string[] = [];
   for (const s of content.sections) {
     out.push(`<h2>${escapeHtml(s.heading)}</h2>`);
@@ -59,9 +101,16 @@ function renderSections(content: BlogPostContent, siteUrl: string): string {
     if (s.orderedList?.length) {
       out.push(`<ol>${s.orderedList.map(renderListItem).join("")}</ol>`);
     }
+    if (s.table?.headers?.length) {
+      const cap = s.table.caption ? `<caption>${escapeHtml(s.table.caption)}</caption>` : "";
+      const head = `<thead><tr>${s.table.headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>`;
+      const rows = s.table.rows.map((r) => `<tr>${r.map((c) => `<td>${escapeHtml(c)}</td>`).join("")}</tr>`).join("");
+      out.push(`<table>${cap}${head}<tbody>${rows}</tbody></table>`);
+    }
     if (s.image?.src) {
       out.push(
-        `<figure><img src="${escapeHtml(s.image.src)}" alt="${escapeHtml(s.image.alt)}" loading="lazy"/>` +
+        `<figure><img src="${escapeHtml(s.image.src)}" alt="${escapeHtml(s.image.alt)}"` +
+          `${blogImageAttrs(s.image.src)} loading="lazy" decoding="async"/>` +
           (s.image.caption ? `<figcaption>${escapeHtml(s.image.caption)}</figcaption>` : "") +
           `</figure>`,
       );
@@ -70,6 +119,14 @@ function renderSections(content: BlogPostContent, siteUrl: string): string {
       out.push(
         `<ul>${s.internalLinks.map(renderSectionLink.bind(null, siteUrl)).join("")}</ul>`,
       );
+    }
+    // A live block is data the post cannot hold: the caller fetches it and
+    // passes the HTML in, so this module stays free of Supabase. Missing key
+    // (feed empty, or the query failed) renders nothing — the prose around it
+    // still stands on its own, which is why the block never carries the only
+    // copy of a fact the page claims.
+    if (s.liveBlock && liveBlocks[s.liveBlock]) {
+      out.push(liveBlocks[s.liveBlock]);
     }
   }
   return out.join("\n");
@@ -89,11 +146,20 @@ function renderFaq(content: BlogPostContent): string {
  * without a post file would otherwise 500 here — blog-sync.test.ts already
  * fails CI on that combination, this is belt-and-braces).
  */
-export async function renderEnBlogBody(slug: string, siteUrl: string): Promise<string> {
+export async function renderEnBlogBody(
+  slug: string,
+  siteUrl: string,
+  liveBlocks: Record<string, string> = {},
+): Promise<string> {
   const post: BlogPost | undefined = await loadBlogPost(slug);
   if (!post) return "";
   const en = post.content.en;
-  return `<article>${renderSections(en, siteUrl)}${renderFaq(en)}</article>`;
+  const identity = authorIdentity(post.author, siteUrl);
+  const byline = 'url' in identity ? `<a href="${escapeHtml(identity.url!)}">${escapeHtml(identity.name)}</a>` : escapeHtml(identity.name);
+  return (
+    `<article><h1>${escapeHtml(en.title)}</h1><p>By ${byline} · Updated <time datetime="${escapeHtml(post.updatedDate)}">${escapeHtml(post.updatedDate)}</time></p>${heroFigure(post.heroImage)}` +
+    `${renderSections(en, siteUrl, liveBlocks)}${renderFaq(en)}</article>`
+  );
 }
 
 /** FAQPage node for the @graph, or null when the post has no FAQ. */

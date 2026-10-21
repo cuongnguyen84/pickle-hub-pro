@@ -13,9 +13,9 @@ Website: https://www.thepicklehub.net
 - **Frontend:** React 18 + TypeScript + Vite + shadcn/ui + Tailwind CSS + vite-plugin-pwa
 - **Backend:** Supabase (project ref `ajvlcamxemgbxduhiqrl`)
 - **Hosting:** Cloudflare Pages (project `pickle-hub-pro`, production branch `main`) + Cloudflare Workers for scheduled scrapers
-- **Mobile:** Capacitor (iOS + Android, app ID `net.thepicklehub.app`)
+- **Mobile:** native SwiftUI iOS app in `/apple` (app ID `net.thepicklehub.app`). Capacitor retired 2026-08-24 — the iOS wrapper was replaced on the App Store by native 2.0.3, and the Android wrapper never shipped. There is no Android app.
 - **Livestream:** Mux
-- **Push:** Firebase Cloud Messaging (FCM via Capacitor)
+- **Push:** Firebase Cloud Messaging (FCM, registered natively by `/apple`)
 - **Email:** Resend
 - **AI translation:** Google Gemini (EN → VI for news)
 - **Analytics:** GA4, Google Search Console (read via Chrome when needed), Ahrefs Web Analytics (free script in `index.html`, data since 2026-07-04 — read the dashboard via Chrome at app.ahrefs.com/web-analytics). _Ahrefs MCP tools ALL return "Insufficient plan" (even `web-analytics-*`); do not call them._ GA4 caveat: heavily polluted by US datacenter bot traffic — trust the Vietnam segment / Ahrefs numbers instead.
@@ -38,14 +38,7 @@ Regenerate Supabase types (canonical command — `--schema public` is REQUIRED; 
 npx supabase gen types typescript --project-id ajvlcamxemgbxduhiqrl --schema public > src/integrations/supabase/types.ts
 ```
 
-Mobile (Capacitor) — see [MOBILE_BUILD_GUIDE.md](./MOBILE_BUILD_GUIDE.md). Common commands:
-
-```sh
-npx cap sync ios     # Sync web assets to iOS
-npx cap sync android # Sync web assets to Android
-npx cap open ios     # Open Xcode
-npx cap open android # Open Android Studio
-```
+Mobile — the app lives in `/apple` (SwiftUI). Build loop: `xcodegen` → `xcodebuild` → `simctl`.
 
 ## Critical Workflow Notes
 
@@ -55,17 +48,29 @@ npx cap open android # Open Android Studio
 
 ### New blog post checklist (EN + VI bilingual)
 
-Every new blog post requires **3 simultaneous changes** in the same push, or bots will 404 / VI won't render / hreflang breaks:
+Every new blog post requires **4 simultaneous changes** in the same push, or bots will 404 / VI won't render / hreflang breaks:
 
 1. `src/content/blog/posts/<slug>.ts` — full BlogPost with content.en AND content.vi
 2. `src/content/blog/metadata.ts` — prepend BlogPostMetadata entry at top of array. **Single SEO source of truth** (SEO-02): `BLOG_POST_META` (SSR `<title>` = `metaTitleEn`) and `EN_BLOG_SLUGS` (sitemap) are GENERATED from it — never hand-edit `functions/_lib/render/blog-meta.ts` or `functions/_lib/static-blog-slugs.ts`.
 3. Supabase `vi_blog_posts` INSERT — VI HTML version with `alternate_en_slug` pointing back to the EN slug. Required for `/vi/blog/<vi-slug>` route + reciprocal hreflang.
+4. `node scripts/gen-blog-barrel.mjs` — regenerates `src/content/blog/posts/all.ts`. That barrel is the ONLY loader the SSR bot path can use (Pages Functions cannot use `import.meta.glob`); skip it and Googlebot gets the shell with no article body. Missed on 2026-08-05 (`hong-kong-slam-2026-preview` served 71 words instead of 1518) — caught by `src/content/blog/__tests__/blog-barrel.test.ts`, fixed in #546.
+5. **GEO check on the opening paragraph** (rule since 2026-08-14, validated by blind passage-citation testing — full method in the `picklehub-builder` skill). AI search cites PASSAGES, not pages; the opening must survive being extracted standalone:
+   - Name **"ThePickleHub"** once, naturally, in the opening (EN + VI) — "This ThePickleHub guide covers...", "lịch giải do ThePickleHub cập nhật..." — so an AI answer can attribute the snippet ("theo ThePickleHub..."). One mention; don't stuff. Never the spaced variant "The Pickle Hub" in prose (entity dilution; alternateName-only).
+   - **Front-load the answer**: names + dates + places + numbers in the first two sentences. No throat-clearing intros ("Trong những năm gần đây...") — a passage that promises the answer loses to one that contains it.
+   - **Entity + year together**: "Ho Chi Minh City Open 2026 (6–9/8/2026)", not "(6–9/8)".
+   - Calendar/list/living posts: add a visible **"last updated: <date>"** dateline in the opening AND bump `updatedDate` in the post + metadata.ts (feeds dateModified schema). Refresh stale statuses (completed events must say completed).
+   - No pronoun-dependent openings ("chúng tôi", "công ty này") and no unverifiable superlatives without a number/source in the same passage.
+6. **Content effort** (owner rule since 2026-10-13, applies to every published post, whoever writes it). GSC 14/09→11/10: 18 generic guide posts × 2 languages earned 10 clicks; one PPA Chicago results post earned 241.
+   - The post must carry at least one thing a reader cannot easily get elsewhere: our own data (`venues`, results feed, calendars, rankings) or a sourced observation. Ask: with the site name removed, does the reader still get something hard to find on other pages? If not, add it or say so before publishing. Search Console 11–17/10/2026: clicks came from English results pages; the Vietnamese page for the same event earned a small fraction. The team's content job is that Vietnamese results page, not another generic guide.
+   - No padding sections: platform intro, sign-in/privacy, history, outlook, anything restating common knowledge or drifting off the query.
+   - Never print a placeholder as a measurement. `venues.price_source = 'default'` / `hours_source = 'default'` are filler ranges, not checked figures — write "not confirmed" instead.
+   - The team's copy of this rule lives in the editorial mission (`scripts/ops/team_roles.json`) and `WRIAI_BRIEF` (`team_supervisor.py`); change all three together.
 
 After `git push main` and Cloudflare deploy succeeds, **immediately request indexing**:
 - Google: open GSC URL Inspection → paste EN URL + VI URL → "Request Indexing". No public Google Indexing API for blog posts (only JobPosting + BroadcastEvent).
 - Bing: IndexNow POST via `functions/api/indexnow.ts` (or direct `https://api.indexnow.org/indexnow?url=<URL>&key=<KEY>`). Requires `<KEY>.txt` at root.
 
-Verify via `curl -A "Googlebot"` returning 200 with correct title + og:image + hreflang en/vi/x-default tags before declaring done.
+Verify via `curl -A "Googlebot"` returning 200 with correct title + og:image + hreflang en/vi/x-default tags before declaring done. Append `?nocache=1` — without it the prerender KV serves the pre-deploy HTML and the check passes on stale content. Assert the body is actually present (word count), not just the tags: the 2026-08-05 miss had perfect tags and an empty article.
 
 ## Critical Architecture Notes
 
@@ -83,7 +88,15 @@ Key examples: `mux-create-livestream`, `delete-account`, `send-push-notification
 
 SEO prerendering for bot crawlers is handled by `functions/_middleware.ts` + `functions/_lib/render/`, NOT by Supabase edge functions.
 
-- Cache key: **`pr:v32:${pathname}`** in KV namespace `PRERENDER_CACHE` (bump version when changing SSR output to invalidate stale HTML). The query string is **not** part of the key. To force-refresh a single path after changing content or og:image, request it once with **`?nocache=1`** — the value must be exactly `1` (`_middleware.ts` compares `=== "1"`); any other value silently serves the cached copy.
+- Cache key: **`pr:v<N>:${pathname}`** in KV namespace `PRERENDER_CACHE`. **Do not trust a version number written here** — this line said `pr:v34` while production had been on `v53` for weeks. Read the current value from the source instead:
+
+  ```sh
+  grep -n 'const cacheKey' functions/_middleware.ts
+  ```
+
+  Bump `<N>` in the same commit as any change to SSR output, or cached HTML serves the pre-change version for the full TTL. The number carries no meaning beyond being different from the deployed one, so when two open branches both bump it, take the higher and move on. Add a one-line comment above the constant saying what changed — that comment block is the real changelog.
+
+  The query string is **not** part of the key. To force-refresh a single path after changing content or og:image, request it once with **`?nocache=1`** — the value must be exactly `1` (`_middleware.ts` compares `=== "1"`); any other value silently serves the cached copy.
 - Per-route handlers: `renderBlog`, `renderViBlog`, `renderTournament`, `renderMatch` (`match-seo.ts`), `renderSocialEvent`, `renderRankings`, `renderLive`, `renderNews`, etc.
 - `BLOG_POST_META` in `functions/_lib/render/blog-meta.ts` is the SSR truth table for blog posts — missing entry = bot 404. Since SEO-02 (`ce6a0fa`) it is **generated at module load** from `src/content/blog/metadata.ts`; do not hand-edit it, add the metadata entry instead.
 
@@ -94,9 +107,17 @@ The legacy `prerender-worker` Cloudflare Worker is still active and **MUST be pr
 Root `/sitemap.xml` is a sitemap index served by `functions/sitemap.xml.ts` referencing segment sitemaps:
 
 - `sitemap-static.xml`, `sitemap-blog.xml`, `sitemap-tournaments.xml`, `sitemap-matches.xml`, `sitemap-events.xml`, `sitemap-news.xml`
-- `sitemap-players.xml`, `sitemap-venues.xml`, `sitemap-livestreams.xml`, `sitemap-organizations.xml` are **enabled** in the index (venues: /san detail + /san/khu-vuc/<city> hub pairs; players: DUPR-linked public profiles only)
+- `sitemap-players.xml`, `sitemap-venues.xml`, `sitemap-livestreams.xml`, `sitemap-organizations.xml` are **enabled** in the index (venues: /san detail + /san/khu-vuc/<city> hub pairs; players: profiles with real content only — DUPR-linked, a synced DUPR rating, or a bio ≥30 chars; see `hasIndexableSubstance()` in `functions/sitemap-players.xml.ts`)
 
-All segments support `xhtml:link` hreflang (en, vi, x-default).
+`xhtml:link` hreflang (en, vi, x-default) is emitted only by the segments that genuinely have two URLs per entity: **blog, events, venues, static**. **news emits `vi` + `x-default` only** — since C3 (`20260825120000_indexnow_news_vi_only.sql`) EN news articles are noindex and out of the sitemap, so `sitemap-news.xml` is 100% VI (919 URLs on 2026-09-04) and has no EN half to point at; do not "restore" it. **tournaments, matches, players, livestreams, videos, organizations emit none, deliberately** — those entities are single-canonical (one URL serves both locales via the SPA language toggle), so `singleCanonicalHreflang()` in `functions/_lib/utils.ts` returns `""` and the sitemaps carry no `xhtml:link`. Google's rule: if only one URL is indexed across all locales, omit hreflang. Adding it back re-triggers Ahrefs' "no return-tag" + "referenced for more than one language" — the exact regression batches 6 and 9 fixed on 2026-05-28. `/vi/org/*`, `/vi/tournament/*` and `/vi/watch/*` additionally 301 to the EN path (`_middleware.ts` rule 1d).
+
+⚠️ **PostgREST caps every response at 1000 rows** and does it silently — `.limit(5000)` returns exactly 1000 rows, HTTP 200, `error = null`. sitemap-news served 500 of 709 EN articles that way for months (fixed 2026-08-23, #644). Every segment now pages through `fetchAllRows()` in `functions/_lib/sitemap-helpers.ts` (commit `f58aea3c`), each with a unique tie breaker in the ORDER BY, and `functions/__tests__/sitemap-row-cap.test.ts` fails any new segment that reintroduces a bare `.limit()`.
+
+Live `<loc>` counts, measured 2026-08-27 by curling each segment with a Googlebot UA: venues 1948, news 832, matches 260, static 103, blog 68, livestreams 31, events 20, tournaments 15, players 13, videos 6, organizations 3. Two of these are past the old cap, so the paging is load-bearing, not precautionary.
+
+**`sitemap-players.xml` at 13 URLs is correct, not a regression.** An earlier note in this file recorded 40; #643 (`809710db`) then dropped 27 stub profiles, ten of them QA accounts. The count is what survives five DB predicates (`is_ghost = false`, `country = 'VN'`, `username IS NOT NULL`, `onboarding_completed_at IS NOT NULL`, `is_public_profile = true`) plus `hasIndexableSubstance()` — a linked `dupr_id`, a synced DUPR rating, or a bio ≥ 30 chars. `is_public_profile` is the binding one: it is opt-in and only ~24 profiles have it. Expect this number to move with DUPR linking, and do not "fix" it by loosening the substance gate.
+
+News URLs are pushed to IndexNow by the `indexnow-news-hourly` pg_cron job (migration `20260823060000`), not by `functions/api/indexnow.ts` — that endpoint covers static routes + blog only.
 
 ### News Aggregator (Phase 1-5)
 
@@ -132,7 +153,7 @@ Each worker has its own `wrangler.toml`. Deploy with `wrangler deploy` from insi
 
 `vite-plugin-pwa` config in `vite.config.ts`:
 
-- Service worker is registered **manually** in `src/pwa.ts` so we can skip registration inside Capacitor native WebView (mobile app uses live remote URL, not a precached shell)
+- Service worker is registered **manually** in `src/pwa.ts` (kept manual after the Capacitor retirement — `injectRegister: null` lets us control ordering against the chunk-error recovery)
 - Navigation requests use `NetworkFirst` with 3s timeout — `index.html` is **excluded** from precache so users always get the freshest shell after deploy
 - Runtime cache rules for Supabase REST/storage, Mux images, Google avatars, Google Fonts — see `vite.config.ts` for full list
 
@@ -155,6 +176,31 @@ When verifying edge function deployments:
 - Feature branches deploy to preview URLs (`<branch>.pickle-hub-pro.pages.dev`), not production
 - Hotfix: can merge directly via CLI if needed
 - DUPR integration PRs (PR1-PR7, #114-#122) are intentionally held out of main pending design review — do not auto-merge
+
+### 🔴 No long-lived branches — the lesson of `feat/shop-production-phase-1`
+
+That branch forked on 2026-08-11 and ran five weeks. By 15/09 each side held
+half the product: main had 438 web commits and most of the native app the
+branch never saw, while the branch held Shop screens, the World Cup board and
+the wildcard sheet main never saw. A TestFlight build from either side shipped
+a *worse* app than the one before it, and reuniting `apple/` alone took 66
+hand-resolved conflicts.
+
+Rules that follow from it:
+
+1. **A branch that cannot merge this week is too big.** Split it. `apple/` and
+   web can ship separately — they have no build-time dependency.
+2. **Merge main into the branch daily**, not at the end. The 66 conflicts were
+   five weeks of drift, not five weeks of work.
+3. **Never build a release off a feature branch.** `release_preflight.sh
+   --release-source` fails when HEAD omits `origin/main`; that gate exists
+   because 2.1.4 and 2.1.5 shipped from a branch and main kept saying 2.1.0.
+4. **A squash commit hides divergence.** `7c6fd802` ("ship native shop") is 310
+   files; nothing in it tells you which halves already existed on main. Prefer
+   a merge that keeps history, or land the work in reviewable PRs.
+5. Before any native release, run `git log origin/main..<branch> -- apple` and
+   `git log <branch>..origin/main -- apple`. **Both** directions. If the second
+   is non-empty you are about to ship a regression.
 
 ## Environment Variables
 
@@ -179,7 +225,7 @@ Function `send-push-notification` verifies the JWT internally and requires the a
 
 The admin role requires an **aal2 session** (TOTP via Supabase MFA) once the user has a verified factor — self-activating, enforced in `is_admin()`/`has_role()` (migrations `20260730090000` + `20260730100000` sweep) and in admin-privileged edge functions via `_shared/admin-aal.ts`. UI gate: `AdminMFAGate` (wraps `AdminLayout` + `RequireAuth requiredRole="admin"`). Lost authenticator → delete the row in `auth.mfa_factors` to unlock.
 
-## Supabase Edge Functions (50 active)
+## Supabase Edge Functions (86 active — count enforced by `npm run auth:registry`)
 
 Browse: `supabase/functions/`. Categories:
 
@@ -193,14 +239,14 @@ Browse: `supabase/functions/`. Categories:
 
 ## Known Bugs (Not Fixed)
 
-_(none currently — Red5 residual columns were dropped by migration `20260716170000`, CLOSE-01)_
+- **B14 — `delete-account` returns success while all 13 of its cleanup steps fail.** 10 × missing `service_role` GRANT (all pre-Shop tables), 2 tables that no longer exist, 1 renamed column. Accounts are deleted only by `ON DELETE CASCADE`; the loop is decorative. 🔴 **Do NOT grant the missing permissions as an isolated fix** — the loop runs before `auth.admin.deleteUser` with no transaction, so granting them turns a harmless no-op into a real partial deletion. Full record: [`docs/defects/b14-delete-account-cleanup-noop.md`](./docs/defects/b14-delete-account-cleanup-noop.md)
 
 ## Coding Standards
 
 - **Code output:** Always write complete files for copy-paste. No snippets, no partial diffs. Especially for Cloudflare Worker, Supabase edge functions, config files.
 - **Vietnamese comments OK** in code where Cuong is the sole maintainer.
 - **Bilingual content:** All user-facing text should have Vietnamese and English translations.
-- **Follow existing patterns:** Match the code style of surrounding files. Many pages have `.legacy.tsx` siblings used for 14-day rollback windows — do not edit legacy files unless rolling back.
+- **Follow existing patterns:** Match the code style of surrounding files. `.legacy.tsx` rollback siblings: all retired as of 2026-08-03 (CLOSE-03 audit — 0 files remain); if one reappears it is a 14-day rollback window — do not edit it unless rolling back.
 
 ## Response Style
 

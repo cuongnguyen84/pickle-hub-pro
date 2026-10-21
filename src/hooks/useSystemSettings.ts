@@ -10,6 +10,7 @@ export interface SystemSettings {
   geo_block_enabled: boolean;
   blocked_countries: string[];
   require_login_tournament_detail: boolean;
+  shop_sepay_gateway_enabled: boolean;
 }
 
 const DEFAULT_SETTINGS: SystemSettings = {
@@ -19,6 +20,7 @@ const DEFAULT_SETTINGS: SystemSettings = {
   geo_block_enabled: true,
   blocked_countries: ["US"],
   require_login_tournament_detail: false,
+  shop_sepay_gateway_enabled: false,
 };
 
 async function fetchSystemSettings(): Promise<SystemSettings> {
@@ -46,6 +48,9 @@ export function useSystemSettings() {
     queryKey: ["system-settings"],
     queryFn: fetchSystemSettings,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    // Trang giải đang chờ query này xong mới bắt đầu tải bảng (ConditionalAuth).
+    // Giá trị mặc định cho hiện trang ngay; cài đặt thật về sau nếu khác.
+    placeholderData: DEFAULT_SETTINGS,
   });
 }
 

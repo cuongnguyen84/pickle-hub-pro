@@ -1,0 +1,39 @@
+{
+  "agent": "ui-ux-critic",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Slice 1 có product editor tối thiểu không — điểm dừng của PR đầu tiên",
+      "myRound1Position": "CÓ — slice kết thúc trước product editor là slice không đo được gì; exit đúng = seller đăng xong sản phẩm đầu tiên và nhìn thấy nó.",
+      "move": "HOLD",
+      "note": "Không có dữ kiện file mới nào xuất hiện ở vòng 2; cả hai phản đối đều là lập luận thứ tự/khẩu vị rủi ro. Lập luận 'điểm dừng-và-nhìn' đo sai thứ: 00-intake.md mục 3 ghi thước đo là 'số shop được duyệt + số sản phẩm thật được đăng', còn seller bấm 'đồng ý điều khoản' trên gian hàng do chính Cuong tạo là phép lịch sự, không phải tín hiệu cung — 2 tuần chờ nút đó nhúc nhích là 2 tuần đo tiếng vọng của chính mình. Với risk-auditor tôi thu hẹp phạm vi: slice 1 KHÔNG tạo bucket mới — ảnh sản phẩm đi vào bucket public đã có (thumbnails 20251222132621:2, avatars 20260112073626:5, mẫu mime/size limit ở 20260415000001:2) dưới prefix shop/<shop_id>/, hoặc sản phẩm đầu không ảnh rồi thêm sau. Reverse của slice 1 vẫn là DROP TABLE + xoá prefix, 0 PII nhạy cảm — RED không đổi hạng. Blocker B1 giữ nguyên: PR đầu phải kết thúc ở 'seller nhìn thấy sản phẩm của mình', quyền hoãn thuộc về Cuong."
+    },
+    {
+      "id": "D2",
+      "topic": "Màn chấp thuận điều khoản + trạng thái pending_activation trong UI slice 1",
+      "myRound1Position": "KN2 — pending_activation vô nghĩa khi Cuong bấm nút tạo; UI slice 1 chỉ render active|suspended.",
+      "move": "REFINE",
+      "note": "Mục đích 'chỗ ghi pháp lý' (version+timestamp+user_id) là thứ tôi không cân ở vòng 1 và nó chính đáng — plan §23 (shop-marketplace-plan.md:1033-1037) liệt kê 'Seller terms' là policy surface bắt buộc. Nhưng tôi kiểm src/pages/Terms.tsx: 0 kết quả cho seller/người bán/bán hàng, và không có 'Quy chế người bán' ở đâu trong repo — nút 'Tôi đồng ý với Quy chế người bán v1' hiện tại ghi lại sự chấp thuận một văn bản KHÔNG TỒN TẠI. Chỉnh phạm vi: (1) nếu văn bản VI chưa có trong cùng PR thì bỏ nút, ghi verified_method+verified_at; (2) nếu có văn bản thì giữ RPC shop_accept_policy() + render như MỘT cổng toàn màn hình trên /seller (đọc được nội dung tại chỗ, không phải checkbox trỏ link); (3) danh sách/badge UI slice 1 vẫn chỉ 2 giá trị active|suspended — enum khai đủ 5 trong DB là chuyện schema; (4) nút này vẫn không phải kim đo pilot."
+    },
+    {
+      "id": "D3",
+      "topic": "Bảng shop_members tạo ngay trong slice 1 hay hoãn sau helper is_shop_member()",
+      "myRound1Position": "TẠO NGAY — B1 liệt kê 'shops + shop_members + audit', theo ràng buộc plan §0.",
+      "move": "CONCEDE",
+      "evidence": "supabase/migrations/20260730090000_admin_requires_aal2.sql:21-33 — CREATE OR REPLACE FUNCTION public.is_admin() đổi THÂN HÀM (thêm AND public.admin_session_aal_ok()), mọi policy gọi is_admin() được aal2 miễn phí, không policy nào phải viết lại; ngược lại supabase/migrations/20260730100000_admin_aal2_sweep.sql:1-30 phải DROP + CREATE lại hàng loạt policy đúng vì chúng inline EXISTS(user_roles ... role='admin') thay vì gọi helper.",
+      "note": "Repo đã trả học phí cho đúng câu hỏi này một lần: helper-first cho phép đổi mô hình quyền bằng một thân hàm, inline bắt quét lại toàn bộ policy. Đó là dữ kiện tôi chưa mở ở vòng 1 và nó lật kết luận. Slice 1 không có bề mặt UI nào đọc/ghi shop_members (không màn mời nhân viên) nên tôi không có phần đặt cược UX ở đây. Điều kiện: mọi policy của shops và products phải gọi is_shop_member(shop_id), không viết thẳng owner_user_id = auth.uid() — nếu viết thẳng thì tôi rút CONCEDE này."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Cả ba phương án đều bắt seller ĐĂNG NHẬP mới làm được gì, nhưng không phương án nào chạm B3 (Login.tsx:135,172 chỉ có OAuth; Google chặn OAuth trong in-app browser Zalo/Messenger — đúng nơi 3 seller pilot mở link)",
+      "with": "solution-architect + risk-auditor",
+      "myPosition": "Blocker giữ nguyên và đứng TRƯỚC cả D1: seller không vào được cửa thì 'không ai bấm đồng ý sau 2 tuần' bị đọc nhầm thành 'seller không quan tâm'. Rẻ nhất: nửa ngày cho bản (b) — UA detect FBAN|FBAV|FB_IAB|Instagram|Zalo, ẩn nút Google, banner 'Mở bằng trình duyệt để đăng nhập' + Sao chép liên kết. Bản (a) gắn phone-otp-send/verify (đã chạy prod, chỉ nằm trong RegistrationModal) vào /login trả nợ cho cả sản phẩm. Không sửa thì slice 1 là thí nghiệm không có nhóm đối chứng."
+    },
+    {
+      "topic": "Ảnh sản phẩm đi qua rule CacheFirst 30 ngày ở vite.config.ts:217-225",
+      "with": "risk-auditor",
+      "myPosition": "Với ảnh sản phẩm public, cache 30 ngày là ĐÚNG mong muốn (người dùng 4G được lợi), không phải lỗ hổng — chỉ cần seller sửa ảnh thì đổi tên object thay vì ghi đè cùng key, nếu không seller thấy ảnh cũ suốt một tháng và tưởng hệ thống nuốt thao tác. Một dòng quy ước đặt tên file, không phải hạng mục rủi ro."
+    }
+  ]
+}

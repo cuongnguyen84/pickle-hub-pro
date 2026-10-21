@@ -1,0 +1,189 @@
+// @vitest-environment jsdom
+// The home-page World Cup card, two modes: "Livescore" (up to two live matches,
+// a score per side, Vietnamese first and highlighted) when a match is live, and
+// "Kết quả hôm nay" (today's finished Vietnamese matches with full scorelines)
+// when nothing is live. Hidden only when there is neither. Always links to /live.
+
+import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
+import { render, screen, cleanup } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import type { WcProFeed, WcProMatchRow, WcProEventGroup } from "@/hooks/useWcProLive";
+
+const proMock = vi.fn<() => { data: WcProFeed | undefined; isLoading: boolean; isError: boolean }>();
+vi.mock("@/hooks/useWcProLive", async (orig) => ({ ...(await orig<typeof import("@/hooks/useWcProLive")>()), useWcProLive: () => proMock() }));
+
+import { WorldCupLiveCard } from "../WorldCupLiveCard";
+
+const match = (over: Partial<WcProMatchRow>): WcProMatchRow => ({
+  match_id: "m1", category_id: "pro_singles_mens", division_name: null, round_name: "Round of 32",
+  round_num: 3, entry_a_name: "Nguyễn Văn Linh", entry_a_seed: 1, entry_b_name: "Kento Tamaki",
+  entry_b_seed: 2, current_a: 11, current_b: 7, games_json: [], serving_side: "A",
+  leader_side: "A", status: "in_progress", is_vietnam: true, venue_name: null,
+  court_label: null, scheduled_at: null, ...over,
+});
+const feed = (live: WcProMatchRow[], liveCount = live.length): WcProFeed => ({
+  events: live.length ? [{ event: "pro_singles_mens", live, vietnam: [], completed: [] } as WcProEventGroup] : [],
+  liveCount,
+});
+const wrap = (lang: "vi" | "en") => render(<MemoryRouter><WorldCupLiveCard language={lang} /></MemoryRouter>);
+
+// The card retires itself at HIDE_AFTER (2026-09-08 00:00 Vietnam time) and
+// reads the wall clock to do it, so every render assertion below has to be made
+// from inside the tournament. Without this the whole file went red on its own
+// at midnight on 2026-09-08 — a green suite that fails on a date nobody
+// changed. The retirement itself is asserted in its own test.
+const DURING_TOURNAMENT = new Date("2026-09-03T08:00:00Z");
+
+beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(DURING_TOURNAMENT); });
+afterEach(() => { vi.useRealTimers(); cleanup(); proMock.mockReset(); });
+
+describe("WorldCupLiveCard", () => {
+  it("retires itself once the tournament window has passed", () => {
+    vi.setSystemTime(new Date("2026-09-08T00:01:00+07:00"));
+    proMock.mockReturnValue({ data: feed([match({})], 4), isLoading: false, isError: false });
+    const { container } = wrap("vi");
+    expect(container.querySelector(".wclc")).toBeNull();
+  });
+
+  it("hides when nothing is live, even if there are scheduled events", () => {
+    proMock.mockReturnValue({
+      data: { events: [{ event: "pro_singles_mens", live: [], vietnam: [match({ status: "scheduled" })], completed: [] }], liveCount: 0 },
+      isLoading: false, isError: false,
+    });
+    const { container } = wrap("vi");
+    expect(container.querySelector(".wclc")).toBeNull();
+  });
+
+  it("shows the logo, the Livescore header and the live count", () => {
+    proMock.mockReturnValue({ data: feed([match({})], 4), isLoading: false, isError: false });
+    const { container } = wrap("vi");
+    expect(screen.getByText("Livescore")).toBeTruthy();
+    expect(screen.getByText(/4 trận/)).toBeTruthy();
+    const img = container.querySelector(".wclc-logo img");
+    expect(img?.getAttribute("src")).toBe("/images/world-cup-2026-logo.jpg");
+  });
+
+  it("shows a score per side and highlights the Vietnamese name and the leader", () => {
+    const { container } = (proMock.mockReturnValue({ data: feed([match({ current_a: 11, current_b: 7, leader_side: "A" })]), isLoading: false, isError: false }), wrap("vi"));
+    expect(screen.getByText("Nguyễn Văn Linh")).toBeTruthy();
+    expect(screen.getByText("11")).toBeTruthy();
+    expect(screen.getByText("7")).toBeTruthy();
+    const vn = [...container.querySelectorAll(".wclc-m-name--vn")].map((n) => n.textContent);
+    expect(vn).toContain("Nguyễn Văn Linh");
+    expect(vn).not.toContain("Kento Tamaki");
+    expect(container.querySelectorAll(".wclc-m-row--win").length).toBe(1);
+  });
+
+  it("shows at most two matches, Vietnamese first", () => {
+    proMock.mockReturnValue({
+      data: feed([
+        match({ match_id: "f1", entry_a_name: "Patrick Kawka", entry_b_name: "Yuta Yoshida", is_vietnam: false }),
+        match({ match_id: "f2", entry_a_name: "Alex Newman", entry_b_name: "Sam Tan", is_vietnam: false }),
+        match({ match_id: "vn", entry_a_name: "Lê Xuân Đức", entry_b_name: "Stanley Owusu" }),
+      ], 3),
+      isLoading: false, isError: false,
+    });
+    const { container } = wrap("vi");
+    expect(container.querySelectorAll(".wclc-m").length).toBe(2);
+    expect(screen.getByText("Lê Xuân Đức")).toBeTruthy(); // VN pulled into the top two
+  });
+
+  it("links to /live in the right language", () => {
+    proMock.mockReturnValue({ data: feed([match({})]), isLoading: false, isError: false });
+    const { container } = wrap("en");
+    const links = [...container.querySelectorAll("a")].map((a) => a.getAttribute("href"));
+    expect(links).toContain("/live");
+  });
+
+  // ── Results mode: nothing live → today's finished Vietnamese matches ────────
+  // Derived from the frozen clock, not Date.now(): this line runs at collection
+  // time, before beforeEach installs the fake timers, so a real-clock value here
+  // would never match the day the component sees.
+  const todayIso = new Date(DURING_TOURNAMENT.getTime() + 7 * 3600 * 1000).toISOString().slice(0, 10) + "T05:00:00+00:00";
+  const resultsFeed = (vietnam: WcProMatchRow[]): WcProFeed => ({
+    events: [{ event: "pro_singles_mens", live: [], vietnam, completed: [] } as WcProEventGroup],
+    liveCount: 0,
+  });
+
+  it("falls back to today's results when nothing is live", () => {
+    proMock.mockReturnValue({
+      data: resultsFeed([
+        match({ match_id: "r1", status: "completed", current_a: null, current_b: null, games_json: [{ a: 15, b: 17 }, { a: 15, b: 10 }, { a: 15, b: 9 }], leader_side: "A", scheduled_at: todayIso }),
+      ]),
+      isLoading: false, isError: false,
+    });
+    const { container } = wrap("vi");
+    expect(container.querySelector(".wclc")).not.toBeNull();
+    expect(screen.getByText(/Kết quả hôm nay/)).toBeTruthy();
+    expect(container.querySelector(".wclc-dot")).toBeNull(); // no live pulse in results mode
+    // the winner (side A) is marked; colour never signals nationality here
+    const winRow = container.querySelector(".wclc-r-row--win");
+    expect(winRow?.textContent).toContain("Nguyễn Văn Linh");
+    expect(container.querySelector(".wclc-r-tick")).not.toBeNull();
+    expect(container.querySelector(".wclc-m-name--vn")).toBeNull();
+    // per-game scores sit next to each name (winner A: 15, 15, 15; loser B: 17, 10, 9)
+    const aCells = [...(winRow?.querySelectorAll(".wclc-r-g") ?? [])].map((n) => n.textContent);
+    expect(aCells).toEqual(["15", "15", "15"]);
+    const rows = container.querySelectorAll(".wclc-r-row");
+    const bCells = [...rows[1].querySelectorAll(".wclc-r-g")].map((n) => n.textContent);
+    expect(bCells).toEqual(["17", "10", "9"]);
+  });
+
+  it("rotates the featured pair every 15 minutes (deterministic by clock)", () => {
+    // Four results on the same VN day; the card shows two at a time and the
+    // pair advances by two each 15-minute bucket, so consecutive buckets are
+    // disjoint pairs.
+    const day = "2026-08-31";
+    const mk = (id: string, hhmm: string) =>
+      match({ match_id: id, entry_a_name: id, entry_b_name: `${id}-opp`, status: "completed", current_a: null, current_b: null, games_json: [{ a: 15, b: 0 }], leader_side: "A", scheduled_at: `${day}T0${hhmm}:00+00:00` });
+    proMock.mockReturnValue({
+      data: resultsFeed([mk("AAA", "1:00"), mk("BBB", "2:00"), mk("CCC", "3:00"), mk("DDD", "4:00")]),
+      isLoading: false, isError: false,
+    });
+    const base = Date.parse(`${day}T05:00:00+00:00`); // ~noon VN, same day
+    const shownAt = (t: number): string[] => {
+      const spy = vi.spyOn(Date, "now").mockReturnValue(t);
+      try {
+        const { container } = wrap("vi");
+        return [...container.querySelectorAll(".wclc-r-row--win .wclc-r-name")].map((n) => n.textContent ?? "");
+      } finally {
+        cleanup();
+        spy.mockRestore();
+      }
+    };
+    const a = shownAt(base);
+    const b = shownAt(base + 15 * 60 * 1000);
+    expect(a.length).toBe(2);
+    expect(b.length).toBe(2);
+    expect(a.some((n) => b.includes(n))).toBe(false); // different pair after 15 min
+  });
+
+  it("does not count a result from another day as today", () => {
+    proMock.mockReturnValue({
+      data: resultsFeed([
+        match({ match_id: "old", status: "completed", current_a: null, current_b: null, games_json: [{ a: 21, b: 10 }], leader_side: "A", scheduled_at: "2026-08-30T05:00:00+00:00" }),
+      ]),
+      isLoading: false, isError: false,
+    });
+    const { container } = wrap("vi");
+    expect(container.querySelector(".wclc")).toBeNull();
+  });
+
+  it("prefers live over results when a match is live", () => {
+    proMock.mockReturnValue({
+      data: {
+        events: [{
+          event: "pro_singles_mens",
+          live: [match({ match_id: "L", status: "in_progress" })],
+          vietnam: [match({ match_id: "r", status: "completed", current_a: null, current_b: null, games_json: [{ a: 15, b: 9 }], scheduled_at: todayIso })],
+          completed: [],
+        }],
+        liveCount: 1,
+      },
+      isLoading: false, isError: false,
+    });
+    wrap("vi");
+    expect(screen.getByText("Livescore")).toBeTruthy();
+    expect(screen.queryByText(/Kết quả hôm nay/)).toBeNull();
+  });
+});

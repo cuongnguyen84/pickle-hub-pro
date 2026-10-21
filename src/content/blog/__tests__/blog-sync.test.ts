@@ -37,10 +37,17 @@ import { blogMetadata } from "../metadata";
 const here = dirname(fileURLToPath(import.meta.url));
 const POSTS_DIR = resolve(here, "..", "posts");
 
+/** Non-post modules that live in posts/ and must never be read as a slug.
+ *  `all.ts` is the generated barrel (scripts/gen-blog-barrel.mjs). It was
+ *  added long after this guard was written, so every run reported a phantom
+ *  draft named "all" and the draft warning stopped carrying information.
+ *  Mirrors the same exclusion in blog-barrel.test.ts. */
+const NON_POST_FILES = new Set(["index.ts", "types.ts", "all.ts"]);
+
 /** Slugs that have a posts/<slug>.ts file. */
 function postFileSlugs(): string[] {
   return readdirSync(POSTS_DIR)
-    .filter((f) => f.endsWith(".ts") && f !== "index.ts" && f !== "types.ts")
+    .filter((f) => f.endsWith(".ts") && !NON_POST_FILES.has(f))
     .map((f) => f.replace(/\.ts$/, ""));
 }
 

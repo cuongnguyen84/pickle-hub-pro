@@ -90,6 +90,14 @@ describe("parseMlpFromInlineTicker", () => {
     ).toThrow(/belongs to another event/);
   });
 
+  it("ignores punctuation when matching the page's own event (Dallas 2026-08-08 regression)", () => {
+    // Dallas playoffs h1 read "MLP Playoffs - Dallas presented by
+    // eisneramper" while the ticker subtitle had no hyphen — the guard
+    // false-positived on the ACTIVE event and every scrape "skipped".
+    const parsed = parseMlpFromInlineTicker(FIXTURE, EVENT_URL, "MLP - San Diego")!;
+    expect(parsed.matches).toHaveLength(2);
+  });
+
   it("creates team + player ghost profiles", () => {
     const teamIds = result.players.map((p) => p.external_id);
     expect(teamIds).toContain("columbus-sliders");

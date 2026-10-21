@@ -1,0 +1,33 @@
+{
+  "agent": "risk-auditor",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Slice 1 có product editor tối thiểu không",
+      "myRound1Position": "KHÔNG — Slice 0′ chỉ shops + shop_members, admin tạo tay, không upload, không form; RED nhỏ nhất có thể.",
+      "move": "CONCEDE",
+      "evidence": "supabase/migrations/20260512160000_clubs_self_service.sql:100-143 — bucket clubs-logos public=true, file_size_limit 2MB, allowed_mime_types jpeg/png/webp (không svg), policy storage.objects scope theo (storage.foldername(name))[1] = auth.uid()::text; src/hooks/useClubLogoUpload.ts:56,64 — path '<uid>/<ts>-<rand>.<ext>' + upsert:false. Vòng 1 em chỉ trích og-images và khẳng định 'bucket ảnh = pattern net-new'; sai — repo đã có precedent user-owned image upload đã qua review (kể cả bug đã vá ở 20260512160200).",
+      "note": "Map thẳng 6 P0: KÍCH HOẠT LẠI = P0-2, P0-4, P0-6 — cả ba đã sống sẵn với BẤT KỲ migration nào, kể cả Slice 0′, nên products+product_media không thêm hạng mục P0 mới nào. KHÔNG kích hoạt = P0-1 (bucket public, không signed URL), P0-3 (không bank), P0-5 (ảnh/giá/tên là dữ liệu công khai chủ đích), P1-3 (không KYC mồ côi). Verdict TOÀN SLICE VẪN 🔴 RED vì P0-6 đứng một mình đã đủ — em nhượng bộ về PHẠM VI, không hạ tier. Hai điều kiện merge bổ sung: (a) pgTAP viết 'shop_%'/'seller_%' KHÔNG khớp products/product_media — phải liệt kê tên bảng tường minh, vì rls_auth_matrix.test.sql:16-28 chỉ bắt 'có policy mà tắt RLS', không bao giờ bắt 'không RLS và không policy'; (b) 0 dependency mới — thêm bất kỳ lib ảnh nào là ăn vào 66 KB headroom còn lại."
+    },
+    {
+      "id": "D3",
+      "topic": "shop_members tạo ngay hay hoãn sau helper is_shop_member()",
+      "myRound1Position": "TẠO NGAY — Slice 0′ là 2 bảng shops + shop_members.",
+      "move": "CONCEDE",
+      "evidence": "supabase/migrations/20260730090000_admin_requires_aal2.sql:21-33 — is_admin() STABLE + SECURITY DEFINER + SET search_path, đổi thân hàm bằng CREATE OR REPLACE và mọi policy GỌI QUA nó nhận aal2 miễn phí, 0 dòng policy phải sửa; ngược lại supabase/migrations/20260730100000_admin_aal2_sweep.sql phải DROP+CREATE 12 lần cho đúng những policy đã inline EXISTS(user_roles...role='admin') thay vì gọi helper — tức một migration RED THỨ HAI, đúng cái giá mà solution-architect nói helper tránh được.",
+      "note": "Repo này đã chạy đúng thí nghiệm đó một lần và kết quả đứng về phía hoãn. Thêm nữa, shop_members rỗng với 1-3 seller solo vẫn phải vượt P0-2 + P0-4 cho 0 người dùng — bề mặt rủi ro thuần. Điều kiện bắt buộc: (1) is_shop_member(uuid) khai STABLE + SECURITY DEFINER + SET search_path = public đúng khuôn 20260730090000; (2) pgTAP assert KHÔNG policy nào trên shops/products/product_media chứa literal 'owner_user_id' trong pg_policies.qual/with_check; (3) path ảnh giữ prefix auth.uid() (khuôn clubs-logos) — khi shop_members xuất hiện, staff upload folder riêng vẫn đọc được vì bucket public, không khoá cửa nào."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Nếu slice 1 có ảnh sản phẩm thì template bucket phải là clubs-logos, TUYỆT ĐỐI không phải og-images — copy nhầm là lỗ P0 mới",
+      "with": "ui-ux-critic + solution-architect",
+      "myPosition": "og-images (20260415000001_create_og_images_bucket.sql:26-31) cho MỌI authenticated UPDATE/DELETE bất kỳ object nào trong bucket, không scope folder; cộng useOgImageUpload.ts:36,40 path tất định ${slug}.${ext} + upsert:true. Copy cặp này cho product-media = bất kỳ ai trong ~1669 user viewer, chỉ cần đăng nhập và biết slug, ghi đè hoặc xoá được ảnh sản phẩm của seller khác — và ảnh không nằm trong DB backup nên không khôi phục được. Bắt buộc: policy INSERT/UPDATE/DELETE scope (storage.foldername(name))[1] = auth.uid()::text (20260512160000:113-143) + path random upsert:false. Đây là P0 mới, vòng 1 cả ba agent đều không nêu."
+    },
+    {
+      "topic": "file_size_limit 2MB copy từ clubs-logos sẽ chặn đúng hành động mà pilot đang cố đo",
+      "with": "ui-ux-critic",
+      "myPosition": "CLUB_LOGO_MAX_BYTES = 2MB (useClubLogoUpload.ts:13) hợp lý cho logo desktop, nhưng ảnh sản phẩm chụp điện thoại JPEG 12MP thường 2-4MB, vượt ngưỡng. Triệu chứng: seller bấm chọn ảnh, nhận 'File quá lớn', bỏ cuộc; Cuong đọc thành 'seller không chịu đăng bán' — thước đo pilot bị nhiễu ở đúng bước quyết định. Yêu cầu: file_size_limit 8MB + downscale canvas trước upload (~30 dòng, 0 dependency), test tay iPhone thật (ALLOWED_MIME không có image/heic — hành vi iOS Safari chưa xác minh từ repo, mục test thiết bị)."
+    }
+  ]
+}

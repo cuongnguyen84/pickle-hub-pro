@@ -41,7 +41,10 @@ export function FeedMatchCard({
   staggerIndex,
 }: FeedMatchCardProps) {
   const { teamA, teamB } = groupTeams(match.participants);
+  // Never `!winnerIsA`: winning_team is NULL while a match is in progress,
+  // and the negation used to award the win to team B on every such card.
   const winnerIsA = match.winning_team === "a";
+  const winnerIsB = match.winning_team === "b";
 
   // Final / Gold-Match treatment: cards whose round is the championship
   // get a foil-style accent (hairline gold rule + GOLD MATCH eyebrow
@@ -64,7 +67,7 @@ export function FeedMatchCard({
     teamB,
     scoreA: match.team_a_score,
     scoreB: match.team_b_score,
-    winningTeam: winnerIsA ? "a" : "b",
+    winningTeam: winnerIsA ? "a" : winnerIsB ? "b" : null,
     venueName: match.venue_name,
     playedAt: match.played_at,
     format: match.format,
@@ -198,13 +201,13 @@ export function FeedMatchCard({
         />
         <TeamRow
           team={teamB}
-          isWinner={!winnerIsA}
+          isWinner={winnerIsB}
           format={match.format}
           language={language}
         />
         <ScoreColumn
           scores={match.team_b_score}
-          isWinner={!winnerIsA}
+          isWinner={winnerIsB}
         />
       </div>
 
@@ -387,7 +390,9 @@ function StatusBadge({
   const variantStyle: React.CSSProperties =
     variant === "verified"
       ? {
-          color: "var(--tl-green)",
+          // a11y CLOSE-03: --tl-green on the glow bg is 3.84:1 in light mode
+          // (10px text needs 4.5) — green-dim is 5.44:1 light / still AA dark.
+          color: "var(--tl-green-dim)",
           borderColor: "var(--tl-green-dim)",
           background: "var(--tl-green-glow)",
         }

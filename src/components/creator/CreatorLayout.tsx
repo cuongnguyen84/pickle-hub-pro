@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCreatorAuth } from "@/hooks/useCreatorAuth";
 import { cn } from "@/lib/utils";
 import { getLoginUrl } from "@/lib/auth-config";
-import { isIOS, isNativeApp, isAndroid } from "@/lib/capacitor-utils";
+import { isIOS } from "@/lib/platform";
 import {
   LayoutDashboard,
   Video,
@@ -67,13 +67,9 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
   }, []);
 
   const isIOSDevice = isIOS();
-  const isAndroidDevice = isAndroid();
-  const isNative = isNativeApp();
-  const mobileBottomNavOffset = (isAndroidDevice && isNative)
-    ? 'calc(72px + max(env(safe-area-inset-bottom, 14px), 14px))'
-    : isIOSDevice
-      ? 'calc(68px + env(safe-area-inset-bottom, 0px))'
-      : '56px';
+  const mobileBottomNavOffset = isIOSDevice
+    ? 'calc(68px + env(safe-area-inset-bottom, 0px))'
+    : '56px';
 
   // Loading state
   if (isLoading) {
@@ -164,16 +160,12 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
       <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 z-[9999] bg-background-elevated border-t border-border-subtle"
         style={{
-          paddingBottom: (isAndroidDevice && isNative)
-            ? 'max(env(safe-area-inset-bottom, 14px), 14px)'
-            : isIOSDevice
-              ? 'env(safe-area-inset-bottom, 0px)'
-              : '0px',
+          paddingBottom: isIOSDevice ? 'env(safe-area-inset-bottom, 0px)' : '0px',
         }}
       >
         <div
           className="flex items-stretch justify-around"
-          style={{ minHeight: isIOSDevice ? '68px' : (isAndroidDevice && isNative) ? '72px' : '56px' }}
+          style={{ minHeight: isIOSDevice ? '68px' : '56px' }}
         >
           {sidebarLinks.map((link) => {
             const isActive = link.exact

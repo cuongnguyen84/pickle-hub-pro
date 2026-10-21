@@ -1,5 +1,4 @@
 import type { Metric } from "web-vitals";
-import { getPlatform } from "@/lib/capacitor-utils";
 import { trackEvent } from "@/utils/ga";
 
 export type DeviceClass = "mobile" | "tablet" | "desktop";
@@ -143,11 +142,29 @@ export function isMarketSegment(value: unknown): value is MarketSegment {
   return value === "vn" || value === "international" || value === "unknown";
 }
 
+// CLS-attribution INC0: auth_state per-event (viewer can log in mid-session
+// to chat). Boot module — no supabase import; token presence in storage is
+// enough for an analytics segment. Dim already registered in GA4.
+export function getAuthState(): "authenticated" | "anonymous" {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("sb-") && key.endsWith("-auth-token")) {
+        return "authenticated";
+      }
+    }
+  } catch {
+    // Storage can be unavailable in strict privacy modes.
+  }
+  return "anonymous";
+}
+
 export function buildWebVitalEvent(
   metric: RumMetric,
   context: RumPageContext,
   marketSegment: MarketSegment,
   attribution?: ClsAttribution,
+  authState: "authenticated" | "anonymous" = getAuthState(),
 ): Record<string, unknown> {
   const isCls = metric.name === "CLS";
   const event: Record<string, unknown> = {
@@ -167,6 +184,7 @@ export function buildWebVitalEvent(
     app_surface: context.appSurface,
     device_class: context.deviceClass,
     market_segment: marketSegment,
+    auth_state: authState,
     navigation_scope: "document",
     sample_rate: 1,
     non_interaction: true,
@@ -201,10 +219,9 @@ export function getLocale(pathname: string): "vi" | "en" {
   return "en";
 }
 
+// Capacitor nghỉ hưu 2026-08-24 — web là bề mặt duy nhất chạy bundle này. Giữ
+// nguyên union vì GA4 còn dữ liệu lịch sử mang hai giá trị capacitor_*.
 export function getAppSurface(): RumPageContext["appSurface"] {
-  const platform = getPlatform();
-  if (platform === "ios") return "capacitor_ios";
-  if (platform === "android") return "capacitor_android";
   return "web";
 }
 

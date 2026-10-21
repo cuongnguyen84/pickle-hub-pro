@@ -77,6 +77,20 @@ describe("evaluatePgNetCron — scheduler status transience", () => {
   it("is healthy on the happy path", () => {
     expect(evaluatePgNetCron(healthySnapshot(), NOW).state).toBe("healthy");
   });
+
+  it("detects item-level failures inside a successful HTTP response", () => {
+    const result = evaluatePgNetCron(healthySnapshot({
+      response_content: JSON.stringify({ results: [{ username: "ok" }, { username: "broken", error: "token expired" }] }),
+    }), NOW);
+    expect(result.state).toBe("partial_success");
+  });
+
+  it("detects task errors encoded as result strings", () => {
+    const result = evaluatePgNetCron(healthySnapshot({
+      response_content: JSON.stringify({ results: { ai_recap: "error: quota exceeded", protour_digest: 1 } }),
+    }), NOW);
+    expect(result.state).toBe("partial_success");
+  });
 });
 
 describe("evaluateGitHubWorkflow", () => {

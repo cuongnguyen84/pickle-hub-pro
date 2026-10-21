@@ -1,0 +1,17 @@
+# Tracker organic cụm /san — hàng tuần
+
+> Checklist docs/seo-followup-2026-08.md mục 6. KHÔNG SLO nào canh organic — file này LÀ
+> monitoring. Cron tuần (thứ 2) chạy:
+> `python3 scripts/seo/gsc_report.py --page-contains /san/`
+> (GSC lag ~3 ngày nên cửa sổ là 7 ngày kết thúc 3 ngày trước). Cảnh báo nếu clicks
+> giảm >20% WoW — đó là hình dạng sự cố "noindex/link nhầm" mà panel 02/08 mô tả.
+> Mốc so sánh quan trọng: PR #533 (fix VI links + title byte) deploy 03/08 — hiệu ứng
+> đọc được từ ~tuần 31/08.
+
+| Tuần (end) | Clicks | Impr | Pos | WoW clicks | Ghi chú |
+|---|---|---|---|---|---|
+| 2026-07-31 | 93 | 7543 | 7.8 | +4.5% | Baseline TRƯỚC PR #533 (chạy tay 03/08) |
+| 2026-09-10 | 100 | 7144 | 8.0 | -23.1% | Đọc 13/09, kỳ 04–10/09; tuần trước 130 clicks/7792 impressions. Đã cảnh báo Telegram receipt 3991. Chưa quy nguyên nhân cho PR #533 hoặc noindex; cần kiểm tra riêng. |
+| 2026-09-20 | 102 | 7558 | 7.7 | +13.3% | Đọc 23/09 (daily-growth), kỳ 14–20/09; tuần trước 90 clicks/7088 impr. Hồi lại sau cú -23% kỳ 04–10/09 → không có dấu hiệu sự cố noindex. Top page: /vi/san/hnmu-pickleball-ha-noi 4 click. |
+| 2026-09-25 | 133 | 7117 | 7.5 | +56.5% | Đọc 28/09 (daily-growth), kỳ 19–25/09; tuần trước 85 clicks/7423 impr. Tăng mạnh, không cảnh báo (ngưỡng -20%). Top page: /vi/san/the-pyar-pickleball-club 5 click. |
+| 2026-10-18 | 138 | 8785 | 7.6 | +24.3% | Đọc 21/10 (SEO-SAN-W39 trễ), kỳ 12–18/10; tuần trước 111 clicks/8370 impr. Không cảnh báo. Top page: /vi/san/san-pickleball-tao-dan-tp-hcm 5 click. Kỳ 28/09–11/10 không đọc bù. |

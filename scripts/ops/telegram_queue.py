@@ -110,12 +110,19 @@ def update_status(key, row_id, new_status, result=None):
         fields["processed_at"] = datetime.now(timezone.utc).isoformat()
     if result is not None:
         fields["result"] = result[:2000]
+    # CAS: chỉ claim được row còn pending — hai drainer (pg_cron mỗi phút + daemon
+    # local) đọc cùng bảng, không CAS là một row bị xử lý hai lần (risk-auditor #6).
     path = f"{TABLE}?id=eq.{rid}"
+    if new_status == "processing":
+        path += "&status=eq.pending"
     status, body = _request(
-        "PATCH", path, key, body=fields, extra_headers={"Prefer": "return=minimal"}
+        "PATCH", path, key, body=fields,
+        extra_headers={"Prefer": "return=representation"},
     )
     if status not in (200, 204):
         return {"ok": False, "error": (body or {}).get("error", f"HTTP {status}")}
+    if new_status == "processing" and isinstance(body, list) and len(body) == 0:
+        return {"ok": False, "error": "claim_lost: row không còn pending (drainer khác đã lấy)"}
     return {"ok": True, "id": rid, "status": new_status}
 
 

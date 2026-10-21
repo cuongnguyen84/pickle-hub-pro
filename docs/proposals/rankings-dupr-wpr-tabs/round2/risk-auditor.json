@@ -1,0 +1,45 @@
+{
+  "agent": "risk-auditor",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "verdict": "CONCEDE",
+      "evidence": [
+        "external/pickleball-com-tos-2026-08-06.txt:L42 — 'Unless authorized under a separate written agreement with us, provide any portion of data or other Content from the Sites to any other company, application, database, website or entity, including without limitation any competitor or other provider of pickleball-related services.'",
+        "L41 — 'use automated systems or software to extract data or other Content from the Sites, including without limitation screen scraping'",
+        "L29 — Content bao gồm data · L30 — cấm reproduce/distribute/republish/store/transmit · L33 — carve-out duy nhất: personal non-commercial",
+        "L10 + L15-22 — 'the Sites' = pickleball.com và affiliated sites; PPA Tour Operations HoldCo LLC trong nhóm pháp nhân → ppatour.com cùng nhóm"
+      ],
+      "reasoning": "Đã đóng đúng điều kiện cứng tự đặt, và bằng chứng đi NGƯỢC kỳ vọng — chặt hơn. Lập luận AMBER của (e) đứng trên 2 chân ('không tái xuất bản giá trị xếp hạng' + 'đẩy traffic về nguồn') — L42 không có ngưỡng kích thước, không ngoại lệ cho chỉ-mục-dẫn-đường, nêu đích danh 'other provider of pickleball-related services' = đúng hạng mục ThePickleHub; L41 cấm việc TRÍCH XUẤT bất kể đăng cột nào; slug chính là dữ liệu pickleball.com. Architect đúng ở luận điểm trung tâm: hình dạng file không đổi bản chất hành động. NÂNG (e): 🟡→🔴 RED — nhượng bộ đi LÊN. Hệ quả: KHÔNG còn kiến trúc nào phủ 2.075 ngay; mở khoá duy nhất = văn bản từ legal@ppatour.com. Giới hạn nói rõ để không thổi phồng: đây là ràng buộc HỢP ĐỒNG browsewrap (hiệu lực tranh cãi được), không phải copyright (rank/points là dữ kiện); cơ chế hỏng thực tế: takedown → IP/WAF block (giết luôn news-fetcher cron 2h) → email đang treo về dưới dạng 'không'. Quyết định pháp lý thuộc Cuong.",
+      "revised_position": "(e) 🔴 RED. Search chỉ còn 2 lựa chọn thật: 92 dòng nói-thật-phạm-vi (Option A + 5 điều kiện D2) hoặc chờ thư."
+    },
+    {
+      "id": "D2",
+      "verdict": "REFINE",
+      "evidence": [
+        "functions/_lib/render/ppa-rankings.ts:L65 — 42 tên sẽ vào HTML bot thấy",
+        "external/pickleball-com-tos-2026-08-06.txt:L42 ('any portion', không ngưỡng %) + L38 (cấm dùng ảnh/graphics tách khỏi text)",
+        "workers/news-fetcher/src/index.ts:L485-489 — excludePrefixes chứa '/rankings' và '/athletes'"
+      ],
+      "reasoning": "VERDICT: 🟡 AMBER — không GREEN không RED. Không RED vì revert được thật: 1 hằng số .ts, git revert + ?nocache ×4 ≈ 10-15'; thứ không lấy lại được (42 tên vào index vài tuần + luận điểm 'chỉ trích top-25' trong email lần 2) đắt nhưng không phải mất dữ liệu. Không GREEN vì '2% nên vẫn editorial' không đứng: L42 nói 'any portion' — không có ngưỡng % để bám; và với khán giả 95% Việt, 'toàn bộ VĐV cờ vn' KHÔNG phải 2% giá trị — nó là ~100% phần bảng có giá trị với đúng nhóm mình phục vụ = THAY THẾ nguồn, không phải trích dẫn. TIÊU CHÍ CHỐT (5 phép thử, FAIL cái nào ⇒ hết editorial): T1 Thay thế (phủ ≥90% thứ khán giả cần?) · T2 Vét cạn (định nghĩa bằng bộ lọc vét cạn trên nguồn hay lát cắt có biên do người chọn?) · T3 Tái sinh (sinh bằng script/query trên bản sao tập đầy đủ? Có = đang GIỮ tập đầy đủ = L41) · T4 Tự động (cron/refresh?) · T5 Trường dữ liệu (headshot/ảnh/bracket? = L38). ÁP: top-25 pass cả 5 = GREEN; 42 dòng lọc cờ vn FAIL T2 + một phần T1 = AMBER; full 2.075 và (e) FAIL T1+T2+T3 = RED.",
+      "revised_position": "AMBER ship được với 5 điều kiện, tất cả rẻ: (1) TUYỆT ĐỐI không copy headshot/ảnh; (2) mỗi khối có credit + link nguồn, không xoá proprietary notice; (3) PPA_WPR_FETCHED_AT hiện NGAY CẠNH khối 42 dòng — trích dẫn có ngày đọc như bình luận, bảng không ngày đọc như mirror sống; (4) hằng số VIẾT TAY — CẤM commit script filter country==='vn' vào repo (cùng 42 dòng nhưng provenance quyết định tính chất: danh sách người chọn + phán đoán biên tập [3 VĐV gốc Việt cờ khác + dedupe] đọc như editorial; rows.filter() là bằng chứng T3 nằm sẵn trong git); (5) không cron, không auto-refresh. Thiếu (1) hoặc (4) → nâng RED."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "'Repo ĐÃ scrape ppatour.com' không phải tiền lệ hạ chuẩn — nhưng cũng không phải bàn tay sạch",
+      "with": "solution-architect",
+      "myPosition": "excludePrefixes news-fetcher CỐ Ý loại '/rankings' + '/athletes' → không phải tiền lệ cho chép bảng xếp hạng; nếu làm là LẦN ĐẦU chạm dữ liệu ranking. Chiều ngược: crons 0 */2 là automated extraction theo L41, đang chạy — câu 'chưa bao giờ tự động lấy dữ liệu' trong email gửi legal@ có chú thích. Đừng dùng dữ kiện này theo cả hai chiều."
+    },
+    {
+      "topic": "Cắt đuôi bảng ~1.069 dòng nếu làm Option B",
+      "myPosition": "Loại khỏi bàn: L42 'any portion' không ngưỡng — 1.069 và 2.075 cùng RED; cắt đuôi giảm KB, không giảm phơi nhiễm."
+    },
+    {
+      "topic": "Câu hỏi UX của (e) đã moot",
+      "with": "ui-ux-critic",
+      "myPosition": "(e) đã RED — không còn là phương án, đừng tiêu thêm vòng thiết kế."
+    }
+  ],
+  "primary_source": "external/pickleball-com-tos-2026-08-06.txt (fetch 2026-08-06, Last updated June 3, 2025)"
+}

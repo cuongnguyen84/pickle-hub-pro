@@ -1,6 +1,8 @@
+import { buildTitle, truncateForSeo } from "@/lib/seo-title";
+import { authorIdentity } from "@/content/authors";
 import { useEffect } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { useViBlogPostBySlug } from "@/hooks/useViBlogPosts";
+import { preloadViBlogPostBySlug, useViBlogPostBySlug } from "@/hooks/useViBlogPosts";
 import { ErrorState } from "@/components/states/PageStates";
 import { DynamicMeta, HreflangTags, BreadcrumbSchema, ArticleSchema, FAQSchema } from "@/components/seo";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
@@ -12,6 +14,23 @@ import DOMPurify from "isomorphic-dompurify";
 import { useTrackBlogView } from "@/hooks/useTrackBlogView";
 import { useBlogPostViewCount } from "@/hooks/useBlogPostViewCount";
 import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
+import { cmsHeroImageSources, heroDimsProps } from "@/lib/image-utils";
+import { WorldCupResultsBoard } from "@/components/live/WorldCupResultsBoard";
+
+/** Marker a VI post puts in content_html where a live block belongs. Mirrors
+ *  WC_RESULTS_MARKER in functions/_lib/render/blog.ts. */
+const WC_RESULTS_MARKER = "[[WC_RESULTS]]";
+
+const PROSE_CLASS =
+  "prose prose-lg dark:prose-invert max-w-none prose-a:text-primary prose-a:underline prose-a:underline-offset-2 hover:prose-a:opacity-80 prose-table:border prose-table:border-border prose-th:bg-muted prose-th:p-3 prose-td:p-3 prose-td:border-t prose-td:border-border prose-h2:mt-12 prose-h2:text-foreground prose-h3:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground prose-tr:even:bg-muted/30";
+
+// App.tsx starts this route chunk during cold deep-link bootstrap. Begin the
+// public CMS read as soon as the module evaluates so React Query can consume
+// it on mount instead of creating a later request waterfall.
+if (typeof window !== "undefined") {
+  const match = window.location.pathname.match(/^\/vi\/blog\/([a-z0-9-]+)\/?$/);
+  preloadViBlogPostBySlug(match?.[1]);
+}
 
 const ViBlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -52,10 +71,18 @@ const ViBlogPost = () => {
   if (isLoading) {
     return (
       <TheLineLayout title="Đang tải...">
-        <div className="tl-shell" style={{ paddingTop: 32, paddingBottom: 80 }}>
-          <Skeleton className="h-8 w-3/4 mb-4" />
+        <div className="tl-shell" style={{ maxWidth: 880, paddingTop: 24, paddingBottom: 80 }} aria-busy="true">
+          <Skeleton className="h-4 w-2/3 mb-8" />
+          <Skeleton className="h-4 w-24 mb-4" />
+          <Skeleton className="h-12 w-full mb-3" />
+          <Skeleton className="h-12 w-3/4 mb-6" />
           <Skeleton className="h-4 w-1/2 mb-8" />
-          <Skeleton className="h-64 w-full" />
+          <Skeleton className="aspect-[3/2] w-full rounded-xl mb-8" />
+          <div className="space-y-4">
+            <Skeleton className="h-5 w-full" />
+            <Skeleton className="h-5 w-5/6" />
+            <Skeleton className="h-5 w-full" />
+          </div>
         </div>
       </TheLineLayout>
     );
@@ -101,16 +128,20 @@ const ViBlogPost = () => {
     { name: post.title, url: `https://www.thepicklehub.net/vi/blog/${post.slug}` },
   ];
 
+  const metaTitle = truncateForSeo(buildTitle(post.meta_title.replace(/ \| ThePickleHub$/, "")), 60);
   const faqItems = Array.isArray(post.faq_items) ? post.faq_items : [];
+  const coverImage = cmsHeroImageSources(post.cover_image_url);
 
   return (
     <TheLineLayout
-      title={post.meta_title.replace(/ \| ThePickleHub$/, "")}
+      title={metaTitle}
+      exactTitle
       description={post.meta_description}
       active="stories"
     >
       <DynamicMeta
-        title={post.meta_title.replace(/ \| ThePickleHub$/, "")}
+        title={metaTitle}
+        exactTitle
         description={post.meta_description}
         image={normalizeImageUrl(post.cover_image_url) || undefined}
         type="article"
@@ -157,25 +188,50 @@ const ViBlogPost = () => {
                   })}
                 </time>
               )}
-              {post.author_name && <span>· {post.author_name}</span>}
+              {post.author_name && <span>· {"url" in authorIdentity(post.author_name) ? <Link to={authorIdentity(post.author_name).url!}>{post.author_name}</Link> : post.author_name}</span>}
               <ViewCountBadge count={viewCount} />
             </div>
           </header>
 
-          {post.cover_image_url && (
+          {coverImage && (
             <img
-              src={normalizeImageUrl(post.cover_image_url)}
+              src={coverImage.src}
+              srcSet={coverImage.srcSet}
+              sizes="(max-width: 912px) calc(100vw - 32px), 832px"
               alt={post.title}
-              className="w-full h-auto rounded-xl mb-8 border border-border"
-              style={{ marginTop: "2rem" }}
+              {...heroDimsProps(post.cover_image_url)}
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+              className="w-full rounded-xl mb-8 border border-border"
+              style={{ marginTop: "2rem", display: "block", height: "auto" }}
             />
           )}
 
           <AdSlot slot="blogInArticle" minHeight={120} className="my-6" />
-          <div
-            className="prose prose-lg dark:prose-invert max-w-none prose-a:text-primary prose-a:underline prose-a:underline-offset-2 hover:prose-a:opacity-80 prose-table:border prose-table:border-border prose-th:bg-muted prose-th:p-3 prose-td:p-3 prose-td:border-t prose-td:border-border prose-h2:mt-12 prose-h2:text-foreground prose-h3:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground prose-tr:even:bg-muted/30"
-            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(normalizeImagesInHtml(post.content_html)) }}
-          />
+          {/* A VI post can mount a live data block by putting [[WC_RESULTS]] in
+              its content_html. Splitting on the marker keeps the rest of the
+              body on the existing sanitised-HTML path — the component is
+              rendered by React, never injected as a string, so nothing the
+              database holds can become markup. Bots get the same block from
+              functions/_lib/render/blog.ts. */}
+          {(() => {
+            const clean = DOMPurify.sanitize(normalizeImagesInHtml(post.content_html));
+            const parts = clean.split(WC_RESULTS_MARKER);
+            return parts.map((chunk, i) => (
+              <div key={i}>
+                <div
+                  className={PROSE_CLASS}
+                  dangerouslySetInnerHTML={{ __html: chunk }}
+                />
+                {i < parts.length - 1 && (
+                  <div className={PROSE_CLASS}>
+                    <WorldCupResultsBoard language="vi" />
+                  </div>
+                )}
+              </div>
+            ));
+          })()}
 
           {faqItems.length > 0 && (
             <section className="mt-12 border-t border-border pt-8">

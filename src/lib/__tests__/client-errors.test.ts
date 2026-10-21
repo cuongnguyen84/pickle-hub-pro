@@ -4,6 +4,7 @@ import {
   getClientErrorIp,
   hashClientErrorIdentity,
   parseClientErrorType,
+  isThirdPartyCspReport,
   parseCspClientErrors,
   parseJsClientError,
   sanitizeClientErrorUrl,
@@ -146,5 +147,128 @@ describe("client-error ingestion contract", () => {
       },
     });
     expect(getClientErrorIp(forwardedOnly)).toBe("198.51.100.2");
+  });
+});
+
+// ============================================================================
+// Third-party injections (2026-08-30 site audit).
+// ----------------------------------------------------------------------------
+// 312 of the 336 rows recorded in the preceding week were scripts and styles
+// injected into our pages by the Facebook in-app browser, Google Translate and
+// browser extensions — none of which appear anywhere in this repo. They are
+// dropped at ingestion so they cannot spend the per-identity rate limit that a
+// real error from the same reader needs.
+// ============================================================================
+describe("third-party CSP injections are dropped at ingestion", () => {
+  const cspBody = (blocked: string, sourceFile?: string) => ({
+    "csp-report": {
+      "document-uri": "https://www.thepicklehub.net/live",
+      "violated-directive": "script-src-elem",
+      "effective-directive": "script-src-elem",
+      "blocked-uri": blocked,
+      ...(sourceFile ? { "source-file": sourceFile } : {}),
+    },
+  });
+
+  it("recognises the injectors by host, path prefix and extension scheme", () => {
+    expect(isThirdPartyCspReport({
+      "blocked-uri": "https://connect.facebook.net/en_US/pcm.js",
+    })).toBe(true);
+    expect(isThirdPartyCspReport({
+      "blocked-uri": "https://www.gstatic.com/_/translate_http/_/ss/k=translate_http.tr/d=0",
+    })).toBe(true);
+    expect(isThirdPartyCspReport({
+      "blocked-uri": "https://static.shopback.com/fonts/ShopBackSans-Bold.woff2",
+    })).toBe(true);
+    expect(isThirdPartyCspReport({
+      "blocked-uri": "https://cdn.honey.io/css/empty.css",
+      "source-file": "safari-extension:",
+    })).toBe(true);
+  });
+
+  it("matches the host exactly, so a lookalike domain still reports", () => {
+    expect(isThirdPartyCspReport({
+      "blocked-uri": "https://connect.facebook.net.evil.example/x.js",
+    })).toBe(false);
+    expect(isThirdPartyCspReport({
+      "blocked-uri": "https://cdn.connect.facebook.net/x.js",
+    })).toBe(false);
+  });
+
+  it("keeps adware and proxy injections, which are evidence about readers", () => {
+    // lottingem.com and gateway.zscloud.net both appeared in the 30 days to
+    // 2026-08-30. They are third-party too, but they say something about the
+    // audience — an infected reader, a corporate TLS proxy — rather than about
+    // a browser feature we already understand. Deliberately not filtered.
+    expect(isThirdPartyCspReport({ "blocked-uri": "https://lottingem.com/re.php" })).toBe(false);
+    expect(isThirdPartyCspReport({ "blocked-uri": "https://gateway.zscloud.net/" })).toBe(false);
+  });
+
+  it("keeps our own violations, and the rest of gstatic", () => {
+    // The fonts we really do load — the prefix match must not become a host
+    // match, or a genuine font-src regression would go unreported.
+    expect(isThirdPartyCspReport({
+      "blocked-uri": "https://www.gstatic.com/fonts/roboto.woff2",
+    })).toBe(false);
+    // A real violation from our own bundle: the one signal this whole feed is
+    // for. It was in the same week's data, under 200 rows of Facebook noise.
+    expect(isThirdPartyCspReport({
+      "blocked-uri": "data:",
+      "source-file": "https://www.thepicklehub.net/assets/index-DBiY9zW5.js",
+    })).toBe(false);
+    // sanitizeClientErrorUrl turns every CSP keyword into a bare string that
+    // new URL() rejects. None of them may be read as a third-party host.
+    for (const keyword of ["data:", "blob:", "inline", "eval", "self", "none", ""]) {
+      expect(isThirdPartyCspReport({ "blocked-uri": keyword })).toBe(false);
+    }
+    expect(isThirdPartyCspReport(null)).toBe(false);
+    expect(isThirdPartyCspReport({})).toBe(false);
+  });
+
+  it("stores nothing for a legacy report that is pure injection", () => {
+    const parsed = parseCspClientErrors(
+      cspBody("https://connect.facebook.net/en_US/pcm.js"),
+      null,
+      "Mozilla/5.0",
+    );
+    expect(parsed.rows).toEqual([]);
+    expect(parsed.injectedCount).toBe(1);
+    // rawCount is untouched: the request WAS one report, and the caller still
+    // needs that to tell "filtered" apart from "unparseable".
+    expect(parsed.rawCount).toBe(1);
+  });
+
+  it("keeps the real report when a Reporting API batch mixes both", () => {
+    const parsed = parseCspClientErrors(
+      [
+        {
+          type: "csp-violation",
+          url: "https://www.thepicklehub.net/live",
+          body: cspBody("https://connect.facebook.net/en_US/pcm.js")["csp-report"],
+        },
+        {
+          type: "csp-violation",
+          url: "https://www.thepicklehub.net/shop",
+          body: {
+            "document-uri": "https://www.thepicklehub.net/shop",
+            "violated-directive": "connect-src",
+            "effective-directive": "connect-src",
+            "blocked-uri": "data:text/plain,x",
+            "source-file": "https://www.thepicklehub.net/assets/index-DBiY9zW5.js",
+          },
+        },
+      ],
+      null,
+      "Mozilla/5.0",
+    );
+    expect(parsed.injectedCount).toBe(1);
+    expect(parsed.rows).toHaveLength(1);
+    expect(parsed.rows[0].message).toContain("connect-src");
+  });
+
+  it("leaves js_error parsing alone", () => {
+    const parsed = parseJsClientError("js_error", { message: "boom" }, null, "Mozilla/5.0");
+    expect(parsed.injectedCount).toBe(0);
+    expect(parsed.rows).toHaveLength(1);
   });
 });

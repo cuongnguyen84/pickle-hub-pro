@@ -1,0 +1,560 @@
+{
+  "site": "https://www.thepicklehub.net",
+  "segments": {
+    "sitemap-static.xml": 81,
+    "sitemap-blog.xml": 55,
+    "sitemap-news.xml": 1000,
+    "sitemap-tournaments.xml": 12,
+    "sitemap-matches.xml": 246,
+    "sitemap-events.xml": 19,
+    "sitemap-players.xml": 40,
+    "sitemap-videos.xml": 6,
+    "sitemap-livestreams.xml": 26,
+    "sitemap-organizations.xml": 3,
+    "sitemap-venues.xml": 1688
+  },
+  "performance_urls": 1000,
+  "in_sitemap_with_impressions": 992,
+  "in_sitemap_no_impression_UNKNOWN_STATUS": 2184,
+  "in_performance_not_in_sitemap": [
+    "https://www.thepicklehub.net/vi/san",
+    "https://www.thepicklehub.net/livestream",
+    "https://www.thepicklehub.net/tran-dau/ppa_tour-ab0c3626-06a4-45c2-884f-ac3066c2e348",
+    "https://www.thepicklehub.net/blog/free-pickleball-bracket-generator",
+    "https://www.thepicklehub.net/san",
+    "https://www.thepicklehub.net/vi/news/tro-chuyen-cung-hien-tuong-tre-cailyn-campbell-cua-lang-pickleball-chuyen-nghiep-k9t66t",
+    "https://www.thepicklehub.net/vi/blog/mau-bracket-pickleball",
+    "https://www.thepicklehub.net/news/qa-with-rising-young-pickleball-pro-cailyn-campbell-k9t66t"
+  ],
+  "note": "no_impression means NO PER-URL SOURCE — it is NOT a 'not indexed' label. Use --inspect for real coverage states.",
+  "inspections": {
+    "https://www.thepicklehub.net/blog/best-pickleball-tournament-software-2026": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog/best-pickleball-tournament-software-2026",
+      "user_canonical": "https://www.thepicklehub.net/blog/best-pickleball-tournament-software-2026",
+      "last_crawl": "2026-07-09T16:29:17Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/dupr-algorithm-explained-performance-vs-expectation": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog/dupr-algorithm-explained-performance-vs-expectation",
+      "user_canonical": "https://www.thepicklehub.net/blog/dupr-algorithm-explained-performance-vs-expectation",
+      "last_crawl": "2026-06-03T10:22:07Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/dupr-rating-improvement-30-day-plan": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog/dupr-rating-improvement-30-day-plan",
+      "user_canonical": "https://www.thepicklehub.net/blog/dupr-rating-improvement-30-day-plan",
+      "last_crawl": "2026-07-31T12:56:07Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/dupr-vietnam-partnership-ta-pickleball-thepicklehub": {
+      "state": "CRAWLED_NOT_INDEXED",
+      "verdict": "NEUTRAL",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog/dupr-vietnam-partnership-ta-pickleball-thepicklehub",
+      "user_canonical": "https://www.thepicklehub.net/blog/dupr-vietnam-partnership-ta-pickleball-thepicklehub",
+      "last_crawl": "2026-05-28T19:52:46Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/how-to-play-pickleball": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog/how-to-play-pickleball",
+      "user_canonical": "https://www.thepicklehub.net/blog/how-to-play-pickleball",
+      "last_crawl": "2026-07-31T08:56:58Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/how-to-watch-ppa-tour-live-2026": {
+      "state": "CRAWLED_NOT_INDEXED",
+      "verdict": "NEUTRAL",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog/how-to-watch-ppa-tour-live-2026",
+      "user_canonical": "https://www.thepicklehub.net/blog/how-to-watch-ppa-tour-live-2026",
+      "last_crawl": "2026-08-02T05:35:13Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/mlp-vs-ppa-2026-which-tour-to-watch": {
+      "state": "DISCOVERED",
+      "verdict": "NEUTRAL",
+      "robots": "ROBOTS_TXT_STATE_UNSPECIFIED",
+      "google_canonical": "",
+      "user_canonical": "",
+      "last_crawl": "",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/pickleball-doubles-strategy-guide": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog/pickleball-doubles-strategy-guide",
+      "user_canonical": "https://www.thepicklehub.net/blog/pickleball-doubles-strategy-guide",
+      "last_crawl": "2026-07-09T00:06:59Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/pickleball-erne-shot-tutorial": {
+      "state": "DISCOVERED",
+      "verdict": "NEUTRAL",
+      "robots": "ROBOTS_TXT_STATE_UNSPECIFIED",
+      "google_canonical": "",
+      "user_canonical": "",
+      "last_crawl": "",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/pickleball-for-tennis-players-2026": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog/pickleball-for-tennis-players-2026",
+      "user_canonical": "https://www.thepicklehub.net/blog/pickleball-for-tennis-players-2026",
+      "last_crawl": "2026-06-03T13:20:11Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/pickleball-live-streaming-guide": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog/pickleball-live-streaming-guide",
+      "user_canonical": "https://www.thepicklehub.net/blog/pickleball-live-streaming-guide",
+      "last_crawl": "2026-07-11T22:57:25Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/pickleball-rules-complete-guide": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog/pickleball-rules-complete-guide",
+      "user_canonical": "https://www.thepicklehub.net/blog/pickleball-rules-complete-guide",
+      "last_crawl": "2026-06-03T10:24:54Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/pickleball-scoring-rules-guide": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog/pickleball-scoring-rules-guide",
+      "user_canonical": "https://www.thepicklehub.net/blog/pickleball-scoring-rules-guide",
+      "last_crawl": "2026-07-23T03:54:26Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/pickleball-third-shot-drop-vs-drive": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog/pickleball-third-shot-drop-vs-drive",
+      "user_canonical": "https://www.thepicklehub.net/blog/pickleball-third-shot-drop-vs-drive",
+      "last_crawl": "2026-07-24T02:26:31Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/pickleball-vs-padel-vs-paddle-tennis": {
+      "state": "CRAWLED_NOT_INDEXED",
+      "verdict": "NEUTRAL",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog/pickleball-vs-padel-vs-paddle-tennis",
+      "user_canonical": "https://www.thepicklehub.net/blog/pickleball-vs-padel-vs-paddle-tennis",
+      "last_crawl": "2026-06-03T13:26:21Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/pickleball-world-cup-2026-da-nang": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog/pickleball-world-cup-2026-da-nang",
+      "user_canonical": "https://www.thepicklehub.net/blog/pickleball-world-cup-2026-da-nang",
+      "last_crawl": "2026-06-03T12:45:15Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/pickleball-world-cup-2026-da-nang-how-to-watch": {
+      "state": "UNKNOWN_TO_GOOGLE",
+      "verdict": "NEUTRAL",
+      "robots": "ROBOTS_TXT_STATE_UNSPECIFIED",
+      "google_canonical": "",
+      "user_canonical": "",
+      "last_crawl": "",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/ppa-tour-asia-2026-complete-guide": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog/ppa-tour-asia-2026-complete-guide",
+      "user_canonical": "https://www.thepicklehub.net/blog/ppa-tour-asia-2026-complete-guide",
+      "last_crawl": "2026-06-01T11:38:14Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/ppa-tour-asia-2026-recap": {
+      "state": "DISCOVERED",
+      "verdict": "NEUTRAL",
+      "robots": "ROBOTS_TXT_STATE_UNSPECIFIED",
+      "google_canonical": "",
+      "user_canonical": "",
+      "last_crawl": "",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/professional-pickleball-tours-guide-2026": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog/professional-pickleball-tours-guide-2026",
+      "user_canonical": "https://www.thepicklehub.net/blog/professional-pickleball-tours-guide-2026",
+      "last_crawl": "2026-07-05T15:02:15Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/tama-shimabukuro-ppa-atlanta-final-15-year-old": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog/tama-shimabukuro-ppa-atlanta-final-15-year-old",
+      "user_canonical": "https://www.thepicklehub.net/blog/tama-shimabukuro-ppa-atlanta-final-15-year-old",
+      "last_crawl": "2026-07-29T13:57:32Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/tournament-organizer-hub": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog/tournament-organizer-hub",
+      "user_canonical": "https://www.thepicklehub.net/blog/tournament-organizer-hub",
+      "last_crawl": "2026-07-31T06:21:54Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/vietnam-dupr-leaderboard-launch": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog/vietnam-dupr-leaderboard-launch",
+      "user_canonical": "https://www.thepicklehub.net/blog/vietnam-dupr-leaderboard-launch",
+      "last_crawl": "2026-07-19T17:48:05Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/vietnam-pickleball-federation-2026": {
+      "state": "DISCOVERED",
+      "verdict": "NEUTRAL",
+      "robots": "ROBOTS_TXT_STATE_UNSPECIFIED",
+      "google_canonical": "",
+      "user_canonical": "",
+      "last_crawl": "",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/vietnam-pickleball-players-to-watch-2026": {
+      "state": "DISCOVERED",
+      "verdict": "NEUTRAL",
+      "robots": "ROBOTS_TXT_STATE_UNSPECIFIED",
+      "google_canonical": "",
+      "user_canonical": "",
+      "last_crawl": "",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/what-is-dupr-pickleball-rating-system": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog/what-is-dupr-pickleball-rating-system",
+      "user_canonical": "https://www.thepicklehub.net/blog/what-is-dupr-pickleball-rating-system",
+      "last_crawl": "2026-06-03T10:22:57Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/clb/122-dinh-cong": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/clb/122-dinh-cong",
+      "user_canonical": "https://www.thepicklehub.net/clb/122-dinh-cong",
+      "last_crawl": "2026-07-04T14:40:59Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/clb/163-tran-hoa": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/clb/163-tran-hoa",
+      "user_canonical": "https://www.thepicklehub.net/clb/163-tran-hoa",
+      "last_crawl": "2026-07-27T01:48:20Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/clb/175-dinh-cong": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/clb/175-dinh-cong",
+      "user_canonical": "https://www.thepicklehub.net/clb/175-dinh-cong",
+      "last_crawl": "2026-07-08T12:57:51Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/clb/kim-lien": {
+      "state": "DISCOVERED",
+      "verdict": "NEUTRAL",
+      "robots": "ROBOTS_TXT_STATE_UNSPECIFIED",
+      "google_canonical": "",
+      "user_canonical": "",
+      "last_crawl": "",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/clb/leo-hilbert": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/clb/leo-hilbert",
+      "user_canonical": "https://www.thepicklehub.net/clb/leo-hilbert",
+      "last_crawl": "2026-06-10T03:40:34Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/clb/plx": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/clb/plx",
+      "user_canonical": "https://www.thepicklehub.net/clb/plx",
+      "last_crawl": "2026-07-08T22:26:24Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/clb/sportcaree-pickleball": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/clb/sportcaree-pickleball",
+      "user_canonical": "https://www.thepicklehub.net/clb/sportcaree-pickleball",
+      "last_crawl": "2026-08-03T02:40:56Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/clb/thanh-dong-pickleball": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/clb/thanh-dong-pickleball",
+      "user_canonical": "https://www.thepicklehub.net/clb/thanh-dong-pickleball",
+      "last_crawl": "2026-06-10T18:34:38Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/clb/tinhgiomay": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/clb/tinhgiomay",
+      "user_canonical": "https://www.thepicklehub.net/clb/tinhgiomay",
+      "last_crawl": "2026-08-02T14:02:14Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/clb/tpp": {
+      "state": "DISCOVERED",
+      "verdict": "NEUTRAL",
+      "robots": "ROBOTS_TXT_STATE_UNSPECIFIED",
+      "google_canonical": "",
+      "user_canonical": "",
+      "last_crawl": "",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/live/10779a7c-46f4-4501-a65e-e852eb2fb565": {
+      "state": "CRAWLED_NOT_INDEXED",
+      "verdict": "NEUTRAL",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/live/10779a7c-46f4-4501-a65e-e852eb2fb565",
+      "user_canonical": "https://www.thepicklehub.net/live/10779a7c-46f4-4501-a65e-e852eb2fb565",
+      "last_crawl": "2026-07-29T16:35:31Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/live/1a2ac1e2-3be3-40a2-a2bd-2e0054717bf6": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/live/1a2ac1e2-3be3-40a2-a2bd-2e0054717bf6",
+      "user_canonical": "https://www.thepicklehub.net/live/1a2ac1e2-3be3-40a2-a2bd-2e0054717bf6",
+      "last_crawl": "2026-06-20T11:00:25Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/live/1f5fcca2-c276-4ce7-bbca-fbfa471b77cc": {
+      "state": "DISCOVERED",
+      "verdict": "NEUTRAL",
+      "robots": "ROBOTS_TXT_STATE_UNSPECIFIED",
+      "google_canonical": "",
+      "user_canonical": "",
+      "last_crawl": "",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/live/22459077-bf71-4f91-841c-799f0bdd1909": {
+      "state": "UNKNOWN_TO_GOOGLE",
+      "verdict": "NEUTRAL",
+      "robots": "ROBOTS_TXT_STATE_UNSPECIFIED",
+      "google_canonical": "",
+      "user_canonical": "",
+      "last_crawl": "",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/live/2cac01eb-217a-4634-95fa-4f915773bce2": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/live/2cac01eb-217a-4634-95fa-4f915773bce2",
+      "user_canonical": "https://www.thepicklehub.net/live/2cac01eb-217a-4634-95fa-4f915773bce2",
+      "last_crawl": "2026-08-01T22:06:03Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/live/2ee90ef1-99bc-4c2e-9b87-693d3dfec3f6": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/live/2ee90ef1-99bc-4c2e-9b87-693d3dfec3f6",
+      "user_canonical": "https://www.thepicklehub.net/live/2ee90ef1-99bc-4c2e-9b87-693d3dfec3f6",
+      "last_crawl": "2026-07-07T09:30:54Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/live/3e211e67-2caa-47c1-b002-f180546980f9": {
+      "state": "CRAWLED_NOT_INDEXED",
+      "verdict": "NEUTRAL",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/live/3e211e67-2caa-47c1-b002-f180546980f9",
+      "user_canonical": "https://www.thepicklehub.net/live/3e211e67-2caa-47c1-b002-f180546980f9",
+      "last_crawl": "2026-08-01T00:29:24Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/live/44e75b8e-afe0-4a00-a85a-ecea8ee87af5": {
+      "state": "CRAWLED_NOT_INDEXED",
+      "verdict": "NEUTRAL",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/live/44e75b8e-afe0-4a00-a85a-ecea8ee87af5",
+      "user_canonical": "https://www.thepicklehub.net/live/44e75b8e-afe0-4a00-a85a-ecea8ee87af5",
+      "last_crawl": "2026-05-28T16:18:04Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/live/57fe3b87-5d35-4aca-a17c-e4a24d866386": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/live/57fe3b87-5d35-4aca-a17c-e4a24d866386",
+      "user_canonical": "https://www.thepicklehub.net/live/57fe3b87-5d35-4aca-a17c-e4a24d866386",
+      "last_crawl": "2026-06-12T08:46:59Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/live/5b4fb4ee-1b38-4294-b16f-33a4ca0e2cb8": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/live/5b4fb4ee-1b38-4294-b16f-33a4ca0e2cb8",
+      "user_canonical": "https://www.thepicklehub.net/live/5b4fb4ee-1b38-4294-b16f-33a4ca0e2cb8",
+      "last_crawl": "2026-06-03T08:57:40Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/live/886f6401-8496-42f8-b2a5-82cce2b08540": {
+      "state": "DISCOVERED",
+      "verdict": "NEUTRAL",
+      "robots": "ROBOTS_TXT_STATE_UNSPECIFIED",
+      "google_canonical": "",
+      "user_canonical": "",
+      "last_crawl": "",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/live/8ca98c2a-cb45-4772-ac4e-30d4f83dbd9b": {
+      "state": "CRAWLED_NOT_INDEXED",
+      "verdict": "NEUTRAL",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/live/8ca98c2a-cb45-4772-ac4e-30d4f83dbd9b",
+      "user_canonical": "https://www.thepicklehub.net/live/8ca98c2a-cb45-4772-ac4e-30d4f83dbd9b",
+      "last_crawl": "2026-07-29T16:35:31Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/live/923432b7-f97f-441d-8e6e-77774e05e0d5": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/live/923432b7-f97f-441d-8e6e-77774e05e0d5",
+      "user_canonical": "https://www.thepicklehub.net/live/923432b7-f97f-441d-8e6e-77774e05e0d5",
+      "last_crawl": "2026-06-12T07:31:59Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/live/9439d561-5857-4b94-8304-7d787c5502c3": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/live/9439d561-5857-4b94-8304-7d787c5502c3",
+      "user_canonical": "https://www.thepicklehub.net/live/9439d561-5857-4b94-8304-7d787c5502c3",
+      "last_crawl": "2026-06-03T11:55:40Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/live/9f50562f-c924-4d15-842b-c6497d1c828f": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/live/9f50562f-c924-4d15-842b-c6497d1c828f",
+      "user_canonical": "https://www.thepicklehub.net/live/9f50562f-c924-4d15-842b-c6497d1c828f",
+      "last_crawl": "2026-06-03T12:16:43Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/live/afc2506b-e81f-417d-9425-e3d46694d1d9": {
+      "state": "UNKNOWN_TO_GOOGLE",
+      "verdict": "NEUTRAL",
+      "robots": "ROBOTS_TXT_STATE_UNSPECIFIED",
+      "google_canonical": "",
+      "user_canonical": "",
+      "last_crawl": "",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/live/c8e56c37-d405-4281-b66f-c5d925f89595": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/live/c8e56c37-d405-4281-b66f-c5d925f89595",
+      "user_canonical": "https://www.thepicklehub.net/live/c8e56c37-d405-4281-b66f-c5d925f89595",
+      "last_crawl": "2026-06-19T08:01:23Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/live/d7750a98-2d19-440e-8197-51662492891f": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/live/d7750a98-2d19-440e-8197-51662492891f",
+      "user_canonical": "https://www.thepicklehub.net/live/d7750a98-2d19-440e-8197-51662492891f",
+      "last_crawl": "2026-08-03T05:15:59Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/live/d8481dc4-d29e-4dad-9f9a-6a19cfd05e05": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/live/d8481dc4-d29e-4dad-9f9a-6a19cfd05e05",
+      "user_canonical": "https://www.thepicklehub.net/live/d8481dc4-d29e-4dad-9f9a-6a19cfd05e05",
+      "last_crawl": "2026-06-03T12:14:00Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/live/e283def0-68cc-4aa8-984c-94f562590177": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/live/e283def0-68cc-4aa8-984c-94f562590177",
+      "user_canonical": "https://www.thepicklehub.net/live/e283def0-68cc-4aa8-984c-94f562590177",
+      "last_crawl": "2026-06-12T10:02:02Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/live/e5c61e50-d121-4560-9c0a-6d978861d613": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/live/e5c61e50-d121-4560-9c0a-6d978861d613",
+      "user_canonical": "https://www.thepicklehub.net/live/e5c61e50-d121-4560-9c0a-6d978861d613",
+      "last_crawl": "2026-06-03T12:01:05Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/news/10-pickleball-rules-every-intermediate-player-should-know-q59we1": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/news/10-pickleball-rules-every-intermediate-player-should-know-q59we1",
+      "user_canonical": "https://www.thepicklehub.net/news/10-pickleball-rules-every-intermediate-player-should-know-q59we1",
+      "last_crawl": "2026-07-20T23:29:51Z",
+      "cached": false
+    }
+  },
+  "inspection_summary": {
+    "INDEXED": 39,
+    "CRAWLED_NOT_INDEXED": 7,
+    "DISCOVERED": 9,
+    "UNKNOWN_TO_GOOGLE": 3
+  }
+}

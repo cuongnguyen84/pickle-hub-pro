@@ -7,13 +7,23 @@ không bật OTP và không đổi production setting nếu chưa có phê duy�
 
 | Configuration | Bundle ID | Version | Environment | Native registration | FCM push |
 |---|---|---|---|---|---|
-| Debug | `net.thepicklehub.app.dev` | `1.1.0 (3)` | development | OFF mặc định | OFF |
-| Release | `net.thepicklehub.app` | `1.1.0 (3)` | production | OFF/Safari fallback | ON |
+| Debug | `net.thepicklehub.app` | `2.1.9 (17)` | development | ON | OFF |
+| Release | `net.thepicklehub.app` | `2.1.9 (17)` | production | ON | ON |
 
-`1.1.0 (3)` nối tiếp app Capacitor hiện tại `1.0.1 (2)`. Nếu App Store Connect
+`2.1.8 (16)` là candidate hiện tại: Pro Tour results, nút thoát cho màn chấm
+điểm trọng tài, thẻ giải pro tour tự rụng sau 1 ngày. 🔴 **2.1.7 đã được Apple
+duyệt** nên tuyến đó ĐÓNG: upload build mang `CFBundleShortVersionString`
+2.1.7 bị Validation chặn hai lỗi ("Invalid Pre-Release Train" + "must contain a
+higher version than the previously approved version"). Mỗi lần ship sau khi
+Apple duyệt phải tăng MARKETING_VERSION, không chỉ build number. Nếu App Store Connect
 đã có build/version mới hơn bảng này, tăng cả `MARKETING_VERSION` và
 `CURRENT_PROJECT_VERSION` trong `Config/Debug.xcconfig` + `Config/Release.xcconfig`
 trước khi archive.
+
+Shop native chỉ hiện khi **đồng thời** `SHOP_NATIVE_BUILT_IN=YES` và
+`SHOP_NATIVE_PILOT_ENABLED=YES`. Release bật cả hai; Debug compile Shop nhưng
+để pilot OFF mặc định nhằm fail closed. Khi Shop bật, Social và Công cụ vẫn có
+trong tab **Thêm**, không bị mất khỏi điều hướng.
 
 Native registration chỉ mở khi **đồng thời** đạt bốn gate:
 
@@ -60,7 +70,7 @@ tên người dùng đã sửa.
 ### Hành vi khi update từ Capacitor
 
 Capacitor/supabase-js lưu session trong WebKit localStorage; supabase-swift lưu
-session native trong Keychain. Bản `1.1.0` hiện **yêu cầu người dùng đăng nhập lại
+session native trong Keychain. Bản `2.0.1` hiện **yêu cầu người dùng đăng nhập lại
 một lần** sau update. Product đã chấp thuận hành vi này ngày 2026-07-22 và
 `CAPACITOR_AUTH_RESET_APPROVED = YES`; không cần session bridge cho release này.
 
@@ -181,6 +191,19 @@ Bốn `FIREBASE_*` giữ ở file ignored `Secrets.xcconfig`/CI secret, không c
 
 ## 5. Archive và distribution
 
+Trước mọi archive dùng để upload, bắt buộc xác nhận source release mới nhất và
+có thể tái tạo chính xác:
+
+```sh
+git switch <release-branch>
+./scripts/release_preflight.sh --release-source
+```
+
+Gate này tự fetch `origin/main`, rồi fail nếu `HEAD` chưa chứa toàn bộ main,
+worktree còn thay đổi chưa commit, branch chưa có upstream hoặc commit local chưa
+được push. Không build TestFlight/App Store trực tiếp từ một feature branch cũ
+chỉ vì branch đó đang khớp với upstream riêng của nó.
+
 Unsigned artifact check, không cần certificate:
 
 ```sh
@@ -223,14 +246,14 @@ riêng, không nằm trong script này.
 
 ## 6. Rollout và rollback
 
-Theo quyết định release ngày 2026-07-22, bỏ phân phối TestFlight và gửi build
-thẳng vào App Store Review. Native registration vẫn để OFF/Safari fallback trong
-binary đầu tiên; không bật remote OTP/payment cùng lúc với native rewrite.
-
-Trạng thái hiện tại: `ThePickleHub.ipa` đã upload thành công lên App Store
-Connect từ signed cloud-distributed archive `ThePickleHub-1.1.0-3.xcarchive`.
-Apple đang xử lý package; bước còn lại là hoàn tất metadata và submit trong
-App Store Connect.
+Trạng thái ngày 15/09/2026: `2.1.7` đã được Apple duyệt; `2.1.8 (16)` là
+candidate kế tiếp, đã archive và qua gate `--release-source`. Ký + upload phải
+chạy từ terminal của Cuong: tiến trình agent không đọc được token tài khoản
+Xcode 26 (`xcodebuild -exportArchive` trả `No Accounts` dù Settings → Apple
+Accounts có hai tài khoản), còn máy không có certificate Apple Distribution
+local nên phải dựa vào cloud signing. Rollout Shop dùng phased release của App Store và cohort
+validation được mời có chủ đích; không bật `SHOP_PUBLIC_INDEXING` trong giai đoạn
+validation.
 
 1. Upload signed build vào App Store Connect và chọn trực tiếp cho App Review.
 2. Giữ `native_event_registration_enabled=false`; Safari tiếp tục xử lý đăng ký.

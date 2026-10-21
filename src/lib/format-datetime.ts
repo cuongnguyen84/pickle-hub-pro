@@ -20,16 +20,48 @@ export const formatTime = (iso: string | null | undefined): string => {
   return dt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 };
 
-export const formatRelative = (iso: string | null | undefined): string => {
+export type RelativeLang = "vi" | "en";
+
+/**
+ * Relative timestamp for a moment in the past or the future.
+ *
+ * The Vietnamese strings were missing entirely until 2026-08-19: this returned
+ * "10h ago" on every Vietnamese page, across nine surfaces, for an audience
+ * that is ~95% Vietnamese. Vietnamese puts the unit before the marker and does
+ * not abbreviate it the way English does, so "5m ago" is "5 phút trước" and
+ * "in 5m" is "trong 5 phút" — so the strings differ in shape, not just in
+ * vocabulary, and cannot be produced by swapping two words.
+ *
+ * The Vietnamese wording is taken verbatim from the private copy that used to
+ * live in Index.tsx, which has been serving the homepage for months. Adopting
+ * it rather than inventing a second phrasing means folding that copy into this
+ * one changes nothing a reader sees.
+ *
+ * `lang` defaults to "en" so existing callers keep their exact output until
+ * they pass a locale; every caller in this repo now does.
+ */
+export const formatRelative = (
+  iso: string | null | undefined,
+  lang: RelativeLang = "en",
+): string => {
   if (!iso) return "";
   const dt = new Date(iso).getTime();
   if (Number.isNaN(dt)) return "";
   const diff = dt - Date.now();
+  const vi = lang === "vi";
   const absMin = Math.abs(Math.round(diff / 60000));
-  if (absMin < 1) return "now";
-  if (absMin < 60) return diff > 0 ? `in ${absMin}m` : `${absMin}m ago`;
+  if (absMin < 1) return vi ? "vừa xong" : "now";
+  const unit = (n: number, viWord: string, enLetter: string) =>
+    vi
+      ? diff > 0
+        ? `trong ${n} ${viWord}`
+        : `${n} ${viWord} trước`
+      : diff > 0
+        ? `in ${n}${enLetter}`
+        : `${n}${enLetter} ago`;
+  if (absMin < 60) return unit(absMin, "phút", "m");
   const hrs = Math.round(absMin / 60);
-  if (hrs < 24) return diff > 0 ? `in ${hrs}h` : `${hrs}h ago`;
+  if (hrs < 24) return unit(hrs, "giờ", "h");
   const days = Math.round(hrs / 24);
-  return diff > 0 ? `in ${days}d` : `${days}d ago`;
+  return unit(days, "ngày", "d");
 };

@@ -58,7 +58,7 @@ BEGIN
     RETURN;
   END IF;
   PERFORM net.http_post(
-    url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/news-translate',
+    url := public.ops_project_url() || '/functions/v1/news-translate',
     headers := jsonb_build_object('Content-Type','application/json','x-auth-secret', v_secret),
     body := '{}'::jsonb,
     timeout_milliseconds := 60000

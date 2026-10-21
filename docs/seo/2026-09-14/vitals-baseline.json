@@ -1,0 +1,249 @@
+{
+  "dimensionHeaders": [
+    {
+      "name": "customEvent:metric_name"
+    },
+    {
+      "name": "customEvent:metric_rating"
+    }
+  ],
+  "metricHeaders": [
+    {
+      "name": "eventCount",
+      "type": "TYPE_INTEGER"
+    }
+  ],
+  "rows": [
+    {
+      "dimensionValues": [
+        {
+          "value": "TTFB"
+        },
+        {
+          "value": "good"
+        }
+      ],
+      "metricValues": [
+        {
+          "value": "17504"
+        }
+      ]
+    },
+    {
+      "dimensionValues": [
+        {
+          "value": "FCP"
+        },
+        {
+          "value": "good"
+        }
+      ],
+      "metricValues": [
+        {
+          "value": "17107"
+        }
+      ]
+    },
+    {
+      "dimensionValues": [
+        {
+          "value": "LCP"
+        },
+        {
+          "value": "good"
+        }
+      ],
+      "metricValues": [
+        {
+          "value": "11271"
+        }
+      ]
+    },
+    {
+      "dimensionValues": [
+        {
+          "value": "INP"
+        },
+        {
+          "value": "good"
+        }
+      ],
+      "metricValues": [
+        {
+          "value": "8982"
+        }
+      ]
+    },
+    {
+      "dimensionValues": [
+        {
+          "value": "CLS"
+        },
+        {
+          "value": "good"
+        }
+      ],
+      "metricValues": [
+        {
+          "value": "4623"
+        }
+      ]
+    },
+    {
+      "dimensionValues": [
+        {
+          "value": "LCP"
+        },
+        {
+          "value": "needs-improvement"
+        }
+      ],
+      "metricValues": [
+        {
+          "value": "1465"
+        }
+      ]
+    },
+    {
+      "dimensionValues": [
+        {
+          "value": "TTFB"
+        },
+        {
+          "value": "needs-improvement"
+        }
+      ],
+      "metricValues": [
+        {
+          "value": "1354"
+        }
+      ]
+    },
+    {
+      "dimensionValues": [
+        {
+          "value": "FCP"
+        },
+        {
+          "value": "needs-improvement"
+        }
+      ],
+      "metricValues": [
+        {
+          "value": "1041"
+        }
+      ]
+    },
+    {
+      "dimensionValues": [
+        {
+          "value": "LCP"
+        },
+        {
+          "value": "poor"
+        }
+      ],
+      "metricValues": [
+        {
+          "value": "850"
+        }
+      ]
+    },
+    {
+      "dimensionValues": [
+        {
+          "value": "CLS"
+        },
+        {
+          "value": "needs-improvement"
+        }
+      ],
+      "metricValues": [
+        {
+          "value": "820"
+        }
+      ]
+    },
+    {
+      "dimensionValues": [
+        {
+          "value": "INP"
+        },
+        {
+          "value": "needs-improvement"
+        }
+      ],
+      "metricValues": [
+        {
+          "value": "802"
+        }
+      ]
+    },
+    {
+      "dimensionValues": [
+        {
+          "value": "FCP"
+        },
+        {
+          "value": "poor"
+        }
+      ],
+      "metricValues": [
+        {
+          "value": "572"
+        }
+      ]
+    },
+    {
+      "dimensionValues": [
+        {
+          "value": "TTFB"
+        },
+        {
+          "value": "poor"
+        }
+      ],
+      "metricValues": [
+        {
+          "value": "334"
+        }
+      ]
+    },
+    {
+      "dimensionValues": [
+        {
+          "value": "INP"
+        },
+        {
+          "value": "poor"
+        }
+      ],
+      "metricValues": [
+        {
+          "value": "318"
+        }
+      ]
+    },
+    {
+      "dimensionValues": [
+        {
+          "value": "CLS"
+        },
+        {
+          "value": "poor"
+        }
+      ],
+      "metricValues": [
+        {
+          "value": "307"
+        }
+      ]
+    }
+  ],
+  "rowCount": 15,
+  "metadata": {
+    "currencyCode": "USD",
+    "timeZone": "Asia/Saigon"
+  },
+  "kind": "analyticsData#runReport"
+}

@@ -46,6 +46,10 @@ const post: BlogPost = {
               text: "The DUPR Vietnam partnership announcement explains how TA Pickleball, DUPR, and ThePickleHub teamed up for this rollout",
               path: "/blog/dupr-vietnam-partnership-ta-pickleball-thepicklehub",
             },
+            {
+              text: "Build a tournament bracket that snake-seeds players by their DUPR — free, no signup",
+              path: "/tools",
+            },
           ],
         },
         {

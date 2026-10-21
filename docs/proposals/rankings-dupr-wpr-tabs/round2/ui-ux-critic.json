@@ -1,0 +1,25 @@
+{
+  "agent": "ui-ux-critic",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "verdict": "REFINE",
+      "evidence": ["src/hooks/useSearch.ts:24,29", "vite.config.ts:157-273,286", "src/content/ppa-rankings.ts:105-110"],
+      "reasoning": "Câu hỏi 'A hay (e)' là câu hỏi SAI — (e) không phải phương án thay A, (e) là bản vá cho chỗ yếu nhất của A. Xét riêng, (e) tệ hơn A ở 3 điểm: (1) kết quả = đúng cái user vừa gõ ('hien truong' → 'Hien Truong ↗') — với 1.983/2.075 người, search trả lại chính query không thêm dữ kiện nào = thành công GIẢ, tốn 1 page load 4G để phát hiện; thất bại nhanh trung thực (A) tốt hơn thất bại chậm nguỵ trang (e). (2) (e) đẩy user RA site — 1.901 sang pickleball.com tiếng Anh nặng, ToS chưa đọc; A đẩy ra SAU khi thừa nhận không có — rời đi có ý thức. (3) Nếu public asset fetch-on-focus: không rule runtimeCaching nào khớp /data/*.json + navigateFallbackDenylist có \\.json → offline/Capacitor search chết câm; online 4G 3 phím đầu lọc trên tập rỗng — đúng lời nói dối đang đi sửa. Nếu in-bundle: +28,5 KB cho 100% khách xem BẢNG phục vụ thiểu số có gõ. (e) TỐT HƠN đúng 1 chỗ quan trọng: A không phân biệt 'không có trong trích dẫn' với 'không tồn tại trên WPR', và handoff của A là handoff MÙ (architect tự nhận chưa kiểm ppatour.com có ô search riêng). Index (e) cho câu trả lời có/không dứt khoát + slug deep-link đúng hồ sơ.",
+      "revised_position": "PHƯƠNG ÁN LAI — A là SÀN, (e) là tầng bổ sung: (1) Tầng 1: 92 dòng in-bundle, tức thì, offline chạy, dòng đầy đủ hạng·tên·điểm·cờ + thẻ NAM/NỮ, header 'TRONG BẢNG THEPICKLEHUB · có hạng & điểm'. (2) Tầng 2: index (e) fetch-on-focus KHÔNG chặn tầng 1, mục riêng có đường kẻ + header một lần 'NGOÀI TRÍCH DẪN — có tên trên bảng đầy đủ, xem hạng ở trang gốc', dòng = tên + icon link ngoài ≥44px, href = profileUrl deep-link đúng người (KHÔNG về trang bảng), aria-label đầy đủ. (3) Dedupe tầng 1/2. (4) Fetch lỗi/offline → tầng 2 thay bằng đúng handoff của A dạng dòng chữ — (e) hỏng thì sản phẩm tụt về đúng A, không bao giờ tệ hơn A. (5) Loading tầng 2 = skeleton 3 dòng dưới header đã hiện, không chặn, không CLS. (6) Empty thật (cả 92 lẫn 2.075) mới được nói dứt khoát: 'Không có {q} trong bảng WPR (hơn 2.000 VĐV) — thử họ hoặc tên, không cần dấu.' (7) Helper: 'Tìm tên trong toàn bảng WPR; hạng & điểm chỉ hiện với VĐV ThePickleHub đăng.' ĐIỀU KIỆN CỨNG không nhượng: tầng 2 chỉ ship khi ToS pickleball.com đã đọc VÀ profileUrl đã xác minh không 404; chưa đủ thì A là bản ship — KHÔNG ship tầng 2 dạng link về trang bảng chung. Muốn ít trạng thái hơn: cắt tầng 2, không bao giờ cắt tầng 1 — 92 dòng có điểm đáng giá hơn 2.075 cái tên trống."
+    },
+    {
+      "id": "D1-sub",
+      "verdict": "HOLD",
+      "evidence": ["src/hooks/useSearch.ts:24 (delay 300 hard-code)", "useSearch.ts:29 (includes thuần, KHÔNG fold NFD)", "useSearch.ts:27 (xoá input vẫn giữ kết quả cũ 300ms — nháy)"],
+      "reasoning": "Lập luận 'tái dùng useSearch nên đành chịu 300ms' không đứng: hook KHÔNG dùng lại được nguyên trạng — không fold dấu, gãy đúng guard đồng thuận 'Trương'. Đã phải sửa hook thì thêm tham số delay (mặc định 300, truyền 0 ở rankings) là cùng một diff — debounce chỉ còn là độ trễ tặng thêm. Debounce giữ cho 2 thứ KHÔNG phải việc lọc: fetch index tầng 2 (theo focus, 1 lần) và GA4 no-match (idle 800ms + blur); aria-live vẫn trễ ~400ms."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Khối VN 4→42 render phẳng cộng ~1.700px vào trang mà R1 đã Blocker vì dòng dữ liệu đầu ở y≈775/853",
+      "with": "solution-architect",
+      "myPosition": "Ủng hộ DỮ LIỆU 42 dòng, không ủng hộ RENDER phẳng. Spec: mặc định 8 dòng VN thứ hạng cao nhất + nút 'Xem tất cả 42 VĐV Việt / gốc Việt' bằng <details> native (0 JS; SSR vẫn phát đủ 42 tên cho bot vì <details> không ẩn khỏi DOM); phần còn lại là surface của ô search. Tab +52px mà khối VN +1.700px thì 3 phép trừ bị nuốt trọn — Blocker #1 vẫn đứng."
+    }
+  ]
+}

@@ -10,7 +10,10 @@ export const onRequest: PagesFunction = async ({ request }) => {
 
   const country = request.cf?.country;
   return new Response(
-    JSON.stringify({ market_segment: marketSegmentForCountry(country) }),
+    JSON.stringify({
+      country: typeof country === "string" ? country.toUpperCase() : null,
+      market_segment: marketSegmentForCountry(country),
+    }),
     {
       headers: {
         "Cache-Control": "private, no-store",

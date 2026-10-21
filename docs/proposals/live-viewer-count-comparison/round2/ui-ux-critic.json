@@ -1,0 +1,46 @@
+{
+  "agent": "ui-ux-critic",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "LiveBroadcastHero.tsx + LiveCardWithPresence.tsx có đang mount trên prod không — 'hero tự track mọi khách trang chủ' là bug sống hay dead code?",
+      "myRound1Position": "Hero trang chủ là bề mặt sống, nó track() chính nó vào phòng presence nên mọi khách trang chủ bị đếm là viewer — Blocker #2, nguồn lớn nhất làm con số nói dối.",
+      "move": "CONCEDE",
+      "evidence": "src/pages/Index.tsx:599 — trang chủ render <LiveSection>, KHÔNG phải LiveBroadcastHero; src/components/home/LiveBroadcastHero.tsx:146 là occurrence DUY NHẤT của định danh đó trong toàn bộ src/ (em tự grep: không có src/components/home/index.ts để re-export, 0 lazy()/import() động trỏ tới nó, LiveSection.tsx:9 chỉ lazy HomeLivePlayer). src/components/content/index.ts:3 re-export LiveCardWithPresence nhưng 0 file lấy nó ra khỏi barrel.",
+      "note": "Architect đúng, Blocker #2 CHẾT — em cite file:line của một bề mặt không tồn tại trên cây render. Hệ quả ngược lại đáng chú ý: consumer presence sống duy nhất là WatchLive.tsx:75, nên con số đang hiển thị hôm nay về cơ bản TRUNG THỰC, không bị thổi phồng. Điều đó làm Blocker #1 nặng thêm chứ không nhẹ đi: nó là lời nói dối DUY NHẤT còn lại trên prod. #1 và #3 em đã tự mở lại và cả hai còn sống nguyên: TournamentDetail.tsx:166 + OrganizationDetail.tsx:236 truyền viewerCount={0} với status=\"live\" cứng, WatchLive.tsx:564 truyền 0 với status động, và LiveCard.tsx:107 gác bằng `isLive && viewerCount !== undefined` nên 0 lọt qua → in '0 đang xem' trên trận đang phát; LiveCard.tsx:109-111 bọc TooltipTrigger asChild quanh một <div className=\"...cursor-help\"> không tabIndex, nằm trong <Link> mở ở LiveCard.tsx:56 đóng ở :197 → tooltip không tới được bằng bàn phím lẫn cảm ứng."
+    },
+    {
+      "id": "D2",
+      "topic": "Nếu thêm snapshot phục vụ list + native: ai ghi con số xuống DB — client leader election hay server-side?",
+      "myRound1Position": "Server-side ghi cột livestreams.viewer_count làm mới ~30s, để mọi bề mặt list và native đọc một con số duy nhất.",
+      "move": "CONCEDE",
+      "evidence": "src/integrations/supabase/types.ts:2866-2887 — Row của bảng livestreams KHÔNG có cột viewer_count, nên đề xuất của em cũng cần migration = cùng risk tier RED với bảng snapshot của architect, không rẻ hơn. workers/edge-blob-watchdog/wrangler.toml:27 (crons = [\"* * * * *\"]) và supabase/migrations/20260802143000_ops_job_retry_control.sql:111 ('* * * * *') là nhịp dày nhất tồn tại trong repo — sàn lập lịch là 1 PHÚT ở cả pg_cron lẫn Cloudflare, và không có process always-on nào trong repo để subscribe presence liên tục.",
+      "note": "Con số '~30s' của em không lập lịch được với hạ tầng đang có; bản server-side khả thi là 60s — TRÙNG độ tươi với snapshot leader của architect nhưng phải đẻ thêm một subscriber thường trực. Cùng độ tươi, cùng tier RED, ít hạ tầng hơn thì em nhường cơ chế ghi. Em CHỈ nhường câu hỏi 'ai ghi'; hai yêu cầu UX bên dưới không nằm trong nhượng bộ này và em đưa lên newDisagreements."
+    },
+    {
+      "id": "D3",
+      "topic": "Lợi thế 'phát hiện rời đi tức thì' của Presence — có thật trên mobile VN (95% user) không?",
+      "myRound1Position": "Phần lớn là lý thuyết trên mobile: khoá màn hình/chuyển Zalo thì WebView giữ socket, khác biệt thực tế giữa A và B gần bằng 0.",
+      "move": "HOLD",
+      "evidence": "src/hooks/useLivePresence.ts:186-188 — untrack() + removeChannel() chỉ nằm trong release(), mà release() chỉ chạy khi refcount về 0 tức React unmount. Grep src/hooks/ + src/pages/WatchLive.tsx: 0 handler pagehide/visibilitychange/beforeunload trên đường presence (chỉ có ở useAutosaveDraft.ts:116-119, useClubMembers.ts:141, useVisibilityRefresh.ts:32).",
+      "note": "Architect không đưa dữ kiện mới, và dữ kiện em tự kiểm làm luận điểm của anh ấy YẾU ĐI: 'đóng sạch → tức thì' chỉ phủ hai ca là điều hướng trong SPA và đóng tab desktop (socket teardown ở tầng TCP, không phải nhờ untrack). Ca thoát chi phối trên mobile VN — khoá màn hình, nhảy sang Zalo, vuốt app đi — không kích unmount nên KHÔNG chạy untrack, rơi xuống đúng đường heartbeat 25-50s mà chính architect thừa nhận ở mục 1.5. Vậy tiêu đề công bằng cho 95% user mobile là '60-85s so với 25-50s', không phải '60-85s so với tức thì'. Đây vẫn là lợi thế của A, nhưng nó không đủ sức làm luận điểm đầu bảng."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Snapshot leader election không có ai ghi khi số web viewer về 0, và query đọc 'order by minute desc limit 1' không có rào độ tươi — card list sẽ hiện con số cuối cùng (ví dụ '12 đang xem') vĩnh viễn sau khi phòng đã rỗng",
+      "with": "solution-architect",
+      "myPosition": "Leader là một client; hết client thì hết leader, và không có dòng nào ghi giá trị 0 cuối cùng. Đọc theo 'row mới nhất' sẽ phục vụ một con số cũ hàng chục phút, đúng loại nói dối mà D1 vừa giết ở hero. Yêu cầu bắt buộc nếu chọn Option B: query đọc phải loại row cũ hơn 2 phút và trả 'không có dữ liệu' → badge ẨN theo đúng máy trạng thái vòng 1 (không '—', không 0), và stream ở trạng thái ended phải ẩn concurrent. Đây là điều kiện chấp nhận của em cho Option B, không phải góp ý."
+    },
+    {
+      "topic": "Native chỉ ĐỌC snapshot mà không tham gia đếm → người xem trên native vô hình vĩnh viễn trong con số hiển thị trên web",
+      "with": "solution-architect",
+      "myPosition": "Architect coi 'native chỉ cần đọc, không cần tham gia' là ưu điểm (mục 5, kết luận). Về UX đó là một khiếm khuyết có cấu trúc: một nhãn ghi 'đang xem' mà loại trừ trọn một loại client thì sai cùng một kiểu với bug hero vừa bị giết ở D1, chỉ ngược dấu (đếm thiếu thay vì đếm thừa). Chấp nhận được ở quy mô hiện tại, NHƯNG phải là quyết định có ý thức của Cuong và phải ghi vào proposal — hoặc native có đường ghi, hoặc con số được hiểu là 'người xem trên web'. Không được ship im lặng."
+    },
+    {
+      "topic": "Ngưỡng hiển thị 3 và luật 'không bao giờ in 0' phải đi kèm bất kể option nào thắng",
+      "with": "solution-architect",
+      "myPosition": "Cả 3 Option của architect (A/B/C) đều không nhắc tới LiveCard.tsx:107 hay ba chỗ viewerCount={0}. Increments của anh ấy bắt đầu bằng 'bỏ user_agent khỏi payload' — tối ưu một trần V=2.500 mà nền tảng ~2.000 user đăng ký chưa bao giờ chạm — trong khi thứ đang làm mất click TRÊN PROD NGAY BÂY GIỜ là badge '0 đang xem' trên trận đang phát. Em giữ nguyên thứ tự vòng 1: sửa LiveCard.tsx:107 + gỡ 3 chỗ truyền 0 là increment #1, đứng trước mọi quyết định A/B/C."
+    }
+  ]
+}

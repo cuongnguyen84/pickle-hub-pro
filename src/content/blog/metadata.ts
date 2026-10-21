@@ -10,132 +10,1737 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "create-tournament-by-chat",
+    "publishedDate": "2026-10-20",
+    "updatedDate": "2026-10-20",
+    "author": "The PickleHub Team",
+    "tags": ["tạo giải pickleball", "dán danh sách", "chat", "vòng bảng", "round robin"],
+    "ctaPath": "/tools/quick-tables/chat",
+    "ctaLabel": { "en": "Open the chat", "vi": "Mở chat tạo giải" },
+    "heroImage": {
+      "src": "/images/blog/create-tournament-by-chat-hero-en-v2.webp",
+      "alt": "ThePickleHub chat review for Saturday Night Club, with groups A and B and a Create tournament button"
+    },
+    "titleEn": "AI Pickleball Round Robin: Paste a List in Chat, Up to 48 Teams",
+    "titleVi": "Tạo giải pickleball bằng AI: dán danh sách Zalo, tối đa 48 đội",
+    "metaTitleEn": "AI Pickleball Round Robin in Chat | ThePickleHub",
+    "metaTitleVi": "Tạo giải AI pickleball | Dán danh sách Zalo",
+    "metaDescriptionEn": "44 teams, 11 groups, then 2 or 3 brackets. ThePickleHub AI reads a pasted list or photo. Up to 48 teams. 20 Oct 2026.",
+    "metaDescriptionVi": "44 đội, 11 bảng, rồi 2 hoặc 3 nhánh. AI ThePickleHub đọc ảnh hoặc tin Zalo. Tối đa 48 đội. 20/10/2026."
+  },
+  {
+    "slug": "hong-kong-slam-2026-results",
+    "publishedDate": "2026-10-19",
+    "updatedDate": "2026-10-21",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball",
+      "results",
+      "hong kong slam",
+      "ppa tour asia",
+      "2026"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/hong-kong-slam-2026-preview-hero.webp",
+      "alt": "Hong Kong Slam 2026 results at Kai Tak Arena"
+    },
+    "titleEn": "Hong Kong Slam 2026 Results: Daily Scores and Confirmed Winners",
+    "titleVi": "Kết quả Hong Kong Slam 2026: cập nhật hằng ngày",
+    "metaTitleEn": "Hong Kong Slam Results 2026 | Daily Scores",
+    "metaTitleVi": "Kết quả Hong Kong Slam 2026 mỗi ngày",
+    "metaDescriptionEn": "Hong Kong Slam 2026 results and daily scores from the official PPA feed, checked by ThePickleHub.",
+    "metaDescriptionVi": "Kết quả Hong Kong Slam 2026 từ feed PPA chính thức, được ThePickleHub kiểm chứng."
+  },
+  {
+    "slug": "pickleball-courts-bac-ninh-2026",
+    "publishedDate": "2026-10-18",
+    "updatedDate": "2026-10-18",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball courts",
+      "Bac Ninh",
+      "Vietnam",
+      "court directory",
+      "where to play",
+      "court booking",
+      "Tu Son"
+    ],
+    "ctaPath": "/san/khu-vuc/bac-ninh",
+    "ctaLabel": {
+      "en": "Browse all Bac Ninh courts",
+      "vi": "Xem tất cả sân ở Bắc Ninh"
+    },
+    "titleEn": "Pickleball Courts in Bac Ninh 2026: 15 Venues, 84 Courts by Ward",
+    "titleVi": "Sân pickleball Bắc Ninh 2026: 15 địa điểm, 84 sân theo khu vực",
+    "metaTitleEn": "Pickleball Courts in Bac Ninh 2026: Venues & Court Counts",
+    "metaTitleVi": "Sân pickleball Bắc Ninh 2026: 21 địa điểm",
+    "metaDescriptionEn": "Bac Ninh pickleball directory, 18 Oct 2026: 21 venues, 15 listed with 84 courts by ward, links to each venue page and a pre-booking checklist.",
+    "metaDescriptionVi": "Sân pickleball Bắc Ninh 18/10/2026: 15 địa điểm, 84 sân theo phường, kèm link từng sân và việc cần hỏi trước khi đặt."
+  },
+  {
+    "slug": "pickleball-courts-ha-tinh-2026",
+    "publishedDate": "2026-10-17",
+    "updatedDate": "2026-10-17",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball courts",
+      "ha tinh",
+      "vietnam pickleball",
+      "court directory",
+      "court booking",
+      "san pickleball"
+    ],
+    "ctaPath": "/san/khu-vuc/ha-tinh",
+    "ctaLabel": {
+      "en": "See all Hà Tĩnh venues",
+      "vi": "Xem 11 sân pickleball Hà Tĩnh"
+    },
+    "titleEn": "Pickleball Courts in Hà Tĩnh 2026: 11 Venues, Areas and Hourly Rates",
+    "titleVi": "Sân pickleball Hà Tĩnh 2026: 11 sân, khu vực và giá thuê theo giờ",
+    "metaTitleEn": "Pickleball Courts in Hà Tĩnh 2026: 11 Venues & Prices",
+    "metaTitleVi": "Sân pickleball Hà Tĩnh 2026: 11 sân và giá thuê",
+    "metaDescriptionEn": "ThePickleHub lists 11 pickleball venues in Hà Tĩnh as of 17 Oct 2026, with areas, hourly rates from 70,000 to 140,000 VND and a booking checklist.",
+    "metaDescriptionVi": "ThePickleHub có 11 sân pickleball ở Hà Tĩnh (17/10/2026), giá 70.000–140.000đ/giờ ở 5 sân, kèm cách hỏi lịch."
+  },
+  {
+    "slug": "pickleball-courts-vinh-2026",
+    "publishedDate": "2026-10-15",
+    "updatedDate": "2026-10-15",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball courts",
+      "vinh",
+      "court directory",
+      "court booking",
+      "court prices",
+      "vietnam"
+    ],
+    "ctaPath": "/san/khu-vuc/vinh",
+    "ctaLabel": {
+      "en": "Browse pickleball courts in Vinh",
+      "vi": "Xem sân pickleball ở Vinh"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-courts-vinh-2026-hero.webp",
+      "alt": "Pickleball Courts in Vinh 2026: 15 Venues, Court Counts and Hourly Prices"
+    },
+    "titleEn": "Pickleball Courts in Vinh 2026: 15 Venues, Court Counts and Hourly Prices",
+    "titleVi": "Sân pickleball Vinh 2026: 15 sân, khu vực, số sân và giá thuê theo giờ",
+    "metaTitleEn": "Pickleball Courts in Vinh 2026: 15 Venues, Prices",
+    "metaTitleVi": "Sân pickleball Vinh 2026: 15 sân, giá thuê",
+    "metaDescriptionEn": "15 pickleball venues in Vinh, Vietnam: area, court count and hourly prices from 50,000 to 190,000 VND, plus how to confirm a booking.",
+    "metaDescriptionVi": "15 sân pickleball ở Vinh: khu vực, số sân, giá 50,000–190,000đ/giờ và cách xác nhận trước khi đặt sân."
+  },
+  {
+    "slug": "how-to-choose-a-pickleball-paddle",
+    "publishedDate": "2026-10-13",
+    "updatedDate": "2026-10-13",
+    "heroImage": {
+      "src": "/images/blog/how-to-choose-a-pickleball-paddle-hero.webp",
+      "alt": "Four pickleball paddles with different shapes and face materials on a wooden table, with a measuring tape, a digital scale and a yellow ball"
+    },
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball",
+      "paddles",
+      "buying guide",
+      "grip size",
+      "paddle core",
+      "beginners"
+    ],
+    "ctaPath": "/shop/category/vot",
+    "ctaLabel": {
+      "en": "Browse pickleball paddles",
+      "vi": "Xem vợt pickleball trên ThePickleHub"
+    },
+    "titleEn": "How to Choose a Pickleball Paddle: Weight, Core, Face, Grip and Shape",
+    "titleVi": "Cách chọn vợt pickleball: trọng lượng, lõi, mặt vợt, size cán và hình dáng",
+    "metaTitleEn": "How to Choose a Pickleball Paddle: Weight, Core, Grip",
+    "metaTitleVi": "Cách chọn vợt pickleball: trọng lượng, lõi, cán",
+    "metaDescriptionEn": "How to choose a pickleball paddle: weight, core thickness and face material first, then grip size and shape. Spec table of paddles on ThePickleHub.",
+    "metaDescriptionVi": "Cách chọn vợt pickleball: trọng lượng, độ dày lõi, chất liệu mặt, size cán, dáng vợt; kèm bảng thông số trên ThePickleHub."
+  },
+  {
+    "slug": "ppa-brisbane-2026-results",
+    "publishedDate": "2026-10-13",
+    "updatedDate": "2026-10-18",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball",
+      "results",
+      "ppa brisbane",
+      "ppa tour australia",
+      "2026"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/ppa-brisbane-2026-results-hero.webp",
+      "alt": "PPA Tour Australia Pickleball Cup 2026 court in Brisbane with the city skyline at sunset"
+    },
+    "titleEn": "Australia Pickleball Cup 2026 Results: Daily Scores and Confirmed Winners",
+    "titleVi": "Kết quả Australia Pickleball Cup 2026: cập nhật hằng ngày",
+    "metaTitleEn": "PPA Brisbane Results 2026: Australia Pickleball Cup Scores",
+    "metaTitleVi": "Kết quả PPA Brisbane 2026: Australia Pickleball Cup",
+    "metaDescriptionEn": "PPA Brisbane results: Australia Pickleball Cup 2026 results and daily scores from the official PPA feed, checked by ThePickleHub.",
+    "metaDescriptionVi": "Kết quả Australia Pickleball Cup 2026 từ feed PPA chính thức, được ThePickleHub kiểm chứng."
+  },
+  {
+    "slug": "virginia-beach-open-2026-results",
+    "publishedDate": "2026-10-12",
+    "updatedDate": "2026-10-18",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball",
+      "results",
+      "2026"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/virginia-beach-open-2026-results-hero.webp",
+      "alt": "Mojo Energy Pouches Virginia Beach Open 2026 pickleball court on the oceanfront at sunset"
+    },
+    "titleEn": "Virginia Beach Open 2026 Results: Daily Scores and Confirmed Winners",
+    "titleVi": "Kết quả Virginia Beach Open 2026: cập nhật hằng ngày",
+    "metaTitleEn": "PPA Virginia Beach Results 2026: Virginia Beach Open Scores",
+    "metaTitleVi": "Kết quả PPA Virginia Beach 2026: Virginia Beach Open",
+    "metaDescriptionEn": "PPA Virginia Beach results: Virginia Beach Open 2026 results and daily scores from the official PPA feed, checked by ThePickleHub.",
+    "metaDescriptionVi": "Kết quả Virginia Beach Open 2026 từ feed PPA chính thức, được ThePickleHub kiểm chứng."
+  },
+  {
+    "slug": "pickleball-kitchen-foot-fault",
+    "publishedDate": "2026-10-11",
+    "updatedDate": "2026-10-11",
+    "heroImage": {
+      "src": "/images/blog/pickleball-kitchen-foot-fault-hero.webp",
+      "alt": "Pickleball Kitchen Foot Faults: The Situations Players Often Miss"
+    },
+    "author": "The PickleHub Team",
+    "tags": [
+      "kitchen rule",
+      "non-volley zone",
+      "foot fault",
+      "pickleball rules",
+      "pickleball volley",
+      "line calls",
+      "pickleball footwork",
+      "tournament officiating"
+    ],
+    "ctaPath": "/tim-ban-choi",
+    "ctaLabel": {
+      "en": "Find a partner to drill kitchen volleys",
+      "vi": "Tìm bạn tập volley gần bếp"
+    },
+    "titleEn": "Pickleball Kitchen Foot Faults: The Situations Players Often Miss",
+    "titleVi": "Lỗi chân khu vực bếp pickleball: Những tình huống dễ bị bỏ sót",
+    "metaTitleEn": "Pickleball Kitchen Foot Faults Players Often Miss",
+    "metaTitleVi": "Lỗi chân khu vực bếp pickleball dễ bỏ sót",
+    "metaDescriptionEn": "Kitchen (NVZ) foot faults explained: line touches, volley momentum, hands, dropped hats or paddles, plus a 6-step check for self-called games.",
+    "metaDescriptionVi": "Lỗi chân khu vực bếp pickleball: chạm vạch, đà sau volley, chống tay, rơi vật dụng và 6 bước tự rà soát."
+  },
+  {
+    "slug": "vietnam-pickleball-community-guide-2026",
+    "publishedDate": "2026-10-11",
+    "updatedDate": "2026-10-11",
+    "author": "The PickleHub Team",
+    "tags": [
+      "vietnam pickleball",
+      "pickleball community",
+      "pickleball clubs",
+      "community events",
+      "court directory",
+      "find pickleball players",
+      "bracket lab",
+      "grassroots tournaments"
+    ],
+    "ctaPath": "/clubs",
+    "ctaLabel": {
+      "en": "Find a pickleball club",
+      "vi": "Tìm câu lạc bộ pickleball"
+    },
+    "titleEn": "Vietnam Pickleball Community 2026: How to Find Groups, Clubs and Local Tournaments",
+    "titleVi": "Cộng đồng pickleball Việt Nam: Tìm nhóm, CLB và giải",
+    "metaTitleEn": "Vietnam Pickleball Community 2026: Groups, Clubs, Events",
+    "metaTitleVi": "Cộng đồng pickleball Việt Nam: nhóm, CLB, giải",
+    "metaDescriptionEn": "Find pickleball groups, clubs and community events in Vietnam with ThePickleHub's 690+ court directory, then run local tournaments in Bracket Lab.",
+    "metaDescriptionVi": "Tìm nhóm chơi, CLB và sự kiện pickleball Việt Nam trên ThePickleHub: hơn 690 sân, lịch sinh hoạt và Bracket Lab."
+  },
+  {
+    "slug": "pickleball-line-calls-in-or-out",
+    "publishedDate": "2026-10-10",
+    "updatedDate": "2026-10-10",
+    "heroImage": {
+      "src": "/images/blog/pickleball-line-calls-in-or-out-hero.webp",
+      "alt": "Pickleball Line Calls: How to Call In or Out Fairly"
+    },
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball rules",
+      "line calls",
+      "in or out",
+      "sportsmanship",
+      "doubles",
+      "recreational play",
+      "self-officiating"
+    ],
+    "ctaPath": "/forum",
+    "ctaLabel": {
+      "en": "Discuss tricky line calls in the forum",
+      "vi": "Thảo luận tình huống gọi bóng trên diễn đàn"
+    },
+    "titleEn": "Pickleball Line Calls: How to Call In or Out Fairly",
+    "titleVi": "Luật gọi bóng trong hay ngoài pickleball: Cách gọi đường biên công bằng",
+    "metaTitleEn": "Pickleball Line Calls: In or Out Rules for Fair Play",
+    "metaTitleVi": "Luật gọi bóng trong ngoài pickleball",
+    "metaDescriptionEn": "A ball touching any part of the line is in. Learn who calls lines in pickleball, when to call out, and a 4-step process for fair line calls.",
+    "metaDescriptionVi": "Bóng chạm vạch là trong. Ai gọi đường biên, khi nào gọi ngoài và 4 bước gọi bóng công bằng trong pickleball."
+  },
+  {
+    "slug": "pickleball-for-kids-drills-gear-session-length",
+    "publishedDate": "2026-10-09",
+    "updatedDate": "2026-10-09",
+    "heroImage": {
+      "src": "/images/blog/pickleball-for-kids-drills-gear-session-length-hero.webp",
+      "alt": "Pickleball for Kids: Choosing Drills, Gear and Session Length"
+    },
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball for kids",
+      "junior pickleball",
+      "pickleball for beginners",
+      "pickleball paddles",
+      "pickleball drills",
+      "pickleball safety",
+      "pickleball vietnam"
+    ],
+    "ctaPath": "/san",
+    "ctaLabel": {
+      "en": "Find a pickleball court near you",
+      "vi": "Tìm sân pickleball gần bạn"
+    },
+    "titleEn": "Pickleball for Kids: Choosing Drills, Gear and Session Length",
+    "titleVi": "Cho trẻ làm quen với pickleball: Chọn bài tập, dụng cụ và thời lượng phù hợp",
+    "metaTitleEn": "Pickleball for Kids: Drills, Gear and Session Length",
+    "metaTitleVi": "Cho trẻ làm quen pickleball: bài tập, dụng cụ",
+    "metaDescriptionEn": "Introduce kids to pickleball with light 190-215 g paddles, small grips, soft balls, 45-60 minute sessions and four steps from wall drills to round robins.",
+    "metaDescriptionVi": "Cho trẻ làm quen pickleball: vợt nhẹ 190-215g, cán nhỏ, bóng mềm, buổi tập 45-60 phút và 4 bước ra sân an toàn, vui vẻ."
+  },
+  {
+    "slug": "pickleball-for-older-adults-safe-start",
+    "publishedDate": "2026-10-08",
+    "updatedDate": "2026-10-08",
+    "heroImage": {
+      "src": "/images/blog/pickleball-for-older-adults-safe-start-hero.webp",
+      "alt": "Pickleball for Older Adults: A Safe, Steady Start in 2026"
+    },
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball for seniors",
+      "older adults",
+      "beginner pickleball",
+      "injury prevention",
+      "court directory",
+      "pickleball clubs",
+      "vietnam pickleball"
+    ],
+    "ctaPath": "/san",
+    "ctaLabel": {
+      "en": "Browse the court directory",
+      "vi": "Xem danh bạ sân pickleball"
+    },
+    "titleEn": "Pickleball for Older Adults: A Safe, Steady Start in 2026",
+    "titleVi": "Pickleball cho người lớn tuổi: Bắt đầu an toàn, đúng nhịp",
+    "metaTitleEn": "Pickleball for Older Adults: A Safe, Steady Start",
+    "metaTitleVi": "Pickleball người lớn tuổi: bắt đầu an toàn",
+    "metaDescriptionEn": "How older adults can start pickleball safely in 2026: set your own pace, warm up, rest early, and confirm courts and groups before the first session.",
+    "metaDescriptionVi": "Cách người lớn tuổi bắt đầu pickleball an toàn: chơi vừa sức, khởi động, nghỉ đúng lúc."
+  },
+  {
+    "slug": "pickleball-elbow-pain-causes-safe-steps",
+    "publishedDate": "2026-10-07",
+    "updatedDate": "2026-10-07",
+    "heroImage": {
+      "src": "/images/blog/pickleball-elbow-pain-causes-safe-steps-hero.webp",
+      "alt": "Pickleball Elbow Pain: Causes, What to Check and When to Stop"
+    },
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball elbow",
+      "pickleball elbow pain",
+      "pickleball injury prevention",
+      "pickleball paddle",
+      "pickleball technique",
+      "pickleball for beginners"
+    ],
+    "ctaPath": "/clubs",
+    "ctaLabel": {
+      "en": "Find a club where a coach can watch your stroke",
+      "vi": "Tìm câu lạc bộ để được quan sát kỹ thuật"
+    },
+    "titleEn": "Pickleball Elbow Pain: Causes, What to Check and When to Stop",
+    "titleVi": "Đau khuỷu tay khi chơi pickleball: nguyên nhân, xử lý an toàn",
+    "metaTitleEn": "Pickleball Elbow Pain: Causes and Safe First Steps",
+    "metaTitleVi": "Đau khuỷu tay khi chơi pickleball: xử lý an toàn",
+    "metaDescriptionEn": "Pickleball elbow pain can stem from technique, paddle choice or playing more too fast. What to review, how to ease off and when to see a clinician.",
+    "metaDescriptionVi": "Đau khuỷu tay khi chơi pickleball: yếu tố cần rà soát, cách giảm tải an toàn và khi nào nên đi khám."
+  },
+  {
+    "slug": "pickleball-recovery-rest-hydration",
+    "publishedDate": "2026-10-06",
+    "updatedDate": "2026-10-06",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball recovery",
+      "pickleball hydration",
+      "pickleball injury prevention",
+      "pickleball for beginners",
+      "pickleball tournament scheduling",
+      "bracket lab",
+      "pickleball vietnam"
+    ],
+    "ctaPath": "/tools",
+    "ctaLabel": {
+      "en": "Build your draw in Bracket Lab",
+      "vi": "Tạo bảng đấu với Bracket Lab"
+    },
+    "titleEn": "Pickleball Recovery: Rest, Hydration and Listening to Your Body",
+    "titleVi": "Phục hồi sau khi chơi pickleball: nghỉ ngơi, bù nước và theo dõi cơ thể",
+    "metaTitleEn": "Pickleball Recovery: Rest, Hydration & Body Checks",
+    "metaTitleVi": "Phục hồi sau khi chơi pickleball đúng cách",
+    "metaDescriptionEn": "How to recover after pickleball: cool down, rest, drink to need, track symptoms, and know when to stop and see a doctor. A ThePickleHub guide.",
+    "metaDescriptionVi": "Cách phục hồi sau pickleball: giảm cường độ, nghỉ, uống nước, theo dõi cơ thể và biết khi nào cần tìm tư vấn y tế."
+  },
+  {
+    "slug": "pickleball-singles-strategy",
+    "publishedDate": "2026-10-05",
+    "updatedDate": "2026-10-05",
+    "heroImage": {
+      "src": "/images/blog/pickleball-singles-strategy-hero.webp",
+      "alt": "Pickleball Singles Strategy: Movement and Attack"
+    },
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball singles",
+      "singles strategy",
+      "footwork",
+      "court coverage",
+      "shot placement",
+      "pickleball technique",
+      "pickleball drills"
+    ],
+    "ctaPath": "/san",
+    "ctaLabel": {
+      "en": "Find a court to practise singles",
+      "vi": "Tìm sân để tập đánh đơn"
+    },
+    "titleEn": "Pickleball Singles Strategy: Movement and Attack",
+    "titleVi": "Chiến thuật đánh đơn pickleball: Di chuyển và tấn công",
+    "metaTitleEn": "Pickleball Singles Strategy: Movement and Attack",
+    "metaTitleVi": "Chiến thuật đánh đơn pickleball hiệu quả",
+    "metaDescriptionEn": "Pickleball singles strategy for doubles players: recovery positioning, shot placement, when to speed up, a decision table and a 3-step practice plan.",
+    "metaDescriptionVi": "Đánh đơn pickleball: hồi vị đúng chỗ, điều bóng theo vị trí đối thủ, chọn lúc tăng tốc và giữ sức bền."
+  },
+  {
+    "slug": "veolia-chicago-cup-2026-results",
+    "publishedDate": "2026-10-05",
+    "updatedDate": "2026-10-13",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball",
+      "results",
+      "2026"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/veolia-chicago-cup-2026-results-hero.webp",
+      "alt": "Veolia Chicago Cup 2026 pickleball tournament court at golden hour with the Chicago skyline"
+    },
+    "titleEn": "Veolia Chicago Cup 2026 Results: Daily Scores and Confirmed Winners",
+    "titleVi": "Kết quả Veolia Chicago Cup 2026: cập nhật hằng ngày",
+    "metaTitleEn": "PPA Chicago Results 2026: Veolia Chicago Cup Scores",
+    "metaTitleVi": "Kết quả PPA Chicago 2026: Veolia Chicago Cup",
+    "metaDescriptionEn": "PPA Chicago results: Veolia Chicago Cup 2026 results and daily scores from the official PPA feed, checked by ThePickleHub.",
+    "metaDescriptionVi": "Kết quả Veolia Chicago Cup 2026 từ feed PPA chính thức, được ThePickleHub kiểm chứng."
+  },
+  {
+    "slug": "pickleball-volley-technique",
+    "publishedDate": "2026-10-03",
+    "updatedDate": "2026-10-03",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball volley",
+      "volley technique",
+      "kitchen",
+      "non-volley zone",
+      "pickleball technique",
+      "dink",
+      "pickleball drills"
+    ],
+    "ctaPath": "/tim-ban-choi",
+    "ctaLabel": {
+      "en": "Find a partner to practise volleys",
+      "vi": "Tìm bạn tập volley"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-volley-technique-hero.webp",
+      "alt": "Pickleball Volley Technique: Hold Your Position and Handle Fast Balls"
+    },
+    "titleEn": "Pickleball Volley Technique: Hold Your Position and Handle Fast Balls",
+    "titleVi": "Kỹ thuật volley pickleball: giữ vị trí, xử lý bóng nhanh",
+    "metaTitleEn": "Pickleball Volley Technique: Ready Position & Fast Hands",
+    "metaTitleVi": "Kỹ thuật volley pickleball gần lưới",
+    "metaDescriptionEn": "Learn the pickleball volley: ready position, compact contact, paddle-face control, block vs dink volley, a 4-step drill plan and the 7-ft kitchen rule.",
+    "metaDescriptionVi": "Cách volley pickleball: tư thế sẵn sàng, chạm bóng gọn, kiểm soát mặt vợt, chặn hay bỏ nhỏ và luật Kitchen 7 feet."
+  },
+  {
+    "slug": "rate-las-vegas-open-2026-results",
+    "publishedDate": "2026-10-01",
+    "updatedDate": "2026-10-21",
+    "author": "The PickleHub Team",
+    "tags": [
+      "ppa tour",
+      "las vegas open",
+      "results",
+      "anna leigh waters",
+      "vietnam",
+      "2026"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/rate-las-vegas-open-2026-results-hero.webp",
+      "alt": "Rate Las Vegas Open 2026 results at Darling Tennis Center"
+    },
+    "titleEn": "Rate Las Vegas Open 2026 Results: Final Results, Vietnamese Players",
+    "titleVi": "Kết quả Rate Las Vegas Open 2026: kết quả chung cuộc, tay vợt Việt Nam",
+    "metaTitleEn": "Rate Las Vegas Open 2026 Results (Final)",
+    "metaTitleVi": "Kết quả chung cuộc Las Vegas Open 2026",
+    "metaDescriptionEn": "Final Rate Las Vegas Open 2026 results: five champions. Anna Leigh Waters won women's doubles, one short of title 200.",
+    "metaDescriptionVi": "Kết quả chung cuộc PPA Las Vegas Open 2026. Anna Leigh Waters vô địch đôi nữ, thua đôi nam nữ, chưa cán mốc 200."
+  },
+  {
+    "slug": "pickleball-lob-technique",
+    "publishedDate": "2026-10-01",
+    "updatedDate": "2026-10-01",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball lob",
+      "lob technique",
+      "pickleball technique",
+      "kitchen",
+      "doubles strategy",
+      "shot selection",
+      "pickleball drills"
+    ],
+    "ctaPath": "/tim-ban-choi",
+    "ctaLabel": {
+      "en": "Find a partner to practise lobs",
+      "vi": "Tìm bạn tập cú lob"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-lob-technique-hero.webp",
+      "alt": "Pickleball Lob Technique: When, How High and Where to Aim"
+    },
+    "titleEn": "Pickleball Lob Technique: When, How High and Where to Aim",
+    "titleVi": "Kỹ thuật đánh bóng bổng pickleball: chọn thời điểm, độ cao và hướng",
+    "metaTitleEn": "Pickleball Lob Technique: Timing, Height and Direction",
+    "metaTitleVi": "Kỹ thuật đánh bóng bổng pickleball (lob)",
+    "metaDescriptionEn": "Learn when to hit a pickleball lob, how deep and high to aim, which direction to choose, and the common mistakes that set up an overhead smash.",
+    "metaDescriptionVi": "Cách đánh lob pickleball: chọn thời điểm, độ cao, độ sâu, hướng bóng và tránh bị đập trả."
+  },
+  {
+    "slug": "rate-las-vegas-open-2026-schedule",
+    "publishedDate": "2026-09-30",
+    "updatedDate": "2026-10-01",
+    "author": "The PickleHub Team",
+    "tags": [
+      "ppa tour",
+      "las vegas open",
+      "schedule",
+      "anna leigh waters",
+      "quang duong",
+      "2026"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/rate-las-vegas-open-2026-schedule-hero.webp",
+      "alt": "Rate Las Vegas Open 2026 pro women's doubles at Darling Tennis Center"
+    },
+    "titleEn": "Rate Las Vegas Open 2026: Schedule in Vietnam Time, How to Watch, Storylines",
+    "titleVi": "Rate Las Vegas Open 2026: lịch thi đấu giờ Việt Nam, kênh xem và VĐV gốc Việt",
+    "metaTitleEn": "Rate Las Vegas Open 2026: Schedule & How to Watch",
+    "metaTitleVi": "Lịch thi đấu PPA Las Vegas Open 2026 theo giờ VN",
+    "metaDescriptionEn": "Rate Las Vegas Open 2026 (Sept 28–Oct 4, Darling Tennis Center): every round in Las Vegas and Vietnam time, TV, Anna Leigh Waters' 200th title chase.",
+    "metaDescriptionVi": "Lịch thi đấu Rate Las Vegas Open 2026 (28/9–4/10) theo giờ Việt Nam, kênh xem, Anna Leigh Waters săn danh hiệu 200 và tin Quang Dương."
+  },
+  {
+    "slug": "hong-kong-slam-2026-schedule",
+    "publishedDate": "2026-09-30",
+    "updatedDate": "2026-09-30",
+    "author": "The PickleHub Team",
+    "tags": [
+      "hong kong slam",
+      "ppa tour asia",
+      "schedule",
+      "kai tak arena",
+      "vietnam",
+      "2026"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/hong-kong-slam-2026-preview-hero.webp",
+      "alt": "Hong Kong Slam 2026 schedule at Kai Tak Arena"
+    },
+    "titleEn": "Hong Kong Slam 2026 Schedule: Every Round, Hong Kong and Vietnam Time",
+    "titleVi": "Lịch thi đấu Hong Kong Slam 2026: từng vòng, giờ Việt Nam",
+    "metaTitleEn": "Hong Kong Slam 2026 Schedule (Oct 19–25): Day by Day",
+    "metaTitleVi": "Lịch thi đấu Hong Kong Slam 2026 (19–25/10), giờ VN",
+    "metaDescriptionEn": "Hong Kong Slam 2026 schedule at Kai Tak Arena, October 19–25: every round by day in Hong Kong and Vietnam time, confirmed stars and Vietnamese players.",
+    "metaDescriptionVi": "Lịch thi đấu Hong Kong Slam 2026 tại Kai Tak Arena 19–25/10: từng vòng theo ngày, giờ Việt Nam, sao thế giới và VĐV Việt Nam."
+  },
+  {
+    "slug": "pickleball-courts-vung-tau-2026",
+    "publishedDate": "2026-09-29",
+    "updatedDate": "2026-10-13",
+    "author": "The PickleHub Team",
+    "tags": [
+      "vung tau",
+      "ba ria vung tau",
+      "pickleball courts",
+      "court finder",
+      "vietnam pickleball",
+      "pickleball clubs",
+      "travel pickleball",
+      "bracket lab"
+    ],
+    "ctaPath": "/san/khu-vuc/vung-tau",
+    "ctaLabel": {
+      "en": "Browse Vung Tau courts",
+      "vi": "Xem sân pickleball Vũng Tàu"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-courts-vung-tau-2026-hero.webp",
+      "alt": "Pickleball Courts in Vung Tau 2026: 13 Venues, Addresses, Phone Numbers and Prices"
+    },
+    "titleEn": "Pickleball Courts in Vung Tau 2026: 13 Venues, Addresses, Phone Numbers and Prices",
+    "titleVi": "Sân pickleball Vũng Tàu 2026: 13 sân, địa chỉ, điện thoại và giá thuê",
+    "metaTitleEn": "Pickleball Courts in Vung Tau 2026: 13 Venues & Prices",
+    "metaTitleVi": "Sân pickleball Vũng Tàu 2026: 13 sân và giá thuê",
+    "metaDescriptionEn": "ThePickleHub lists 13 pickleball venues in Vung Tau as of October 2026: addresses, phones and confirmed rates from 100,000 VND/hour.",
+    "metaDescriptionVi": "13 sân pickleball Vũng Tàu trên ThePickleHub (10/2026): địa chỉ, điện thoại, giá đã xác nhận từ 100.000đ/giờ."
+  },
+  {
+    "slug": "pickleball-courts-vietnam-guide-2026",
+    "publishedDate": "2026-09-29",
+    "updatedDate": "2026-10-13",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball courts",
+      "vietnam pickleball",
+      "court directory",
+      "pickleball clubs",
+      "community events",
+      "bracket lab",
+      "dupr",
+      "hanoi",
+      "quang ngai"
+    ],
+    "ctaPath": "/san",
+    "ctaLabel": {
+      "en": "Browse the court directory",
+      "vi": "Xem danh bạ sân pickleball"
+    },
+    "titleEn": "Pickleball Courts in Vietnam 2026: 821 Venues in 84 Cities",
+    "titleVi": "Sân pickleball tại Việt Nam 2026: 821 sân ở 84 thành phố",
+    "metaTitleEn": "Pickleball Courts in Vietnam 2026: 821 Venues",
+    "metaTitleVi": "Sân pickleball Việt Nam 2026: 821 sân",
+    "metaDescriptionEn": "ThePickleHub lists 821 pickleball venues in 84 Vietnamese cities as of October 2026: venues per city and confirmed hourly rates.",
+    "metaDescriptionVi": "ThePickleHub ghi nhận 821 sân pickleball tại 84 thành phố (10/2026): số sân từng nơi, giá đã xác nhận."
+  },
+  {
+    "slug": "pickleball-courts-dong-nai-2026",
+    "publishedDate": "2026-09-28",
+    "updatedDate": "2026-10-13",
+    "author": "The PickleHub Team",
+    "tags": [
+      "dong nai",
+      "bien hoa",
+      "pickleball courts",
+      "court directory",
+      "vietnam pickleball",
+      "pickleball clubs",
+      "bracket lab",
+      "dupr"
+    ],
+    "ctaPath": "/san/khu-vuc/bien-hoa",
+    "ctaLabel": {
+      "en": "See Bien Hoa courts",
+      "vi": "Xem sân pickleball Biên Hòa"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-courts-dong-nai-2026-hero.webp",
+      "alt": "Pickleball Courts in Dong Nai 2026: 8 Venues, Addresses, Phone Numbers and Prices"
+    },
+    "titleEn": "Pickleball Courts in Dong Nai 2026: 8 Venues, Addresses, Phone Numbers and Prices",
+    "titleVi": "Sân pickleball Đồng Nai 2026: 8 sân, địa chỉ, điện thoại và giá thuê",
+    "metaTitleEn": "Pickleball Courts in Dong Nai 2026: 8 Venues & Prices",
+    "metaTitleVi": "Sân pickleball Đồng Nai 2026: 8 sân và giá thuê",
+    "metaDescriptionEn": "ThePickleHub lists 8 pickleball venues in Dong Nai as of October 2026: addresses, phones and confirmed rates from 100,000 VND/hour.",
+    "metaDescriptionVi": "8 sân pickleball Đồng Nai trên ThePickleHub (10/2026): địa chỉ, điện thoại, giá đã xác nhận từ 100.000đ/giờ."
+  },
+  {
+    "slug": "graphite-vs-carbon-pickleball-paddle",
+    "publishedDate": "2026-09-28",
+    "updatedDate": "2026-09-28",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball paddles",
+      "graphite paddle",
+      "carbon fiber paddle",
+      "raw carbon",
+      "paddle buying guide",
+      "pickleball equipment",
+      "spin"
+    ],
+    "ctaPath": "/san",
+    "ctaLabel": {
+      "en": "Find a pickleball court near you",
+      "vi": "Tìm sân pickleball gần bạn"
+    },
+    "heroImage": {
+      "src": "/images/blog/graphite-vs-carbon-pickleball-paddle-hero.webp",
+      "alt": "Graphite vs Carbon Fiber Pickleball Paddles in 2026: Which Should You Choose?"
+    },
+    "titleEn": "Graphite vs Carbon Fiber Pickleball Paddles in 2026: Which Should You Choose?",
+    "titleVi": "Vợt pickleball graphite hay carbon: Khác biệt nào đáng chọn?",
+    "metaTitleEn": "Graphite vs Carbon Pickleball Paddles (2026): Which to Buy",
+    "metaTitleVi": "Vợt pickleball graphite hay carbon: chọn loại nào?",
+    "metaDescriptionEn": "Graphite vs carbon fiber pickleball paddles in 2026: spin, power, control, durability and price ($80–150 vs $150–250+), plus who should buy each.",
+    "metaDescriptionVi": "So sánh vợt pickleball graphite và carbon: lực, xoáy, kiểm soát, độ bền, giá 2026 và cách chọn theo trình độ."
+  },
+  {
+    "slug": "pickleball-courts-nha-trang-2026",
+    "publishedDate": "2026-09-28",
+    "updatedDate": "2026-10-13",
+    "author": "The PickleHub Team",
+    "tags": [
+      "nha trang",
+      "khanh hoa",
+      "pickleball courts",
+      "court finder",
+      "vietnam pickleball",
+      "pickleball clubs",
+      "travel pickleball"
+    ],
+    "ctaPath": "/san/khu-vuc/nha-trang",
+    "ctaLabel": {
+      "en": "Browse Nha Trang courts",
+      "vi": "Xem sân pickleball Nha Trang"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-courts-nha-trang-2026-hero.webp",
+      "alt": "Pickleball Courts in Nha Trang 2026: 9 Venues, Addresses, Phone Numbers and Prices"
+    },
+    "titleEn": "Pickleball Courts in Nha Trang 2026: 9 Venues, Addresses, Phone Numbers and Prices",
+    "titleVi": "Sân pickleball Nha Trang 2026: 9 sân, địa chỉ, điện thoại và giá thuê",
+    "metaTitleEn": "Pickleball Courts in Nha Trang 2026: 9 Venues & Prices",
+    "metaTitleVi": "Sân pickleball Nha Trang 2026: 9 sân và giá thuê",
+    "metaDescriptionEn": "ThePickleHub lists 9 pickleball venues in Nha Trang as of October 2026: addresses, phones and confirmed rates from 20,000 VND/hour.",
+    "metaDescriptionVi": "9 sân pickleball Nha Trang trên ThePickleHub (10/2026): địa chỉ, điện thoại, giá đã xác nhận từ 20.000đ/giờ."
+  },
+  {
+    "slug": "pickleball-courts-binh-duong-2026",
+    "publishedDate": "2026-09-28",
+    "updatedDate": "2026-10-13",
+    "author": "The PickleHub Team",
+    "tags": [
+      "binh duong",
+      "pickleball courts",
+      "court directory",
+      "di an",
+      "vietnam",
+      "venue guide"
+    ],
+    "ctaPath": "/san/khu-vuc/binh-duong",
+    "ctaLabel": {
+      "en": "See Binh Duong courts",
+      "vi": "Xem sân pickleball Bình Dương"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-courts-binh-duong-2026-hero.webp",
+      "alt": "Pickleball Courts in Binh Duong 2026: 12 Venues, Addresses, Phone Numbers and Prices"
+    },
+    "titleEn": "Pickleball Courts in Binh Duong 2026: 12 Venues, Addresses, Phone Numbers and Prices",
+    "titleVi": "Sân pickleball Bình Dương 2026: 12 sân, địa chỉ, điện thoại và giá thuê",
+    "metaTitleEn": "Pickleball Courts in Binh Duong 2026: 12 Venues & Prices",
+    "metaTitleVi": "Sân pickleball Bình Dương 2026: 12 sân và giá thuê",
+    "metaDescriptionEn": "ThePickleHub lists 12 pickleball venues in Binh Duong as of October 2026: addresses, phones and confirmed rates from 100,000 VND/hour.",
+    "metaDescriptionVi": "12 sân pickleball Bình Dương trên ThePickleHub (10/2026): địa chỉ, điện thoại, giá đã xác nhận từ 100.000đ/giờ."
+  },
+  {
+    "slug": "pickleball-courts-hai-phong-2026",
+    "publishedDate": "2026-09-28",
+    "updatedDate": "2026-10-13",
+    "author": "The PickleHub Team",
+    "tags": [
+      "hai phong",
+      "pickleball courts",
+      "vietnam",
+      "venue guide",
+      "find players",
+      "community events",
+      "bracket lab"
+    ],
+    "ctaPath": "/san/khu-vuc/hai-phong",
+    "ctaLabel": {
+      "en": "See Hai Phong courts",
+      "vi": "Xem các sân pickleball Hải Phòng"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-courts-hai-phong-2026-hero.webp",
+      "alt": "Pickleball Courts in Hai Phong 2026: 10 Venues, Addresses, Phone Numbers and Prices"
+    },
+    "titleEn": "Pickleball Courts in Hai Phong 2026: 10 Venues, Addresses, Phone Numbers and Prices",
+    "titleVi": "Sân pickleball Hải Phòng 2026: 10 sân, địa chỉ, điện thoại và giá thuê",
+    "metaTitleEn": "Pickleball Courts in Hai Phong 2026: 10 Venues & Prices",
+    "metaTitleVi": "Sân pickleball Hải Phòng 2026: 10 sân và giá thuê",
+    "metaDescriptionEn": "ThePickleHub lists 10 pickleball venues in Hai Phong as of October 2026: addresses, phones and confirmed rates from 60,000 VND/hour.",
+    "metaDescriptionVi": "10 sân pickleball Hải Phòng trên ThePickleHub (10/2026): địa chỉ, điện thoại, giá đã xác nhận từ 60.000đ/giờ."
+  },
+  {
+    "slug": "pickleball-courts-can-tho-2026",
+    "publishedDate": "2026-09-25",
+    "updatedDate": "2026-10-13",
+    "author": "The PickleHub Team",
+    "tags": [
+      "can tho",
+      "pickleball courts",
+      "court rental prices",
+      "vietnam",
+      "venue guide"
+    ],
+    "ctaPath": "/san/khu-vuc/can-tho",
+    "ctaLabel": {
+      "en": "See all Can Tho courts",
+      "vi": "Xem các sân pickleball Cần Thơ"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-courts-can-tho-2026-hero.webp",
+      "alt": "Pickleball Courts in Can Tho 2026: 10 Venues, Addresses, Phone Numbers and Prices"
+    },
+    "titleEn": "Pickleball Courts in Can Tho 2026: 10 Venues, Addresses, Phone Numbers and Prices",
+    "titleVi": "Sân pickleball Cần Thơ 2026: 10 sân, địa chỉ, điện thoại và giá thuê",
+    "metaTitleEn": "Pickleball Courts in Can Tho 2026: 10 Venues & Prices",
+    "metaTitleVi": "Sân pickleball Cần Thơ 2026: 10 sân và giá thuê",
+    "metaDescriptionEn": "ThePickleHub lists 10 pickleball venues in Can Tho as of October 2026: addresses, phones and confirmed rates from 90,000 VND/hour.",
+    "metaDescriptionVi": "10 sân pickleball Cần Thơ trên ThePickleHub (10/2026): địa chỉ, điện thoại, giá đã xác nhận từ 90.000đ/giờ."
+  },
+  {
+    slug: "ppa-tour-europe-2026-27-schedule",
+    publishedDate: "2026-09-10",
+    updatedDate: "2026-09-10",
+    author: "The PickleHub Team",
+    tags: [
+      "ppa tour europe",
+      "ppa tour europe 2026",
+      "ppa spain",
+      "pickleball europe",
+      "ppa tour europe schedule",
+      "pickleball barcelona",
+      "lich thi dau ppa tour europe",
+    ],
+    ctaPath: "/tournaments",
+    ctaLabel: {
+      en: "See the full 2026 pro tournament calendar",
+      vi: "Xem lịch giải chuyên nghiệp 2026 đầy đủ",
+    },
+    heroImage: {
+      src: "/images/blog/ppa-tour-europe-2026-27-schedule-hero.webp",
+      alt:
+        "Leapmotor-blue outdoor pickleball court at sunset overlooking Barcelona, the net across the foreground and rows of empty navy spectator seats along the far side, with the city skyline and the spires of the Sagrada Familia silhouetted against an orange sky, overlaid with the tournament lockup reading \"PPA Pickleball Tour Europe · 2026-2027 Season · 20 PPA events across Europe\".",
+    },
+    titleEn:
+      "PPA Tour Europe 2026-27: Every Confirmed Date, and Everything Still Unannounced",
+    titleVi:
+      "PPA Tour Europe 2026-27: những mốc đã chốt, và tất cả những gì còn bỏ trống",
+    metaTitleEn: "PPA Tour Europe 2026-27: Schedule and What's Still TBA",
+    metaTitleVi: "PPA Tour Europe 2026-27: lịch và phần còn TBA",
+    metaDescriptionEn:
+      "PPA Tour Europe 2026-27: 20 events, 9 countries, EUR 545,000. Only two dates are published - Barcelona Sep 23-27, 2026 and May 5-9, 2027. The full picture.",
+    metaDescriptionVi:
+      "PPA Tour Europe 2026-27: 20 chặng, 9 nước, 545.000 EUR. Mới 2 mốc có ngày — Barcelona 23-27/9/2026 và 5-9/5/2027. Toàn cảnh đầy đủ.",
+  },
+  {
+    slug: "kuala-lumpur-cup-2026-results",
+    publishedDate: "2026-09-09",
+    updatedDate: "2026-09-10",
+    author: "Cuong Nguyen",
+    tags: [
+      "ket qua kuala lumpur cup 2026",
+      "kuala lumpur cup 2026 results",
+      "ppa asia 1000",
+      "ppa tour asia",
+      "leapmotor kuala lumpur cup",
+      "ho tam",
+      "pickleball malaysia 2026",
+    ],
+    ctaPath: "/live/pro/ppa-asia-1000-leapmotor-kuala-lumpur-cup-2026",
+    ctaLabel: {
+      en: "Follow live Pro results on ThePickleHub",
+      vi: "Theo dõi kết quả Pro trực tiếp trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/kuala-lumpur-cup-2026-results-hero.webp",
+      alt: "Leapmotor Kuala Lumpur Cup 2026 results — an empty floodlit indoor pickleball court seen from the stands, blue playing surface and net with a blank dark screen behind the far baseline and empty navy seating either side, overlaid with the PPA Asia 1000 tournament badge, the dates September 9 to 13 at The Hood, Kuala Lumpur, and the words RESULTS · KẾT QUẢ",
+    },
+    titleEn: "Kuala Lumpur Cup 2026 Results: Every Pro Match, Day by Day",
+    titleVi: "Kết quả Kuala Lumpur Cup 2026: từng trận Pro, từng ngày",
+    metaTitleEn: "Kuala Lumpur Cup 2026 Results: Every Pro Match",
+    metaTitleVi: "Kết quả Kuala Lumpur Cup 2026 (9–13/9)",
+    metaDescriptionEn:
+      "Leapmotor Kuala Lumpur Cup 2026 results, Sep 9-13 at The Hood, Kuala Lumpur: every Pro draw as it lands, Ho Tam seeded 8th, finals Sunday Sep 13.",
+    metaDescriptionVi:
+      "Kết quả Kuala Lumpur Cup 2026 (9–13/9) cập nhật liên tục: mọi nhánh Pro, Hồ Tâm hạt giống 8, chung kết 13/9 12:00 giờ VN.",
+  },
+  {
+    slug: "kuala-lumpur-cup-2026-preview",
+    publishedDate: "2026-09-08",
+    updatedDate: "2026-09-09",
+    author: "The PickleHub Team",
+    tags: [
+      "kuala lumpur cup 2026",
+      "leapmotor kuala lumpur cup",
+      "ppa tour asia",
+      "ppa asia 1000",
+      "pickleball malaysia",
+      "lich thi dau ppa tour asia",
+      "ho tam pickleball",
+    ],
+    ctaPath: "/live",
+    ctaLabel: {
+      en: "Follow live scores on ThePickleHub",
+      vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/kuala-lumpur-cup-2026-preview-hero.webp",
+      alt:
+        "Leapmotor Kuala Lumpur Cup 2026 banner — a rooftop pickleball court at blue hour with a paddle and a yellow ball on the teal-blue surface, the floodlit Kuala Lumpur skyline and Petronas Twin Towers behind, and the tournament lockup reading \"PPA Asia 1000 · Leapmotor Kuala Lumpur Cup 2026 · September 9-13 · The Hood, Kuala Lumpur, Malaysia\".",
+    },
+    titleEn: "Leapmotor Kuala Lumpur Cup 2026: Schedule, Seeds, Prize Money and How to Watch",
+    titleVi: "Leapmotor Kuala Lumpur Cup 2026: lịch thi đấu, hạt giống, tiền thưởng và cách xem",
+    metaTitleEn: "Leapmotor KL Cup 2026: Schedule, Seeds, Prize Money",
+    metaTitleVi: "KL Cup 2026 (9–13/9): lịch thi đấu, cách xem",
+    metaDescriptionEn: "Leapmotor Kuala Lumpur Cup 2026, Sep 9-13 at The Hood, KL: US$300,000, 1000 points, day-by-day schedule, every seed and where to watch.",
+    metaDescriptionVi: "Leapmotor Kuala Lumpur Cup 2026 (9–13/9): lịch thi đấu theo giờ Việt Nam, 300.000 USD, Hồ Tâm hạt giống số 8, và cách xem trực tiếp.",
+  },
+  {
+    slug: "pickleball-world-cup-2026-da-nang-from-the-stands",
+    publishedDate: "2026-09-07",
+    updatedDate: "2026-09-07",
+    author: "Cuong Nguyen",
+    tags: [
+      "pickleball world cup 2026",
+      "world cup pickleball da nang",
+      "pickleball da nang 2026",
+      "nhat ky pickleball world cup",
+      "heineken pickleball world cup",
+      "cong dong pickleball viet nam",
+      "pickleball viet nam",
+    ],
+    ctaPath: "/vi/blog/ket-qua-pickleball-world-cup-2026-da-nang",
+    ctaLabel: {
+      en: "See every result from Da Nang 2026",
+      vi: "Xem toàn bộ kết quả Đà Nẵng 2026",
+    },
+    heroImage: {
+      src: "/images/blog/wc-2026-from-the-stands-hero.webp",
+      alt: "Stands at Tien Son Sports Palace during the Pickleball World Cup 2026 in Da Nang, Vietnam: teams applauding courtside beneath the Heineken boards, a Vietnamese flag in the upper tier, photographers working the near court.",
+    },
+    titleEn: "Pickleball World Cup 2026 in Da Nang, From the Stands",
+    titleVi: "Nhật ký Pickleball World Cup 2026 Đà Nẵng: tôi đã ở đó",
+    metaTitleEn: "Pickleball World Cup 2026 Da Nang: A Week in the Stands",
+    metaTitleVi: "World Cup Pickleball 2026 Đà Nẵng nhìn từ khán đài",
+    metaDescriptionEn:
+      "Pickleball World Cup 2026 in Da Nang, Aug 30 - Sep 6: what the week was actually like from the stands - the arena, the city, the organizers, the people.",
+    metaDescriptionVi:
+      "Pickleball World Cup 2026 Đà Nẵng (30/8–6/9) nhìn từ khán đài: không khí nhà thi đấu, ban tổ chức và con người Đà Nẵng.",
+  },
+  {
+    slug: "pickleball-world-cup-2026-da-nang-results",
+    publishedDate: "2026-08-31",
+    updatedDate: "2026-09-08",
+    author: "Cuong Nguyen",
+    tags: [
+      "ket qua pickleball world cup 2026",
+      "pickleball world cup 2026 results",
+      "world cup pickleball da nang",
+      "heineken pickleball world cup",
+      "pickleball da nang 2026",
+      "doi tuyen pickleball viet nam",
+      "pro singles pickleball",
+    ],
+    ctaPath: "/live",
+    ctaLabel: {
+      en: "Follow the World Cup live on ThePickleHub",
+      vi: "Theo dõi World Cup trực tiếp trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/pickleball-world-cup-2026-da-nang-results-hero.webp",
+      alt: "Illustration: a courtside results board glows beside a blue championship court at the Pickleball World Cup 2026 in Da Nang, Vietnam, as a player walks past carrying a paddle.",
+    },
+    titleEn: "Pickleball World Cup 2026 Da Nang Results: Every Final and Every Pro Match",
+    titleVi: "Kết quả Pickleball World Cup 2026 Đà Nẵng: toàn bộ chung kết, mọi trận Pro",
+    metaTitleEn: "Pickleball World Cup 2026 Results: Every Pro Match",
+    metaTitleVi: "Kết quả Pickleball World Cup 2026 Đà Nẵng",
+    metaDescriptionEn:
+      "Pickleball World Cup 2026 Da Nang results: Ly Hoang Nam wins men's singles, USA beat Vietnam 4-0 in the Open team final. Every Pro match, game by game.",
+    metaDescriptionVi:
+      "Kết quả Pickleball World Cup 2026 Đà Nẵng: Lý Hoàng Nam vô địch đơn nam, Mỹ thắng Việt Nam 4-0 chung kết Đồng đội Open.",
+  },
+  {
+    slug: "pickleball-world-cup-2026-mens-pro-doubles-field",
+    publishedDate: "2026-08-26",
+    updatedDate: "2026-09-07",
+    author: "Cuong Nguyen",
+    tags: [
+      "pickleball world cup 2026",
+      "men's pro doubles",
+      "doi nam chuyen nghiep",
+      "jack munro",
+      "quang duong",
+      "jay devilliers",
+      "world cup pickleball da nang",
+      "heineken pickleball world cup",
+    ],
+    ctaPath: "/live",
+    ctaLabel: {
+      en: "Follow the World Cup live on ThePickleHub",
+      vi: "Theo dõi World Cup trực tiếp trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/pickleball-world-cup-2026-mens-pro-doubles-field-hero.webp",
+      alt: "Official bracket cards for Men's Pro Doubles at the Heineken Pickleball World Cup 2026 in Da Nang, showing six pairs with their DUPR ratings: Jay Devilliers 6.599 and Emilien Burnel 5.666; Richard Livornese Jr 6.187 and Jack Munro 6.323; Max Manthou 6.281 and Trinh Linh Giang 5.566; Duong Thien Quang 6.258 and Harsh Mehta 5.921; Zack Marceau 5.629 and Ronan Camron 6.125; Brandon Lane 5.994 and Ryler DeHeart 6.03.",
+    },
+    titleEn:
+      "Pickleball World Cup 2026 Men's Pro Doubles: The Final Field, Ranked by Combined DUPR",
+    titleVi:
+      "Đôi nam chuyên nghiệp Pickleball World Cup 2026: danh sách đã chốt, xếp theo tổng DUPR",
+    metaTitleEn: "World Cup 2026 Men's Pro Doubles: Field Ranked by DUPR",
+    metaTitleVi: "Đôi nam pro World Cup 2026: xếp theo DUPR",
+    metaDescriptionEn:
+      "Men's Pro Doubles at the Pickleball World Cup 2026 Da Nang: Livornese Jr and Munro won it. The full field ranked by combined DUPR, every pair broken down.",
+    metaDescriptionVi:
+      "Đôi nam pro World Cup Pickleball 2026 Đà Nẵng đấu thứ Ba 1/9. Danh sách chốt, xếp theo tổng DUPR.",
+  },
+  {
+    slug: "pickleball-group-draw-schedule-guide",
+    publishedDate: "2026-08-26",
+    updatedDate: "2026-08-26",
+    author: "Cuong Nguyen",
+    tags: [
+      "chia bảng pickleball",
+      "xếp lịch thi đấu pickleball",
+      "vòng tròn pickleball",
+      "chia bảng đấu",
+      "lịch thi đấu vòng tròn",
+      "công cụ chia bảng",
+      "group draw",
+      "round robin schedule",
+    ],
+    ctaPath: "/tools",
+    ctaLabel: {
+      en: "Generate your bracket free — no signup",
+      vi: "Chia bảng & tạo lịch miễn phí — không cần đăng ký",
+    },
+    heroImage: {
+      src: "/images/blog/pickleball-group-draw-schedule-guide-hero.webp",
+      alt: "Top-down view of a pickleball tournament organizer setup: a clipboard with a five-team round-robin rotation diagram and schedule grid next to a blue pickleball court with two paddles, balls and a whistle.",
+    },
+    titleEn:
+      "Pickleball Group Draws & Round Robin Schedules: 4–10 Teams, Odd Counts, Limited Courts",
+    titleVi:
+      "Cách chia bảng & xếp lịch thi đấu pickleball: vòng tròn 4–10 đội, kèm công cụ miễn phí",
+    metaTitleEn: "Pickleball Group Draw & Round Robin Schedule Guide",
+    metaTitleVi: "Cách chia bảng & xếp lịch thi đấu pickleball",
+    metaDescriptionEn:
+      "How to split pickleball teams into groups and schedule a round robin — 5-team rotations, court-limited scheduling, tiebreakers, and a free generator.",
+    metaDescriptionVi:
+      "Cách chia bảng pickleball, xếp lịch vòng tròn 5 đội, luật tính hạng khi bằng điểm — kèm công cụ miễn phí.",
+  },
+  {
+    slug: "pickleball-world-cup-2026-da-nang-schedule",
+    publishedDate: "2026-08-24",
+    updatedDate: "2026-09-07",
+    author: "Cuong Nguyen",
+    tags: [
+      "lịch thi đấu world cup pickleball",
+      "pickleball world cup 2026",
+      "world cup pickleball da nang",
+      "lich thi dau pickleball",
+      "doi tuyen pickleball viet nam",
+      "pickleball da nang 2026",
+      "heineken pickleball world cup",
+    ],
+    ctaPath: "/live",
+    ctaLabel: {
+      en: "Follow the World Cup live on ThePickleHub",
+      vi: "Theo dõi World Cup trực tiếp trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/pickleball-world-cup-2026-da-nang-schedule-hero.webp",
+      alt: "Tournament schedule graphic for the Pickleball World Cup 2026 in Da Nang, Vietnam, August 30 to September 6 — two Vietnamese players at the net on a blue court with the Dragon Bridge and a Vietnamese flag behind them, and a timeline of four dates: Aug 30 tournament begins, Sep 2 opening ceremony, Sep 3 team events, Sep 6 championship finals.",
+    },
+    titleEn:
+      "Pickleball World Cup 2026 Da Nang Schedule: Every Date, Both Tournaments",
+    titleVi:
+      "Lịch thi đấu Pickleball World Cup 2026 Đà Nẵng: đủ hai giải, từng ngày",
+    metaTitleEn: "Pickleball World Cup 2026 Schedule: Times & Finals Sep 6",
+    metaTitleVi: "Lịch thi đấu World Cup Pickleball 2026 Đà Nẵng",
+    metaDescriptionEn:
+      "Full Pickleball World Cup 2026 Da Nang schedule: day-by-day match times, national team ties Sep 3-6, Vietnam's route, and Sunday's finals lineup.",
+    metaDescriptionVi:
+      "Lịch thi đấu World Cup Pickleball 2026 Đà Nẵng: Cá nhân từ 30/8, Đồng đội 3-6/9, Việt Nam đấu ngày nào và ở sân nào.",
+  },
+  {
+    slug: "sophia-huynh-ken-tam-womens-doubles-gold-2026",
+    publishedDate: "2026-08-24",
+    updatedDate: "2026-08-24",
+    author: "Cuong Nguyen",
+    tags: [
+      "sophia nhi huynh",
+      "sophia huynh tran",
+      "ken tam pickleball",
+      "ho thi truc tam",
+      "vietnam women pickleball",
+      "ppa tour asia",
+      "shenzhen open 2026",
+      "womens doubles gold",
+    ],
+    ctaPath: "/live",
+    ctaLabel: {
+      en: "Follow Vietnamese players live on ThePickleHub",
+      vi: "Theo dõi tay vợt Việt Nam trực tiếp trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/sophia-huynh-ken-tam-womens-doubles-gold-2026-hero.webp",
+      alt: "Championship graphic for Sophia Huynh Tran and Ken Tam winning Women's Doubles gold at the Shenzhen Open 2026 — the two Vietnamese players raising a gold trophy engraved Shenzhen Open 2026 Women's Doubles Champion, with the Vietnamese flag behind them, the Vietnamese headline \"HCV doi nu dau tien\" and the final score 11-9, 3-11, 11-6.",
+    },
+    titleEn:
+      "Sophia Nhi Huynh and Ken Tam Win Vietnam's First PPA Tour Asia Women's Doubles Gold",
+    titleVi:
+      "Sophia Huỳnh Trần và Ken Tâm vô địch đôi nữ Thâm Quyến: HCV đôi nữ đầu tiên của Việt Nam ở PPA Tour Asia",
+    metaTitleEn: "Huynh & Ken Tam Win Vietnam's First WD Gold",
+    metaTitleVi: "Huỳnh & Ken Tâm vô địch đôi nữ Thâm Quyến",
+    metaDescriptionEn:
+      "Sophia Nhi Huynh and Ken Tam beat Kong and Turulja 11-9, 3-11, 11-6 for Women's Doubles gold at the Shenzhen Open 2026. The final, the run, and who they are.",
+    metaDescriptionVi:
+      "Sophia Huỳnh Trần và Ken Tâm vô địch đôi nữ Shenzhen Open 2026 (11-9, 3-11, 11-6). Trận chung kết, đường vào CK và chân dung hai VĐV.",
+  },
+  {
+    slug: "hien-truong-quan-do-vietnam-pickleball-2026",
+    publishedDate: "2026-08-20",
+    updatedDate: "2026-08-20",
+    author: "Cuong Nguyen",
+    tags: [
+      "hien truong pickleball",
+      "truong vinh hien",
+      "quan do pickleball",
+      "do minh quan",
+      "vietnam pickleball team",
+      "ppa tour asia",
+      "pickleball world cup 2026",
+    ],
+    ctaPath: "/live",
+    ctaLabel: {
+      en: "Follow Vietnamese players live on ThePickleHub",
+      vi: "Theo dõi tay vợt Việt Nam trực tiếp trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/hien-truong-quan-do-vietnam-pickleball-2026-hero.webp",
+      alt: "Vietnam's Golden Pair promo graphic for Hien Truong and Quan Do — two Vietnamese men's pickleball players in front of a Vietnamese flag, one holding a paddle and one holding a PPA Tour Asia men's doubles champion trophy, beside three gold trophies labelled Hangzhou 2025, Beijing 2026 and Ho Chi Minh City 2026, the Ho Chi Minh City final score 11-13, 11-6, 11-4, and a Da Nang 2026 World Cup at home panel.",
+    },
+    titleEn:
+      "Hien Truong and Quan Do: Inside Vietnam's Most Successful Pickleball Partnership",
+    titleVi:
+      "Trương Vinh Hiển và Đỗ Minh Quân: hồ sơ cặp đôi thành công nhất pickleball Việt Nam",
+    metaTitleEn: "Hien Truong & Quan Do: Vietnam's Top Pickleball Pair",
+    metaTitleVi: "Trương Vinh Hiển & Đỗ Minh Quân: hồ sơ 2026",
+    metaDescriptionEn:
+      "Hien Truong and Quan Do have three PPA Tour Asia men's doubles golds. Full record, singles breakthrough, and their split roles at the 2026 World Cup.",
+    metaDescriptionVi:
+      "Trương Vinh Hiển và Đỗ Minh Quân: 3 HCV đôi nam PPA Tour Asia, cú đột phá đơn nam và vai trò tại World Cup 2026 ở Đà Nẵng.",
+  },
+  {
+    slug: "mlp-2026-semifinals-new-york-preview",
+    publishedDate: "2026-08-19",
+    updatedDate: "2026-08-19",
+    author: "The PickleHub Team",
+    tags: [
+      "mlp 2026",
+      "mlp semifinals",
+      "major league pickleball",
+      "mlp finals new york",
+      "new jersey 5s",
+      "st louis shock",
+      "brooklyn pickleball team",
+      "dallas flash",
+      "alix truong",
+      "central park pickleball",
+    ],
+    ctaPath: "/live",
+    ctaLabel: {
+      en: "Follow live scores on ThePickleHub",
+      vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/mlp-2026-semifinals-new-york-preview-hero.webp",
+      alt: "MLP 2026 Semifinals promo graphic - two pickleball players at the net on a blue outdoor court in Central Park at sunset, with the Manhattan skyline and a full grandstand behind them, over the title MLP 2026 Semifinals, Central Park New York City, August 28-30 2026.",
+    },
+    titleEn:
+      "MLP 2026 Semifinals Preview: Four Teams Left, One Trophy, and Central Park",
+    titleVi:
+      "Bán kết MLP 2026 tại Central Park: 4 đội cuối cùng, lịch thi đấu và cách xem",
+    metaTitleEn: "MLP 2026 Semifinals: Matchups, Schedule & How to Watch",
+    metaTitleVi: "Bán kết MLP 2026: Lịch thi đấu và cách xem",
+    metaDescriptionEn:
+      "MLP 2026 semifinals in Central Park, Aug 28-30: New Jersey 5s vs Brooklyn, St. Louis Shock vs Dallas Flash. Rosters, format and how to watch.",
+    metaDescriptionVi:
+      "Bán kết MLP 2026 (28-30/8) tại Central Park, New York: New Jersey 5s gặp Brooklyn, St. Louis Shock gặp Dallas Flash. Lịch giờ Việt Nam.",
+  },
+  {
+    slug: "shenzhen-open-2026-preview",
+    publishedDate: "2026-08-18",
+    updatedDate: "2026-08-24",
+    author: "The PickleHub Team",
+    tags: [
+      "shenzhen open 2026",
+      "skechers shenzhen open",
+      "ppa tour asia",
+      "ppa asia 500",
+      "pickleball china",
+      "shenzhen pickleball",
+      "ppa asia schedule",
+    ],
+    ctaPath: "/live",
+    ctaLabel: {
+      en: "Follow live scores on ThePickleHub",
+      vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/shenzhen-open-2026-preview-hero.webp",
+      alt: "Skechers Shenzhen Open 2026 preview graphic — PPA Asia 500 event banner over the Shenzhen skyline with two pickleball players at the net, listing August 20-23 2026 at Bao'an Sports Center Gymnasium, a US$70,000 prize pool and 500 PPA points.",
+    },
+    titleEn:
+      "Skechers Shenzhen Open 2026 Results: Huynh Wins Vietnam's First Women's Doubles Gold, Truong Takes Two Silvers",
+    titleVi:
+      "Kết quả Skechers Shenzhen Open 2026: Sophia Nhi Huỳnh vô địch đôi nữ, Trương Vinh Hiển 2 HCB",
+    // CTR-01 (2026-08-27) — EN meta only; body and updatedDate untouched
+    // because nothing in the article changed. GSC 28d for this URL: 903
+    // impressions, 22 clicks, and the single biggest query is "ppa shenzhen
+    // 2026" (91 impressions, position 8.6, zero clicks) with "ppa shenzhen",
+    // "shenzhen ppa" and "ppa tour shenzhen" behind it. The old title never
+    // said PPA, so the snippet did not visibly answer the query it ranked
+    // for. The VI twin (shenzhen-open-2026-lich-thi-dau-cach-xem) converts at
+    // 19.7% against this page's 2.44% from a comparable position.
+    metaTitleEn: "PPA Shenzhen Open 2026 Results: All Scores",
+    metaTitleVi: "Kết quả Shenzhen Open 2026: HCV đôi nữ cho Huỳnh",
+    metaDescriptionEn:
+      "PPA Shenzhen Open 2026 results, Aug 20-23: Sophia Nhi Huynh wins Vietnam's first Women's Doubles gold, Hien Truong two silvers. Every final score.",
+    metaDescriptionVi:
+      "Kết quả Shenzhen Open 2026: Sophia Nhi Huỳnh vô địch đôi nữ, Trương Vinh Hiển 2 HCB. Tỷ số đủ 5 trận chung kết.",
+  },
+  {
+    slug: "pickleball-world-cup-2026-group-a-vietnam",
+    publishedDate: "2026-08-17",
+    updatedDate: "2026-09-07",
+    author: "Cuong Nguyen",
+    tags: [
+      "pickleball world cup 2026",
+      "pickleball world cup group a",
+      "pickleball world cup da nang",
+      "vietnam pickleball team",
+      "pablo tellez",
+      "nicolas acevedo",
+      "cayman islands pickleball",
+    ],
+    ctaPath: "/live",
+    ctaLabel: {
+      en: "Follow the World Cup live on ThePickleHub",
+      vi: "Theo dõi World Cup trực tiếp trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/bang-a-world-cup-pickleball-2026-hero.webp",
+      alt: "Group A scouting report graphic for the Pickleball World Cup 2026 in Da Nang, Vietnam — Pablo Tellez of Colombia and Nicolas Acevedo of Chile with the flags of Colombia, Vietnam, Chile and the Cayman Islands.",
+    },
+    titleEn:
+      "Pickleball World Cup 2026 Group A: Who Stands Between Vietnam and the Knockout Stage?",
+    titleVi:
+      "Bảng A World Cup Pickleball 2026: Việt Nam gặp ai và cơ hội đi tiếp đến đâu?",
+    metaTitleEn: "Pickleball World Cup 2026 Group A: Vietnam's Rivals",
+    metaTitleVi: "Bảng A World Cup Pickleball 2026: Đối Thủ Của VN",
+    metaDescriptionEn:
+      "Group A at the Pickleball World Cup 2026 in Da Nang: Vietnam vs Colombia, Chile and the Cayman Islands. Scouting each rival from PPA Tour and DUPR data.",
+    metaDescriptionVi:
+      "Bảng A World Cup Pickleball 2026: Việt Nam gặp Colombia, Chile, Cayman Islands. Hồ sơ Pablo Tellez, Acevedo, Faletto theo PPA Tour.",
+  },
+  {
+    slug: "pickleball-warm-up-injury-prevention",
+    publishedDate: "2026-08-16",
+    updatedDate: "2026-08-17",
+    author: "Cuong Nguyen",
+    tags: [
+      "pickleball warm up",
+      "pickleball injury prevention",
+      "pickleball elbow",
+      "pickleball stretching",
+      "pickleball court shoes",
+      "pickleball for beginners",
+      "pickleball vietnam",
+    ],
+    ctaPath: "/san",
+    ctaLabel: {
+      en: "Find a court near you on ThePickleHub",
+      vi: "Tìm sân gần bạn trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/khoi-dong-tranh-chan-thuong-pickleball-hero.webp",
+      alt: "A pickleball player performing a side lunge warm-up stretch beside an outdoor blue and green court in Vietnam in early morning light, paddle and ball resting on the net post.",
+    },
+    titleEn:
+      "Pickleball Warm-Up and Injury Prevention: A 5-Minute Routine That Works",
+    titleVi:
+      "Khởi động và tránh chấn thương khi chơi Pickleball: hướng dẫn 5 phút",
+    metaTitleEn: "Pickleball Warm-Up & Injury Prevention (5 Minutes)",
+    metaTitleVi: "Khởi Động & Tránh Chấn Thương Pickleball 2026",
+    metaDescriptionEn:
+      "A 5-minute pickleball warm-up, the five most common injuries and how to prevent them, why running shoes cause ankle sprains, and when to see a doctor.",
+    metaDescriptionVi:
+      "Khởi động 5 phút đúng cách, 5 chấn thương pickleball thường gặp và cách phòng: chọn giày, giãn cơ, quy tắc đuổi bóng lob.",
+  },
+  {
+    slug: "hcmc-open-2026-recap",
+    publishedDate: "2026-08-10",
+    updatedDate: "2026-08-10",
+    author: "The PickleHub Team",
+    tags: [
+      "hcmc open 2026",
+      "ho chi minh city open",
+      "ppa tour asia",
+      "ppa asia 500",
+      "truong vinh hien",
+      "do minh quan",
+      "ly hoang nam",
+      "pickleball vietnam",
+      "2026 recap",
+    ],
+    ctaPath: "/live",
+    ctaLabel: {
+      en: "Follow the scores live on ThePickleHub",
+      vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/hcmc-open-2026-recap-hero.webp",
+      alt: "Do Minh Quan and Truong Vinh Hien of Vietnam holding trophies and the national flag as men's doubles champions of the Ho Chi Minh City Open 2026 (PPA Tour Asia 500)",
+    },
+    titleEn:
+      "Ho Chi Minh City Open 2026 Recap: Minh Quan & Vinh Hien Win an All-Vietnamese Doubles Final",
+    titleVi:
+      "Ho Chi Minh City Open 2026: Minh Quân & Vinh Hiển vô địch trong trận chung kết toàn Việt",
+    metaTitleEn: "HCMC Open 2026 Recap: Quan & Hien Win Doubles Gold",
+    metaTitleVi: "HCMC Open 2026: Quân & Hiển vô địch đôi nam",
+    metaDescriptionEn:
+      "Recap of the PPA Asia 500 MB Ho Chi Minh City Open 2026: Do Minh Quan and Truong Vinh Hien beat Ly Hoang Nam and Collin Johns 2-1 in an all-Vietnamese final.",
+    metaDescriptionVi:
+      "Kết quả PPA Asia 500 HCMC Open 2026: Đỗ Minh Quân và Trương Vinh Hiển thắng Lý Hoàng Nam - Collin Johns 2-1 trong chung kết toàn Việt.",
+  },
+  {
+    slug: "world-pickleball-rankings-wpr-explained",
+    publishedDate: "2026-08-05",
+    updatedDate: "2026-08-05",
+    author: "Cuong Nguyen",
+    tags: [
+      "world pickleball rankings",
+      "wpr",
+      "ppa tour rankings",
+      "ppa finals qualification",
+      "pickleball world ranking",
+      "ben johns ranking",
+      "pickleball vietnam",
+    ],
+    ctaPath: "/live",
+    ctaLabel: {
+      en: "Follow PPA Tour live on ThePickleHub",
+      vi: "Theo dõi PPA Tour trực tiếp trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/world-pickleball-rankings-wpr-hero.webp",
+      alt: "World Pickleball Rankings (WPR) infographic — the PPA Tour men's top 10 for the week of Aug 3–9, 2026 led by Ben Johns, with the doubles 50% / mixed 35% / singles 15% weighting.",
+    },
+    titleEn:
+      "World Pickleball Rankings (WPR): PPA's New Global System Explained",
+    titleVi:
+      "World Pickleball Rankings (WPR): hệ thống xếp hạng toàn cầu mới của PPA",
+    metaTitleEn: "World Pickleball Rankings (WPR) Explained | PPA",
+    metaTitleVi: "World Pickleball Rankings (WPR) là gì | PPA",
+    metaDescriptionEn:
+      "PPA's new World Pickleball Rankings (WPR): doubles 50%, mixed 35%, singles 15%, 14 best results over 52 weeks. How it works and what it means for Vietnam.",
+    metaDescriptionVi:
+      "WPR mới của PPA: đôi 50%, đôi nam nữ 35%, đơn 15%, 14 kết quả tốt nhất trong 52 tuần. Cách tính và ý nghĩa với VĐV Việt Nam.",
+  },
+  {
+    slug: "hong-kong-slam-2026-preview",
+    publishedDate: "2026-08-05",
+    updatedDate: "2026-09-10",
+    author: "Cuong Nguyen",
+    tags: [
+      "hong kong slam 2026",
+      "ppa tour asia 1500",
+      "hang seng bank hong kong slam",
+      "ppa asia hong kong",
+      "kai tak arena pickleball",
+      "pickleball hong kong",
+      "asia first pickleball slam",
+    ],
+    ctaPath: "/live",
+    ctaLabel: {
+      en: "Watch live tournaments on ThePickleHub",
+      vi: "Xem giải trực tiếp trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/hong-kong-slam-2026-preview-hero.webp",
+      alt: "Hong Kong Slam 2026 hero — PPA Asia 1500 pickleball finale banner with the Hong Kong skyline and a dragon motif, silhouetted players in action, October 19–25 at Kai Tak Arena.",
+    },
+    titleEn:
+      "Hong Kong Slam 2026: Asia's First PPA Slam and US$1.1M Season Finale",
+    titleVi:
+      "Hong Kong Slam 2026: Slam đầu tiên châu Á, chung kết 1,1 triệu USD",
+    metaTitleEn: "Hong Kong Slam 2026 | Asia's First PPA Slam, $1.1M",
+    metaTitleVi: "Hong Kong Slam 2026 | Slam đầu tiên châu Á",
+    metaDescriptionEn:
+      "The Hang Seng Bank Hong Kong Slam, Oct 19–25 2026 at Kai Tak Arena: a US$1.1M PPA Tour Asia 1500 finale — Asia's first Slam. Dates, prize and registration.",
+    metaDescriptionVi:
+      "Hang Seng Bank Hong Kong Slam 19–25/10/2026 tại Kai Tak Arena: chung kết PPA Tour Asia 1500, thưởng 1,1 triệu USD, Slam đầu tiên châu Á.",
+  },
+  {
+    slug: "mlp-orlando-super-sunday-2026-best-game",
+    publishedDate: "2026-08-03",
+    updatedDate: "2026-08-03",
+    author: "The PickleHub Team",
+    tags: [
+      "mlp orlando 2026",
+      "super sunday",
+      "anna leigh waters",
+      "noe khlif",
+      "hayden patriquin",
+      "anna bright",
+      "quang duong",
+      "mixed doubles",
+      "major league pickleball",
+      "2026 recap",
+    ],
+    ctaPath: "/live",
+    ctaLabel: {
+      en: "Follow pickleball live on ThePickleHub",
+      vi: "Theo dõi pickleball trực tiếp trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/mlp-orlando-super-sunday-2026-hero.webp",
+      alt: "MLP Orlando 2026 Super Sunday scorecard — New Jersey 5s 15, St. Louis Shock 13, with Hayden Patriquin celebrating at the net and Anna Leigh Waters nearby",
+    },
+    titleEn:
+      "MLP Orlando Super Sunday 2026: One of the Best Games in MLP History (Waters & Khlif Rally Past Patriquin & Bright, 15-13)",
+    titleVi:
+      "Trận hay nhất lịch sử MLP? Waters ngược dòng 15-13 ở Super Sunday Orlando",
+    metaTitleEn: "MLP Orlando 2026: One of MLP's Best Games Ever, 15-13",
+    metaTitleVi: "MLP Orlando 2026: Trận hay nhất lịch sử MLP | 15-13",
+    metaDescriptionEn:
+      "Anna Leigh Waters & Noe Khlif rallied from 0-6 to beat Patriquin & Bright 15-13 at MLP Orlando — called one of the best games in MLP history.",
+    metaDescriptionVi:
+      "Waters & Khlif ngược dòng từ 0-6 hạ Patriquin & Bright 15-13 ở MLP Orlando — được gọi là game hay nhất lịch sử MLP.",
+  },
+  {
     slug: "singapore-open-2026-recap",
     publishedDate: "2026-07-27",
     updatedDate: "2026-07-27",
     author: "The PickleHub Team",
-    tags: ["singapore open 2026", "ppa tour asia", "leapmotor singapore open", "truong vinh hien", "pickleball vietnam", "ppa asia 500", "2026 recap"],
+    tags: [
+      "singapore open 2026",
+      "ppa tour asia",
+      "leapmotor singapore open",
+      "truong vinh hien",
+      "pickleball vietnam",
+      "ppa asia 500",
+      "2026 recap",
+    ],
     ctaPath: "/live",
-    ctaLabel: { en: "Follow the scores live on ThePickleHub", vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub" },
-    heroImage: { src: "/images/blog/singapore-open-2026-recap-hero.webp", alt: "Singapore Open 2026 recap — a silver medal resting on a pickleball paddle on a teal-green championship court at Singapore Expo, arena spotlights behind" },
-    titleEn: "Singapore Open 2026 Recap: Truong Vinh Hien Takes Doubles Silver and Singles Bronze",
-    titleVi: "Singapore Open 2026: Trương Vinh Hiển giành á quân đôi nam và HCĐ đơn nam",
+    ctaLabel: {
+      en: "Follow the scores live on ThePickleHub",
+      vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/singapore-open-2026-recap-hero.webp",
+      alt: "Singapore Open 2026 recap — a silver medal resting on a pickleball paddle on a teal-green championship court at Singapore Expo, arena spotlights behind",
+    },
+    titleEn:
+      "Singapore Open 2026 Recap: Truong Vinh Hien Takes Doubles Silver and Singles Bronze",
+    titleVi:
+      "Singapore Open 2026: Trương Vinh Hiển giành á quân đôi nam và HCĐ đơn nam",
     metaTitleEn: "Singapore Open 2026 Recap: Hien Silver & Singles Bronze",
     metaTitleVi: "Singapore Open 2026: Hiển á quân đôi, HCĐ đơn",
-    metaDescriptionEn: "Recap of the PPA Asia 500 Singapore Open 2026: Truong Vinh Hien won doubles silver and singles bronze, keeping Vietnam's medal streak alive.",
-    metaDescriptionVi: "Trương Vinh Hiển giành á quân đôi nam và HCĐ đơn nam Singapore Open 2026, giữ mạch huy chương mọi chặng PPA Tour Asia. Kế: HCMC Open.",
+    metaDescriptionEn:
+      "Recap of the PPA Asia 500 Singapore Open 2026: Truong Vinh Hien won doubles silver and singles bronze, keeping Vietnam's medal streak alive.",
+    metaDescriptionVi:
+      "Trương Vinh Hiển giành á quân đôi nam và HCĐ đơn nam Singapore Open 2026, giữ mạch huy chương mọi chặng PPA Tour Asia. Kế: HCMC Open.",
   },
   {
     slug: "singapore-open-2026-preview",
     publishedDate: "2026-07-18",
-    updatedDate: "2026-07-18",
+    updatedDate: "2026-08-11",
     author: "The PickleHub Team",
-    tags: ["singapore open 2026", "ppa tour asia", "leapmotor singapore open", "truong vinh hien", "pickleball singapore", "ppa asia 500", "2026"],
+    tags: [
+      "singapore open 2026",
+      "ppa tour asia",
+      "leapmotor singapore open",
+      "truong vinh hien",
+      "pickleball singapore",
+      "ppa asia 500",
+      "2026",
+    ],
     ctaPath: "/live",
-    ctaLabel: { en: "Follow the scores live on ThePickleHub", vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub" },
+    ctaLabel: {
+      en: "Follow the scores live on ThePickleHub",
+      vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub",
+    },
     heroImage: {
       src: "/images/blog/singapore-open-2026-preview-hero.webp",
-      alt: "Leapmotor Singapore Open 2026 preview — an indoor pickleball championship court under arena spotlights at Singapore Expo, with a teal-green surface and tiered spectator seating."
+      alt: "Leapmotor Singapore Open 2026 preview — an indoor pickleball championship court under arena spotlights at Singapore Expo, with a teal-green surface and tiered spectator seating.",
     },
-    titleEn: "Leapmotor Singapore Open 2026: Preview of PPA Tour Asia's Singapore Debut",
-    titleVi: "Leapmotor Singapore Open 2026: Trương Vinh Hiển là hạt giống số 1 đơn nam",
+    titleEn:
+      "Leapmotor Singapore Open 2026: Preview of PPA Tour Asia's Singapore Debut",
+    titleVi:
+      "Leapmotor Singapore Open 2026: Trương Vinh Hiển là hạt giống số 1 đơn nam",
     metaTitleEn: "Singapore Open 2026 Pickleball: Schedule & How to Watch",
     metaTitleVi: "Singapore Open 2026 | Lịch đấu & cách xem",
-    metaDescriptionEn: "Preview of the PPA Asia 500 Leapmotor Singapore Open (July 23-26): Vietnam's Truong Vinh Hien is the top seed, plus schedule, prizes and how to watch free.",
-    metaDescriptionVi: "PPA Asia 500 Leapmotor Singapore Open (23–26/7): Trương Vinh Hiển hạt giống số 1 đơn nam, lịch theo giờ VN và cách xem miễn phí.",
+    metaDescriptionEn:
+      "The Singapore Open 2026 is over: Truong Vinh Hien took doubles silver and singles bronze. Original preview, plus the full recap and what's next in Asia.",
+    metaDescriptionVi:
+      "Singapore Open 2026 đã kết thúc: Trương Vinh Hiển á quân đôi nam, HCĐ đơn nam. Xem bài preview gốc và link tổng kết đầy đủ.",
   },
   {
     slug: "pickleball-world-cup-2026-da-nang-how-to-watch",
     publishedDate: "2026-07-17",
-    updatedDate: "2026-07-17",
+    updatedDate: "2026-09-07",
     author: "The PickleHub Team",
-    tags: ["world cup pickleball", "da nang", "vietnam", "how to watch", "registration", "2026", "guide"],
+    tags: [
+      "world cup pickleball",
+      "da nang",
+      "vietnam",
+      "how to watch",
+      "registration",
+      "2026",
+      "guide",
+    ],
     ctaPath: "/live",
-    ctaLabel: { en: "Watch live on ThePickleHub", vi: "Xem trực tiếp trên ThePickleHub" },
+    ctaLabel: {
+      en: "Watch live on ThePickleHub",
+      vi: "Xem trực tiếp trên ThePickleHub",
+    },
     heroImage: {
       src: "/images/blog/pickleball-world-cup-2026-da-nang-how-to-watch-hero.webp",
-      alt: "How to watch the Heineken Pickleball World Cup 2026 in Da Nang — a spectator's view from the stands over brightly lit indoor pickleball courts, with flags of many nations around the arena"
+      alt: "How to watch the Heineken Pickleball World Cup 2026 in Da Nang — a spectator's view from the stands over brightly lit indoor pickleball courts, with flags of many nations around the arena",
     },
-    titleEn: "How to Watch — and Enter — the Heineken Pickleball World Cup 2026 in Da Nang",
-    titleVi: "Cẩm nang xem và thi đấu Heineken Pickleball World Cup 2026 tại Đà Nẵng",
-    metaTitleEn: "Pickleball World Cup 2026 Da Nang: How to Watch & Register",
-    metaTitleVi: "World Cup Pickleball 2026 Đà Nẵng | Cách xem",
-    metaDescriptionEn: "Heineken Pickleball World Cup 2026, Da Nang (Aug 30–Sep 6): day-by-day schedule, all 7 venues, entry fees, deadlines and how to watch.",
-    metaDescriptionVi: "Heineken Pickleball World Cup 2026 tại Đà Nẵng (30/8–6/9): lịch từng ngày, 7 địa điểm, cách đăng ký, phí và cách xem trực tiếp.",
+    titleEn:
+      "How to Watch — and Enter — the Heineken Pickleball World Cup 2026 in Da Nang",
+    titleVi:
+      "Cẩm nang xem và thi đấu Heineken Pickleball World Cup 2026 tại Đà Nẵng",
+    metaTitleEn: "Pickleball World Cup 2026 Live Stream: Watch & Replay",
+    metaTitleVi: "Vé, giá vé & xem World Cup Pickleball 2026 Đà Nẵng",
+    metaDescriptionEn:
+      "Pickleball World Cup 2026 Da Nang (Aug 30-Sep 6) streamed live on FPT Play. Where to find replays, the 7 venues, tickets, and how the Sep 6 finals ended.",
+    metaDescriptionVi:
+      "Giá vé, 7 địa điểm, xem trực tiếp World Cup Pickleball 2026 Đà Nẵng trên FPT Play. Giải khép lại 6/9: Mỹ thắng Việt Nam 4-0.",
   },
   {
     slug: "vietnam-pickleball-players-to-watch-2026",
     publishedDate: "2026-07-15",
     updatedDate: "2026-07-15",
     author: "Cuong Nguyen",
-    tags: ["vietnamese pickleball players", "ly hoang nam pickleball", "truong vinh hien", "vietnam pickleball players to watch", "pickleball vietnam 2026", "hcmc open 2026", "pickleball world cup da nang"],
+    tags: [
+      "vietnamese pickleball players",
+      "ly hoang nam pickleball",
+      "truong vinh hien",
+      "vietnam pickleball players to watch",
+      "pickleball vietnam 2026",
+      "hcmc open 2026",
+      "pickleball world cup da nang",
+    ],
     ctaPath: "/live",
-    ctaLabel: { en: "Follow Vietnam's players live on ThePickleHub", vi: "Theo dõi các tay vợt Việt Nam trực tiếp trên ThePickleHub" },
-    heroImage: { src: "/images/blog/vietnam-pickleball-players-to-watch-2026-hero.webp", alt: "Vietnamese Pickleball Players to Watch 2026 — hero banner of Vietnam's leading players in national red and gold, with the MB HCMC Open (Aug 6–9) and Da Nang World Cup (Aug 30–Sep 6) event tags." },
+    ctaLabel: {
+      en: "Follow Vietnam's players live on ThePickleHub",
+      vi: "Theo dõi các tay vợt Việt Nam trực tiếp trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/vietnam-pickleball-players-to-watch-2026-hero.webp",
+      alt: "Vietnamese Pickleball Players to Watch 2026 — hero banner of Vietnam's leading players in national red and gold, with the MB HCMC Open (Aug 6–9) and Da Nang World Cup (Aug 30–Sep 6) event tags.",
+    },
     titleEn: "Vietnamese Pickleball Players to Watch in 2026",
     titleVi: "Các tay vợt Pickleball Việt Nam đáng chú ý năm 2026",
     metaTitleEn: "Vietnamese Pickleball Players to Watch in 2026",
     metaTitleVi: "Tay Vợt Pickleball Việt Nam Đáng Chú Ý Năm 2026",
-    metaDescriptionEn: "The Vietnamese pickleball players to watch in 2026 — Ly Hoang Nam, Truong Vinh Hien, Do Minh Quan and the rising stars chasing titles.",
-    metaDescriptionVi: "Tay vợt pickleball Việt Nam đáng chú ý 2026: Lý Hoàng Nam, Trương Vinh Hiển, Đỗ Minh Quân và dàn sao trẻ đang lên.",
+    metaDescriptionEn:
+      "The Vietnamese pickleball players to watch in 2026 — Ly Hoang Nam, Truong Vinh Hien, Do Minh Quan and the rising stars chasing titles.",
+    metaDescriptionVi:
+      "Tay vợt pickleball Việt Nam đáng chú ý 2026: Lý Hoàng Nam, Trương Vinh Hiển, Đỗ Minh Quân và dàn sao trẻ đang lên.",
   },
   {
     slug: "vietnam-hosts-ppa-tour-asia-2026",
     publishedDate: "2026-07-13",
     updatedDate: "2026-07-13",
     author: "Cuong Nguyen",
-    tags: ["vietnam hosts ppa tour asia", "viet nam dang cai pickleball", "ppa tour asia viet nam", "pickleball vietnam 2026", "hcmc open 2026", "pickleball world cup da nang", "mb hanoi cup"],
+    tags: [
+      "vietnam hosts ppa tour asia",
+      "viet nam dang cai pickleball",
+      "ppa tour asia viet nam",
+      "pickleball vietnam 2026",
+      "hcmc open 2026",
+      "pickleball world cup da nang",
+      "mb hanoi cup",
+    ],
     ctaPath: "/live",
-    ctaLabel: { en: "Follow Vietnam's tournaments live on ThePickleHub", vi: "Theo dõi các giải đấu tại Việt Nam trên ThePickleHub" },
-    heroImage: { src: "/images/blog/vietnam-hosts-ppa-tour-asia-2026-hero.webp", alt: "Vietnam 2026 — Three Big Events, One Passion: illustrated stadium banner with a doubles pickleball match at sunset under the Vietnamese flag, and three event cards for the MB Hanoi Cup (April), MB HCMC Open (Aug 6–9) and Pickleball World Cup Da Nang (Aug 30–Sep 6)." },
-    titleEn: "Vietnam Hosts PPA Tour Asia 2026: HCMC Open, World Cup Da Nang and a Historic Season",
-    titleVi: "Việt Nam đăng cai PPA Tour Asia 2026: HCMC Open, World Cup Đà Nẵng và một mùa giải lịch sử",
+    ctaLabel: {
+      en: "Follow Vietnam's tournaments live on ThePickleHub",
+      vi: "Theo dõi các giải đấu tại Việt Nam trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/vietnam-hosts-ppa-tour-asia-2026-hero.webp",
+      alt: "Vietnam 2026 — Three Big Events, One Passion: illustrated stadium banner with a doubles pickleball match at sunset under the Vietnamese flag, and three event cards for the MB Hanoi Cup (April), MB HCMC Open (Aug 6–9) and Pickleball World Cup Da Nang (Aug 30–Sep 6).",
+    },
+    titleEn:
+      "Vietnam Hosts PPA Tour Asia 2026: HCMC Open, World Cup Da Nang and a Historic Season",
+    titleVi:
+      "Việt Nam đăng cai PPA Tour Asia 2026: HCMC Open, World Cup Đà Nẵng và một mùa giải lịch sử",
     metaTitleEn: "Vietnam Hosts PPA Tour Asia 2026 | HCMC Open & Da Nang",
     metaTitleVi: "Việt Nam đăng cai PPA Tour Asia 2026",
-    metaDescriptionEn: "Vietnam hosts two PPA Tour Asia stops in 2026 — the $300K MB Hanoi Cup and the HCMC Open — plus Asia's first Pickleball World Cup in Da Nang.",
-    metaDescriptionVi: "Năm 2026 Việt Nam đăng cai 2 chặng PPA Tour Asia (MB Hanoi Cup, HCMC Open) và Pickleball World Cup đầu tiên ở châu Á.",
+    metaDescriptionEn:
+      "Vietnam hosts two PPA Tour Asia stops in 2026 — the $300K MB Hanoi Cup and the HCMC Open — plus Asia's first Pickleball World Cup in Da Nang.",
+    metaDescriptionVi:
+      "Năm 2026 Việt Nam đăng cai 2 chặng PPA Tour Asia (MB Hanoi Cup, HCMC Open) và Pickleball World Cup đầu tiên ở châu Á.",
   },
   {
     slug: "pickleball-cost-vietnam-2026",
     publishedDate: "2026-07-11",
     updatedDate: "2026-07-11",
     author: "Cuong Nguyen",
-    tags: ["pickleball cost vietnam", "chi phi choi pickleball", "gia thue san pickleball", "choi pickleball ton bao nhieu", "pickleball gia re", "pickleball vietnam 2026"],
+    tags: [
+      "pickleball cost vietnam",
+      "chi phi choi pickleball",
+      "gia thue san pickleball",
+      "choi pickleball ton bao nhieu",
+      "pickleball gia re",
+      "pickleball vietnam 2026",
+    ],
     ctaPath: "/san",
-    ctaLabel: { en: "Find courts and rental prices near you on ThePickleHub", vi: "Tìm sân pickleball và giá thuê gần bạn trên ThePickleHub" },
-    heroImage: { src: "/images/blog/pickleball-cost-vietnam-2026-hero.webp", alt: "Pickleball cost in Vietnam 2026 — flat-lay of a carbon paddle, yellow balls, Vietnamese dong banknotes, a notebook with a handwritten cost table and a calculator on a blue court surface." },
+    ctaLabel: {
+      en: "Find courts and rental prices near you on ThePickleHub",
+      vi: "Tìm sân pickleball và giá thuê gần bạn trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/pickleball-cost-vietnam-2026-hero.webp",
+      alt: "Pickleball cost in Vietnam 2026 — flat-lay of a carbon paddle, yellow balls, Vietnamese dong banknotes, a notebook with a handwritten cost table and a calculator on a blue court surface.",
+    },
     titleEn: "How Much Does Pickleball Cost in Vietnam? The 2026 Price Guide",
-    titleVi: "Chi phí chơi Pickleball ở Việt Nam 2026: sân, vợt, giải đấu hết bao nhiêu?",
+    titleVi:
+      "Chi phí chơi Pickleball ở Việt Nam 2026: sân, vợt, giải đấu hết bao nhiêu?",
     metaTitleEn: "Pickleball Cost in Vietnam 2026 | Courts, Paddles, Fees",
     metaTitleVi: "Chi phí chơi Pickleball 2026 | Sân, vợt, giải",
-    metaDescriptionEn: "What pickleball costs in Vietnam in 2026: court rental by city, paddle prices, coaching, tournament fees and three realistic monthly budgets.",
-    metaDescriptionVi: "Chơi pickleball tốn bao nhiêu? Giá thuê sân theo thành phố, giá vợt, học phí HLV, lệ phí giải và 3 mức ngân sách hàng tháng.",
+    metaDescriptionEn:
+      "What pickleball costs in Vietnam in 2026: court rental by city, paddle prices, coaching, tournament fees and three realistic monthly budgets.",
+    metaDescriptionVi:
+      "Chơi pickleball tốn bao nhiêu? Giá thuê sân theo thành phố, giá vợt, học phí HLV, lệ phí giải và 3 mức ngân sách hàng tháng.",
   },
   {
     slug: "hcmc-open-2026-preview",
     publishedDate: "2026-07-10",
-    updatedDate: "2026-07-27",
+    updatedDate: "2026-08-25",
     author: "Cuong Nguyen",
-    tags: ["hcmc open 2026", "ho chi minh city open pickleball", "mb ho chi minh city open", "ppa tour asia 500", "ppa asia ho chi minh", "pickleball tp hcm", "giai pickleball tphcm"],
+    tags: [
+      "hcmc open 2026",
+      "ho chi minh city open pickleball",
+      "mb ho chi minh city open",
+      "ppa tour asia 500",
+      "ppa asia ho chi minh",
+      "pickleball tp hcm",
+      "giai pickleball tphcm",
+    ],
     ctaPath: "/live",
-    ctaLabel: { en: "Watch live tournaments on ThePickleHub", vi: "Xem giải trực tiếp trên ThePickleHub" },
-    heroImage: { src: "/images/blog/hcmc-open-2026-preview-hero.webp", alt: "MB HCMC Open 2026 hero — outdoor pickleball stadium court at golden hour in Ho Chi Minh City with the city skyline behind a packed grandstand, PPA Asia 500 event banner for August 6-9." },
-    titleEn: "HCMC Open 2026 Preview: The PPA Asia 500 Comes to Ho Chi Minh City",
-    titleVi: "HCMC Open 2026: Toàn cảnh giải PPA Asia 500 tại TP.HCM",
-    metaTitleEn: "HCMC Open 2026 Preview | PPA Asia 500 in Ho Chi Minh City",
-    metaTitleVi: "HCMC Open 2026 | Lịch & giải thưởng",
-    metaDescriptionEn: "The MB Ho Chi Minh City Open, Aug 6–9 2026 at New Sports Club: a US$70,000 PPA Tour Asia 500 stop. Prize money, entry and how to watch.",
-    metaDescriptionVi: "MB Ho Chi Minh City Open 6–9/8/2026 tại New Sports Club — chặng PPA Tour Asia 500, thưởng 70.000 USD. Lịch, đăng ký, cách xem.",
+    ctaLabel: {
+      en: "Watch live tournaments on ThePickleHub",
+      vi: "Xem giải trực tiếp trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/hcmc-open-2026-preview-hero.webp",
+      alt: "MB HCMC Open 2026 hero — outdoor pickleball stadium court at golden hour in Ho Chi Minh City with the city skyline behind a packed grandstand, PPA Asia 500 event banner for August 6-9.",
+    },
+    titleEn:
+      "HCMC Open 2026: Results, Prize Money and the All-Vietnamese Final",
+    titleVi: "HCMC Open 2026: Kết quả, tiền thưởng và trận chung kết toàn Việt",
+    metaTitleEn: "HCMC Open 2026 Results | PPA Asia 500 Ho Chi Minh City",
+    metaTitleVi: "HCMC Open 2026 | Kết quả & tiền thưởng",
+    metaDescriptionEn:
+      "MB Ho Chi Minh City Open 2026 (Aug 6–9): Do Minh Quan & Truong Vinh Hien beat Ly Hoang Nam & Collin Johns 2–1 in an all-Vietnamese men's doubles final.",
+    metaDescriptionVi:
+      "HCMC Open 2026 (6–9/8): Đỗ Minh Quân & Trương Vĩnh Hiển thắng Lý Hoàng Nam & Collin Johns 2–1 ở chung kết đôi nam toàn Việt.",
   },
   {
     slug: "vietnam-pickleball-tournament-calendar-2026",
     publishedDate: "2026-07-06",
-    updatedDate: "2026-07-06",
+    updatedDate: "2026-09-14",
     author: "Cuong Nguyen",
-    tags: ["vietnam pickleball tournament calendar 2026", "pickleball tournaments vietnam", "ho chi minh city open 2026", "pickleball world cup 2026 da nang", "ppa tour asia 2026 schedule", "mb hanoi cup", "pickleball vietnam"],
+    tags: [
+      "vietnam pickleball tournament calendar 2026",
+      "pickleball tournaments vietnam",
+      "ho chi minh city open 2026",
+      "pickleball world cup 2026 da nang",
+      "ppa tour asia 2026 schedule",
+      "mb hanoi cup",
+      "pickleball vietnam",
+    ],
     ctaPath: "/live",
-    ctaLabel: { en: "Watch live tournaments on ThePickleHub", vi: "Xem giải trực tiếp trên ThePickleHub" },
-    heroImage: { src: "/images/blog/vietnam-pickleball-tournament-calendar-2026-hero.webp", alt: "Vietnam pickleball tournament calendar 2026 hero — a stylized teal-green map of Vietnam with location pins on Hanoi, Da Nang and Ho Chi Minh City, beside a paddle, ball and a gold trophy over an abstract calendar-grid background." },
+    ctaLabel: {
+      en: "Watch live tournaments on ThePickleHub",
+      vi: "Xem giải trực tiếp trên ThePickleHub",
+    },
+    heroImage: {
+      src: "/images/blog/vietnam-pickleball-tournament-calendar-2026-hero.webp",
+      alt: "Vietnam pickleball tournament calendar 2026 hero — a stylized teal-green map of Vietnam with location pins on Hanoi, Da Nang and Ho Chi Minh City, beside a paddle, ball and a gold trophy over an abstract calendar-grid background.",
+    },
     titleEn: "Vietnam Pickleball Tournament Calendar 2026: Every Major Event",
     titleVi: "Lịch Giải Pickleball Việt Nam 2026: Toàn Bộ Sự Kiện Lớn",
     metaTitleEn: "Vietnam Pickleball Tournament Calendar 2026 | Dates & Venues",
@@ -148,57 +1753,124 @@ export const blogMetadata: BlogPostMetadata[] = [
     publishedDate: "2026-06-23",
     updatedDate: "2026-06-23",
     author: "Cuong Nguyen",
-    tags: ["ppa beijing open 2026", "beijing open pickleball", "truong vinh hien", "do minh quan", "ppa tour asia 2026", "ly hoang nam pickleball", "pickleball vietnam", "vietnamese pickleball champions"],
+    tags: [
+      "ppa beijing open 2026",
+      "beijing open pickleball",
+      "truong vinh hien",
+      "do minh quan",
+      "ppa tour asia 2026",
+      "ly hoang nam pickleball",
+      "pickleball vietnam",
+      "vietnamese pickleball champions",
+    ],
     ctaPath: "/blog/ppa-tour-asia-2026-complete-guide",
-    ctaLabel: { en: "Next Vietnam stop: Ho Chi Minh City Open, Aug 6–9 — full schedule & prize money", vi: "Chặng Việt Nam tiếp theo: Ho Chi Minh City Open 6–9/8 — lịch & tiền thưởng" },
-    heroImage: { src: "/images/blog/ppa-beijing-open-2026-recap-hero.webp", alt: "Truong Vinh Hien and Do Minh Quan of Vietnam celebrating their men's doubles gold medal at the PPA Asia 500 Beijing Open 2026, holding the Vietnamese flag on an indoor court" },
-    titleEn: "PPA Beijing Open 2026 Recap: Vietnam's Hien & Quan Win Men's Doubles Gold",
+    ctaLabel: {
+      en: "Next Vietnam stop: Ho Chi Minh City Open, Aug 6–9 — full schedule & prize money",
+      vi: "Chặng Việt Nam tiếp theo: Ho Chi Minh City Open 6–9/8 — lịch & tiền thưởng",
+    },
+    heroImage: {
+      src: "/images/blog/ppa-beijing-open-2026-recap-hero.webp",
+      alt: "Truong Vinh Hien and Do Minh Quan of Vietnam celebrating their men's doubles gold medal at the PPA Asia 500 Beijing Open 2026, holding the Vietnamese flag on an indoor court",
+    },
+    titleEn:
+      "PPA Beijing Open 2026 Recap: Vietnam's Hien & Quan Win Men's Doubles Gold",
     titleVi: "PPA Beijing Open 2026: Vinh Hiển & Minh Quân vô địch đôi nam",
     metaTitleEn: "PPA Beijing Open 2026 Recap | Vietnam Wins Men's Doubles",
     metaTitleVi: "PPA Beijing Open 2026 | Việt Nam vô địch đôi nam",
-    metaDescriptionEn: "Truong Vinh Hien and Do Minh Quan won men's doubles gold at the PPA Asia 500 Beijing Open 2026. Full results and the road to the final.",
-    metaDescriptionVi: "Trương Vinh Hiển và Đỗ Minh Quân vô địch đôi nam PPA Asia 500 Beijing Open 2026. Kết quả đầy đủ và đường tới chung kết.",
+    metaDescriptionEn:
+      "Truong Vinh Hien and Do Minh Quan won men's doubles gold at the PPA Asia 500 Beijing Open 2026. Full results and the road to the final.",
+    metaDescriptionVi:
+      "Trương Vinh Hiển và Đỗ Minh Quân vô địch đôi nam PPA Asia 500 Beijing Open 2026. Kết quả đầy đủ và đường tới chung kết.",
   },
   {
     slug: "pickleball-club-management-software-comparison",
     publishedDate: "2026-06-15",
     updatedDate: "2026-06-15",
     author: "Cuong Nguyen",
-    tags: ["pickleball club management software", "best pickleball club app", "pickleball court booking software", "pickleball league management", "courtreserve", "playtomic", "pickleball club software", "pickleball vietnam"],
+    tags: [
+      "pickleball club management software",
+      "best pickleball club app",
+      "pickleball court booking software",
+      "pickleball league management",
+      "courtreserve",
+      "playtomic",
+      "pickleball club software",
+      "pickleball vietnam",
+    ],
     ctaPath: "/tools",
-    ctaLabel: { en: "Run Your Club's Tournaments Free", vi: "Tổ chức giải cho CLB miễn phí" },
-    heroImage: { src: "/images/blog/pickleball-club-management-software-comparison-hero.webp", alt: "Laptop and smartphone displaying a pickleball club management dashboard with a member list, court-booking calendar and payment-status badges, beside a paddle and ball on a minimalist desk." },
-    titleEn: "Best Pickleball Club Management Software in 2026 — Honest Comparison",
-    titleVi: "Phần Mềm Quản Lý CLB Pickleball Tốt Nhất 2026 — So Sánh Thẳng Thắn",
+    ctaLabel: {
+      en: "Run Your Club's Tournaments Free",
+      vi: "Tổ chức giải cho CLB miễn phí",
+    },
+    heroImage: {
+      src: "/images/blog/pickleball-club-management-software-comparison-hero.webp",
+      alt: "Laptop and smartphone displaying a pickleball club management dashboard with a member list, court-booking calendar and payment-status badges, beside a paddle and ball on a minimalist desk.",
+    },
+    titleEn:
+      "Best Pickleball Club Management Software in 2026 — Honest Comparison",
+    titleVi:
+      "Phần Mềm Quản Lý CLB Pickleball Tốt Nhất 2026 — So Sánh Thẳng Thắn",
     metaTitleEn: "Best Pickleball Club Management Software 2026 | Compared",
     metaTitleVi: "Phần mềm quản lý CLB Pickleball 2026",
-    metaDescriptionEn: "Compare pickleball club management software in 2026 — CourtReserve, Playtomic, PlayByPoint, ClubSpark and more: features, pricing, low-cost stack.",
-    metaDescriptionVi: "So sánh phần mềm quản lý CLB pickleball 2026: CourtReserve, Playtomic, PlayByPoint, ClubSpark. Tính năng, giá và lựa chọn rẻ.",
+    metaDescriptionEn:
+      "Compare pickleball club management software in 2026 — CourtReserve, Playtomic, PlayByPoint, ClubSpark and more: features, pricing, low-cost stack.",
+    metaDescriptionVi:
+      "So sánh phần mềm quản lý CLB pickleball 2026: CourtReserve, Playtomic, PlayByPoint, ClubSpark. Tính năng, giá và lựa chọn rẻ.",
   },
   {
     slug: "pickleball-tournament-budget-calculator-guide",
     publishedDate: "2026-06-13",
     updatedDate: "2026-07-30",
     author: "Cuong Nguyen",
-    tags: ["pickleball tournament budget", "pickleball tournament cost", "how much does a pickleball tournament cost", "tournament budget template", "pickleball entry fee", "tournament organizer", "pickleball vietnam"],
+    tags: [
+      "pickleball tournament budget",
+      "pickleball tournament cost",
+      "how much does a pickleball tournament cost",
+      "tournament budget template",
+      "pickleball entry fee",
+      "tournament organizer",
+      "pickleball vietnam",
+    ],
     ctaPath: "/tools",
-    ctaLabel: { en: "Create Free Tournament Brackets with Bracket Lab", vi: "Tạo bracket giải đấu miễn phí với Bracket Lab" },
-    heroImage: { src: "/images/blog/pickleball-tournament-budget-calculator-guide-hero.webp", alt: "Flat-lay of a pickleball tournament organizer's desk with a laptop showing a budget spreadsheet, calculator, notebook, paddle and pickleballs." },
-    titleEn: "Pickleball Tournament Budget: Full Cost Breakdown, Templates & Free Calculator (2026)",
-    titleVi: "Tổ Chức Giải Pickleball Tốn Bao Nhiêu? Dự Toán Chi Tiết + File Mẫu Miễn Phí (2026)",
+    ctaLabel: {
+      en: "Create Free Tournament Brackets with Bracket Lab",
+      vi: "Tạo bracket giải đấu miễn phí với Bracket Lab",
+    },
+    heroImage: {
+      src: "/images/blog/pickleball-tournament-budget-calculator-guide-hero.webp",
+      alt: "Flat-lay of a pickleball tournament organizer's desk with a laptop showing a budget spreadsheet, calculator, notebook, paddle and pickleballs.",
+    },
+    titleEn:
+      "Pickleball Tournament Budget: Full Cost Breakdown, Templates & Free Calculator (2026)",
+    titleVi:
+      "Tổ Chức Giải Pickleball Tốn Bao Nhiêu? Dự Toán Chi Tiết + File Mẫu Miễn Phí (2026)",
     metaTitleEn: "Pickleball Tournament Budget 2026 | Costs + Free Template",
     metaTitleVi: "Ngân sách giải Pickleball 2026 | Kèm file mẫu",
-    metaDescriptionEn: "What it costs to run a pickleball tournament in 2026: full breakdown in USD and VND, 3 budget templates, break-even fee formula and a free sheet.",
-    metaDescriptionVi: "Tổ chức giải pickleball tốn bao nhiêu? Bảng chi phí 2026, 3 mẫu ngân sách, công thức lệ phí hòa vốn, kèm file Excel.",
+    metaDescriptionEn:
+      "What it costs to run a pickleball tournament in 2026: full breakdown in USD and VND, 3 budget templates, break-even fee formula and a free sheet.",
+    metaDescriptionVi:
+      "Tổ chức giải pickleball tốn bao nhiêu? Bảng chi phí 2026, 3 mẫu ngân sách, công thức lệ phí hòa vốn, kèm file Excel.",
   },
   {
     slug: "ppa-tour-asia-2026-recap",
     publishedDate: "2026-06-11",
     updatedDate: "2026-06-11",
     author: "Cuong Nguyen",
-    tags: ["ppa tour asia 2026", "ppa tour asia recap", "ly hoang nam pickleball", "truong vinh hien", "mb hanoi cup 2026", "ho chi minh city open 2026", "hong kong slam pickleball", "pickleball vietnam"],
+    tags: [
+      "ppa tour asia 2026",
+      "ppa tour asia recap",
+      "ly hoang nam pickleball",
+      "truong vinh hien",
+      "mb hanoi cup 2026",
+      "ho chi minh city open 2026",
+      "hong kong slam pickleball",
+      "pickleball vietnam",
+    ],
     ctaPath: "/blog/ppa-tour-asia-2026-complete-guide",
-    ctaLabel: { en: "Next: PPA Tour Asia 2026 — Full Schedule, Prize Money & Vietnam Stops", vi: "Tiếp theo: PPA Tour Asia 2026 — Lịch đầy đủ, tiền thưởng & các chặng Việt Nam" },
+    ctaLabel: {
+      en: "Next: PPA Tour Asia 2026 — Full Schedule, Prize Money & Vietnam Stops",
+      vi: "Tiếp theo: PPA Tour Asia 2026 — Lịch đầy đủ, tiền thưởng & các chặng Việt Nam",
+    },
     heroImage: {
       src: "/images/blog/ppa-tour-asia-2026-recap-hero.webp",
       alt: "PPA Tour Asia 2026 mid-season recap infographic — a map of Asia marking the 10 tour stops with Hanoi, Kuala Lumpur and Macao completed, Vietnam's two stops (Hanoi and Ho Chi Minh City) flagged, two Vietnamese champions in red, and the road to the $1.1M Hong Kong Slam in October",
@@ -207,17 +1879,31 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "PPA Tour Asia 2026: Tổng Kết Nửa Mùa & Kết Quả 3 Chặng",
     metaTitleEn: "PPA Tour Asia 2026 | Mid-Season Recap & Results",
     metaTitleVi: "PPA Tour Asia 2026 | Tổng Kết Nửa Mùa & Kết Quả",
-    metaDescriptionEn: "PPA Tour Asia 2026 recap: Ly Hoang Nam's historic Hanoi title, Hien Truong winning in KL, Tama's Macao double and the road to the Hong Kong Slam.",
-    metaDescriptionVi: "Tổng kết PPA Tour Asia 2026: Lý Hoàng Nam vô địch Hà Nội, Trương Vinh Hiển thắng ở Kuala Lumpur, Tama cú đúp Macao.",
+    metaDescriptionEn:
+      "PPA Tour Asia 2026 recap: Ly Hoang Nam's historic Hanoi title, Hien Truong winning in KL, Tama's Macao double and the road to the Hong Kong Slam.",
+    metaDescriptionVi:
+      "Tổng kết PPA Tour Asia 2026: Lý Hoàng Nam vô địch Hà Nội, Trương Vinh Hiển thắng ở Kuala Lumpur, Tama cú đúp Macao.",
   },
   {
     slug: "mlp-vs-ppa-2026-which-tour-to-watch",
     publishedDate: "2026-06-09",
     updatedDate: "2026-06-09",
     author: "Cuong Nguyen",
-    tags: ["mlp vs ppa", "mlp vs ppa 2026", "which pickleball tour to watch", "major league pickleball", "ppa tour", "united pickleball association", "ppa tour asia", "pickleball vietnam"],
+    tags: [
+      "mlp vs ppa",
+      "mlp vs ppa 2026",
+      "which pickleball tour to watch",
+      "major league pickleball",
+      "ppa tour",
+      "united pickleball association",
+      "ppa tour asia",
+      "pickleball vietnam",
+    ],
     ctaPath: "/blog/ppa-tour-asia-2026-complete-guide",
-    ctaLabel: { en: "Next: PPA Tour Asia 2026 — Full Schedule & Vietnam Stops", vi: "Tiếp theo: PPA Tour Asia 2026 — Lịch đầy đủ & các chặng tại Việt Nam" },
+    ctaLabel: {
+      en: "Next: PPA Tour Asia 2026 — Full Schedule & Vietnam Stops",
+      vi: "Tiếp theo: PPA Tour Asia 2026 — Lịch đầy đủ & các chặng tại Việt Nam",
+    },
     heroImage: {
       src: "/images/blog/mlp-vs-ppa-2026-which-tour-to-watch-hero.webp",
       alt: "MLP vs PPA 2026 comparison graphic — the PPA Tour's individual knockout brackets versus Major League Pickleball's team-draft format, both under the United Pickleball Association (UPA), with PPA Tour Asia's Ho Chi Minh City Open in August highlighted for Vietnamese fans",
@@ -226,361 +1912,628 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "MLP vs PPA 2026: Nên Xem Giải Pickleball Nào?",
     metaTitleEn: "MLP vs PPA 2026 | Which Pickleball Tour to Watch",
     metaTitleVi: "MLP vs PPA 2026 | Nên Xem Giải Pickleball Nào",
-    metaDescriptionEn: "MLP and PPA merged under the UPA in 2024 but keep different formats. A 2026 guide to which pro pickleball tour to watch — plus PPA Tour Asia's Vietnam stops.",
-    metaDescriptionVi: "MLP và PPA sáp nhập dưới UPA từ 2024 nhưng giữ 2 thể thức riêng. Chọn giải nào để xem 2026, kèm chặng PPA Asia ở Việt Nam.",
+    metaDescriptionEn:
+      "MLP and PPA merged under the UPA in 2024 but keep different formats. A 2026 guide to which pro pickleball tour to watch — plus PPA Tour Asia's Vietnam stops.",
+    metaDescriptionVi:
+      "MLP và PPA sáp nhập dưới UPA từ 2024 nhưng giữ 2 thể thức riêng. Chọn giải nào để xem 2026, kèm chặng PPA Asia ở Việt Nam.",
   },
   {
     slug: "vietnam-pickleball-federation-2026",
     publishedDate: "2026-06-08",
     updatedDate: "2026-06-08",
     author: "Cuong Nguyen",
-    tags: ["vietnam pickleball federation", "lien doan pickleball viet nam", "vietnam pickleball governance", "pickleball national sports games 2026", "pickleball vietnam 2026", "da nang pickleball federation", "dupr vietnam"],
+    tags: [
+      "vietnam pickleball federation",
+      "lien doan pickleball viet nam",
+      "vietnam pickleball governance",
+      "pickleball national sports games 2026",
+      "pickleball vietnam 2026",
+      "da nang pickleball federation",
+      "dupr vietnam",
+    ],
     ctaPath: "/blog/professional-pickleball-tours-guide-2026",
-    ctaLabel: { en: "Next: Pro Pickleball Tours 2026 — PPA, MLP, APP & PPA Tour Asia Compared", vi: "Tiếp theo: Các giải Pickleball chuyên nghiệp 2026 — PPA, MLP, APP & PPA Tour Asia" },
+    ctaLabel: {
+      en: "Next: Pro Pickleball Tours 2026 — PPA, MLP, APP & PPA Tour Asia Compared",
+      vi: "Tiếp theo: Các giải Pickleball chuyên nghiệp 2026 — PPA, MLP, APP & PPA Tour Asia",
+    },
     heroImage: {
       src: "/images/blog/vietnam-pickleball-federation-2026-hero.webp",
       alt: "Vietnam Pickleball Federation 2026 status and roadmap infographic — a map of Vietnam with emerging city-level pickleball federations in Hanoi, Da Nang and Ho Chi Minh City, and a timeline from the September 2025 organizing committee through the 2026 National Sports Games toward a still-pending national federation",
     },
     titleEn: "Is There a Vietnam Pickleball Federation? 2026 Status & Roadmap",
-    titleVi: "Việt Nam Đã Có Liên Đoàn Pickleball Chưa? Hiện Trạng & Lộ Trình 2026",
+    titleVi:
+      "Việt Nam Đã Có Liên Đoàn Pickleball Chưa? Hiện Trạng & Lộ Trình 2026",
     metaTitleEn: "Vietnam Pickleball Federation 2026 | Status & Roadmap",
     metaTitleVi: "Liên đoàn Pickleball Việt Nam 2026",
-    metaDescriptionEn: "Vietnam still has no national pickleball federation in mid-2026 — only an organizing committee approved in Sept 2025. Status, roadmap and what changes.",
-    metaDescriptionVi: "Giữa 2026 Việt Nam chưa có liên đoàn pickleball quốc gia, mới có Ban vận động (9/2025). Hiện trạng và lộ trình.",
+    metaDescriptionEn:
+      "Vietnam still has no national pickleball federation in mid-2026 — only an organizing committee approved in Sept 2025. Status, roadmap and what changes.",
+    metaDescriptionVi:
+      "Giữa 2026 Việt Nam chưa có liên đoàn pickleball quốc gia, mới có Ban vận động (9/2025). Hiện trạng và lộ trình.",
   },
   {
     slug: "pickleball-erne-shot-tutorial",
     publishedDate: "2026-06-05",
     updatedDate: "2026-06-05",
     author: "Cuong Nguyen",
-    tags: ["pickleball erne", "erne shot pickleball", "how to hit an erne in pickleball", "jump erne", "erne rules pickleball", "pickleball advanced shots", "pickleball volley", "kitchen rules pickleball"],
+    tags: [
+      "pickleball erne",
+      "erne shot pickleball",
+      "how to hit an erne in pickleball",
+      "jump erne",
+      "erne rules pickleball",
+      "pickleball advanced shots",
+      "pickleball volley",
+      "kitchen rules pickleball",
+    ],
     ctaPath: "/blog/pickleball-doubles-stacking-strategy",
-    ctaLabel: { en: "Next: Pickleball Stacking Strategy — Control Sides to Create Erne Chances", vi: "Tiếp theo: Chiến thuật Stacking — kiểm soát bên sân để tạo cơ hội erne" },
+    ctaLabel: {
+      en: "Next: Pickleball Stacking Strategy — Control Sides to Create Erne Chances",
+      vi: "Tiếp theo: Chiến thuật Stacking — kiểm soát bên sân để tạo cơ hội erne",
+    },
     heroImage: {
       src: "/images/blog/pickleball-erne-shot-tutorial-hero.webp",
-      alt: "Dynamic side-angle action shot of a pickleball player leaping forward outside the kitchen line, mid-air, executing an erne volley right at the net while the opponent's dink floats toward the sideline."
+      alt: "Dynamic side-angle action shot of a pickleball player leaping forward outside the kitchen line, mid-air, executing an erne volley right at the net while the opponent's dink floats toward the sideline.",
     },
     titleEn: "The Erne in Pickleball: How to Hit It, Rules & Setup (2026)",
-    titleVi: "Cú Erne Trong Pickleball: Cách Thực Hiện, Luật & Cách Giăng Bẫy (2026)",
+    titleVi:
+      "Cú Erne Trong Pickleball: Cách Thực Hiện, Luật & Cách Giăng Bẫy (2026)",
     metaTitleEn: "Pickleball Erne Shot 2026 | How to Hit It & When",
     metaTitleVi: "Cú Erne Pickleball 2026 | Cách Thực Hiện & Khi Nào",
-    metaDescriptionEn: "The pickleball erne explained: what it is, why it's legal, jump vs stationary erne, step-by-step technique, how to set it up, defense, mistakes, and drills.",
-    metaDescriptionVi: "Cú erne pickleball là gì: vì sao hợp lệ, erne bật nhảy vs đứng sẵn, kỹ thuật từng bước, lỗi phổ biến và bài tập.",
+    metaDescriptionEn:
+      "The pickleball erne explained: what it is, why it's legal, jump vs stationary erne, step-by-step technique, how to set it up, defense, mistakes, and drills.",
+    metaDescriptionVi:
+      "Cú erne pickleball là gì: vì sao hợp lệ, erne bật nhảy vs đứng sẵn, kỹ thuật từng bước, lỗi phổ biến và bài tập.",
   },
   {
     slug: "pickleball-doubles-stacking-strategy",
     publishedDate: "2026-06-03",
     updatedDate: "2026-06-03",
     author: "Cuong Nguyen",
-    tags: ["pickleball stacking", "pickleball stacking strategy", "stacking in pickleball explained", "pickleball stacking serve", "pickleball stacking return", "lefty righty pickleball", "pickleball doubles strategy", "pickleball positioning"],
+    tags: [
+      "pickleball stacking",
+      "pickleball stacking strategy",
+      "stacking in pickleball explained",
+      "pickleball stacking serve",
+      "pickleball stacking return",
+      "lefty righty pickleball",
+      "pickleball doubles strategy",
+      "pickleball positioning",
+    ],
     ctaPath: "/blog/pickleball-third-shot-drop-vs-drive",
-    ctaLabel: { en: "Next: Third Shot Drop vs Drive — Win the Point After You Stack", vi: "Tiếp theo: Cú thứ 3 Drop vs Drive — thắng điểm sau khi stack" },
+    ctaLabel: {
+      en: "Next: Third Shot Drop vs Drive — Win the Point After You Stack",
+      vi: "Tiếp theo: Cú thứ 3 Drop vs Drive — thắng điểm sau khi stack",
+    },
     heroImage: {
       src: "/images/blog/pickleball-doubles-stacking-strategy-hero.webp",
-      alt: "Top-down diagram of a pickleball doubles court showing a stacking formation: two teammates positioned on the same side before the serve, with arrows indicating their rotation to preferred sides once the ball is in play, color-coded to show each partner's path."
+      alt: "Top-down diagram of a pickleball doubles court showing a stacking formation: two teammates positioned on the same side before the serve, with arrows indicating their rotation to preferred sides once the ball is in play, color-coded to show each partner's path.",
     },
     titleEn: "Pickleball Stacking Strategy: A Complete Doubles Guide (2026)",
-    titleVi: "Chiến Thuật Stacking Pickleball: Hướng Dẫn Đánh Đôi Đầy Đủ (2026)",
+    titleVi:
+      "Chiến Thuật Stacking Pickleball: Hướng Dẫn Đánh Đôi Đầy Đủ (2026)",
     metaTitleEn: "Pickleball Stacking Strategy 2026 | How & When to Stack",
     metaTitleVi: "Chiến thuật Stacking Pickleball | Khi nào dùng",
-    metaDescriptionEn: "Pickleball stacking explained: what it is, how to stack on the serve and return, the lefty-righty stack, hand signals, full vs half stack, mistakes, and drills.",
-    metaDescriptionVi: "Stacking pickleball là gì: cách stack khi giao và khi trả bóng, tín hiệu tay, full stack vs half stack, lỗi phổ biến và bài tập.",
+    metaDescriptionEn:
+      "Pickleball stacking explained: what it is, how to stack on the serve and return, the lefty-righty stack, hand signals, full vs half stack, mistakes, and drills.",
+    metaDescriptionVi:
+      "Stacking pickleball là gì: cách stack khi giao và khi trả bóng, tín hiệu tay, full stack vs half stack, lỗi phổ biến và bài tập.",
   },
   {
     slug: "pickleball-third-shot-drop-vs-drive",
     publishedDate: "2026-06-01",
     updatedDate: "2026-06-01",
     author: "Cuong Nguyen",
-    tags: ["third shot drop pickleball", "third shot drive vs drop", "pickleball third shot", "third shot drop technique", "pickleball drive", "pickleball drop shot", "pickleball doubles strategy", "get to the kitchen"],
+    tags: [
+      "third shot drop pickleball",
+      "third shot drive vs drop",
+      "pickleball third shot",
+      "third shot drop technique",
+      "pickleball drive",
+      "pickleball drop shot",
+      "pickleball doubles strategy",
+      "get to the kitchen",
+    ],
     ctaPath: "/blog/pickleball-dink-technique-mastery",
-    ctaLabel: { en: "Next: Pickleball Dink Technique — Master the Soft Game", vi: "Tiếp theo: Kỹ thuật Dink Pickleball — làm chủ soft game" },
+    ctaLabel: {
+      en: "Next: Pickleball Dink Technique — Master the Soft Game",
+      vi: "Tiếp theo: Kỹ thuật Dink Pickleball — làm chủ soft game",
+    },
     heroImage: {
       src: "/images/blog/pickleball-third-shot-drop-vs-drive-hero.webp",
-      alt: "Side-by-side comparison of a pickleball player executing a third shot drop with a soft high arc landing in the kitchen versus the same player hitting a flat, fast third shot drive, illustrating the two third-shot options for the 2026 strategy guide."
+      alt: "Side-by-side comparison of a pickleball player executing a third shot drop with a soft high arc landing in the kitchen versus the same player hitting a flat, fast third shot drive, illustrating the two third-shot options for the 2026 strategy guide.",
     },
-    titleEn: "Third Shot Drop vs Drive in Pickleball: Which to Hit & When (2026)",
-    titleVi: "Cú Thứ 3 Pickleball: Drop vs Drive — Đánh Cú Nào & Khi Nào (2026)",
+    titleEn:
+      "Third Shot Drop vs Drive in Pickleball: Which to Hit & When (2026)",
+    titleVi:
+      "Cú Thứ 3 Pickleball: Drop vs Drive — Đánh Cú Nào & Khi Nào (2026)",
     metaTitleEn: "Third Shot Drop vs Drive Pickleball 2026 | Which & When",
     metaTitleVi: "Cú thứ 3 Pickleball | Drop hay Drive?",
-    metaDescriptionEn: "Third shot drop vs drive in pickleball: what each shot does, the mechanics, when to drop, when to drive, the hybrid drive-and-drop, common mistakes, and drills.",
-    metaDescriptionVi: "Cú thứ 3 pickleball drop vs drive: mỗi cú làm gì, cơ học, khi nào drop, khi nào drive, combo drive-and-drop, lỗi phổ biến và bài tập.",
+    metaDescriptionEn:
+      "Third shot drop vs drive in pickleball: what each shot does, the mechanics, when to drop, when to drive, the hybrid drive-and-drop, common mistakes, and drills.",
+    metaDescriptionVi:
+      "Cú thứ 3 pickleball drop vs drive: mỗi cú làm gì, cơ học, khi nào drop, khi nào drive, combo drive-and-drop, lỗi phổ biến và bài tập.",
   },
   {
     slug: "pickleball-dink-technique-mastery",
     publishedDate: "2026-06-01",
     updatedDate: "2026-06-01",
     author: "Cuong Nguyen",
-    tags: ["how to dink pickleball", "pickleball dink technique", "pickleball dink", "cross court dink", "topspin dink", "pickleball kitchen game", "pickleball soft game", "dink drills"],
+    tags: [
+      "how to dink pickleball",
+      "pickleball dink technique",
+      "pickleball dink",
+      "cross court dink",
+      "topspin dink",
+      "pickleball kitchen game",
+      "pickleball soft game",
+      "dink drills",
+    ],
     ctaPath: "/blog/pickleball-doubles-strategy-guide",
-    ctaLabel: { en: "Next: Pickleball Doubles Strategy — Positioning & Shot Selection", vi: "Tiếp theo: Chiến thuật Pickleball đôi — vị trí & chọn cú đánh" },
+    ctaLabel: {
+      en: "Next: Pickleball Doubles Strategy — Positioning & Shot Selection",
+      vi: "Tiếp theo: Chiến thuật Pickleball đôi — vị trí & chọn cú đánh",
+    },
     heroImage: {
       src: "/images/blog/pickleball-dink-technique-mastery-hero.webp",
-      alt: "Close-up action shot of a pickleball player at the kitchen line executing a soft dink shot with an open paddle face, the ball captured mid-air just clearing the net, a blurred opponent in the background, illustrating proper dink technique for the 2026 mastery guide."
+      alt: "Close-up action shot of a pickleball player at the kitchen line executing a soft dink shot with an open paddle face, the ball captured mid-air just clearing the net, a blurred opponent in the background, illustrating proper dink technique for the 2026 mastery guide.",
     },
     titleEn: "How to Dink in Pickleball: Technique Mastery Guide 2026",
     titleVi: "Kỹ Thuật Dink Pickleball: Hướng Dẫn Cơ Bản Đến Nâng Cao 2026",
     metaTitleEn: "How to Dink in Pickleball: Technique Mastery Guide 2026",
     metaTitleVi: "Kỹ thuật Dink Pickleball | Cơ bản tới nâng cao",
-    metaDescriptionEn: "Master the pickleball dink: grip, paddle face, contact point, cross-court vs straight, topspin dink, the 5 most common mistakes, and 4 drills to practice.",
-    metaDescriptionVi: "Làm chủ cú dink pickleball: cầm vợt, mặt vợt, điểm chạm, dink chéo sân vs thẳng, dink topspin, 5 lỗi phổ biến và 4 bài tập.",
+    metaDescriptionEn:
+      "Master the pickleball dink: grip, paddle face, contact point, cross-court vs straight, topspin dink, the 5 most common mistakes, and 4 drills to practice.",
+    metaDescriptionVi:
+      "Làm chủ cú dink pickleball: cầm vợt, mặt vợt, điểm chạm, dink chéo sân vs thẳng, dink topspin, 5 lỗi phổ biến và 4 bài tập.",
   },
   {
     slug: "dupr-thepicklehub-user-guide",
     publishedDate: "2026-05-29",
     updatedDate: "2026-05-29",
     author: "Cuong Nguyen",
-    tags: ["dupr thepicklehub", "dupr integration", "dupr vietnam", "pickleball rating vietnam", "dupr connect", "log pickleball match", "dupr leaderboard vietnam", "pickleball thepicklehub"],
+    tags: [
+      "dupr thepicklehub",
+      "dupr integration",
+      "dupr vietnam",
+      "pickleball rating vietnam",
+      "dupr connect",
+      "log pickleball match",
+      "dupr leaderboard vietnam",
+      "pickleball thepicklehub",
+    ],
     ctaPath: "/dupr",
-    ctaLabel: { en: "Connect Your DUPR Account Now", vi: "Kết Nối Tài Khoản DUPR Ngay" },
+    ctaLabel: {
+      en: "Connect Your DUPR Account Now",
+      vi: "Kết Nối Tài Khoản DUPR Ngay",
+    },
     heroImage: {
       src: "/images/blog/dupr-thepicklehub-user-guide-hero.webp",
-      alt: "A 16:9 editorial product hero showing the ThePickleHub.net dashboard on a laptop, featuring a green Connect DUPR header button, a DUPR rating pill displaying singles 4.27 and doubles 4.41, and a 30-day rating history line chart in the background, with subtle pickleball paddle and ball props and a faint Vietnam map outline, illustrating the 2026 DUPR integration user guide for ThePickleHub."
+      alt: "A 16:9 editorial product hero showing the ThePickleHub.net dashboard on a laptop, featuring a green Connect DUPR header button, a DUPR rating pill displaying singles 4.27 and doubles 4.41, and a 30-day rating history line chart in the background, with subtle pickleball paddle and ball props and a faint Vietnam map outline, illustrating the 2026 DUPR integration user guide for ThePickleHub.",
     },
-    titleEn: "DUPR on ThePickleHub: Complete User Guide 2026 — Connect, Log Matches, Rankings",
-    titleVi: "Hướng Dẫn Dùng DUPR Trên ThePickleHub 2026 | Connect, Log Trận, Bảng Xếp Hạng",
+    titleEn:
+      "DUPR on ThePickleHub: Complete User Guide 2026 — Connect, Log Matches, Rankings",
+    titleVi:
+      "Hướng Dẫn Dùng DUPR Trên ThePickleHub 2026 | Connect, Log Trận, Bảng Xếp Hạng",
     metaTitleEn: "DUPR on ThePickleHub Guide 2026 | Connect + Log Matches",
     metaTitleVi: "Dùng DUPR Trên ThePickleHub 2026 | Connect + Log Trận",
-    metaDescriptionEn: "Connect DUPR to ThePickleHub in one click, log matches with opponent confirmation, submit to DUPR, and track your rating on the Vietnam DUPR leaderboard.",
-    metaDescriptionVi: "Kết nối DUPR với ThePickleHub trong 1 click, log trận có đối thủ xác nhận và theo dõi rating trên bảng xếp hạng.",
+    metaDescriptionEn:
+      "Connect DUPR to ThePickleHub in one click, log matches with opponent confirmation, submit to DUPR, and track your rating on the Vietnam DUPR leaderboard.",
+    metaDescriptionVi:
+      "Kết nối DUPR với ThePickleHub trong 1 click, log trận có đối thủ xác nhận và theo dõi rating trên bảng xếp hạng.",
   },
   {
     slug: "pickleball-court-dimensions-setup-guide",
     publishedDate: "2026-05-29",
     updatedDate: "2026-05-29",
     author: "Cuong Nguyen",
-    tags: ["pickleball court dimensions", "pickleball court size", "pickleball kitchen size", "pickleball net height", "convert tennis court to pickleball", "mark a pickleball court", "pickleball court vietnam", "pickleball setup"],
+    tags: [
+      "pickleball court dimensions",
+      "pickleball court size",
+      "pickleball kitchen size",
+      "pickleball net height",
+      "convert tennis court to pickleball",
+      "mark a pickleball court",
+      "pickleball court vietnam",
+      "pickleball setup",
+    ],
     ctaPath: "/blog/how-to-play-pickleball",
-    ctaLabel: { en: "Next: How to Play Pickleball — 7-Day Beginner Plan", vi: "Tiếp theo: Hướng dẫn chơi Pickleball — lộ trình 7 ngày cho người mới" },
+    ctaLabel: {
+      en: "Next: How to Play Pickleball — 7-Day Beginner Plan",
+      vi: "Tiếp theo: Hướng dẫn chơi Pickleball — lộ trình 7 ngày cho người mới",
+    },
     heroImage: {
       src: "/images/blog/how-to-play-pickleball-hero.webp",
-      alt: "Pickleball court with players at the net — hero image for the 2026 court dimensions and setup guide."
+      alt: "Pickleball court with players at the net — hero image for the 2026 court dimensions and setup guide.",
     },
     titleEn: "Pickleball Court Dimensions & Setup Guide 2026 | Sizes + Diagram",
     titleVi: "Kích Thước Sân Pickleball Tiêu Chuẩn 2026 | Sơ Đồ + Cách Vẽ Sân",
     metaTitleEn: "Pickleball Court Dimensions 2026 | Sizes + Setup Diagram",
     metaTitleVi: "Kích thước sân Pickleball | Sơ đồ & cách vẽ",
-    metaDescriptionEn: "Official pickleball court dimensions: 44×20 ft playing area, 7 ft kitchen, net height, total space needed. Plus how to mark a court and convert a tennis court.",
-    metaDescriptionVi: "Kích thước sân pickleball chuẩn: sân 13,41×6,1 m, khu bếp 2,13 m, chiều cao lưới. Kèm cách kẻ sân và dùng sân tennis.",
+    metaDescriptionEn:
+      "Official pickleball court dimensions: 44×20 ft playing area, 7 ft kitchen, net height, total space needed. Plus how to mark a court and convert a tennis court.",
+    metaDescriptionVi:
+      "Kích thước sân pickleball chuẩn: sân 13,41×6,1 m, khu bếp 2,13 m, chiều cao lưới. Kèm cách kẻ sân và dùng sân tennis.",
   },
   {
     slug: "vietnam-dupr-leaderboard-launch",
     publishedDate: "2026-05-27",
     updatedDate: "2026-05-27",
     author: "Cuong Nguyen",
-    tags: ["dupr", "dupr vietnam", "vietnam pickleball ranking", "dupr leaderboard", "thepicklehub", "pickleball vietnam", "asia pickleball", "tournament rating"],
+    tags: [
+      "dupr",
+      "dupr vietnam",
+      "vietnam pickleball ranking",
+      "dupr leaderboard",
+      "thepicklehub",
+      "pickleball vietnam",
+      "asia pickleball",
+      "tournament rating",
+    ],
     ctaPath: "/rankings",
-    ctaLabel: { en: "View the Vietnam DUPR Leaderboard", vi: "Xem bảng xếp hạng DUPR Việt Nam" },
+    ctaLabel: {
+      en: "View the Vietnam DUPR Leaderboard",
+      vi: "Xem bảng xếp hạng DUPR Việt Nam",
+    },
     heroImage: {
       src: "/images/blog/dupr-thepicklehub-user-guide-hero.webp",
-      alt: "DUPR ratings on ThePickleHub — hero image for the Vietnam DUPR leaderboard launch announcement."
+      alt: "DUPR ratings on ThePickleHub — hero image for the Vietnam DUPR leaderboard launch announcement.",
     },
-    titleEn: "Vietnam DUPR Leaderboard Launches on ThePickleHub | Live Rankings, Bracket Seeding, Balanced Matchmaking",
-    titleVi: "Bảng xếp hạng DUPR Việt Nam ra mắt trên ThePickleHub | Cập nhật real-time, seed bracket tự động, ghép cặp cân bằng",
+    titleEn:
+      "Vietnam DUPR Leaderboard Launches on ThePickleHub | Live Rankings, Bracket Seeding, Balanced Matchmaking",
+    titleVi:
+      "Bảng xếp hạng DUPR Việt Nam ra mắt trên ThePickleHub | Cập nhật real-time, seed bracket tự động, ghép cặp cân bằng",
     metaTitleEn: "Vietnam DUPR Leaderboard | Live Pickleball Rankings",
     metaTitleVi: "Bảng xếp hạng DUPR Việt Nam | Cập nhật live",
-    metaDescriptionEn: "ThePickleHub hosts a live Vietnam DUPR pickleball leaderboard updated by webhook, plus DUPR-required tournaments and auto-seeded brackets.",
-    metaDescriptionVi: "Bảng xếp hạng DUPR Việt Nam cập nhật real-time qua webhook, kèm giải đấu yêu cầu DUPR, seed bracket tự động và ghép cặp Mexicano.",
+    metaDescriptionEn:
+      "ThePickleHub hosts a live Vietnam DUPR pickleball leaderboard updated by webhook, plus DUPR-required tournaments and auto-seeded brackets.",
+    metaDescriptionVi:
+      "Bảng xếp hạng DUPR Việt Nam cập nhật real-time qua webhook, kèm giải đấu yêu cầu DUPR, seed bracket tự động và ghép cặp Mexicano.",
   },
   {
     slug: "pickleball-vs-padel-vs-paddle-tennis",
     publishedDate: "2026-05-26",
     updatedDate: "2026-05-26",
     author: "Cuong Nguyen",
-    tags: ["pickleball vs padel", "pickleball vs paddle tennis", "padel vs pickleball", "racquet sports comparison", "padel vietnam", "paddle tennis explained", "pickleball court dimensions", "pickleball beginners"],
+    tags: [
+      "pickleball vs padel",
+      "pickleball vs paddle tennis",
+      "padel vs pickleball",
+      "racquet sports comparison",
+      "padel vietnam",
+      "paddle tennis explained",
+      "pickleball court dimensions",
+      "pickleball beginners",
+    ],
     ctaPath: "/blog/pickleball-for-tennis-players-2026",
-    ctaLabel: { en: "Next: Pickleball for Tennis Players 2026 — 5 Habits to Unlearn", vi: "Tiếp theo: Pickleball cho người chơi tennis 2026 — 5 thói quen cần bỏ" },
+    ctaLabel: {
+      en: "Next: Pickleball for Tennis Players 2026 — 5 Habits to Unlearn",
+      vi: "Tiếp theo: Pickleball cho người chơi tennis 2026 — 5 thói quen cần bỏ",
+    },
     heroImage: {
       src: "/images/blog/pickleball-vs-padel-vs-paddle-tennis-hero.webp",
-      alt: "Three top-down court diagrams side by side at the same visual scale, showing pickleball court (44 by 20 feet, kitchen marked), padel court (20 by 10 meters with glass walls in light blue), and paddle tennis POP court (50 by 20 feet, no walls), each labeled with sport name and dimensions in a clean illustrative diagram style on a white background for the 2026 racquet sports comparison guide"
+      alt: "Three top-down court diagrams side by side at the same visual scale, showing pickleball court (44 by 20 feet, kitchen marked), padel court (20 by 10 meters with glass walls in light blue), and paddle tennis POP court (50 by 20 feet, no walls), each labeled with sport name and dimensions in a clean illustrative diagram style on a white background for the 2026 racquet sports comparison guide",
     },
     titleEn: "Pickleball vs Padel vs Paddle Tennis: Complete Guide 2026",
     titleVi: "Pickleball vs Padel vs Paddle Tennis: So Sánh Đầy Đủ 2026",
     metaTitleEn: "Pickleball vs Padel vs Paddle Tennis: Complete Guide 2026",
     metaTitleVi: "Pickleball vs Padel vs Paddle Tennis: So Sánh 2026",
-    metaDescriptionEn: "Pickleball vs padel vs paddle tennis: full 2026 comparison of court size, rules, scoring, equipment, where each sport is popular, what to try first.",
-    metaDescriptionVi: "Pickleball, padel hay paddle tennis khác nhau thế nào? So sánh sân, luật, dụng cụ và nên thử môn nào trước.",
+    metaDescriptionEn:
+      "Pickleball vs padel vs paddle tennis: full 2026 comparison of court size, rules, scoring, equipment, where each sport is popular, what to try first.",
+    metaDescriptionVi:
+      "Pickleball, padel hay paddle tennis khác nhau thế nào? So sánh sân, luật, dụng cụ và nên thử môn nào trước.",
   },
   {
     slug: "best-pickleball-paddles-beginners-2026",
     publishedDate: "2026-05-24",
-    updatedDate: "2026-05-24",
+    updatedDate: "2026-10-13",
     author: "Cuong Nguyen",
-    tags: ["best pickleball paddles", "beginner paddle", "paddle buying guide", "pickleball equipment", "joola", "selkirk", "gamma", "pickleball vietnam", "asia"],
+    tags: [
+      "best pickleball paddles",
+      "beginner paddle",
+      "paddle buying guide",
+      "pickleball equipment",
+      "joola",
+      "selkirk",
+      "gamma",
+      "pickleball vietnam",
+      "asia",
+    ],
     ctaPath: "/blog/how-to-play-pickleball",
-    ctaLabel: { en: "Next: How to Play Pickleball — Complete Beginner Guide", vi: "Tiếp theo: Hướng dẫn chơi Pickleball cho người mới" },
+    ctaLabel: {
+      en: "Next: How to Play Pickleball — Complete Beginner Guide",
+      vi: "Tiếp theo: Hướng dẫn chơi Pickleball cho người mới",
+    },
     heroImage: {
       src: "/images/blog/best-pickleball-paddles-beginners-2026-hero.webp",
-      alt: "Top-down product photo of seven beginner pickleball paddles arranged in a fan layout on a neutral wood background, showing paddle face colors ranging from white to black with varied grip wraps, sports equipment catalog style for the 2026 best pickleball paddles for beginners buyer guide"
+      alt: "Top-down product photo of seven beginner pickleball paddles arranged in a fan layout on a neutral wood background, showing paddle face colors ranging from white to black with varied grip wraps, sports equipment catalog style for the 2026 best pickleball paddles for beginners buyer guide",
     },
-    titleEn: "Best Pickleball Paddles for Beginners 2026: 7 Top Picks (Asia Buyer's Guide)",
-    titleVi: "Vợt Pickleball Tốt Nhất Cho Người Mới 2026: 7 Lựa Chọn (Hướng Dẫn Mua Tại VN)",
+    titleEn:
+      "Best Pickleball Paddles for Beginners 2026: 7 Top Picks (Asia Buyer's Guide)",
+    titleVi:
+      "Vợt Pickleball Tốt Nhất Cho Người Mới 2026: 7 Lựa Chọn (Hướng Dẫn Mua Tại VN)",
     metaTitleEn: "Best Pickleball Paddles for Beginners 2026 | 7 Top Picks",
     metaTitleVi: "Vợt Pickleball cho người mới 2026 | 7 lựa chọn",
-    metaDescriptionEn: "Picking your first pickleball paddle without overspending. 7 beginner-friendly paddles for 2026 with weight, face, grip specs — plus what to avoid in VN.",
-    metaDescriptionVi: "Chọn vợt pickleball đầu tiên không cháy túi: 7 mẫu cho người mới 2026, trọng lượng, mặt vợt và lỗi cần tránh.",
+    metaDescriptionEn:
+      "Picking your first pickleball paddle without overspending. 7 beginner-friendly paddles for 2026 with weight, face, grip specs — plus what to avoid in VN.",
+    metaDescriptionVi:
+      "Chọn vợt pickleball đầu tiên không cháy túi: 7 mẫu cho người mới 2026, trọng lượng, mặt vợt và lỗi cần tránh.",
   },
   {
     slug: "pickleball-for-tennis-players-2026",
     publishedDate: "2026-05-22",
     updatedDate: "2026-05-22",
     author: "Cuong Nguyen",
-    tags: ["pickleball for tennis players", "tennis to pickleball", "tennis vs pickleball", "beginner", "technique", "transition guide", "unlearn", "vietnam pickleball"],
+    tags: [
+      "pickleball for tennis players",
+      "tennis to pickleball",
+      "tennis vs pickleball",
+      "beginner",
+      "technique",
+      "transition guide",
+      "unlearn",
+      "vietnam pickleball",
+    ],
     ctaPath: "/blog/how-to-play-pickleball",
-    ctaLabel: { en: "Read: How to Play Pickleball — Complete Beginner Guide", vi: "Đọc tiếp: Hướng dẫn chơi Pickleball cho người mới bắt đầu" },
+    ctaLabel: {
+      en: "Read: How to Play Pickleball — Complete Beginner Guide",
+      vi: "Đọc tiếp: Hướng dẫn chơi Pickleball cho người mới bắt đầu",
+    },
     heroImage: {
       src: "/images/blog/pickleball-for-tennis-players-2026-hero.webp",
-      alt: "Split-screen sports photo: left side a tennis player executing a deep baseline forehand on a clay court, right side the same player at the kitchen line on a pickleball court holding a paddle in a compact ready position, illustrating the transition from tennis to pickleball and the 5 habits tennis players need to unlearn"
+      alt: "Split-screen sports photo: left side a tennis player executing a deep baseline forehand on a clay court, right side the same player at the kitchen line on a pickleball court holding a paddle in a compact ready position, illustrating the transition from tennis to pickleball and the 5 habits tennis players need to unlearn",
     },
     titleEn: "Pickleball for Tennis Players: 5 Things to Unlearn (2026 Guide)",
-    titleVi: "Từ tennis chuyển sang pickleball: 5 thói quen cần \"quên\" (2026)",
+    titleVi: 'Từ tennis chuyển sang pickleball: 5 thói quen cần "quên" (2026)',
     metaTitleEn: "Pickleball for Tennis Players 2026 | 5 Habits to Unlearn",
     metaTitleVi: "Tennis sang Pickleball 2026 | 5 thói quen phải sửa",
-    metaDescriptionEn: "Tennis players struggle with pickleball not because it's harder — they bring 5 ingrained habits that backfire. Here's what to unlearn and the 7-day fix.",
-    metaDescriptionVi: "Người chơi tennis chuyển sang pickleball thua vì 5 thói quen phản tác dụng, không phải vì kỹ thuật. Cách sửa và lịch tập 7 ngày.",
+    metaDescriptionEn:
+      "Tennis players struggle with pickleball not because it's harder — they bring 5 ingrained habits that backfire. Here's what to unlearn and the 7-day fix.",
+    metaDescriptionVi:
+      "Người chơi tennis chuyển sang pickleball thua vì 5 thói quen phản tác dụng, không phải vì kỹ thuật. Cách sửa và lịch tập 7 ngày.",
   },
   {
     slug: "dupr-rating-improvement-30-day-plan",
     publishedDate: "2026-05-20",
     updatedDate: "2026-05-20",
     author: "Cuong Nguyen",
-    tags: ["dupr", "dupr rating", "pickleball rating", "training plan", "improvement", "30 day plan", "dupr algorithm", "performance vs expectation", "vietnam pickleball"],
+    tags: [
+      "dupr",
+      "dupr rating",
+      "pickleball rating",
+      "training plan",
+      "improvement",
+      "30 day plan",
+      "dupr algorithm",
+      "performance vs expectation",
+      "vietnam pickleball",
+    ],
     ctaPath: "/blog/dupr-algorithm-explained-performance-vs-expectation",
-    ctaLabel: { en: "Read Part 2: How the DUPR Algorithm Actually Works", vi: "Đọc Phần 2: Thuật toán DUPR — thắng mất điểm, thua tăng điểm" },
+    ctaLabel: {
+      en: "Read Part 2: How the DUPR Algorithm Actually Works",
+      vi: "Đọc Phần 2: Thuật toán DUPR — thắng mất điểm, thua tăng điểm",
+    },
     heroImage: {
       src: "/images/blog/dupr-rating-improvement-30-day-plan-hero.webp",
-      alt: "A vertical bar chart showing a DUPR (Dynamic Universal Pickleball Rating) climbing from 3.50 to 4.20 across 30 days, beside a pickleball paddle and DUPR logo, illustrating a realistic week-by-week training plan to improve a pickleball rating."
+      alt: "A vertical bar chart showing a DUPR (Dynamic Universal Pickleball Rating) climbing from 3.50 to 4.20 across 30 days, beside a pickleball paddle and DUPR logo, illustrating a realistic week-by-week training plan to improve a pickleball rating.",
     },
     titleEn: "How to Improve Your DUPR Rating: A Realistic 30-Day Plan",
     titleVi: "Tăng điểm DUPR trong 30 ngày: kế hoạch thực tế (không hứa nhanh)",
     metaTitleEn: "Improve Your DUPR in 30 Days | Realistic Training Plan",
     metaTitleVi: "Tăng điểm DUPR trong 30 ngày | Kế hoạch thật",
-    metaDescriptionEn: "A 30-day plan to raise your DUPR rating: how DUPR's algorithm rewards consistent play, the 4 rules from Part 2, and a week-by-week training schedule.",
-    metaDescriptionVi: "Kế hoạch 30 ngày tăng điểm DUPR: hiểu thuật toán, 4 quy tắc từ Phần 2, lịch tập theo tuần và 3 sai lầm cần tránh.",
+    metaDescriptionEn:
+      "A 30-day plan to raise your DUPR rating: how DUPR's algorithm rewards consistent play, the 4 rules from Part 2, and a week-by-week training schedule.",
+    metaDescriptionVi:
+      "Kế hoạch 30 ngày tăng điểm DUPR: hiểu thuật toán, 4 quy tắc từ Phần 2, lịch tập theo tuần và 3 sai lầm cần tránh.",
   },
   {
     slug: "professional-pickleball-tours-guide-2026",
     publishedDate: "2026-05-18",
     updatedDate: "2026-05-18",
     author: "Cuong Nguyen",
-    tags: ["professional pickleball", "ppa tour", "mlp", "ppa tour asia", "app tour", "upa", "2026", "pro pickleball comparison", "asia"],
+    tags: [
+      "professional pickleball",
+      "ppa tour",
+      "mlp",
+      "ppa tour asia",
+      "app tour",
+      "upa",
+      "2026",
+      "pro pickleball comparison",
+      "asia",
+    ],
     ctaPath: "/blog/ppa-tour-asia-2026-complete-guide",
-    ctaLabel: { en: "Read: PPA Tour Asia 2026 Complete Guide", vi: "Đọc: Hướng dẫn đầy đủ PPA Tour Asia 2026" },
+    ctaLabel: {
+      en: "Read: PPA Tour Asia 2026 Complete Guide",
+      vi: "Đọc: Hướng dẫn đầy đủ PPA Tour Asia 2026",
+    },
     heroImage: {
       src: "/images/blog/professional-pickleball-tours-guide-2026-hero.webp",
-      alt: "Professional pickleball tours 2026 — PPA Tour, MLP, PPA Tour Asia, and APP Tour shown across global venues with crowded stadiums and broadcast cameras, the four pro circuits operating under the UPA umbrella that define competitive pickleball in 2026"
+      alt: "Professional pickleball tours 2026 — PPA Tour, MLP, PPA Tour Asia, and APP Tour shown across global venues with crowded stadiums and broadcast cameras, the four pro circuits operating under the UPA umbrella that define competitive pickleball in 2026",
     },
-    titleEn: "Professional Pickleball Tours 2026: Complete Guide to PPA, MLP, PPA Tour Asia, and APP",
-    titleVi: "Các giải Pickleball chuyên nghiệp 2026: Hướng dẫn đầy đủ về PPA, MLP, PPA Tour Asia và APP",
+    titleEn:
+      "Professional Pickleball Tours 2026: Complete Guide to PPA, MLP, PPA Tour Asia, and APP",
+    titleVi:
+      "Các giải Pickleball chuyên nghiệp 2026: Hướng dẫn đầy đủ về PPA, MLP, PPA Tour Asia và APP",
     metaTitleEn: "Pro Pickleball Tours 2026 | PPA vs MLP vs APP Compared",
     metaTitleVi: "Pro Pickleball 2026 | PPA, MLP, APP so sánh",
-    metaDescriptionEn: "2026 guide to pro pickleball tours: PPA Tour, MLP, PPA Tour Asia, APP — schedules, prize money, formats, top players, how to watch from Asia.",
-    metaDescriptionVi: "4 giải pickleball chuyên nghiệp 2026 — PPA Tour, MLP, PPA Tour Asia, APP: lịch, tiền thưởng và cách xem từ Việt Nam.",
-  },  {
+    metaDescriptionEn:
+      "2026 guide to pro pickleball tours: PPA Tour, MLP, PPA Tour Asia, APP — schedules, prize money, formats, top players, how to watch from Asia.",
+    metaDescriptionVi:
+      "4 giải pickleball chuyên nghiệp 2026 — PPA Tour, MLP, PPA Tour Asia, APP: lịch, tiền thưởng và cách xem từ Việt Nam.",
+  },
+  {
     slug: "pickleball-tour-wars-2023-explained",
     publishedDate: "2026-05-05",
     updatedDate: "2026-05-05",
     author: "Cuong Nguyen",
-    tags: ["tour wars", "ppa tour", "mlp", "upa", "professional pickleball", "history", "gold contract", "asia"],
+    tags: [
+      "tour wars",
+      "ppa tour",
+      "mlp",
+      "upa",
+      "professional pickleball",
+      "history",
+      "gold contract",
+      "asia",
+    ],
     ctaPath: "/blog/app-tour-vs-ppa-tour-contracts-2026",
-    ctaLabel: { en: "Read: APP Tour vs PPA Tour Contracts in 2026", vi: "Đọc tiếp: Hợp đồng APP Tour vs PPA Tour 2026" },
+    ctaLabel: {
+      en: "Read: APP Tour vs PPA Tour Contracts in 2026",
+      vi: "Đọc tiếp: Hợp đồng APP Tour vs PPA Tour 2026",
+    },
     heroImage: {
       src: "/images/blog/pickleball-tour-wars-2023-hero.webp",
-      alt: "Pickleball Tour Wars 2023 — the 10-day signing frenzy in August 2023 between PPA Tour and Major League Pickleball that reshaped professional pickleball, created exclusive Gold Contracts, and set the stage for the 2024 UPA merger"
+      alt: "Pickleball Tour Wars 2023 — the 10-day signing frenzy in August 2023 between PPA Tour and Major League Pickleball that reshaped professional pickleball, created exclusive Gold Contracts, and set the stage for the 2024 UPA merger",
     },
-    titleEn: "Pickleball Tour Wars 2023: The 10 Days That Reshaped Pro Pickleball Forever",
-    titleVi: "Tour Wars 2023: 10 ngày thay đổi pickleball chuyên nghiệp mãi mãi",
+    titleEn:
+      "Pickleball Tour Wars 2023: The 10 Days That Reshaped Pro Pickleball Forever",
+    titleVi:
+      "Tour Wars 2023: 10 ngày thay đổi pickleball chuyên nghiệp mãi mãi",
     metaTitleEn: "Pickleball Tour Wars 2023 | The 10 Days That Changed Pro",
     metaTitleVi: "Tour Wars 2023 | 10 ngày đổi cả pickleball pro",
-    metaDescriptionEn: "Pickleball Tour Wars 2023: how PPA and MLP fought for 10 days, why Gold Contracts only exist from that window, and what it means for Vietnamese pros today.",
-    metaDescriptionVi: "Tour Wars 2023: PPA và MLP đua ký 150 VĐV trong 10 ngày, tạo Gold Contract, dẫn tới sáp nhập UPA — và ý nghĩa với VĐV Việt Nam.",
-  },  {
+    metaDescriptionEn:
+      "Pickleball Tour Wars 2023: how PPA and MLP fought for 10 days, why Gold Contracts only exist from that window, and what it means for Vietnamese pros today.",
+    metaDescriptionVi:
+      "Tour Wars 2023: PPA và MLP đua ký 150 VĐV trong 10 ngày, tạo Gold Contract, dẫn tới sáp nhập UPA — và ý nghĩa với VĐV Việt Nam.",
+  },
+  {
     slug: "app-tour-vs-ppa-tour-contracts-2026",
     publishedDate: "2026-05-05",
     updatedDate: "2026-05-05",
     author: "Cuong Nguyen",
-    tags: ["app tour", "ppa tour", "professional pickleball", "contracts", "quang duong", "asia", "global pickleball alliance"],
+    tags: [
+      "app tour",
+      "ppa tour",
+      "professional pickleball",
+      "contracts",
+      "quang duong",
+      "asia",
+      "global pickleball alliance",
+    ],
     ctaPath: "/blog/ppa-tour-asia-2026-complete-guide",
-    ctaLabel: { en: "Read the PPA Tour Asia 2026 Guide", vi: "Đọc hướng dẫn PPA Tour Asia 2026" },
+    ctaLabel: {
+      en: "Read the PPA Tour Asia 2026 Guide",
+      vi: "Đọc hướng dẫn PPA Tour Asia 2026",
+    },
     heroImage: {
       src: "/images/blog/app-tour-vs-ppa-tour-contracts-hero.webp",
-      alt: "APP Tour vs PPA Tour 2026 contract comparison — APP's open free-agent model versus PPA's exclusive multi-year deals, with Quang Duong's APP signing as a case study from Vietnam"
+      alt: "APP Tour vs PPA Tour 2026 contract comparison — APP's open free-agent model versus PPA's exclusive multi-year deals, with Quang Duong's APP signing as a case study from Vietnam",
     },
-    titleEn: "APP Tour vs PPA Tour: How Pickleball's Two Pro Contracts Actually Work in 2026",
-    titleVi: "Hợp đồng APP Tour vs PPA Tour: Hai cách tổ chức pro pickleball năm 2026",
+    titleEn:
+      "APP Tour vs PPA Tour: How Pickleball's Two Pro Contracts Actually Work in 2026",
+    titleVi:
+      "Hợp đồng APP Tour vs PPA Tour: Hai cách tổ chức pro pickleball năm 2026",
     metaTitleEn: "APP vs PPA Tour 2026 | Contracts, Money & Exclusivity",
     metaTitleVi: "APP vs PPA Tour 2026 | Hợp đồng & tiền thưởng",
-    metaDescriptionEn: "APP Tour vs PPA Tour 2026: contract structures, prize money, exclusivity, the Global Pickleball Alliance, and Quang Duong's APP deal explained.",
-    metaDescriptionVi: "So sánh APP Tour vs PPA Tour 2026: hợp đồng, tiền thưởng, điều khoản độc quyền và bản hợp đồng APP của Quang Dương.",
-  },  {
+    metaDescriptionEn:
+      "APP Tour vs PPA Tour 2026: contract structures, prize money, exclusivity, the Global Pickleball Alliance, and Quang Duong's APP deal explained.",
+    metaDescriptionVi:
+      "So sánh APP Tour vs PPA Tour 2026: hợp đồng, tiền thưởng, điều khoản độc quyền và bản hợp đồng APP của Quang Dương.",
+  },
+  {
     slug: "how-to-play-pickleball",
     publishedDate: "2026-04-26",
     updatedDate: "2026-04-26",
     author: "Cuong Nguyen",
-    tags: ["how to play pickleball", "beginner", "pickleball technique", "dink", "third shot drop", "asia"],
+    tags: [
+      "how to play pickleball",
+      "beginner",
+      "pickleball technique",
+      "dink",
+      "third shot drop",
+      "asia",
+    ],
     ctaPath: "/tools/quick-tables",
     ctaLabel: { en: "Run Your First Game", vi: "Chấm điểm trận đầu tiên" },
     heroImage: {
       src: "/images/blog/how-to-play-pickleball-hero.webp",
-      alt: "How to play pickleball — beginner-friendly 7-day plan covering gear, grip, six core shots, and doubles strategy, taught to 200+ Vietnamese players in Hanoi and Ho Chi Minh City"
+      alt: "How to play pickleball — beginner-friendly 7-day plan covering gear, grip, six core shots, and doubles strategy, taught to 200+ Vietnamese players in Hanoi and Ho Chi Minh City",
     },
-    titleEn: "How to Play Pickleball: 7-Day Beginner Plan (Tested with 200+ Players in Vietnam)",
-    titleVi: "Cách chơi Pickleball cho người mới: Lộ trình 7 ngày từ 0 đến đánh được",
+    titleEn:
+      "How to Play Pickleball: 7-Day Beginner Plan (Tested with 200+ Players in Vietnam)",
+    titleVi:
+      "Cách chơi Pickleball cho người mới: Lộ trình 7 ngày từ 0 đến đánh được",
     metaTitleEn: "How to Play Pickleball | 7-Day Beginner Plan",
     metaTitleVi: "Cách chơi Pickleball | Lộ trình 7 ngày",
-    metaDescriptionEn: "How to play pickleball: beginner gear, grip, 6 core shots, and a 7-day practice plan tested with 200+ Vietnamese players. Start playing in week one.",
-    metaDescriptionVi: "Cách chơi pickleball cho người mới: dụng cụ, kỹ thuật cơ bản, lộ trình 7 ngày và lỗi thường gặp.",
-  },  {
+    metaDescriptionEn:
+      "How to play pickleball: beginner gear, grip, 6 core shots, and a 7-day practice plan tested with 200+ Vietnamese players. Start playing in week one.",
+    metaDescriptionVi:
+      "Cách chơi pickleball cho người mới: dụng cụ, kỹ thuật cơ bản, lộ trình 7 ngày và lỗi thường gặp.",
+  },
+  {
     slug: "tournament-organizer-hub",
     publishedDate: "2026-04-25",
     updatedDate: "2026-07-26",
     author: "The PickleHub Team",
     tags: ["organize", "tournament", "hub", "guide", "directory"],
     ctaPath: "/tools",
-    ctaLabel: { en: "Open Free Tournament Tools", vi: "Mở công cụ tổ chức miễn phí" },
+    ctaLabel: {
+      en: "Open Free Tournament Tools",
+      vi: "Mở công cụ tổ chức miễn phí",
+    },
     heroImage: {
       src: "/images/blog/tournament-organizer-hub-hero.webp",
-      alt: "Pickleball tournament organizer hub — workflow from format selection through bracket generation, scoring, livestream, and software comparison"
+      alt: "Pickleball tournament organizer hub — workflow from format selection through bracket generation, scoring, livestream, and software comparison",
     },
-    titleEn: "Pickleball Tournament Organizer Hub — Every Guide, Tool & Format in One Place",
-    titleVi: "Hub Tổ chức giải Pickleball — Mọi hướng dẫn, công cụ và thể thức trong một trang",
+    titleEn:
+      "Pickleball Tournament Organizer Hub — Every Guide, Tool & Format in One Place",
+    titleVi:
+      "Hub Tổ chức giải Pickleball — Mọi hướng dẫn, công cụ và thể thức trong một trang",
     metaTitleEn: "Pickleball Tournament Organizer Hub | Formats & Tools",
     metaTitleVi: "Hub tổ chức giải Pickleball | Thể thức, công cụ",
-    metaDescriptionEn: "Pickleball tournament organizer hub 2026: choose a format, build brackets, manage scoring, livestream, and compare free software — all from one page.",
-    metaDescriptionVi: "Hub cho ban tổ chức giải pickleball 2026: chọn thể thức, tạo bracket, quản lý điểm, livestream và so sánh phần mềm miễn phí.",
-  },  {
+    metaDescriptionEn:
+      "Pickleball tournament organizer hub 2026: choose a format, build brackets, manage scoring, livestream, and compare free software — all from one page.",
+    metaDescriptionVi:
+      "Hub cho ban tổ chức giải pickleball 2026: chọn thể thức, tạo bracket, quản lý điểm, livestream và so sánh phần mềm miễn phí.",
+  },
+  {
     slug: "pickleball-world-cup-2026-da-nang",
     publishedDate: "2026-04-23",
-    updatedDate: "2026-07-17",
+    updatedDate: "2026-09-07",
     author: "The PickleHub Team",
-    tags: ["world cup pickleball", "da nang", "vietnam", "tournament", "asia", "2026", "guide"],
+    tags: [
+      "world cup pickleball",
+      "da nang",
+      "vietnam",
+      "tournament",
+      "asia",
+      "2026",
+      "guide",
+    ],
     ctaPath: "/tournaments",
     ctaLabel: { en: "Browse Tournaments", vi: "Xem các giải đấu" },
     heroImage: {
       src: "/images/blog/pickleball-world-cup-2026-da-nang-hero.webp",
-      alt: "Heineken Pickleball World Cup 2026 in Da Nang, Vietnam — Aug 30 to Sep 6, 2026, Tien Son Sports Palace, around 80 countries and 4,000 participants"
+      alt: "Heineken Pickleball World Cup 2026 in Da Nang, Vietnam — Aug 30 to Sep 6, 2026, Tien Son Sports Palace, around 80 countries and 4,000 participants",
     },
-    titleEn: "Heineken Pickleball World Cup 2026 in Da Nang, Vietnam — Complete Guide",
-    titleVi: "Heineken Pickleball World Cup 2026 tại Đà Nẵng — Hướng dẫn đầy đủ",
+    titleEn:
+      "Heineken Pickleball World Cup 2026 in Da Nang, Vietnam — Complete Guide",
+    titleVi:
+      "Heineken Pickleball World Cup 2026 tại Đà Nẵng — Hướng dẫn đầy đủ",
     metaTitleEn: "Pickleball World Cup 2026 Da Nang | Dates & $500K Prize",
     metaTitleVi: "World Cup Pickleball 2026 Đà Nẵng | Lịch & thưởng",
-    metaDescriptionEn: "Heineken Pickleball World Cup 2026 in Da Nang, Vietnam (Aug 30–Sep 6). US$500,000 prize pool, ~80 nations, 39 courts. Dates, venues, format, Vietnam team.",
-    metaDescriptionVi: "Đà Nẵng đăng cai Heineken Pickleball World Cup 2026 (30/8–6/9): thưởng 500.000 USD, 39 sân, lịch và đội tuyển Việt Nam.",
-  },  {
+    metaDescriptionEn:
+      "Heineken Pickleball World Cup 2026 in Da Nang, Vietnam (Aug 30–Sep 6). US$500,000 prize pool, ~80 nations, 39 courts. Dates, venues, format, Vietnam team.",
+    metaDescriptionVi:
+      "Đà Nẵng đăng cai Heineken Pickleball World Cup 2026 (30/8–6/9): thưởng 500.000 USD, 39 sân, lịch và đội tuyển Việt Nam.",
+  },
+  {
     slug: "best-pickleball-tournament-software-2026",
     publishedDate: "2025-12-15",
-    updatedDate: "2026-03-27",
-    author: "The PickleHub Team",
+    updatedDate: "2026-09-14",
+    author: "ThePickleHub Team",
     tags: ["tournament", "software", "comparison"],
     ctaPath: "/tools",
     ctaLabel: { en: "Try Free Tournament Tools", vi: "Dùng thử miễn phí" },
     heroImage: undefined,
-    titleEn: "Best Pickleball Tournament Software in 2026 — Free Tools Compared",
-    titleVi: "Phần mềm tổ chức giải Pickleball tốt nhất 2026 — So sánh công cụ miễn phí",
-    metaTitleEn: "Best Pickleball Tournament Software 2026 | Free Tools",
-    metaTitleVi: "Phần mềm tổ chức giải Pickleball 2026 | So sánh",
-    metaDescriptionEn: "Compare the best pickleball tournament software in 2026: free bracket generators, round robin tools, MLP team match platforms. No signup.",
-    metaDescriptionVi: "So sánh phần mềm tổ chức giải pickleball 2026. Tạo bracket miễn phí, round robin, MLP team match. Không cần đăng ký.",
-  },  {
+    titleEn: "Pickleball Tournament Software 2026: Compare Before You Choose",
+    titleVi: "Phần mềm giải Pickleball 2026: So sánh theo nhu cầu",
+    metaTitleEn: "Pickleball Tournament Software 2026 | Compared",
+    metaTitleVi: "Phần mềm giải Pickleball 2026 | So sánh",
+    metaDescriptionEn: "Compare ThePickleHub, Challonge and UTR Sports by organizer needs, account requirements and published features. Sources checked September 14, 2026.",
+    metaDescriptionVi: "So sánh ThePickleHub, Challonge, UTR Sports: tính năng, tài khoản và nguồn. Cập nhật 14/9/2026.",
+  },
+  {
     slug: "how-to-create-pickleball-bracket",
     publishedDate: "2025-11-20",
     updatedDate: "2026-07-26",
@@ -593,9 +2546,12 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Cách tạo Bracket giải Pickleball — Hướng dẫn từng bước",
     metaTitleEn: "How to Create a Pickleball Bracket | Sizes & Templates 2026",
     metaTitleVi: "Cách tạo Bracket Pickleball | Kích thước & Mẫu 2026",
-    metaDescriptionEn: "How to create a pickleball bracket step by step: round robin, single and double elimination, plus ready-made bracket sizes for 4 to 64 players.",
-    metaDescriptionVi: "Cách tạo bracket pickleball từng bước: vòng tròn, loại trực tiếp, loại kép, kèm cỡ bảng sẵn cho 4 đến 64 người chơi.",
-  },  {
+    metaDescriptionEn:
+      "How to create a pickleball bracket step by step: round robin, single and double elimination, plus ready-made bracket sizes for 4 to 64 players.",
+    metaDescriptionVi:
+      "Cách tạo bracket pickleball từng bước: vòng tròn, loại trực tiếp, loại kép, kèm cỡ bảng sẵn cho 4 đến 64 người chơi.",
+  },
+  {
     slug: "how-to-organize-pickleball-tournament",
     publishedDate: "2026-03-20",
     updatedDate: "2026-03-29",
@@ -604,13 +2560,18 @@ export const blogMetadata: BlogPostMetadata[] = [
     ctaPath: "/tools",
     ctaLabel: { en: "Start Organizing Now", vi: "Bắt đầu tổ chức ngay" },
     heroImage: undefined,
-    titleEn: "How to Organize a Pickleball Tournament — The Complete Organizer's Checklist",
-    titleVi: "Cách tổ chức giải đấu Pickleball — Checklist đầy đủ cho ban tổ chức",
+    titleEn:
+      "How to Organize a Pickleball Tournament — The Complete Organizer's Checklist",
+    titleVi:
+      "Cách tổ chức giải đấu Pickleball — Checklist đầy đủ cho ban tổ chức",
     metaTitleEn: "How to Organize a Pickleball Tournament | Checklist",
     metaTitleVi: "Cách tổ chức giải Pickleball | Checklist",
-    metaDescriptionEn: "Step-by-step guide to organize a pickleball tournament: venue, format, registration, scheduling, scoring, and free tools to run the event.",
-    metaDescriptionVi: "Hướng dẫn tổ chức giải pickleball: địa điểm, thể thức, đăng ký, lịch thi đấu, chấm điểm và công cụ miễn phí.",
-  },  {
+    metaDescriptionEn:
+      "Step-by-step guide to organize a pickleball tournament: venue, format, registration, scheduling, scoring, and free tools to run the event.",
+    metaDescriptionVi:
+      "Hướng dẫn tổ chức giải pickleball: địa điểm, thể thức, đăng ký, lịch thi đấu, chấm điểm và công cụ miễn phí.",
+  },
+  {
     slug: "how-to-watch-ppa-tour-live-2026",
     publishedDate: "2026-04-16",
     updatedDate: "2026-04-16",
@@ -618,14 +2579,22 @@ export const blogMetadata: BlogPostMetadata[] = [
     tags: ["ppa tour", "live streaming", "watch live", "pickleball tv", "2026"],
     ctaPath: "/live",
     ctaLabel: { en: "Watch Free Tournaments", vi: "Xem giải đấu miễn phí" },
-    heroImage: { src: "/images/blog/how-to-watch-ppa-tour-live-2026-hero.webp?v=2", alt: "PPA Tour professional pickleball match being broadcast live with multiple camera angles and streaming overlay" },
-    titleEn: "How to Watch PPA Tour Live in 2026 — Every Streaming Platform & Free Options",
-    titleVi: "Cách Xem PPA Tour Trực Tiếp Năm 2026 — Tất Cả Nền Tảng & Tùy Chọn Miễn Phí",
+    heroImage: {
+      src: "/images/blog/how-to-watch-ppa-tour-live-2026-hero.webp?v=2",
+      alt: "PPA Tour professional pickleball match being broadcast live with multiple camera angles and streaming overlay",
+    },
+    titleEn:
+      "How to Watch PPA Tour Live in 2026 — Every Streaming Platform & Free Options",
+    titleVi:
+      "Cách Xem PPA Tour Trực Tiếp Năm 2026 — Tất Cả Nền Tảng & Tùy Chọn Miễn Phí",
     metaTitleEn: "How to Watch PPA Tour Live 2026 | Streams & Free Options",
     metaTitleVi: "Xem PPA Tour trực tiếp 2026 | Nền tảng miễn phí",
-    metaDescriptionEn: "Watch PPA Tour live in 2026 on PBTV, Amazon Prime, CBS, ESPN, and Fox Sports. Plus free YouTube highlights + ThePickleHub livestreams.",
-    metaDescriptionVi: "Xem PPA Tour trực tiếp 2026 trên PBTV, Amazon Prime, CBS Sports, ESPN, Fox Sports, kèm highlights YouTube và livestream miễn phí.",
-  },  {
+    metaDescriptionEn:
+      "Watch PPA Tour live in 2026 on PBTV, Amazon Prime, CBS, ESPN, and Fox Sports. Plus free YouTube highlights + ThePickleHub livestreams.",
+    metaDescriptionVi:
+      "Xem PPA Tour trực tiếp 2026 trên PBTV, Amazon Prime, CBS Sports, ESPN, Fox Sports, kèm highlights YouTube và livestream miễn phí.",
+  },
+  {
     slug: "mlp-format-explained",
     publishedDate: "2026-03-29",
     updatedDate: "2026-03-29",
@@ -634,13 +2603,18 @@ export const blogMetadata: BlogPostMetadata[] = [
     ctaPath: "/tools/team-match",
     ctaLabel: { en: "Create MLP Team Match", vi: "Tạo giải đồng đội MLP" },
     heroImage: undefined,
-    titleEn: "MLP Format Explained — Major League Pickleball Team Match Rules & How to Play",
-    titleVi: "Thể thức MLP giải thích — Luật thi đấu đồng đội Major League Pickleball",
+    titleEn:
+      "MLP Format Explained — Major League Pickleball Team Match Rules & How to Play",
+    titleVi:
+      "Thể thức MLP giải thích — Luật thi đấu đồng đội Major League Pickleball",
     metaTitleEn: "MLP Format Explained 2026 | Major League Pickleball Rules",
     metaTitleVi: "Thể thức MLP Pickleball | Luật đồng đội",
-    metaDescriptionEn: "MLP format explained: Major League Pickleball team match rules, dreambreaker, lineup strategy, and how to organize your own MLP-style event.",
-    metaDescriptionVi: "Thể thức MLP trong pickleball: luật thi đấu đồng đội Major League Pickleball, dreambreaker và chiến thuật xếp lineup.",
-  },  {
+    metaDescriptionEn:
+      "MLP format explained: Major League Pickleball team match rules, dreambreaker, lineup strategy, and how to organize your own MLP-style event.",
+    metaDescriptionVi:
+      "Thể thức MLP trong pickleball: luật thi đấu đồng đội Major League Pickleball, dreambreaker và chiến thuật xếp lineup.",
+  },
+  {
     // `pickleball-bracket-templates` was merged into
     // `how-to-create-pickleball-bracket` (SEO cluster Sprint 1, step 2) and
     // 301s there — see docs/seo-tools-cluster-intent-map.md. Do not re-add.
@@ -652,13 +2626,17 @@ export const blogMetadata: BlogPostMetadata[] = [
     ctaPath: "/tools/doubles-elimination",
     ctaLabel: { en: "Create Doubles Bracket", vi: "Tạo bracket đôi" },
     heroImage: undefined,
-    titleEn: "Pickleball Doubles Strategy — Winning Tips for Tournament Players",
+    titleEn:
+      "Pickleball Doubles Strategy — Winning Tips for Tournament Players",
     titleVi: "Chiến thuật Pickleball đôi — Mẹo thắng cho người chơi giải đấu",
     metaTitleEn: "Pickleball Doubles Strategy | Tournament Winning Guide",
     metaTitleVi: "Chiến thuật Pickleball đôi | Mẹo thắng giải 2026",
-    metaDescriptionEn: "Pickleball doubles strategy for tournaments: partner communication, court positioning, stacking, and when to attack the kitchen line.",
-    metaDescriptionVi: "Chiến thuật pickleball đôi cho giải đấu: giao tiếp đồng đội, vị trí sân, stacking và khi nào tấn công kitchen.",
-  },  {
+    metaDescriptionEn:
+      "Pickleball doubles strategy for tournaments: partner communication, court positioning, stacking, and when to attack the kitchen line.",
+    metaDescriptionVi:
+      "Chiến thuật pickleball đôi cho giải đấu: giao tiếp đồng đội, vị trí sân, stacking và khi nào tấn công kitchen.",
+  },
+  {
     slug: "pickleball-live-streaming-guide",
     publishedDate: "2026-03-29",
     updatedDate: "2026-03-29",
@@ -667,13 +2645,17 @@ export const blogMetadata: BlogPostMetadata[] = [
     ctaPath: "/live",
     ctaLabel: { en: "Watch Live Now", vi: "Xem trực tiếp ngay" },
     heroImage: undefined,
-    titleEn: "Pickleball Live Streaming — How to Watch & Stream Pickleball Online",
+    titleEn:
+      "Pickleball Live Streaming — How to Watch & Stream Pickleball Online",
     titleVi: "Trực tiếp Pickleball — Cách xem và phát sóng trực tuyến",
     metaTitleEn: "Pickleball Live Streaming 2026 | Watch & Stream Free",
     metaTitleVi: "Xem & phát trực tiếp Pickleball | Hướng dẫn",
-    metaDescriptionEn: "Watch pickleball live streams for free. Learn how to stream your own pickleball tournament online with The Pickle Hub's free livestreaming platform.",
-    metaDescriptionVi: "Xem trực tiếp pickleball miễn phí và hướng dẫn phát sóng giải đấu với nền tảng livestream miễn phí của ThePickleHub.",
-  },  {
+    metaDescriptionEn:
+      "Watch pickleball live streams for free. Learn how to stream your own pickleball tournament online with ThePickleHub's free livestreaming platform.",
+    metaDescriptionVi:
+      "Xem trực tiếp pickleball miễn phí và hướng dẫn phát sóng giải đấu với nền tảng livestream miễn phí của ThePickleHub.",
+  },
+  {
     slug: "pickleball-round-robin-generator-guide",
     publishedDate: "2025-10-10",
     updatedDate: "2026-07-30",
@@ -682,43 +2664,73 @@ export const blogMetadata: BlogPostMetadata[] = [
     ctaPath: "/tools/quick-tables",
     ctaLabel: { en: "Open Quick Tables", vi: "Mở Bảng đấu nhanh" },
     heroImage: undefined,
-    titleEn: "How to Run a Pickleball Round Robin — Schedule, Byes & Tiebreakers",
+    titleEn:
+      "How to Run a Pickleball Round Robin — Schedule, Byes & Tiebreakers",
     titleVi: "Cách tổ chức giải vòng tròn Pickleball — Lịch, bye và tiebreaker",
     metaTitleEn: "How to Run a Pickleball Round Robin | Schedule & Rules 2026",
     metaTitleVi: "Tổ chức giải vòng tròn Pickleball | Lịch & Luật",
-    metaDescriptionEn: "How to run a pickleball round robin: match counts by group size, court scheduling, byes, snake seeding, and the tiebreaker order to announce before play.",
-    metaDescriptionVi: "Cách tổ chức vòng tròn pickleball: số trận theo cỡ bảng, xếp lịch sân, xử lý bye, chia seed và tiebreaker.",
-  },  {
+    metaDescriptionEn:
+      "How to run a pickleball round robin: match counts by group size, court scheduling, byes, snake seeding, and the tiebreaker order to announce before play.",
+    metaDescriptionVi:
+      "Cách tổ chức vòng tròn pickleball: số trận theo cỡ bảng, xếp lịch sân, xử lý bye, chia seed và tiebreaker.",
+  },
+  {
     slug: "pickleball-rules-complete-guide",
     publishedDate: "2026-04-19",
     updatedDate: "2026-04-19",
     author: "Cuong Nguyen",
-    tags: ["pickleball rules", "beginner", "kitchen rule", "serving", "scoring", "ppa tour asia"],
+    tags: [
+      "pickleball rules",
+      "beginner",
+      "kitchen rule",
+      "serving",
+      "scoring",
+      "ppa tour asia",
+    ],
     ctaPath: "/tools/quick-tables",
-    ctaLabel: { en: "Try Free Scoring Tool", vi: "Dùng thử chấm điểm miễn phí" },
-    heroImage: { src: "/images/blog/how-to-play-pickleball-hero.webp", alt: "Pickleball court with players at the kitchen line showing the Non-Volley Zone and serving positions under PPA Tour Asia rules" },
-    titleEn: "Pickleball Rules 2026: The Complete Guide (With Asia's Hardest Calls Explained)",
-    titleVi: "Luật Pickleball 2026 — Hướng dẫn đầy đủ (kèm 5 tình huống tranh cãi nhất ở châu Á)",
+    ctaLabel: {
+      en: "Try Free Scoring Tool",
+      vi: "Dùng thử chấm điểm miễn phí",
+    },
+    heroImage: {
+      src: "/images/blog/pickleball-rules-complete-guide-hero.webp",
+      alt: "Pickleball rules infographic: a regulation 44x20 ft court with the 7-ft kitchen (non-volley zone), cross-court serve, the two-bounce rule and 0-0-2 scoring",
+    },
+    titleEn:
+      "Pickleball Rules 2026: The Complete Guide (With Asia's Hardest Calls Explained)",
+    titleVi:
+      "Luật Pickleball 2026 — Hướng dẫn đầy đủ (kèm 5 tình huống tranh cãi nhất ở châu Á)",
     metaTitleEn: "Pickleball Rules 2026 | Complete Guide + Hardest Calls",
     metaTitleVi: "Luật Pickleball 2026 | Hướng dẫn đầy đủ",
-    metaDescriptionEn: "The 2026 pickleball rulebook simplified: serve, two-bounce, kitchen/NVZ, scoring, faults. Plus 5 disputed calls in Asian tournaments.",
-    metaDescriptionVi: "Luật pickleball 2026: giao bóng, hai lần nảy, kitchen/NVZ, tính điểm, lỗi. Kèm 5 tình huống tranh cãi nhất ở giải châu Á.",
-  },  {
+    metaDescriptionEn:
+      "The 2026 pickleball rulebook simplified: serve, two-bounce, kitchen/NVZ, scoring, faults. Plus 5 disputed calls in Asian tournaments.",
+    metaDescriptionVi:
+      "Luật pickleball 2026: giao bóng, hai lần nảy, kitchen/NVZ, tính điểm, lỗi. Kèm 5 tình huống tranh cãi nhất ở giải châu Á.",
+  },
+  {
     slug: "pickleball-scoring-rules-guide",
     publishedDate: "2026-03-15",
     updatedDate: "2026-03-29",
     author: "The PickleHub Team",
     tags: ["scoring", "rules", "beginner"],
     ctaPath: "/tools/quick-tables",
-    ctaLabel: { en: "Try Free Scoring Tool", vi: "Dùng thử chấm điểm miễn phí" },
+    ctaLabel: {
+      en: "Try Free Scoring Tool",
+      vi: "Dùng thử chấm điểm miễn phí",
+    },
     heroImage: undefined,
-    titleEn: "Pickleball Scoring Rules Explained — Complete Guide for Beginners & Tournament Play",
-    titleVi: "Luật chấm điểm Pickleball — Hướng dẫn đầy đủ cho người mới và giải đấu",
+    titleEn:
+      "Pickleball Scoring Rules Explained — Complete Guide for Beginners & Tournament Play",
+    titleVi:
+      "Luật chấm điểm Pickleball — Hướng dẫn đầy đủ cho người mới và giải đấu",
     metaTitleEn: "Pickleball Scoring Rules 2026 | Beginner & Tournament",
     metaTitleVi: "Luật chấm điểm Pickleball | Người mới & giải",
-    metaDescriptionEn: "Learn pickleball scoring rules for singles, doubles, and tournament play. Rally scoring vs side-out explained. Free digital scoring tool included.",
-    metaDescriptionVi: "Luật chấm điểm pickleball cho đơn, đôi và giải đấu. Rally scoring vs side-out, kèm công cụ chấm điểm miễn phí.",
-  },  {
+    metaDescriptionEn:
+      "Learn pickleball scoring rules for singles, doubles, and tournament play. Rally scoring vs side-out explained. Free digital scoring tool included.",
+    metaDescriptionVi:
+      "Luật chấm điểm pickleball cho đơn, đôi và giải đấu. Rally scoring vs side-out, kèm công cụ chấm điểm miễn phí.",
+  },
+  {
     slug: "pickleball-tournament-formats-explained",
     publishedDate: "2026-03-25",
     updatedDate: "2026-03-29",
@@ -727,105 +2739,177 @@ export const blogMetadata: BlogPostMetadata[] = [
     ctaPath: "/tools",
     ctaLabel: { en: "Explore All Formats", vi: "Khám phá tất cả thể thức" },
     heroImage: undefined,
-    titleEn: "Pickleball Tournament Formats Explained — Which One Should You Use?",
+    titleEn:
+      "Pickleball Tournament Formats Explained — Which One Should You Use?",
     titleVi: "Các thể thức giải Pickleball giải thích — Nên dùng thể thức nào?",
     metaTitleEn: "Pickleball Tournament Formats | Round Robin & More",
     metaTitleVi: "Thể thức giải Pickleball | Vòng tròn, loại kép",
-    metaDescriptionEn: "Pickleball tournament formats explained: round robin, single + double elimination, MLP team match, flex. Choose the right format for your event.",
-    metaDescriptionVi: "Thể thức giải pickleball: vòng tròn, loại trực tiếp, loại kép, MLP team match và flex. Chọn đúng thể thức cho sự kiện.",
-  },  {
+    metaDescriptionEn:
+      "Pickleball tournament formats explained: round robin, single + double elimination, MLP team match, flex. Choose the right format for your event.",
+    metaDescriptionVi:
+      "Thể thức giải pickleball: vòng tròn, loại trực tiếp, loại kép, MLP team match và flex. Chọn đúng thể thức cho sự kiện.",
+  },
+  {
     slug: "ppa-tour-asia-2026-complete-guide",
     publishedDate: "2026-04-16",
-    updatedDate: "2026-04-16",
+    updatedDate: "2026-08-28",
     author: "The PickleHub Team",
     tags: ["ppa tour asia", "tournament", "asia", "schedule", "guide"],
     ctaPath: "/tournaments",
     ctaLabel: { en: "Browse Tournaments", vi: "Xem các giải đấu" },
-    heroImage: { src: "/images/blog/ppa-tour-asia-2026-hero.webp", alt: "PPA Tour Asia 2026 professional pickleball tournament with multiple courts and packed stadium" },
+    heroImage: {
+      src: "/images/blog/ppa-tour-asia-2026-hero.webp",
+      alt: "PPA Tour Asia 2026 professional pickleball tournament with multiple courts and packed stadium",
+    },
     titleEn: "PPA Tour Asia 2026: Complete Schedule, Prize Money & How to Play",
     titleVi: "PPA Tour Asia 2026: Lịch thi đấu, Tiền thưởng & Cách tham gia",
     metaTitleEn: "PPA Tour Asia 2026 | All 10 Stops, Prize Money & Play",
     metaTitleVi: "PPA Tour Asia 2026 | Lịch, thưởng, cách dự",
-    metaDescriptionEn: "Complete guide to PPA Tour Asia 2026 — all 10 tournament stops, $2.15M total prize money, dates, cities, and how amateurs can play alongside the pros.",
-    metaDescriptionVi: "PPA Tour Asia 2026: 10 chặng, tổng thưởng 2,15 triệu USD, lịch thi đấu, địa điểm và cách VĐV nghiệp dư tham gia.",
+    metaDescriptionEn:
+      "Complete guide to PPA Tour Asia 2026 — all 10 tournament stops, $2.15M total prize money, dates, cities, and how amateurs can play alongside the pros.",
+    metaDescriptionVi:
+      "PPA Tour Asia 2026: 10 chặng, tổng thưởng 2,15 triệu USD, lịch thi đấu, địa điểm và cách VĐV nghiệp dư tham gia.",
   },
   {
     slug: "tama-shimabukuro-ppa-atlanta-final-15-year-old",
     publishedDate: "2026-05-11",
     updatedDate: "2026-05-11",
     author: "Cuong Nguyen",
-    tags: ["tama shimabukuro", "ppa tour", "atlanta championships", "hunter johnson", "federico staksrud", "young players", "professional pickleball", "hawaii"],
+    tags: [
+      "tama shimabukuro",
+      "ppa tour",
+      "atlanta championships",
+      "hunter johnson",
+      "federico staksrud",
+      "young players",
+      "professional pickleball",
+      "hawaii",
+    ],
     ctaPath: "/blog/ppa-tour-asia-2026-complete-guide",
-    ctaLabel: { en: "Read: PPA Tour Asia 2026 Complete Guide", vi: "Đọc tiếp: PPA Tour Asia 2026 — Hướng dẫn đầy đủ" },
+    ctaLabel: {
+      en: "Read: PPA Tour Asia 2026 Complete Guide",
+      vi: "Đọc tiếp: PPA Tour Asia 2026 — Hướng dẫn đầy đủ",
+    },
     heroImage: {
       src: "/images/blog/tama-shimabukuro-atlanta-hero.webp",
-      alt: "Tama Shimabukuro, the 15-year-old pickleball pro from Hawaii, at the PPA Veolia Atlanta Championships where he defeated world #1 Hunter Johnson and world #2 Federico Staksrud to reach the men's singles final — a self-taught player who started in 2023 and signed his three-year PPA Tour contract at 14"
+      alt: "Tama Shimabukuro, the 15-year-old pickleball pro from Hawaii, at the PPA Veolia Atlanta Championships where he defeated world #1 Hunter Johnson and world #2 Federico Staksrud to reach the men's singles final — a self-taught player who started in 2023 and signed his three-year PPA Tour contract at 14",
     },
-    titleEn: "Tama Shimabukuro: How a 15-Year-Old From Hawaii Took Down World #1 and #2 at PPA Atlanta",
-    titleVi: "Tama Shimabukuro: 15 tuổi, hạ số 1 và số 2 thế giới, vào chung kết PPA Atlanta",
+    titleEn:
+      "Tama Shimabukuro: How a 15-Year-Old From Hawaii Took Down World #1 and #2 at PPA Atlanta",
+    titleVi:
+      "Tama Shimabukuro: 15 tuổi, hạ số 1 và số 2 thế giới, vào chung kết PPA Atlanta",
     metaTitleEn: "Tama Shimabukuro, 15, Reaches PPA Atlanta Final",
     metaTitleVi: "Tama Shimabukuro 15 tuổi vào chung kết PPA",
-    metaDescriptionEn: "15-year-old Tama Shimabukuro beat world #1 Hunter Johnson and #2 Staksrud at PPA Atlanta Championships to reach the final. Self-taught Hawaii story.",
-    metaDescriptionVi: "Tama Shimabukuro 15 tuổi hạ số 1 Hunter Johnson và số 2 Federico Staksrud tại PPA Atlanta. Câu chuyện tự học từ Hawaii.",
+    metaDescriptionEn:
+      "15-year-old Tama Shimabukuro beat world #1 Hunter Johnson and #2 Staksrud at PPA Atlanta Championships to reach the final. Self-taught Hawaii story.",
+    metaDescriptionVi:
+      "Tama Shimabukuro 15 tuổi hạ số 1 Hunter Johnson và số 2 Federico Staksrud tại PPA Atlanta. Câu chuyện tự học từ Hawaii.",
   },
   {
     slug: "what-is-dupr-pickleball-rating-system",
     publishedDate: "2026-05-11",
     updatedDate: "2026-05-11",
     author: "Cuong Nguyen",
-    tags: ["dupr", "pickleball rating", "skill rating", "ppa tour", "mlp", "usa pickleball", "vietnam", "beginner guide"],
+    tags: [
+      "dupr",
+      "pickleball rating",
+      "skill rating",
+      "ppa tour",
+      "mlp",
+      "usa pickleball",
+      "vietnam",
+      "beginner guide",
+    ],
     ctaPath: "/blog/ppa-tour-asia-2026-complete-guide",
-    ctaLabel: { en: "Read: PPA Tour Asia 2026 Complete Guide", vi: "Đọc tiếp: PPA Tour Asia 2026 — Hướng dẫn đầy đủ" },
+    ctaLabel: {
+      en: "Read: PPA Tour Asia 2026 Complete Guide",
+      vi: "Đọc tiếp: PPA Tour Asia 2026 — Hướng dẫn đầy đủ",
+    },
     heroImage: {
       src: "/images/blog/dupr-pickleball-rating-hero.webp",
-      alt: "Visual explainer for DUPR (Dynamic Universal Pickleball Rating), the global pickleball skill rating system on a 2.000–8.000 scale used by PPA Tour, MLP, USA Pickleball, Pickleball World Cup, and over 1 million rated players across 175 countries"
+      alt: "Visual explainer for DUPR (Dynamic Universal Pickleball Rating), the global pickleball skill rating system on a 2.000–8.000 scale used by PPA Tour, MLP, USA Pickleball, Pickleball World Cup, and over 1 million rated players across 175 countries",
     },
-    titleEn: "What Is DUPR? The Global Pickleball Rating System Explained (Part 1 of 3)",
-    titleVi: "DUPR là gì? Hệ thống xếp hạng pickleball toàn cầu cho người chơi Việt Nam (Phần 1/3)",
+    titleEn:
+      "What Is DUPR? The Global Pickleball Rating System Explained (Part 1 of 3)",
+    titleVi:
+      "DUPR là gì? Hệ thống xếp hạng pickleball toàn cầu cho người chơi Việt Nam (Phần 1/3)",
     metaTitleEn: "What Is DUPR? Pickleball Rating System Explained",
     metaTitleVi: "DUPR là gì? | Hệ thống xếp hạng pickleball",
-    metaDescriptionEn: "DUPR explained: the global pickleball rating used by PPA, MLP, USA Pickleball, World Cup. How it works, who runs it, why Vietnamese players need it.",
-    metaDescriptionVi: "DUPR là hệ thống xếp hạng pickleball toàn cầu dùng bởi PPA Tour, MLP, USA Pickleball. Cách hoạt động và vì sao người chơi VN cần.",
+    metaDescriptionEn:
+      "DUPR explained: the global pickleball rating used by PPA, MLP, USA Pickleball, World Cup. How it works, who runs it, why Vietnamese players need it.",
+    metaDescriptionVi:
+      "DUPR là hệ thống xếp hạng pickleball toàn cầu dùng bởi PPA Tour, MLP, USA Pickleball. Cách hoạt động và vì sao người chơi VN cần.",
   },
   {
     slug: "dupr-vietnam-partnership-ta-pickleball-thepicklehub",
     publishedDate: "2026-05-13",
     updatedDate: "2026-05-13",
     author: "Cuong Nguyen",
-    tags: ["dupr", "dupr vietnam", "ta pickleball", "thepicklehub", "pickleball vietnam", "partnership", "pickleball rating", "asia pickleball"],
+    tags: [
+      "dupr",
+      "dupr vietnam",
+      "ta pickleball",
+      "thepicklehub",
+      "pickleball vietnam",
+      "partnership",
+      "pickleball rating",
+      "asia pickleball",
+    ],
     ctaPath: "/blog/what-is-dupr-pickleball-rating-system",
-    ctaLabel: { en: "Read: What Is DUPR? The Global Rating System Explained", vi: "Đọc tiếp: DUPR là gì? Hệ thống xếp hạng pickleball toàn cầu" },
+    ctaLabel: {
+      en: "Read: What Is DUPR? The Global Rating System Explained",
+      vi: "Đọc tiếp: DUPR là gì? Hệ thống xếp hạng pickleball toàn cầu",
+    },
     heroImage: {
       src: "/images/blog/dupr-ta-picklehub-partnership-hero.webp",
-      alt: "First step together — preliminary partnership between DUPR (Dynamic Universal Pickleball Rating), TA Pickleball, and ThePickleHub.net to bring the global pickleball rating system to the Vietnamese pickleball community"
+      alt: "First step together — preliminary partnership between DUPR (Dynamic Universal Pickleball Rating), TA Pickleball, and ThePickleHub.net to bring the global pickleball rating system to the Vietnamese pickleball community",
     },
-    titleEn: "DUPR x TA Pickleball x ThePickleHub: A Preliminary Partnership for Vietnamese Pickleball",
-    titleVi: "DUPR x TA Pickleball x ThePickleHub: Thỏa thuận sơ bộ cho cộng đồng pickleball Việt Nam",
+    titleEn:
+      "DUPR x TA Pickleball x ThePickleHub: A Preliminary Partnership for Vietnamese Pickleball",
+    titleVi:
+      "DUPR x TA Pickleball x ThePickleHub: Thỏa thuận sơ bộ cho cộng đồng pickleball Việt Nam",
     metaTitleEn: "DUPR Vietnam Partnership | TA Pickleball x ThePickleHub",
     metaTitleVi: "DUPR Việt Nam | Thỏa thuận với TA Pickleball",
-    metaDescriptionEn: "DUPR, TA Pickleball and ThePickleHub signed a preliminary deal to bring the global pickleball rating system to Vietnam — phase 1 of a 3-phase roadmap.",
-    metaDescriptionVi: "DUPR, TA Pickleball và ThePickleHub ký thỏa thuận sơ bộ đưa hệ thống xếp hạng toàn cầu vào Việt Nam.",
+    metaDescriptionEn:
+      "DUPR, TA Pickleball and ThePickleHub signed a preliminary deal to bring the global pickleball rating system to Vietnam — phase 1 of a 3-phase roadmap.",
+    metaDescriptionVi:
+      "DUPR, TA Pickleball và ThePickleHub ký thỏa thuận sơ bộ đưa hệ thống xếp hạng toàn cầu vào Việt Nam.",
   },
   {
     slug: "dupr-algorithm-explained-performance-vs-expectation",
     publishedDate: "2026-05-14",
     updatedDate: "2026-05-14",
     author: "Cuong Nguyen",
-    tags: ["dupr", "dupr algorithm", "pickleball rating", "performance vs expectation", "reliability score", "ppa tour", "mlp", "vietnam"],
+    tags: [
+      "dupr",
+      "dupr algorithm",
+      "pickleball rating",
+      "performance vs expectation",
+      "reliability score",
+      "ppa tour",
+      "mlp",
+      "vietnam",
+    ],
     ctaPath: "/blog/what-is-dupr-pickleball-rating-system",
-    ctaLabel: { en: "Read Part 1: What Is DUPR?", vi: "Đọc Phần 1: DUPR là gì?" },
+    ctaLabel: {
+      en: "Read Part 1: What Is DUPR?",
+      vi: "Đọc Phần 1: DUPR là gì?",
+    },
     heroImage: {
       src: "/images/blog/dupr-algorithm-performance-vs-expectation-hero.webp",
-      alt: "Diagram explaining how the DUPR (Dynamic Universal Pickleball Rating) algorithm works after the July 2025 rewrite: it compares actual match score to an expected score derived from the average rating of both sides, so a player can win a match and still lose rating points if they underperformed expectation, or lose a match and still gain points if they overperformed."
+      alt: "Diagram explaining how the DUPR (Dynamic Universal Pickleball Rating) algorithm works after the July 2025 rewrite: it compares actual match score to an expected score derived from the average rating of both sides, so a player can win a match and still lose rating points if they underperformed expectation, or lose a match and still gain points if they overperformed.",
     },
-    titleEn: "How the DUPR Algorithm Works: Performance vs Expectation Explained (Part 2 of 3)",
-    titleVi: "Thuật toán DUPR: Vì sao thắng vẫn mất điểm, thua vẫn tăng điểm? (Phần 2/3)",
+    titleEn:
+      "How the DUPR Algorithm Works: Performance vs Expectation Explained (Part 2 of 3)",
+    titleVi:
+      "Thuật toán DUPR: Vì sao thắng vẫn mất điểm, thua vẫn tăng điểm? (Phần 2/3)",
     metaTitleEn: "DUPR Algorithm Explained | Why You Lose Points After Wins",
     metaTitleVi: "Thuật toán DUPR | Thắng vẫn mất điểm vì sao",
-    metaDescriptionEn: "DUPR's July 2025 algorithm: why winning can lose points and losing can gain them. Match weights, exclusion rules, reliability score. Part 2 of 3.",
-    metaDescriptionVi: "DUPR đổi thuật toán 7/2025: thắng vẫn có thể mất điểm. Performance vs Expectation, trọng số trận và Reliability Score — Phần 2/3.",
+    metaDescriptionEn:
+      "DUPR's July 2025 algorithm: why winning can lose points and losing can gain them. Match weights, exclusion rules, reliability score. Part 2 of 3.",
+    metaDescriptionVi:
+      "DUPR đổi thuật toán 7/2025: thắng vẫn có thể mất điểm. Performance vs Expectation, trọng số trận và Reliability Score — Phần 2/3.",
   },
 ];
 
 export const blogSlugs: string[] = blogMetadata.map((p) => p.slug);
-

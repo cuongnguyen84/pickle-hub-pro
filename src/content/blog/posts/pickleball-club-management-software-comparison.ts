@@ -186,7 +186,7 @@ const post: BlogPost = {
             { text: "Phần mềm tổ chức giải Pickleball tốt nhất 2026", path: "/blog/best-pickleball-tournament-software-2026" },
             { text: "Cách tổ chức một giải Pickleball", path: "/blog/how-to-organize-pickleball-tournament" },
             { text: "DUPR là gì? Hệ thống xếp hạng Pickleball", path: "/blog/what-is-dupr-pickleball-rating-system" },
-            { text: "Tổ chức giải cho CLB miễn phí", path: "/tools" },
+            { text: "Tổ chức giải cho CLB miễn phí", path: "/vi/tools" },
           ],
         },
         {

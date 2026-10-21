@@ -9,6 +9,7 @@
 
 import { Link } from "react-router-dom";
 import { BadgeCheck, MapPin } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   type VenueListItem,
   type Language,
@@ -17,6 +18,7 @@ import {
   courtsLabel,
   indoorLabel,
 } from "@/lib/venues";
+import { fetchVenueDetail, venueDetailQueryKey } from "@/lib/venue-detail-query";
 
 interface Props {
   venue: VenueListItem;
@@ -31,13 +33,26 @@ function initialsOf(name: string): string {
 }
 
 export function VenueCard({ venue, language }: Props) {
+  const queryClient = useQueryClient();
   const name = venueDisplayName(venue, language);
   const location = venueLocationLine(venue);
   const courts = courtsLabel(venue.num_courts, language);
   const indoor = indoorLabel(venue.is_indoor, language);
+  const prefetchDetail = () => {
+    void queryClient.prefetchQuery({
+      queryKey: venueDetailQueryKey(venue.slug),
+      queryFn: () => fetchVenueDetail(venue.slug),
+      staleTime: 60_000,
+    });
+  };
 
   return (
-    <div className="group flex flex-col gap-3 rounded-md border border-border bg-card p-5 transition-colors hover:border-primary/40">
+    <div
+      className="group flex flex-col gap-3 rounded-md border border-border bg-card p-5 transition-colors hover:border-primary/40"
+      onPointerEnter={prefetchDetail}
+      onFocusCapture={prefetchDetail}
+      onTouchStart={prefetchDetail}
+    >
       <Link
         to={`/san/${venue.slug}`}
         className="flex items-start gap-3"

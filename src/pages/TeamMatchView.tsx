@@ -722,10 +722,10 @@ export default function TeamMatchView() {
               )}
 
               {/* Other teams list — child component (deferred PR D.2) */}
-              {(isOwner || !userTeam) && (
+              {(canManage || !userTeam) && (
                 <TeamList
                   tournamentId={tournament.id}
-                  isOwner={false}
+                  isOwner={canManage}
                   onTeamClick={(team) => setSelectedTeam(team)}
                 />
               )}

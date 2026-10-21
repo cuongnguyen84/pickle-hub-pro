@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "ppa-tour-asia-2026-complete-guide",
   publishedDate: "2026-04-16",
-  updatedDate: "2026-04-16",
+  updatedDate: "2026-08-28",
   author: "The PickleHub Team",
   tags: ["ppa tour asia", "tournament", "asia", "schedule", "guide"],
   ctaPath: "/tournaments",
@@ -17,7 +17,7 @@ const post: BlogPost = {
       sections: [
         {
           heading: "PPA Tour Asia 2026 — The Biggest Pro Pickleball Tour Outside the US",
-          content: "PPA Tour Asia returns in 2026 with its most ambitious season yet — ten tournament stops across seven markets in Asia, totaling over $2.15 million in prize money. The season opens with the MB Hanoi Cup in Vietnam and closes with the Hong Kong Slam, the largest professional pickleball event ever staged in Asia with up to $1.1 million on the line. Whether you're a fan following the pros or an amateur player looking to compete on the same courts, this guide covers everything you need to know about the 2026 season.",
+          content: "PPA Tour Asia returns in 2026 with its most ambitious season yet — ten tournament stops across seven markets in Asia, totaling over $2.15 million in prize money. The season opens with the MB Hanoi Cup in Vietnam and closes with the Hong Kong Slam, the largest professional pickleball event ever staged in Asia with up to $1.1 million on the line. Whether you're a fan following the pros or an amateur player looking to compete on the same courts, this ThePickleHub guide covers everything you need to know about the 2026 season.",
           internalLinks: [
             { text: "How PPA Tour Asia fits among all the pro tours — PPA, MLP, APP compared for 2026", path: "/blog/professional-pickleball-tours-guide-2026" }
           ]
@@ -34,7 +34,7 @@ const post: BlogPost = {
             "Sansan Tokyo Open — July 1–4, 2026 | Tokyo, Japan | $50,000 prize money | PPA Tour Asia's debut in Japan",
             "Singapore Open — July 23–26, 2026 | Singapore | $70,000 prize money | Key stop in Southeast Asia's most international city",
             "Ho Chi Minh City Open — August 6–9, 2026 | Ho Chi Minh City, Vietnam | $70,000 prize money | Vietnam's second stop of the season, building on record-breaking 2025 attendance",
-            "China Open 2 — August 20–23, 2026 | China | $70,000 prize money | Second Chinese stop in the season",
+            "Skechers Shenzhen Open (announced as \"China Open 2\") — August 20–23, 2026 | Shenzhen, China | $70,000 prize money | Second Chinese stop in the season",
             "Kuala Lumpur Cup — September 9–13, 2026 | Kuala Lumpur, Malaysia | Up to $300,000 prize money | Major tier event closing the regular season",
             "Hong Kong Slam — October 19–25, 2026 | Hong Kong | Up to $1,100,000 prize money | The grand finale — largest prize pool in Asian pickleball history"
           ]
@@ -124,7 +124,7 @@ const post: BlogPost = {
       sections: [
         {
           heading: "PPA Tour Asia 2026 — Giải Pickleball chuyên nghiệp lớn nhất ngoài Mỹ",
-          content: "PPA Tour Asia trở lại năm 2026 với mùa giải hoành tráng nhất từ trước đến nay — 10 chặng đấu tại 7 thị trường châu Á, tổng tiền thưởng hơn 2,15 triệu USD. Mùa giải mở màn với MB Hanoi Cup tại Việt Nam và kết thúc với Hong Kong Slam — giải pickleball chuyên nghiệp lớn nhất từng được tổ chức tại châu Á với tiền thưởng lên tới 1,1 triệu USD. Dù bạn là fan theo dõi các pro hay VĐV nghiệp dư muốn thi đấu trên cùng sân với các ngôi sao, bài viết này cung cấp mọi thứ bạn cần biết về mùa giải 2026.",
+          content: "PPA Tour Asia trở lại năm 2026 với mùa giải hoành tráng nhất từ trước đến nay — 10 chặng đấu tại 7 thị trường châu Á, tổng tiền thưởng hơn 2,15 triệu USD. Mùa giải mở màn với MB Hanoi Cup tại Việt Nam và kết thúc với Hong Kong Slam — giải pickleball chuyên nghiệp lớn nhất từng được tổ chức tại châu Á với tiền thưởng lên tới 1,1 triệu USD. Dù bạn là fan theo dõi các pro hay VĐV nghiệp dư muốn thi đấu trên cùng sân với các ngôi sao, bài viết này của ThePickleHub cung cấp mọi thứ bạn cần biết về mùa giải 2026.",
           internalLinks: [
             { text: "PPA Tour Asia trong bức tranh các giải pickleball chuyên nghiệp 2026", path: "/vi/blog/cac-giai-pickleball-chuyen-nghiep-2026-toan-canh" }
           ]
@@ -140,7 +140,7 @@ const post: BlogPost = {
             "Sansan Tokyo Open — 1–4/7/2026 | Tokyo, Nhật Bản | $50,000 | PPA Tour Asia lần đầu đến Nhật",
             "Singapore Open — 23–26/7/2026 | Singapore | $70,000",
             "Ho Chi Minh City Open — 6–9/8/2026 | TP.HCM, Việt Nam | $70,000 | Chặng thứ 2 tại Việt Nam",
-            "China Open 2 — 20–23/8/2026 | Trung Quốc | $70,000",
+            "Skechers Shenzhen Open (lịch mùa giải ghi là \"China Open 2\") — 20–23/8/2026 | Thâm Quyến, Trung Quốc | $70,000",
             "Kuala Lumpur Cup — 9–13/9/2026 | Kuala Lumpur, Malaysia | Lên tới $300,000",
             "Hong Kong Slam — 19–25/10/2026 | Hồng Kông | Lên tới $1,100,000 | Trận chung kết mùa giải"
           ]

@@ -1,0 +1,56 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "verdict": "CONCEDE",
+      "reasoning": "Tự fetch https://www.ppatour.com/about/terms/ (200, cập nhật 22/05/2026), nguyên văn: \"Don't scrape, mirror, or rebroadcast our content commercially without written permission\" + \"commercial use requires a license\". Lật D1 theo đường vòng nhưng dứt khoát: không có văn bản cho phép thì thứ duy nhất ship được là trích dẫn biên tập ~10-30 dòng có credit — không đủ tư cách làm khối chính của trang priority 0.9 đang index cụm 'DUPR Việt Nam'. Không còn dataset để đôn lên default → tranh luận default kết thúc. Cộng khoảng trống tự khai vòng 1: chưa có baseline GSC để bảo vệ đánh đổi. GHI RÕ: nhượng bộ vì ToS, KHÔNG vì lập luận 'phễu' của ui-ux-critic — lập luận đó sai dữ kiện (xem newDisagreements #1).",
+      "evidence": [
+        "https://www.ppatour.com/about/terms/ — Acceptable use: 'Don't scrape, mirror, or rebroadcast our content commercially without written permission'; Content & broadcast rights: 'commercial use requires a license' (tự curl 2026-08-06, 200, 96.984 byte)",
+        "functions/_lib/render/rankings.ts:27-32 — title/description SSR hardcode DUPR Việt Nam",
+        "round1/solution-architect.md:125 — tự ghi 'chưa xác minh rủi ro SEO đổi title'"
+      ],
+      "revised_position": "/rankings giữ fallback 'vietnam' (Rankings.tsx:44), renderRankings giữ nguyên khối VN + title VN. Không đổi default, không trung tính hoá h1, không bump KV vì lý do này. Nếu PPA cấp phép bằng văn bản thì mở lại D1 kèm baseline GSC 28 ngày TRƯỚC."
+    },
+    {
+      "id": "D2",
+      "verdict": "REFINE",
+      "reasoning": "GIỮ: 'không cần route mới, không cần entry sitemap mới'. BỎ: cơ chế 'superset qua đổi default cùng pathname' — chết theo D1. NHẬN cơ chế phía kia: routeAndRender chỉ nhận pathname (_middleware.ts:712-713), cacheKey pathname-only (:580) → scope không mặc định sau ?scope=ppa vô hình 100% với bot — xác nhận đọc code đúng. NHƯNG 'vậy phải mở /rankings/ppa-tour' là bước nhảy sai: SEO landing cho cụm này ĐÃ TỒN TẠI, 1 ngày tuổi — bài WPR explainer (712bf549, metadata.ts:13-27) metaTitleEn 'World Pickleball Rankings (WPR) Explained | PPA', tags 'ppa tour rankings', EN+VI, đã có renderBlog + sitemap-blog + hreflang + twin vi_blog_posts. Route mới cạnh tranh SERP với chính bài đó + bắt nuôi 5 bề mặt (handler SSR, sitemap-static, hreflang, App.tsx, parity native) cho trang toàn dữ liệu bên thứ ba chưa có giấy phép (D3). Rẻ hơn cùng tác dụng: nhét bảng trích top 10 nam + top 10 nữ + tên gốc Việt vào chính bài WPR (dữ liệu top-10 hiện chỉ nằm trong ALT hero image — bot không đọc được), rồi /rankings trỏ MỘT link sang bài. Chi phí: sửa post + UPDATE vi_blog_posts + gen-blog-barrel + ?nocache=1; ~1-2 KB gz vào chunk CONTENT. HOLD một điểm của pre-mortem: câu 'không còn URL nào cho bot thấy nội dung VN' mô tả biến thể em KHÔNG đề xuất — Option A giữ khối VN (round1:42). Ghi sổ để không trích nhầm.",
+      "evidence": [
+        "functions/_middleware.ts:580,712-713 — cacheKey pathname-only; query string không tới tầng render",
+        "src/content/blog/metadata.ts:13-27 — bài world-pickleball-rankings-wpr-explained, 2026-08-05, nhắm đúng cụm WPR/PPA",
+        "src/content/blog/metadata.ts:20 — dữ liệu top-10 hiện chỉ trong alt hero image, không crawlable",
+        "round1/solution-architect.md:42 — Option A giữ khối Vietnam trong SSR"
+      ],
+      "revised_position": "Không mở /rankings/ppa-tour. SEO landing PPA/WPR = bài blog WPR explainer đã có (mở rộng bảng trích top 10 nam/nữ + tên gốc Việt + credit + link nguồn, EN+VI cùng lúc). /rankings giữ nguyên nghĩa DUPR Việt Nam + một link text sang bài. Có nhu cầu đo được + có giấy phép thì mới bàn route riêng — bài blog không khoá cửa nào."
+    },
+    {
+      "id": "D3",
+      "verdict": "CONCEDE",
+      "reasoning": "Tự fetch trang ToS (không tin lời agent kia) — văn bản THẬT, đúng nguyên văn risk-auditor trích, cập nhật 22/05/2026, có địa chỉ legal@ppatour.com. Vòng 1 dùng sai công cụ: robots.txt là chỉ thị crawl kỹ thuật, không phải giấy phép; 'Allow: /' không nói gì về quyền tái xuất bản thương mại. ThePickleHub có create-payment-order + livestream trả phí → không cãi được là phi thương mại. Toàn bộ increment 4-5 (worker + bảng + cron + secret) bị CHẶN, không phải hoãn.",
+      "evidence": [
+        "https://www.ppatour.com/about/terms/ (curl 2026-08-06, 200): 'Last updated: May 22, 2026 ... Acceptable use: Don't scrape, mirror, or rebroadcast our content commercially without written permission. Don't bypass paywalls, ticket controls, or rate limits.'",
+        "'All match footage, brackets data, photography, and tour branding are property of the Carvana PPA Tour or our broadcast partners. Personal, non-commercial sharing on social media is welcome with credit; commercial use requires a license.'",
+        "round1/solution-architect.md:13 — vòng 1 chỉ kiểm robots.txt, không kiểm ToS"
+      ],
+      "revised_position": "Không worker, không bảng, không cron, không secret. Chỉ trích dẫn biên tập: top 10 mỗi board + tên gốc Việt, ghi nguồn + link (rel nofollow), nói rõ không phải kênh chính thức. Song song: Cuong gửi legal@ppatour.com xin phép văn bản — có thư thì lưu external/ và mở lại Option A nguyên vẹn."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Blocker #1 của ui-ux-critic sai dữ kiện: CTA /rankings không phải phễu duy nhất, và với khách vãng lai nó không phải phễu",
+      "with": "ui-ux-critic",
+      "myPosition": "Kết luận (giữ default vietnam) đúng nhưng lý do sai, không được dùng lại. HeaderDuprBadge.tsx:85 render nút 'Kết nối DUPR' trên MỌI trang (mount TheLineLayout.tsx:691), ConnectDuprBanner mount toàn cục (TheLineLayout.tsx:1049), HomeLogMatchCTA.tsx:248 nút thứ ba — CTA trong isVietnamScope là cái THỨ TƯ. Và 'khách lần đầu không còn thấy nó' hỏng chiều ngược: CTA trỏ /dupr là RequireAuth (App.tsx:635), HeaderDuprBadge return null khi !user (:35) — khách chưa đăng nhập bấm vào gặp tường login, chưa bao giờ là cửa vào cho người mới. Tin lý do này thì Cuong đầu tư sai chỗ khi tìm đường đưa bảng VN 12 → 200 người."
+    },
+    {
+      "topic": "Route riêng /rankings/ppa-tour là chi phí thừa khi landing đã tồn tại",
+      "with": "ui-ux-critic, pre-mortem",
+      "myPosition": "Hai bên độc lập cùng 'route riêng' nhưng không ai đọc metadata.ts:13-27 — bài WPR explainer EN+VI ship 05/08 đã có SSR/sitemap/hreflang, nhắm đúng cụm truy vấn route mới sẽ nhắm. Mở route mới = tự cạnh tranh SERP + 5 bề mặt phải nuôi. Thay thế: bảng trích top 10 trong bài blog đã có + một link từ /rankings."
+    },
+    {
+      "topic": "Ngay cả đường AMBER của risk-auditor vẫn thừa cho v1",
+      "with": "risk-auditor",
+      "myPosition": "Đồng ý bỏ worker/migration/cron. Nhưng 'tab không mặc định, top 25, commit tay ~200 dòng' vẫn là xây UI trước khi có câu trả lời 'người Việt có tìm bảng PPA không' — tab vô hình với bot (D2) nên không tự sinh câu trả lời từ GSC. Bằng chứng bảng nuôi tay sẽ mục: DUPR_LAST_UPDATED='2026-07-20' trôi 17 ngày. Bảng cũ trong /rankings trông như sản phẩm hỏng; cùng dữ liệu trong bài blog có ngày tháng là bình thường. Increment 1 rẻ hơn: chỉ bài blog + 1 link, đọc GA4 VN + GSC sau 2 tuần rồi mới quyết dựng tab."
+    }
+  ]
+}

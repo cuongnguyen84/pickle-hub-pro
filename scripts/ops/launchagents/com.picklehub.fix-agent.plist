@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.picklehub.fix-agent</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/python3</string>
+    <string>/Users/cm10/pickle-hub-pro/scripts/ops/fix_agent_daemon.py</string>
+  </array>
+  <key>StartInterval</key>
+  <integer>60</integer>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>SECRETS_FILE</key>
+    <string>/Users/cm10/Library/Application Support/PickleHub/fix-agent-secrets.md</string>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>/Users/cm10/Library/Logs/PickleHub/fix-agent-launchd.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/cm10/Library/Logs/PickleHub/fix-agent-launchd.log</string>
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>

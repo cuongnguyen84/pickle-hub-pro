@@ -10,17 +10,12 @@ import {
 import { marketSegmentForCountry } from "../../../functions/_lib/rum-context";
 
 const rumMocks = vi.hoisted(() => ({
-  getPlatform: vi.fn<() => "ios" | "android" | "web">(() => "web"),
   onCLS: vi.fn(),
   onFCP: vi.fn(),
   onINP: vi.fn(),
   onLCP: vi.fn(),
   onTTFB: vi.fn(),
   trackEvent: vi.fn(),
-}));
-
-vi.mock("@/lib/capacitor-utils", () => ({
-  getPlatform: rumMocks.getPlatform,
 }));
 
 vi.mock("@/utils/ga", () => ({
@@ -108,8 +103,35 @@ describe("RUM dimensions", () => {
       route: "/social/:id",
       device_class: "mobile",
       market_segment: "vn",
+      auth_state: "anonymous",
       sample_rate: 1,
     });
+  });
+
+  it("segments auth_state from the supabase token in storage (INC0)", () => {
+    // Node test env has no localStorage — stub the minimal surface getAuthState reads.
+    const store = ["sb-ajvlcamxemgbxduhiqrl-auth-token"];
+    vi.stubGlobal("localStorage", {
+      length: store.length,
+      key: (i: number) => store[i] ?? null,
+    });
+    try {
+      const event = buildWebVitalEvent(
+        {
+          delta: 0.1,
+          id: "v5-auth",
+          name: "CLS",
+          navigationType: "navigate",
+          rating: "poor",
+          value: 0.1,
+        },
+        { appSurface: "web", deviceClass: "mobile", locale: "vi", route: "/live/:id" },
+        "vn",
+      );
+      expect(event.auth_state).toBe("authenticated");
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("attaches CLS shift attribution when provided", () => {
@@ -165,7 +187,6 @@ describe("RUM dimensions", () => {
 
   it("initializes all observers and reports a cached market segment", async () => {
     vi.stubEnv("DEV", false);
-    rumMocks.getPlatform.mockReturnValue("ios");
 
     const requestIdleCallback = vi.fn((callback: IdleRequestCallback) => {
       callback({
@@ -214,7 +235,7 @@ describe("RUM dimensions", () => {
     expect(rumMocks.trackEvent).toHaveBeenCalledWith(
       "web_vital",
       expect.objectContaining({
-        app_surface: "capacitor_ios",
+        app_surface: "web",
         device_class: "mobile",
         locale: "vi",
         market_segment: "vn",

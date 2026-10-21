@@ -17,6 +17,11 @@
       "ruleId": "js/incomplete-multi-character-sanitization",
       "file": "workers/news-fetcher/src/index.ts",
       "reason": "False positive: same fixpoint-loop pattern in stripHtml() (strip + entity-decode to convergence). Dismissed on the Security tab while upload still worked; re-accepted by Cuong 2026-07-22 (PR #432)."
+    },
+    {
+      "ruleId": "js/incomplete-url-substring-sanitization",
+      "file": "functions/_lib/__tests__/brand-sameas.test.ts",
+      "reason": "False positive: the flagged line is a TEST ASSERTION checking that a Play Store URL is ABSENT from rendered sameAs output (substring match on expected test data) — it is not a sanitization/authorization path and no untrusted input flows through it. Entered main via PR #480 (2026-07-27); security.yml was disabled 28/07-03/08 so it surfaced when the workflow was re-enabled. Reviewed and accepted by Cuong 2026-08-03 (PR #530)."
     }
   ]
 }

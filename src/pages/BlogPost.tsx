@@ -1,7 +1,10 @@
+import { truncateForSeo } from "@/lib/seo-title";
+import { authorIdentity } from "@/content/authors";
 import { useEffect, useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import {
+  blogMetadata,
   getBlogPost,
   getRelatedPosts,
   type BlogPost as BlogPostType,
@@ -19,9 +22,10 @@ import { useTrackBlogView } from "@/hooks/useTrackBlogView";
 import { useBlogPostViewCount } from "@/hooks/useBlogPostViewCount";
 import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
-import { blogHeroSrcSet } from "@/lib/image-utils";
+import { blogHeroSrcSet, heroDimsProps } from "@/lib/image-utils";
 import { AdSlot } from "@/components/monetization/AdSlot";
 import { Skeleton } from "@/components/ui/skeleton";
+import { WorldCupResultsBoard } from "@/components/live/WorldCupResultsBoard";
 
 /**
  * /blog/:slug — English long-form article page.
@@ -67,11 +71,35 @@ const BlogPost = () => {
       return undefined;
     }
     setPost(null);
+
+    // The article body is route-split, but its lightweight metadata is
+    // already in the entry bundle. Start the hero request in parallel with
+    // the post chunk instead of waiting for that chunk to resolve and React
+    // to commit the final <img>. Responsive preload attributes keep mobile
+    // from downloading the 1600px original.
+    const hero = blogMetadata.find((item) => item.slug === slug)?.heroImage;
+    const responsiveHero = blogHeroSrcSet(hero?.src);
+    let heroPreload: HTMLLinkElement | undefined;
+    if (hero) {
+      heroPreload = document.createElement("link");
+      heroPreload.rel = "preload";
+      heroPreload.as = "image";
+      heroPreload.href = responsiveHero?.small ?? hero.src;
+      if (responsiveHero) {
+        heroPreload.imageSrcset = responsiveHero.srcSet;
+        heroPreload.imageSizes = "(max-width: 900px) 100vw, 832px";
+      }
+      heroPreload.fetchPriority = "high";
+      heroPreload.dataset.blogHeroPreload = slug;
+      document.head.appendChild(heroPreload);
+    }
+
     getBlogPost(slug).then((p) => {
       if (!cancelled) setPost(p);
     });
     return () => {
       cancelled = true;
+      heroPreload?.remove();
     };
   }, [slug]);
 
@@ -90,7 +118,7 @@ const BlogPost = () => {
           <Skeleton className="h-12 w-full mb-3" />
           <Skeleton className="h-12 w-3/4 mb-6" />
           <Skeleton className="h-4 w-1/2 mb-10" />
-          <Skeleton className="h-72 w-full mb-10 rounded-xl" />
+          <Skeleton className="aspect-video w-full mb-10 rounded-xl" />
           <div className="space-y-4">
             <Skeleton className="h-6 w-1/2" />
             <Skeleton className="h-4 w-full" />
@@ -108,6 +136,7 @@ const BlogPost = () => {
 
   // EN route always serves English content regardless of i18n context.
   const content = post.content.en;
+  const metaTitle = truncateForSeo(content.metaTitle, 60);
   const postUrl = `https://www.thepicklehub.net/blog/${post.slug}`;
   const relatedPosts = getRelatedPosts(post.slug, 3);
 
@@ -122,11 +151,16 @@ const BlogPost = () => {
 
   return (
     <TheLineLayout
-      title={content.metaTitle.replace(/ \| ThePickleHub$/, "")}
+      title={metaTitle}
+      exactTitle
       description={content.metaDescription}
       active="stories"
     >
-      <DynamicMeta title={content.metaTitle} description={content.metaDescription} />
+      <DynamicMeta
+        title={metaTitle}
+        exactTitle
+        description={content.metaDescription}
+      />
       <HreflangTags
         enPath={`/blog/${post.slug}`}
         viPath={viSlug ? `/vi/blog/${viSlug}` : undefined}
@@ -204,7 +238,7 @@ const BlogPost = () => {
             <p className="lede">{content.metaDescription}</p>
             <div className="tl-article-meta">
               <span>
-                <b>{post.author}</b>
+                <b>{"url" in authorIdentity(post.author) ? <Link to={authorIdentity(post.author).url!}>{post.author}</Link> : post.author}</b>
               </span>
               <span>Published {publishedFull}</span>
               {showUpdated && <span>Updated {updatedFull}</span>}
@@ -230,7 +264,6 @@ const BlogPost = () => {
           {post.heroImage && !heroImgFailed && (
             <figure
               style={{
-                aspectRatio: "16 / 9",
                 borderRadius: "var(--tl-radius-lg)",
                 overflow: "hidden",
                 margin: "0 0 48px",
@@ -242,13 +275,14 @@ const BlogPost = () => {
                 srcSet={blogHeroSrcSet(post.heroImage.src)?.srcSet}
                 sizes="(max-width: 900px) 100vw, 832px"
                 alt={post.heroImage.alt}
+                {...heroDimsProps(post.heroImage.src)}
+                loading="eager"
                 fetchPriority="high"
                 decoding="async"
                 onError={() => setHeroImgFailed(true)}
                 style={{
                   width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
+                  height: "auto",
                   display: "block",
                 }}
               />
@@ -304,6 +338,34 @@ const BlogPost = () => {
                       <li key={i}>{item}</li>
                     ))}
                   </ol>
+                )}
+                {section.table && section.table.headers.length > 0 && (
+                  <div className="tl-table-wrap">
+                    <table>
+                      {section.table.caption && (
+                        <caption>{section.table.caption}</caption>
+                      )}
+                      <thead>
+                        <tr>
+                          {section.table.headers.map((h, i) => (
+                            <th key={i}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {section.table.rows.map((row, ri) => (
+                          <tr key={ri}>
+                            {row.map((cell, ci) => (
+                              <td key={ci}>{cell}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                {section.liveBlock === "wc-results" && (
+                  <WorldCupResultsBoard language="en" />
                 )}
                 {section.internalLinks && section.internalLinks.length > 0 && (
                   <p>

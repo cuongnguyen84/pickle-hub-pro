@@ -1,4 +1,5 @@
 import { normalizeImageUrl } from "./url-utils";
+import { blogImageDims } from "@/content/blog/image-dims";
 
 /**
  * Optimizes Supabase Storage image URLs using the built-in image transformation API.
@@ -75,6 +76,47 @@ export function blogHeroSrcSet(
 }
 
 /**
+ * Build responsive candidates for a CMS-managed hero image. Vietnamese blog
+ * covers commonly live in Supabase Storage or Google Drive, so serving the
+ * original 1500px+ asset to a 390px phone needlessly delays LCP. Unknown
+ * origins are left alone because appending resize parameters without a known
+ * CDN contract can break the image.
+ */
+export function cmsHeroImageSources(
+  source: string | null | undefined,
+): { src: string; srcSet?: string } | undefined {
+  if (!source) return undefined;
+
+  const normalized = normalizeImageUrl(source);
+  const local = blogHeroSrcSet(normalized);
+  if (local) return { src: local.small, srcSet: local.srcSet };
+
+  const widths = [480, 768, 1200];
+  const transformed = widths.map((width) => optimizeImageUrl(normalized, { width, quality: 78 }));
+  if (transformed.every((url) => url && url !== normalized)) {
+    return {
+      src: transformed[1]!,
+      srcSet: transformed.map((url, index) => `${url} ${widths[index]}w`).join(", "),
+    };
+  }
+
+  try {
+    const url = new URL(normalized);
+    if (url.hostname === "googleusercontent.com" || url.hostname.endsWith(".googleusercontent.com")) {
+      const base = url.toString().replace(/=w\d+(?:-h\d+)?(?:-[a-z]+)?$/i, "");
+      return {
+        src: `${base}=w768`,
+        srcSet: widths.map((width) => `${base}=w${width} ${width}w`).join(", "),
+      };
+    }
+  } catch {
+    // A relative non-blog path has no known resizing contract.
+  }
+
+  return { src: normalized };
+}
+
+/**
  * Return a bounded thumbnail URL that is safe to use on high-traffic listing
  * surfaces. Remote publishers frequently expose multi-megabyte originals for
  * images that render at 84–224px; loading those originals on the homepage was
@@ -86,12 +128,18 @@ export function blogHeroSrcSet(
  */
 export function homepageThumbnailUrl(
   source: string | null | undefined,
-  options: { width: number; height: number; quality?: number },
+  options: { width: number; height: number; quality?: number; fit?: "cover" | "contain" },
 ): string | undefined {
   if (!source) return undefined;
 
   const normalized = normalizeImageUrl(source);
-  const transformed = optimizeImageUrl(normalized, options);
+  // Hero artwork often contains copy or subjects close to the edge. In
+  // `contain` mode, request a width-bounded derivative without asking the CDN
+  // to crop it to the destination ratio; CSS then letterboxes it if needed.
+  const transformOptions = options.fit === "contain"
+    ? { width: options.width, quality: options.quality }
+    : options;
+  const transformed = optimizeImageUrl(normalized, transformOptions);
   if (transformed && transformed !== normalized) return transformed;
 
   // Committed/local assets already have a controlled byte budget.
@@ -104,6 +152,7 @@ export function homepageThumbnailUrl(
     // Google Drive direct images use the Google Photos CDN transform suffix.
     if (host === "googleusercontent.com" || host.endsWith(".googleusercontent.com")) {
       const base = url.toString().replace(/=w\d+(?:-h\d+)?(?:-[a-z]+)?$/i, "");
+      if (options.fit === "contain") return `${base}=w${options.width}`;
       return `${base}=w${options.width}-h${options.height}-c`;
     }
 
@@ -115,6 +164,47 @@ export function homepageThumbnailUrl(
       return `https://i.ytimg.com/vi/${match[1]}/hqdefault.jpg`;
     }
 
+    // Pickleball.com's image optimizer accepts bounded width/height values.
+    // Replace feed-provided hero dimensions so its 1320px images do not reach
+    // the homepage unchanged.
+    if (host === "cdn.pickleball.com" && url.searchParams.get("optimizer") === "image") {
+      url.searchParams.set("width", String(options.width));
+      if (options.fit !== "contain") {
+        url.searchParams.set("height", String(options.height));
+      } else {
+        url.searchParams.delete("height");
+      }
+      return url.toString();
+    }
+
+    // APP's Webflow feed serves pre-encoded AVIF editorial assets. The current
+    // corpus is bounded (all audited assets <= 74KB); keep the extension and
+    // exact-host guards so arbitrary Webflow originals remain blocked.
+    if (
+      host === "cdn.prod.website-files.com" &&
+      url.pathname.toLowerCase().endsWith(".avif")
+    ) {
+      return url.toString();
+    }
+
+    // The current Pickleball Union and MLP feeds publish their card artwork
+    // from WordPress' generated upload variants. Keep this deliberately
+    // limited to known editorial hosts + the uploads path: accepting every
+    // remote WordPress URL here would undo the homepage byte-budget guard.
+    const trustedWordPressNewsHosts = new Set([
+      "pickleballunion.com",
+      "www.pickleballunion.com",
+      "majorleaguepickleball.co",
+      "www.majorleaguepickleball.co",
+    ]);
+    if (
+      trustedWordPressNewsHosts.has(host) &&
+      url.pathname.startsWith("/wp-content/uploads/") &&
+      /\.(?:avif|jpe?g|png|webp)$/i.test(url.pathname)
+    ) {
+      return url.toString();
+    }
+
     // Same-origin absolute URLs are as controlled as root-relative assets.
     if (host === "thepicklehub.net" || host === "www.thepicklehub.net") {
       return `${url.pathname}${url.search}`;
@@ -124,4 +214,25 @@ export function homepageThumbnailUrl(
   }
 
   return undefined;
+}
+
+/**
+ * `width` / `height` for a blog hero.
+ *
+ * Both hero components used to hardcode 1200x630 while the real assets run
+ * 1024x1536 through 1731x909. With `height: auto` the browser derives the
+ * pre-load placeholder from these attributes, so every post whose hero was not
+ * 1.905:1 reserved the wrong box and shifted the article down when the image
+ * decoded — on the highest-yield content on the site (audit 2026-08-25).
+ *
+ * Unknown assets (Supabase Storage covers, Google Drive links) keep the old
+ * 1200x630 guess: it is still wrong, but dropping the attributes entirely would
+ * reserve no space at all and shift harder.
+ */
+export function heroDimsProps(src: string | null | undefined): {
+  width: number;
+  height: number;
+} {
+  const dims = blogImageDims(src);
+  return dims ? { width: dims[0], height: dims[1] } : { width: 1200, height: 630 };
 }

@@ -15,6 +15,7 @@ import {
   SITEMAP_CACHE_HEADERS,
   URL_SAFE_SLUG_RE,
   buildUrlEntry,
+  fetchAllRows,
   toLastmod,
   today,
   wrapUrlset,
@@ -34,20 +35,22 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const supabase = createSupabaseClient(context.env);
     const cutoff = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
 
-    const { data: matches, error } = await supabase
-      .from("matches")
-      .select("slug, updated_at")
-      .eq("is_public", true)
-      .in("verification_status", ["verified", "pending"])
-      .gte("played_at", cutoff)
-      .order("updated_at", { ascending: false })
-      .limit(5000);
+    // Paged — PostgREST caps a response at 1000 rows regardless of .limit(),
+    // and this table is already near that cap (see fetchAllRows).
+    const matches = await fetchAllRows<{ slug: string | null; updated_at: string | null }>(
+      (from, to) =>
+        supabase
+          .from("matches")
+          .select("slug, updated_at")
+          .eq("is_public", true)
+          .in("verification_status", ["verified", "pending"])
+          .gte("played_at", cutoff)
+          .order("updated_at", { ascending: false })
+          .order("slug", { ascending: true })
+          .range(from, to)
+    );
 
-    if (error) {
-      console.error("sitemap-matches: query error:", error);
-    }
-
-    const entries = (matches || [])
+    const entries = matches
       // PR (2026-05-18 Ahrefs Site Audit Round 2 fix) — exclude test
       // matches that flagged as orphan (3 URLs: qt-7fcd1bb8-55bd1577,
       // qt-7fcd1bb8-446a4be8, nguyenvana-test-vs-tranthib-test-*).

@@ -1,0 +1,111 @@
+:root {
+  color: #eef2f7;
+  background: #06080c;
+  font-family: "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  margin: 0;
+  height: 100%;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  height: 100%;
+}
+
+.stage { position: relative; min-width: 0; }
+
+.topbar {
+  position: absolute;
+  z-index: 2;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(10, 14, 20, 0.78);
+}
+
+.eyebrow {
+  margin: 0 0 2px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7cc4d6;
+}
+
+h1, h2, p { margin: 0; }
+
+h1 { font-size: 16px; font-weight: 650; }
+
+.stamp { color: #b7c1cf; font-size: 13px; text-align: right; }
+
+.speech {
+  position: absolute;
+  z-index: 2;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(232, 176, 74, 0.45);
+  background: rgba(10, 14, 20, 0.82);
+  color: #eef2f7;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.panel {
+  overflow: auto;
+  padding: 16px;
+  background: #0e131b;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.panel h2 { font-size: 18px; margin-bottom: 6px; }
+
+.panel .role { color: #9ad7e6; font-size: 13px; margin-bottom: 10px; }
+
+.panel .detail { color: #d5dbe3; line-height: 1.45; font-size: 14px; }
+
+.list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+
+.card {
+  text-align: left;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #121823;
+  color: inherit;
+  cursor: pointer;
+}
+
+.card.selected { border-color: #7cc4d6; }
+
+.card b { display: block; font-size: 14px; }
+
+.card span { display: block; margin-top: 3px; color: #b7c1cf; font-size: 12px; }
+
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 99px;
+}
+
+@media (max-width: 800px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: 1fr 42dvh; }
+  .panel { border-left: 0; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+  .stamp { display: none; }
+}

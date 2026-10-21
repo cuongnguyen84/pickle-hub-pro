@@ -1,0 +1,593 @@
+<title>Phiếu nghiệm thu Shop</title>
+<style>
+  :root {
+    --ground: #EEF1EF;
+    --card: #FFFFFF;
+    --card-2: #F6F8F6;
+    --ink: #1A1C22;
+    --ink-2: #4A5158;
+    --ink-3: #767E86;
+    --line: #D9DFDB;
+    --line-2: #C4CCC7;
+    --accent: #2F6B4F;
+    --accent-soft: #E2EDE7;
+    --done: #2F6B4F;
+    --blocked: #B4342A;
+    --blocked-soft: #F7E4E2;
+    --warn: #9A6A12;
+    --warn-soft: #F7EEDC;
+    --eye: #6B4FA8;
+    --eye-soft: #EDE7F7;
+    --shadow: 0 1px 2px rgba(26,28,34,.06), 0 6px 18px rgba(26,28,34,.05);
+    --serif: ui-serif, "New York", Georgia, "Times New Roman", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #14171A;
+      --card: #1D2124;
+      --card-2: #23282B;
+      --ink: #E8EDEA;
+      --ink-2: #A9B3AE;
+      --ink-3: #7C8781;
+      --line: #2E3438;
+      --line-2: #3C4449;
+      --accent: #6FBF95;
+      --accent-soft: #1E322A;
+      --done: #6FBF95;
+      --blocked: #E8837A;
+      --blocked-soft: #35211F;
+      --warn: #D8A84E;
+      --warn-soft: #322A18;
+      --eye: #B49CE8;
+      --eye-soft: #262039;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 18px rgba(0,0,0,.25);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #14171A;
+    --card: #1D2124;
+    --card-2: #23282B;
+    --ink: #E8EDEA;
+    --ink-2: #A9B3AE;
+    --ink-3: #7C8781;
+    --line: #2E3438;
+    --line-2: #3C4449;
+    --accent: #6FBF95;
+    --accent-soft: #1E322A;
+    --done: #6FBF95;
+    --blocked: #E8837A;
+    --blocked-soft: #35211F;
+    --warn: #D8A84E;
+    --warn-soft: #322A18;
+    --eye: #B49CE8;
+    --eye-soft: #262039;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 18px rgba(0,0,0,.25);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 40rem; margin: 0 auto; padding: 0 14px 96px; }
+
+  /* ── Sticky progress ─────────────────────────────── */
+  .bar {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--ground) 92%, transparent);
+    backdrop-filter: saturate(1.4) blur(12px);
+    -webkit-backdrop-filter: saturate(1.4) blur(12px);
+    border-bottom: 1px solid var(--line);
+    padding: 10px 14px 9px;
+  }
+  .bar-in { max-width: 40rem; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+  .bar h1 {
+    font-family: var(--serif); font-size: 17px; font-weight: 600;
+    margin: 0; letter-spacing: -0.01em; white-space: nowrap;
+  }
+  .track { flex: 1; height: 7px; border-radius: 99px; background: var(--line); overflow: hidden; }
+  .fill { height: 100%; width: 0%; background: var(--accent); border-radius: 99px; transition: width .25s ease; }
+  .count { font-family: var(--mono); font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* ── Header ──────────────────────────────────────── */
+  header.top { padding: 22px 0 6px; }
+  header.top .kicker {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin: 0 0 6px;
+  }
+  header.top h2 {
+    font-family: var(--serif); font-size: 30px; line-height: 1.15;
+    margin: 0 0 8px; letter-spacing: -0.02em; text-wrap: balance;
+  }
+  header.top p { margin: 0 0 14px; color: var(--ink-2); font-size: 15px; }
+
+  .cta {
+    display: block; text-align: center; text-decoration: none;
+    background: var(--accent); color: #fff; font-weight: 600; font-size: 16px;
+    padding: 15px; border-radius: 12px; margin: 0 0 10px;
+  }
+  :root[data-theme="dark"] .cta, :root:not([data-theme="light"]) .cta { color: #10201A; }
+  @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .cta { color: #fff; } }
+
+  /* ── Cards ───────────────────────────────────────── */
+  section { margin: 26px 0 0; }
+  .sec-head { display: flex; align-items: baseline; gap: 9px; margin: 0 0 10px; padding: 0 2px; }
+  .sec-head .id {
+    font-family: var(--mono); font-size: 11px; color: var(--ink-3);
+    letter-spacing: .06em; text-transform: uppercase;
+  }
+  .sec-head h3 { font-family: var(--serif); font-size: 20px; margin: 0; letter-spacing: -0.01em; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; box-shadow: var(--shadow); overflow: hidden;
+    margin: 0 0 10px;
+  }
+  details.tc > summary {
+    list-style: none; cursor: pointer; padding: 13px 14px;
+    display: flex; align-items: center; gap: 11px; min-height: 52px;
+  }
+  details.tc > summary::-webkit-details-marker { display: none; }
+  details.tc > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .dot {
+    width: 11px; height: 11px; border-radius: 50%; flex: none;
+    border: 2px solid var(--line-2); background: transparent;
+  }
+  details.tc[data-state="part"] .dot { border-color: var(--warn); background: var(--warn); }
+  details.tc[data-state="done"] .dot { border-color: var(--done); background: var(--done); }
+  .tc-code {
+    font-family: var(--mono); font-size: 12px; color: var(--ink-3);
+    font-variant-numeric: tabular-nums; flex: none;
+  }
+  .tc-name { font-size: 15px; font-weight: 550; flex: 1; }
+  details.tc[data-state="done"] .tc-name { color: var(--ink-3); text-decoration: line-through; text-decoration-thickness: 1px; }
+  .chev { flex: none; color: var(--ink-3); font-size: 13px; transition: transform .18s ease; }
+  details.tc[open] .chev { transform: rotate(90deg); }
+  .tc-body { padding: 0 14px 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+
+  /* ── Steps ───────────────────────────────────────── */
+  ul.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  ul.steps li { margin: 0; }
+  label.step {
+    display: flex; gap: 11px; align-items: flex-start;
+    padding: 9px 8px; margin: 0 -8px; border-radius: 9px;
+    min-height: 44px; cursor: pointer; font-size: 15px; line-height: 1.45;
+  }
+  label.step:active { background: var(--card-2); }
+  label.step input {
+    appearance: none; -webkit-appearance: none;
+    width: 22px; height: 22px; flex: none; margin: 1px 0 0;
+    border: 2px solid var(--line-2); border-radius: 6px; background: var(--card);
+  }
+  label.step input:checked { background: var(--accent); border-color: var(--accent); }
+  label.step input:checked::after {
+    content: ""; display: block; width: 5px; height: 10px;
+    border: solid var(--card); border-width: 0 2px 2px 0;
+    transform: rotate(43deg); margin: 2px 0 0 6px;
+  }
+  label.step input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  label.step input:checked + span { color: var(--ink-3); }
+
+  .eye { background: var(--eye-soft); border-left: 3px solid var(--eye); }
+  .eye .tag { color: var(--eye); font-weight: 650; }
+  .must { background: var(--blocked-soft); border-left: 3px solid var(--blocked); }
+  .must .tag { color: var(--blocked); font-weight: 650; }
+  .step-note { display: block; font-size: 13px; color: var(--ink-3); margin-top: 2px; }
+
+  /* ── Blocks ──────────────────────────────────────── */
+  .note {
+    background: var(--card-2); border: 1px solid var(--line);
+    border-radius: 10px; padding: 11px 13px; margin: 10px 0;
+    font-size: 14px; color: var(--ink-2);
+  }
+  .note strong { color: var(--ink); }
+  .note.warn { background: var(--warn-soft); border-color: transparent; }
+  .note.warn strong { color: var(--warn); }
+
+  .sql { position: relative; margin: 10px 0; }
+  .sql pre {
+    margin: 0; padding: 12px 13px; background: var(--card-2);
+    border: 1px solid var(--line); border-radius: 10px;
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.55;
+    overflow-x: auto; -webkit-overflow-scrolling: touch; color: var(--ink);
+  }
+  .sql button {
+    position: absolute; top: 7px; right: 7px;
+    font-family: var(--sans); font-size: 12px; font-weight: 600;
+    padding: 7px 11px; min-height: 34px;
+    border: 1px solid var(--line-2); border-radius: 8px;
+    background: var(--card); color: var(--ink-2); cursor: pointer;
+  }
+  .sql button:active { background: var(--accent); color: var(--card); border-color: var(--accent); }
+
+  code.inl {
+    font-family: var(--mono); font-size: 13px;
+    background: var(--card-2); border: 1px solid var(--line);
+    border-radius: 5px; padding: 1px 5px;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  th, td { text-align: left; padding: 9px 11px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 650; }
+  tr:last-child td { border-bottom: none; }
+  td.ok { color: var(--done); font-weight: 600; white-space: nowrap; }
+  td.no { color: var(--blocked); font-weight: 600; white-space: nowrap; }
+
+  .pad { padding: 13px 14px; }
+  .pad > :first-child { margin-top: 0; }
+  .pad > :last-child { margin-bottom: 0; }
+
+  footer { margin: 30px 0 0; padding: 16px 2px; border-top: 1px solid var(--line); }
+  footer p { font-size: 13px; color: var(--ink-3); margin: 0 0 10px; }
+  .reset {
+    font-family: var(--sans); font-size: 14px; font-weight: 600;
+    padding: 11px 16px; min-height: 44px;
+    background: transparent; color: var(--blocked);
+    border: 1px solid var(--line-2); border-radius: 10px; cursor: pointer;
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="bar">
+  <div class="bar-in">
+    <h1>Nghiệm thu Shop</h1>
+    <div class="track"><div class="fill" id="fill"></div></div>
+    <span class="count" id="count">0/0</span>
+  </div>
+</div>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="kicker">Phase 3 · PR #610 · 18/08</p>
+  <h2>Người mua đặt được đơn, người bán xử lý được đơn</h2>
+  <p>Mở trang này trên chính chiếc iPhone dùng để test. Tick tự lưu, thoát app quay lại vẫn còn.</p>
+  <a class="cta" href="https://feat-shop-phase-3.pickle-hub-pro.pages.dev/shop">Mở preview → /shop</a>
+</header>
+
+<section>
+  <div class="card pad">
+    <div class="scroll"><table>
+      <tr><th>Chuẩn bị</th><th>Trạng thái</th></tr>
+      <tr><td>Pre-flight 3 câu <code class="inl">SELECT DISTINCT</code></td><td class="ok">sạch</td></tr>
+      <tr><td>Cất bản cũ 6 hàm</td><td class="ok">đã dump</td></tr>
+      <tr><td>Áp 4 migration lên prod</td><td class="ok">xong</td></tr>
+      <tr><td>Bật bán shop <code class="inl">thepicklehub</code></td><td class="ok">30.000₫</td></tr>
+      <tr><td>Ledger 4 migration</td><td class="no">còn lại</td></tr>
+    </table></div>
+    <div class="note warn"><strong>Shop đang nhận đơn thật.</strong> Test xong nhớ tắt — lệnh ở cuối trang.</div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="id">Dữ liệu</span><h3>Hai sản phẩm để test</h3></div>
+  <div class="card pad">
+    <div class="scroll"><table>
+      <tr><th>Sản phẩm</th><th>Giá</th><th>Tồn</th></tr>
+      <tr><td><strong>Kaiwin Diamond</strong><br><code class="inl">/shop/product/kaiwin-diamond</code></td><td>2.900.000₫</td><td class="ok">10</td></tr>
+      <tr><td><strong>Negin shoes</strong><br><code class="inl">/shop/product/negin-shoes</code></td><td>1.299.000₫</td><td>không đếm</td></tr>
+    </table></div>
+    <div class="note">Kaiwin Diamond là <strong>variant duy nhất có đếm tồn</strong> — TC-02, TC-07 và TC-17 bắt buộc dùng nó.
+    <br><code class="inl">d5f369ee-5902-4a31-8f36-e9689722ec66</code></div>
+    <div class="note">Chỉ cần <strong>một tài khoản</strong>. Chủ shop tự mua không bị chặn — có chủ đích, để anh nghiệm thu được cả hai phía. Đây cũng là ca đắt nhất: <code class="inl">/shop/orders</code> phải chỉ hiện đơn anh mua, <code class="inl">/seller/orders</code> mới hiện đơn khách.</div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="id">Phần A</span><h3>Người mua</h3></div>
+
+  <div class="card"><details class="tc"><summary><span class="dot"></span><span class="tc-code">TC-01</span><span class="tc-name">Thêm vào giỏ</span><span class="chev">›</span></summary>
+  <div class="tc-body"><ul class="steps">
+    <li><label class="step"><input type="checkbox"><span>Mở sản phẩm, thấy ô số lượng + nút <strong>Thêm vào giỏ</strong> là nút chính</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Bấm → hiện <strong>“Đã thêm vào giỏ”</strong> kèm nút <strong>Xem giỏ</strong></span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Thông báo tự biến mất sau ~6 giây</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Badge giỏ trên đầu trang tăng đúng số</span></label></li>
+    <li><label class="step eye"><input type="checkbox"><span><span class="tag">Nhìn kỹ ·</span> nút Thêm vào giỏ có bị ô số lượng đẩy tràn không? Thông báo có che nút không?</span></label></li>
+  </ul></div></details></div>
+
+  <div class="card"><details class="tc"><summary><span class="dot"></span><span class="tc-code">TC-02</span><span class="tc-name">Sửa số lượng, trần 10</span><span class="chev">›</span></summary>
+  <div class="tc-body"><ul class="steps">
+    <li><label class="step"><input type="checkbox"><span>Bấm <strong>+</strong> → thành tiền = đơn giá × số lượng, tạm tính cập nhật</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Lên tới 10 → nút <strong>+</strong> mờ đi <strong>và có câu giải thích nhìn thấy được</strong>, không phải nút xám câm</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Bấm <strong>−</strong> về 1 → không xuống được 0</span></label></li>
+    <li><label class="step eye"><input type="checkbox"><span><span class="tag">Nhìn kỹ ·</span> nút +/− có đủ to để bấm bằng ngón cái không</span></label></li>
+  </ul></div></details></div>
+
+  <div class="card"><details class="tc"><summary><span class="dot"></span><span class="tc-code">TC-03</span><span class="tc-name">Bỏ món rồi Hoàn tác</span><span class="chev">›</span></summary>
+  <div class="tc-body"><ul class="steps">
+    <li><label class="step"><input type="checkbox"><span>Bấm <strong>Bỏ</strong> → dòng biến mất <strong>ngay</strong>, KHÔNG có hộp xác nhận</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Hiện băng “Đã bỏ … khỏi giỏ.” + nút <strong>Hoàn tác</strong></span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Bấm Hoàn tác trong 10 giây → dòng trở lại đúng số lượng cũ</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Tải lại trang → dòng vẫn còn</span></label></li>
+  </ul></div></details></div>
+
+  <div class="card"><details class="tc"><summary><span class="dot"></span><span class="tc-code">TC-04</span><span class="tc-name">Đặt hàng COD</span><span class="chev">›</span></summary>
+  <div class="tc-body"><ul class="steps">
+    <li><label class="step"><input type="checkbox"><span>Trong giỏ bấm <strong>Đặt hàng shop này</strong></span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Điền họ tên, SĐT (0 + 9 số), địa chỉ</span></label></li>
+    <li><label class="step eye"><input type="checkbox"><span><span class="tag">Nhìn kỹ ·</span> ô địa chỉ có gợi ý đủ cấp không (số nhà, đường, phường/xã, quận/huyện, tỉnh/thành)</span></label></li>
+    <li><label class="step eye"><input type="checkbox"><span><span class="tag">Nhìn kỹ ·</span> ô SĐT có bật <strong>bàn phím số</strong> không</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>“Trả khi nhận hàng (COD)” <strong>được chọn sẵn</strong></span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Bảng tổng: tiền hàng + 30.000₫ = tổng<span class="step-note">Nếu phí bằng 0 phải hiện chữ “Miễn phí”, tuyệt đối không “0₫” hay “—”</span></span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Bấm nút đặt <strong>một lần</strong> → nút khoá + đổi chữ “Đang gửi đơn…”</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Sang <code class="inl">/shop/order/PH-…</code> có khối “Đã gửi đơn tới người bán”</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Bấm <strong>Back</strong> của Safari → KHÔNG quay lại trang checkout</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Mở lại giỏ → giỏ của shop đó <strong>rỗng</strong></span></label></li>
+    <li><label class="step eye"><input type="checkbox"><span><span class="tag">Nhìn kỹ ·</span> nhãn nút <code class="inl">Đặt đơn · 2.930.000₫</code> có bị <strong>cắt chữ</strong> không? Xuống 2 dòng thì chấp nhận, cắt cụt thì không</span></label></li>
+  </ul></div></details></div>
+
+  <div class="card"><details class="tc"><summary><span class="dot"></span><span class="tc-code">TC-05</span><span class="tc-name">Chuyển khoản trước</span><span class="chev">›</span></summary>
+  <div class="tc-body"><ul class="steps">
+    <li><label class="step"><input type="checkbox"><span>Đặt đơn nữa, chọn <strong>“Chuyển khoản trước — shop sẽ gửi thông tin”</strong></span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Trang thành công có nút liên hệ shop (Zalo/gọi)</span></label></li>
+    <li><label class="step must"><input type="checkbox"><span><span class="tag">Bắt buộc ·</span> KHÔNG được có mã QR, KHÔNG số tài khoản, KHÔNG chữ “đối soát”</span></label></li>
+  </ul></div></details></div>
+
+  <div class="card"><details class="tc"><summary><span class="dot"></span><span class="tc-code">TC-06</span><span class="tc-name">Danh sách đơn của tôi</span><span class="chev">›</span></summary>
+  <div class="tc-body"><ul class="steps">
+    <li><label class="step"><input type="checkbox"><span>Mở <code class="inl">/shop/orders</code> — 4 tab, <strong>mỗi tab có số đếm</strong></span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Mỗi đơn hiện <strong>câu việc-cần-làm</strong>, không phải chip trạng thái trơ<span class="step-note">ví dụ: “Shop chưa xác nhận — chưa cần làm gì. Huỷ được nếu đổi ý.”</span></span></label></li>
+    <li><label class="step must"><input type="checkbox"><span><span class="tag">Quan trọng ·</span> chỉ thấy đơn <strong>anh mua</strong>, KHÔNG thấy đơn khách mua ở shop anh</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Gõ chữ vô nghĩa vào ô tìm → “Không có đơn nào khớp …” + nút Xoá tìm kiếm</span></label></li>
+    <li><label class="step eye"><input type="checkbox"><span><span class="tag">Nhìn kỹ ·</span> hàng tab cuộn ngang được, nhưng <strong>trang</strong> không cuộn ngang theo</span></label></li>
+    <li><label class="step eye"><input type="checkbox"><span><span class="tag">Nhìn kỹ ·</span> câu việc-cần-làm dài quá gây rối, hay vừa đọc</span></label></li>
+  </ul></div></details></div>
+
+  <div class="card"><details class="tc"><summary><span class="dot"></span><span class="tc-code">TC-07</span><span class="tc-name">Huỷ đơn, kho được hoàn</span><span class="chev">›</span></summary>
+  <div class="tc-body">
+  <div class="note">Dùng <strong>Kaiwin Diamond</strong>. Ghi lại tồn kho trước khi đặt.</div>
+  <ul class="steps">
+    <li><label class="step"><input type="checkbox"><span>Mở đơn chưa xác nhận → có nút <strong>Huỷ đơn</strong></span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Hộp xác nhận: “Đơn sẽ bị huỷ và hàng được trả lại kho của shop. Không hoàn tác được.”</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Bấm giữ đơn → không có gì đổi</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Huỷ thật → tiêu đề “Đơn đã huỷ”, dòng “Anh/chị đã huỷ đơn này lúc …” nằm <strong>trên cùng</strong></span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Nút liên hệ shop <strong>vẫn còn</strong></span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Kiểm SQL: tồn kho đã hoàn lại đúng số lượng</span></label></li>
+  </ul></div></details></div>
+
+  <div class="card"><details class="tc"><summary><span class="dot"></span><span class="tc-code">TC-08</span><span class="tc-name">Liên hệ shop ở mọi trạng thái</span><span class="chev">›</span></summary>
+  <div class="tc-body">
+  <div class="note">Đây là <strong>điều kiện an toàn</strong> để cắt phần khiếu nại. Không có nó thì người dùng mắc kẹt khi gặp tình huống ngoài luồng.</div>
+  <ul class="steps">
+    <li><label class="step"><input type="checkbox"><span>Đơn chờ xác nhận → có nút liên hệ shop</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Đơn đã xác nhận → có</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Đơn đang giao → có</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Đơn đã giao → có</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Đơn đã huỷ → có</span></label></li>
+  </ul></div></details></div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="id">Phần B</span><h3>Người bán</h3></div>
+
+  <div class="card"><details class="tc"><summary><span class="dot"></span><span class="tc-code">TC-09</span><span class="tc-name">Danh sách đơn của shop</span><span class="chev">›</span></summary>
+  <div class="tc-body"><ul class="steps">
+    <li><label class="step"><input type="checkbox"><span>Mở <code class="inl">/seller/orders</code> — mục <strong>Đơn hàng</strong> phải hết chữ “Sắp có”</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Tab <strong>Cần xử lý</strong> mở sẵn</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Đơn hiện dạng <strong>thẻ</strong>, không phải bảng</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Đơn chờ xác nhận có dòng hạn “Còn N giờ để trả lời”</span></label></li>
+    <li><label class="step must"><input type="checkbox"><span><span class="tag">Quan trọng ·</span> ở đây thấy được đơn của <strong>khách</strong>, khác hẳn <code class="inl">/shop/orders</code></span></label></li>
+    <li><label class="step eye"><input type="checkbox"><span><span class="tag">Cần anh quyết ·</span> thẻ đơn quá hạn đang <strong>canh giữa</strong> trong khi thẻ khác canh trái. Nhìn có chướng không?</span></label></li>
+  </ul></div></details></div>
+
+  <div class="card"><details class="tc"><summary><span class="dot"></span><span class="tc-code">TC-10</span><span class="tc-name">Vòng đời đầy đủ</span><span class="chev">›</span></summary>
+  <div class="tc-body"><ul class="steps">
+    <li><label class="step"><input type="checkbox"><span>Mở đơn chờ → bấm <strong>Xác nhận đơn</strong>, nút đổi chữ “Đang xác nhận…” và không tự mở lại</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Hiện ô <strong>Mã vận đơn</strong> + nút <strong>Đã gửi hàng</strong></span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Bấm Đã gửi hàng khi <strong>để trống</strong> mã vận đơn → vẫn chạy được</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Sang trạng thái đang giao → có nút <strong>Ghi nhận đã giao</strong></span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Bấm → “Đơn đã kết thúc. Không còn thao tác nào.”, hết nút</span></label></li>
+  </ul></div></details></div>
+
+  <div class="card"><details class="tc"><summary><span class="dot"></span><span class="tc-code">TC-11</span><span class="tc-name">Từ chối đơn kèm lý do</span><span class="chev">›</span></summary>
+  <div class="tc-body"><ul class="steps">
+    <li><label class="step"><input type="checkbox"><span>Bấm <strong>Từ chối đơn</strong> → con trỏ <strong>tự nhảy vào</strong> ô lý do</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Để trống → nút gửi mờ + <strong>có câu giải thích cạnh nút</strong></span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Nhập lý do rồi gửi</span></label></li>
+    <li><label class="step must"><input type="checkbox"><span><span class="tag">Then chốt ·</span> chuyển sang tài khoản người mua → thấy <strong>nguyên văn</strong> lý do vừa gõ, ngay dưới tiêu đề</span></label></li>
+  </ul></div></details></div>
+
+  <div class="card"><details class="tc"><summary><span class="dot"></span><span class="tc-code">TC-12</span><span class="tc-name">Gọi khách + sao chép địa chỉ</span><span class="chev">›</span></summary>
+  <div class="tc-body">
+  <div class="note">Chỉ làm trên iPhone thật mới có ý nghĩa.</div>
+  <ul class="steps">
+    <li><label class="step"><input type="checkbox"><span>Khối <strong>Địa chỉ giao</strong> có nút <strong>Gọi người mua</strong></span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Bấm → iPhone mở màn hình gọi với đúng số</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Bấm <strong>Sao chép địa chỉ giao</strong> → nhãn đổi “Đã sao chép” ~2 giây rồi trở lại</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Dán vào Notes → đúng 4 dòng: tên / SĐT / địa chỉ / ghi chú</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Có dòng “Số điện thoại này chỉ hiện với shop vì có đơn hàng thật.”</span></label></li>
+  </ul></div></details></div>
+
+  <div class="card"><details class="tc"><summary><span class="dot"></span><span class="tc-code">TC-13</span><span class="tc-name">“Tôi đã nhận hàng”</span><span class="chev">›</span></summary>
+  <div class="tc-body"><ul class="steps">
+    <li><label class="step"><input type="checkbox"><span>Đưa một đơn về trạng thái đang giao</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Bằng tài khoản người mua, mở <code class="inl">/shop/orders</code> → thẻ có nút <strong>Tôi đã nhận hàng</strong></span></label></li>
+    <li><label class="step must"><input type="checkbox"><span><span class="tag">Quan trọng ·</span> bấm ở <strong>danh sách</strong> chỉ chuyển sang trang chi tiết, <strong>chưa</strong> đổi trạng thái</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Ở trang chi tiết bấm lần nữa → có hộp xác nhận → đồng ý</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Tiêu đề đổi thành “Đơn đã xong”</span></label></li>
+  </ul></div></details></div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="id">Phần C</span><h3>Cố tình phá</h3></div>
+
+  <div class="card"><details class="tc"><summary><span class="dot"></span><span class="tc-code">TC-14</span><span class="tc-name">Giá đổi giữa chừng</span><span class="chev">›</span></summary>
+  <div class="tc-body">
+  <div class="note warn"><strong>Đây là bug đã sửa</strong> — cần xác nhận không tái phát. Trước khi sửa, nút kẹt vĩnh viễn ở “Đang gửi đơn…” và người mua phải tự F5.</div>
+  <ul class="steps">
+    <li><label class="step"><input type="checkbox"><span>Mở checkout trên iPhone, điền đủ form, <strong>chưa bấm đặt</strong></span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Trên máy tính chạy câu SQL dưới để đổi giá</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Trên iPhone bấm <strong>Đặt đơn</strong></span></label></li>
+    <li><label class="step must"><input type="checkbox"><span><span class="tag">Phải có ·</span> khối cảnh báo nêu <strong>tên món + giá cũ → giá mới</strong>, tổng cập nhật, nút trở lại bấm được</span></label></li>
+    <li><label class="step must"><input type="checkbox"><span><span class="tag">Không được ·</span> kẹt mãi ở “Đang gửi đơn…”</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Chưa có đơn nào được tạo</span></label></li>
+  </ul>
+  <div class="sql"><button>Chép</button><pre>UPDATE public.product_variants
+   SET price_vnd = price_vnd + 100000
+ WHERE id = 'd5f369ee-5902-4a31-8f36-e9689722ec66';</pre></div>
+  </div></details></div>
+
+  <div class="card"><details class="tc"><summary><span class="dot"></span><span class="tc-code">TC-15</span><span class="tc-name">Bấm hai lần / F5 giữa chừng</span><span class="chev">›</span></summary>
+  <div class="tc-body"><ul class="steps">
+    <li><label class="step"><input type="checkbox"><span>Đếm đơn trước: <code class="inl">SELECT count(*) FROM shop_orders;</code></span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Mở checkout, điền form, <strong>kéo xuống refresh</strong> Safari, điền lại</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Bấm nút đặt <strong>hai lần thật nhanh</strong></span></label></li>
+    <li><label class="step must"><input type="checkbox"><span><span class="tag">Phải đúng ·</span> đếm lại chỉ tăng <strong>1</strong></span></label></li>
+  </ul></div></details></div>
+
+  <div class="card"><details class="tc"><summary><span class="dot"></span><span class="tc-code">TC-16</span><span class="tc-name">Shop tạm ngưng bán</span><span class="chev">›</span></summary>
+  <div class="tc-body"><ul class="steps">
+    <li><label class="step"><input type="checkbox"><span>Chạy lệnh tắt bán (ở cuối trang)</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Trang sản phẩm → <strong>ẩn hẳn</strong> ô số lượng + nút, hiện “Shop đang tạm ngưng bán.”, nút liên hệ lên làm nút chính</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Giỏ → không đặt được, <strong>sản phẩm vẫn nằm trong giỏ</strong></span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Gõ thẳng URL checkout → cũng chặn</span></label></li>
+    <li><label class="step"><input type="checkbox"><span><code class="inl">/seller/orders</code> có notice và <strong>đơn cũ vẫn xử lý được</strong></span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Bật lại → nút trở về bình thường</span></label></li>
+    <li><label class="step must"><input type="checkbox"><span><span class="tag">Chuỗi cấm ·</span> không nơi nào được hiện “Shop <strong>bị</strong> tạm ngưng”</span></label></li>
+  </ul></div></details></div>
+
+  <div class="card"><details class="tc"><summary><span class="dot"></span><span class="tc-code">TC-17</span><span class="tc-name">Hết hàng và thiếu hàng</span><span class="chev">›</span></summary>
+  <div class="tc-body">
+  <div class="note">Dùng <strong>Kaiwin Diamond</strong>. Đổi tồn kho phải bọc <code class="inl">DISABLE/ENABLE TRIGGER product_variants_guard_stock</code>, hoặc dùng màn điều chỉnh kho của người bán.</div>
+  <ul class="steps">
+    <li><label class="step"><input type="checkbox"><span>Tồn = 0 → dòng trong giỏ có cảnh báo (<strong>icon + chữ</strong>, không chỉ đổi màu)</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Nút đặt của nhóm bị chặn kèm câu “Còn 1 món cần sửa trước khi đặt.”</span></label></li>
+    <li><label class="step must"><input type="checkbox"><span><span class="tag">Phân biệt ·</span> tồn = 4 nhưng để số lượng 8 → phải hiện <strong>“Chỉ còn 4 cái. Giảm số lượng để đặt tiếp.”</strong>, KHÔNG phải “vừa hết hàng”</span></label></li>
+  </ul></div></details></div>
+
+  <div class="card"><details class="tc"><summary><span class="dot"></span><span class="tc-code">TC-18</span><span class="tc-name">Không lộ đơn người khác</span><span class="chev">›</span></summary>
+  <div class="tc-body"><ul class="steps">
+    <li><label class="step"><input type="checkbox"><span>Gõ thẳng <code class="inl">/shop/order/PH-0000-9999</code> → “Không tìm thấy đơn này.”</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Nếu có tài khoản thứ hai: mở đơn người kia → <strong>đúng câu giống hệt</strong></span></label></li>
+    <li><label class="step must"><input type="checkbox"><span><span class="tag">Không được lộ ·</span> tên shop, SĐT, địa chỉ, tổng tiền</span></label></li>
+  </ul></div></details></div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="id">Phần D</span><h3>Nhìn tổng thể</h3></div>
+  <div class="card"><details class="tc" open><summary><span class="dot"></span><span class="tc-code">TC-19</span><span class="tc-name">Chỉ mắt người làm được</span><span class="chev">›</span></summary>
+  <div class="tc-body">
+  <div class="note warn"><strong>Đây là phần quan trọng nhất.</strong> Công cụ test không đổi được viewport suốt hai vòng — mọi case máy chạy đều ở 500px và 1335px. <strong>Chưa ai thấy giao diện ở đúng bề ngang iPhone.</strong></div>
+  <ul class="steps">
+    <li><label class="step"><input type="checkbox"><span>Không trang nào cuộn ngang ở iPhone dọc<span class="step-note">/shop/cart · /shop/checkout · /shop/order · /shop/orders · /seller/orders · /seller/orders/&lt;mã&gt;</span></span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Xoay ngang iPhone → không vỡ layout</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Chữ tiếng Việt đọc tự nhiên, xưng “anh/chị”, không lộ chuỗi kỹ thuật kiểu <code class="inl">PT409</code></span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Không chỗ nào hứa điều nền tảng không làm: không “email xác nhận”, không “quản trị viên sẽ xử lý”, không đếm ngược phía người mua</span></label></li>
+    <li><label class="step"><input type="checkbox"><span>Bấm bằng ngón cái thoải mái, không phải phóng to</span></label></li>
+  </ul>
+  <div class="note">Cuộn ngang ~39px cũng có sẵn ở <code class="inl">/shop</code> và <code class="inl">/rankings</code> từ trước — nếu thấy y hệt ở trang mới thì là lỗi cũ, không phải Phase 3.</div>
+  </div></details></div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="id">Đã biết</span><h3>Đừng báo là bug mới</h3></div>
+  <div class="card pad">
+    <div class="scroll"><table>
+      <tr><th>Điều</th><th>Vì sao</th></tr>
+      <tr><td>Thẻ đơn quá hạn canh giữa</td><td>Lệch nhịp thị giác, chờ anh quyết</td></tr>
+      <tr><td>Ảnh trên thẻ <code class="inl">/shop/orders</code> là logo shop</td><td>Dòng đơn snapshot tên/giá chứ không snapshot ảnh; muốn ảnh thật cần quyết định về read model</td></tr>
+      <tr><td>Cuộn ngang ~39px</td><td>Site-wide sẵn có, cũng có ở <code class="inl">/shop</code>, <code class="inl">/rankings</code></td></tr>
+      <tr><td>Không có wishlist / đánh giá / trả hàng / khiếu nại</td><td><strong>Cắt có chủ ý</strong></td></tr>
+      <tr><td>Không có thông báo đẩy khi có đơn mới</td><td>Hoãn có lý do — repo chưa có edge function gửi Telegram dùng chung. Vì thế UI <strong>không hứa</strong> “shop trả lời trong 48 giờ”</td></tr>
+      <tr><td>Danh sách đơn tối đa 200</td><td>Trần có chủ ý, ghi trong code</td></tr>
+    </table></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="id">Sau khi xong</span><h3>Dọn dẹp</h3></div>
+  <div class="card pad">
+    <p style="margin:0 0 4px;font-weight:600">Tắt bán, nếu chưa muốn mở cho người thật</p>
+    <div class="sql"><button>Chép</button><pre>ALTER TABLE public.shops DISABLE TRIGGER shops_guard_privileged_columns_trg;
+UPDATE public.shops SET ordering_enabled = false WHERE slug = 'thepicklehub';
+ALTER TABLE public.shops ENABLE TRIGGER shops_guard_privileged_columns_trg;</pre></div>
+
+    <p style="margin:16px 0 4px;font-weight:600">Ledger 4 migration — còn thiếu, chạy giúp em</p>
+    <div class="note">Không chạy thì <code class="inl">check-migration-drift.mjs</code> sẽ đỏ mọi commit trên main.</div>
+    <div class="sql"><button>Chép</button><pre>INSERT INTO supabase_migrations.schema_migrations (version, name) VALUES
+ ('20260818090000','shop_cart_items'),
+ ('20260818100000','shop_orders'),
+ ('20260818110000','append_only_actor_null'),
+ ('20260818120000','shop_phase3_projection_and_address')
+ON CONFLICT (version) DO NOTHING;</pre></div>
+
+    <p style="margin:16px 0 4px;font-weight:600">Dọn đơn test</p>
+    <div class="note warn"><strong>Đừng <code class="inl">DELETE</code>.</strong> Huỷ qua RPC để kho được hoàn đúng.</div>
+    <div class="sql"><button>Chép</button><pre>SELECT public.shop_order_transition(
+  '&lt;order-id&gt;'::uuid, 'cancel', '&lt;status-hiện-tại&gt;', 'Đơn thử nghiệm', NULL);</pre></div>
+  </div>
+</section>
+
+<footer>
+  <p>Tick lưu trong trình duyệt này. Bản gốc đầy đủ: <code class="inl">docs/build-feature/shop-phase-3/TEST-IPHONE.md</code></p>
+  <button class="reset" id="reset">Xoá hết tick</button>
+</footer>
+
+</div>
+
+<script>
+  var KEY = "shop-p3-qa";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('label.step input'));
+  boxes.forEach(function (b, i) { b.dataset.k = "b" + i; });
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { return {}; }
+  }
+  function save(state) {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* riêng tư / hết chỗ */ }
+  }
+
+  function paint() {
+    var done = 0;
+    boxes.forEach(function (b) { if (b.checked) done++; });
+    document.getElementById("fill").style.width = (boxes.length ? done / boxes.length * 100 : 0) + "%";
+    document.getElementById("count").textContent = done + "/" + boxes.length;
+
+    document.querySelectorAll("details.tc").forEach(function (d) {
+      var inner = Array.prototype.slice.call(d.querySelectorAll("input"));
+      var n = inner.filter(function (x) { return x.checked; }).length;
+      d.dataset.state = n === 0 ? "none" : (n === inner.length ? "done" : "part");
+    });
+  }
+
+  var state = load();
+  boxes.forEach(function (b) {
+    if (state[b.dataset.k]) b.checked = true;
+    b.addEventListener("change", function () {
+      state[b.dataset.k] = b.checked;
+      save(state);
+      paint();
+    });
+  });
+  paint();
+
+  document.getElementById("reset").addEventListener("click", function () {
+    if (!confirm("Xoá hết tick và bắt đầu lại?")) return;
+    state = {};
+    save(state);
+    boxes.forEach(function (b) { b.checked = false; });
+    paint();
+  });
+
+  document.querySelectorAll(".sql button").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.parentNode.querySelector("pre").textContent;
+      var reset = function () { setTimeout(function () { btn.textContent = "Chép"; }, 1600); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () {
+          btn.textContent = "Đã chép"; reset();
+        }, function () { btn.textContent = "Bôi đen rồi chép tay"; reset(); });
+      } else {
+        btn.textContent = "Bôi đen rồi chép tay"; reset();
+      }
+    });
+  });
+</script>

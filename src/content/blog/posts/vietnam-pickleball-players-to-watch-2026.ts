@@ -33,7 +33,7 @@ const post: BlogPost = {
         {
           heading: "Why 2026 is the year to watch Vietnamese pickleball",
           content:
-            "Vietnam has never had a pickleball season like 2026. The country hosts two PPA Tour Asia stops — the US$300,000 MB Hanoi Cup in April and the MB Ho Chi Minh City Open on August 6–9 — and then, from August 30 to September 6, Da Nang stages the first Pickleball World Cup ever held in Asia. That means the best Vietnamese players are competing on home soil, for world-ranking points, in front of the biggest crowds the sport has drawn in the country. A wave of talent has arrived to meet the moment — several of them former professional tennis players who have crossed over to pickleball and are already winning internationally. This is the shortlist of Vietnamese players worth following through the home season, based on their 2026 results.",
+            "Vietnam has never had a pickleball season like 2026. The country hosts two PPA Tour Asia stops — the US$300,000 MB Hanoi Cup in April and the MB Ho Chi Minh City Open on August 6–9 — and then, from August 30 to September 6, Da Nang stages the first Pickleball World Cup ever held in Asia. That means the best Vietnamese players are competing on home soil, for world-ranking points, in front of the biggest crowds the sport has drawn in the country. A wave of talent has arrived to meet the moment — several of them former professional tennis players who have crossed over to pickleball and are already winning internationally. This is ThePickleHub's shortlist of Vietnamese players worth following through the home season, based on their 2026 results.",
           internalLinks: [
             {
               text: "Every major Vietnam tournament this year — the full 2026 calendar",
@@ -143,7 +143,7 @@ const post: BlogPost = {
         {
           heading: "Vì sao 2026 là năm để dõi theo pickleball Việt Nam",
           content:
-            "Việt Nam chưa từng có một mùa giải pickleball như 2026. Cả nước đăng cai hai chặng PPA Tour Asia — MB Hanoi Cup 300.000 USD hồi tháng 4 và MB Ho Chi Minh City Open ngày 6–9/8 — rồi từ 30/8 đến 6/9, Đà Nẵng tổ chức kỳ Pickleball World Cup đầu tiên tại châu Á. Điều đó nghĩa là những tay vợt Việt Nam hay nhất đang thi đấu ngay trên sân nhà, tranh điểm xếp hạng thế giới, trước những khán đài đông nhất mà môn này từng có ở Việt Nam. Một thế hệ tài năng đã xuất hiện đúng thời điểm — trong đó có nhiều cựu tay vợt tennis chuyển sang pickleball và đã bắt đầu chiến thắng ở đấu trường quốc tế. Đây là danh sách những tay vợt Việt Nam đáng theo dõi trong mùa giải sân nhà, dựa trên thành tích 2026 của họ.",
+            "Việt Nam chưa từng có một mùa giải pickleball như 2026. Cả nước đăng cai hai chặng PPA Tour Asia — MB Hanoi Cup 300.000 USD hồi tháng 4 và MB Ho Chi Minh City Open ngày 6–9/8 — rồi từ 30/8 đến 6/9, Đà Nẵng tổ chức kỳ Pickleball World Cup đầu tiên tại châu Á. Điều đó nghĩa là những tay vợt Việt Nam hay nhất đang thi đấu ngay trên sân nhà, tranh điểm xếp hạng thế giới, trước những khán đài đông nhất mà môn này từng có ở Việt Nam. Một thế hệ tài năng đã xuất hiện đúng thời điểm — trong đó có nhiều cựu tay vợt tennis chuyển sang pickleball và đã bắt đầu chiến thắng ở đấu trường quốc tế. Đây là danh sách ThePickleHub tuyển chọn những tay vợt Việt Nam đáng theo dõi trong mùa giải sân nhà, dựa trên thành tích 2026 của họ.",
           internalLinks: [
             {
               text: "Toàn bộ giải đấu lớn tại Việt Nam năm nay — lịch giải 2026 đầy đủ",

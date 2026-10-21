@@ -31,7 +31,11 @@ the perf-js-gzip pre-mortem).
   recharts eager bug)
 - CODE: **~1455 KB gz** (was 1576.8 with recharts)
 - CONTENT: **353.2 KB gz** across 47 blog chunks (max single chunk ~15 KB)
-- Total: **~1822 KB gz** (backstop unchanged at 1970)
+- Total: **~1822 KB gz** — no longer enforced. The backstop summed CODE +
+  CONTENT, so each published blog post ate headroom no user ever downloads
+  (blog chunks are lazy per slug). It went red on two ordinary EN posts on
+  17/8/2026 and blocked unrelated commits; CONTENT now carries its own
+  aggregate budget instead. See DEBT-01 in `roadmap-9.md`.
 - Entry chunk: ~102 KB gz (the old "~170 KB" line in this doc was stale)
 - PWA precache: **~1.63 MB** (includes self-hosted Latin/Vietnamese fonts)
 
@@ -40,9 +44,10 @@ the perf-js-gzip pre-mortem).
 | Metric | Budget | Now | Owner |
 |---|---:|---:|---|
 | INITIAL first-paint gz (CI-enforced) | ≤ 280 KB | ~265 | every PR |
-| CODE gz (CI-enforced) | ≤ 1800 KB | ~1455 | every PR |
+| CODE gz (CI-enforced) | ≤ 1900 KB (1800 until DEBT-09) | 1799.7 | every PR |
 | Per blog-post content chunk (CI-enforced) | ≤ 20 KB | 15 max | every PR |
-| Total gz JS backstop (CI-enforced) | 1970 KB — ratchets DOWN only | ~1822 | deletion/dependency cuts |
+| CONTENT aggregate gz | reported only, not enforced (DEBT-09, 1/10/2026) | 596.5 | — |
+| Total gz JS | reported only, not enforced (DEBT-01, 17/8/2026) | 1979 | — |
 | Any single route chunk gz | ≤ 150 KB (no grandfathers) | 136 max | every PR |
 | PWA precache | ≤ 3 MB | 1.63 MB | hold |
 | Homepage total transfer (clean desktop lab) | ≤ 3 MB | 0.84 MB | Lighthouse |
@@ -79,3 +84,11 @@ the perf-js-gzip pre-mortem).
   stalls. Mobile simulated Lighthouse is now stable at 0.70, LCP 5.93–6.23s
   and CLS 0.000 across three runs; real-user p75 remains the release metric.
   PWA precache is 1.63 MB, still well below its 3 MB budget.
+- 2026-10-01 (DEBT-09, owner-approved bump): CODE 1800 → 1900 KB and the
+  CONTENT aggregate (600 KB) moved to report-only; the 20 KB per-post cap
+  stays. What grew: every published post adds to the blog `metadata` chunk
+  (24.6 KB gz, counted in CODE) and adds one lazy `blog-post-*` chunk.
+  CODE sat at 1799.7/1800 and CONTENT at 596.5/600, so the gate blocked new
+  posts (Wriai T123, PR #823) rather than a regression. CONTENT chunks load
+  one slug at a time, so their sum is never a reader's download. Pays back:
+  DEBT-09 in `roadmap-9.md` — ship the /blog list without the whole metadata.

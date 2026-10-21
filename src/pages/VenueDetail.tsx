@@ -13,7 +13,6 @@ import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Loader2,
   MapPin,
   Navigation,
   Phone,
@@ -22,14 +21,16 @@ import {
   BadgeCheck,
   Plus,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/i18n";
 import { toast } from "@/hooks/use-toast";
 import { VenueCard } from "@/components/venues/VenueCard";
+import { VenueReviews } from "@/components/venues/VenueReviews";
+import { cmsHeroImageSources } from "@/lib/image-utils";
 import {
   type Venue,
-  VENUE_DETAIL_COLUMNS,
   venueDisplayName,
   venueFullAddress,
   venueDirectionsUrl,
@@ -39,8 +40,14 @@ import {
   surfaceLabel,
   citySlugFromName,
   VENUE_LIST_COLUMNS,
+  isVerifiedVenueSource,
+  venuePriceRange,
+  uniformWeekHours,
+  formatHoursRange,
+  venuePriceHoursVisibility,
   type VenueListItem,
 } from "@/lib/venues";
+import { fetchVenueDetail, venueDetailQueryKey } from "@/lib/venue-detail-query";
 
 const DAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 const DAY_LABELS: Record<string, { vi: string; en: string }> = {
@@ -58,24 +65,12 @@ export default function VenueDetail() {
   const { language } = useI18n();
 
   const { data: venue, isLoading } = useQuery<Venue | null>({
-    queryKey: ["venue", slug],
-    queryFn: async () => {
-      if (!slug) return null;
-      const { data, error } = await supabase
-        .from("venues")
-        .select(VENUE_DETAIL_COLUMNS)
-        .eq("slug", slug)
-        .maybeSingle();
-      if (error) {
-        console.error("VenueDetail: fetch error", error);
-        return null;
-      }
-      return (data as Venue | null) ?? null;
-    },
+    queryKey: venueDetailQueryKey(slug),
+    queryFn: () => fetchVenueDetail(slug),
     staleTime: 60_000,
   });
 
-  const { data: nearby } = useQuery<VenueListItem[]>({
+  const { data: nearby, isLoading: nearbyLoading } = useQuery<VenueListItem[]>({
     queryKey: ["venue-nearby", venue?.city ?? null, slug],
     queryFn: async () => {
       if (!venue?.city || !slug) return [];
@@ -93,19 +88,59 @@ export default function VenueDetail() {
     staleTime: 60_000,
   });
 
+  const lang = language === "vi" ? "vi" : "en";
+
+  // PRICE-01: 'default' means a blanket placeholder on 753 of 896 rows, not a
+  // fact about this venue. Showing it unlabelled is how a player ends up
+  // outside a court that shut at 21:00. See VENUE_SOURCE_CONTRACT in lib/venues.
+  const hoursVerified = isVerifiedVenueSource(venue?.hours_source ?? null);
+  const weekHours = useMemo(() => uniformWeekHours(venue?.hours_json ?? null), [venue]);
+
   const hours = useMemo(() => {
-    if (!venue?.hours_json) return [];
+    // A uniform week is one line, not seven identical rows — which is what
+    // production rendered before this change.
+    if (!venue?.hours_json || weekHours) return [];
     return DAY_ORDER.filter((d) => venue.hours_json?.[d]).map((d) => ({
       day: language === "vi" ? DAY_LABELS[d].vi : DAY_LABELS[d].en,
       value: venue.hours_json![d],
     }));
-  }, [venue, language]);
+  }, [venue, language, weekHours]);
+
+  const priceText = useMemo(
+    () => venuePriceRange(venue?.price_min_vnd ?? null, venue?.price_max_vnd ?? null),
+    [venue],
+  );
+  const priceVerified = isVerifiedVenueSource(venue?.price_source ?? null);
+
+  // Every row in the bordered box needs a *verified* source, so the box has to
+  // be gated on the same thing the rows are — see venuePriceHoursVisibility().
+  const priceHours = venuePriceHoursVisibility({
+    priceText,
+    priceVerified,
+    weekHours,
+    hoursVerified,
+    dayRowCount: hours.length,
+  });
 
   if (isLoading) {
     return (
       <TheLineLayout title="…" active="venues">
-        <div className="tl-shell" style={{ padding: "60px 16px" }}>
-          <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="tl-shell" style={{ paddingBottom: 80, maxWidth: 880, margin: "0 auto" }} aria-busy="true">
+          <Skeleton className="mb-3 h-4 w-56" />
+          <Skeleton className="mb-5 aspect-video w-full rounded-lg" />
+          <Skeleton className="mb-3 h-12 w-3/4" />
+          <Skeleton className="mb-6 h-4 w-2/3" />
+          <div className="mb-6 space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+          </div>
+          <div className="mb-6 flex gap-2">
+            <Skeleton className="h-7 w-20" />
+            <Skeleton className="h-7 w-24" />
+            <Skeleton className="h-7 w-24" />
+          </div>
+          <Skeleton className="mb-6 h-11 w-72 max-w-full" />
+          <Skeleton className="h-80 w-full rounded-lg" />
         </div>
       </TheLineLayout>
     );
@@ -136,6 +171,7 @@ export default function VenueDetail() {
   }
 
   const name = venueDisplayName(venue, language);
+  const coverImage = cmsHeroImageSources(venue.cover_image_url);
   const fullAddress = venueFullAddress(venue);
   const osmUrl = venueOsmEmbedUrl(venue);
   const directionsUrl = venueDirectionsUrl(venue);
@@ -198,12 +234,18 @@ export default function VenueDetail() {
           <span>{name}</span>
         </p>
 
-        {venue.cover_image_url && (
+        {coverImage && (
           <img
-            src={venue.cover_image_url}
+            src={coverImage.src}
+            srcSet={coverImage.srcSet}
+            sizes="(max-width: 912px) calc(100vw - 32px), 832px"
             alt={name}
-            className="mb-5 h-56 w-full rounded-lg border border-border object-cover"
-            loading="lazy"
+            width={1600}
+            height={900}
+            className="mb-5 aspect-video w-full rounded-lg border border-border object-cover"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
           />
         )}
 
@@ -293,30 +335,90 @@ export default function VenueDetail() {
           </div>
         )}
 
-        {/* Opening hours */}
-        {hours.length > 0 && (
+        {/* Price + opening hours.
+            A verified figure is stated plainly. A default is shown as what
+            courts in the area cost, with this venue explicitly excluded from
+            the claim — same split the bot renderer applies. */}
+        {priceHours.section && (
           <section className="mb-6">
             <h2 className="mb-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
-              {language === "vi" ? "Giờ mở cửa" : "Opening hours"}
+              {language === "vi" ? "Giá & giờ mở cửa" : "Price & opening hours"}
             </h2>
-            <div className="rounded-md border border-border">
-              {hours.map((h, i) => (
-                <div
-                  key={h.day}
-                  className={`flex items-center justify-between px-4 py-2 text-sm ${
-                    i > 0 ? "border-t border-border" : ""
-                  }`}
-                >
-                  <span className="text-muted-foreground">{h.day}</span>
-                  <span>{h.value}</span>
+            {priceHours.box && (
+              <div className="rounded-md border border-border">
+                {priceHours.priceRow && (
+                  <div className="flex items-center justify-between px-4 py-2 text-sm">
+                    <span className="text-muted-foreground">
+                      {language === "vi" ? "Giá thuê" : "Price"}
+                    </span>
+                    <span className="font-medium">
+                      {priceText}
+                      {language === "vi" ? "/giờ" : "/hour"}
+                    </span>
+                  </div>
+                )}
+                {priceHours.weekHoursRow && (
+                  <div
+                    className={`flex items-center justify-between px-4 py-2 text-sm ${
+                      priceHours.priceRow ? "border-t border-border" : ""
+                    }`}
+                  >
+                    <span className="text-muted-foreground">
+                      {language === "vi" ? "Giờ mở cửa" : "Opening hours"}
+                    </span>
+                    <span>{formatHoursRange(priceHours.weekHoursRow, lang)}</span>
+                  </div>
+                )}
+                {priceHours.dayRows &&
+                  hours.map((h, i) => (
+                    <div
+                      key={h.day}
+                      className={`flex items-center justify-between px-4 py-2 text-sm ${
+                        i > 0 || priceHours.priceRow ? "border-t border-border" : ""
+                      }`}
+                    >
+                      <span className="text-muted-foreground">{h.day}</span>
+                      <span>{h.value}</span>
+                    </div>
+                  ))}
+              </div>
+            )}
+
+            {priceHours.disclaimer && (
+              <p className={`text-sm text-muted-foreground ${priceHours.box ? "mt-2" : ""}`}>
+                {language === "vi"
+                  ? `Chưa có bảng giá riêng của sân này. Sân pickleball${
+                      venue.city ? ` ở ${venue.city}` : ""
+                    } thường thuê ${priceText}/giờ — gọi sân để hỏi giá và giờ chính xác.`
+                  : `No confirmed rate for this court yet. Pickleball courts${
+                      venue.city ? ` in ${venue.city}` : ""
+                    } typically rent for ${priceText} per hour — call ahead for the exact price and hours.`}
+              </p>
+            )}
+          </section>
+        )}
+
+        {/* Community reviews — first-hand content + aggregateRating source */}
+        <VenueReviews venueId={venue.id} language={language === "vi" ? "vi" : "en"} />
+
+        {/* Other courts in the same city — internal links */}
+        {venue.city && nearbyLoading && (
+          <section className="mt-10 border-t border-border pt-6" aria-busy="true" aria-label={language === "vi" ? "Đang tải sân gần đây" : "Loading nearby courts"}>
+            <Skeleton className="mb-3 h-4 w-64" />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
+              {Array.from({ length: 6 }, (_, index) => (
+                <div className="overflow-hidden rounded-lg border border-border" key={index}>
+                  <Skeleton className="aspect-[4/3] w-full rounded-none" />
+                  <div className="space-y-2 p-4">
+                    <Skeleton className="h-5 w-4/5" />
+                    <Skeleton className="h-4 w-3/5" />
+                  </div>
                 </div>
               ))}
             </div>
           </section>
         )}
-
-        {/* Other courts in the same city — internal links */}
-        {nearby && nearby.length > 0 && (
+        {!nearbyLoading && nearby && nearby.length > 0 && (
           <section className="mt-10 border-t border-border pt-6">
             <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-muted-foreground">
               {language === "vi" ? `Sân pickleball khác tại ${venue.city}` : `Other pickleball courts in ${venue.city}`}

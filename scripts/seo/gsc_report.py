@@ -40,6 +40,16 @@ except ImportError:
     )
     sys.exit(2)
 
+# --- Force IPv4 -------------------------------------------------------------
+# 2026-09-11: on Cuong's network IPv6 SYN to Google (2001:4860::/32) never gets
+# answered, so requests/urllib3 (which try AAAA first) hung in SYN_SENT for the
+# full connect timeout and chief_brief.py's 120s wrapper gave up -> "GSC: chưa
+# đọc được". curl worked because it falls back to IPv4 (Happy Eyeballs). Supabase
+# has no AAAA record, which is why every other script kept working.
+import urllib3.util.connection as _u3c  # noqa: E402
+
+_u3c.HAS_IPV6 = False
+
 SCOPE = "https://www.googleapis.com/auth/webmasters.readonly"
 SA_JSON = os.environ.get("GOOGLE_SA_JSON", ".claude/secrets.local.gsc-ga4-sa.json")
 # Default to the Domain property (covers www + non-www + all subdomains).
@@ -64,7 +74,7 @@ def token():
     return creds.token
 
 
-def query(tok, start, end, dimensions, row_limit=25):
+def query(tok, start, end, dimensions, row_limit=25, page_contains=None):
     url = (
         "https://searchconsole.googleapis.com/webmasters/v3/sites/"
         f"{quote(SITE, safe='')}/searchAnalytics/query"
@@ -76,6 +86,10 @@ def query(tok, start, end, dimensions, row_limit=25):
         "rowLimit": row_limit,
         "dataState": "all",
     }
+    if page_contains:
+        body["dimensionFilterGroups"] = [
+            {"filters": [{"dimension": "page", "operator": "contains", "expression": page_contains}]}
+        ]
     r = requests.post(
         url,
         headers={"Authorization": f"Bearer {tok}", "Content-Type": "application/json"},
@@ -126,6 +140,13 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--days", type=int, default=7)
     ap.add_argument("--limit", type=int, default=25)
+    ap.add_argument(
+        "--page-contains",
+        help="Cluster tracker mode: aggregate totals + top pages for URLs "
+        "containing this substring (e.g. /san/). Prints a compact JSON and "
+        "exits — the weekly /san organic tracker (docs/seo-followup-2026-08.md "
+        "item 6; no SLO covers organic, this IS the monitoring).",
+    )
     args = ap.parse_args()
 
     # GSC data lags ~2-3 days; end the window 3 days back to avoid partials.
@@ -137,6 +158,30 @@ def main():
 
     iso = lambda d: d.isoformat()
     tok = token()
+
+    if args.page_contains:
+        agg = lambda s, e: (query(tok, iso(s), iso(e), [], 1, args.page_contains) or [{}])[0]
+        cur, prev = agg(cur_start, cur_end), agg(prev_start, prev_end)
+        top = query(tok, iso(cur_start), iso(cur_end), ["page"], args.limit, args.page_contains)
+        out = {
+            "cluster": args.page_contains,
+            "window": {"start": iso(cur_start), "end": iso(cur_end), "days": args.days},
+            "clicks": round(cur.get("clicks", 0)),
+            "impressions": round(cur.get("impressions", 0)),
+            "position": round(cur.get("position", 0), 1),
+            "wow": {
+                "clicks_prev": round(prev.get("clicks", 0)),
+                "impressions_prev": round(prev.get("impressions", 0)),
+                "clicks_pct": pct(round(cur.get("clicks", 0)), round(prev.get("clicks", 0))),
+                "impressions_pct": pct(round(cur.get("impressions", 0)), round(prev.get("impressions", 0))),
+            },
+            "top_pages": [
+                {"page": r["keys"][0], "clicks": round(r.get("clicks", 0)), "impressions": round(r.get("impressions", 0))}
+                for r in top
+            ],
+        }
+        print(json.dumps(out, ensure_ascii=False, indent=2))
+        return
 
     cur_q = query(tok, iso(cur_start), iso(cur_end), ["query"], args.limit)
     prev_q = query(tok, iso(prev_start), iso(prev_end), ["query"], 1000)

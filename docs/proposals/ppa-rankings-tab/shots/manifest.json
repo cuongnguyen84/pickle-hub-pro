@@ -1,0 +1,190 @@
+[
+  {
+    "name": "m-en-ppa",
+    "vp": "mobile",
+    "locale": "en-US",
+    "route": "/rankings/ppa-tour",
+    "finalUrl": "https://feat-ppa-rankings-tab.pickle-hub-pro.pages.dev/rankings/ppa-tour?board=men",
+    "status": 200,
+    "title": "Bảng xếp hạng PPA Tour (WPR) | ThePickleHub",
+    "scroll": {
+      "scrollHeight": 3130,
+      "clientHeight": 844,
+      "cls": "tl-scroll"
+    },
+    "files": [
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-en-ppa__p1.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-en-ppa__p2.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-en-ppa__p3.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-en-ppa__p4.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-en-ppa__p5.png"
+    ],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "failedRequests": []
+  },
+  {
+    "name": "m-vi-ppa",
+    "vp": "mobile",
+    "locale": "vi-VN",
+    "route": "/vi/rankings/ppa-tour",
+    "finalUrl": "https://feat-ppa-rankings-tab.pickle-hub-pro.pages.dev/vi/rankings/ppa-tour?board=men",
+    "status": 200,
+    "title": "Bảng xếp hạng PPA Tour (WPR) | ThePickleHub",
+    "scroll": {
+      "scrollHeight": 3130,
+      "clientHeight": 844,
+      "cls": "tl-scroll"
+    },
+    "files": [
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-vi-ppa__p1.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-vi-ppa__p2.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-vi-ppa__p3.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-vi-ppa__p4.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-vi-ppa__p5.png"
+    ],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "failedRequests": []
+  },
+  {
+    "name": "m-vi-ppa-women",
+    "vp": "mobile",
+    "locale": "vi-VN",
+    "route": "/vi/rankings/ppa-tour?board=women",
+    "finalUrl": "https://feat-ppa-rankings-tab.pickle-hub-pro.pages.dev/vi/rankings/ppa-tour?board=women",
+    "status": 200,
+    "title": "Bảng xếp hạng PPA Tour (WPR) | ThePickleHub",
+    "scroll": {
+      "scrollHeight": 3130,
+      "clientHeight": 844,
+      "cls": "tl-scroll"
+    },
+    "files": [
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-vi-ppa-women__p1.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-vi-ppa-women__p2.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-vi-ppa-women__p3.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-vi-ppa-women__p4.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-vi-ppa-women__p5.png"
+    ],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "failedRequests": []
+  },
+  {
+    "name": "m-en-ppa-women",
+    "vp": "mobile",
+    "locale": "en-US",
+    "route": "/rankings/ppa-tour?board=women",
+    "finalUrl": "https://feat-ppa-rankings-tab.pickle-hub-pro.pages.dev/rankings/ppa-tour?board=women",
+    "status": 200,
+    "title": "Bảng xếp hạng PPA Tour (WPR) | ThePickleHub",
+    "scroll": {
+      "scrollHeight": 3130,
+      "clientHeight": 844,
+      "cls": "tl-scroll"
+    },
+    "files": [
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-en-ppa-women__p1.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-en-ppa-women__p2.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-en-ppa-women__p3.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-en-ppa-women__p4.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-en-ppa-women__p5.png"
+    ],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "failedRequests": []
+  },
+  {
+    "name": "m-en-rankings",
+    "vp": "mobile",
+    "locale": "en-US",
+    "route": "/rankings",
+    "finalUrl": "https://feat-ppa-rankings-tab.pickle-hub-pro.pages.dev/rankings?format=doubles",
+    "status": 200,
+    "title": "Bảng xếp hạng DUPR | ThePickleHub",
+    "scroll": {
+      "scrollHeight": 2485,
+      "clientHeight": 844,
+      "cls": "tl-scroll"
+    },
+    "files": [
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-en-rankings__p1.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-en-rankings__p2.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-en-rankings__p3.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-en-rankings__p4.png"
+    ],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "failedRequests": []
+  },
+  {
+    "name": "m-vi-rankings",
+    "vp": "mobile",
+    "locale": "vi-VN",
+    "route": "/vi/rankings",
+    "finalUrl": "https://feat-ppa-rankings-tab.pickle-hub-pro.pages.dev/vi/rankings?format=doubles",
+    "status": 200,
+    "title": "Bảng xếp hạng DUPR | ThePickleHub",
+    "scroll": {
+      "scrollHeight": 2485,
+      "clientHeight": 844,
+      "cls": "tl-scroll"
+    },
+    "files": [
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-vi-rankings__p1.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-vi-rankings__p2.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-vi-rankings__p3.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/m-vi-rankings__p4.png"
+    ],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "failedRequests": []
+  },
+  {
+    "name": "d-en-ppa",
+    "vp": "desktop",
+    "locale": "en-US",
+    "route": "/rankings/ppa-tour",
+    "finalUrl": "https://feat-ppa-rankings-tab.pickle-hub-pro.pages.dev/rankings/ppa-tour?board=men",
+    "status": 200,
+    "title": "Bảng xếp hạng PPA Tour (WPR) | ThePickleHub",
+    "scroll": {
+      "scrollHeight": 2902,
+      "clientHeight": 900,
+      "cls": "tl-scroll"
+    },
+    "files": [
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/d-en-ppa__p1.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/d-en-ppa__p2.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/d-en-ppa__p3.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/d-en-ppa__p4.png"
+    ],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "failedRequests": []
+  },
+  {
+    "name": "d-vi-ppa",
+    "vp": "desktop",
+    "locale": "vi-VN",
+    "route": "/vi/rankings/ppa-tour",
+    "finalUrl": "https://feat-ppa-rankings-tab.pickle-hub-pro.pages.dev/vi/rankings/ppa-tour?board=men",
+    "status": 200,
+    "title": "Bảng xếp hạng PPA Tour (WPR) | ThePickleHub",
+    "scroll": {
+      "scrollHeight": 2902,
+      "clientHeight": 900,
+      "cls": "tl-scroll"
+    },
+    "files": [
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/d-vi-ppa__p1.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/d-vi-ppa__p2.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/d-vi-ppa__p3.png",
+      "/Users/cm10/pickle-hub-pro/docs/proposals/ppa-rankings-tab/shots/d-vi-ppa__p4.png"
+    ],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "failedRequests": []
+  }
+]

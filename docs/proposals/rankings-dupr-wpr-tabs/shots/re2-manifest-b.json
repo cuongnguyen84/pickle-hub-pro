@@ -1,0 +1,118 @@
+{
+  "rows": {
+    "vh": 844,
+    "tableTop": 623.3,
+    "theadTop": 623.3,
+    "theadBottom": 668.3,
+    "row01Y": 668.3,
+    "fullyVisible": 3,
+    "partVisible": 4,
+    "first8": [
+      {
+        "rank": "01",
+        "y": 668.3,
+        "bottom": 718.3,
+        "h": 50,
+        "name": "01\t Chồng Thanh Hoà"
+      },
+      {
+        "rank": "02",
+        "y": 718.3,
+        "bottom": 768.3,
+        "h": 50,
+        "name": "02\t Đỗ Hùng"
+      },
+      {
+        "rank": "03",
+        "y": 768.3,
+        "bottom": 818.3,
+        "h": 50,
+        "name": "03\t Nguyễn Anh Vũ"
+      },
+      {
+        "rank": "04",
+        "y": 818.3,
+        "bottom": 868.3,
+        "h": 50,
+        "name": "04\t CM11"
+      },
+      {
+        "rank": "05",
+        "y": 868.3,
+        "bottom": 918.3,
+        "h": 50,
+        "name": "05\t trungnguyen0706"
+      },
+      {
+        "rank": "06",
+        "y": 918.3,
+        "bottom": 968.3,
+        "h": 50,
+        "name": "06\t Phạm Quang"
+      },
+      {
+        "rank": "07",
+        "y": 968.3,
+        "bottom": 1018.3,
+        "h": 50,
+        "name": "07\t Trần Sơn"
+      },
+      {
+        "rank": "08",
+        "y": 1018.3,
+        "bottom": 1068.3,
+        "h": 50,
+        "name": "08\t Giang Truong Nguyen"
+      }
+    ]
+  },
+  "rowsConsole": [],
+  "stack": {
+    "kicker": {
+      "y": 117.5,
+      "bottom": 134,
+      "h": 16.5
+    },
+    "h1": {
+      "y": 144,
+      "bottom": 213,
+      "h": 69
+    },
+    "tabs": {
+      "y": 313.6,
+      "bottom": 371.1,
+      "h": 57.5
+    },
+    "scope": {
+      "y": 383.1,
+      "bottom": 427.1,
+      "h": 44
+    },
+    "scopeRow": {
+      "y": 383.1,
+      "bottom": 427.1,
+      "h": 44
+    },
+    "filters": {
+      "y": 439.1,
+      "bottom": 524.1,
+      "h": 85
+    },
+    "table": {
+      "y": 623.3,
+      "bottom": 1267.8,
+      "h": 644.5
+    }
+  },
+  "qt_preview": {
+    "found": false,
+    "title": "Pickleball Bracket Generator & Round Robin Tool | ThePickleHub",
+    "url": "https://feat-rankings-wpr-tabs.pickle-hub-pro.pages.dev/tools/quick-tables"
+  },
+  "qt_console": [],
+  "qt_prod": {
+    "found": false,
+    "title": "Pickleball Bracket Generator & Round Robin Tool | ThePickleHub",
+    "url": "https://www.thepicklehub.net/tools/quick-tables"
+  }
+}

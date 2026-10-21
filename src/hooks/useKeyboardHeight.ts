@@ -1,5 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 
+// CLS INC4 (proposal cls-attribution, D4 = web-only): mobile-web address
+// bars collapse/expand ~85-100px on scroll, tripping the old 80px threshold
+// and toggling the chat 400↔280px mid-scroll — scroll shifts carry no
+// hadRecentInput exemption, so each false positive scores full CLS. Real
+// keyboards are ≥~260px. Ngưỡng 80 của WebView native đã bỏ cùng Capacitor
+// (24/08/2026) — bundle này chỉ còn chạy trong trình duyệt.
+const KEYBOARD_THRESHOLD_PX = 150;
+
 /**
  * Detects virtual keyboard height using the Visual Viewport API.
  * Returns 0 when keyboard is closed or on desktop.
@@ -39,7 +47,7 @@ export const useKeyboardHeight = (): number => {
       const diff = baselineHeightRef.current - currentVisibleHeight;
 
       // Threshold to avoid false positives from address bar changes
-      setKeyboardHeight(diff > 80 ? Math.round(diff) : 0);
+      setKeyboardHeight(diff > KEYBOARD_THRESHOLD_PX ? Math.round(diff) : 0);
     };
 
     update();

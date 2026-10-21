@@ -1,0 +1,93 @@
+{
+  "slug": "shop-marketplace",
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "Slice 1 có product editor tối thiểu không — điểm dừng của PR đầu tiên",
+      "positions": {
+        "solution-architect": "KHÔNG — Option B dừng sau shops + /admin/shops + màn chấp thuận điều khoản; chỉ mở products khi cả 3 shop pilot active.",
+        "ui-ux-critic": "CÓ — slice kết thúc trước product editor là không đo được gì; exit = seller đăng xong sản phẩm đầu tiên (Claude + GPT-5.6 độc lập).",
+        "risk-auditor": "KHÔNG — Slice 0′ tối giản để RED nhỏ nhất."
+      },
+      "round2": {
+        "solution-architect": { "move": "CONCEDE", "evidence": "src/hooks/useClubLogoUpload.ts:L12-14,L60-66; supabase/migrations/20260512160200_clubs_logos_bucket_limits.sql:L26-36; docs/proposals/shop-marketplace-plan.md:L936 vs L991" },
+        "ui-ux-critic": { "move": "HOLD" },
+        "risk-auditor": { "move": "CONCEDE", "evidence": "supabase/migrations/20260512160000_clubs_self_service.sql:100-143; src/hooks/useClubLogoUpload.ts:56,64" }
+      },
+      "resolution": "RESOLVED — product editor tối thiểu (tên, giá VND, 1-3 ảnh, tồn kho, draft/published; không variant, không catalogue công khai) vào khối slice 1. Điều kiện phạm vi từ architect: products/editor đi PR riêng ngay sau PR shops (cùng khối việc, review nhỏ). Điều kiện risk-auditor: pgTAP liệt kê tên bảng tường minh (products/product_media không khớp pattern shop_%/seller_%); 0 dependency mới. Tier vẫn RED (P0-6 migration), không hạ."
+    },
+    {
+      "id": "D2",
+      "topic": "Màn chấp thuận điều khoản + pending_activation trong UI slice 1",
+      "positions": {
+        "solution-architect": "CÓ — pending_activation → seller bấm đồng ý → active; shop_accept_policy() ghi version+timestamp+user_id.",
+        "ui-ux-critic": "KN2 — pending vô nghĩa khi Cuong tự tạo; UI chỉ render active|suspended."
+      },
+      "round2": {
+        "solution-architect": { "move": "REFINE" },
+        "ui-ux-critic": { "move": "REFINE" }
+      },
+      "resolution": "RESOLVED (cả hai REFINE hội tụ) — giữ pending_activation + RPC shop_accept_policy() làm ĐIỀU KIỆN CHẶN PUBLISH sản phẩm (RLS: chỉ shop active mới publish) và hồ sơ pháp lý; UI chỉ render 3 nhánh theo hành vi (cổng chấp thuận toàn màn hình / gian hàng active / dải suspended), không bộ 5 badge; restricted/closed chỉ khai enum DB. ⚠️ ĐIỀU KIỆN CỦA CUONG: ui-ux-critic phát hiện văn bản 'Quy chế người bán v1' KHÔNG TỒN TẠI trong repo (src/pages/Terms.tsx: 0 kết quả seller/người bán) — nếu văn bản VI chưa có trong cùng PR thì bỏ nút, ghi verified_method+verified_at thay thế."
+    },
+    {
+      "id": "D3",
+      "topic": "shop_members tạo ngay trong slice 1 hay hoãn sau helper is_shop_member()",
+      "positions": {
+        "solution-architect": "HOÃN — 1 bảng shops + helper is_shop_member(shop_id).",
+        "risk-auditor": "TẠO NGAY — Slice 0′ 2 bảng.",
+        "ui-ux-critic": "TẠO NGAY — B1 theo plan §0."
+      },
+      "round2": {
+        "solution-architect": { "move": "HOLD" },
+        "ui-ux-critic": { "move": "CONCEDE", "evidence": "supabase/migrations/20260730090000_admin_requires_aal2.sql:21-33 vs 20260730100000_admin_aal2_sweep.sql:1-30" },
+        "risk-auditor": { "move": "CONCEDE", "evidence": "supabase/migrations/20260730090000_admin_requires_aal2.sql:21-33; 20260730100000_admin_aal2_sweep.sql" }
+      },
+      "resolution": "RESOLVED — hoãn shop_members; helper is_shop_member(uuid) STABLE + SECURITY DEFINER + SET search_path=public theo khuôn 20260730090000. Guard bắt buộc (cả 3 đồng ý): assertion pgTAP quét pg_policies FAIL nếu policy nào trên shops/products/product_media chứa literal 'owner_user_id' trong qual/with_check — mọi policy phải gọi qua helper."
+    }
+  ],
+  "newFindingsRound2": [
+    {
+      "id": "R2-1",
+      "severity": "P0",
+      "topic": "Template bucket ảnh sản phẩm PHẢI là clubs-logos (20260512160000:100-143), TUYỆT ĐỐI KHÔNG phải og-images",
+      "detail": "og-images (20260415000001:26-31) cho mọi authenticated UPDATE/DELETE bất kỳ object nào + useOgImageUpload.ts path tất định + upsert:true → bất kỳ ai trong ~1669 user đăng nhập ghi đè/xoá được ảnh sản phẩm seller khác, ảnh ngoài DB backup. Bắt buộc: policy scope (storage.foldername(name))[1] = auth.uid()::text, path random, upsert:false. Cả 3 agent vòng 1 đều không nêu — chỉ lộ ra ở vòng 2.",
+      "from": "risk-auditor"
+    },
+    {
+      "id": "R2-2",
+      "severity": "P1",
+      "topic": "file_size_limit 2MB copy từ clubs-logos chặn đúng hành động pilot đang đo",
+      "detail": "Ảnh chụp điện thoại 12MP thường 2-4MB → 'File quá lớn' → seller bỏ cuộc → Cuong đọc nhầm thành 'seller không chịu đăng bán'. Yêu cầu: 8MB + canvas downscale (~30 dòng, 0 dependency); test tay iPhone (heic chưa xác minh).",
+      "from": "risk-auditor"
+    },
+    {
+      "id": "R2-3",
+      "severity": "BLOCKER-trước-pilot",
+      "topic": "B3 login in-app browser — cả 3 agent hội tụ sau vòng 2",
+      "detail": "Login.tsx:135,172 chỉ OAuth Google/Apple; grep signInWithOtp toàn src/ = 0 (architect tự xác minh). Google chặn OAuth trong WebView Zalo/Messenger. Chốt: slice 1 làm bản (b) UA-detect + banner 'Mở bằng trình duyệt' + Sao chép liên kết (~nửa ngày, 0 rủi ro auth); bản (a) phone-OTP vào /login = PR RED RIÊNG, ưu tiên cao, xong TRƯỚC khi gửi link cho seller thật.",
+      "from": "ui-ux-critic + solution-architect"
+    },
+    {
+      "id": "R2-4",
+      "severity": "P2",
+      "topic": "Phễu đo tách 3 số riêng",
+      "detail": "(1) shop được tạo · (2) seller đăng nhập được + bấm đồng ý · (3) sản phẩm published. Gộp một số thì lỗi OAuth WebView bị đọc thành 'seller không quan tâm'.",
+      "from": "solution-architect"
+    },
+    {
+      "id": "R2-5",
+      "severity": "nit",
+      "topic": "Seller sửa ảnh → object key MỚI, không ghi đè",
+      "detail": "CacheFirst 30 ngày (vite.config.ts:217-225) đúng mong muốn cho ảnh public, nhưng ghi đè cùng key làm seller thấy ảnh cũ một tháng. Một dòng quy ước đặt tên.",
+      "from": "ui-ux-critic"
+    }
+  ],
+  "ledger": {
+    "tool": "scripts/agents/debate-ledger.mjs KHÔNG TỒN TẠI trong repo (memory idea-pipeline-missing-scripts đã ghi) — orchestrator cưỡng chế luật THỦ CÔNG theo docs/agent-round2-rules.md",
+    "manualCheck": {
+      "concedes": "4/4 CONCEDE đều kèm evidence file:line và agent khai đã tự mở kiểm chứng — HỢP LỆ",
+      "redGuard": "risk-auditor CONCEDE về phạm vi (D1, D3), KHÔNG concede tier — verdict giữ nguyên 🔴 RED cho slice + toàn plan — HỢP LỆ theo luật 'RED chỉ được REFINE thu hẹp'",
+      "openForCuong": []
+    }
+  }
+}

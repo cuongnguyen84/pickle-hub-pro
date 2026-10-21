@@ -297,7 +297,7 @@ BEGIN
 
   v_command := $command$
     SELECT net.http_post(
-      url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/news-rewrite',
+      url := public.ops_project_url() || '/functions/v1/news-rewrite',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
         'x-cron-secret', (

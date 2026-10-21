@@ -14,9 +14,21 @@ describe("service worker — Supabase REST must never be cached", () => {
   // per-user (RLS + bearer) and a URL-keyed cache could serve another
   // account's data offline. This test reds if anyone reverts the rule to a
   // caching strategy.
+  //
+  // 2026-08-13: the rule's urlPattern became `new RegExp` built from
+  // SUPABASE_ORIGIN, because the old literal was pinned to the production host
+  // and therefore matched NOTHING on staging — this safety rule was silently
+  // absent on every other environment. The locator moved with it.
+  //
+  // Locating by text is the weak part of both tests here: when the pattern
+  // changed, the first one went red (good) and the second went VACUOUS — its
+  // assertions are all `not.toContain`, so a slice that found nothing passed
+  // everything. Hence `expect(idx).toBeGreaterThan(-1)` in both, which is what
+  // makes a missing rule fail instead of quietly succeed.
+  const REST_RULE = "reEscape(SUPABASE_ORIGIN)}/rest/";
+
   it("uses NetworkOnly for the Supabase /rest/ rule", () => {
-    // Grab the object literal following the /rest/ urlPattern.
-    const idx = CONFIG.indexOf("supabase\\.co\\/rest");
+    const idx = CONFIG.indexOf(REST_RULE);
     expect(idx).toBeGreaterThan(-1);
     const block = CONFIG.slice(idx, idx + 400);
     const handler = block.match(/handler:\s*"(\w+)"/)?.[1];
@@ -24,7 +36,8 @@ describe("service worker — Supabase REST must never be cached", () => {
   });
 
   it("does not write a caching handler or cacheName for REST", () => {
-    const idx = CONFIG.indexOf("supabase\\.co\\/rest");
+    const idx = CONFIG.indexOf(REST_RULE);
+    expect(idx).toBeGreaterThan(-1);
     // Slice only up to the NEXT rule so we don't read the following block.
     const rest = CONFIG.slice(idx);
     const block = rest.slice(0, rest.indexOf("urlPattern", 1));
@@ -32,6 +45,13 @@ describe("service worker — Supabase REST must never be cached", () => {
     expect(block).not.toContain('handler: "StaleWhileRevalidate"');
     expect(block).not.toContain('handler: "CacheFirst"');
     expect(block).not.toContain('cacheName: "supabase-rest"');
+  });
+
+  it("builds the rule from the configured origin, so it applies on every environment", () => {
+    // The bug this replaces: a host-pinned literal here meant staging ran with
+    // no REST caching rule at all. It happened to stay uncached because no
+    // other rule matched — protection by accident, not by design.
+    expect(CONFIG).toContain(`urlPattern: new RegExp(\`^\${${REST_RULE}\`)`);
   });
 });
 

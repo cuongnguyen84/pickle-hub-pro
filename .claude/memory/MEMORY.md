@@ -25,3 +25,15 @@
 - `reports/YYYY-MM-DD.md` — báo cáo hằng ngày.
 
 ## 🧭 Behavioral (từ SKILL): Think → Simple → Surgical → Goal-driven trước mọi code.
+
+## 🛍️ Shop web unified handoff (27/8/2026)
+- **Nhánh web shop chuẩn:** `feat/shop-unified` (remote `origin/feat/shop-unified`). Tiếp tục mọi phát triển shop web trên nhánh này; không quay lại `feat/bulk-product-import`, `fix/shop-publish-media-button` hay `fix/shop-equal-card-heights`.
+- **Không trộn app native/iOS:** `feat/shop-native-screens` và code dưới `apple/` là luồng riêng do Cường phát triển độc lập.
+- **Worktree sạch đang dùng:** `.claude/worktrees/shop-publish-btn` (dù tên cũ, hiện checkout `feat/shop-unified`). Worktree gốc có rất nhiều thay đổi chưa commit của user; không reset/overwrite/merge trực tiếp tại đó.
+- **Preview chuẩn:** `https://feat-shop-unified.pickle-hub-pro.pages.dev`.
+- **Worker xóa nền:** `https://picklehub-image-background-remover.thecuong.workers.dev`; source tại `workers/image-background-remover/`. CORS đã cho phép preview unified và production. Cloudflare Images binding là `IMAGES`; secrets chỉ lưu trên Cloudflare: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` (không ghi giá trị vào repo).
+- Chức năng đã gom: import sản phẩm từ template, AI enrichment, category/spec/variant/color, Brave image search, chọn nhiều ảnh, upload ảnh thủ công, xóa nền, publish thẳng storefront, bulk delete seller products và cân chiều cao product card.
+- Fix auth xóa nền gần nhất: membership table không có cột `id`; worker phải query `select=shop_id` (`e3065fbb`). Auth errors đã tách thành `session_invalid`, `seller_required`, `auth_unavailable`. **Cần user xác nhận lại thao tác xóa nền end-to-end sau fix này.**
+- Commit hợp nhất gần nhất: `0cbee8d3` (CORS preview); merge latest `origin/main` tại `ebed4c06`; card fix `33604c80`.
+- Validation khi hợp nhất: TypeScript, ESLint, production build pass; 2 test files / 11 tests pass.
+- Untracked user file cần giữ nguyên: `docs/proposals/shop-closed-pilot/HANDOFF-2026-08-18.md`.

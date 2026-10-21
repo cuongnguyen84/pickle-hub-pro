@@ -15,14 +15,20 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const STALE_DAYS = 14;
+    // Hard lifecycle cap: a community tournament must not remain live more
+    // than 30 days after it was created, even if a late edit refreshed
+    // updated_at. This is intentionally based on created_at, not inactivity.
+    const MAX_OPEN_AGE_DAYS = 30;
+    const createdBefore = new Date(
+      Date.now() - MAX_OPEN_AGE_DAYS * 86400000,
+    ).toISOString();
 
     // Archive stale Quick Tables
     const { data: quickTables, error: qtError } = await supabase
       .from("quick_tables")
       .update({ status: "completed" })
       .in("status", ["setup", "group_stage", "playoff"])
-      .lt("updated_at", new Date(Date.now() - STALE_DAYS * 86400000).toISOString())
+      .lt("created_at", createdBefore)
       .select("id");
 
     if (qtError) {
@@ -34,7 +40,7 @@ Deno.serve(async (req) => {
       .from("team_match_tournaments")
       .update({ status: "completed" })
       .in("status", ["registration", "ongoing"])
-      .lt("updated_at", new Date(Date.now() - STALE_DAYS * 86400000).toISOString())
+      .lt("created_at", createdBefore)
       .select("id");
 
     if (tmError) {
@@ -45,8 +51,8 @@ Deno.serve(async (req) => {
     const { data: flexTournaments, error: ftError } = await supabase
       .from("flex_tournaments")
       .update({ status: "completed" })
-      .in("status", ["active", "setup"])
-      .lt("updated_at", new Date(Date.now() - STALE_DAYS * 86400000).toISOString())
+      .in("status", ["active", "ongoing", "setup"])
+      .lt("created_at", createdBefore)
       .select("id");
 
     if (ftError) {
@@ -57,8 +63,8 @@ Deno.serve(async (req) => {
     const { data: doublesTournaments, error: dtError } = await supabase
       .from("doubles_elimination_tournaments")
       .update({ status: "completed" })
-      .in("status", ["setup", "in_progress"])
-      .lt("updated_at", new Date(Date.now() - STALE_DAYS * 86400000).toISOString())
+      .in("status", ["setup", "registration_open", "ongoing"])
+      .lt("created_at", createdBefore)
       .select("id");
 
     if (dtError) {

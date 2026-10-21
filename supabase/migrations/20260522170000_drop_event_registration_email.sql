@@ -95,7 +95,7 @@ BEGIN
                 || ' • ' || v_event.title_vi;
     BEGIN
       PERFORM net.http_post(
-        url     := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/send-push-notification',
+        url     := public.ops_project_url() || '/functions/v1/send-push-notification',
         headers := jsonb_build_object(
           'Content-Type', 'application/json',
           'Authorization', 'Bearer ' || v_anon_key,

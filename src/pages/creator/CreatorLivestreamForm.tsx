@@ -26,6 +26,14 @@ import type { Enums } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeWithBlobRetry } from "@/lib/edgeInvoke";
 
+interface MuxCreateLivestreamResponse {
+  error?: string;
+  message?: string;
+  mux_live_stream_id?: string;
+  mux_playback_id?: string;
+  mux_stream_key?: string;
+}
+
 export default function CreatorLivestreamForm() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -103,7 +111,7 @@ export default function CreatorLivestreamForm() {
         throw new Error("Not authenticated");
       }
 
-      const response = await invokeWithBlobRetry("mux-create-livestream", {
+      const response = await invokeWithBlobRetry<MuxCreateLivestreamResponse>("mux-create-livestream", {
         body: { title: formData.title, playback_policy: "public" },
       });
 
@@ -112,7 +120,11 @@ export default function CreatorLivestreamForm() {
       }
 
       const data = response.data;
-      
+
+      if (!data) {
+        throw new Error("Mux livestream returned no data");
+      }
+
       if (data.error) {
         throw new Error(data.message || data.error);
       }

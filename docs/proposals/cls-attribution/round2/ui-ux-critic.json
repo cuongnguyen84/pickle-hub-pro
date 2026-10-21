@@ -1,0 +1,33 @@
+{
+  "agent": "ui-ux-critic",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Hình dạng fix hàng metadata WatchLive (viewer chip + async values)",
+      "myRound1Position": "Blocker: hàng flex-wrap 3 giá trị async rewrap suốt phiên — phải tách organizer + grid nowrap + tabular-nums + slot visibility:hidden; fix span đơn lẻ không đủ",
+      "move": "REFINE",
+      "evidence": "src/components/layout/TheLineLayout.tsx:1052 + src/components/dupr/ConnectDuprBanner.tsx:41-43 (đã mở kiểm: return null → chèn div grid padding 12px/20px vào đầu flow, mọi route) — dữ kiện mới, em nhận thứ tự ưu tiên. NHƯNG shape thì giữ, vì: src/pages/WatchLive.tsx:43 `const { data: viewCount = 0 } = useViewCount(...)` → hàng render '0 lượt xem' rồi đổi '1.234 lượt xem' — giá trị async THỨ HAI trong cùng hàng mà INC3 của architect không đụng; src/pages/WatchLive.tsx:429-431 chuỗi thật là icon 16px + gap 4px + '1.234 đang xem' (14 ký tự VI, 14 EN) ≈ 115-125px, trong khi `min-w-[10ch]` ở 14px ≈ 75px → vẫn nở ~45px lúc presence connect, hàng vẫn tip sang dòng 2; và round1/risk-auditor.md:29 (R7) ghi WIP đổi `>= MIN_PUBLIC_VIEWERS` → `> 0` khiến chip từ 'hiếm khi hiện' thành 'gần như luôn hiện' — cùng cửa sổ đo",
+      "note": "Nhượng phần thứ tự: metadata row tụt từ #1 xuống sau banner + keyboard, gộp chung PR với INC2, không đòi increment riêng. Giữ phần hình dạng: bọc 3 mục số liệu vào MỘT div `flex-nowrap tabular-nums` (organizer tự rơi xuống dòng riêng — không cần refactor hàng), slot viewer width đo bằng chuỗi dài nhất của cả vi và en chứ không phải 10ch, và viewCount khi chưa resolve render skeleton thay vì `0`. Delta effort so với INC3 của architect là một wrapper div + 3 class ≈ 0.1 nửa ngày trong ngân sách 2 nửa ngày — ràng buộc effort không mua được cái fix yếu hơn. `min-w-[10ch]` đúng hướng nhưng sai số đo: nó reserve chưa tới 2/3 bề rộng thật, và một reserve tuỳ tiện trong hàng flex-wrap chính là thứ risk-auditor.md:134 xác nhận là làm hàng wrap."
+    },
+    {
+      "id": "D3",
+      "topic": "Font Vietnamese swap/preload có thuộc scope pass này không",
+      "myRound1Position": "Blocker B4: inter-vietnamese swap + không preload → reflow toàn site, là lời giải duy nhất hợp lý cho /login 15 poor, phải fix trong pass này",
+      "move": "REFINE",
+      "evidence": "index.html:66 `html{font-family:Inter,...}` + src/index.css:164 `body{font-family:'Inter',...}` + tailwind.config.ts:27 `sans: ['Inter', ...]` + src/styles/the-line.css:3092 (`.tl-root` KHÔNG set font-family, khối Geist nằm ở `:root[data-theme]` line 15-112 nên body override lại bằng Inter) → body font thật của mọi trang, kể cả /login (src/pages/Login.tsx:286,336 bọc trong .tl-root) là **Inter**, không phải Geist. index.html:62-63: inter-vietnamese = swap, inter-latin = optional. index.html:86-89: chỉ geist-latin (29.288 B) + geist-vietnamese (7.968 B) được preload; inter-vietnamese.woff2 (10.280 B, `ls public/fonts`) KHÔNG được preload.",
+      "note": "Architect loại font dựa trên round1/solution-architect.md:96-99 'cả hai file Geist đều được preload → FOUT rất ngắn' — đúng về Geist nhưng Geist không phải font body; kết luận đó không áp cho Inter. Nên em giữ font TRONG pass này. Chỉnh hai chỗ: (1) BỎ lý do '/login 15 poor' — 86% good, volume quá thấp, em không đòi increment cho /login; /login chỉ là *chẩn đoán* (trang gần như không async mà vẫn 14% poor → cơ chế cấp document), không phải *đích*. Payoff nằm ở / và /live nơi cùng reflow đó chạy trên nhiều nội dung hơn. (2) BỎ đề xuất thêm preload thứ 4 một cách vô điều kiện — biên LCP chỉ 77ms (risk-auditor R8) nên không nhét thêm request ưu tiên cao khi chưa biết font nào paint phần tử LCP. Phần ship được ngay là phần **0 byte, 0 request**: @font-face fallback metric-match (size-adjust/ascent-override — hiện repo không có dòng nào, grep 'size-adjust' rỗng) + gỡ mismatch inter-latin `optional` vs inter-vietnamese `swap` (nguồn chữ lai font trong một từ tiếng Việt). Preload chỉ xét sau khi đo family của phần tử LCP; nếu Inter là font LCP thì nước đi đúng là ĐỔI preload geist-latin 29 KB lấy inter-vietnamese 10 KB (ròng −19 KB ưu tiên cao, LCP tốt lên chứ không xấu đi), không phải cộng thêm."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "INC3 `min-w-[10ch]` reserve không đủ rộng và đặt trong hàng flex-wrap là đúng cơ chế gây wrap mà chính panel đang điều tra — nếu ship nguyên trạng, cửa sổ đo T+7 sẽ ghi nhận 'đã fix viewer span' trong khi hàng vẫn nhảy",
+      "with": "solution-architect",
+      "myPosition": "Reserve phải đo bằng chuỗi dài nhất của cả vi và en (`1.234 đang xem` / `1,234 watching` + icon 16px + gap) trong một group `flex-nowrap`, và phải kèm skeleton cho `viewCount` (WatchLive.tsx:43 default 0) — nếu không thì INC3 chỉ khoá 1 trong 2 giá trị async của hàng"
+    },
+    {
+      "topic": "Chưa ai trong panel nêu: repo preload 37 KB font Geist (index.html:86-89) trong khi font body thật là Inter (index.css:164) — 37 KB băng thông ưu tiên cao trên 4G VN dùng cho vài class .tl-hero-title/.tl-lh-*, đúng lúc LCP chỉ còn biên 77ms",
+      "with": "solution-architect + risk-auditor",
+      "myPosition": "Không sửa mù trong PR này, nhưng phải ghi vào proposal như một mục đo: xác định family của phần tử LCP trên / và /live trước khi đụng bất kỳ dòng preload nào — đây là nơi duy nhất trong pass này có khả năng cải thiện LCP thay vì chỉ CLS"
+    }
+  ]
+}
