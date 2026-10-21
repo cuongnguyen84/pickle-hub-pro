@@ -612,6 +612,9 @@ class SocialPromoFilterTests(unittest.TestCase):
             "Best pickleball paddles for women: Top choices for 2026",
             "Giày Pickleball SQAIRZ XRZ2 Đánh Giá Độ Bền Và Độ Ổn Định",
             "Six Zero Ra Mắt Vợt Pickleball Boulder Opal Mới",
+            "Cảnh báo bóng Life Time giả mạo",
+            "So sánh vợt Joola Perseus và Selkirk Vanguard",
+            "Best portable pickleball nets for your driveway",
         ):
             self.assertTrue(promo.is_promotional(title), title)
 
@@ -624,6 +627,7 @@ class SocialPromoFilterTests(unittest.TestCase):
             "Quy định pháp lý vợt pickleball và danh sách phê duyệt",
             "Selkirk Red Rock Open: Ben Johns wins the men's singles",
             "Doanh thu sân pickleball và những rủi ro tài chính tiềm ẩn",
+            "Kỹ thuật lên lưới và chiếm lĩnh khu bếp",
         ):
             self.assertFalse(promo.is_promotional(title), title)
 

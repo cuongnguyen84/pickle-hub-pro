@@ -55,6 +55,14 @@ GEAR_TITLE_PATTERNS = [re.compile(p, _I) for p in (
     r"(?:giả mạo|hàng giả|hàng nhái)",
     r"(?:xuất hiện trên|in lên) (?:mẫu )?vợt",
     r"(?:ra mắt|trình làng)[^.]{0,40}(?:dụng cụ|bóng pickleball|mẫu bóng)",
+    # 21/10 08:30 broadening: gear as the main subject at all (see promo-filter.ts).
+    r"\b(?:paddles?|balls?|shoes?|bags?|nets?)\b[^.]{0,40}\b(?:vs\.?|versus|compared?|comparison|deals?|sale|prices?)\b",
+    r"\b(?:compar\w*|deals? on|buy(?:ing)?|choos\w*|best|top|new)\b[^.]{0,30}\b(?:balls?|nets?|bags?)\b",
+    r"\b(?:gear|equipment)\b",
+    r"so sánh[^.]{0,30}(?:vợt|bóng|giày|lưới|balo)",
+    r"(?:mua|chọn)[^.]{0,15}(?:giày|bóng pickleball|lưới|balo|túi)",
+    r"(?:vợt|bóng|giày|lưới)[^.]{0,20}(?:giá rẻ|giá tốt|giá bao nhiêu)",
+    r"(?:dụng cụ|thiết bị|phụ kiện) pickleball",
 )]
 
 GEAR_BRANDS = (

@@ -320,6 +320,11 @@ describe('gear and product pieces (owner rule 2026-10-21)', () => {
     'Volair và 11SIX24 hợp tác công nghệ vợt',
     'Dylan Frazier Kết Hợp Volair Ra Mắt Dụng Cụ Pickleball Star Wars',
     'Cảnh báo bóng Life Time giả mạo',
+    'Ed Ju Warns Pickleball Community About Suspected Fake Life Time Balls',
+    'So sánh vợt Joola Perseus và Selkirk Vanguard',
+    'Franklin X-40 vs Dura Fast 40: which outdoor ball wins on price',
+    'Best portable pickleball nets for your driveway',
+    'Top pickleball gear deals this week',
   ])('blocks: %s', (title) => {
     expect(isPromotionalSource(title, null, null, 'equipment')).toBe(true);
   });

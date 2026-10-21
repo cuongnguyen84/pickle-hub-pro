@@ -140,6 +140,16 @@ const GEAR_TITLE_PATTERNS: ReadonlyArray<RegExp> = [
   /(?:giả mạo|hàng giả|hàng nhái)/i,
   /(?:xuất hiện trên|in lên) (?:mẫu )?vợt/i,
   /(?:ra mắt|trình làng)[^.]{0,40}(?:dụng cụ|bóng pickleball|mẫu bóng)/i,
+  // 21/10 08:30 broadening (after the Life Time fake-ball warning went out):
+  // the main subject being gear at all is enough. Comparisons, deals, nets,
+  // counterfeit warnings and "equipment"/"dụng cụ" pieces.
+  /\b(?:paddles?|balls?|shoes?|bags?|nets?)\b[^.]{0,40}\b(?:vs\.?|versus|compared?|comparison|deals?|sale|prices?)\b/i,
+  /\b(?:compar\w*|deals? on|buy(?:ing)?|choos\w*|best|top|new)\b[^.]{0,30}\b(?:balls?|nets?|bags?)\b/i,
+  /\b(?:gear|equipment)\b/i,
+  /so sánh[^.]{0,30}(?:vợt|bóng|giày|lưới|balo)/i,
+  /(?:mua|chọn)[^.]{0,15}(?:giày|bóng pickleball|lưới|balo|túi)/i,
+  /(?:vợt|bóng|giày|lưới)[^.]{0,20}(?:giá rẻ|giá tốt|giá bao nhiêu)/i,
+  /(?:dụng cụ|thiết bị|phụ kiện) pickleball/i,
 ];
 
 /** Names that only ever mean a gear company in this feed. */
