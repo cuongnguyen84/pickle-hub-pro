@@ -511,7 +511,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     "slug": "rate-las-vegas-open-2026-results",
     "publishedDate": "2026-10-01",
-    "updatedDate": "2026-10-04",
+    "updatedDate": "2026-10-21",
     "author": "The PickleHub Team",
     "tags": [
       "ppa tour",
@@ -530,12 +530,12 @@ export const blogMetadata: BlogPostMetadata[] = [
       "src": "/images/blog/rate-las-vegas-open-2026-results-hero.webp",
       "alt": "Rate Las Vegas Open 2026 results at Darling Tennis Center"
     },
-    "titleEn": "Rate Las Vegas Open 2026 Results: Live Results, Vietnamese Players",
-    "titleVi": "Kết quả Rate Las Vegas Open 2026: kết quả từng ngày, tay vợt Việt Nam",
-    "metaTitleEn": "Rate Las Vegas Open 2026 Results (Daily)",
-    "metaTitleVi": "Kết quả PPA Las Vegas Open 2026 mỗi ngày",
-    "metaDescriptionEn": "Rate Las Vegas Open 2026 results, updated daily: every draw's stage, upsets, Anna Leigh Waters' title 200 and the Vietnamese players.",
-    "metaDescriptionVi": "Kết quả Rate Las Vegas Open 2026 cập nhật hằng ngày: từng nội dung, kết quả bất ngờ, Anna Leigh Waters và tay vợt Việt Nam."
+    "titleEn": "Rate Las Vegas Open 2026 Results: Final Results, Vietnamese Players",
+    "titleVi": "Kết quả Rate Las Vegas Open 2026: kết quả chung cuộc, tay vợt Việt Nam",
+    "metaTitleEn": "Rate Las Vegas Open 2026 Results (Final)",
+    "metaTitleVi": "Kết quả chung cuộc Las Vegas Open 2026",
+    "metaDescriptionEn": "Final Rate Las Vegas Open 2026 results: five champions. Anna Leigh Waters won women's doubles, one short of title 200.",
+    "metaDescriptionVi": "Kết quả chung cuộc PPA Las Vegas Open 2026. Anna Leigh Waters vô địch đôi nữ, thua đôi nam nữ, chưa cán mốc 200."
   },
   {
     "slug": "pickleball-lob-technique",

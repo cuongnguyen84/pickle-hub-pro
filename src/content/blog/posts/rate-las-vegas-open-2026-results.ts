@@ -6,7 +6,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   "slug": "rate-las-vegas-open-2026-results",
   "publishedDate": "2026-10-01",
-  "updatedDate": "2026-10-04",
+  "updatedDate": "2026-10-21",
   "author": "The PickleHub Team",
   "tags": [
     "ppa tour",
@@ -27,13 +27,13 @@ const post: BlogPost = {
   },
   "content": {
     "en": {
-      "title": "Rate Las Vegas Open 2026 Results: Live Results, Vietnamese Players",
-      "metaTitle": "Rate Las Vegas Open 2026 Results (Daily)",
-      "metaDescription": "Rate Las Vegas Open 2026 results, updated daily: every draw's stage, upsets, Anna Leigh Waters' title 200 and the Vietnamese players.",
+      "title": "Rate Las Vegas Open 2026 Results: Final Results, Vietnamese Players",
+      "metaTitle": "Rate Las Vegas Open 2026 Results (Final)",
+      "metaDescription": "Final Rate Las Vegas Open 2026 results: five champions. Anna Leigh Waters won women's doubles, one short of title 200.",
       "sections": [
         {
           "heading": "Rate Las Vegas Open 2026 results: where every draw stands",
-          "content": "Last updated: October 4, 2026, 13:37 Vietnam time.\n\nThe Rate Las Vegas Open 2026 runs September 28 – October 4, 2026 at the Darling Tennis Center, Las Vegas, a PPA Tour Open worth 1,000 ranking points per title. This ThePickleHub results page is updated every day from the official PPA Tour scores: Men's Singles: Semi-Finals complete, Finals next; Women's Singles: Semi-Finals complete, Finals next; Men's Doubles: Semi-Finals complete, Finals next; Women's Doubles: Semi-Finals complete, Finals next; Mixed Doubles: Semi-Finals complete, Finals next.\n\nScores are listed game by game from the side of the player or team named first. Seeds are in brackets. Match times and the remaining schedule in Vietnam time are in our schedule guide, and Vietnamese and Vietnamese-origin players are tracked in their own section below.",
+          "content": "Last updated: October 21, 2026, 08:19 Vietnam time.\n\nThe Rate Las Vegas Open 2026 runs September 28 – October 4, 2026 at the Darling Tennis Center, Las Vegas, a PPA Tour Open worth 1,000 ranking points per title. This ThePickleHub results page is updated every day from the official PPA Tour scores: Men's Singles: won by Hunter Johnson [3]; Women's Singles: won by Kaitlyn Christian [2]; Men's Doubles: won by Christian Alshon / Andrei Daescu [2]; Women's Doubles: won by Anna Leigh Waters / Anna Bright [1]; Mixed Doubles: won by Hayden Patriquin / Anna Bright [2]. She won the women's doubles title and lost the mixed doubles final, so career title No. 200 is still one doubles title away.\n\nScores are listed game by game from the side of the player or team named first. Seeds are in brackets. Match times and the remaining schedule in Vietnam time are in our schedule guide, and Vietnamese and Vietnamese-origin players are tracked in their own section below.",
           "internalLinks": [
             {
               "text": "Rate Las Vegas Open 2026 schedule in Vietnam time",
@@ -73,52 +73,37 @@ const post: BlogPost = {
         },
         {
           "heading": "Anna Leigh Waters and title No. 200",
-          "content": "Anna Leigh Waters arrived two doubles titles away from career title No. 200 on the PPA Tour and is not playing singles, so she needs both women's doubles and mixed doubles. Her matches so far:",
+          "content": "Anna Leigh Waters arrived two doubles titles away from career title No. 200 on the PPA Tour and is not playing singles, so she needs both women's doubles and mixed doubles. She won the women's doubles title and lost the mixed doubles final, so career title No. 200 is still one doubles title away. Her matches:",
           "listItems": [
             "Women's Doubles, Round 16: Anna Leigh Waters / Anna Bright [1] beat Abbigal Hatton / Jalina Ingram [13] (11-3, 11-0).",
             "Women's Doubles, Quarter Finals: Anna Leigh Waters / Anna Bright [1] beat Layne Sleeth / Alix Truong [7] (11-0, 11-0).",
             "Women's Doubles, Semi-Finals: Anna Leigh Waters / Anna Bright [1] beat Ting Chieh Wei / Meghan Dizon [4] (11-1, 11-2).",
-            "Women's Doubles, Finals: Anna Leigh Waters / Anna Bright [1] next faces Tyra Hurricane Black / Catherine Parenteau [2].",
+            "Women's Doubles, Finals: Anna Leigh Waters / Anna Bright [1] beat Tyra Hurricane Black / Catherine Parenteau [2] (11-8, 10-12, 11-5).",
             "Mixed Doubles, Round 16: Anna Leigh Waters / Ben Johns [1] beat Jack Sock / Lea Jansen [19] (11-2, 11-5).",
             "Mixed Doubles, Quarter Finals: Anna Leigh Waters / Ben Johns [1] beat Nicolas Acevedo / Isabella Dunlap [16] (11-1, 11-4).",
             "Mixed Doubles, Semi-Finals: Anna Leigh Waters / Ben Johns [1] beat Tyra Hurricane Black / Gabriel Tardio [4] (11-6, 11-4).",
-            "Mixed Doubles, Finals: Anna Leigh Waters / Ben Johns [1] next faces Hayden Patriquin / Anna Bright [2]."
+            "Mixed Doubles, Finals: Anna Leigh Waters / Ben Johns [1] lost to Hayden Patriquin / Anna Bright [2] (9-11, 7-11)."
           ]
         },
         {
           "heading": "Men's Singles: results and what's next",
-          "content": "Semi-Finals is complete. Next: Finals.\n\nUpsets: Semi-Finals: Ben Johns [19] beat John Lucian Goins [8]; Quarter Finals: Ben Johns [19] beat Christian Alshon [4]; Round 16: Luc Pham [14] beat Christopher Haworth [1]; Round 32: Yates Johnson [23] beat Connor Garnett [6].",
-          "listItems": [
-            "Ben Johns [19] vs Hunter Johnson [3]"
-          ]
+          "content": "Men's Singles champion: Hunter Johnson [3].\n\nUpsets: Semi-Finals: Ben Johns [19] beat John Lucian Goins [8]; Quarter Finals: Ben Johns [19] beat Christian Alshon [4]; Round 16: Luc Pham [14] beat Christopher Haworth [1]; Round 32: Yates Johnson [23] beat Connor Garnett [6]."
         },
         {
           "heading": "Women's Singles: results and what's next",
-          "content": "Semi-Finals is complete. Next: Finals.\n\nUpsets: Round 32: Daria Walczak [31] beat Judit Castillo [6].",
-          "listItems": [
-            "Kiora Kunimoto [5] vs Kaitlyn Christian [2]"
-          ]
+          "content": "Women's Singles champion: Kaitlyn Christian [2].\n\nUpsets: Round 32: Daria Walczak [31] beat Judit Castillo [6]."
         },
         {
           "heading": "Men's Doubles: results and what's next",
-          "content": "Semi-Finals is complete. Next: Finals.\n\nUpsets: Round 32: Elliott Schupp / John Lucian Goins [27] beat Roscoe Bellamy / Connor Garnett [6]; Round 32: Casey Diamond / Max Freeman [29] beat James Delgado / Tyson McGuffin [8].",
-          "listItems": [
-            "Gabriel Tardio / Ben Johns [1] vs Christian Alshon / Andrei Daescu [2]"
-          ]
+          "content": "Men's Doubles champion: Christian Alshon / Andrei Daescu [2].\n\nUpsets: Round 32: Elliott Schupp / John Lucian Goins [27] beat Roscoe Bellamy / Connor Garnett [6]; Round 32: Casey Diamond / Max Freeman [29] beat James Delgado / Tyson McGuffin [8]."
         },
         {
           "heading": "Women's Doubles: results and what's next",
-          "content": "Semi-Finals is complete. Next: Finals.",
-          "listItems": [
-            "Anna Leigh Waters / Anna Bright [1] vs Tyra Hurricane Black / Catherine Parenteau [2]"
-          ]
+          "content": "Women's Doubles champion: Anna Leigh Waters / Anna Bright [1]."
         },
         {
           "heading": "Mixed Doubles: results and what's next",
-          "content": "Semi-Finals is complete. Next: Finals.\n\nUpsets: Round 16: Nicolas Acevedo / Isabella Dunlap [16] beat Eric Oncins / Catherine Parenteau [7]; Round 16: Will Howells / Meghan Dizon [17] beat Dylan Frazier / Alix Truong [8].",
-          "listItems": [
-            "Anna Leigh Waters / Ben Johns [1] vs Hayden Patriquin / Anna Bright [2]"
-          ]
+          "content": "Mixed Doubles champion: Hayden Patriquin / Anna Bright [2].\n\nUpsets: Round 16: Nicolas Acevedo / Isabella Dunlap [16] beat Eric Oncins / Catherine Parenteau [7]; Round 16: Will Howells / Meghan Dizon [17] beat Dylan Frazier / Alix Truong [8]."
         }
       ],
       "faqItems": [
@@ -137,13 +122,13 @@ const post: BlogPost = {
       ]
     },
     "vi": {
-      "title": "Kết quả Rate Las Vegas Open 2026: kết quả từng ngày, tay vợt Việt Nam",
-      "metaTitle": "Kết quả PPA Las Vegas Open 2026 mỗi ngày",
-      "metaDescription": "Kết quả Rate Las Vegas Open 2026 cập nhật hằng ngày: từng nội dung, kết quả bất ngờ, Anna Leigh Waters và tay vợt Việt Nam.",
+      "title": "Kết quả Rate Las Vegas Open 2026: kết quả chung cuộc, tay vợt Việt Nam",
+      "metaTitle": "Kết quả chung cuộc Las Vegas Open 2026",
+      "metaDescription": "Kết quả chung cuộc PPA Las Vegas Open 2026. Anna Leigh Waters vô địch đôi nữ, thua đôi nam nữ, chưa cán mốc 200.",
       "sections": [
         {
           "heading": "Kết quả Rate Las Vegas Open 2026: tình hình từng nội dung",
-          "content": "Cập nhật: 13:37 ngày 4/10/2026 (giờ Việt Nam).\n\nRate Las Vegas Open 2026 diễn ra 28/9–4/10/2026 tại Darling Tennis Center, Las Vegas, giải PPA Tour hạng Open, mỗi nhà vô địch nhận 1.000 điểm xếp hạng. Trang kết quả này của ThePickleHub được cập nhật hằng ngày theo bảng điểm chính thức của PPA Tour: Đơn nam: xong bán kết, tiếp theo chung kết; Đơn nữ: xong bán kết, tiếp theo chung kết; Đôi nam: xong bán kết, tiếp theo chung kết; Đôi nữ: xong bán kết, tiếp theo chung kết; Đôi nam nữ: xong bán kết, tiếp theo chung kết.\n\nTỷ số ghi theo từng ván, tính từ phía tay vợt hoặc cặp được nêu trước; số trong ngoặc là hạt giống. Giờ thi đấu các vòng còn lại theo giờ Việt Nam có trong bài lịch thi đấu, còn các tay vợt Việt Nam và gốc Việt được theo dõi riêng ở mục ngay dưới đây.",
+          "content": "Cập nhật: 08:19 ngày 21/10/2026 (giờ Việt Nam).\n\nRate Las Vegas Open 2026 diễn ra 28/9–4/10/2026 tại Darling Tennis Center, Las Vegas, giải PPA Tour hạng Open, mỗi nhà vô địch nhận 1.000 điểm xếp hạng. Trang kết quả này của ThePickleHub được cập nhật hằng ngày theo bảng điểm chính thức của PPA Tour: Đơn nam: vô địch Hunter Johnson [3]; Đơn nữ: vô địch Kaitlyn Christian [2]; Đôi nam: vô địch Christian Alshon / Andrei Daescu [2]; Đôi nữ: vô địch Anna Leigh Waters / Anna Bright [1]; Đôi nam nữ: vô địch Hayden Patriquin / Anna Bright [2]. Cô vô địch đôi nữ và thua chung kết đôi nam nữ, nên danh hiệu thứ 200 vẫn còn thiếu một danh hiệu đôi.\n\nTỷ số ghi theo từng ván, tính từ phía tay vợt hoặc cặp được nêu trước; số trong ngoặc là hạt giống. Giờ thi đấu các vòng còn lại theo giờ Việt Nam có trong bài lịch thi đấu, còn các tay vợt Việt Nam và gốc Việt được theo dõi riêng ở mục ngay dưới đây.",
           "internalLinks": [
             {
               "text": "Lịch thi đấu Rate Las Vegas Open 2026 theo giờ Việt Nam",
@@ -183,52 +168,37 @@ const post: BlogPost = {
         },
         {
           "heading": "Anna Leigh Waters và danh hiệu thứ 200",
-          "content": "Anna Leigh Waters đến Las Vegas khi chỉ còn thiếu hai danh hiệu đôi để cán mốc danh hiệu thứ 200 trên PPA Tour, và cô không đánh đơn, nên phải vô địch cả đôi nữ lẫn đôi nam nữ. Các trận của cô tới lúc này:",
+          "content": "Anna Leigh Waters đến Las Vegas khi chỉ còn thiếu hai danh hiệu đôi để cán mốc danh hiệu thứ 200 trên PPA Tour, và cô không đánh đơn, nên phải vô địch cả đôi nữ lẫn đôi nam nữ. Cô vô địch đôi nữ và thua chung kết đôi nam nữ, nên danh hiệu thứ 200 vẫn còn thiếu một danh hiệu đôi. Các trận của cô:",
           "listItems": [
             "Đôi nữ, vòng 16: Anna Leigh Waters / Anna Bright [1] thắng Abbigal Hatton / Jalina Ingram [13] (11-3, 11-0).",
             "Đôi nữ, tứ kết: Anna Leigh Waters / Anna Bright [1] thắng Layne Sleeth / Alix Trương [7] (11-0, 11-0).",
             "Đôi nữ, bán kết: Anna Leigh Waters / Anna Bright [1] thắng Ting Chieh Wei / Meghan Dizon [4] (11-1, 11-2).",
-            "Đôi nữ, chung kết: Anna Leigh Waters / Anna Bright [1] gặp Tyra Hurricane Black / Catherine Parenteau [2].",
+            "Đôi nữ, chung kết: Anna Leigh Waters / Anna Bright [1] thắng Tyra Hurricane Black / Catherine Parenteau [2] (11-8, 10-12, 11-5).",
             "Đôi nam nữ, vòng 16: Anna Leigh Waters / Ben Johns [1] thắng Jack Sock / Lea Jansen [19] (11-2, 11-5).",
             "Đôi nam nữ, tứ kết: Anna Leigh Waters / Ben Johns [1] thắng Nicolas Acevedo / Isabella Dunlap [16] (11-1, 11-4).",
             "Đôi nam nữ, bán kết: Anna Leigh Waters / Ben Johns [1] thắng Tyra Hurricane Black / Gabriel Tardio [4] (11-6, 11-4).",
-            "Đôi nam nữ, chung kết: Anna Leigh Waters / Ben Johns [1] gặp Hayden Patriquin / Anna Bright [2]."
+            "Đôi nam nữ, chung kết: Anna Leigh Waters / Ben Johns [1] thua Hayden Patriquin / Anna Bright [2] (9-11, 7-11)."
           ]
         },
         {
           "heading": "Đơn nam: kết quả và vòng tiếp theo",
-          "content": "Đã xong bán kết. Vòng tiếp theo: chung kết.\n\nKết quả bất ngờ: bán kết: Ben Johns [19] thắng John Lucian Goins [8]; tứ kết: Ben Johns [19] thắng Christian Alshon [4]; vòng 16: Luc Phạm [14] thắng Christopher Haworth [1]; vòng 32: Yates Johnson [23] thắng Connor Garnett [6].",
-          "listItems": [
-            "Ben Johns [19] vs Hunter Johnson [3]"
-          ]
+          "content": "Nhà vô địch đơn nam: Hunter Johnson [3].\n\nKết quả bất ngờ: bán kết: Ben Johns [19] thắng John Lucian Goins [8]; tứ kết: Ben Johns [19] thắng Christian Alshon [4]; vòng 16: Luc Phạm [14] thắng Christopher Haworth [1]; vòng 32: Yates Johnson [23] thắng Connor Garnett [6]."
         },
         {
           "heading": "Đơn nữ: kết quả và vòng tiếp theo",
-          "content": "Đã xong bán kết. Vòng tiếp theo: chung kết.\n\nKết quả bất ngờ: vòng 32: Daria Walczak [31] thắng Judit Castillo [6].",
-          "listItems": [
-            "Kiora Kunimoto [5] vs Kaitlyn Christian [2]"
-          ]
+          "content": "Nhà vô địch đơn nữ: Kaitlyn Christian [2].\n\nKết quả bất ngờ: vòng 32: Daria Walczak [31] thắng Judit Castillo [6]."
         },
         {
           "heading": "Đôi nam: kết quả và vòng tiếp theo",
-          "content": "Đã xong bán kết. Vòng tiếp theo: chung kết.\n\nKết quả bất ngờ: vòng 32: Elliott Schupp / John Lucian Goins [27] thắng Roscoe Bellamy / Connor Garnett [6]; vòng 32: Casey Diamond / Max Freeman [29] thắng James Delgado / Tyson McGuffin [8].",
-          "listItems": [
-            "Gabriel Tardio / Ben Johns [1] vs Christian Alshon / Andrei Daescu [2]"
-          ]
+          "content": "Nhà vô địch đôi nam: Christian Alshon / Andrei Daescu [2].\n\nKết quả bất ngờ: vòng 32: Elliott Schupp / John Lucian Goins [27] thắng Roscoe Bellamy / Connor Garnett [6]; vòng 32: Casey Diamond / Max Freeman [29] thắng James Delgado / Tyson McGuffin [8]."
         },
         {
           "heading": "Đôi nữ: kết quả và vòng tiếp theo",
-          "content": "Đã xong bán kết. Vòng tiếp theo: chung kết.",
-          "listItems": [
-            "Anna Leigh Waters / Anna Bright [1] vs Tyra Hurricane Black / Catherine Parenteau [2]"
-          ]
+          "content": "Nhà vô địch đôi nữ: Anna Leigh Waters / Anna Bright [1]."
         },
         {
           "heading": "Đôi nam nữ: kết quả và vòng tiếp theo",
-          "content": "Đã xong bán kết. Vòng tiếp theo: chung kết.\n\nKết quả bất ngờ: vòng 16: Nicolas Acevedo / Isabella Dunlap [16] thắng Eric Oncins / Catherine Parenteau [7]; vòng 16: Will Howells / Meghan Dizon [17] thắng Dylan Frazier / Alix Trương [8].",
-          "listItems": [
-            "Anna Leigh Waters / Ben Johns [1] vs Hayden Patriquin / Anna Bright [2]"
-          ]
+          "content": "Nhà vô địch đôi nam nữ: Hayden Patriquin / Anna Bright [2].\n\nKết quả bất ngờ: vòng 16: Nicolas Acevedo / Isabella Dunlap [16] thắng Eric Oncins / Catherine Parenteau [7]; vòng 16: Will Howells / Meghan Dizon [17] thắng Dylan Frazier / Alix Trương [8]."
         }
       ],
       "faqItems": [
