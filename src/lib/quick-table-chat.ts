@@ -499,6 +499,11 @@ export function localSlotPatch(text: string, slot: Slot): Partial<Draft> | null 
     return n >= 1 && n <= 50 ? { courts: Array.from({ length: n }, (_, i) => i + 1), courts_done: true } : null;
   }
   if (slot === "start_time") {
+    if (/^(bây giờ|bay gio|now)$/.test(t)) {
+      const now = new Date();
+      return { start_time: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`, time_done: true };
+    }
+    if (/^(để sau|de sau|later|skip|bỏ qua|bo qua|chưa biết|chua biet)$/.test(t)) return { time_done: true };
     const m = t.match(/^(\d{1,2})\s*(?:h|g|giờ|:)?\s*(\d{2})?$/);
     if (!m) return null;
     const h = Number(m[1]);
@@ -531,15 +536,15 @@ export function chatFacts(d: Draft, lang: "vi" | "en"): string {
     for (let k = 2; k <= MAX_SERIES; k++) {
       const plan = seriesPlan(o.sizes, k);
       if (plan) {
-        lines.push(`  ${k} nhánh mặc định: ${plan.map((sl, i) => seriesLine(seriesName(style, i, "vi"), sl, "vi", u)).join("; ")}.`);
+        lines.push(`  ${k} vòng loại mặc định: ${plan.map((sl, i) => seriesLine(seriesName(style, i, "vi"), sl, "vi", u)).join("; ")}.`);
         continue;
       }
-      // Luật mặc định không ra k nhánh (vd bảng 4 đội không có hạng 5) → gợi ý cỡ tuỳ chỉnh.
+      // Luật mặc định không ra k vòng (vd bảng 4 đội không có hạng 5) → gợi ý cỡ tuỳ chỉnh.
       let top = 1;
       while (top * 2 <= n / 2) top *= 2;
       const alt = resolveSeriesSizes([top, ...Array(k - 1).fill(0)], n);
-      lines.push(`  ${k} nhánh theo luật mặc định: KHÔNG chia được.` +
-        (alt ? ` Muốn ${k} nhánh thì đặt cỡ tuỳ chỉnh, ví dụ ${alt.map(slot).map((sl, i) => seriesLine(seriesName(style, i, "vi"), sl, "vi", u)).join("; ")}.` : ""));
+      lines.push(`  ${k} vòng loại theo luật mặc định: KHÔNG chia được.` +
+        (alt ? ` Muốn ${k} vòng loại thì đặt cỡ tuỳ chỉnh, ví dụ ${alt.map(slot).map((sl, i) => seriesLine(seriesName(style, i, "vi"), sl, "vi", u)).join("; ")}.` : ""));
     }
     return lines.join("\n");
   };
@@ -555,12 +560,12 @@ export function chatFacts(d: Draft, lang: "vi" | "en"): string {
     d.advance_per_group && d.group_count
       ? `ĐÃ CHỐT: đúng ${d.advance_per_group} mỗi bảng = ${d.advance_per_group * d.group_count} vào vòng loại trực tiếp. KHÔNG lấy thêm hạng 3.`
       : "",
-    plan ? `Nhánh đang chọn: ${plan.map((sl, i) => seriesLine(seriesName(style, i, "vi"), sl, "vi", u)).join("; ")}.` : "",
-    chosen ? `Mỗi hạng một nhánh: ${(() => {
+    plan ? `Vòng loại đang chọn: ${plan.map((sl, i) => seriesLine(seriesName(style, i, "vi"), sl, "vi", u)).join("; ")}.` : "",
+    chosen ? `Mỗi hạng một vòng loại: ${(() => {
       const ranks = rankSeriesSizes(chosen.sizes);
       return ranks ? ranks.map((n, i) => seriesLine(seriesName("series", i, "vi"), slot(n), "vi", u)).join("; ") + "." : "không tách được (một hạng cần ít nhất 2 đội).";
     })()}` : "",
-    `Xếp hạng toàn giải để chia nhánh: mọi đội nhất bảng (so khác bảng bằng tỉ lệ thắng, rồi hiệu số trung bình mỗi trận, rồi điểm ghi trung bình mỗi trận), rồi mọi đội nhì, rồi hạng 3. Luật mặc định gộp nhất và nhì vào nhánh đầu. "Mỗi hạng một nhánh" thì nhất → Nhánh 1, nhì → Nhánh 2, ba → Nhánh 3. Hạng chỉ còn 1 đội thì đội đó không đi tiếp. Nhánh không chẵn 2/4/8/16/32 thì đội xếp cao được nghỉ vòng đầu.`,
+    `Xếp hạng toàn giải để chia vòng loại: mọi đội nhất bảng (so khác bảng bằng tỉ lệ thắng, rồi hiệu số trung bình mỗi trận, rồi điểm ghi trung bình mỗi trận), rồi mọi đội nhì, rồi hạng 3. Luật mặc định gộp nhất và nhì vào vòng đầu. "Mỗi hạng một vòng loại" thì nhất → Vòng loại 1, nhì → Vòng loại 2, ba → Vòng loại 3. Hạng chỉ còn 1 đội thì đội đó không đi tiếp. Vòng không chẵn 2/4/8/16/32 thì đội xếp cao được nghỉ vòng đầu.`,
   ].filter(Boolean).join("\n");
 }
 
@@ -590,7 +595,7 @@ export function readUserFacts(text: string): Partial<Draft> {
     .replace(/\bsann\b/g, "san");
   const out: Partial<Draft> = {};
   // "đổi chỗ / đổi tên" cũng gấp thành "doi" — không được hiểu thành đánh đôi.
-  const spoken = folded.replace(/\bdoi (cho|ten)\b/g, " ");
+  const spoken = folded.replace(/\bdoi (cho|ten)\b/g, " ").replace(/\bten cap\b/g, " ").replace(/\bcap mau\b/g, " ");
   const singles = /\b(don|singles)\b/.test(spoken);
   const doubles = /\b(doi|doubles|cap)\b/.test(spoken);
   if (singles && !doubles) out.is_doubles = false;
@@ -631,6 +636,7 @@ export function readUserFacts(text: string): Partial<Draft> {
     .split(/\s+(?=\d+\s*(?:người|nguoi|đôi|doi|đơn|don|vđv|vdv|cặp|cap)\b)|\s+(?=đánh\b|danh\b|chia\b|vòng\b|vong\b)/i)[0]
     .replace(/\s+(đôi|doi|đơn|don|doubles|singles|playoff)\s*$/i, "")
     .replace(/^["“]|["”]$/g, "")
+    .replace(/[,.:;]+$/g, "")
     .trim();
   if (rawName.length >= 2 && rawName.length <= 80) out.name = rawName;
 
@@ -659,10 +665,28 @@ export function readUserFacts(text: string): Partial<Draft> {
   // Đã nói số sân mà không nói giờ thì không hỏi giờ — giờ không bắt buộc.
   if (out.courts?.length && !out.start_time) out.time_done = true;
 
-  const adv = folded.match(/(?:top|lay|chon)\s*(\d{1,2})\s*(?:nguoi|doi|vdv)?\s*(?:moi|per)\s*(?:bang|group)\b/);
-  if (adv) out.advance_per_group = Number(adv[1]);
-  else if (/top\s*2\b|nhat nhi moi bang|1st and 2nd/.test(folded)) out.advance_per_group = 2;
+  // "mỗi bảng lấy 2 đội vào vòng loại" và "lấy 2 mỗi bảng" đều là một vòng
+  // loại, đúng N đội mỗi bảng. "Nhiều vòng" thì không chốt một vòng.
+  const adv =
+    folded.match(/(?:moi|per)\s+(?:bang|group)\s+(?:lay|chon|take|advance)\s+(\d{1,2})/) ||
+    folded.match(/(?:top|lay|chon|advance)\s+(\d{1,2})\s*(?:nguoi|doi|vdv|teams?|players?)?\s*(?:moi|per)\s+(?:bang|group)\b/);
+  const manyBrackets = /nhieu vong|nhieu nhanh|multiple bracket|several bracket/.test(folded);
+  if (adv && !manyBrackets) out.advance_per_group = Number(adv[1]);
+  else if (!manyBrackets && /top\s*2\b|nhat nhi moi bang|1st and 2nd/.test(folded)) out.advance_per_group = 2;
+  if (out.advance_per_group && !manyBrackets) out.series = 1;
   return out;
+}
+
+/** "dùng tên mẫu" / "chưa có tên" → Đội 1… hoặc Người 1…, sửa được sau. */
+export function placeholderEntries(text: string, d: Draft): Entry[] | null {
+  const f = fold(text);
+  const sample = /ten mau|ten cap mau|dung mau|sample name|placeholder/.test(f);
+  const noNames = /chua co ten/.test(f) && !/nhap sau|de sau/.test(f);
+  if (!sample && !noNames) return null;
+  const n = Math.min(entryCount(d), MAX_CHAT_ENTRIES);
+  if (n < 2) return null;
+  const singles = d.is_doubles === false;
+  return Array.from({ length: n }, (_, i) => ({ p1: singles ? `Người ${i + 1}` : `Đội ${i + 1}` }));
 }
 
 function findEntry(entries: Entry[], query: string): number {
@@ -693,6 +717,17 @@ export function applySpokenEdit(draft: Draft, text: string): Draft | null {
   let touched = false;
   if (Object.keys(facts).length) {
     next = applyPatch(next, facts);
+    touched = true;
+  }
+  const placeholders = placeholderEntries(text, next);
+  if (placeholders) {
+    next = {
+      ...next,
+      entries: placeholders,
+      player_count: placeholders.length,
+      roster_mode: "now",
+      pairing_done: true,
+    };
     touched = true;
   }
   const entries = next.entries ? next.entries.map((e) => ({ ...e })) : undefined;
@@ -797,7 +832,12 @@ export function factualAck(before: Draft, after: Draft, lang: "vi" | "en", reque
   const next = after.entries ?? [];
   const added = next.filter((e) => !prev.some((p) => fold(entryLabel(p)) === fold(entryLabel(e))));
   const listed = looksLikeNameList(request) || (added.length > 0 && added.every((e) => fold(request).includes(fold(e.p1))));
-  if (added.length && listed) {
+  const samples = /ten mau|ten cap mau|dung mau|chua co ten|sample name/.test(fold(request));
+  if (added.length && samples) {
+    const shown = added.slice(0, 6).map(entryLabel).join(", ");
+    const more = added.length > 6 ? (vi ? ` và ${added.length - 6} nữa` : ` and ${added.length - 6} more`) : "";
+    bits.push(vi ? `Đã tạo ${added.length} tên mẫu: ${shown}${more}.` : `Added ${added.length} placeholder names: ${shown}${more}.`);
+  } else if (added.length && listed) {
     const shown = added.slice(0, 6).map(entryLabel).join(", ");
     const more = added.length > 6 ? (vi ? ` và ${added.length - 6} nữa` : ` and ${added.length - 6} more`) : "";
     bits.push(vi ? `Đã nhận ${added.length} ${u}: ${shown}${more}.` : `Got ${added.length} ${u}: ${shown}${more}.`);

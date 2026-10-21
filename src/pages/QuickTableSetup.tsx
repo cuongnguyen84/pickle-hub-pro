@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAutosaveDraft } from '@/hooks/useAutosaveDraft';
 import { DraftRestoredBanner, DraftSaveStatus } from '@/components/wizard/DraftAutosave';
@@ -36,6 +36,7 @@ const QuickTableSetup = () => {
   const { shareId } = useParams<{ shareId: string }>();
   const navigate = useNavigate();
   const { t, language } = useI18n();
+  const lp = useCallback((path: string) => localePath(path, language === 'vi' ? 'vi' : 'en'), [language]);
   const confirm = useConfirm();
   const { user } = useAuth();
   const { isAdmin } = useAdminAuth();
@@ -143,12 +144,12 @@ const QuickTableSetup = () => {
         setTable(data.table);
 
         if (data.table.requires_registration) {
-          navigate(`/tools/quick-tables/${shareId}`);
+          navigate(lp(`/tools/quick-tables/${shareId}`));
           return;
         }
 
         if (data.players.length > 0) {
-          navigate(`/tools/quick-tables/${shareId}`);
+          navigate(lp(`/tools/quick-tables/${shareId}`));
           return;
         }
 
@@ -169,7 +170,7 @@ const QuickTableSetup = () => {
     };
 
     loadTable();
-  }, [shareId, getTableByShareId, navigate]);
+  }, [shareId, getTableByShareId, navigate, lp]);
 
   const updatePlayer = (index: number, field: keyof PlayerInput, value: string) => {
     setPlayers(prev => {
@@ -253,7 +254,7 @@ const QuickTableSetup = () => {
         auth_state: user ? 'authenticated' : 'anonymous',
       });
       toast.success(t.quickTable.setup.createdSuccess);
-      navigate(`/tools/quick-tables/${shareId}`);
+      navigate(lp(`/tools/quick-tables/${shareId}`));
     } catch (error) {
       console.error('Error setting up table:', error);
       toast.error(t.quickTable.setup.errorOccurred);
@@ -304,7 +305,7 @@ const QuickTableSetup = () => {
         auth_state: user ? 'authenticated' : 'anonymous',
       });
       toast.success(t.quickTable.setup.manualSuccess);
-      navigate(`/tools/quick-tables/${shareId}`);
+      navigate(lp(`/tools/quick-tables/${shareId}`));
     } catch (error) {
       console.error('Error setting up table with manual assignment:', error);
       toast.error(t.quickTable.setup.errorOccurred);
@@ -443,7 +444,7 @@ const QuickTableSetup = () => {
     }
     const success = await deleteTable(table.id);
     if (success) {
-      navigate('/tools/quick-tables');
+      navigate(lp('/tools/quick-tables'));
     }
   };
 

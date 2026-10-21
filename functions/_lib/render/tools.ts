@@ -195,34 +195,62 @@ ${TOOLS_FAQ_EN.map(([q, a]) => `<p><strong>${q}</strong> ${a}</p>`).join("\n")}
   }));
 }
 
-const TOOL_PAGE_META: Record<string, { title: string; description: string }> = {
+const TOOL_PAGE_META: Record<string, { en: { title: string; description: string }; vi: { title: string; description: string } }> = {
   "quick-tables": {
-    title: "Quick Tables – Round Robin & Single Elimination | ThePickleHub",
-    description: "Free round-robin & single elimination bracket generator. Auto-scheduling, real-time scoring, shareable links. Sign in to create; public viewing is free.",
+    en: {
+      title: "Quick Tables – Round Robin & Single Elimination | ThePickleHub",
+      description: "Free round-robin & single elimination bracket generator. Auto-scheduling, real-time scoring, shareable links. Sign in to create; public viewing is free.",
+    },
+    vi: {
+      title: "Chia bảng — đánh vòng tròn và loại trực tiếp | ThePickleHub",
+      description: "Công cụ miễn phí chia bảng vòng tròn và vòng loại trực tiếp. Tự xếp lịch, chấm điểm, gửi link. Đăng nhập để tạo giải.",
+    },
   },
   "team-match": {
-    title: "Team Match – MLP Format Pickleball | ThePickleHub",
-    description: "Free MLP-style team match pickleball bracket tool. Manage team lineups, track singles and doubles results, and generate instant standings. Account required to create; public viewing needs no login.",
+    en: {
+      title: "Team Match – MLP Format Pickleball | ThePickleHub",
+      description: "Free MLP-style team match pickleball bracket tool. Manage team lineups, track singles and doubles results, and generate instant standings. Account required to create; public viewing needs no login.",
+    },
+    vi: {
+      title: "Đấu đồng đội | ThePickleHub",
+      description: "Công cụ miễn phí cho hai đội đấu với nhau. Xếp cặp, chấm điểm và xem thứ hạng. Đăng nhập để tạo trận.",
+    },
   },
   "doubles-elimination": {
-    title: "Doubles Elimination Bracket Generator | ThePickleHub",
-    description: "Free doubles elimination bracket generator. Auto bracket draw, live scoring, shareable results. Sign in to create; public viewing is free.",
+    en: {
+      title: "Doubles Elimination Bracket Generator | ThePickleHub",
+      description: "Free doubles elimination bracket generator. Auto bracket draw, live scoring, shareable results. Sign in to create; public viewing is free.",
+    },
+    vi: {
+      title: "Loại trực tiếp đôi | ThePickleHub",
+      description: "Công cụ miễn phí loại trực tiếp đôi. Bốc thăm, chấm điểm, gửi kết quả. Đăng nhập để tạo giải.",
+    },
   },
   "flex-tournament": {
-    title: "Flex Tournament Generator – Flexible Bracket | ThePickleHub",
-    description: "Free flex-format tournament generator. Custom groups, flexible scheduling, live scoring. Perfect for clubs — ThePickleHub.",
+    en: {
+      title: "Flex Tournament Generator – Flexible Bracket | ThePickleHub",
+      description: "Free flex-format tournament generator. Custom groups, flexible scheduling, live scoring. Perfect for clubs — ThePickleHub.",
+    },
+    vi: {
+      title: "Giải linh hoạt | ThePickleHub",
+      description: "Công cụ miễn phí cho giải tự chọn vòng và bảng. Chấm điểm trực tiếp. Đăng nhập để tạo giải.",
+    },
   },
 };
 
 export function renderToolPage(toolSlug: string, siteUrl: string, rawPath: string, lang: "en" | "vi" = "en"): Response {
-  const meta = TOOL_PAGE_META[toolSlug];
-  if (!meta) return renderTools(siteUrl, rawPath, lang);
+  const entry = TOOL_PAGE_META[toolSlug];
+  if (!entry) return renderTools(siteUrl, rawPath, lang);
+  const meta = entry[lang] ?? entry.en;
+  const back = lang === "vi" ? `${siteUrl}/vi/tools` : `${siteUrl}/tools`;
+  const backLabel = lang === "vi" ? "← Tất cả công cụ" : "← All Tournament Tools";
 
   return htmlResponse(buildHtml({
     title: meta.title,
     description: meta.description,
     url: `${siteUrl}${rawPath}`,
     siteUrl,
+    lang,
     jsonLd: {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
@@ -232,7 +260,7 @@ export function renderToolPage(toolSlug: string, siteUrl: string, rawPath: strin
       offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
     },
     bodyContent: `<h2>${meta.title}</h2><p>${meta.description}</p>
-      <p><a href="${siteUrl}/tools">← All Tournament Tools</a></p>`,
+      <p><a href="${back}">${backLabel}</a></p>`,
   }));
 }
 

@@ -1335,7 +1335,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v141 (2026-10-21): /rankings and /rankings/ppa-tour titles and descriptions
   // fit the 60/160 byte clamps. The VI rankings title and the VI PPA description
   // were one and four bytes over, so cached HTML shipped a trailing ellipsis.
-  const cacheKey = `pr:v141:${url.pathname}`;
+  // v142 (2026-10-21): /vi tool list pages use Vietnamese titles
+  // (Chia bảng, Đấu đồng đội, Loại trực tiếp đôi, Giải linh hoạt).
+  const cacheKey = `pr:v142:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

@@ -9,8 +9,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Check, ChevronDown, Copy, Loader2, MessageSquareText, Paperclip, Pencil, RotateCcw, Send, Shuffle, Sparkles, Trash2, TriangleAlert, Trophy, Undo2 } from "lucide-react";
-import { toast } from "sonner";
+import { ArrowLeft, Check, ChevronDown, Loader2, MessageSquareText, Paperclip, Pencil, RotateCcw, Send, Shuffle, Sparkles, Trash2, TriangleAlert, Trophy, Undo2 } from "lucide-react";
+import { QuickTableShareActions } from "@/components/quicktable/QuickTableShareActions";
 import { TheLineLayout } from "@/components/layout";
 import { SetupLoginGate } from "@/components/tournament/SetupShell";
 import { Button } from "@/components/ui/button";
@@ -100,7 +100,7 @@ const COPY = {
     seriesOne: "Một vòng loại", seriesOneSub: (u: string) => `2 ${u} đứng đầu mỗi bảng đi tiếp`,
     seriesMany: (names: string[]) => `${names.length} vòng: ${names.join(" + ")}`,
     seriesByRank: "Mỗi thứ hạng một vòng riêng",
-    optStyle: (s: SeriesStyle): string => (s === "medal" ? "Đổi tên: Nhánh 1, 2" : "Đổi tên: Vàng, Bạc"),
+    optStyle: (s: SeriesStyle): string => (s === "medal" ? "Đổi tên: Vòng loại 1, 2" : "Đổi tên: Vàng, Bạc"),
     roster: (u: string) => `Bạn đã có tên từng ${u} chưa? Chưa có thì tạo giải rồi nhập sau.`,
     pasteNow: "Dán danh sách tên",
     openRegistration: "Để người chơi tự đăng ký",
@@ -110,7 +110,9 @@ const COPY = {
     courtsQ: "Có bao nhiêu sân thi đấu? Mình sẽ tự xếp sân và giờ cho từng trận.",
     courtN: (k: number) => `${k} sân`,
     courtsSkip: "Chưa biết, bỏ qua",
-    timeQ: "Mấy giờ bắt đầu? Gõ kiểu “7h tối” cũng được.",
+    timeQ: "Mấy giờ bắt đầu? Bấm một nút, hoặc gõ kiểu “7h tối”.",
+    timeNow: "Bây giờ",
+    timeLater: "Để sau",
     timeSkip: "Chưa biết",
     fCourts: "Sân & giờ",
     undo: "Quay lại bước trước",
@@ -131,7 +133,10 @@ const COPY = {
     dupWarn: (n: number) => ` ⚠️ Có ${n} dòng trùng — xem lại trong Bản nháp.`,
     aiError: "Mình chưa nghe rõ, mạng hoặc trợ lý đang chậm. Thử lại nhé?",
     thinking: "Đang đọc tin nhắn…",
+    thinkingSchedule: "Đang xếp lịch…",
+    thinkingAlmost: "Sắp xong rồi…",
     thinkingRetry: "Hơi chậm, mình thử lại một lần nữa…",
+    rephrase: "Mình chưa đổi được. Bấm một nút bên dưới, hoặc nói cách khác nhé.",
     attachmentNoList: "Mình chưa thấy tên đội trong file này. Ảnh cần thấy rõ từng dòng. Danh sách dài thì gửi thêm ảnh. Hoặc dán chữ, file Excel, hay link Google Sheet.",
     photoMissed: (n: number) => (n === 1 ? " Một ảnh chưa thấy tên." : ` ${n} ảnh chưa thấy tên.`),
     retry: "Thử lại",
@@ -160,9 +165,12 @@ const COPY = {
     created: (name: string) => `🎉 Đã tạo “${name}”!`,
     openTable: "Mở giải",
     enterRoster: "Nhập danh sách",
-    copyLink: "Sao chép đường dẫn",
+    copyLink: "Sao chép link",
     copyZalo: "Sao chép tin nhắn Zalo",
+    sendZalo: "Gửi qua Zalo",
     copied: "Đã copy",
+    endTable: "Kết thúc giải",
+    deleteTable: "Xoá giải",
     another: "Tạo giải khác",
     rosterFailed: "Giải đã tạo nhưng chưa xếp được bảng. Mở trang nhập danh sách để thử lại.",
     zaloLink: "Xem lịch & kết quả",
@@ -229,7 +237,9 @@ const COPY = {
     courtsQ: "How many courts do you have? I'll assign courts and times to every match.",
     courtN: (k: number) => `${k} ${k === 1 ? "court" : "courts"}`,
     courtsSkip: "Not sure, skip",
-    timeQ: "What time do you start? You can type “7pm” too.",
+    timeQ: "What time do you start? Tap a button, or type “7pm”.",
+    timeNow: "Start now",
+    timeLater: "Decide later",
     timeSkip: "Not sure",
     fCourts: "Courts & time",
     undo: "Undo last step",
@@ -250,7 +260,10 @@ const COPY = {
     dupWarn: (n: number) => ` ⚠️ ${n} duplicate lines — check the Draft.`,
     aiError: "I didn't catch that — the network or assistant is slow. Try again?",
     thinking: "Reading your message…",
+    thinkingSchedule: "Building the schedule…",
+    thinkingAlmost: "Almost done…",
     thinkingRetry: "That was slow, trying once more…",
+    rephrase: "Nothing changed. Tap a button below, or say it another way.",
     attachmentNoList: "I couldn't see team names in this file. The photo needs every line readable. A long list can be several photos. Or paste text, send Excel, or a Google Sheet link.",
     photoMissed: (n: number) => (n === 1 ? " One photo had no names." : ` ${n} photos had no names.`),
     retry: "Try again",
@@ -280,8 +293,11 @@ const COPY = {
     openTable: "Open tournament",
     enterRoster: "Enter the list",
     copyLink: "Copy link",
-    copyZalo: "Copy group-chat message",
+    copyZalo: "Copy Zalo message",
+    sendZalo: "Send via Zalo",
     copied: "Copied",
+    endTable: "End tournament",
+    deleteTable: "Delete tournament",
     another: "Create another",
     rosterFailed: "The tournament was created but the groups weren't drawn. Open the entry page to try again.",
     zaloLink: "Schedule & results",
@@ -359,7 +375,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   const navigate = useNavigate();
   const to = (path: string) => localePath(path, lang);
   const confirm = useConfirm();
-  const { createTable, setupRosterAtomic, getUserQuotaInfo } = useQuickTable();
+  const { createTable, setupRosterAtomic, getUserQuotaInfo, getUserTables, deleteTable, updateTableStatus } = useQuickTable();
   const storageKey = STORAGE_PREFIX + userId;
 
   const restored = useMemo(() => {
@@ -384,6 +400,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   const [creating, setCreating] = useState(false);
   const [created, setCreated] = useState<{ table: QuickTable; rosterOk: boolean } | null>(null);
   const [quotaFull, setQuotaFull] = useState<number | null>(null);
+  const [quotaTables, setQuotaTables] = useState<QuickTable[]>([]);
   const [draftOpen, setDraftOpen] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -402,6 +419,25 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   useEffect(() => {
     getUserQuotaInfo().then((q) => { if (q && q.current_count >= q.quota) setQuotaFull(q.quota); });
   }, [getUserQuotaInfo]);
+
+  useEffect(() => {
+    if (quotaFull == null) return;
+    void getUserTables().then(setQuotaTables);
+  }, [quotaFull, getUserTables]);
+
+  useEffect(() => {
+    if (!busy) return;
+    const schedule = window.setTimeout(() => {
+      setBusyNote((note) => (note === c.thinkingRetry ? note : c.thinkingSchedule));
+    }, 4000);
+    const almost = window.setTimeout(() => {
+      setBusyNote((note) => (note === c.thinkingRetry ? note : c.thinkingAlmost));
+    }, 8000);
+    return () => {
+      window.clearTimeout(schedule);
+      window.clearTimeout(almost);
+    };
+  }, [busy, c]);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages, busy, slot, subMenu, created]);
   // Trang giải là chunk riêng. Tải trước lúc người dùng sắp bấm "Mở giải",
@@ -434,9 +470,14 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     setDraft(locked);
     setSubMenu(null);
     const q = questionFor(c, locked, nextSlot(locked));
-    const text = [ack?.trim(), q].filter(Boolean).join(" ").replace(/\.\s+\./g, ".").replace(/[ \t]{2,}/g, " ");
-    setMessages((m) => [...m, { id: uid(), role: "bot", text }]);
-  }, [c]);
+    const unchanged = !ack || ack === (lang === "vi" ? "Bản nháp chưa đổi." : "The draft did not change.");
+    setMessages((m) => {
+      const last = [...m].reverse().find((x) => x.role === "bot")?.text ?? "";
+      let text = [ack?.trim(), q].filter(Boolean).join(" ").replace(/\.\s+\./g, ".").replace(/[ \t]{2,}/g, " ");
+      if (q && last.includes(q) && unchanged) text = c.rephrase;
+      return [...m, { id: uid(), role: "bot", text }];
+    });
+  }, [c, lang]);
 
   // Quay lại: ảnh chụp nháp + hội thoại trước mỗi lượt người dùng (chỉ trong phiên).
   const history = useRef<Array<{ draft: Draft; messages: Msg[] }>>([]);
@@ -721,17 +762,21 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
         ];
       case "courts":
         return [
-          ...[1, 2, 3, 4, 5, 6, 8].map((k) => ({
+          ...[1, 2, 3, 4].map((k) => ({
             label: c.courtN(k),
+            recommended: k === 2,
             onClick: () => choose(c.courtN(k), { courts: Array.from({ length: k }, (_, i) => i + 1), courts_done: true }),
           })),
           { label: c.courtsSkip, onClick: () => choose(c.courtsSkip, { courts_done: true }) },
         ];
-      case "start_time":
+      case "start_time": {
+        const now = new Date();
+        const hh = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
         return [
-          ...["07:00", "08:00", "09:00", "17:00", "18:00", "19:00"].map((t) => ({ label: t, onClick: () => choose(t, { start_time: t, time_done: true }) })),
-          { label: c.timeSkip, onClick: () => choose(c.timeSkip, { time_done: true }) },
+          { label: c.timeNow, recommended: true, onClick: () => choose(c.timeNow, { start_time: hh, time_done: true }) },
+          { label: c.timeLater, onClick: () => choose(c.timeLater, { time_done: true }) },
         ];
+      }
       case "name": {
         const name = defaultName(draft, lang);
         return [{ label: name, onClick: () => choose(name, { name }) }];
@@ -830,9 +875,6 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     return out;
   }, [draft.entries, draft.group_count, assignments]);
 
-  const copy = async (text: string) => {
-    try { await navigator.clipboard.writeText(text); toast.success(c.copied); } catch { /* clipboard bị chặn */ }
-  };
   const zaloText = () => [
     `🏓 ${draft.name}`,
     ...(draft.entries?.length ? groupsList.map((g, i) => `${c.group(i)}: ${g.map(entryLabel).join(", ")}`) : []),
@@ -854,6 +896,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       label: files.length > 1 ? `📎 ${files.length}` : `📎 ${files[0].name}`,
     }]);
     setBusy(true);
+    setBusyNote(c.thinking);
     const images = files.filter((f) => f.type.startsWith("image/") || /\.(png|jpe?g|webp|gif|heic|heif)$/i.test(f.name));
     const others = files.filter((f) => !images.includes(f));
     if (others.length > 1 || (others.length && images.length)) { say(c.oneFile); return; }
@@ -882,7 +925,33 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     if (await confirm({ title: c.resetTitle, description: c.resetDesc, confirmText: c.resetOk, destructive: true })) startOver();
   };
 
+  const refreshQuota = async () => {
+    const [q, tables] = await Promise.all([getUserQuotaInfo(), getUserTables()]);
+    setQuotaTables(tables);
+    setQuotaFull(q && q.current_count >= q.quota ? q.quota : null);
+  };
+  const endQuotaTable = async (table: QuickTable) => {
+    if (!(await confirm({
+      title: c.endTable,
+      description: lang === "vi"
+        ? `Kết thúc “${table.name}”? Kết quả vẫn giữ. Bạn tạo được giải mới.`
+        : `End “${table.name}”? Results stay. You can create another tournament.`,
+      confirmText: c.endTable,
+    }))) return;
+    if (await updateTableStatus(table.id, "completed")) await refreshQuota();
+  };
+  const deleteQuotaTable = async (table: QuickTable) => {
+    if (!(await confirm({
+      title: c.deleteTable,
+      description: lang === "vi" ? `Xoá “${table.name}”? Không lấy lại được.` : `Delete “${table.name}”? This cannot be undone.`,
+      confirmText: c.deleteTable,
+      destructive: true,
+    }))) return;
+    if (await deleteTable(table.id)) await refreshQuota();
+  };
+
   const quotaMsg = quotaFull != null ? c.quotaFull(quotaFull) : null;
+  const openQuotaTables = quotaTables.filter((t) => t.status !== "completed");
   const filled = [draft.is_doubles !== undefined, entryCount(draft) > 0, !!draft.group_count && slot !== "groups", !!draft.name].filter(Boolean).length;
 
   return (
@@ -967,13 +1036,22 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
               needsRoster={!draft.entries?.length && draft.roster_mode !== "registration"}
               onOpen={() => navigate(to(`/tools/quick-tables/${created.table.share_id}`))}
               onRoster={() => navigate(to(`/tools/quick-tables/${created.table.share_id}/setup`))}
-              onCopyLink={() => copy(tableUrl)}
-              onCopyZalo={() => copy(zaloText())}
+              shareUrl={tableUrl}
+              shareMessage={zaloText()}
               onAnother={startOver}
             />
           )}
           {quotaMsg && (
-            <div><Button variant="outline" onClick={() => navigate(to("/tools/quick-tables"))}>{c.myTables}</Button></div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <Button variant="default" onClick={() => navigate(to("/tools/quick-tables"))}>{c.myTables}</Button>
+              {openQuotaTables.map((table) => (
+                <div key={table.id} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <span style={{ flex: 1, minWidth: 120, fontSize: 14 }}>{table.name}</span>
+                  <Button variant="outline" onClick={() => void endQuotaTable(table)}>{c.endTable}</Button>
+                  <Button variant="outline" onClick={() => void deleteQuotaTable(table)}>{c.deleteTable}</Button>
+                </div>
+              ))}
+            </div>
           )}
           <div ref={endRef} />
         </div>
@@ -1361,24 +1439,27 @@ function ConfirmCard({ draft, c, lang, groups, creating, onCreate, onEdit, onRes
   );
 }
 
-function SuccessCard({ c, name, rosterOk, needsRoster, onOpen, onRoster, onCopyLink, onCopyZalo, onAnother }: {
+function SuccessCard({ c, name, rosterOk, needsRoster, onOpen, onRoster, shareUrl, shareMessage, onAnother }: {
   c: C; name: string; rosterOk: boolean; needsRoster: boolean;
-  onOpen: () => void; onRoster: () => void; onCopyLink: () => void; onCopyZalo: () => void; onAnother: () => void;
+  onOpen: () => void; onRoster: () => void; shareUrl: string; shareMessage: string; onAnother: () => void;
 }) {
   const goRoster = needsRoster || !rosterOk;
   return (
     <div style={{ background: "var(--tl-green-glow)", border: "1px solid var(--tl-green)", borderRadius: "var(--tl-radius-lg)", padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
       <strong style={{ fontSize: 17, color: "var(--tl-fg)" }}>{c.created(name)}</strong>
       {!rosterOk && <p style={{ margin: 0, fontSize: 14, color: "var(--tl-fg-2)" }}>{c.rosterFailed}</p>}
-      <Button variant="default" onClick={goRoster ? onRoster : onOpen} style={{ minHeight: 44 }}>
+      <Button variant="default" size="lg" onClick={goRoster ? onRoster : onOpen} style={{ minHeight: 52, fontSize: 17 }}>
         {goRoster ? c.enterRoster : c.openTable}
       </Button>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <Button variant="outline" onClick={onCopyLink} style={{ flex: 1, minHeight: 44 }}><Copy className="w-4 h-4" /> {c.copyLink}</Button>
-        {rosterOk && !needsRoster && (
-          <Button variant="outline" onClick={onCopyZalo} style={{ flex: 1, minHeight: 44 }}><Copy className="w-4 h-4" /> {c.copyZalo}</Button>
-        )}
-      </div>
+      <QuickTableShareActions
+        url={shareUrl}
+        title={name}
+        message={shareMessage}
+        copyLink={c.copyLink}
+        copyZalo={c.copyZalo}
+        sendZalo={c.sendZalo}
+        copied={c.copied}
+      />
       <Button variant="ghost" onClick={onAnother}>{c.another}</Button>
     </div>
   );

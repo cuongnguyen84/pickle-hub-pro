@@ -223,7 +223,7 @@ export function useQuickTableMutations() {
   const updateTableStatus = useCallback(async (
     tableId: string,
     status: QuickTableStatus,
-  ): Promise<void> => {
+  ): Promise<boolean> => {
     setPendingFor('updateTableStatus', true);
     try {
       const { error } = await supabase
@@ -231,11 +231,13 @@ export function useQuickTableMutations() {
         .update({ status })
         .eq('id', tableId);
       if (error) throw error;
+      return true;
     } catch (error) {
       console.error('[useQuickTableMutations] updateTableStatus:', error);
       if (isPermissionDenied(error)) {
         toast.error(tStandalone('toast.table.updateTableStatus.permissionDenied'));
       }
+      return false;
     } finally {
       setPendingFor('updateTableStatus', false);
     }
