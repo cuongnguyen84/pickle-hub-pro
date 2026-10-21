@@ -17,7 +17,7 @@ with `[Grok Bot]`; instant alerts read `[Grok Bot] 🔴 …`, recoveries `[Grok 
 | `quality.yml`, `security.yml` | First red run on main, then one "green again". |
 | `news-repair` | Only when rows are stuck (with its buttons) or the queue is unreadable. |
 | team-v2 `watchdog`, replies to commands and button presses (`control`, `accepted`, `action-*`, …) | As before, labelled. |
-| `fb_browser_post.py` / `x_browser_post.py` | Only when posting fails 2+ times in a row (job stops); a single failure retries next run. Also: picker returned an already-posted item; X posted without its link reply. |
+| `fb_browser_post.py` / `x_browser_post.py` | Every successful post, instantly: `[Grok Bot] Đã đăng bài`, platform (Facebook page / X), headline, link (owner rule 21/10/2026). Failures only when posting fails 2+ times in a row (job stops); a single failure retries next run. Also: picker returned an already-posted item; X posted without its link reply (flagged in the post notice). |
 
 ## Digest (team-v2 `scheduled_digest`, reads sources, no new tables)
 - Held outbox rows: `verification`, `alert`, `starting`, `request`, `fallback`, `provider*`, `blocked-*`, `tournament-autopublish`, `content-*` (status `held` → `digested`).
@@ -26,4 +26,5 @@ with `[Grok Bot]`; instant alerts read `[Grok Bot] 🔴 …`, recoveries `[Grok 
 - 08:00 only: due milestones from `scripts/due-milestones.mjs` (`milestone-due.yml` no longer messages).
 
 ## Social posting
-- `workers/social-poster` no longer sends a Telegram per published post (removed 20/10/2026); posts are counted in the digest.
+- Chrome posters (`fb_browser_post.py`, `x_browser_post.py`, run by launchd from the repo checkout) send one instant `[Grok Bot] Đã đăng bài` per published post (restored 21/10/2026). The digest still counts posts.
+- `workers/social-poster` (API path, currently unused: both pages and X post via Chrome) does not send per-post Telegram.

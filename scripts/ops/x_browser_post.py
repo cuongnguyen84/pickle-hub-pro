@@ -112,9 +112,10 @@ def post_one(row: dict) -> int:
         miss = f" — CHƯA reply link: {res.get('error')}" if row.get("link_url") and not replied else ""
         log(f"OK {url}{miss}")
         fb.failure_streak(FAIL_STREAK_FILE, False)
-        # 20/10/2026: success goes to the log only; a missing link reply still pages.
-        if miss:
-            fb.tele(f"⚠️ X (Chrome) đã đăng nhưng{miss}\n{url}")
+        # 21/10/2026 (Cuong): every successful post messages Telegram at once;
+        # a missing link reply is flagged in the same message.
+        fb.tele(fb.posted_notice(f"X · @{HANDLE}", row.get("body") or "", url,
+                                 f"⚠️ Đã đăng nhưng{miss}" if miss else ""))
         return 0
 
     # Trả về approved: lượt sau có attempt_count > 1 nên kiểm trang trước khi đăng lại.
