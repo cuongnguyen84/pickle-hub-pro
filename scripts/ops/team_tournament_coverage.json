@@ -3,7 +3,7 @@
   "timezone": "Asia/Ho_Chi_Minh",
   "daily_time": "07:30",
   "refresh_every_hours": 2,
-  "verified_at": "2026-10-13",
+  "verified_at": "2026-10-21",
   "events": [
     {
       "key": "veolia-chicago-cup-2026",
@@ -149,6 +149,32 @@
       ]
     },
     {
+      "key": "ppa-canada-ottawa-125-2026",
+      "title": "PPA Canada Ottawa 125",
+      "start_date": "2026-10-22",
+      "end_date": "2026-10-25",
+      "event_timezone": "America/Toronto",
+      "enabled": true,
+      "sources": [
+        "https://ppatourcanada.ca/tournament/2026/ottawa-125/",
+        "https://pickleballtournaments.com/tournaments/ppa-canada-ottawa-125"
+      ],
+      "notes": "P2, thêm 21/10 từ ppatour.com/events (Oct 22–25, 2026). Venue: The Forge, 1680 Vimont Ct #103, Orléans, ON. Trang Canada vẫn ghi 'get notified when registration opens'. Draw slug ppa-canada-ottawa-125 có tourneyId 94307fed-6e0f-4390-bf19-bda3bfb80d18 nhưng /api/scores/?event= trả divisions rỗng (đã thử cả 488732c4, 89879e63, 435f37f4). Không bật auto_publish."
+    },
+    {
+      "key": "college-world-championship-2026",
+      "title": "College World Championship 2026",
+      "start_date": "2026-10-30",
+      "end_date": "2026-11-01",
+      "event_timezone": "America/Chicago",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour.com/events/2026/college-world-championship/",
+        "https://pickleballtournaments.com/tournaments/2026-college-world-championship"
+      ],
+      "notes": "P2, thêm 21/10. Brookhaven Country Club, Farmers Branch TX (cùng venue World Championships tuần sau). tourneyId 95602192-b649-420f-a8ff-0887fddfe1e7 và uuid e2dda6f6 đều trả /api/scores/ divisions rỗng. Không bật auto_publish."
+    },
+    {
       "key": "nanjing-2026",
       "title": "Skechers Nanjing 2026 — PPA Asia 125",
       "start_date": "2026-10-28",
@@ -156,9 +182,24 @@
       "event_timezone": "Asia/Shanghai",
       "enabled": true,
       "sources": [
-        "https://www.ppatour-asia.com/tournament/2026/ppa-asia-125-chn-nanjing-2026/"
+        "https://www.ppatour-asia.com/tournament/2026/ppa-asia-125-chn-nanjing-2026/",
+        "https://pickleballtournaments.com/tournaments/ppa-asia-125-skechers-nanjing-challenger-2026",
+        "https://www.ppatour.com/api/scores/?event=49004a6d-fb3b-4a64-81a5-6468df8ec39d"
       ],
-      "notes": "P2. Nanjing, venue cụ thể/draw/giờ trận CHƯA xác minh; pre-registration tại ngày4/10. Không tạo kết quả hoặc hứa live. Asia125 vẫn diễn ra sau Hong Kong main tour finale."
+      "notes": "P2. 21/10: eventId xác nhận trên pickleballtournaments.com/tournaments/ppa-asia-125-skechers-nanjing-challenger-2026 (tourneyId, không phải clubId). Feed trả 5 nội dung Pro, 0 trận — draw chưa ra, autopublish sẽ báo score_matches_missing chứ không đăng trang rỗng. Venue cụ thể vẫn chưa công bố (trang Asia chỉ ghi Nanjing, China). Asia125 vẫn diễn ra sau Hong Kong main tour finale.",
+      "name": "Skechers Nanjing 2026",
+      "search_name": "PPA Nanjing",
+      "auto_publish": true,
+      "publish_from": "2026-10-21",
+      "event_id": "49004a6d-fb3b-4a64-81a5-6468df8ec39d",
+      "result_source": "https://www.ppatour.com/api/scores/?event=49004a6d-fb3b-4a64-81a5-6468df8ec39d",
+      "source": "https://www.ppatour-asia.com/tournament/2026/ppa-asia-125-chn-nanjing-2026/",
+      "slug": "ppa-nanjing-2026-results",
+      "vi_slug": "ket-qua-ppa-nanjing-2026",
+      "dates_en": "October 28–31, 2026",
+      "dates_vi": "28–31/10/2026",
+      "venue": "Nanjing, China",
+      "tags": ["pickleball", "results", "ppa nanjing", "ppa tour asia", "2026"]
     },
     {
       "key": "world-championships-2026",
@@ -168,9 +209,24 @@
       "event_timezone": "America/Chicago",
       "enabled": true,
       "sources": [
-        "https://www.ppatour.com/events/2026/pickleball-world-championships/"
+        "https://www.ppatour.com/events/2026/pickleball-world-championships/",
+        "https://pickleballtournaments.com/tournaments/2026-pickleball-world-championships",
+        "https://www.ppatour.com/api/scores/?event=ad262b1f-ea62-4dcc-af59-69732a97107c"
       ],
-      "notes": "P1. Brookhaven Country Club, Farmers Branch TX. 2/11 qualifying,3 R64,4 R32,5 R16,6 QF,7 SF,8 finals; giờ pro TBD. Sau đổi DST: local+13h=VN. https://pickleballtournaments.com/tournaments/2026-pickleball-world-championships chưa fetch được ngày4/10. Không nhầm World Cup Đà Nẵng."
+      "notes": "P1. Brookhaven Country Club, Farmers Branch TX. 2/11 qualifying,3 R64,4 R32,5 R16,6 QF,7 SF,8 finals; giờ pro TBD. Sau đổi DST: local+13h=VN. Không nhầm World Cup Đà Nẵng. 21/10: eventId là tourneyId trên pickleballtournaments.com/tournaments/2026-pickleball-world-championships (Nov 2–8 2026, reg-open). Feed trả đúng tournamentId, 10 divisions (5 pro + 5 Challenger Showdown), 0 trận. uuid 85a4022e trên trang ppatour.com là mã Hilton, không phải event. `name` ngắn 'World Championship 2026' để metaTitle VI (Kết quả PPA World Championships 2026: …) nằm trong 60 byte; search_name giữ đúng 'PPA World Championships'.",
+      "name": "World Championship 2026",
+      "search_name": "PPA World Championships",
+      "auto_publish": true,
+      "publish_from": "2026-10-21",
+      "event_id": "ad262b1f-ea62-4dcc-af59-69732a97107c",
+      "result_source": "https://www.ppatour.com/api/scores/?event=ad262b1f-ea62-4dcc-af59-69732a97107c",
+      "source": "https://www.ppatour.com/events/2026/pickleball-world-championships/",
+      "slug": "pickleball-world-championships-2026-results",
+      "vi_slug": "ket-qua-pickleball-world-championships-2026",
+      "dates_en": "November 2–8, 2026",
+      "dates_vi": "2–8/11/2026",
+      "venue": "Brookhaven Country Club, Farmers Branch, Texas",
+      "tags": ["pickleball", "results", "ppa world championships", "2026"]
     },
     {
       "key": "app-bangkok-open-2026",
@@ -182,7 +238,7 @@
       "sources": [
         "https://www.theapp.global/tour-schedule/2026-app-bangkok-open"
       ],
-      "notes": "P1 châu Á. APP không có feed điểm số công khai như PPA — chỉ nháp, không tự đăng. Lịch xác minh 13/10 từ theapp.global."
+      "notes": "P1 châu Á. APP không có feed điểm số công khai như PPA — chỉ nháp, không tự đăng. 13/10 lịch lấy từ theapp.global. 21/10 trang /tour không còn card Bangkok; script trên trang chỉ còn tên BANGKOK trong danh sách ẩn ngày TBD (cùng NEW DELHI). Giữ lịch 2–7/11 như bản 13/10, chưa xác minh lại được ngày."
     },
     {
       "key": "daytona-beach-open-2026",
@@ -197,6 +253,31 @@
       "notes": "P1. Pictona at Holly Hill Florida. Draw URL và giờ trận chưa xác minh ngày4/10. Local+12h=VN trong tháng11."
     },
     {
+      "key": "ppa-europe-lille-125-2026",
+      "title": "PPA Tour Europe P125 Lille",
+      "start_date": "2026-11-12",
+      "end_date": "2026-11-15",
+      "event_timezone": "Europe/Paris",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour.com/events/",
+        "https://pickleballtournaments.com/tournaments/ppa-tour-europe-p125-lille"
+      ],
+      "notes": "P2, thêm 21/10 từ card ppatour.com/events (Nov 12–15, 2026). Ngoài cửa sổ 14 ngày nên chưa tra eventId / chưa bật auto_publish. Venue chưa lấy từ trang event riêng."
+    },
+    {
+      "key": "ppa-canada-toronto-125-2026",
+      "title": "PPA Canada Toronto 125",
+      "start_date": "2026-11-26",
+      "end_date": "2026-11-29",
+      "event_timezone": "America/Toronto",
+      "enabled": true,
+      "sources": [
+        "https://ppatourcanada.ca/tournament/2026/toronto-125/"
+      ],
+      "notes": "P2, thêm 21/10 (một trong ba PPA Canada 125 còn thiếu từ 13/10). Venue: Pickleplex Social Club Downsview, 40 Carl Hall Rd #49, North York, ON. Trang Canada: registration chưa mở. Ngoài 14 ngày, chưa bật auto_publish."
+    },
+    {
       "key": "app-tour-championships-2026",
       "title": "APP Tour Championships 2026",
       "start_date": "2026-12-03",
@@ -207,6 +288,18 @@
         "https://www.theapp.global/tour-schedule/2026-app-tour-championships"
       ],
       "notes": "P2. The Fort, Fort Lauderdale. APP không có feed điểm số công khai — chỉ nháp. Lịch xác minh 13/10 từ theapp.global."
+    },
+    {
+      "key": "ppa-canada-vancouver-125-2026",
+      "title": "PPA Canada Vancouver 125",
+      "start_date": "2026-12-03",
+      "end_date": "2026-12-06",
+      "event_timezone": "America/Vancouver",
+      "enabled": true,
+      "sources": [
+        "https://ppatourcanada.ca/tournament/2026/vancouver-125/"
+      ],
+      "notes": "P2, thêm 21/10 (PPA Canada 125 thứ ba). Venue: 4920 Canoe Pass Wy, Delta, BC. Trang Canada: registration chưa mở. Ngoài 14 ngày, chưa bật auto_publish."
     },
     {
       "key": "pj-tokyo-challenger-2026",
@@ -231,6 +324,32 @@
         "https://www.ppatour.com/events/2026/veolia-malibu-cup/"
       ],
       "notes": "P1. Open 500, Malibu CA. Lịch xác minh 13/10 từ ppatour.com/events. Chưa có eventId/feed điểm số — tra lại theo mốc RESULTS-ENABLE trước ngày đấu rồi bật auto_publish."
+    },
+    {
+      "key": "ppa-adelaide-125-2026",
+      "title": "PPA 125 Adelaide",
+      "start_date": "2026-12-10",
+      "end_date": "2026-12-13",
+      "event_timezone": "Australia/Adelaide",
+      "enabled": true,
+      "sources": [
+        "https://ppatour.com.au/tournaments/ppa-125-adelaide-sa/",
+        "https://www.ppatour.com/events/"
+      ],
+      "notes": "P2, thêm 21/10. Card ppatour.com/events ghi Dec 10–13, 2026 (bản mốc 13/10 ghi 10–13/12, khớp). Ngoài 14 ngày, chưa tra eventId, chưa bật auto_publish."
+    },
+    {
+      "key": "app-ho-chi-minh-city-open-2026",
+      "title": "APP Asia Ho Chi Minh City Open 2026",
+      "start_date": "2026-12-10",
+      "end_date": "2026-12-13",
+      "event_timezone": "Asia/Ho_Chi_Minh",
+      "enabled": true,
+      "sources": [
+        "https://www.theapp.global/tour",
+        "https://www.sportssync.asia/tournament/390"
+      ],
+      "notes": "P1 châu Á, thêm 21/10. APP không có feed điểm số PPA — chỉ nháp, không auto_publish. theapp.global/tour ngày 21/10 ghi 10–13/12/2026 (không nằm trong danh sách ẩn ngày TBD, danh sách đó chỉ có BANGKOK và NEW DELHI). Bản 13/10 ghi Dec 2–Dec 2 là ngày giữ chỗ, đã lỗi thời."
     },
     {
       "key": "johor-2026",
@@ -326,7 +445,19 @@
       "sources": [
         "https://www.ppatour.com/events/2027/sacramento-open/"
       ],
-      "notes": "P1. Open 1000, Sacramento CA. Cùng tuần có Texas Open (địa điểm TBD, chưa có trang event) — chưa thêm. Lịch xác minh 13/10 từ ppatour.com/events. Chưa có eventId/feed điểm số — tra lại theo mốc RESULTS-ENABLE trước ngày đấu rồi bật auto_publish."
+      "notes": "P1. Open 1000, Sacramento CA. Lịch xác minh 13/10 từ ppatour.com/events. Chưa có eventId/feed điểm số — tra lại theo mốc RESULTS-ENABLE trước ngày đấu rồi bật auto_publish. Texas Open không còn cùng tuần: card 21/10 ghi Texas Open 8–14/3/2027, Location TBD."
+    },
+    {
+      "key": "texas-open-2027",
+      "title": "Texas Open 2027",
+      "start_date": "2027-03-08",
+      "end_date": "2027-03-14",
+      "event_timezone": "America/Chicago",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour.com/events/"
+      ],
+      "notes": "P1, thêm 21/10. Card ppatour.com/events: Mar 8–14, 2027, Open · 1,000, Location TBD, Details Coming Soon (chưa có trang /events/2027/...). Bản ghi 13/10 nói 5–11/4/2027 đã lỗi thời. Không bật auto_publish."
     },
     {
       "key": "cincinnati-open-2027",
