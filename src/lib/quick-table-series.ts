@@ -112,7 +112,7 @@ export function maxSeries(sizes: number[]): number {
   return 1;
 }
 
-const MEDAL_VI = ["Nhánh Vàng", "Nhánh Bạc", "Nhánh Đồng"];
+const MEDAL_VI = ["Vàng", "Bạc", "Đồng"];
 const MEDAL_EN = ["Gold bracket", "Silver bracket", "Bronze bracket"];
 
 const seriesLetter = (division: number) =>
@@ -123,7 +123,7 @@ export function seriesName(style: SeriesStyle | undefined, division: number, lan
     const named = (lang === "en" ? MEDAL_EN : MEDAL_VI)[division];
     if (named) return named;
   }
-  if (lang === "vi") return `Nhánh ${division + 1}`;
+  if (lang === "vi") return `Vòng loại ${division + 1}`;
   return `Series ${seriesLetter(division)}`;
 }
 

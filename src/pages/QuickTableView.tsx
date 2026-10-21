@@ -46,6 +46,7 @@ import {
   generateBracketPairings,
   resolveBracketConflicts,
 } from '@/lib/quick-table-seeding-v2';
+import { QuickTableShareActions } from '@/components/quicktable/QuickTableShareActions';
 import { scheduleMatches } from '@/lib/round-robin';
 import { playoffStartTime, schedulePlayoff } from '@/lib/quick-table-playoff-schedule';
 import { maxSeries, rankSeriesSizes, resolveSeriesSizes, seriesDraws, seriesLine, seriesName, seriesPlan, seriesPreview, seriesDrawPreview, slot } from '@/lib/quick-table-series';
@@ -65,7 +66,7 @@ const QuickTableView = () => {
     isGroupStageComplete, getWildcardCount, movePlayerToGroup,
     addPlayerToGroup, removePlayerFromGroup, regenerateGroupMatches,
     updatePlayerName, updateTableName, updateTableCourtSettings,
-    reassignCourtsAndTimes, deleteTable,
+    reassignCourtsAndTimes, deleteTable, updateTableStatus,
     updateCourtName, swapPlayoffPlayers, pending,
   } = useQuickTable();
   const { isAdmin } = useAdminAuth();
@@ -263,10 +264,6 @@ const QuickTableView = () => {
 
   const shareUrl = `${getSiteUrl()}${loc(`/tools/quick-tables/${shareId}`)}`;
   const handleShare = () => setShareOpen((open) => !open);
-  const copyShareUrl = () => {
-    navigator.clipboard.writeText(shareUrl);
-    toast.success(t.quickTable.view.shareSuccess);
-  };
 
   const getPlayerById = (id: string | null) => players.find(p => p.id === id);
 
@@ -398,10 +395,10 @@ const QuickTableView = () => {
     const lines = plan.map((sl, d) => seriesLine(seriesName(seriesStyle, d, lang), sl, lang));
     const ok = await confirm({
       title: lang === 'vi'
-        ? `Tạo ${count} nhánh: ${plan.map((sl, d) => `${seriesName(seriesStyle, d, lang)} ${sl.size}`).join(' · ')}?`
+        ? `Tạo ${count} vòng loại: ${plan.map((sl, d) => `${seriesName(seriesStyle, d, lang)} ${sl.size}`).join(' · ')}?`
         : `Create ${count} bracket${count > 1 ? 's' : ''}: ${plan.map((sl, d) => `${seriesName(seriesStyle, d, lang)} ${sl.size}`).join(' · ')}?`,
       description: lines.join('\n') + (lang === 'vi'
-        ? '\nMỗi nhánh có vô địch riêng; vô địch giải là vô địch nhánh đầu.'
+        ? '\nMỗi vòng loại có nhà vô địch riêng; vô địch giải là vô địch vòng đầu.'
         : '\nEach bracket has its own winner; the first bracket decides the champion.'),
       confirmText: t.quickTable.view.startPlayoff,
     });
@@ -427,7 +424,7 @@ const QuickTableView = () => {
     const ok = await confirm({
       title: vi ? 'Huỷ playoff, quay về vòng bảng?' : 'Cancel the playoff and go back to the group stage?',
       description: vi
-        ? 'Xoá toàn bộ sơ đồ playoff để chọn lại cách chia nhánh. Kết quả vòng bảng giữ nguyên.'
+        ? 'Xoá toàn bộ sơ đồ vòng loại để chọn lại cách chia. Kết quả vòng bảng giữ nguyên.'
         : 'Removes the whole playoff draw so you can pick a different split. Group results are kept.',
       confirmText: vi ? 'Huỷ playoff' : 'Cancel playoff',
       destructive: true,
@@ -441,7 +438,7 @@ const QuickTableView = () => {
         : t.quickTable.view.errorOccurred);
       return;
     }
-    toast.success(vi ? 'Đã huỷ playoff. Chọn lại cách chia nhánh nhé.' : 'Playoff cancelled. Pick a split again.');
+    toast.success(vi ? 'Đã huỷ vòng loại. Chọn lại cách chia nhé.' : 'Playoff cancelled. Pick a split again.');
     setSeriesChoice(null);
     setActiveTab('groups');
     await loadData();
@@ -800,6 +797,23 @@ const QuickTableView = () => {
     await loadData();
   };
 
+  const handleEndTable = async () => {
+    if (!table) return;
+    const ok = await confirm({
+      title: language === 'vi' ? 'Kết thúc giải' : 'End tournament',
+      description: language === 'vi'
+        ? `Kết thúc “${table.name}”? Kết quả vẫn giữ, và bạn tạo được giải mới.`
+        : `End “${table.name}”? Results stay, and you can create another tournament.`,
+      confirmText: language === 'vi' ? 'Kết thúc giải' : 'End tournament',
+    });
+    if (!ok) return;
+    const success = await updateTableStatus(table.id, 'completed');
+    if (success) {
+      toast.success(language === 'vi' ? 'Đã kết thúc giải' : 'Tournament ended');
+      await loadData();
+    }
+  };
+
   const handleDeleteTable = async () => {
     if (!table) return;
     if (!(await confirm({ description: t.quickTable.view.deleteConfirmFull.replace('{name}', table.name), destructive: true }))) {
@@ -879,7 +893,7 @@ const QuickTableView = () => {
 
   return (
     <TheLineLayout
-      title={`${table.name} | Quick Table`}
+      title={language === 'vi' ? `${table.name} | Chia bảng` : `${table.name} | Quick Table`}
       description={`${table.name} – ${table.player_count} VĐV`}
       noindex={true}
       active="lab"
@@ -976,6 +990,11 @@ const QuickTableView = () => {
               {!canManageTable && !canEditScores && table?.id && (
                 <RefereeJoinByPin format="quick_table" parentId={table.id} onJoined={refreshUserRole} />
               )}
+              {canDeleteTable && table.status !== 'completed' && table.status !== 'playoff' && (
+                <Button type="button" variant="outline" onClick={() => void handleEndTable()} disabled={pending.updateTableStatus}>
+                  {language === 'vi' ? 'Kết thúc giải' : 'End tournament'}
+                </Button>
+              )}
               {canDeleteTable && (
                 <button
                   type="button"
@@ -996,12 +1015,15 @@ const QuickTableView = () => {
           <section aria-label={t.quickTable.view.shareWith} style={{ marginTop: 16, padding: 16, border: '1px solid var(--tl-border)', borderRadius: 'var(--tl-radius-lg)', background: 'var(--tl-bg-elev)', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <strong style={{ fontSize: 14 }}>{t.quickTable.view.shareWith}</strong>
             <input readOnly value={shareUrl} aria-label={t.quickTable.view.shareWith} onFocus={(e) => e.currentTarget.select()} style={{ width: '100%', minHeight: 44, fontSize: 16, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--tl-border)', background: 'var(--tl-bg)', color: 'var(--tl-fg)' }} />
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Button type="button" variant="outline" onClick={copyShareUrl} style={{ minHeight: 44 }}>{language === 'vi' ? 'Sao chép link' : 'Copy link'}</Button>
-              <Button variant="outline" asChild style={{ minHeight: 44 }}>
-                <a href={`https://sp.zalo.me/share?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(table.name)}`} target="_blank" rel="noopener noreferrer">{t.quickTable.view.shareZalo}</a>
-              </Button>
-            </div>
+            <QuickTableShareActions
+              url={shareUrl}
+              title={table.name}
+              message={`🏓 ${table.name}\n${shareUrl}`}
+              copyLink={language === 'vi' ? 'Sao chép link' : 'Copy link'}
+              copyZalo={language === 'vi' ? 'Sao chép tin nhắn Zalo' : 'Copy Zalo message'}
+              sendZalo={t.quickTable.view.shareZalo}
+              copied={language === 'vi' ? 'Đã copy' : 'Copied'}
+            />
           </section>
         )}
 
@@ -1041,11 +1063,11 @@ const QuickTableView = () => {
                 </p>
                 {planOptions.length > 1 && (
                   <p style={{ margin: '14px 0 0', fontSize: 12.5, color: 'var(--tl-fg-2)', fontWeight: 600 }}>
-                    {language === 'vi' ? 'Chọn cách chia nhánh:' : 'Choose how to split the playoff:'}
+                    {language === 'vi' ? 'Chọn cách vào vòng loại:' : 'Choose how to split the playoff:'}
                   </p>
                 )}
                 {planOptions.length > 1 && (
-                  <div role="group" aria-label={language === 'vi' ? 'Số nhánh playoff' : 'Playoff brackets'} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
+                  <div role="group" aria-label={language === 'vi' ? 'Số vòng loại' : 'Playoff brackets'} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
                     {planOptions.map((sizes, k) => (
                       <button
                         key={k}
@@ -1060,9 +1082,9 @@ const QuickTableView = () => {
                         }}
                       >
                         {sizes === chosenSizes ? '✓ ' : ''}
-                        {sizes === customSizes ? (language === 'vi' ? 'Theo thiết lập giải: ' : 'As set up: ') : sameSizes(sizes, rankSizes) ? (language === 'vi' ? 'Mỗi hạng một nhánh: ' : 'One per place: ') : ''}
+                        {sizes === customSizes ? (language === 'vi' ? 'Theo thiết lập giải: ' : 'As set up: ') : sameSizes(sizes, rankSizes) ? (language === 'vi' ? 'Mỗi hạng một vòng: ' : 'One per place: ') : ''}
                         {sameSizes(sizes, defaultPlans[0])
-                          ? (language === 'vi' ? '1 nhánh (top 2)' : '1 bracket (top 2)')
+                          ? (language === 'vi' ? '1 vòng loại (2 đội đầu)' : '1 bracket (top 2)')
                           : sizes.map((n, d) => `${seriesName(seriesStyle, d, language === 'en' ? 'en' : 'vi')} · ${n}`).join(' + ')}
                       </button>
                     ))}
@@ -1218,7 +1240,6 @@ const QuickTableView = () => {
                         fontFamily: 'Geist Mono, ui-monospace, monospace',
                         fontSize: 11.5,
                         letterSpacing: '0.04em',
-                        textTransform: 'uppercase',
                         color: 'var(--tl-fg-2)',
                       }}
                     >
@@ -1618,7 +1639,7 @@ const QuickTableView = () => {
                 </div>
               )}
               {playoffDivisions.length > 1 && (
-                <div role="group" aria-label={language === 'vi' ? 'Nhánh playoff' : 'Playoff bracket'} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <div role="group" aria-label={language === 'vi' ? 'Vòng loại' : 'Playoff'} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {playoffDivisions.map((d) => (
                     <button
                       key={d}

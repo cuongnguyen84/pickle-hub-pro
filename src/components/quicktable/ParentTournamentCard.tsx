@@ -4,6 +4,7 @@ import { displayChampionName } from "@/lib/championDisplay";
 import { format } from "date-fns";
 import type { ParentTournamentWithPreview } from "@/hooks/useParentTournament";
 import { useI18n } from "@/i18n";
+import { localePath } from "@/lib/locale-path";
 
 interface ParentTournamentCardProps {
   parent: ParentTournamentWithPreview;
@@ -28,8 +29,8 @@ const STATUS_CONFIG: Record<
     bg: "var(--tl-blue-glow)",
     fg: "var(--tl-blue)",
   },
-  playoff: {
-    labelVi: "Playoff",
+    playoff: {
+    labelVi: "Vòng loại",
     labelEn: "Playoff",
     bg: "var(--tl-gold-glow)",
     fg: "var(--tl-gold)",
@@ -50,21 +51,22 @@ const ParentTournamentCard = ({
   const navigate = useNavigate();
   const { language, t } = useI18n();
   const isVi = language === "vi";
+  const lp = (path: string) => localePath(path, isVi ? "vi" : "en");
   const pt = t.quickTable.parentTournament;
   const isFeatured = variant === "featured";
 
   const handleHeaderClick = () => {
-    navigate(`/tools/quick-tables/parent/${parent.share_id}`);
+    navigate(lp(`/tools/quick-tables/parent/${parent.share_id}`));
   };
 
   const handleSubEventClick = (e: React.MouseEvent, shareId: string) => {
     e.stopPropagation();
-    navigate(`/tools/quick-tables/${shareId}`);
+    navigate(lp(`/tools/quick-tables/${shareId}`));
   };
 
   const handleAddEvent = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/tools/quick-tables?parentId=${parent.id}`);
+    navigate(`${lp("/tools/quick-tables")}?parentId=${parent.id}`);
   };
 
   const remaining = parent.subEventCount - parent.previewSubEvents.length;

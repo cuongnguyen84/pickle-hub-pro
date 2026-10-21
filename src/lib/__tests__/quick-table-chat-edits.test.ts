@@ -41,6 +41,34 @@ describe("readUserFacts", () => {
   it("does not treat đổi chỗ as doubles", () => {
     expect(readUserFacts("đổi chỗ An với Bình").is_doubles).toBeUndefined();
   });
+
+  it("mỗi bảng lấy N vào vòng loại trực tiếp is one knockout, with or without accents", () => {
+    const sentences = [
+      "Giai TEST Grok 3, 8 doi, 2 bang, moi bang lay 2 doi vao vong loai truc tiep",
+      "Giải TEST Grok 3, 8 đội, 2 bảng, mỗi bảng lấy 2 đội vào vòng loại trực tiếp",
+      "Giải TEST Grok 3, 8 đội, 2 bảng, mỗi bảng lấy 2 đội vào trong",
+      "Giải TEST Grok 3, 8 đội, 2 bảng, mỗi bảng lấy 2 đội đi tiếp",
+    ];
+    for (const text of sentences) {
+      const facts = readUserFacts(text);
+      expect(facts.name).toBe("TEST Grok 3");
+      expect(facts.is_doubles).toBe(true);
+      expect(facts.player_count).toBe(8);
+      expect(facts.group_count).toBe(2);
+      expect(facts.advance_per_group).toBe(2);
+      expect(facts.series).toBe(1);
+      const locked = applySpokenEdit({}, text);
+      expect(locked?.series).toBe(1);
+      expect(locked?.series_sizes).toEqual([4]);
+      expect(nextSlot({ ...locked!, roster_mode: "later", courts_done: true, options_done: true })).not.toBe("series");
+      const ack = factualAck({}, locked!, "vi", text);
+      expect(ack).toContain("đúng 2 mỗi bảng");
+      expect(ack).not.toContain("Hết vòng bảng");
+    }
+    const many = readUserFacts("8 đội, 2 bảng, nhiều vòng");
+    expect(many.advance_per_group).toBeUndefined();
+    expect(many.series).toBeUndefined();
+  });
 });
 
 describe("lockAdvance", () => {
@@ -49,6 +77,29 @@ describe("lockAdvance", () => {
     expect(d.series).toBe(1);
     expect(d.series_sizes).toEqual([6]);
     expect(nextSlot({ ...d, name: "A", courts_done: true, options_done: true, roster_mode: "now" })).not.toBe("series");
+  });
+});
+
+describe("placeholder names", () => {
+  const waiting: Draft = { is_doubles: true, player_count: 8, group_count: 2, roster_mode: undefined };
+
+  it("dùng tên mẫu and chưa có tên create editable Đội placeholders and leave the roster question", () => {
+    for (const text of ["Chưa có tên, dùng tên cặp mẫu giúp mình", "chưa có tên", "dùng tên mẫu"]) {
+      const next = applySpokenEdit(waiting, text);
+      expect(next?.entries?.map((e) => e.p1)).toEqual(["Đội 1", "Đội 2", "Đội 3", "Đội 4", "Đội 5", "Đội 6", "Đội 7", "Đội 8"]);
+      expect(next?.pairing_done).toBe(true);
+      expect(nextSlot(next!)).not.toBe("roster");
+      const ack = factualAck(waiting, next!, "vi", text);
+      expect(ack).toContain("Đội 1");
+      expect(ack).not.toBe("Bản nháp chưa đổi.");
+      const again = applySpokenEdit(next!, text);
+      expect(nextSlot(again!)).not.toBe("roster");
+    }
+  });
+
+  it("singles placeholders are Người 1…", () => {
+    const next = applySpokenEdit({ is_doubles: false, player_count: 4 }, "dùng tên mẫu");
+    expect(next?.entries?.map((e) => e.p1)).toEqual(["Người 1", "Người 2", "Người 3", "Người 4"]);
   });
 });
 

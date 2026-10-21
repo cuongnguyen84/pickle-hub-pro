@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
+import { localePath } from "@/lib/locale-path";
 import { Users, Trophy, Layers } from "lucide-react";
 
 interface ToolsInternalLinksProps {
@@ -12,51 +13,53 @@ interface ToolsInternalLinksProps {
  */
 export const ToolsInternalLinks = ({ currentTool }: ToolsInternalLinksProps) => {
   const { language } = useI18n();
+  const vi = language === "vi";
+  const lp = (path: string) => localePath(path, vi ? "vi" : "en");
 
   const tools = [
     {
       id: "hub" as const,
-      path: "/tools",
+      path: lp("/tools"),
       icon: Users,
-      title: language === "vi" ? "Tất cả công cụ giải đấu" : "All Tournament Tools",
-      description: language === "vi"
-        ? "Phần mềm tổ chức giải pickleball miễn phí — bracket, team match, loại kép"
+      title: vi ? "Tất cả công cụ giải đấu" : "All Tournament Tools",
+      description: vi
+        ? "Công cụ tổ chức giải pickleball miễn phí — chia bảng, đấu đồng đội, loại trực tiếp"
         : "Free pickleball tournament software — brackets, team match, elimination",
     },
     {
       id: "quick-tables" as const,
-      path: "/tools/quick-tables",
+      path: lp("/tools/quick-tables"),
       icon: Users,
-      title: language === "vi" ? "Pickleball Bracket Generator" : "Pickleball Bracket Generator",
-      description: language === "vi"
-        ? "Tạo bracket tự động, lịch thi đấu round robin hoặc playoff"
+      title: vi ? "Chia bảng" : "Pickleball Bracket Generator",
+      description: vi
+        ? "Chia bảng, xếp lịch đánh vòng tròn hoặc vòng loại trực tiếp"
         : "Auto bracket generator for round robin or playoff formats",
     },
     {
       id: "team-match" as const,
-      path: "/tools/team-match",
+      path: lp("/tools/team-match"),
       icon: Users,
-      title: language === "vi" ? "MLP Team Match Software" : "MLP Team Match Software",
-      description: language === "vi"
-        ? "Thi đấu theo đội kiểu Major League Pickleball"
+      title: vi ? "Đấu đồng đội" : "MLP Team Match Software",
+      description: vi
+        ? "Hai đội đấu với nhau, có trận quyết định khi hoà"
         : "MLP-style team competition with lineup management",
     },
     {
       id: "doubles-elimination" as const,
-      path: "/tools/doubles-elimination",
+      path: lp("/tools/doubles-elimination"),
       icon: Trophy,
-      title: language === "vi" ? "Double Elimination Bracket" : "Double Elimination Bracket",
-      description: language === "vi"
-        ? "Bracket loại kép cho các giải đấu đôi pickleball"
+      title: vi ? "Loại trực tiếp đôi" : "Double Elimination Bracket",
+      description: vi
+        ? "Thua một trận vẫn còn một cơ hội, rồi vào chung kết"
         : "Double elimination bracket for doubles pickleball tournaments",
     },
     {
       id: "flex-tournament" as const,
-      path: "/tools/flex-tournament",
+      path: lp("/tools/flex-tournament"),
       icon: Layers,
-      title: language === "vi" ? "Custom Tournament Bracket Maker" : "Custom Tournament Bracket Maker",
-      description: language === "vi"
-        ? "Tạo cấu trúc giải đấu tùy chỉnh, không giới hạn format"
+      title: vi ? "Giải linh hoạt" : "Custom Tournament Bracket Maker",
+      description: vi
+        ? "Tự chọn vòng, bảng và cách xếp"
         : "Create custom tournament structures with no format restrictions",
     },
   ];

@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { TheLineLayout } from '@/components/layout';
 import { useI18n } from '@/i18n';
+import { localePath } from '@/lib/locale-path';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useParentTournament, type ParentTournament } from '@/hooks/useParentTournament';
 import type { QuickTable } from '@/hooks/useQuickTable';
@@ -44,6 +45,7 @@ const sectionTitle: React.CSSProperties = {
 
 export default function ParentTournamentView({ shareId }: ParentTournamentViewProps) {
   const { t, language } = useI18n();
+  const lp = (path: string) => localePath(path, language === 'vi' ? 'vi' : 'en');
   const confirm = useConfirm();
   const navigate = useNavigate();
   const { getParentByShareId, isOwner, deleteParent } = useParentTournament();
@@ -77,7 +79,7 @@ export default function ParentTournamentView({ shareId }: ParentTournamentViewPr
 
   const handleAddSubEvent = () => {
     if (!parent) return;
-    navigate(`/tools/quick-tables?parentId=${parent.id}&parentName=${encodeURIComponent(parent.name)}`);
+    navigate(`${lp('/tools/quick-tables')}?parentId=${parent.id}&parentName=${encodeURIComponent(parent.name)}`);
   };
 
   const handleDeleteParent = async () => {
@@ -92,7 +94,7 @@ export default function ParentTournamentView({ shareId }: ParentTournamentViewPr
     if (!confirmed) return;
     const success = await deleteParent(parent.id);
     if (success) {
-      navigate('/tools/quick-tables');
+      navigate(lp('/tools/quick-tables'));
     }
   };
 
@@ -144,7 +146,7 @@ export default function ParentTournamentView({ shareId }: ParentTournamentViewPr
         <div className="tl-shell">
           <div className="tl-empty" style={{ marginTop: 56 }}>
             <h3>{t.quickTable.view.notFound}</h3>
-            <Link to="/tools/quick-tables" className="tl-btn">
+            <Link to={lp('/tools/quick-tables')} className="tl-btn">
               ← {t.quickTable.view.goBack}
             </Link>
           </div>
@@ -159,9 +161,9 @@ export default function ParentTournamentView({ shareId }: ParentTournamentViewPr
     <TheLineLayout title={parent.name} active="lab">
       <div className="tl-shell">
         <nav className="tl-breadcrumb">
-          <Link to="/tools">{language === 'vi' ? 'Bracket Lab' : 'Bracket Lab'}</Link>
+          <Link to={lp('/tools')}>{language === 'vi' ? 'Công cụ' : 'Bracket Lab'}</Link>
           <span className="sep">/</span>
-          <Link to="/tools/quick-tables">Quick Tables</Link>
+          <Link to={lp('/tools/quick-tables')}>{language === 'vi' ? 'Chia bảng' : 'Quick Tables'}</Link>
           <span className="sep">/</span>
           <span className="current">{parent.name}</span>
         </nav>
@@ -277,11 +279,11 @@ export default function ParentTournamentView({ shareId }: ParentTournamentViewPr
                     }}
                   >
                     <Link
-                      to={
+                      to={lp(
                         sub.status === 'setup'
                           ? `/tools/quick-tables/${sub.share_id}/setup`
-                          : `/tools/quick-tables/${sub.share_id}`
-                      }
+                          : `/tools/quick-tables/${sub.share_id}`,
+                      )}
                       className="min-w-0 flex-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tl-green)]"
                       style={{
                         display: 'flex',
@@ -335,7 +337,7 @@ export default function ParentTournamentView({ shareId }: ParentTournamentViewPr
                     </Link>
                     {(sub.status === 'group_stage' || sub.status === 'playoff') && (
                       <Link
-                        to={`/tools/dashboard/quick-table/${sub.share_id}`}
+                        to={lp(`/tools/dashboard/quick-table/${sub.share_id}`)}
                         className="tl-btn green min-h-11 shrink-0"
                         aria-label={`${t.dashboard.openDashboard}: ${sub.name}`}
                       >

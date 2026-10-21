@@ -84,9 +84,9 @@ describe("ordering", () => {
     expect(crossGroupCompare(three, four)).toBeLessThan(0); // 2/2 thắng xếp trên 2/3
   });
   it("names", () => {
-    expect(seriesName("series", 1, "vi")).toBe("Nhánh 2");
-    expect(seriesName("series", 3, "vi")).toBe("Nhánh 4");
-    expect(seriesName("medal", 0, "vi")).toBe("Nhánh Vàng");
+    expect(seriesName("series", 1, "vi")).toBe("Vòng loại 2");
+    expect(seriesName("series", 3, "vi")).toBe("Vòng loại 4");
+    expect(seriesName("medal", 0, "vi")).toBe("Vàng");
     expect(seriesName("medal", 1, "en")).toBe("Silver bracket");
   });
 });
