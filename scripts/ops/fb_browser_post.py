@@ -149,12 +149,24 @@ def failure_streak(path: Path, failed: bool) -> int:
     return n
 
 
+def parse_ts(value: str) -> datetime:
+    """Parse a PostgREST timestamptz on /usr/bin/python3 (3.9).
+
+    Postgres drops trailing zeros ("…:59.00477+00:00"); 3.9's fromisoformat only
+    takes 0, 3 or 6 fraction digits, so such a value crashed every run from
+    20/10 20:10 and the second page (ThePickleHub) never got its turn.
+    """
+    value = value.replace("Z", "+00:00")
+    value = re.sub(r"\.(\d+)", lambda m: "." + m.group(1)[:6].ljust(6, "0"), value, count=1)
+    return datetime.fromisoformat(value)
+
+
 def gap_ok(page: dict) -> bool:
     rows = rest("GET", f"fb_post_log?select=posted_at&status=eq.posted&page_id=eq.{page['id']}"
                        "&order=posted_at.desc&limit=1") or []
     if not rows or not rows[0]["posted_at"]:
         return True
-    last = datetime.fromisoformat(rows[0]["posted_at"].replace("Z", "+00:00"))
+    last = parse_ts(rows[0]["posted_at"])
     return datetime.now(timezone.utc) - last >= timedelta(minutes=MIN_GAP_MIN)
 
 

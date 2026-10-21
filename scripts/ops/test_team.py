@@ -551,6 +551,14 @@ class TelegramPolicyTests(unittest.TestCase):
         self.assertEqual(len(lines[2]), 200)
         self.assertTrue(lines[-1].startswith("⚠️"))
 
+    def test_post_gap_parses_postgrest_timestamps_with_any_fraction(self):
+        import fb_browser_post as fb
+        for raw in ("2026-10-21T00:14:59.00477+00:00", "2026-10-20T12:58:31.45644+00:00",
+                    "2026-10-20T10:11:30.376+00:00", "2026-10-20T10:11:30Z",
+                    "2026-10-20T10:17:40.647348+00:00"):
+            self.assertEqual(fb.parse_ts(raw).utcoffset().total_seconds(), 0, raw)
+        self.assertEqual(fb.parse_ts("2026-10-21T00:14:59.00477+00:00").microsecond, 4770)
+
     def test_evening_digest_has_no_milestones_and_survives_feed_errors(self):
         with patch.object(team, "command", return_value=(1, "", "")), \
              patch.object(team, "rest", side_effect=urllib.error.URLError("down")):
