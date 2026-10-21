@@ -1328,7 +1328,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // article <img> now includes that srcset.
   // v138 (2026-10-20): the English chat-draw guide uses English UI screenshots.
   // The Vietnamese article keeps the Vietnamese images.
-  const cacheKey = `pr:v138:${url.pathname}`;
+  // v139 (2026-10-21): those English cards were rebuilt. The first pass baked
+  // in a broken <img>, so the article now points at the -en-v2 files.
+  const cacheKey = `pr:v139:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
