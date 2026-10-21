@@ -21,6 +21,7 @@ import { Link } from "react-router-dom";
 import { Eye, PencilLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { vnd } from "@/lib/shop/productState";
+import { SpecList } from "@/components/shop/SpecList";
 import type { ProductProjection } from "@/integrations/supabase/shop-schema";
 
 const DRAFT_BUCKET = "shop-product-media-draft";
@@ -173,7 +174,7 @@ export default function ProductPreview({
           <p className={`tl-shop-pill tl-shop-pill--${availability.tone}`}>{availability.label}</p>
 
           {groups.map((group) => (
-            <fieldset key={group.name} style={{ border: 0, padding: 0, margin: "16px 0 0" }}>
+            <fieldset key={group.name} className="tl-shop-fieldset" style={{ marginTop: 16 }}>
               <legend className="tl-shop-label" style={{ padding: 0 }}>
                 {group.name}
               </legend>
@@ -236,6 +237,16 @@ export default function ProductPreview({
               ? " Shop đã được quản trị viên xác minh (đối chiếu giấy tờ hoặc gặp trực tiếp) — đây không phải cam kết chất lượng."
               : ""}
           </p>
+
+          {/* Cùng một component với trang thật — bản xem trước mà khác trang
+              thật thì nó không còn là bản xem trước. */}
+          <div style={{ marginTop: 20 }}>
+            <SpecList
+              categorySlug={projection.category?.slug}
+              specs={projection.specs}
+              headingId="pv-specs"
+            />
+          </div>
 
           {projection.description && (
             <section aria-labelledby="pv-desc" style={{ marginTop: 20 }}>

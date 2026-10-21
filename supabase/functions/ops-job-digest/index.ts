@@ -5,6 +5,10 @@ import {
   type JobHealthDigestSnapshot as HealthSnapshot,
 } from "../_shared/job-health-digest.ts";
 
+// Keep a deployment revision in the entrypoint because the Supabase API
+// deployer has previously reused a stale bundle when only a shared import changed.
+const deploymentRevision = "20260802-job-business-metrics-v2";
+
 function reportDateIct(now = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Ho_Chi_Minh",
@@ -93,7 +97,7 @@ Deno.serve(async (req) => {
     };
   }
   const text = formatJobHealthDigest(snapshot, reportDate);
-  if (mode === "preview") return Response.json({ ok: true, mode, report_date: reportDate, text, snapshot });
+  if (mode === "preview") return Response.json({ ok: true, mode, report_date: reportDate, deployment_revision: deploymentRevision, text, snapshot });
 
   const { data: claimed, error: claimError } = await supabase.rpc("ops_claim_daily_digest", {
     p_report_date: reportDate,
@@ -101,7 +105,14 @@ Deno.serve(async (req) => {
   if (claimError) return Response.json({ error: "claim_failed", detail: claimError.message }, { status: 500 });
   if (!claimed) return Response.json({ ok: true, duplicate: true, report_date: reportDate });
 
-  const sent = await sendTelegram(text);
+  // 2026-10-20: folded into the Grok Bot 08:00 digest (team-v2 reads
+  // ops_job_health_snapshot itself). The scheduled run still claims and records
+  // the day's preview for /admin/jobs, but does not message Telegram unless
+  // OPS_JOB_DIGEST_TELEGRAM=on is set as a function secret.
+  const folded = (Deno.env.get("OPS_JOB_DIGEST_TELEGRAM") ?? "") !== "on";
+  const sent = folded
+    ? { ok: true, error: "telegram_folded_into_grok_bot_digest" }
+    : await sendTelegram(text);
   const counts = snapshot.counts;
   await supabase.rpc("ops_finish_daily_digest", {
     p_report_date: reportDate,
@@ -114,7 +125,7 @@ Deno.serve(async (req) => {
   });
 
   return Response.json(
-    sent.ok ? { ok: true, report_date: reportDate } : { ok: false, error: sent.error },
+    sent.ok ? { ok: true, report_date: reportDate, folded } : { ok: false, error: sent.error },
     { status: sent.ok ? 200 : 502 },
   );
 });

@@ -1,3 +1,4 @@
+import { getRelatedPosts } from "../../src/content/blog/related";
 /**
  * Shared utilities for Cloudflare Pages Functions
  */
@@ -30,40 +31,7 @@ export function escapeHtml(text: string): string {
     .replace(/'/g, "&#039;");
 }
 
-/**
- * Build a page title, truncated to 60 chars with optional suffix.
- *
- * PR73 Phase 2C (audit I-4) — when the raw title is too long we now
- * break at the last whitespace before the budget instead of a hard
- * char cut, so "175 Định Công" no longer renders as "175 Đị…" in
- * the SERP. We accept a slightly shorter title rather than orphan a
- * partial Vietnamese glyph. Falls back to the hard cut only when the
- * budget leaves no whitespace to break on (or the break would land
- * too early in the title).
- */
-export function buildTitle(rawTitle: string, suffix = " | ThePickleHub"): string {
-  const maxTotal = 60;
-  // Budget in BYTES, not characters: buildHtml's truncateForSeo cuts the final
-  // <title> at 60 UTF-8 bytes, and a Vietnamese character costs 2-3 of them.
-  // Counting characters here made this function append " | ThePickleHub" to a
-  // VI title that already had no room for it — e.g. "Thể thức MLP Pickleball |
-  // Luật đồng đội" is 39 chars (fits) but 51 bytes, so the branded version was
-  // 66 bytes and prod served "…Luật đồng đội |…". Measured 2026-07-26.
-  const byteLength = (s: string) => new TextEncoder().encode(s).length;
-  if (byteLength(rawTitle + suffix) <= maxTotal) return rawTitle + suffix;
-  // Raw title alone fits the byte budget: hand it back untouched and let
-  // truncateForSeo be the single place that ever ellipsises.
-  if (byteLength(rawTitle) <= maxTotal) return rawTitle;
-  const budget = maxTotal - 1;
-  const head = rawTitle.slice(0, budget);
-  const lastSpace = head.lastIndexOf(" ");
-  // Require >=50% of the budget to remain after the break — a tiny
-  // break early in the title would orphan most of the headline.
-  if (lastSpace > budget * 0.5) {
-    return head.slice(0, lastSpace).trimEnd() + "\u2026";
-  }
-  return head.trim() + "\u2026";
-}
+export { buildTitle } from "../../src/lib/seo-title";
 
 /**
  * Build a meta description between 120-160 chars with fallbacks.
@@ -333,8 +301,20 @@ export function breadcrumb(crumbs: { label: string; href?: string }[]): string {
 // used by PageSpeed Insights; treating it as a crawler made PSI audit the
 // lightweight SSR document rather than the SPA visitors actually use.
 // Search and social crawlers still receive SSR via their explicit tokens.
+//
+// The AI-citation tokens (oai-searchbot, chatgpt-user, claude-searchbot,
+// claude-user, perplexity-user, duckassistbot, mistralai-user) are the ones
+// that put a link back in an AI answer, and they are separate user agents
+// from the training crawlers that share their vendor's name. Listing only
+// gptbot/claudebot/perplexitybot inverted the whole policy: the crawlers
+// robots.txt DISALLOWS were served the full 3,177-word article, while
+// OAI-SearchBot and Claude-SearchBot — explicitly allowed since 2026-07-07
+// precisely so they can cite us — got the 324-word SPA shell with no article
+// body and no JSON-LD. Measured on /blog/pickleball-world-cup-2026-da-nang,
+// 2026-08-18. A crawler that reaches the page and finds nothing to read is
+// indistinguishable from one that was blocked at the edge.
 export const BOT_UA =
-  /googlebot|bingbot|yandexbot|duckduckbot|baiduspider|facebookexternalhit|facebot|twitterbot|linkedinbot|whatsapp|zalo|telegrambot|applebot|discordbot|pinterestbot|redditbot|slackbot|slurp|gptbot|claudebot|perplexitybot|bytespider|petalbot|seznambot|ahrefsbot|ahrefssiteaudit|semrushbot|mj12bot|dotbot|screaming frog|sitebulb|rogerbot|dataforseobot|serpstatbot|moz\.com|cocoabot|google-inspectiontool|google-read-aloud|google-site-verification|google-structureddatatestingtool|mediapartners-google|adsbot-google|google-pagerenderer|google-extended|googleother|google-cloudvertexbot|validator\.schema\.org|schemamarkupvalidator|seonaut|crawlobserver|seobserver/i;
+  /googlebot|bingbot|yandexbot|duckduckbot|baiduspider|facebookexternalhit|facebot|twitterbot|linkedinbot|whatsapp|zalo|telegrambot|applebot|discordbot|pinterestbot|redditbot|slackbot|slurp|gptbot|claudebot|perplexitybot|oai-searchbot|chatgpt-user|claude-searchbot|claude-user|perplexity-user|duckassistbot|mistralai-user|meta-externalagent|amazonbot|deepseekbot|bytespider|petalbot|seznambot|ahrefsbot|ahrefssiteaudit|semrushbot|mj12bot|dotbot|screaming frog|sitebulb|rogerbot|dataforseobot|serpstatbot|moz\.com|cocoabot|google-inspectiontool|google-read-aloud|google-site-verification|google-structureddatatestingtool|mediapartners-google|adsbot-google|google-pagerenderer|google-extended|googleother|google-cloudvertexbot|validator\.schema\.org|schemamarkupvalidator|seonaut|crawlobserver|seobserver/i;
 
 // ─── Related content links ─────────────────────────────────
 
@@ -358,9 +338,10 @@ export const ALL_TOOLS = [
 ];
 
 export function relatedBlogLinks(currentSlug: string, siteUrl: string): string {
-  const related = ALL_BLOGS.filter((b) => b.slug !== currentSlug).slice(0, 3);
+  const related = getRelatedPosts(currentSlug, 3);
+  if (!related.length) return "";
   return `<section><h2>Related posts</h2><ul>${related
-    .map((p) => `<li><a href="${siteUrl}/blog/${p.slug}">${escapeHtml(p.title)}</a></li>`)
+    .map((p) => `<li><a href="${siteUrl}/blog/${p.slug}">${escapeHtml(p.titleEn)}</a></li>`)
     .join("")}</ul></section>`;
 }
 

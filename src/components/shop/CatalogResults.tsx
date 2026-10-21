@@ -10,11 +10,11 @@
 // actually failed stops looking — the P2a lesson, on a buyer surface now.
 // ============================================================================
 
-import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, SlidersHorizontal } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { SlidersHorizontal } from "lucide-react";
 import type { PublicCategory, ProductCard as Card } from "@/hooks/shop/usePublicShop";
 import { ProductCard, ProductCardSkeleton } from "./ProductCard";
-import { catalogMood } from "@/lib/shop/publicCatalog";
+import { ShopErrorNotice } from "./ShopNotice";
 
 export interface Filters {
   condition: "new" | "used" | null;
@@ -82,10 +82,6 @@ export function FilterFields({
           />
           Chỉ hiện sản phẩm còn hàng
         </label>
-        <p className="tl-shop-hint" style={{ marginTop: 4, marginBottom: 0 }}>
-          Shop chưa khai số lượng thì vẫn hiện, kèm ghi chú — không coi &ldquo;chưa khai&rdquo; là
-          hết hàng.
-        </p>
       </fieldset>
     </>
   );
@@ -209,7 +205,11 @@ export function ResultsGrid({
   onRetry,
   emptyTitle,
   emptyBody,
+  emptyIcon,
+  emptyAction,
   onClearFilters,
+  hideCount = false,
+  hideSparseNote = false,
 }: {
   rows: Card[];
   total: number;
@@ -218,7 +218,15 @@ export function ResultsGrid({
   onRetry: () => void;
   emptyTitle: string;
   emptyBody?: string;
+  /** Decorative lucide icon above the empty title (28px, aria-hidden). */
+  emptyIcon?: ReactNode;
+  /** One extra line/CTA under the empty body — a prop, not a fork. */
+  emptyAction?: ReactNode;
   onClearFilters?: () => void;
+  /** /shop shows twelve of `total`, so the count would be a lie there (#11). */
+  hideCount?: boolean;
+  /** Search/category/store already communicate their scope in the heading. */
+  hideSparseNote?: boolean;
 }) {
   if (isLoading) {
     return (
@@ -233,21 +241,21 @@ export function ResultsGrid({
   if (isError) {
     // Never "không có sản phẩm nào": a shopper told that when the request
     // failed stops looking, and the catalogue looks empty rather than broken.
+    // R5 #8: and never inside the dashed frame either — that frame IS the
+    // empty state, so the two looked identical no matter what the words said.
     return (
-      <div className="tl-shop-empty" role="alert">
-        <p className="tl-shop-empty-title">
-          <AlertTriangle size={15} aria-hidden="true" style={{ verticalAlign: -2 }} />{" "}
-          Chưa tải được danh sách
-        </p>
-        <p className="tl-shop-hint">Đây là lỗi tải dữ liệu, không phải sàn đang trống.</p>
-        <button type="button" className="tl-shop-btn" onClick={onRetry}>Thử lại</button>
-      </div>
+      <ShopErrorNotice
+        title="Chưa tải được danh sách."
+        body="Đây là lỗi tải dữ liệu, không phải sàn đang trống."
+        onRetry={onRetry}
+      />
     );
   }
 
   if (rows.length === 0) {
     return (
       <div className="tl-shop-empty">
+        {emptyIcon}
         <p className="tl-shop-empty-title">{emptyTitle}</p>
         {emptyBody && <p className="tl-shop-hint">{emptyBody}</p>}
         {onClearFilters && (
@@ -255,23 +263,28 @@ export function ResultsGrid({
             Bỏ bộ lọc
           </button>
         )}
+        {emptyAction}
       </div>
     );
   }
 
-  const mood = catalogMood(total);
-
   return (
     <>
-      <p className="tl-shop-hint" role="status" style={{ marginTop: 0 }}>
-        {total} sản phẩm
-        {mood === "sparse" && " — sàn đang ở giai đoạn thử nghiệm, đây là toàn bộ những gì đang bán."}
-      </p>
+      {!hideCount && (
+        <p className="tl-shop-hint" role="status" style={{ marginTop: 0 }}>
+          {total} sản phẩm
+        </p>
+      )}
       <ul className="tl-pgrid">
         {rows.map((c, i) => (
           <li key={c.id}><ProductCard card={c} eager={i < 4} /></li>
         ))}
       </ul>
+      {total > 0 && total < 12 && !hideSparseNote && (
+        <p className="tl-shop-hint">
+          Đây là toàn bộ sản phẩm đang bán.
+        </p>
+      )}
     </>
   );
 }

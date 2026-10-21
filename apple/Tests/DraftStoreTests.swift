@@ -77,4 +77,17 @@ struct DraftStoreTests {
         #expect(m.templates.count == 1)
         #expect(m.bankCode.isEmpty)   // bank không bao giờ restore từ draft
     }
+
+    @Test func teamMatchCustomRosterSize() {
+        let m = CreateTeamMatchModel()
+        var d = m.draftSnapshot
+        d.rosterSize = 12
+        m.apply(d)
+        #expect(m.rosterSize == 12)
+        d.rosterSize = 21             // ngoài 2...20 → giữ nguyên
+        m.apply(d)
+        #expect(m.rosterSize == 12)
+        #expect(CreateTeamMatchModel.defaultTemplates(5).count == 4)   // → preset 6
+        #expect(CreateTeamMatchModel.defaultTemplates(12).count == 6)  // → preset 8
+    }
 }

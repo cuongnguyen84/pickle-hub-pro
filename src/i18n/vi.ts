@@ -221,6 +221,10 @@ export interface Translations {
     feed: string;
     /** Bottom-nav primary slot — replaces the tournaments tile. */
     social: string;
+    /** Ô cố định trên thanh dưới kể từ 23/08. */
+    shop: string;
+    /** Ô cuối thanh dưới — mở tấm trượt chứa mọi bề mặt còn lại. */
+    more: string;
     search: string;
     profile: string;
     viewProfile: string;
@@ -231,6 +235,10 @@ export interface Translations {
     admin: string;
     openMenu: string;
     closeMenu: string;
+    toDark: string;
+    toLight: string;
+    accountMenu: string;
+    createTool: string;
   };
   tools: {
     title: string;
@@ -1009,6 +1017,11 @@ export interface Translations {
       editScore: string;
       openScoring: string;
       tieNotAllowed: string;
+      swap: string;
+      swapHint: string;
+      swapCancel: string;
+      swapped: string;
+      swapFailed: string;
     };
     // Quota / soft launch
     quota: {
@@ -1087,6 +1100,11 @@ export interface Translations {
       startPlayoff: string;
       registrationTab: string;
       playoffTab: string;
+      playoffLockedOneGroup: string;
+      playoffLockedWaiting: string;
+      playoffLockedReady: string;
+      shareWith: string;
+      shareZalo: string;
       standings: string;
       player: string;
       wins: string;
@@ -3107,23 +3125,23 @@ export const vi: Translations = {
       description: "Nếu bạn có câu hỏi về chính sách bảo mật, vui lòng liên hệ:",
     },
     shop: {
-      title: "Dữ liệu của tính năng Shop (thử nghiệm kín)",
+      title: "Dữ liệu của Shop",
       description:
-        "Nếu bạn đăng ký bán hàng trong chương trình thử nghiệm kín, ThePickleHub xử lý thêm những nhóm dữ liệu dưới đây. Chương trình này không thu thập giấy tờ tuỳ thân, số tài khoản ngân hàng hay thông tin chi trả.",
+        "Khi bạn mua hoặc bán hàng qua Shop, ThePickleHub xử lý thông tin cần thiết để hiển thị sản phẩm, tạo và giao đơn, xác nhận thanh toán, hỗ trợ hoàn tiền và giải quyết vấn đề phát sinh. ThePickleHub không thu thập mật khẩu ngân hàng hoặc dữ liệu thẻ thanh toán.",
       groups: {
         public:
           "Công khai trên trang shop: tên shop, giới thiệu, tỉnh/thành, ngành hàng, ảnh logo và ảnh bìa, chính sách giao hàng và đổi trả, sản phẩm cùng ảnh sản phẩm, và những kênh liên hệ do bạn chủ động khai và quản trị viên đã duyệt.",
         internal:
-          "Chỉ bạn và quản trị viên đọc được: họ tên, số điện thoại và địa chỉ lấy hàng trong hồ sơ đăng ký người bán. Địa chỉ lấy hàng không hiển thị công khai, và email hay số điện thoại tài khoản không bao giờ tự động trở thành kênh liên hệ công khai.",
+          "Chỉ hiển thị cho các bên cần xử lý: họ tên, số điện thoại và địa chỉ lấy hàng trong hồ sơ người bán; tên người nhận, số điện thoại, địa chỉ giao hàng, ghi chú và các món trong đơn; thông tin tài khoản nhận chuyển khoản do shop khai. Địa chỉ lấy hàng và giao hàng không hiển thị công khai, và email hay số điện thoại tài khoản không bao giờ tự động trở thành kênh liên hệ công khai.",
         consent:
           "Bằng chứng chấp thuận quy chế người bán: phiên bản, mã băm nội dung và thời điểm bạn đồng ý. Không kèm địa chỉ IP và không kèm dấu vết thiết bị — hệ thống cố ý không có chỗ để lưu hai thứ đó.",
         moderation:
-          "Nhật ký kiểm duyệt: quyết định duyệt hay yêu cầu sửa, việc tạm đình chỉ, ghi chú của quản trị viên, và loại kênh liên hệ đã thay đổi. Nhật ký không ghi giá trị số điện thoại hay kênh liên hệ, và ghi chú nội bộ của quản trị viên không hiển thị cho người bán.",
+          "Nhật ký vận hành: quyết định kiểm duyệt, thay đổi trạng thái đơn, thời điểm báo hoặc xác nhận thanh toán, mã tham chiếu giao dịch từ cổng thanh toán và việc hoàn tiền. Nhật ký kiểm duyệt kênh liên hệ chỉ ghi loại kênh thay đổi, không ghi giá trị; ghi chú nội bộ của quản trị viên không hiển thị cho người bán.",
       },
       purpose:
-        "Dùng để xét duyệt hồ sơ người bán, hiển thị trang shop và sản phẩm, kiểm duyệt nội dung, và xử lý khiếu nại.",
+        "Dùng để xét duyệt người bán, hiển thị shop và sản phẩm, thực hiện đơn hàng, đối soát thanh toán, hỗ trợ giao nhận, hoàn tiền, chống gian lận và xử lý khiếu nại.",
       retention:
-        "Hồ sơ đăng ký và bằng chứng chấp thuận bị xoá cùng tài khoản của bạn. Nhật ký kiểm duyệt được giữ lại để đối chiếu khi có tranh chấp, nhưng không còn gắn với tài khoản đã xoá. Nếu bạn đang sở hữu một shop, shop phải được xử lý trước thì tài khoản mới xoá được.",
+        "Hồ sơ đăng ký và bằng chứng chấp thuận bị xoá cùng tài khoản của bạn. Đơn hàng và nhật ký cần cho giao nhận, thanh toán, hoàn tiền hoặc đối chiếu có thể được giữ lại; khi người mua xoá tài khoản, liên kết tới tài khoản được gỡ nhưng thông tin giao nhận đã lưu trong đơn vẫn còn trong thời gian cần thiết. Nếu bạn đang sở hữu một shop, shop phải được xử lý trước thì tài khoản mới xoá được.",
     },
     effective: {
       text: "Chính sách này được cập nhật và có hiệu lực từ ngày {date}.",
@@ -3236,7 +3254,7 @@ export const vi: Translations = {
     deleteBlockedShopOwner:
       "Tài khoản này đang sở hữu một shop. Để đóng shop và tài khoản an toàn, vui lòng gửi yêu cầu tới tapickleballvn@gmail.com.",
     deleteBlockedShopOwnerWhy:
-      "Shop còn sản phẩm, hình ảnh và lịch sử kiểm duyệt. Trong giai đoạn thử nghiệm kín, ThePickleHub xử lý việc đóng shop thủ công để không xoá nhầm thứ cần giữ.",
+      "Shop còn sản phẩm, đơn hàng, hình ảnh và lịch sử kiểm duyệt. ThePickleHub xử lý việc đóng shop thủ công để bảo toàn dữ liệu cần đối chiếu và không xoá nhầm nội dung cần giữ.",
     deleteBlockedShopOwnerNoAutoSend:
       "Nút bên dưới chỉ mở ứng dụng email của anh/chị — nó KHÔNG tự gửi yêu cầu. Hãy gửi từ chính email đã đăng ký; chúng tôi sẽ xác nhận trước khi làm bất cứ điều gì.",
     deleteBlockedShopOwnerCta: "Soạn email yêu cầu",
@@ -3250,7 +3268,9 @@ export const vi: Translations = {
     tournaments: "Giải đấu",
     tools: "Công cụ",
     feed: "Bảng tin",
-    social: "Social",
+    social: "Cộng đồng",
+    shop: "Chợ",
+    more: "Thêm",
     search: "Tìm kiếm",
     profile: "Tài khoản",
     viewProfile: "Xem hồ sơ",
@@ -3261,6 +3281,10 @@ export const vi: Translations = {
     admin: "Quản trị",
     openMenu: "Mở menu",
     closeMenu: "Đóng menu",
+    toDark: "Chuyển sang nền tối",
+    toLight: "Chuyển sang nền sáng",
+    accountMenu: "Menu tài khoản",
+    createTool: "Tạo bảng đấu",
   },
   tools: {
     title: "Phần mềm Tổ chức Giải Pickleball & Tạo Bracket Miễn Phí",
@@ -3889,9 +3913,9 @@ export const vi: Translations = {
     registrationMessagePlaceholder: "VD: BTC sẽ xác nhận trình độ dựa vào điểm tự khai và đối chiếu với các hệ điểm...",
     continue: "Tiếp tục",
     back: "Quay lại",
-    roundRobin: "Chia bảng (Round Robin)",
-    roundRobinDesc: "Chia người chơi thành các bảng, mỗi người đấu với tất cả người khác trong bảng. Top của mỗi bảng sẽ vào vòng Playoff.",
-    largePlayoff: "Playoff đông người",
+    roundRobin: "Đánh vòng tròn",
+    roundRobinDesc: "Chia người chơi thành các bảng, mỗi người đấu với tất cả người khác trong bảng. Đội đứng đầu mỗi bảng vào vòng loại trực tiếp.",
+    largePlayoff: "Loại trực tiếp đông người",
     largePlayoffDesc: "Thể thức dành cho giải đông người. Lượt 1-2 ghi nhận thắng/thua và hiệu số, từ lượt 3 trở đi là single elimination.",
     recommended: "Khuyến nghị",
     notAvailableOver48: "Không khả dụng với >48 người",
@@ -3899,7 +3923,7 @@ export const vi: Translations = {
     status: {
       setup: "Đang thiết lập",
       groupStage: "Vòng bảng",
-      playoff: "Playoff",
+      playoff: "Vòng loại trực tiếp",
       completed: "Hoàn thành",
     },
     myTournaments: "Giải đấu của tôi",
@@ -4041,12 +4065,17 @@ export const vi: Translations = {
       editScore: "Sửa",
       openScoring: "Mở trang chấm điểm",
       tieNotAllowed: "Không cho phép tỉ số hòa",
+      swap: "Đổi cặp",
+      swapHint: "Chọn đội thứ hai ở trận khác để đổi chỗ",
+      swapCancel: "Huỷ đổi",
+      swapped: "Đã đổi cặp",
+      swapFailed: "Không đổi được: {error}",
     },
     // Quota / soft launch
     quota: {
       usage: "Bạn đã tạo {count}/3 giải",
-      limitReached: "Đã đạt giới hạn soft launch",
-      limitReachedDesc: "Giai đoạn soft launch: mỗi tài khoản chỉ được tạo tối đa 3 giải.",
+      limitReached: "Đã đủ 3 giải",
+      limitReachedDesc: "Mỗi tài khoản đang giữ tối đa 3 giải. Kết thúc hoặc xoá một giải cũ để tạo giải mới.",
       contactUs: "Liên hệ",
     },
     // SEO content
@@ -4115,10 +4144,15 @@ export const vi: Translations = {
       deleteConfirm: "Bạn có chắc chắn muốn xóa giải \"{name}\"? Tất cả dữ liệu (VĐV, trận đấu, đăng ký...) sẽ bị xóa vĩnh viễn.",
       deleteBtn: "Xóa giải",
       groupCompleteTitle: "Vòng bảng đã hoàn tất!",
-      groupCompleteDesc: "Tất cả trận đấu đã có kết quả. Bạn có thể chuyển sang vòng Playoff.",
-      startPlayoff: "Bắt đầu Playoff",
+      groupCompleteDesc: "Mọi trận vòng bảng đã có kết quả. Có thể mở vòng loại trực tiếp.",
+      startPlayoff: "Bắt đầu vòng loại trực tiếp",
       registrationTab: "Đăng ký",
-      playoffTab: "Playoff",
+      playoffTab: "Vòng loại trực tiếp",
+      playoffLockedOneGroup: "Một bảng vòng tròn thì không có vòng loại trực tiếp.",
+      playoffLockedWaiting: "Vòng loại trực tiếp mở sau khi mọi trận vòng bảng có kết quả.",
+      playoffLockedReady: "Vòng loại trực tiếp chưa được tạo. Khi vòng bảng xong, nút tạo nằm phía trên.",
+      shareWith: "Chia sẻ giải",
+      shareZalo: "Gửi qua Zalo",
       standings: "Bảng xếp hạng",
       player: "Người chơi",
       wins: "Thắng",
@@ -4126,8 +4160,8 @@ export const vi: Translations = {
       pointDiff: "Hiệu số",
       actions: "Thao tác",
       matchList: "Danh sách trận đấu",
-      showTeam: "Hiện Team",
-      courtTime: "Sân & Giờ",
+      showTeam: "Hiện câu lạc bộ",
+      courtTime: "Sân và giờ",
       rescheduleMatches: "Xếp lại lịch",
       reschedulePendingOnly: "Chỉ có thể xếp lại khi chưa có trận vòng bảng nào thi đấu",
       scheduleRepaired: "Đã xếp lại lịch thi đấu",
@@ -4189,8 +4223,8 @@ export const vi: Translations = {
       addPlayerName: "Tên VĐV",
       addPlayerTeam: "Team (không bắt buộc)",
       editInlineScore: "Sửa",
-      inputInlineScore: "Nhập",
-      openScoringPage: "Chấm",
+      inputInlineScore: "Nhập điểm",
+      openScoringPage: "Chấm điểm",
       cancelEdit: "Hủy",
       saveScore: "Lưu",
       errorOccurred: "Có lỗi xảy ra",
@@ -4242,7 +4276,7 @@ export const vi: Translations = {
     },
     playoffPreview: {
       title: "Preview Bracket Playoff",
-      subtitle: "16 đội vào playoff — kiểm tra trước khi xác nhận",
+      subtitle: "{count} đội vào playoff — kiểm tra, chạm 2 đội để đổi chỗ trước khi xác nhận",
       seed: "Seed",
       fromGroup: "Bảng",
       conflictWarning: "Có cặp đấu cùng bảng!",
@@ -4553,7 +4587,7 @@ export const vi: Translations = {
       notFound: "Không tìm thấy giải đấu",
       backToList: "Quay lại danh sách",
       preliminary: "Sơ loại",
-      playoff: "Playoff",
+      playoff: "Vòng loại trực tiếp",
       teams: "Đội",
       settings: "Cài đặt",
       teamList: "Danh sách đội",
@@ -4747,7 +4781,7 @@ export const vi: Translations = {
     groupSetupDesc: "Chọn số bảng và xem trước cách chia đội",
   },
   dashboard: {
-    title: "Bảng điều khiển trực tiếp",
+    title: "Quản lý giải",
     description: "Theo dõi trạng thái sân và tỷ số realtime",
     selectTournament: "Chọn giải đấu",
     court: "Sân",
@@ -4771,11 +4805,11 @@ export const vi: Translations = {
     completed: "Đã hoàn thành",
     backToList: "Quay lại",
     backToEvent: "Quay lại nội dung thi đấu",
-    openDashboard: "Dashboard",
+    openDashboard: "Quản lý giải",
     group: "Bảng",
     groupStage: "Vòng bảng",
     round: "Vòng",
-    playoff: "Playoff",
+    playoff: "Vòng loại trực tiếp",
     winnersBracket: "Nhánh thắng",
     losersBracket: "Nhánh thua",
     final: "Chung kết",
@@ -5689,7 +5723,7 @@ export const vi: Translations = {
     matchmaking: {
       pageTitle: "Xếp cặp — Matchmaking",
       tabMexicano: "Mexicano",
-      tabRoundRobin: "Round Robin",
+      tabRoundRobin: "Đánh vòng tròn",
       selectPlayersTitle: "Chọn người tham gia",
       selectAll: "Chọn tất cả",
       selectNone: "Bỏ chọn",
@@ -6039,7 +6073,7 @@ export const vi: Translations = {
       createTable: {
         authRequired: "Vui lòng đăng nhập để tạo bảng đấu",
         nameRequired: "Tên giải không được để trống",
-        limitReached: "Đã đạt giới hạn soft launch: mỗi tài khoản chỉ được tạo tối đa 3 giải.",
+        limitReached: "Đã đủ 3 giải. Kết thúc hoặc xoá một giải cũ để tạo giải mới.",
         error: "Không thể tạo bảng đấu",
       },
       addPlayers: {

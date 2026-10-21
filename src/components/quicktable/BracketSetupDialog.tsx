@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuickTable, type QuickTable } from '@/hooks/useQuickTable';
 import { useI18n } from '@/i18n';
+import { localePath } from '@/lib/locale-path';
 import {
   Dialog,
   DialogContent,
@@ -105,6 +106,7 @@ export function BracketSetupDialog({
 }: BracketSetupDialogProps) {
   const navigate = useNavigate();
   const { language } = useI18n();
+  const lp = (path: string) => localePath(path, language === 'vi' ? 'vi' : 'en');
   const {
     setupRosterAtomic,
   } = useQuickTable();
@@ -173,16 +175,16 @@ export function BracketSetupDialog({
   const txt = {
     titleManual: language === 'vi' ? 'Chia bảng thủ công' : 'Manual bracket assignment',
     titleAuto: language === 'vi' ? 'Chia bảng' : 'Create brackets',
-    formatRoundRobin: language === 'vi' ? 'Round Robin' : 'Round Robin',
-    formatPlayoff: language === 'vi' ? 'Playoff đông người' : 'Large playoff',
+    formatRoundRobin: language === 'vi' ? 'Đánh vòng tròn' : 'Round Robin',
+    formatPlayoff: language === 'vi' ? 'Loại trực tiếp đông người' : 'Large playoff',
     groups: (n: number) => (language === 'vi' ? `${n} bảng` : `${n} groups`),
-    playerCount: (n: number) => (language === 'vi' ? `${n} VĐV` : `${n} players`),
+    playerCount: (n: number) => (language === 'vi' ? `${n} người` : `${n} players`),
     playersApproved: (n: number) =>
-      language === 'vi' ? `${n} VĐV đã duyệt` : `${n} approved players`,
-    playerListTitle: language === 'vi' ? 'Danh sách VĐV' : 'Player list',
+      language === 'vi' ? `${n} người đã duyệt` : `${n} approved players`,
+    playerListTitle: language === 'vi' ? 'Danh sách người chơi' : 'Player list',
     shuffle: language === 'vi' ? 'Xáo trộn' : 'Shuffle',
-    namePlaceholder: language === 'vi' ? 'Tên VĐV *' : 'Player name *',
-    teamPlaceholder: language === 'vi' ? 'Team' : 'Team',
+    namePlaceholder: language === 'vi' ? 'Tên người chơi *' : 'Player name *',
+    teamPlaceholder: language === 'vi' ? 'Câu lạc bộ' : 'Team',
     seedPlaceholder: language === 'vi' ? 'Seed' : 'Seed',
     addPlayer: language === 'vi' ? 'Thêm VĐV' : 'Add player',
     methodTitle: language === 'vi' ? 'Phương thức chia bảng' : 'Assignment method',
@@ -285,7 +287,7 @@ export function BracketSetupDialog({
 
       toast.success(txt.successAuto);
       onOpenChange(false);
-      navigate(`/tools/quick-tables/${shareId}?tab=groups`);
+      navigate(`${lp(`/tools/quick-tables/${shareId}`)}?tab=groups`);
     } catch (error) {
       console.error('[BracketSetupDialog] auto submit failed:', error);
       toast.error(txt.genericError);
@@ -325,7 +327,7 @@ export function BracketSetupDialog({
 
       toast.success(txt.successManual);
       onOpenChange(false);
-      navigate(`/tools/quick-tables/${shareId}?tab=groups`);
+      navigate(`${lp(`/tools/quick-tables/${shareId}`)}?tab=groups`);
     } catch (error) {
       console.error('[BracketSetupDialog] manual assignment failed:', error);
       toast.error(txt.genericError);

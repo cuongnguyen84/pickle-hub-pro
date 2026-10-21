@@ -42,6 +42,27 @@ ROUTES=(
 )
 [[ -n "$MATCH_SLUG" ]] && ROUTES+=("/tran-dau/${MATCH_SLUG}")
 
+# Shop (Phase 4). OPT-IN via SHOP_PRODUCT_SLUG, because these routes answer the
+# noindex shell — no canonical, no hreflang, no JSON-LD — for as long as
+# SHOP_PUBLIC_INDEXING is off, and a script that failed by default while the
+# gate is deliberately shut would be a gate nobody could read.
+#
+# Run it the moment the flag flips, before requesting indexing:
+#   SHOP_PRODUCT_SLUG=kaiwin-diamond ./scripts/seo-verify.sh
+SHOP_PRODUCT_SLUG="${SHOP_PRODUCT_SLUG:-}"
+SHOP_STORE_SLUG="${SHOP_STORE_SLUG:-thepicklehub}"
+SHOP_CATEGORY_SLUG="${SHOP_CATEGORY_SLUG:-vot}"
+if [[ -n "$SHOP_PRODUCT_SLUG" ]]; then
+  ROUTES+=(
+    "/shop"
+    "/vi/shop"
+    "/shop/product/${SHOP_PRODUCT_SLUG}"
+    "/vi/shop/product/${SHOP_PRODUCT_SLUG}"
+    "/shop/store/${SHOP_STORE_SLUG}"
+    "/shop/category/${SHOP_CATEGORY_SLUG}"
+  )
+fi
+
 # ─── Output helpers ─────────────────────────────────────────────────────
 GREEN=$'\033[0;32m'
 RED=$'\033[0;31m'

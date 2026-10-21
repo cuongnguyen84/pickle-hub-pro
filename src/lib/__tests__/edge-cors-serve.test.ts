@@ -218,8 +218,10 @@ describe("Edge Function CORS and server entrypoints", () => {
       [...functionSources.values()].filter((source) =>
         source.includes('_shared/cors.ts"'),
       ),
-      // 75 since P2a.2: shop-media-lifecycle imports the shared preset too.
-    ).toHaveLength(75);
+      // 77: buyer-facing SePay checkout + seller product-import-enrich import
+      // the shared preset; the server-to-server IPN intentionally has no
+      // browser CORS surface. 78: quick-table-chat.
+    ).toHaveLength(78);
     expect(combined).not.toMatch(/const corsHeaders\s*=/i);
     expect(combined).not.toMatch(
       /import\s*\{[^}]*corsHeaders[^}]*\}\s*from\s*["']\.\.\/_shared\/auth\.ts["']/s,
@@ -233,8 +235,8 @@ describe("Edge Function CORS and server entrypoints", () => {
   });
 
   it("uses Deno.serve for every function entrypoint", () => {
-    // 81 since P2a.2 added shop-media-lifecycle.
-    expect(functionSources).toHaveLength(81);
+    // 86 since quick-table-chat.
+    expect(functionSources).toHaveLength(86);
     for (const [functionName, source] of functionSources) {
       const alias = source.match(/import\s+["']\.\.\/([^/]+)\/index\.ts["']/)?.[1];
       const effectiveSource = alias ? functionSources.get(alias) : source;

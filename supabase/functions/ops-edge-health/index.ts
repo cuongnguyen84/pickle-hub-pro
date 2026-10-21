@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { requireCronRequest } from "../_shared/cron-auth.ts";
+import { instantText, isCriticalEdgeFunction } from "../errors-telegram-alert/telegram-policy.ts";
 
 type ProbeState = "available" | "missing_blob" | "http_error" | "timeout";
 type RegistryRow = { function_slug: string; display_name: string; probe_url: string | null };
@@ -64,10 +65,13 @@ Deno.serve(async (req) => {
     const now = new Date().toISOString();
     const crossedFailureThreshold = failures === 2;
     let alerted = false;
-    if (changed && result.state === "available" && previous && previous.state !== "available") {
-      alerted = await sendTelegram(`✅ Edge Function recovered\n${fn.display_name} (${fn.function_slug})\nHTTP ${result.status} · ${result.ms}ms\nhttps://www.thepicklehub.net/admin/jobs`);
-    } else if (result.state !== "available" && ((result.state === "missing_blob" && changed) || crossedFailureThreshold)) {
-      alerted = await sendTelegram(`🚨 Edge Function unavailable\n${fn.display_name} (${fn.function_slug})\nState: ${result.state}\nReason: ${result.reason}\nhttps://www.thepicklehub.net/admin/jobs`);
+    // Non-critical functions only update ops_edge_function_state; the Grok Bot
+    // digest (08:00/21:00) reads it. Critical ones still page on transition.
+    const critical = isCriticalEdgeFunction(fn.function_slug);
+    if (critical && changed && result.state === "available" && previous && previous.state !== "available") {
+      alerted = await sendTelegram(instantText(`Edge Function recovered\n${fn.display_name} (${fn.function_slug})\nHTTP ${result.status} · ${result.ms}ms\nhttps://www.thepicklehub.net/admin/jobs`, "resolved"));
+    } else if (critical && result.state !== "available" && ((result.state === "missing_blob" && changed) || crossedFailureThreshold)) {
+      alerted = await sendTelegram(instantText(`Edge Function unavailable\n${fn.display_name} (${fn.function_slug})\nState: ${result.state}\nReason: ${result.reason}\nhttps://www.thepicklehub.net/admin/jobs`));
     }
     const { error: upsertError } = await supabase.from("ops_edge_function_state").upsert({
       function_slug: fn.function_slug, state: result.state, http_status: result.status,

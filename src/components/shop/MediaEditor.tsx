@@ -14,8 +14,10 @@
 
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, ArrowDown, ArrowUp, ImageOff, Star, Trash2, Upload, X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { reportCaughtError } from "@/lib/errorReporter";
+import { SHOP_STATE_LABEL } from "@/lib/shop/applicationState";
 import { shopErrorMessage } from "@/lib/shop/errors";
+import { useSignedPreviews } from "@/hooks/shop/useSignedPreviews";
 import { IMAGE_LIMITS } from "@/lib/shop/imagePipeline";
 import {
   PHASE_LABEL,
@@ -29,6 +31,7 @@ import {
   moveItem,
   useDeleteProductMedia,
   useDeleteProfileMedia,
+  usePublishProfileMedia,
   useReorderProductMedia,
   useSetCoverFocal,
   useSetVariantMedia,
@@ -38,48 +41,22 @@ import type {
   ProductMediaRow,
   ProductVariantRow,
   ShopMediaPurpose,
+  ShopState,
 } from "@/integrations/supabase/shop-schema";
 
-const DRAFT_BUCKET = "shop-product-media-draft";
 const ACCEPT = IMAGE_LIMITS.inputTypes.join(",");
+
+/** The error code line: monospace so a screenshot of it is readable, and
+ *  breakable so 80 characters cannot push the card sideways at 320px. */
+const CODE_STYLE = {
+  fontFamily: '"Geist Mono", ui-monospace, monospace',
+  fontSize: 11.5,
+  wordBreak: "break-word",
+} as const;
 
 /** An icon has no text to widen the box, so a 44px target has to be asked for.
  *  .tl-shop-btn--sm is 36px tall by 40 wide once an icon is all it holds. */
 const ICON_BUTTON = { minWidth: 44, minHeight: 44 } as const;
-
-/**
- * Signed previews, in memory only.
- *
- * The draft bucket is private, so a preview needs a signed URL. They live five
- * minutes, are never persisted, and are re-minted when the media list changes.
- */
-function useSignedPreviews(paths: string[]) {
-  const [urls, setUrls] = useState<Record<string, string>>({});
-  const key = paths.join("|");
-
-  useEffect(() => {
-    let cancelled = false;
-    if (!paths.length) {
-      setUrls({});
-      return;
-    }
-    void supabase.storage
-      .from(DRAFT_BUCKET)
-      .createSignedUrls(paths, 300)
-      .then(({ data }) => {
-        if (cancelled || !data) return;
-        const next: Record<string, string> = {};
-        for (const row of data) if (row.path && row.signedUrl) next[row.path] = row.signedUrl;
-        setUrls(next);
-      });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
-
-  return urls;
-}
 
 // ─── In-flight files ────────────────────────────────────────────────────────
 
@@ -444,16 +421,40 @@ export function ProductMediaSection({
 function ProfileSlot({
   shopId,
   purpose,
+  shopState,
   disabled,
   onChanged,
 }: {
   shopId: string;
   purpose: ShopMediaPurpose;
+  shopState: ShopState;
   disabled: boolean;
   onChanged: () => void;
 }) {
   const profile = useShopProfileMedia(shopId);
-  const upload = useMediaUpload(profileMediaTarget(shopId, purpose, onChanged));
+  const publish = usePublishProfileMedia(shopId);
+  // shop_profile_media_publish_prepare refuses every shop that is not active,
+  // so firing there would give a seller waiting for activation a red line they
+  // cannot act on, once per upload.
+  const isActive = shopState === "active";
+  const runPublish = () =>
+    publish.mutate(undefined, {
+      // The screen already says it; this is so we hear about it too. The
+      // reporter dedupes the same message for 5 minutes, so a seller pressing
+      // Thử lại twice in a row produces ONE client event, by design.
+      onError: (e) =>
+        reportCaughtError(e instanceof Error ? e : new Error(String(e)), "shop:publish_profile"),
+    });
+  // After a successful finalize the image is verified but still private —
+  // publish is attempted automatically, once per finished upload. A publish
+  // failure is NOT an upload failure: the row stays verified, the status
+  // below says so honestly, and Thử lại retries just the publish leg.
+  const upload = useMediaUpload(
+    profileMediaTarget(shopId, purpose, () => {
+      onChanged();
+      if (isActive) runPublish();
+    }),
+  );
   const remove = useDeleteProfileMedia(shopId);
   const setFocal = useSetCoverFocal(shopId);
   const [error, setError] = useState<string | null>(null);
@@ -506,12 +507,61 @@ function ProfileSlot({
       )}
 
       {row && !row.verified_at && (
-        <p className="tl-shop-hint">Đang chờ xác minh — chưa hiển thị ra ngoài.</p>
+        <p className="tl-shop-hint">Đang kiểm tra ảnh — chưa hiện trên trang shop.</p>
       )}
       {row?.verified_at && !row.public_path && (
-        <p className="tl-shop-hint">
-          Đã xác minh. Ảnh sẽ hiện trên trang shop công khai khi trang đó mở.
-        </p>
+        <div style={{ marginTop: 6 }}>
+          {!isActive ? (
+            // No button: pressing it can only collect a 403.
+            <p className="tl-shop-hint">
+              {shopState === "pending_activation"
+                ? "Ảnh đã lưu. Shop được kích hoạt xong là ảnh tự lên trang shop, anh/chị không phải làm gì thêm."
+                : `Ảnh đã lưu. Shop đang ở trạng thái "${SHOP_STATE_LABEL[shopState]}" nên chưa đưa ảnh lên trang shop được.`}
+            </p>
+          ) : (
+            <>
+              {/* One status line and ONE button, in every state. The old
+                  either/or hid the button for as long as the request ran,
+                  which on a dead request was forever. */}
+              <p className="tl-shop-hint" role={publish.isPending ? "status" : undefined}>
+                {publish.isPending
+                  ? "Đang đưa ảnh lên trang shop…"
+                  : `Trang shop hiện chưa có ${isLogo ? "logo" : "ảnh bìa"}. Ảnh đã lưu trên hệ thống, lần đưa lên trước chưa xong.`}
+              </p>
+              {publish.isError && (
+                <>
+                  <p className="tl-shop-error" role="alert" id={`publish-error-${purpose}`}>
+                    {shopErrorMessage(publish.error)}
+                  </p>
+                  <p className="tl-shop-hint">
+                    Mã lỗi:{" "}
+                    <code style={CODE_STYLE}>
+                      {(publish.error as { code?: string } | null)?.code ?? "không rõ"}
+                    </code>{" "}
+                    Chụp màn hình dòng này gửi cho ThePickleHub nếu bấm mấy lần vẫn lỗi.
+                  </p>
+                </>
+              )}
+              {!disabled && (
+                <button
+                  type="button"
+                  className="tl-shop-btn tl-shop-btn--sm"
+                  style={{ marginTop: 10 }}
+                  disabled={publish.isPending}
+                  // While it runs the visible label IS the state; renaming it
+                  // would hide that state from a screen reader.
+                  aria-label={
+                    publish.isPending ? undefined : `Thử đưa ${isLogo ? "logo" : "ảnh bìa"} lên trang shop lại`
+                  }
+                  aria-describedby={publish.isError ? `publish-error-${purpose}` : undefined}
+                  onClick={runPublish}
+                >
+                  {publish.isPending ? "Đang đưa lên trang shop…" : "Thử lại"}
+                </button>
+              )}
+            </>
+          )}
+        </div>
       )}
 
       {!disabled && (
@@ -582,10 +632,12 @@ function ProfileSlot({
 
 export function ShopProfileMediaSection({
   shopId,
+  shopState,
   disabled,
   onChanged,
 }: {
   shopId: string;
+  shopState: ShopState;
   disabled: boolean;
   onChanged: () => void;
 }) {
@@ -595,11 +647,23 @@ export function ShopProfileMediaSection({
         Logo &amp; ảnh bìa
       </h2>
       <p className="tl-shop-hint" style={{ marginTop: -4 }}>
-        Ảnh được nén ngay trên máy anh/chị và thông tin vị trí bị loại bỏ trước khi gửi. Trang shop
-        công khai chưa mở, nên chưa ai ngoài shop nhìn thấy.
+        Ảnh được nén ngay trên máy anh/chị và thông tin vị trí bị loại bỏ trước khi gửi. Logo và
+        ảnh bìa hiện trên trang shop sau khi được xác minh và đưa lên xong.
       </p>
-      <ProfileSlot shopId={shopId} purpose="logo" disabled={disabled} onChanged={onChanged} />
-      <ProfileSlot shopId={shopId} purpose="cover" disabled={disabled} onChanged={onChanged} />
+      <ProfileSlot
+        shopId={shopId}
+        purpose="logo"
+        shopState={shopState}
+        disabled={disabled}
+        onChanged={onChanged}
+      />
+      <ProfileSlot
+        shopId={shopId}
+        purpose="cover"
+        shopState={shopState}
+        disabled={disabled}
+        onChanged={onChanged}
+      />
     </section>
   );
 }

@@ -128,8 +128,8 @@ export function useClubMatches(clubId: string | undefined, limit = 50) {
   // ─── Realtime: live-update the list when a match in this club changes ────
   // Without this, an opponent confirming a score (matches UPDATE →
   // confirmation_status='confirmed' / submitted_to_dupr=true) or a newly
-  // logged match (INSERT) only appears after a web reload or an iOS Capacitor
-  // force-quit. Mirrors the club_members realtime fix (migration
+  // logged match (INSERT) only appears after a reload.
+  // Mirrors the club_members realtime fix (migration
   // 20260602000000); public.matches is added to supabase_realtime in
   // migration 20260602010000. The `is_public=true` SELECT policy authorizes
   // the subscription and the club_id=eq filter matches the new-row image on

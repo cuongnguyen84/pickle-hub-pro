@@ -10,7 +10,7 @@
 
 BEGIN;
 
-SELECT plan(86);
+SELECT plan(88);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 
@@ -241,7 +241,7 @@ SELECT is(
   'true', 'chủ shop gửi duyệt được');
 SELECT is(
   (SELECT status::text FROM public.products WHERE id=(SELECT v FROM t_sub WHERE k='p1')),
-  'pending_review', 'và trạng thái chuyển sang chờ duyệt');
+  'approved', 'và sản phẩm lên bán luôn — admin chỉ duyệt việc mở shop');
 SELECT ok(
   (SELECT submitted_at IS NOT NULL FROM public.products WHERE id=(SELECT v FROM t_sub WHERE k='p1')),
   'có mốc thời gian gửi');
@@ -254,7 +254,7 @@ SELECT is(
 SELECT is(
   (SELECT from_status::text || '->' || to_status::text FROM public.product_submission_events
    WHERE product_id=(SELECT v FROM t_sub WHERE k='p1')),
-  'draft->pending_review', 'ghi cả hai đầu của bước chuyển');
+  'draft->approved', 'ghi cả hai đầu của bước chuyển');
 SELECT ok(
   (SELECT metadata::text NOT LIKE '%token=%' AND metadata::text NOT LIKE '%/original%'
    FROM public.product_submission_events WHERE product_id=(SELECT v FROM t_sub WHERE k='p1')),
@@ -300,12 +300,20 @@ SELECT lives_ok(
 
 -- ─── Needs changes → resubmit ───────────────────────────────────────────────
 
+-- Từ 20260818170000 sản phẩm không đi qua `pending_review` nữa, nên
+-- `request_changes` (chỉ nhận pending_review) không còn với tới được. Đường
+-- THẬT mà một quản trị viên còn có để bảo người bán sửa là: gỡ xuống rồi mở
+-- lại. Hai bước, và đó là chủ ý — gỡ một món đang bán là việc phải cố tình.
 SET LOCAL request.jwt.claims TO '{"sub":"50080005-0000-4000-8000-000000000005","role":"authenticated","aal":"aal2"}';
 SELECT is(
-  (public.product_decide((SELECT v FROM t_sub WHERE k='p1'), 'request_changes', NULL,
+  (public.product_decide((SELECT v FROM t_sub WHERE k='p1'), 'suspend', NULL,
+    'Ảnh mờ quá, tạm gỡ.', 'nội bộ: ảnh kém')) ->> 'status',
+  'suspended', 'quản trị viên gỡ hàng xuống');
+SELECT is(
+  (public.product_decide((SELECT v FROM t_sub WHERE k='p1'), 'reopen', NULL,
     'Ảnh mờ quá, chụp lại giúp em.', 'nội bộ: ảnh kém',
     '[{"section":"media"}]'::jsonb)) ->> 'status',
-  'needs_changes', 'quản trị viên yêu cầu sửa');
+  'needs_changes', 'rồi mở lại kèm chỗ cần sửa');
 
 SET LOCAL request.jwt.claims TO '{"sub":"50080001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
 SELECT is(
@@ -349,16 +357,28 @@ SELECT throws_ok(
 
 SET LOCAL role authenticated;
 SET LOCAL request.jwt.claims TO '{"sub":"50080001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
-SELECT is(
-  public.product_withdraw_submission((SELECT v FROM t_sub WHERE k='p1'))::text,
-  'draft', 'rút lại được khi đang chờ duyệt');
-SELECT is(
-  (SELECT count(*)::int FROM public.product_submission_events
-   WHERE product_id=(SELECT v FROM t_sub WHERE k='p1') AND event='withdrawn'),
-  1, 'và việc rút lại cũng được ghi');
+-- `product_withdraw_submission` chỉ nhận `pending_review`, và không luồng nào
+-- còn tạo ra trạng thái đó. Đường của người bán nay là `product_edit_again`:
+-- gỡ hàng đang bán xuống để sửa. Không có nó thì bỏ admin khỏi vòng lặp đồng
+-- nghĩa với việc người bán tự khoá mình — đăng xong, thấy sai một chữ, và
+-- không sửa được nữa.
 SELECT throws_ok(
   format($$ SELECT public.product_withdraw_submission(%L::uuid) $$, (SELECT v FROM t_sub WHERE k='p1')),
-  '22023', NULL, 'rút lại lần nữa khi đang là nháp thì bị từ chối');
+  '22023', NULL, 'không còn hàng đợi để "rút lại" nữa');
+
+SELECT is(
+  (public.product_edit_again((SELECT v FROM t_sub WHERE k='p1'))) ->> 'status',
+  'draft', 'người bán gỡ hàng đang bán xuống để sửa');
+SELECT is(
+  (SELECT count(*)::int FROM public.product_submission_events
+   WHERE product_id=(SELECT v FROM t_sub WHERE k='p1') AND event='unpublished_to_edit'),
+  1, 'và việc gỡ xuống cũng được ghi');
+SELECT is(
+  (SELECT is_published FROM public.products WHERE id=(SELECT v FROM t_sub WHERE k='p1')),
+  false, 'hàng rời kệ ngay trong cùng giao dịch');
+SELECT throws_ok(
+  format($$ SELECT public.product_edit_again(%L::uuid) $$, (SELECT v FROM t_sub WHERE k='p1')),
+  '22023', NULL, 'gỡ lần nữa khi đang là nháp thì bị từ chối');
 
 -- Archived cannot be submitted.
 SELECT is(public.product_archive((SELECT v FROM t_sub WHERE k='p1'))::text, 'archived', 'ngừng bán');
@@ -388,13 +408,8 @@ SET LOCAL request.jwt.claims TO '{"sub":"50080001-0000-4000-8000-000000000001","
 SELECT is(
   (public.product_submit((SELECT v FROM t_sub WHERE k='p1'),
      (SELECT version FROM public.products WHERE id=(SELECT v FROM t_sub WHERE k='p1')),
-     'tok-submit-0003')) ->> 'ok',
-  'true', 'gửi duyệt lại lần nữa');
-
-SET LOCAL request.jwt.claims TO '{"sub":"50080005-0000-4000-8000-000000000005","role":"authenticated","aal":"aal2"}';
-SELECT is(
-  (public.product_decide((SELECT v FROM t_sub WHERE k='p1'), 'approve')) ->> 'status',
-  'approved', 'quản trị viên duyệt');
+     'tok-submit-0003')) ->> 'status',
+  'approved', 'đăng bán lại — một bước, không phải hai');
 
 -- Publishing for real needs the worker to copy bytes, which SQL cannot do and
 -- product_set_published says so. For the purposes of "is the public reader the

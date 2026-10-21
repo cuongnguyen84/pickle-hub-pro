@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAutosaveDraft } from '@/hooks/useAutosaveDraft';
 import { DraftRestoredBanner, DraftSaveStatus } from '@/components/wizard/DraftAutosave';
@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { ManualGroupAssignment } from '@/components/quicktable/ManualGroupAssignment';
 import CourtTimeSettings from '@/components/quicktable/CourtTimeSettings';
 import { useI18n } from '@/i18n';
+import { localePath } from '@/lib/locale-path';
 import { useConfirm } from '@/hooks/useConfirm';
 import { parseCourtsInput } from '@/lib/round-robin';
 import { surfaceCard, stepKickerStyle, stepHeadingStyle, stepDescStyle } from '@/components/tournament/setup-styles';
@@ -35,6 +36,7 @@ const QuickTableSetup = () => {
   const { shareId } = useParams<{ shareId: string }>();
   const navigate = useNavigate();
   const { t, language } = useI18n();
+  const lp = useCallback((path: string) => localePath(path, language === 'vi' ? 'vi' : 'en'), [language]);
   const confirm = useConfirm();
   const { user } = useAuth();
   const { isAdmin } = useAdminAuth();
@@ -142,12 +144,12 @@ const QuickTableSetup = () => {
         setTable(data.table);
 
         if (data.table.requires_registration) {
-          navigate(`/tools/quick-tables/${shareId}`);
+          navigate(lp(`/tools/quick-tables/${shareId}`));
           return;
         }
 
         if (data.players.length > 0) {
-          navigate(`/tools/quick-tables/${shareId}`);
+          navigate(lp(`/tools/quick-tables/${shareId}`));
           return;
         }
 
@@ -168,7 +170,7 @@ const QuickTableSetup = () => {
     };
 
     loadTable();
-  }, [shareId, getTableByShareId, navigate]);
+  }, [shareId, getTableByShareId, navigate, lp]);
 
   const updatePlayer = (index: number, field: keyof PlayerInput, value: string) => {
     setPlayers(prev => {
@@ -252,7 +254,7 @@ const QuickTableSetup = () => {
         auth_state: user ? 'authenticated' : 'anonymous',
       });
       toast.success(t.quickTable.setup.createdSuccess);
-      navigate(`/tools/quick-tables/${shareId}`);
+      navigate(lp(`/tools/quick-tables/${shareId}`));
     } catch (error) {
       console.error('Error setting up table:', error);
       toast.error(t.quickTable.setup.errorOccurred);
@@ -303,7 +305,7 @@ const QuickTableSetup = () => {
         auth_state: user ? 'authenticated' : 'anonymous',
       });
       toast.success(t.quickTable.setup.manualSuccess);
-      navigate(`/tools/quick-tables/${shareId}`);
+      navigate(lp(`/tools/quick-tables/${shareId}`));
     } catch (error) {
       console.error('Error setting up table with manual assignment:', error);
       toast.error(t.quickTable.setup.errorOccurred);
@@ -344,7 +346,7 @@ const QuickTableSetup = () => {
           <div className="tl-empty" style={{ marginTop: 56 }}>
             <h3>{t.quickTable.setup.notFound}</h3>
             <p>{t.quickTable.setup.notFoundDesc}</p>
-            <Link to="/tools/quick-tables" className="tl-btn">
+            <Link to={localePath("/tools/quick-tables", language === "vi" ? "vi" : "en")} className="tl-btn">
               ← {t.quickTable.view.goBack}
             </Link>
           </div>
@@ -361,9 +363,9 @@ const QuickTableSetup = () => {
       <TheLineLayout title={`Chia bảng - ${table.name}`} noindex={true} active="lab">
         <div className="tl-shell">
           <nav className="tl-breadcrumb">
-            <Link to="/tools">{language === 'vi' ? 'Bracket Lab' : 'Bracket Lab'}</Link>
+            <Link to={localePath("/tools", language === "vi" ? "vi" : "en")}>{language === "vi" ? "Công cụ" : "Bracket Lab"}</Link>
             <span className="sep">/</span>
-            <Link to="/tools/quick-tables">Quick Tables</Link>
+            <Link to={localePath("/tools/quick-tables", language === "vi" ? "vi" : "en")}>{language === "vi" ? "Chia bảng" : "Quick Tables"}</Link>
             <span className="sep">/</span>
             <span className="current">{table.name}</span>
           </nav>
@@ -442,7 +444,7 @@ const QuickTableSetup = () => {
     }
     const success = await deleteTable(table.id);
     if (success) {
-      navigate('/tools/quick-tables');
+      navigate(lp('/tools/quick-tables'));
     }
   };
 
@@ -453,9 +455,9 @@ const QuickTableSetup = () => {
     <TheLineLayout title={`Nhập VĐV - ${table.name}`} noindex={true} active="lab">
       <div className="tl-shell">
         <nav className="tl-breadcrumb">
-          <Link to="/tools">{language === 'vi' ? 'Bracket Lab' : 'Bracket Lab'}</Link>
+          <Link to={localePath("/tools", language === "vi" ? "vi" : "en")}>{language === "vi" ? "Công cụ" : "Bracket Lab"}</Link>
           <span className="sep">/</span>
-          <Link to="/tools/quick-tables">Quick Tables</Link>
+          <Link to={localePath("/tools/quick-tables", language === "vi" ? "vi" : "en")}>{language === "vi" ? "Chia bảng" : "Quick Tables"}</Link>
           <span className="sep">/</span>
           <span className="current">{table.name}</span>
         </nav>

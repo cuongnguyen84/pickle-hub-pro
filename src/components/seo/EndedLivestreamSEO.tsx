@@ -7,7 +7,8 @@ import type { Livestream } from "@/hooks/useSupabaseData";
 
 interface EndedLivestreamSEOProps {
   livestream: Livestream;
-  viewCount: number;
+  /** undefined = ẩn (chỉ creator/admin thấy lượt xem). */
+  viewCount?: number;
   relatedLivestreams?: Array<{
     id: string;
     title: string;
@@ -103,6 +104,7 @@ export const EndedLivestreamSEO = ({
           )}
 
           {/* Total Views */}
+          {viewCount !== undefined && (
           <div>
             <dt className="text-foreground-muted flex items-center gap-1.5">
               <Eye className="w-4 h-4" />
@@ -112,6 +114,7 @@ export const EndedLivestreamSEO = ({
               {viewCount.toLocaleString()}
             </dd>
           </div>
+          )}
 
           {/* Status */}
           <div className="col-span-2">

@@ -17,9 +17,133 @@ import {
   type Lang,
 } from "../utils";
 import { buildListJsonLd } from "./shared";
+import { wcResultsPath } from "../../../src/lib/wc-results";
 import { render404 } from "./static-pages";
 
 // ─── Livestream ────────────────────────────��──────────────
+
+// ─── World Cup 2026 livescore (SSR block on the /live hub) ───────────────────
+//
+// The React card and /live board are client-only, so Googlebot saw nothing of
+// the World Cup on /live. This renders the same data server-side — matches in
+// progress and recent results, players and scores — so the hub carries real,
+// indexable World Cup content during the tournament ("kết quả / tỉ số
+// pickleball world cup"). It is a snapshot at cache time (live scores drift),
+// so the value is the names, results and event context, not a live score.
+// Empty (and cheap) outside the event window.
+
+const WC_LIVESCORE_UNTIL = Date.UTC(2026, 8, 7, 17, 0, 0); // 2026-09-08 00:00 VN
+
+const WC_EVENT_LABEL: Record<string, { vi: string; en: string }> = {
+  pro_singles_mens: { vi: "Đơn nam", en: "Men's Singles" },
+  pro_singles_womens: { vi: "Đơn nữ", en: "Women's Singles" },
+  pro_doubles_mens: { vi: "Đôi nam", en: "Men's Doubles" },
+  pro_doubles_womens: { vi: "Đôi nữ", en: "Women's Doubles" },
+  pro_mixed: { vi: "Đôi nam nữ", en: "Mixed Doubles" },
+};
+
+interface WcProRow {
+  match_id: string;
+  category_id: string;
+  round_name: string | null;
+  entry_a_name: string | null;
+  entry_b_name: string | null;
+  current_a: number | null;
+  current_b: number | null;
+  games_json: { a: number; b: number }[] | null;
+  leader_side: string | null;
+  status: string;
+  is_vietnam: boolean;
+}
+
+// Full scoreline: every finished game plus the last game still in view (the
+// game being played when live, or the last one observed before the source
+// dropped a completed match — the source never publishes a completed final).
+function wcScore(m: WcProRow): string {
+  const games = m.games_json ?? [];
+  const parts = games.map((g) => `${g.a}-${g.b}`);
+  if (m.current_a != null && m.current_b != null) {
+    const last = games[games.length - 1];
+    const dupOfLast = last != null && last.a === m.current_a && last.b === m.current_b;
+    // Live 0-0 = game just starting (keep); completed 0-0 = source zeroed it (drop).
+    const emptyOnDone = m.status === "completed" && m.current_a === 0 && m.current_b === 0;
+    if (!dupOfLast && !emptyOnDone) parts.push(`${m.current_a}-${m.current_b}`);
+  }
+  return parts.join(", ");
+}
+
+/**
+ * The World Cup livescore section for the /live hub. Empty string outside the
+ * event window or when there is nothing to show.
+ */
+async function buildWorldCupLivescore(
+  supabase: SupabaseClient,
+  lang: Lang,
+): Promise<{ html: string; live: number }> {
+  if (Date.now() > WC_LIVESCORE_UNTIL) return { html: "", live: 0 };
+
+  const { data } = await supabase
+    .from("wc_pro_matches")
+    .select(
+      "match_id, category_id, round_name, entry_a_name, entry_b_name, current_a, current_b, games_json, leader_side, status, is_vietnam",
+    )
+    .in("status", ["in_progress", "completed"])
+    .order("updated_at", { ascending: false })
+    .limit(60);
+
+  const rows = (data ?? []) as WcProRow[];
+  if (rows.length === 0) return { html: "", live: 0 };
+
+  const live = rows.filter((m) => m.status === "in_progress");
+  // Most-recent results, Vietnamese first so the section leads with what the
+  // audience wants; capped so the block stays a summary, not the whole draw.
+  const results = rows
+    .filter((m) => m.status === "completed" && wcScore(m))
+    .sort((a, b) => (a.is_vietnam === b.is_vietnam ? 0 : a.is_vietnam ? -1 : 1))
+    .slice(0, 12);
+
+  const evLabel = (id: string) => WC_EVENT_LABEL[id]?.[lang] ?? id;
+  const nameA = (m: WcProRow) => escapeHtml(m.entry_a_name ?? "—");
+  const nameB = (m: WcProRow) => escapeHtml(m.entry_b_name ?? "—");
+
+  const heading = lang === "en" ? "Pickleball World Cup 2026 livescore — Da Nang" : "Livescore Pickleball World Cup 2026 — Đà Nẵng";
+  const updated =
+    (lang === "en" ? "Updated " : "Cập nhật ") +
+    new Date().toLocaleDateString(lang === "vi" ? "vi-VN" : "en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+  const vnLive = live.find((m) => m.is_vietnam);
+  const lead =
+    lang === "en"
+      ? `${updated}. Live scores from the OPEN/Pro individual events at the Heineken Pickleball World Cup 2026 in Da Nang, tracked by ThePickleHub. ${
+          live.length > 0
+            ? `${live.length} match${live.length > 1 ? "es are" : " is"} in progress${vnLive ? `, including ${nameA(vnLive)} vs ${nameB(vnLive)}` : ""}.`
+            : "No match is in progress right now; recent results are below."
+        }`
+      : `${updated}. Tỉ số trực tiếp các nội dung Cá nhân OPEN/Pro tại Heineken Pickleball World Cup 2026 ở Đà Nẵng, do ThePickleHub cập nhật. ${
+          live.length > 0
+            ? `Có ${live.length} trận đang đấu${vnLive ? `, trong đó ${nameA(vnLive)} gặp ${nameB(vnLive)}` : ""}.`
+            : "Hiện chưa có trận nào đang đấu; kết quả gần nhất ở bên dưới."
+        }`;
+
+  const liveRow = (m: WcProRow) =>
+    `<li>${escapeHtml(evLabel(m.category_id))}${m.round_name ? ` · ${escapeHtml(m.round_name)}` : ""}: ${nameA(m)} vs ${nameB(m)} — ${escapeHtml(wcScore(m))} (${lang === "en" ? "live" : "đang đấu"})</li>`;
+  const resultRow = (m: WcProRow) => {
+    const winner = m.leader_side === "B" ? nameB(m) : nameA(m);
+    const loser = m.leader_side === "B" ? nameA(m) : nameB(m);
+    const verb = lang === "en" ? "beat" : "thắng";
+    return `<li>${escapeHtml(evLabel(m.category_id))}: ${winner} ${verb} ${loser} ${escapeHtml(wcScore(m))}</li>`;
+  };
+
+  const liveBlock = live.length
+    ? `<h3>${lang === "en" ? "In progress" : "Đang đấu"}</h3><ul>${live.slice(0, 12).map(liveRow).join("")}</ul>`
+    : "";
+  const resultsBlock = results.length
+    ? `<h3>${lang === "en" ? "Recent results" : "Kết quả gần nhất"}</h3><ul>${results.map(resultRow).join("")}</ul>`
+    : "";
+
+  const html = `<section><h2>${escapeHtml(heading)}</h2><p>${escapeHtml(lead)}</p>${liveBlock}${resultsBlock}</section>`;
+  return { html, live: live.length };
+}
 
 export async function renderLive(supabase: SupabaseClient, id: string, siteUrl: string): Promise<Response> {
   const { data: ls } = await supabase
@@ -122,7 +246,9 @@ export async function renderLive(supabase: SupabaseClient, id: string, siteUrl: 
     supabase.from("public_livestreams")
       .select("id, title, status")
       .neq("id", id)
-      .in("status", ["live", "scheduled", "ended"])
+      // Replays are hidden site-wide (16/09) — a page that lists them here
+      // would be the one surface still handing crawlers the links.
+      .in("status", ["live", "scheduled"])
       .order("created_at", { ascending: false })
       .limit(5),
     supabase.from("news_items")
@@ -167,6 +293,7 @@ ${ls.description ? `<p>${escapeHtml(ls.description)}</p>` : ""}
 <nav><h2>Xem thêm</h2><ul>
 ${orgSlug ? `<li><a href="${siteUrl}/org/${escapeHtml(orgSlug)}">${escapeHtml(orgName)} - Tất cả livestream</a></li>` : ""}
 <li><a href="${siteUrl}/live">Tất cả livestream pickleball</a></li>
+<li><a href="${siteUrl}${wcResultsPath("vi")}">Kết quả Pickleball World Cup 2026 Đà Nẵng</a></li>
 <li><a href="${siteUrl}/videos">Video pickleball</a></li>
 <li><a href="${siteUrl}/tournaments">Giải đấu pickleball</a></li>
 </ul></nav>${liveRelatedHtml}`,
@@ -275,29 +402,164 @@ export async function renderLivestreamList(
   rawPath: string,
   lang: Lang,
 ): Promise<Response> {
-  const { data: streams } = await supabase
-    .from("public_livestreams")
-    .select("id, title, status")
-    .in("status", ["live", "scheduled"])
-    .order("created_at", { ascending: false })
-    .limit(20);
+  // THIN-01 (2026-08-24) — this hub rendered 59 words for Googlebot, and on a
+  // quiet day the entire body was the string "No live streams right now."
+  // A hub page whose only content is its own empty state cannot rank, and
+  // /live is linked from the global nav on every page on the site.
+  //
+  // Two fixes: (1) never show a bare empty state — 29 ended streams exist and
+  // stay watchable as replays, so fall back to those; (2) carry standing copy
+  // that is true whether or not anything is live right now.
+  type Stream = {
+    id: string;
+    title: string;
+    status: string;
+    scheduled_start_at: string | null;
+    ended_at: string | null;
+  };
+  const COLUMNS = "id, title, status, scheduled_start_at, ended_at";
 
-  const items = (streams ?? [])
-    .map((s: { id: string; title: string; status: string }) =>
-      `<li><a href="${siteUrl}${lang === "vi" ? "/vi" : ""}/live/${escapeHtml(s.id)}">${escapeHtml(s.title)}</a> (${escapeHtml(s.status)})</li>`,
-    )
-    .join("");
-  const listItems = (streams ?? []).map((s: { id: string; title: string }) => ({
-    url: `${siteUrl}${lang === "vi" ? "/vi" : ""}/live/${s.id}`,
+  // One window per status, not one shared window for all three.
+  //
+  // THIN-01 widened a single `.in(["live","scheduled","ended"]).limit(40)`
+  // ordered by created_at, which puts the three statuses in the same 40-row
+  // budget. Ended streams are the only bucket that grows without bound — 29 of
+  // them already sit in that window — so once 40 rows are newer than a given
+  // scheduled stream, the stream silently stops appearing on /live. The rows
+  // most exposed are exactly the ones announced furthest in advance: a
+  // tournament broadcast created weeks before it airs. With WC-DANANG-LIVE
+  // armed, that is the shape we cannot afford to drop.
+  //
+  // Upcoming is ordered by when it AIRS, not by when the row was created. A
+  // stream entered later but starting in December must not sit above one
+  // starting tomorrow, which is what created_at ordering did.
+  // Replays are hidden from the hub on purpose (16/09) — /live/<id> still
+  // renders and still plays, the ended streams are simply not listed here.
+  const [liveRes, scheduledRes] = await Promise.all([
+    supabase
+      .from("public_livestreams")
+      .select(COLUMNS)
+      .eq("status", "live")
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("public_livestreams")
+      .select(COLUMNS)
+      .eq("status", "scheduled")
+      .order("scheduled_start_at", { ascending: true, nullsFirst: false })
+      .limit(10),
+  ]);
+
+  const liveNow = ((liveRes?.data ?? []) as Stream[]).filter((s) => s.status === "live");
+  const upcoming = ((scheduledRes?.data ?? []) as Stream[]).filter((s) => s.status === "scheduled");
+
+  // /live/:id is single-canonical — /vi/live/:id 301s to it (_middleware.ts
+  // rule 1d). Linking to the /vi form from the VI hub sent every crawler and
+  // every reader through a redirect hop to reach the page we actually index.
+  const href = (s: Stream) => `${siteUrl}/live/${escapeHtml(s.id)}`;
+  const dateLabel = (iso: string | null) =>
+    iso
+      ? new Date(iso).toLocaleDateString(lang === "vi" ? "vi-VN" : "en-GB", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        })
+      : "";
+  const section = (heading: string, rows: Stream[], stamp: (s: Stream) => string) =>
+    rows.length === 0
+      ? ""
+      : `<h2>${escapeHtml(heading)}</h2><ul>${rows
+          .map((s) => {
+            const when = stamp(s);
+            return `<li><a href="${href(s)}">${escapeHtml(s.title)}</a>${when ? ` — ${escapeHtml(when)}` : ""}</li>`;
+          })
+          .join("")}</ul>`;
+
+  // ItemList covers whatever is actually on the page, in the order shown.
+  const listItems = [...liveNow, ...upcoming].map((s) => ({
+    url: `${siteUrl}/live/${s.id}`,
     name: s.title,
   }));
 
-  const title = lang === "en"
-    ? "Pickleball Live Streams | ThePickleHub"
-    : "Livestream Pickleball | ThePickleHub";
-  const description = lang === "en"
-    ? "Watch live pickleball streams from Vietnam and PPA Tour Asia free on ThePickleHub. Live tournaments and matches — no signup required."
-    : "Xem livestream pickleball trực tiếp tại Việt Nam. Các giải đấu, trận đấu đang phát sóng trực tuyến miễn phí trên ThePickleHub. Không cần đăng ký.";
+  // World Cup livescore leads the hub during the tournament — it is the reason
+  // most visitors are on /live that week — then the block empties itself.
+  const wc = await buildWorldCupLivescore(supabase, lang);
+
+  // During the tournament the page's SEO intent shifts: most /live traffic that
+  // week is searching the Pickleball World Cup, so the title/description lead
+  // with it (the strongest ranking signal for "pickleball world cup livescore").
+  // wc.html is only non-empty inside the event window, so this reverts on its
+  // own afterwards.
+  const wcActive = wc.html !== "";
+  const title = wcActive
+    ? (lang === "en"
+        ? "Pickleball World Cup 2026 Livescore — Da Nang | ThePickleHub"
+        : "Livescore Pickleball World Cup 2026 — Đà Nẵng | ThePickleHub")
+    : lang === "en"
+      ? "Pickleball Live Streams | ThePickleHub"
+      : "Livestream Pickleball | ThePickleHub";
+  const description = wcActive
+    ? (lang === "en"
+        ? "Live scores and results from the Pickleball World Cup 2026 in Da Nang — men's & women's singles and doubles, mixed — updated live on ThePickleHub, plus pickleball livestreams from Vietnam and PPA Tour Asia."
+        : "Tỉ số và kết quả trực tiếp Pickleball World Cup 2026 tại Đà Nẵng — đơn/đôi nam nữ và đôi nam nữ — cập nhật liên tục trên ThePickleHub, cùng livestream pickleball Việt Nam và PPA Tour Asia.")
+    : lang === "en"
+      ? "Watch live pickleball streams from Vietnam and PPA Tour Asia free on ThePickleHub. Live tournaments and matches — no signup required."
+      : "Xem livestream pickleball trực tiếp tại Việt Nam. Các giải đấu, trận đấu đang phát sóng trực tuyến miễn phí trên ThePickleHub. Không cần đăng ký.";
+
+  // GEO rule (CLAUDE.md): name ThePickleHub once, naturally, and front-load the
+  // answer so the opening survives being extracted as a standalone passage by
+  // an AI search engine. No throat-clearing intro.
+  const h1 = lang === "en" ? "Pickleball live streams" : "Livestream pickleball";
+  const lead =
+    lang === "en"
+      ? `ThePickleHub streams pickleball from Vietnam and PPA Tour Asia free, with no signup and no paywall. ${
+          liveNow.length > 0
+            ? `${liveNow.length} stream${liveNow.length > 1 ? "s are" : " is"} live right now.`
+            : upcoming.length > 0
+              ? `Nothing is live at this moment; ${upcoming.length} stream${upcoming.length > 1 ? "s are" : " is"} scheduled.`
+              : "Nothing is live at this moment; the next broadcasts are listed on the tournament calendar."
+        }`
+      : `ThePickleHub phát livestream pickleball Việt Nam và PPA Tour Asia miễn phí, không cần đăng ký, không tường phí. ${
+          liveNow.length > 0
+            ? `Hiện có ${liveNow.length} trận đang phát trực tiếp.`
+            : upcoming.length > 0
+              ? `Hiện chưa có trận nào đang phát; ${upcoming.length} trận đã lên lịch.`
+              : "Hiện chưa có trận nào đang phát; lịch phát sóng tiếp theo xem ở lịch giải."
+        }`;
+
+  // Standing copy: true on a quiet day as well as a busy one, so the page is
+  // never reduced to its empty state.
+  const about =
+    lang === "en"
+      ? `<h2>What you can watch here</h2><p>Coverage centres on Vietnamese tournaments — club opens, provincial championships and national events — alongside PPA Tour Asia stops relevant to players in the region. Streams open in the browser on phone and desktop; no account, app or subscription is needed to watch.</p><p>Every broadcast keeps its own page after it ends, so a link you already have still opens the match it points to.</p>`
+      : `<h2>Xem được gì ở đây</h2><p>Nội dung tập trung vào giải đấu tại Việt Nam — giải câu lạc bộ, giải tỉnh thành và giải quốc gia — cùng các chặng PPA Tour Asia liên quan tới người chơi trong khu vực. Livestream mở thẳng trên trình duyệt điện thoại và máy tính; không cần tài khoản, không cần cài app, không cần đăng ký gói.</p><p>Mỗi buổi phát đều có trang riêng, nên đường dẫn bạn đã có vẫn mở đúng trận đó.</p>`;
+
+  const nav =
+    lang === "en"
+      ? `<nav><h2>Elsewhere on ThePickleHub</h2><ul>` +
+        `<li><a href="${siteUrl}/tournaments">Pickleball tournament calendar</a></li>` +
+        `<li><a href="${siteUrl}/news">Latest pickleball news</a></li>` +
+        `<li><a href="${siteUrl}/rankings">Vietnam DUPR rankings</a></li>` +
+        `<li><a href="${siteUrl}/videos">Match videos and highlights</a></li>` +
+        `<li><a href="${siteUrl}${wcResultsPath("en")}">Pickleball World Cup 2026 Da Nang results</a></li>` +
+        `</ul></nav>`
+      : `<nav><h2>Khác trên ThePickleHub</h2><ul>` +
+        `<li><a href="${siteUrl}/vi/tournaments">Lịch giải pickleball</a></li>` +
+        `<li><a href="${siteUrl}/vi/news">Tin tức pickleball mới nhất</a></li>` +
+        `<li><a href="${siteUrl}/vi/rankings">Bảng xếp hạng DUPR Việt Nam</a></li>` +
+        `<li><a href="${siteUrl}/vi/videos">Video trận đấu & highlight</a></li>` +
+        `<li><a href="${siteUrl}${wcResultsPath("vi")}">Kết quả Pickleball World Cup 2026 Đà Nẵng</a></li>` +
+        `</ul></nav>`;
+
+  const body =
+    `<header><h1>${escapeHtml(h1)}</h1><p>${escapeHtml(lead)}</p></header>` +
+    wc.html +
+    section(lang === "en" ? "Live now" : "Đang phát trực tiếp", liveNow, () => "") +
+    section(lang === "en" ? "Scheduled" : "Sắp diễn ra", upcoming, (s) =>
+      dateLabel(s.scheduled_start_at),
+    ) +
+    about +
+    nav;
 
   return htmlResponse(buildHtml({
     title,
@@ -306,9 +568,10 @@ export async function renderLivestreamList(
     siteUrl,
     extraMeta: bilingualHreflang(`${siteUrl}/live`, `${siteUrl}/vi/live`),
     jsonLd: buildListJsonLd(title, listItems),
-    bodyContent: items
-      ? `<h2>${lang === "en" ? "Now streaming" : "Đang phát sóng"}</h2><ul>${items}</ul>`
-      : `<p>${lang === "en" ? "No live streams right now. Check back soon." : "Hiện chưa có livestream. Quay lại sau."}</p>`,
+    bodyContent: body,
     lang,
+    // The body opens with its own <h1>; without this the shared auto-header
+    // adds a second one titled "<title> | ThePickleHub" (one-h1 rule, #635).
+    omitAutoHeader: true,
   }));
 }

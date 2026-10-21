@@ -125,6 +125,19 @@ const INK_ON_FILL: Array<[string, string]> = [
   ["--shop-on-gold", "--tl-gold"],
   ["--shop-on-ok", "--shop-stock-ok"],
   ["--shop-on-danger", "--shop-danger-fill"],
+  // R3 card-first sub-theme (04-ux-spec-round3 §8.3):
+  // the active chip inverts ink↔bg — also covers the card's "→" circle,
+  // which paints --tl-bg on --tl-fg.
+  ["--shop-chip-active-ink", "--shop-chip-active-bg"],
+  // meta text and the verified pill sit on the white card, not the page.
+  ["--tl-fg-3", "--shop-card-surface"],
+  ["--shop-verified", "--shop-card-surface"],
+  // R4 ShopHome hero card: title and sub sit on the gradient's STRONGEST tint
+  // (the weak end trends toward --tl-surface, already covered above).
+  ["--shop-hero-ink", "--shop-hero-tint-strong"],
+  ["--shop-hero-sub-ink", "--shop-hero-tint-strong"],
+  // R4: chip ink measured on its own fill (light chip-bg is now a hex literal).
+  ["--shop-chip-ink", "--shop-chip-bg"],
 ];
 
 /**

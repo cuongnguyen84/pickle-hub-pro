@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "hcmc-open-2026-preview",
   publishedDate: "2026-07-10",
-  updatedDate: "2026-08-06",
+  updatedDate: "2026-08-25",
   author: "Cuong Nguyen",
   tags: [
     "hcmc open 2026",
@@ -25,21 +25,30 @@ const post: BlogPost = {
   },
   content: {
     en: {
-      title: "HCMC Open 2026 Preview: The PPA Asia 500 Comes to Ho Chi Minh City",
-      metaTitle: "HCMC Open 2026 Preview | PPA Asia 500 in Ho Chi Minh City",
+      title: "HCMC Open 2026: Results, Prize Money and the All-Vietnamese Final",
+      metaTitle: "HCMC Open 2026 Results | PPA Asia 500 Ho Chi Minh City",
       metaDescription:
-        "The MB Ho Chi Minh City Open, Aug 6–9 2026 at New Sports Club: a US$70,000 PPA Tour Asia 500 stop. Prize money, entry and how to watch.",
+        "MB Ho Chi Minh City Open 2026 (Aug 6–9): Do Minh Quan & Truong Vinh Hien beat Ly Hoang Nam & Collin Johns 2–1 in an all-Vietnamese men's doubles final.",
       sections: [
         {
-          heading: "Vietnam's second pro tour stop of 2026",
+          heading: "HCMC Open 2026 is over — Quan & Hien took the men's doubles title",
           content:
-            "Pro pickleball returns to Vietnam this August. The MB Ho Chi Minh City Open — a 500-level PPA Tour Asia stop with US$70,000 in prize money — runs August 6–9, 2026 at New Sports Club in Ho Chi Minh City. It is Vietnam's second tour stop of the season, following the MB Hanoi Cup in April, and the country's biggest professional pickleball event of the summer before the Pickleball World Cup arrives in Da Nang at the end of the month. Registration for the amateur draws is already open, and with the pro seeds now published — led by Hong Kong's Hong Kit Wong and, for home fans, Vietnam's Truong Vinh Hien at No. 2 — the stakes are clear: from 2026, PPA Tour Asia points count toward the unified global PPA ranking, so the 500 points on offer in Ho Chi Minh City matter far beyond the region. This preview covers everything confirmed — dates, venue, prize money, registration, the published seeds and how to watch.",
+            "Last updated: August 25, 2026. The MB Ho Chi Minh City Open 2026 (August 6–9, 2026, New Sports Club, Ho Chi Minh City) is complete. Do Minh Quan and Truong Vinh Hien won the men's doubles gold in an all-Vietnamese final, beating Ly Hoang Nam and Collin Johns 2–1 (13–11, 6–11, 11–4) for US$5,500 and 500 ranking points; Adam Harvey took the men's singles over Luc Pham 2–0, and Andie Dikosavljevic beat Huynh Phuong Dai Trang 2–1 in the women's singles final. The US$70,000 PPA Tour Asia 500 stop was Vietnam's second tour stop of 2026, after the MB Hanoi Cup in April. This ThePickleHub page was written as the pre-tournament preview and is kept here as the record of what was announced — the dates, venue, prize money, seeds and how to watch are all below, unchanged. For the full match-by-match report and every medal, read our results piece.",
           internalLinks: [
+            {
+              text: "Full HCMC Open 2026 results — the all-Vietnamese final, game by game",
+              path: "/blog/hcmc-open-2026-recap",
+            },
             {
               text: "See every major Vietnam tournament this year — the full 2026 calendar",
               path: "/blog/vietnam-pickleball-tournament-calendar-2026",
             },
           ],
+        },
+        {
+          heading: "Vietnam's second pro tour stop of 2026 (written before the event)",
+          content:
+            "Pro pickleball returned to Vietnam in August. The MB Ho Chi Minh City Open — a 500-level PPA Tour Asia stop with US$70,000 in prize money — ran August 6–9, 2026 at New Sports Club in Ho Chi Minh City. It was Vietnam's second tour stop of the season, following the MB Hanoi Cup in April, and the country's biggest professional pickleball event of the summer before the Pickleball World Cup arrived in Da Nang at the end of the month. With the pro seeds published — led by Hong Kong's Hong Kit Wong and, for home fans, Vietnam's Truong Vinh Hien at No. 2 — the stakes were clear: from 2026, PPA Tour Asia points count toward the unified global PPA ranking, so the 500 points on offer in Ho Chi Minh City mattered far beyond the region.",
         },
         {
           heading: "HCMC Open 2026 at a glance",
@@ -180,15 +189,30 @@ const post: BlogPost = {
       ],
     },
     vi: {
-      title: "HCMC Open 2026: Toàn cảnh giải PPA Asia 500 tại TP.HCM",
-      metaTitle: "HCMC Open 2026 | Lịch & giải thưởng",
+      title: "HCMC Open 2026: Kết quả, tiền thưởng và trận chung kết toàn Việt",
+      metaTitle: "HCMC Open 2026 | Kết quả & tiền thưởng",
       metaDescription:
-        "MB Ho Chi Minh City Open 6–9/8/2026 tại New Sports Club — chặng PPA Tour Asia 500, thưởng 70.000 USD. Lịch, đăng ký, cách xem.",
+        "HCMC Open 2026 (6–9/8): Đỗ Minh Quân & Trương Vĩnh Hiển thắng Lý Hoàng Nam & Collin Johns 2–1 ở chung kết đôi nam toàn Việt.",
       sections: [
         {
-          heading: "Chặng tour chuyên nghiệp thứ hai của Việt Nam trong 2026",
+          heading: "HCMC Open 2026 đã kết thúc — Minh Quân & Vĩnh Hiển vô địch đôi nam",
           content:
-            "Pickleball chuyên nghiệp trở lại Việt Nam trong tháng 8 này. MB Ho Chi Minh City Open — chặng PPA Tour Asia cấp 500 với tổng thưởng 70.000 USD — diễn ra từ 6 đến 9/8/2026 tại New Sports Club, TP.HCM. Đây là chặng tour thứ hai của Việt Nam trong mùa giải, sau MB Hanoi Cup hồi tháng 4, và là sự kiện pickleball chuyên nghiệp lớn nhất mùa hè trước khi Pickleball World Cup đổ bộ Đà Nẵng cuối tháng. Cổng đăng ký cho các nhánh nghiệp dư đã mở, và dù danh sách VĐV chuyên nghiệp chưa được công bố (tính đến 27/7, còn mười ngày), mức độ quan trọng thì đã rõ: từ 2026, điểm PPA Tour Asia được tính vào bảng xếp hạng PPA toàn cầu hợp nhất, nên 500 điểm tại TP.HCM có giá trị vượt xa phạm vi khu vực. Bài preview này tổng hợp mọi thông tin đã xác nhận — lịch, địa điểm, tiền thưởng, cách đăng ký và cách xem — và sẽ được cập nhật ngay khi line-up công bố.",
+            "Cập nhật ngày 25/8/2026. MB Ho Chi Minh City Open 2026 (6–9/8/2026, New Sports Club, TP.HCM) đã khép lại. Đỗ Minh Quân và Trương Vĩnh Hiển giành HCV đôi nam trong trận chung kết toàn Việt Nam, thắng Lý Hoàng Nam và Collin Johns 2–1 (13–11, 6–11, 11–4), nhận 5.500 USD cùng 500 điểm xếp hạng. Ở đơn nam, Adam Harvey thắng Lục Phạm 2–0; đơn nữ, Andie Dikosavljevic thắng Huỳnh Phương Đại Trang 2–1. Giải PPA Tour Asia 500 tổng thưởng 70.000 USD này là chặng tour thứ hai của Việt Nam trong 2026, sau MB Hanoi Cup hồi tháng 4. Trang này của ThePickleHub được viết trước giải và được giữ lại làm hồ sơ những gì đã công bố — lịch, địa điểm, tiền thưởng, hạt giống và cách xem đều còn nguyên bên dưới.",
+          internalLinks: [
+            {
+              text: "Kết quả HCMC Open 2026 đầy đủ — tường thuật chung kết từng ván",
+              path: "/vi/blog/hcmc-open-2026-ket-qua",
+            },
+            {
+              text: "Xem toàn bộ giải đấu lớn tại Việt Nam năm nay — lịch giải 2026 đầy đủ",
+              path: "/vi/blog/lich-giai-pickleball-viet-nam-2026",
+            },
+          ],
+        },
+        {
+          heading: "Chặng tour chuyên nghiệp thứ hai của Việt Nam trong 2026 (viết trước giải)",
+          content:
+            "Pickleball chuyên nghiệp trở lại Việt Nam trong tháng 8. MB Ho Chi Minh City Open — chặng PPA Tour Asia cấp 500 với tổng thưởng 70.000 USD — diễn ra từ 6 đến 9/8/2026 tại New Sports Club, TP.HCM. Đây là chặng tour thứ hai của Việt Nam trong mùa giải, sau MB Hanoi Cup hồi tháng 4, và là sự kiện pickleball chuyên nghiệp lớn nhất mùa hè trước khi Pickleball World Cup đổ bộ Đà Nẵng cuối tháng. Cổng đăng ký cho các nhánh nghiệp dư đã mở, và dù danh sách VĐV chuyên nghiệp chưa được công bố (tính đến 27/7, còn mười ngày), mức độ quan trọng thì đã rõ: từ 2026, điểm PPA Tour Asia được tính vào bảng xếp hạng PPA toàn cầu hợp nhất, nên 500 điểm tại TP.HCM có giá trị vượt xa phạm vi khu vực. Bài preview này tổng hợp mọi thông tin đã xác nhận — lịch, địa điểm, tiền thưởng, cách đăng ký và cách xem — và sẽ được cập nhật ngay khi line-up công bố.",
           internalLinks: [
             {
               text: "Xem toàn bộ giải đấu lớn tại Việt Nam năm nay — lịch giải 2026 đầy đủ",

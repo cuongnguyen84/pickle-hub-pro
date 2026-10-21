@@ -12,22 +12,43 @@
  */
 
 /**
- * Categories that are commercial by definition. Measured over 60 days of the
- * feed rather than guessed:
+ * Categories are no longer a filter layer. Kept as an empty list rather than
+ * deleted, because the reason it is empty is the point.
+ *
+ * The original list blocked `equipment` and `business` on a 60-day sample that
+ * read:
  *
  *   (null) 256 · player 57 · tournament 44 · community 18 · business 12 · equipment 5
  *
- * The two blocked here are the two whose sample titles are adverts —
- *   equipment: "Six Zero Expands Gemstone Paddle Line With Boulder Opal Release"
- *   business:  "PB5star Launches Cross-Country Road Trip to Promote Brand"
- * `community` and `player` sample as instructional, so they stay.
+ * The same count over the 30 days to 2026-09-21:
  *
- * The Vietnamese child rows carry the same category as their English parent,
- * verified on production, so this layer works for both pipelines unchanged.
+ *   equipment 128 · tournament 93 · player 76 · community 34 · business 27 · (null) 0
+ *
+ * `equipment` went from the smallest category to the largest, and the nulls are
+ * gone: news-rewrite now assigns a category to every article, and its
+ * classifier files coaching and injury pieces under `equipment`. The blocklist
+ * was built on five paddle releases and ended up blocking a third of the feed.
+ *
+ * Measured, not guessed. The first 21 rows of promo_filter_shadow (see
+ * supabase/migrations/20260921090000_promo_filter_shadow.sql) are 20 blocked
+ * items, of which two are genuinely adverts:
+ *
+ *   CURREX ra mắt lót giày SUPPORTSTP ............ noul 0.82  advert
+ *   Tùy chỉnh vợt: tay cầm và trọng lượng ........ noul 0.67  borderline
+ *   Kỹ thuật dink / stacking / cú lob / scorpion .. noul 0.03-0.08  coaching
+ *   Khuỷu tay, khớp vai, phục hồi gân cơ ......... noul 0.05-0.06  coaching
+ *   Samin Odhwani rời ghế ủy viên MLP ............ noul 0.03  league news
+ *
+ * The last one is why `business` went too: a league executive stepping down is
+ * not marketing.
+ *
+ * ponytail: an empty array, not a deleted parameter. `isPromotionalSource`
+ * still takes a category so the call sites and the shadow log keep their
+ * shape, and putting a category back is a one-word change if the data ever
+ * argues for one.
  */
-const BLOCKED_CATEGORIES: ReadonlyArray<string> = ['equipment', 'business'];
+const BLOCKED_CATEGORIES: ReadonlyArray<string> = [];
 
-/** Publishers whose feed is mostly marketing. Add names as they show up. */
 const BLOCKED_SOURCES: ReadonlyArray<string> = [];
 
 /**
@@ -50,6 +71,11 @@ const PROMO_PATTERNS_EN: ReadonlyArray<RegExp> = [
   /\bpresented by\b/i,
   /\bpartners? with\b/i,
   /\bannounces? (?:a )?(?:partnership|sponsorship|collaboration)\b/i,
+  // Brand marketing written as an event. This was covered by the `business`
+  // category until that category turned out to carry real league news too;
+  // the shape is specific enough to name directly.
+  /\bto promote [^.]{0,30}\bbrand\b/i,
+  /\bbrand (?:tour|activation|ambassador program)\b/i,
   /\bnow available\b/i,
   /\btickets? (?:are )?on sale\b/i,
   /\b(?:use )?(?:promo|discount) code\b/i,
@@ -81,6 +107,79 @@ const PROMO_PATTERNS_VI: ReadonlyArray<RegExp> = [
   /ưu đãi/i,
 ];
 
+/**
+ * Gear layer, owner rule 2026-10-21: "Anh ko muốn đăng những bài quảng cáo dạng
+ * như thế này. Cả vợt nữa." It followed a Selkirk S2 Pro ball / crack-warranty
+ * post on TA Pickleball. None of the launch patterns above caught it, and the
+ * paddle reviews and buying guides before it never looked like adverts to them.
+ *
+ * So the rule is no longer "no press releases" but "no posts ABOUT products":
+ * paddle, ball, shoe and bag reviews, launches, buying guides, best-of lists,
+ * warranties, paddle tech and brand-named product pieces. Coaching that mentions
+ * a paddle ("paddle angle", "watch the paddle, not the ball") must stay, which is
+ * why these run against the TITLE only and pair the product noun with a
+ * commercial word. `equipment` stays unblocked as a category for the reason
+ * given above BLOCKED_CATEGORIES: half of it is technique and injury pieces.
+ */
+const GEAR_TITLE_PATTERNS: ReadonlyArray<RegExp> = [
+  /\b(?:paddles?|balls?|shoes?|apparel|bags?)\b[^.]{0,40}\b(?:review|buying|launch(?:es|ed)?|debuts?|warranty|technology|tech|testing|popularity|performance)\b/i,
+  /\b(?:reviews?|best|top|buying|buy|choose|choosing|new)\b[^.]{0,30}\b(?:paddles?|shoes?)\b/i,
+  /\bpaddle (?:review|buying|guide|line|lineup|series|release|launch|drop|tech(?:nology)?)\b/i,
+  /\b(?:dead|worn[- ]out) paddle|\bpaddle is dead\b/i,
+  /\bwarrant(?:y|ies)\b/i,
+  /\b(?:fake|counterfeit|knock-?off)\b[^.]{0,25}\b(?:balls?|paddles?|shoes?)\b/i,
+  /(?:đánh giá|review)[^.]{0,30}(?:vợt|bóng|giày|balo|túi)/i,
+  /(?:vợt|giày|balo|túi|bóng pickleball)[^.]{0,40}đánh giá/i,
+  /(?:chọn|mua)[^.]{0,15}vợt/i,
+  /(?:vợt|bóng|giày)[^.]{0,30}(?:tốt nhất|hàng đầu|cao cấp)/i,
+  /top (?:\d+ )?(?:vợt|giày|bóng)/i,
+  /bảo hành/i,
+  /công nghệ vợt/i,
+  /(?:dòng|mẫu) vợt/i,
+  /vợt[^.]{0,25}(?:hỏng|chết)/i,
+  /(?:giả mạo|hàng giả|hàng nhái)/i,
+  /(?:xuất hiện trên|in lên) (?:mẫu )?vợt/i,
+  /(?:ra mắt|trình làng)[^.]{0,40}(?:dụng cụ|bóng pickleball|mẫu bóng)/i,
+  // 21/10 08:30 broadening (after the Life Time fake-ball warning went out):
+  // the main subject being gear at all is enough. Comparisons, deals, nets,
+  // counterfeit warnings and "equipment"/"dụng cụ" pieces.
+  /\b(?:paddles?|balls?|shoes?|bags?|nets?)\b[^.]{0,40}\b(?:vs\.?|versus|compared?|comparison|deals?|sale|prices?)\b/i,
+  /\b(?:compar\w*|deals? on|buy(?:ing)?|choos\w*|best|top|new)\b[^.]{0,30}\b(?:balls?|nets?|bags?)\b/i,
+  /\b(?:gear|equipment)\b/i,
+  /so sánh[^.]{0,30}(?:vợt|bóng|giày|lưới|balo)/i,
+  /(?:mua|chọn)[^.]{0,15}(?:giày|bóng pickleball|lưới|balo|túi)/i,
+  /(?:vợt|bóng|giày|lưới)[^.]{0,20}(?:giá rẻ|giá tốt|giá bao nhiêu)/i,
+  /(?:dụng cụ|thiết bị|phụ kiện) pickleball/i,
+];
+
+/** Names that only ever mean a gear company in this feed. */
+const GEAR_BRANDS = [
+  'selkirk', 'joola', 'gearbox', 'six zero', 'crbn', 'paddletek', 'onix', 'vatic',
+  'volair', '11six24', 'sqairz', 'diadem', 'prokennex', 'babolat', 'ronbus',
+  'bread & butter', 'pb5star', 'currex', 'holbrook', 'skechers', 'k-swiss', 'body helix',
+];
+/** Brands that are also ordinary words or surnames: only with a product noun. */
+const AMBIGUOUS_GEAR_BRANDS = [
+  'franklin', 'wilson', 'head', 'engage', 'gamma', 'proton', 'honolulu', 'electrum',
+  'legacy', 'vulcan', 'adidas', 'asics',
+];
+const PRODUCT_NOUN = /\b(?:paddles?|balls?|shoes?|bags?|apparel|gear)\b|vợt|bóng pickleball|giày|balo/i;
+// A brand in a sponsored event name ("Selkirk Red Rock Open") is tournament news.
+const EVENT_MARKER = /\b(?:open|cup|championships?|slam|tour|wins?|won|playoffs?|finals?|league|mlp|ppa|app)\b|vô địch|giải|chung kết/i;
+
+function hasWord(title: string, word: string): boolean {
+  const esc = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(?:^|[^a-z0-9])${esc}(?:$|[^a-z0-9])`, 'i').test(title);
+}
+
+/** Title-only check for product/gear pieces. Exported for tests. */
+export function isGearPromoTitle(title: string): boolean {
+  if (GEAR_TITLE_PATTERNS.some((p) => p.test(title))) return true;
+  const event = EVENT_MARKER.test(title);
+  if (!event && GEAR_BRANDS.some((b) => hasWord(title, b))) return true;
+  return PRODUCT_NOUN.test(title) && AMBIGUOUS_GEAR_BRANDS.some((b) => hasWord(title, b));
+}
+
 export function isPromotionalSource(
   title: string,
   summary: string | null,
@@ -91,6 +190,7 @@ export function isPromotionalSource(
   if (source && BLOCKED_SOURCES.some((s) => s.toLowerCase() === source.toLowerCase())) {
     return true;
   }
+  if (isGearPromoTitle(title)) return true;
   const text = `${title} ${summary ?? ''}`;
   return (
     PROMO_PATTERNS_EN.some((p) => p.test(text)) ||

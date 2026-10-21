@@ -15,6 +15,7 @@ import {
   useNewsItemSibling,
 } from "@/hooks/useNewsItemBySlug";
 import { formatRelative } from "@/lib/format-datetime";
+import { useNoindex } from "@/hooks/useNoindex";
 import DOMPurify from "isomorphic-dompurify";
 
 /**
@@ -24,7 +25,7 @@ import DOMPurify from "isomorphic-dompurify";
  *   - ThePickleHub-owned default/category image
  *   - Full sanitized editorial body (or summary for legacy briefs)
  *   - Plain-text source attribution without an external link
- *   - hreflang link to the EN↔VI sibling (parent_news_id pivot)
+ *   - hreflang only on the VI half — the EN half is noindex (C3, 2026-08-25)
  *   - Schema.org NewsArticle JSON-LD
  *
  * Routes are wired in src/App.tsx:
@@ -43,6 +44,12 @@ const NewsArticle = ({ language }: Props) => {
   useEffect(() => {
     setLanguageFromUrl(language);
   }, [language, setLanguageFromUrl]);
+
+  // C3 (2026-08-25) — the EN feed is noindex; the VI feed stays indexed. This
+  // mirrors functions/_lib/render/news.ts, which handles the bot path; this
+  // covers JS-rendering crawlers that see the SPA rather than the prerender.
+  // "follow" so the related-news links still pass equity.
+  useNoindex({ enabled: language === "en", content: "noindex, follow" });
 
   const { data: article, isLoading } = useNewsItemBySlug(slug, language);
   const { data: siblingSlug } = useNewsItemSibling(
@@ -80,18 +87,11 @@ const NewsArticle = ({ language }: Props) => {
     language === "vi" ? `/vi/news/${article.slug}` : `/news/${article.slug}`;
   const canonicalUrl = `https://www.thepicklehub.net${canonicalPath}`;
 
-  const enPath =
-    language === "en"
-      ? canonicalPath
-      : siblingSlug
-        ? `/news/${siblingSlug}`
-        : undefined;
-  const viPath =
-    language === "vi"
-      ? canonicalPath
-      : siblingSlug
-        ? `/vi/news/${siblingSlug}`
-        : undefined;
+  // A noindexed URL must never appear in an hreflang cluster — Google drops
+  // or mishandles the whole cluster when one member is unindexable. With the
+  // EN half noindex, the VI page self-references and the EN page emits none.
+  const enPath = undefined;
+  const viPath = language === "vi" ? canonicalPath : undefined;
 
   const breadcrumbItems = [
     {
@@ -179,7 +179,7 @@ const NewsArticle = ({ language }: Props) => {
             </div>
             <h1>{article.title}</h1>
             <div className="tl-article-meta">
-              <span>{formatRelative(article.published_at)}</span>
+              <span>{formatRelative(article.published_at, language)}</span>
               {!article.content_html && (
                 <span
                   style={{

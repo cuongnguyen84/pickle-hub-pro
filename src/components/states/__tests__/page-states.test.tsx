@@ -72,4 +72,17 @@ describe("OfflineBanner", () => {
     expect(screen.queryByRole("status")).toBeNull();
     onLine.mockRestore();
   });
+
+  // Regression: at `bottom-0` the banner sat under the mobile BottomNav
+  // (fixed, bottom-0, z-9999) and inside the Shop buy bar's strip (z-60).
+  it("clears the mobile bottom nav on phones and stays at the edge from md up", () => {
+    const onLine = vi.spyOn(window.navigator, "onLine", "get");
+    onLine.mockReturnValue(false);
+    render(<OfflineBanner />);
+    const cls = screen.getByRole("status").className;
+    expect(cls).toContain("bottom-[calc(72px+env(safe-area-inset-bottom,0px))]");
+    expect(cls).toContain("md:bottom-0");
+    expect(cls).toContain("z-[61]");
+    onLine.mockRestore();
+  });
 });

@@ -12,6 +12,9 @@ verify_jwt = false
 [functions.mux-create-livestream]
 verify_jwt = false
 
+[functions.product-import-enrich]
+verify_jwt = false
+
 [functions.send-auth-email]
 verify_jwt = false
 
@@ -46,6 +49,9 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.news-translate]
+verify_jwt = false
+
+[functions.news-repair]
 verify_jwt = false
 
 [functions.news-rewrite]
@@ -425,6 +431,15 @@ verify_jwt = false
 [functions.shop-media-lifecycle]
 verify_jwt = false
 
+# Buyer JWT is verified inside the checkout function (ES256 workaround).
+# SePay bank webhooks use raw-body HMAC-SHA256; legacy Payment Gateway IPNs use
+# X-Secret-Key. The handler uses service_role for one reconciliation RPC.
+[functions.shop-sepay-checkout]
+verify_jwt = false
+
+[functions.shop-sepay-ipn]
+verify_jwt = false
+
 # ── Local auth: TOTP MFA ────────────────────────────────────────────────────
 # Admin routes sit behind AdminMFAGate, and is_admin() has required aal2 since
 # migration 20260730090000. The CLI's default local stack ships TOTP DISABLED,
@@ -441,3 +456,6 @@ verify_jwt = false
 [auth.mfa.totp]
 enroll_enabled = true
 verify_enabled = true
+
+[functions.quick-table-chat]
+verify_jwt = false

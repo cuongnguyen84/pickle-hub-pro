@@ -93,6 +93,15 @@ function tournamentDescription(
   return fits ?? candidates[candidates.length - 1];
 }
 
+/** "20/2/2026" from an ISO timestamp, in the VN calendar (UTC+7). */
+function vnDayFromTimestamp(ts: string | null): string {
+  if (!ts) return "";
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return "";
+  const vn = new Date(d.getTime() + 7 * 60 * 60 * 1000);
+  return `${vn.getUTCDate()}/${vn.getUTCMonth() + 1}/${vn.getUTCFullYear()}`;
+}
+
 export async function renderTournamentDetail(supabase: SupabaseClient, slug: string, siteUrl: string): Promise<Response> {
   const { data: t } = await supabase
     .from("tournaments")
@@ -101,6 +110,35 @@ export async function renderTournamentDetail(supabase: SupabaseClient, slug: str
     .single();
 
   if (!t) return render404(`/tournament/${slug}`, siteUrl);
+
+  // SEO-GUARD-01 (2026-08-19) — the `tournaments` table carries only name,
+  // dates, status and a (mis-named) org FK, so a body built from it alone tops
+  // out around 145 words on every one of the 14 URLs. The broadcasts we
+  // actually hold ARE the missing content: 29 livestreams are linked to 13 of
+  // the 14 tournaments via `livestreams.tournament_id`. Listing them adds real
+  // per-tournament text, real internal links into /watch + /live (which had no
+  // inbound path from the tournament page at all), a per-tournament og:image
+  // from the stream thumbnail, and honest `subEvent` + `VideoObject` schema.
+  const { data: streamRows } = await supabase
+    .from("livestreams")
+    .select("id, title, status, scheduled_start_at, started_at, thumbnail_url, mux_playback_id, vod_url")
+    .eq("tournament_id", t.id)
+    .order("scheduled_start_at", { ascending: true })
+    .limit(25);
+  const streams = (streamRows ?? []) as {
+    id: string;
+    title: string;
+    status: string | null;
+    scheduled_start_at: string | null;
+    started_at: string | null;
+    thumbnail_url: string | null;
+    mux_playback_id: string | null;
+    vod_url: string | null;
+  }[];
+  // A stream is replayable when it has a recording; otherwise the /live URL is
+  // still the right destination (upcoming or currently on air).
+  const streamUrl = (s: (typeof streams)[number]) =>
+    s.mux_playback_id || s.vod_url ? `${siteUrl}/watch/${s.id}` : `${siteUrl}/live/${s.id}`;
 
   // PostgREST returns an embedded to-one relation as an object, but older
   // client typings widen it to an array — normalise both shapes.
@@ -144,12 +182,41 @@ export async function renderTournamentDetail(supabase: SupabaseClient, slug: str
     `<li><strong>Môn thi đấu:</strong> Pickleball</li>`,
   ].join("");
 
+  // Broadcast list — the only genuinely per-tournament content we hold.
+  const streamItems = streams
+    .map((s) => {
+      const day = vnDayFromTimestamp(s.scheduled_start_at ?? s.started_at);
+      const replay = !!(s.mux_playback_id || s.vod_url);
+      const tag = replay ? "Xem lại" : s.status === "live" ? "Đang phát" : "Sắp phát";
+      return `<li><a href="${streamUrl(s)}">${escapeHtml(s.title)}</a>${day ? ` — ${escapeHtml(day)}` : ""} · ${tag}</li>`;
+    })
+    .join("");
+  const replayCount = streams.filter((s) => s.mux_playback_id || s.vod_url).length;
+  const ogImage = streams.find((s) => s.thumbnail_url)?.thumbnail_url ?? null;
+  const broadcastSection = streams.length
+    ? `<h2>Trận đấu &amp; livestream tại ${escapeHtml(t.name)}</h2>
+<p>ThePickleHub lưu ${streams.length} buổi phát của ${escapeHtml(t.name)}${dateRange ? ` (${escapeHtml(dateRange)})` : ""}${replayCount ? `, trong đó ${replayCount} buổi đã có bản xem lại đầy đủ` : ""}. Bấm vào từng trận để xem trực tiếp hoặc xem lại, kèm tỉ số và thành phần thi đấu.</p>
+<ul>${streamItems}</ul>`
+    : "";
+
+  // Static explainer — same for every row on purpose, but it is the section
+  // that turns a data stub into a page a reader can use, and it carries the
+  // internal links (rankings, livestream hub, calendar) that the tournament
+  // pages previously had no path to. Kept below the per-tournament sections so
+  // the unique content is what an AI answer extracts first.
+  const howToFollow = `<h2>Cách theo dõi ${escapeHtml(t.name)}</h2>
+<p>Có ba cách theo dõi ${escapeHtml(t.name)} trên ThePickleHub. Một là trang này — trạng thái, khung thời gian và toàn bộ buổi phát được cập nhật khi giải diễn ra. Hai là <a href="${siteUrl}/vi/live">trang livestream</a>, nơi tập hợp mọi trận đang phát trực tiếp theo thời gian thực. Ba là <a href="${siteUrl}/vi/news">mục tin tức</a>, nơi kết quả từng ngày và các diễn biến đáng chú ý được tổng hợp bằng tiếng Việt.</p>
+<h2>Giải này nằm ở đâu trong mùa 2026</h2>
+<p>${escapeHtml(t.name)} là một chặng trong hệ thống giải pickleball chuyên nghiệp mùa 2026 mà ThePickleHub theo dõi, gồm PPA Tour, PPA Tour Asia, MLP và các giải khu vực châu Á. Toàn bộ khung lịch — ngày thi đấu, địa điểm, cấp giải và tiền thưởng — nằm ở <a href="${siteUrl}/vi/tournaments">lịch giải pickleball 2026</a>. Muốn biết các kết quả này ảnh hưởng thế nào tới thứ hạng vận động viên, xem <a href="${siteUrl}/vi/rankings">bảng xếp hạng pickleball</a>.</p>`;
+
   const bodyContent = [
     bc,
     `<h1>${escapeHtml(t.name)}</h1>`,
     `<p>${escapeHtml(lead)}</p>`,
     `<ul>${facts}</ul>`,
     t.description ? `<p>${escapeHtml(t.description)}</p>` : "",
+    broadcastSection,
+    howToFollow,
     `<p><a href="${siteUrl}/tournaments">Lịch giải Pickleball 2026 — Việt Nam &amp; châu Á</a> · <a href="${siteUrl}/vi/tournaments">Xem bản tiếng Việt</a></p>`,
   ].join("");
 
@@ -158,6 +225,11 @@ export async function renderTournamentDetail(supabase: SupabaseClient, slug: str
     description: desc,
     url: `${siteUrl}/tournament/${t.slug}`,
     siteUrl,
+    // Per-tournament og:image from the first broadcast thumbnail we hold.
+    // Previously all 14 URLs shared DEFAULT_OG_IMAGE, so every share card of
+    // every tournament looked identical. Falls back to the default when the
+    // tournament has no linked stream (1 of 14 rows today).
+    ...(ogImage ? { image: ogImage } : {}),
     extraMeta: singleCanonicalHreflang(`${siteUrl}/tournament/${t.slug}`, "en"),
     // SEO-3.1 — @graph pattern combines SportsEvent + BreadcrumbList.
     // The previous version declared every tournament as an online event held at
@@ -175,9 +247,31 @@ export async function renderTournamentDetail(supabase: SupabaseClient, slug: str
           description: desc,
           url: `${siteUrl}/tournament/${t.slug}`,
           sport: "Pickleball",
+          // Stays EventScheduled for every status. schema.org EventStatusType
+          // has no "completed" member (only Scheduled / Cancelled / Postponed /
+          // Rescheduled / MovedOnline), and an event that simply finished as
+          // planned IS EventScheduled. "EventCompleted" is a value Google
+          // ignores and validators flag — do not "fix" this to that.
           eventStatus: "https://schema.org/EventScheduled",
           ...(t.start_date ? { startDate: t.start_date } : {}),
           ...(t.end_date ? { endDate: t.end_date } : {}),
+          ...(ogImage ? { image: ogImage } : {}),
+          // Broadcasts as subEvents — sourced from livestreams.tournament_id,
+          // so this claims nothing we do not hold. `location`/`organizer` stay
+          // absent for the same reason (see the note above).
+          ...(streams.length
+            ? {
+              subEvent: streams.map((s) => ({
+                "@type": "BroadcastEvent",
+                name: s.title,
+                url: streamUrl(s),
+                isLiveBroadcast: s.status === "live",
+                ...(s.scheduled_start_at || s.started_at
+                  ? { startDate: s.scheduled_start_at ?? s.started_at }
+                  : {}),
+              })),
+            }
+            : {}),
         },
         buildBreadcrumbJsonLd(crumbs),
       ],
@@ -265,21 +359,39 @@ export async function renderTournaments(supabase: SupabaseClient, siteUrl: strin
 
 // ─── Tool instance pages (noindex) ────────────────────────
 
-export async function renderQuickTable(supabase: SupabaseClient, shareId: string, siteUrl: string): Promise<Response> {
-  const { data: qt } = await supabase.from("quick_tables").select("id, name, format, player_count, status, share_id, is_public, champion_name").eq("share_id", shareId).single();
+export async function renderQuickTable(
+  supabase: SupabaseClient,
+  shareId: string,
+  siteUrl: string,
+  opts?: { pageUrl?: string; lang?: "vi" | "en" },
+): Promise<Response> {
+  const { data: qt } = await supabase.from("quick_tables").select("id, name, format, player_count, status, share_id, is_public, champion_name, is_doubles, group_count").eq("share_id", shareId).single();
   // Client service-role bypass RLS — bảng private phải 404 y hệt không tồn tại.
   if (!qt || !qt.is_public) return render404(`/tools/quick-tables/${shareId}`, siteUrl);
 
   const title = buildTitle(qt.name, " | Bảng đấu Pickleball");
   // Champion đứng ĐẦU description để sống sót khi Zalo cắt ngắn; không vào
-  // <title> (budget 60 byte, tên VN có dấu ăn hết). Không champion → chuỗi cũ.
+  // <title> (budget 60 byte, tên VN có dấu ăn hết).
   const champion = displayChampionName(qt.champion_name);
+  const who = qt.is_doubles ? "đội" : "người";
+  const groups = qt.group_count && qt.group_count > 1 ? `, ${qt.group_count} bảng` : "";
   const desc = (champion
-    ? `Vô địch: ${champion}. Bảng đấu ${qt.name} – ${qt.player_count} VĐV. Xem kết quả trên ThePickleHub.`
-    : `Bảng đấu ${qt.name} – ${qt.player_count} VĐV, ${qt.format}. Xem kết quả trực tiếp trên ThePickleHub.`).slice(0, 160);
-  const bc = breadcrumb([{ label: "Trang chủ", href: siteUrl }, { label: "Công cụ", href: `${siteUrl}/tools` }, { label: "Quick Tables", href: `${siteUrl}/tools/quick-tables` }, { label: qt.name }]);
+    ? `Vô địch: ${champion}. ${qt.name}: ${qt.player_count} ${who}. Xem lịch và kết quả trên ThePickleHub.`
+    : `${qt.name}: ${qt.player_count} ${who}, thi đấu vòng tròn${groups}. Xem lịch và kết quả trên ThePickleHub.`).slice(0, 160);
+  const pageUrl = opts?.pageUrl ?? `${siteUrl}/tools/quick-tables/${shareId}`;
+  const lang = opts?.lang ?? "vi";
+  const bc = breadcrumb([{ label: "Trang chủ", href: siteUrl }, { label: "Công cụ", href: `${siteUrl}/tools` }, { label: "Bảng đấu", href: `${siteUrl}/tools/quick-tables` }, { label: qt.name }]);
 
-  return htmlResponse(buildHtml({ title, description: desc, url: `${siteUrl}/tools/quick-tables/${shareId}`, siteUrl, extraMeta: `<meta name="robots" content="noindex, follow"/>`, bodyContent: `${bc}${relatedToolLinks("quick-tables", siteUrl)}` }));
+  return htmlResponse(buildHtml({
+    title,
+    description: desc,
+    url: pageUrl,
+    siteUrl,
+    lang,
+    // Ảnh chia sẻ mặc định là 1024×1024. Khai đúng kích thước để Zalo không bỏ ảnh.
+    extraMeta: `<meta name="robots" content="noindex, follow"/>\n<meta property="og:image:width" content="1024"/>\n<meta property="og:image:height" content="1024"/>`,
+    bodyContent: `${bc}${relatedToolLinks("quick-tables", siteUrl)}`,
+  }));
 }
 
 export async function renderTeamMatch(supabase: SupabaseClient, id: string, siteUrl: string): Promise<Response> {

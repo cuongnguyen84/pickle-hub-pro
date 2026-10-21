@@ -11,6 +11,9 @@ name: DUPR rankings refresh
 #   3. If the file changed, open a PR from a chore/ branch and enable
 #      auto-merge (squash). The required checks (quality + smoke) run on the
 #      PR; once they pass, GitHub merges it and Cloudflare Pages auto-deploys.
+#      Enabling auto-merge immediately after `gh pr create` is rejected
+#      ("unstable" / "clean" status), so the job polls until the PR is
+#      BLOCKED (arm auto-merge) or CLEAN with both gates green (merge now).
 #      If nothing changed, the job is a no-op.
 #
 # Why a PR instead of a direct push (changed 2026-06-08):
@@ -72,11 +75,57 @@ jobs:
           git commit -m "chore(rankings): weekly DUPR snapshot refresh (${DATE})"
           git push -u origin "${BRANCH}"
 
-          gh pr create --base main --head "${BRANCH}" \
+          PR_URL="$(gh pr create --base main --head "${BRANCH}" \
             --title "chore(rankings): weekly DUPR snapshot refresh (${DATE})" \
-            --body "Automated weekly DUPR rankings snapshot from \`scripts/parse-dupr.py\` (source: www.dupr.com/rankings + continental pages). Auto-merges once \`quality\` + \`smoke\` pass."
+            --body "Automated weekly DUPR rankings snapshot from \`scripts/parse-dupr.py\` (source: www.dupr.com/rankings + continental pages). Auto-merges once \`quality\` + \`smoke\` pass.")"
 
-          # Enable auto-merge; tolerate repos where it is not enabled yet so the
-          # job stays green and the PR can be merged manually in the meantime.
-          gh pr merge "${BRANCH}" --auto --squash --delete-branch \
-            || echo "::warning::Auto-merge not enabled or checks pending; PR left open for manual merge."
+          # enablePullRequestAutoMerge rejects a brand-new PR, and the old
+          # one-shot call swallowed the error — so from 2026-08-04 onward the
+          # weekly PR never got auto-merge even after quality + smoke passed
+          # (GraphQL: "Pull request is in unstable status" ~1s after create;
+          # occasionally "clean status", which means merge now, not arm auto-merge).
+          # Poll until GitHub reports BLOCKED (required checks — arm auto-merge)
+          # or CLEAN with both gates green (merge directly). Never merge while
+          # quality or smoke is still running or has failed.
+          for attempt in $(seq 1 30); do
+            if ! info="$(gh pr view "$PR_URL" --json mergeStateStatus,statusCheckRollup)"; then
+              echo "gh pr view failed; retrying."
+              sleep 10
+              continue
+            fi
+            state="$(printf '%s' "$info" | jq -r '.mergeStateStatus')"
+            q="$(printf '%s' "$info" | jq -r '[.statusCheckRollup[]? | select(.name=="quality")] | if length==0 then "PENDING" else (.[0].conclusion // "PENDING") end | if .=="" then "PENDING" else . end')"
+            s="$(printf '%s' "$info" | jq -r '[.statusCheckRollup[]? | select(.name=="smoke")] | if length==0 then "PENDING" else (.[0].conclusion // "PENDING") end | if .=="" then "PENDING" else . end')"
+            echo "auto-merge attempt ${attempt}: state=${state} quality=${q} smoke=${s}"
+
+            if [ "$q" = "FAILURE" ] || [ "$q" = "CANCELLED" ] || [ "$q" = "TIMED_OUT" ] || [ "$s" = "FAILURE" ] || [ "$s" = "CANCELLED" ] || [ "$s" = "TIMED_OUT" ]; then
+              echo "::warning::quality or smoke failed; PR left open."
+              exit 0
+            fi
+
+            if [ "$state" = "BLOCKED" ] || [ "$state" = "BEHIND" ] || [ "$state" = "HAS_HOOKS" ]; then
+              if out="$(gh pr merge "$PR_URL" --auto --squash --delete-branch 2>&1)"; then
+                echo "$out"
+                echo "Auto-merge enabled."
+                exit 0
+              fi
+              echo "$out"
+              if printf '%s' "$out" | grep -qi "not allowed"; then
+                echo "::warning::Auto-merge is not allowed on this repo; PR left open."
+                exit 0
+              fi
+            fi
+
+            if [ "$state" = "CLEAN" ] && [ "$q" = "SUCCESS" ] && [ "$s" = "SUCCESS" ]; then
+              if out="$(gh pr merge "$PR_URL" --squash --delete-branch 2>&1)"; then
+                echo "$out"
+                echo "Merged: quality and smoke passed and the PR was already mergeable."
+                exit 0
+              fi
+              echo "$out"
+            fi
+
+            sleep 10
+          done
+
+          echo "::warning::Auto-merge was not enabled after waiting (last state=${state:-unknown}). PR left open for manual merge."

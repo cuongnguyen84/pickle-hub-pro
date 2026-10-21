@@ -142,7 +142,7 @@ const Forum = () => {
                     <div className="tl-thread-meta">
                       <span><b>{post.author_name ?? "—"}</b></span>
                       <span className="sep">·</span>
-                      <span>{formatRelative(post.created_at)}</span>
+                      <span>{formatRelative(post.created_at, language)}</span>
                       {post.tags.length > 0 && (
                         <>
                           <span className="sep">·</span>

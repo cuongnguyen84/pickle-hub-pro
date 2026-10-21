@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildAppComment,
+  buildLinkComment,
+  configuredPages,
+  facebookMaxItemAgeDays,
+  laterOf,
   isFacebookPostingWindow,
+  isStaleTournamentNews,
   pickNextId,
   pickNextScanLimit,
   sanitizeCaption,
@@ -64,5 +70,83 @@ describe('isFacebookPostingWindow', () => {
 describe('sanitizeCaption', () => {
   it('passes plain captions through', () => {
     expect(sanitizeCaption('Pickleball VN thắng lớn!')).toBe('Pickleball VN thắng lớn!');
+  });
+});
+
+describe('post comments', () => {
+  const link = 'https://www.thepicklehub.net/vi/news/abc-123';
+
+  // Two comments, not one. Combined, Facebook rendered a single comment with two
+  // links and gave neither its own preview card.
+  it('puts the article link alone in the first comment', () => {
+    expect(buildLinkComment(link)).toBe(link);
+    expect(buildLinkComment(link)).not.toContain('apps.apple.com');
+  });
+
+  it('puts the app CTA alone in the second, with no article link in it', () => {
+    const app = buildAppComment();
+    expect(app).toContain('Tải app ThePickleHub');
+    expect(app).toContain('apps.apple.com');
+    expect(app).not.toContain('/vi/news/');
+  });
+
+  // The caption promises the article link is in the FIRST comment, so the two
+  // must never be swapped.
+  it('keeps them distinct so neither can stand in for the other', () => {
+    expect(buildLinkComment(link)).not.toBe(buildAppComment());
+  });
+});
+
+describe('Facebook staleness floor', () => {
+  it('defaults to 3 days and honours the env override', () => {
+    expect(facebookMaxItemAgeDays({} as never)).toBe(3);
+    expect(facebookMaxItemAgeDays({ FB_MAX_ITEM_AGE_DAYS: '7' } as never)).toBe(7);
+    expect(facebookMaxItemAgeDays({ FB_MAX_ITEM_AGE_DAYS: 'nonsense' } as never)).toBe(3);
+    expect(facebookMaxItemAgeDays({ FB_MAX_ITEM_AGE_DAYS: '0' } as never)).toBe(3);
+  });
+
+  // A page that joined recently must not suddenly reach back past its own start
+  // date just because the staleness window is wider than its history.
+  it('takes whichever bound is later', () => {
+    const cutoff = '2026-08-14T00:00:00Z';
+    expect(laterOf('2026-07-31T00:00:00Z', cutoff)).toBe(cutoff);
+    expect(laterOf('2026-08-16T00:00:00Z', cutoff)).toBe('2026-08-16T00:00:00Z');
+    expect(laterOf(null, cutoff)).toBe(cutoff);
+  });
+});
+
+describe('browser-mode page', () => {
+  const env = {
+    FB_PAGE_ID: '1',
+    FB_PAGE_ACCESS_TOKEN: 't',
+    FB_SECONDARY_PAGE_ID: '2',
+    FB_SECONDARY_PAGE_ACCESS_TOKEN: 't2',
+  } as unknown as Parameters<typeof configuredPages>[0];
+
+  it('flags only the secondary page when FB_SECONDARY_VIA_BROWSER=1', () => {
+    const pages = configuredPages({ ...env, FB_SECONDARY_VIA_BROWSER: '1' });
+    expect(pages.map((p) => [p.key, p.viaBrowser])).toEqual([
+      ['thepicklehub', false],
+      ['ta-pickleball', true],
+    ]);
+  });
+
+  it('flags the primary page when FB_PRIMARY_VIA_BROWSER=1', () => {
+    const pages = configuredPages({ ...env, FB_PRIMARY_VIA_BROWSER: '1', FB_SECONDARY_VIA_BROWSER: '1' });
+    expect(pages.every((p) => p.viaBrowser)).toBe(true);
+  });
+
+  it('keeps both pages on the API when the flag is unset', () => {
+    expect(configuredPages(env).every((p) => !p.viaBrowser)).toBe(true);
+  });
+});
+
+describe('isStaleTournamentNews', () => {
+  const now = Date.parse('2026-10-19T12:00:00Z');
+  it('drops tournament news older than 24h, keeps other categories', () => {
+    expect(isStaleTournamentNews('tournament', '2026-10-18T11:00:00Z', now)).toBe(true);
+    expect(isStaleTournamentNews('tournament', '2026-10-18T13:00:00Z', now)).toBe(false);
+    expect(isStaleTournamentNews('player', '2026-10-16T12:00:00Z', now)).toBe(false);
+    expect(isStaleTournamentNews(null, '2026-10-16T12:00:00Z', now)).toBe(false);
   });
 });

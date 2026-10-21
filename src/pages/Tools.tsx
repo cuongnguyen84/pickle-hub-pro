@@ -1,5 +1,7 @@
-import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { TOOLS_HUB_META } from "@/content/tools/hub-copy";
+import { HreflangTags } from "@/components/seo";
+import { useCallback, useEffect, useMemo } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import {
   useActivePublicQuickTables,
@@ -10,11 +12,17 @@ import {
   useCompletedPublicQuickTables,
 } from "@/hooks/useSupabaseData";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import { ToolsHubFaqSection } from "@/components/seo/ToolsHubFaqSection";
 import { formatRelative } from "@/lib/format-datetime";
+import { localePath } from "@/lib/locale-path";
 
 const Tools = () => {
-  const { language } = useI18n();
+  const { setLanguageFromUrl } = useI18n();
+  const { pathname } = useLocation();
+  const language = pathname.startsWith("/vi/") ? "vi" : "en";
   const isVi = language === "vi";
+  const lp = useCallback((path: string) => localePath(path, language), [language]);
+  useEffect(() => { setLanguageFromUrl(language); }, [language, setLanguageFromUrl]);
   const { data: activeQuickTables = [] } = useActivePublicQuickTables({ limit: 20 });
   const { data: openRegTables = [] } = useOpenRegistrationTables({ limit: 20 });
   const { data: completedQuickTables = [] } = useCompletedPublicQuickTables({ limit: 20 });
@@ -61,7 +69,7 @@ const Tools = () => {
         fmtLabel: isVi ? "Bảng đấu nhanh" : "Quick Table",
         meta: `${t.is_doubles ? (isVi ? "Đôi" : "Doubles") : (isVi ? "Đơn" : "Singles")} · ${t.player_count} ${isVi ? "người" : "players"}`,
         creator: t.creator_display_name,
-        href: `/tools/quick-tables/${t.share_id}`,
+        href: lp(`/tools/quick-tables/${t.share_id}`),
         status: t.status,
         created_at: t.created_at,
       });
@@ -75,7 +83,7 @@ const Tools = () => {
         fmtLabel: isVi ? "Loại trực tiếp Đôi" : "Doubles Elim",
         meta: `${t.team_count} ${isVi ? "đội" : "teams"}`,
         creator: t.creator_display_name,
-        href: `/tools/doubles-elimination/${t.share_id}`,
+        href: lp(`/tools/doubles-elimination/${t.share_id}`),
         status: t.status,
         created_at: t.created_at,
       });
@@ -89,7 +97,7 @@ const Tools = () => {
         fmtLabel: isVi ? "Linh hoạt" : "Flex",
         meta: isVi ? "Định dạng tùy chỉnh" : "Custom format",
         creator: t.creator_display_name,
-        href: `/tools/flex-tournament/${t.share_id}`,
+        href: lp(`/tools/flex-tournament/${t.share_id}`),
         status: t.status,
         created_at: t.created_at,
       });
@@ -103,7 +111,7 @@ const Tools = () => {
         fmtLabel: isVi ? "Đấu đồng đội" : "Team Match",
         meta: `${t.team_count} ${isVi ? "đội" : "teams"} · ${t.team_roster_size}/${isVi ? "đội" : "team"}`,
         creator: t.creator_display_name,
-        href: `/tools/team-match/${t.share_id}`,
+        href: lp(`/tools/team-match/${t.share_id}`),
         status: t.status,
         created_at: t.created_at,
       });
@@ -116,7 +124,7 @@ const Tools = () => {
         return tb - ta;
       })
       .slice(0, 12);
-  }, [activeQuickTables, openRegTables, activeDoublesElim, activeFlex, openTeamMatches, isVi]);
+  }, [activeQuickTables, openRegTables, activeDoublesElim, activeFlex, openTeamMatches, isVi, lp]);
 
   const formatAccent = (fmt: string) =>
     fmt === "quick-tables" ? "#00b96b" :
@@ -134,24 +142,23 @@ const Tools = () => {
 
   return (
     <TheLineLayout
-      title={isVi ? "Bracket Lab" : "Bracket Lab"}
-      description={isVi
-        ? "Công cụ tổ chức giải đấu pickleball miễn phí — round robin, loại trực tiếp đơn/đôi, đấu đồng đội MLP, định dạng linh hoạt. Không cần đăng ký."
-        : "Free pickleball tournament tools — round robin, single/double elimination, MLP team match, Flex format. No signup. Shareable scoreboard."}
+      title={TOOLS_HUB_META[language].title}
+      description={TOOLS_HUB_META[language].description}
       active="lab"
     >
+      <HreflangTags enPath="/tools" viPath="/vi/tools" />
       <div className="tl-shell">
         <nav className="tl-breadcrumb">
           <Link to="/">{isVi ? "Trang chủ" : "Home"}</Link>
           <span className="sep">/</span>
-          <span className="current">Bracket Lab</span>
+          <span className="current">{isVi ? "Công cụ" : "Bracket Lab"}</span>
         </nav>
 
         <header className="tl-page-head">
           <div className="kicker">
             {isVi
-              ? "◆ Tính năng đỉnh · Miễn phí · Không cần đăng ký"
-              : "◆ The killer feature · Free · No signup"}
+              ? "◆ Tính năng đỉnh · Miễn phí · Đăng nhập để tạo giải"
+              : "◆ The killer feature · Free · Sign in to create"}
           </div>
           <h1>
             {isVi ? (
@@ -168,17 +175,17 @@ const Tools = () => {
           </h1>
           <p>
             {isVi
-              ? "Trình tạo bảng đấu pickleball miễn phí — round robin, loại trực tiếp đơn và đôi, đấu đồng đội MLP, và định dạng linh hoạt. Chấm điểm trực tiếp trên điện thoại, link bảng điểm chia sẻ được, bracket in được. Không cần app, không đăng ký, không phụ phí."
-              : "A free pickleball tournament bracket generator — round robin, single and double elimination, MLP team match, and flex format. Live scoring on your phone, shareable scoreboard URL, printable bracket. No apps, no signup, no catch."}
+              ? "Công cụ tạo bảng đấu pickleball miễn phí — đánh vòng tròn, loại trực tiếp đơn và đôi, đấu đồng đội, và định dạng linh hoạt. Chấm điểm trên điện thoại, gửi link bảng điểm, in bảng đấu. Đăng nhập để tạo và quản lý giải. Xem bảng đấu công khai không cần tài khoản."
+              : "A free pickleball tournament bracket generator — round robin, single and double elimination, MLP team match, and flex format. Live scoring on your phone, shareable scoreboard URL, printable bracket. Sign in to create and manage a tournament. Public brackets can be viewed without an account."}
           </p>
           <div style={{ display: "flex", gap: 10, marginTop: 28, flexWrap: "wrap" }}>
-            <Link to="/tools/quick-tables" className="tl-btn green">
+            <Link to={lp("/tools/quick-tables")} className="tl-btn green">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true">
                 <path d="M12 5v14M5 12h14" />
               </svg>
               {isVi ? "Tạo Bảng đấu nhanh →" : "Start a Quick Table →"}
             </Link>
-            <Link to="/tools/doubles-elimination/new" className="tl-btn">
+            <Link to={lp("/tools/doubles-elimination/new")} className="tl-btn">
               {isVi ? "Hoặc Loại trực tiếp Đôi" : "Or Double Elimination"}
             </Link>
           </div>
@@ -199,7 +206,7 @@ const Tools = () => {
           <div className="tl-stat-box">
             <div className="lbl">{isVi ? "Định dạng" : "Formats"}</div>
             <div className="val">4</div>
-            <div className="sub">{isVi ? "Round robin · Loại · Linh hoạt · Đồng đội" : "Round robin · Elim · Flex · Team"}</div>
+            <div className="sub">{isVi ? "Vòng tròn · Loại · Linh hoạt · Đồng đội" : "Round robin · Elim · Flex · Team"}</div>
           </div>
           <div className="tl-stat-box">
             <div className="lbl">{isVi ? "Thời gian thiết lập" : "Setup time"}</div>
@@ -232,17 +239,17 @@ const Tools = () => {
           </div>
 
           <div className="tl-format-grid">
-            <Link to="/tools/quick-tables" className="tl-format-card" data-fmt="quick-tables">
+            <Link to={lp("/tools/quick-tables")} className="tl-format-card" data-fmt="quick-tables">
               <div className="tl-format-head">
                 <div className="tl-format-kicker">
-                  {isVi ? "◆ Round robin · 4-32 người" : "◆ Round robin · 4-32 players"}
+                  {isVi ? "◆ Đánh vòng tròn · 4-32 người" : "◆ Round robin · 4-32 players"}
                 </div>
                 <span className="tl-format-badge">{isVi ? "Phổ biến nhất" : "Most popular"}</span>
               </div>
               <h3 className="tl-format-title">{isVi ? "Bảng đấu nhanh" : "Quick Tables"}</h3>
               <p className="tl-format-desc">
                 {isVi
-                  ? "Vòng bảng → tự động vào playoff. Đơn hoặc đôi. Định dạng chủ lực cho giải club, tournament cuối tuần và buổi tập."
+                  ? "Vòng bảng, rồi tự động vào vòng loại. Đơn hoặc đôi. Dùng cho giải câu lạc bộ, cuối tuần và buổi tập."
                   : "Group stage → auto playoffs. Singles or doubles. The workhorse format for club events, weekend tournaments and practice sessions."}
               </p>
               <div className="tl-format-foot">
@@ -251,7 +258,7 @@ const Tools = () => {
               </div>
             </Link>
 
-            <Link to="/tools/doubles-elimination/new" className="tl-format-card" data-fmt="doubles-elim">
+            <Link to={lp("/tools/doubles-elimination/new")} className="tl-format-card" data-fmt="doubles-elim">
               <div className="tl-format-head">
                 <div className="tl-format-kicker">
                   {isVi ? "◆ Loại trực tiếp đôi · 4-32 đội" : "◆ Double elim · 4-32 teams"}
@@ -270,7 +277,7 @@ const Tools = () => {
               </div>
             </Link>
 
-            <Link to="/tools/flex-tournament/new" className="tl-format-card" data-fmt="flex">
+            <Link to={lp("/tools/flex-tournament/new")} className="tl-format-card" data-fmt="flex">
               <div className="tl-format-head">
                 <div className="tl-format-kicker">
                   {isVi ? "◆ Luật tùy chỉnh · Mọi quy mô" : "◆ Custom rules · Any size"}
@@ -289,17 +296,17 @@ const Tools = () => {
               </div>
             </Link>
 
-            <Link to="/tools/team-match/new" className="tl-format-card" data-fmt="team-match">
+            <Link to={lp("/tools/team-match/new")} className="tl-format-card" data-fmt="team-match">
               <div className="tl-format-head">
                 <div className="tl-format-kicker">
-                  {isVi ? "◆ Định dạng MLP · 2 đội" : "◆ MLP format · 2 teams"}
+                  {isVi ? "◆ Đấu đồng đội · 2 đội" : "◆ MLP format · 2 teams"}
                 </div>
                 <span className="tl-format-badge">{isVi ? "Cấp Pro" : "Pro-level"}</span>
               </div>
               <h3 className="tl-format-title">{isVi ? "Đấu đồng đội" : "Team Match"}</h3>
               <p className="tl-format-desc">
                 {isVi
-                  ? "Đội đấu đội kiểu MLP với tiebreak Dreambreaker. Đôi nữ, đôi nam, đôi hỗn hợp x2 — đúng cách Major League Pickleball vận hành."
+                  ? "Hai đội đấu với nhau, có trận quyết định khi hoà. Đôi nữ, đôi nam, đôi hỗn hợp — cách các giải đồng đội lớn vẫn dùng."
                   : "MLP-style team vs team with Dreambreaker tiebreaker. Women's doubles, men's doubles, mixed x2 — exactly how Major League Pickleball runs it."}
               </p>
               <div className="tl-format-foot">
@@ -316,8 +323,8 @@ const Tools = () => {
             <h2>
               {isVi ? (
                 <>
-                  <em className="tl-serif">Bracket Lab</em>{" "}
-                  <span className="sans">làm gì.</span>
+                  <em className="tl-serif">Công cụ</em>{" "}
+                  <span className="sans">này làm gì.</span>
                 </>
               ) : (
                 <>
@@ -338,13 +345,13 @@ const Tools = () => {
           >
             <p style={{ marginBottom: 16 }}>
               {isVi
-                ? "Bracket Lab là trình tạo bảng đấu pickleball miễn phí, dành cho câu lạc bộ, người tổ chức cuối tuần, và các sự kiện chuyên nghiệp khắp châu Á. Chọn định dạng — round robin, loại trực tiếp đơn, loại trực tiếp đôi, đấu đồng đội MLP, hay giải linh hoạt hoàn toàn tùy chỉnh — và công cụ sẽ dựng bảng đấu, sắp lịch trận, xoay sân, và theo dõi điểm trực tiếp. Chia sẻ một link duy nhất với người chơi và khán giả; in bracket treo tường nếu cần."
+                ? "Đây là công cụ tạo bảng đấu pickleball miễn phí, dành cho câu lạc bộ, người tổ chức cuối tuần, và các sự kiện khắp châu Á. Chọn định dạng — đánh vòng tròn, loại trực tiếp đơn, loại trực tiếp đôi, đấu đồng đội, hay giải linh hoạt — rồi công cụ dựng bảng, xếp lịch, xoay sân và theo dõi điểm. Gửi một link cho người chơi và khán giả; in bảng đấu nếu cần."
                 : "Bracket Lab is a free pickleball tournament bracket generator built for clubs, weekend organizers, and pro events across Asia. Pick a format — round robin, single elimination, double elimination, MLP team match, or a fully custom flex tournament — and the tool builds the bracket, schedules matches, rotates courts, and tracks live scores. Share a single link with players and spectators; print a wall bracket if you need one."}
             </p>
             <p>
               {isVi ? (
                 <>
-                  Không cần đăng ký. Không cần tải về. Không có dùng thử 14 ngày rồi biến thành gói đăng ký $99/tháng. Xây dựng và duy trì bởi{" "}
+                  Đăng nhập để tạo giải; xem bảng đấu công khai không cần tài khoản. Các công cụ tạo bảng đấu hiện miễn phí. Xây dựng và duy trì bởi{" "}
                   <Link to="/blog/tournament-organizer-hub" style={{ color: "var(--tl-green)" }}>
                     ThePickleHub
                   </Link>
@@ -352,7 +359,7 @@ const Tools = () => {
                 </>
               ) : (
                 <>
-                  No signup. No download. No 14-day trial that turns into a $99/month subscription. Built and maintained by{" "}
+                  Create and manage tournaments with a free account. Spectators can view public brackets without signing in. Built and maintained by{" "}
                   <Link to="/blog/tournament-organizer-hub" style={{ color: "var(--tl-green)" }}>
                     ThePickleHub
                   </Link>
@@ -362,6 +369,11 @@ const Tools = () => {
             </p>
           </div>
         </section>
+
+        {/* How-to steps + FAQ. Copy is shared with the SSR renderer
+            (src/content/tools/hub-copy.ts) so the HowTo/FAQPage JSON-LD the bot
+            path emits always describes content a human visitor can see. */}
+        <ToolsHubFaqSection language={language} />
 
         {/* Extra tools / utilities */}
         <section style={{ marginBottom: 56 }}>
@@ -379,13 +391,13 @@ const Tools = () => {
             </h2>
           </div>
           <div className="tl-format-grid">
-            <Link to="/tools/dashboard" className="tl-format-card" data-fmt="dashboard">
+            <Link to={lp("/tools/dashboard")} className="tl-format-card" data-fmt="dashboard">
               <div className="tl-format-head">
                 <div className="tl-format-kicker">
                   {isVi ? "◆ Phân tích · Mọi giải đấu" : "◆ Analytics · Any tournament"}
                 </div>
               </div>
-              <h3 className="tl-format-title">{isVi ? "Bảng điều khiển" : "Dashboard"}</h3>
+              <h3 className="tl-format-title">{isVi ? "Quản lý giải" : "Dashboard"}</h3>
               <p className="tl-format-desc">
                 {isVi
                   ? "Xem thống kê thời gian thực cho mọi bảng đấu — ghim trên laptop bàn chấm điểm cho ban tổ chức. Hàng đợi trận, phân sân, bảng xếp hạng người chơi."
@@ -393,14 +405,14 @@ const Tools = () => {
               </p>
               <div className="tl-format-foot">
                 <span>{isVi ? "Cho BTC" : "For organizers"}</span>
-                <span className="cta">{isVi ? "Mở dashboard →" : "Open dashboard →"}</span>
+                <span className="cta">{isVi ? "Mở quản lý giải →" : "Open dashboard →"}</span>
               </div>
             </Link>
 
             <Link to="/matches/new" className="tl-format-card" data-fmt="scoring">
               <div className="tl-format-head">
                 <div className="tl-format-kicker">
-                  {isVi ? "◆ Trận đơn lẻ · Không bracket" : "◆ Single match · No bracket"}
+                  {isVi ? "◆ Một trận · Không cần bảng đấu" : "◆ Single match · No bracket"}
                 </div>
               </div>
               <h3 className="tl-format-title">{isVi ? "Chấm điểm trận" : "Match Scoring"}</h3>
@@ -452,7 +464,7 @@ const Tools = () => {
                   ? "Hãy là người đầu tiên. Tạo một Bảng đấu nhanh — thiết lập chỉ khoảng một phút."
                   : "Be the first. Spin up a Quick Table — setup takes about a minute."}
               </p>
-              <Link to="/tools/quick-tables" className="tl-btn green">
+              <Link to={lp("/tools/quick-tables")} className="tl-btn green">
                 {isVi ? "Tạo Bảng đấu nhanh →" : "Start a Quick Table →"}
               </Link>
             </div>
@@ -473,7 +485,7 @@ const Tools = () => {
                       <span className="sep">·</span>
                       <span>{row.meta}</span>
                       <span className="sep">·</span>
-                      <span>{formatRelative(row.created_at)}</span>
+                      <span>{formatRelative(row.created_at, language)}</span>
                     </div>
                   </div>
                   <div className="tl-br-creator">{row.creator ?? "—"}</div>
@@ -521,7 +533,7 @@ const Tools = () => {
               ? "Mọi bảng đấu tự sinh URL bảng điểm chỉ đọc, hoàn hảo để chiếu lên TV tại địa điểm. Người chơi chấm điểm trên điện thoại, khán giả xem trên màn hình lớn."
               : "Every bracket auto-generates a read-only scoreboard URL perfect for casting to a TV at the venue. Players score on phones, spectators watch on screens."}
           </p>
-          <Link to="/tools/quick-tables" className="tl-btn green">
+          <Link to={lp("/tools/quick-tables")} className="tl-btn green">
             {isVi ? "Dùng thử miễn phí →" : "Try it free →"}
           </Link>
         </section>

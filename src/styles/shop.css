@@ -21,6 +21,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  overflow: clip; /* like #root (index.css): focus must never scroll a hidden box */
   background: var(--tl-bg);
   color: var(--tl-fg);
 
@@ -59,6 +60,35 @@
   --shop-gap:          14px;
   --shop-pad:          16px;
   --shop-tap:          44px;                /* minimum touch target */
+
+  /* ── R3 card-first sub-theme (04-ux-spec-round3) ─────────────────────────
+   * Buyer catalogue reads as cards, not editorial. Dark mode keeps the flat
+   * surface+border look (shadows carry nothing on a dark ground); light mode
+   * overrides at the bottom of this file. */
+  --shop-radius-card:    20px;
+  --shop-radius-media:   14px;
+  --shop-card-surface:   var(--tl-surface);
+  --shop-card-edge:      var(--tl-border);
+  --shop-shadow-1:       0 0 #0000;
+  --shop-shadow-2:       0 0 #0000;
+  --shop-chip-bg:        var(--tl-surface-2);
+  --shop-chip-ink:       var(--tl-fg-2);
+  --shop-chip-active-bg: var(--tl-fg);
+  --shop-chip-active-ink: var(--tl-bg);
+  --shop-gap-grid:       16px;
+  --shop-card-pad:       12px;
+
+  /* ── R4 ShopHome hero card (04-ux-spec-round4) ───────────────────────────
+   * Tints are color-mix(green N%, surface) PRE-COMPUTED to hex because the
+   * contrast gate only resolves hex literals (precedent: --shop-on-accent).
+   * Dark: mix over --tl-surface #131416 with --tl-green #b5e853.
+   *   strong = 16% green → #2d3620; weak = 5% green → #1b1f19. */
+  --shop-hero-tint-strong: #2d3620;
+  --shop-hero-tint-weak:   #1b1f19;
+  --shop-hero-edge: color-mix(in srgb, var(--tl-green) 28%, var(--tl-border));
+  --shop-hero-ink:     var(--tl-fg);
+  --shop-hero-sub-ink: var(--tl-fg-2);  /* NOT fg-3: it dips under AA on the tint */
+  --shop-hero-art-ink: var(--tl-green);
 }
 
 .tl-shop-scroll {
@@ -113,6 +143,44 @@
 .tl-proto-spacer { flex: 1 1 auto; }
 
 /* ── Layout primitives ────────────────────────────────────────────────── */
+/* ── Ai sở hữu quyền cuộn ─────────────────────────────────────────────────
+ * `.tl-shop` ở trên tự nhận quyền cuộn: `height: 100%` + `overflow: hidden`,
+ * và trông chờ một `.tl-shop-scroll` bên trong. Đúng cho các màn người bán, vì
+ * `ShopScrollShell` dựng đúng khuôn đó.
+ *
+ * Các màn người mua thì KHÔNG: chúng đi qua `TheLineLayout`, và layout đó đã
+ * có sẵn `.tl-scroll` (`flex: 1; overflow-y: auto`) làm scroller. Lồng thêm một
+ * hộp `height: 100%; overflow: hidden` vào trong một scroller nghĩa là khoá
+ * cứng nội dung đúng một màn hình rồi cắt phần còn lại — không có đường nào
+ * cuộn tới.
+ *
+ * Trên desktop không ai thấy, vì nội dung shop (626px) vẫn thấp hơn viewport
+ * (713px) nên chưa chạm mép. Trên iPhone thì mất hẳn nửa trang: PO mở
+ * /shop/checkout và không thấy nút Đặt đơn, mở trang sản phẩm và không thấy ô
+ * chọn Size. Đo được: main.tl-shop clientHeight === scrollHeight === 713 trong
+ * khi .tl-scroll scrollHeight là 1149.
+ *
+ * Nằm trong `.tl-scroll` thì nhường quyền cuộn cho nó và cứ cao theo nội dung.
+ * -------------------------------------------------------------------------- */
+.tl-scroll main.tl-shop,
+.tl-scroll .tl-shop {
+  height: auto;
+  min-height: 100%;
+  flex: 0 0 auto;
+  overflow: visible;
+
+  /* Và thôi làm flex container. `.tl-shop-page` có `margin: 0 auto` để căn
+     giữa trên desktop; auto margin theo trục ngang của một flex item thì
+     HUỶ `stretch`, nên nó tự co theo `fit-content` thay vì rộng bằng cha.
+     Đo ở 390px: `.tl-shop-page` ra 813px, lưới sản phẩm thành 2 cột 384px,
+     ảnh 370px — tràn ra ngoài màn hình và không cuộn ngang tới được, vì
+     `.tl-scroll` là `overflow-x: hidden`.
+     Lỗi này có sẵn từ trước; `overflow: hidden` cũ đang che nó. Ở đây
+     `main` chỉ là hộp dòng chảy bình thường, `margin: 0 auto` căn giữa như
+     mọi khối khác, và mọi con đều rộng đúng bằng viewport. */
+  display: block;
+}
+
 .tl-shop-page {
   max-width: 1240px;
   margin: 0 auto;
@@ -147,10 +215,10 @@
   min-width: 44px;
 }
 .tl-shop-h2 {
-  font-size: 16px;
-  font-weight: 650;
-  letter-spacing: -0.01em;
-  margin: 28px 0 12px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin: 22px 0 10px;
   color: var(--tl-fg);
 }
 .tl-shop-eyebrow {
@@ -211,6 +279,10 @@
 .tl-shop-btn--block { width: 100%; }
 .tl-shop-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .tl-shop-btn--sm { min-height: 36px; padding: 0 12px; font-size: 13px; }
+/* A phone has no hover, so :active is the only feedback a tap gets. */
+.tl-shop-btn:active:not(:disabled) { transform: translateY(1px); }
+/* The file input is clipped away, so its focus ring has to live on the label. */
+.tl-shop-sr:focus-visible + label { outline: 2px solid var(--tl-green); outline-offset: 2px; }
 
 /* Focus is never removed — it is made obvious (global done criteria). */
 .tl-shop :is(a, button, input, select, textarea, [tabindex]):focus-visible {
@@ -327,7 +399,7 @@
 /* ── Empty state ──────────────────────────────────────────────────────── */
 .tl-shop-empty {
   border: 1px dashed var(--tl-border-2);
-  border-radius: var(--tl-radius-lg);
+  border-radius: var(--shop-radius-card);
   padding: 40px 24px;
   text-align: center;
   color: var(--tl-fg-3);
@@ -379,10 +451,14 @@
  * the bottom clearance below is verified against the real thing, not a mock.
  * ---------------------------------------------------------------------- */
 
-/* Bottom clearance: BottomNav is 56px on web, taller on native shells. Any
-   screen with a sticky bottom bar adds this on top of its own height. */
+/* Bottom clearance: BottomNav is 56px on web, 68px on iOS and 72px on the
+   Android shell. R5 audit: this file used to declare 56 here and hard-code 72
+   in .tl-pdp-buybar, so the toast sat UNDER the nav on a phone. One constant,
+   the tallest case — 16px of slack on web is cheaper than hiding content on
+   iOS. Every fixed bottom element measures from this variable, never from a
+   literal. */
 .tl-shop {
-  --shop-bottomnav: 56px;
+  --shop-bottomnav: 72px;
   --shop-safe-b: env(safe-area-inset-bottom, 0px);
 }
 
@@ -428,6 +504,7 @@
   position: relative;
 }
 .tl-shop-iconbtn:hover { background: var(--tl-surface-2); color: var(--tl-fg); }
+.tl-shop-iconbtn:active { transform: scale(0.96); }
 .tl-shop-cart-count {
   position: absolute;
   top: 4px;
@@ -725,14 +802,15 @@
   display: inline-flex;
   align-items: center;
   min-height: var(--shop-tap);
-  padding: 0 14px;
+  padding: 0 16px;
   border-radius: 999px;
-  border: 1px solid var(--tl-border);
-  background: var(--tl-surface);
-  color: var(--tl-fg-2);
+  border: 1px solid transparent;
+  background: var(--shop-chip-bg);
+  color: var(--shop-chip-ink);
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 /* The chip count had no rule of its own, so it glued onto the label —
    "Vợt pickleball1", "Chờ duyệt1" (Wave 0). */
@@ -742,7 +820,16 @@
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
-.tl-shop-cat[aria-current="page"] { border-color: var(--tl-green); color: var(--tl-fg); }
+.tl-shop-cat:hover { background: color-mix(in srgb, var(--tl-fg) 10%, var(--shop-card-surface)); }
+.tl-shop-cat:active { transform: scale(0.97); }
+/* Active chip inverts, like the reference: ink pill on the page's own fg. */
+.tl-shop-cat[aria-current="page"] {
+  background: var(--shop-chip-active-bg);
+  color: var(--shop-chip-active-ink);
+  font-weight: 650;
+}
+.tl-shop-cat[aria-current="page"] .count { color: inherit; }
+.tl-shop-cat[aria-current="page"]:hover { opacity: 0.92; }
 
 .tl-shop-deliv {
   display: flex;
@@ -1217,6 +1304,20 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
   --shop-on-accent:  #f7fbee;   /* on --tl-green   #516c1b — 5.69:1 */
   --shop-on-gold:    #fdfaf2;   /* on --tl-gold    #825e0f — 5.66:1 */
   --shop-on-ok:      #f2fbf6;   /* on --tl-accent-qt #007342 — 5.64:1 */
+
+  /* R3 card-first: white cards with a whisper of shadow on the cream page. */
+  --shop-card-surface: #ffffff;
+  --shop-card-edge: color-mix(in srgb, var(--tl-fg) 6%, transparent);
+  --shop-shadow-1: 0 1px 2px rgb(23 20 10 / 0.04), 0 6px 16px rgb(23 20 10 / 0.06);
+  --shop-shadow-2: 0 2px 4px rgb(23 20 10 / 0.05), 0 12px 28px rgb(23 20 10 / 0.10);
+  /* = color-mix(in srgb, --tl-fg #08090a 5%, #ffffff) pre-computed to hex so
+     the contrast gate can measure chip ink on it (fg-2/#f3f3f3 ≈ 10.4:1). */
+  --shop-chip-bg: #f3f3f3;
+
+  /* R4 hero tints, light: mix over --tl-surface #eeebe1 with --tl-green
+     #516c1b. strong = 12% green → #dbdcc9; weak = 4% green → #e8e6d9. */
+  --shop-hero-tint-strong: #dbdcc9;
+  --shop-hero-tint-weak:   #e8e6d9;
 }
 
 /* ── Buyer catalogue (P2b.4) ──────────────────────────────────────────────
@@ -1226,31 +1327,61 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
  * ------------------------------------------------------------------------ */
 .tl-pgrid {
   display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  /* 2 columns from 320px, like the reference — auto-fill gave one huge card. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin: 0;
   padding: 0;
   list-style: none;
 }
-@media (min-width: 768px) { .tl-pgrid { gap: 18px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } }
+.tl-pgrid > li {
+  display: flex;
+  min-width: 0;
+}
+@media (min-width: 400px) { .tl-pgrid { gap: var(--shop-gap-grid); } }
+@media (min-width: 768px) { .tl-pgrid { gap: 20px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } }
 
 .tl-pcard {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--tl-line);
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--tl-surface);
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--shop-card-edge);
+  border-radius: var(--shop-radius-card);
+  background: var(--shop-card-surface);
+  box-shadow: var(--shop-shadow-1);
+  padding: 6px 6px 0;
   color: inherit;
   text-decoration: none;
   min-height: var(--shop-tap);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
-.tl-pcard:hover { border-color: var(--tl-fg-4); }
-.tl-pcard:focus-visible { outline: 2px solid var(--tl-green); outline-offset: 2px; }
+.tl-pcard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shop-shadow-2);
+  border-color: color-mix(in srgb, var(--tl-fg) 12%, transparent);
+}
+.tl-pcard:hover .tl-pcard-go { background: var(--tl-green); color: var(--shop-on-accent); }
+.tl-pcard:focus-visible {
+  outline: 2px solid var(--tl-green);
+  outline-offset: 2px;
+  transform: translateY(-2px);
+  box-shadow: var(--shop-shadow-2);
+}
+.tl-pcard:active { transform: scale(0.98); }
 
-.tl-pcard-media { position: relative; width: 100%; background: var(--tl-surface-2); }
+.tl-pcard-media {
+  position: relative;
+  display: block;
+  width: 100%;
+  /* 1:1 always — the box is the card's, not the photo's. */
+  aspect-ratio: 1 / 1;
+  border-radius: var(--shop-radius-media);
+  overflow: hidden;
+  background: color-mix(in srgb, var(--tl-fg) 4%, var(--shop-card-surface));
+}
 .tl-pcard-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.tl-pcard-noimg { width: 100%; height: 100%; background: var(--tl-surface-2); }
+.tl-pcard-noimg { width: 100%; height: 100%; }
 
 .tl-pcard-flag {
   position: absolute; left: 8px; top: 8px;
@@ -1260,20 +1391,60 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
   border: 1px solid var(--tl-line);
 }
 
-.tl-pcard-body { padding: 10px 11px 12px; display: grid; gap: 4px; }
+/* Badge giảm giá: cùng hình với .tl-pcard-flag, góc phải; tồn tại song song với
+   "Hết hàng" bên trái. Skeleton không vẽ. */
+.tl-pcard-off {
+  position: absolute; right: 8px; top: 8px;
+  padding: 3px 8px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 600;
+  background: var(--shop-danger-fill); color: var(--shop-on-danger);
+  border: 1px solid var(--shop-danger-fill);
+}
+
+.tl-pcard-body { flex: 1; padding: 10px var(--shop-card-pad) var(--shop-card-pad); display: grid; gap: 4px; }
 .tl-pcard-title {
-  margin: 0; font-size: 13.5px; line-height: 1.4; font-weight: 500;
+  margin: 0; font-size: 14px; line-height: 1.35; font-weight: 600;
+  min-height: 2.7em;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.tl-pcard-price { margin: 0; font-size: 14.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.tl-pcard-noprice { font-weight: 500; color: var(--tl-fg-3); }
-.tl-pcard-meta { margin: 0; font-size: 12px; color: var(--tl-fg-3); }
-.tl-pcard-out { color: var(--tl-fg-3); }
-.tl-pcard-shop { margin: 0; font-size: 12px; color: var(--tl-fg-3); display: flex; align-items: center; gap: 3px; }
+.tl-pcard-meta {
+  margin: 0; font-size: 11.5px; color: var(--tl-fg-3);
+  display: flex; align-items: center; gap: 3px; min-width: 0; white-space: nowrap;
+}
+.tl-pcard-meta .tl-pcard-shopname { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .tl-pcard-verified { color: var(--tl-green); flex: none; }
+
+.tl-pcard-foot { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.tl-pcard-price {
+  flex: 1; min-width: 0; margin: 0;
+  font-size: 16.5px; font-weight: 700; letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* Giá gạch trên card đứng DÒNG RIÊNG phía trên giá bán: cùng dòng thì giá bán
+   bị cắt "1.900…" ngay cả trên desktop (PO 29/08). 12.5px vừa mọi bề rộng
+   card, nên không cần gate theo viewport nữa. */
+.tl-pcard-price .tl-shop-price-was {
+  display: block;
+  line-height: 1.2;
+  margin-bottom: 1px;
+}
+/* Two 138px cards at 320px leave the price ~80px next to the go circle. */
+@media (max-width: 359px) { .tl-pcard-price { font-size: 14.5px; } }
+.tl-pcard-noprice { font-weight: 500; color: var(--tl-fg-3); }
+.tl-pcard-go {
+  flex: none;
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border-radius: 999px;
+  background: var(--tl-fg);
+  color: var(--tl-bg);
+  transition: background 0.15s ease, color 0.15s ease;
+}
 
 .tl-pcard--skeleton { pointer-events: none; }
 .tl-pcard-sk-line { display: block; height: 11px; border-radius: 4px; background: var(--tl-surface-2); }
+.tl-pcard-sk-circle { flex: none; width: 34px; height: 34px; border-radius: 999px; background: var(--tl-surface-2); }
 
 /* Filters: a rail on desktop, a sheet on a phone. */
 .tl-shop-layout { display: block; }
@@ -1324,13 +1495,27 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
  * anchor's box at x = -9, i.e. a fifth of the touch target off the left edge
  * of a 320px screen, and an edge click landed outside the window. A 9px indent
  * is a much smaller price than a target a thumb cannot reach. */
-.tl-shop-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }
+/* R5 audit #13: the crumb row used to borrow .tl-shop-sub, the same class the
+   page subtitle and the order-status sentence use — one class, three meanings,
+   so a change to any of them moved the other two. Crumbs own their type now. */
+.tl-shop-crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--tl-fg-3);
+}
 .tl-crumb {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-height: var(--shop-tap);
   padding-inline: 9px;
+}
+.tl-shop-crumbs a:hover {
+  color: var(--tl-fg);
 }
 .tl-shop-crumbs .tl-crumb-sep { color: var(--tl-fg-4); }
 .tl-shop-crumbs .tl-crumb-current { padding-inline: 6px; }
@@ -1341,7 +1526,19 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
 .tl-pdp { display: grid; gap: 20px; }
 @media (min-width: 900px) { .tl-pdp { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; } }
 
-.tl-pdp-media img { display: block; width: 100%; height: auto; border-radius: 12px; background: var(--tl-surface-2); }
+/* Ảnh sản phẩm là ảnh người bán tự chụp — phần lớn là ảnh dọc. Để `height:auto`
+ * thì một tấm 3:4 ở 375px cao 500px, cộng header và bottom nav là hết sạch màn
+ * hình đầu: giá, chọn phiên bản và nút mua đều rơi xuống màn thứ hai. Chốt trần
+ * theo chiều cao màn hình và `contain` để không cắt ảnh; khung giữ tỉ lệ sẵn nên
+ * không giật layout lúc ảnh về (CLS). */
+.tl-pdp-media img {
+  display: block; width: 100%; height: auto;
+  max-height: 46svh; object-fit: contain;
+  border-radius: var(--shop-radius-card); background: var(--tl-surface-2);
+}
+@supports not (height: 1svh) { .tl-pdp-media img { max-height: 46vh; } }
+@media (min-width: 900px) { .tl-pdp-media img { max-height: none; } }
+.tl-pdp-media .tl-pcard-noimg { background: var(--tl-surface-2); border-radius: var(--shop-radius-card); }
 .tl-pdp-thumbs { display: flex; gap: 8px; padding: 10px 0 0; margin: 0; list-style: none; overflow-x: auto; }
 .tl-pdp-thumb {
   display: block; padding: 0; border: 2px solid transparent; border-radius: 8px;
@@ -1351,9 +1548,32 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
 .tl-pdp-thumb img { display: block; width: 56px; height: 56px; object-fit: cover; border-radius: 6px; }
 
 .tl-pdp-info { display: grid; gap: 12px; }
-.tl-pdp-price { margin: 0; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tl-pdp-price {
+  margin: 0; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums;
+  display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: baseline;
+}
+.tl-pdp-price > .tl-shop-price-was, .tl-pdp-price > .tl-pdp-off { white-space: nowrap; }
+.tl-pdp-price .tl-shop-price-was { font-size: 14px; font-weight: 500; }
+.tl-pdp-off {
+  display: inline-block; padding: 2px 8px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; line-height: 1.4;
+  background: var(--shop-danger-fill); color: var(--shop-on-danger);
+  border: 1px solid var(--shop-danger-fill);
+  vertical-align: middle;
+}
 .tl-pdp-meta { margin: 0; font-size: 13px; color: var(--tl-fg-3); }
 .tl-pdp-desc { margin: 0; font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+
+/* Bảng thông số: hai cột trên màn hẹp cũng đọc được vì nhãn xuống dòng được,
+ * và mỗi dòng có gạch chân mảnh để mắt dò ngang không nhảy hàng. */
+.tl-pdp-specs { margin: 0; display: grid; gap: 0; font-size: 13.5px; }
+.tl-pdp-specs > div {
+  display: grid; grid-template-columns: minmax(38%, auto) 1fr; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--tl-line);
+}
+.tl-pdp-specs > div:last-child { border-bottom: 0; }
+.tl-pdp-specs dt { margin: 0; color: var(--tl-fg-3); }
+.tl-pdp-specs dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
 
 .tl-pdp-opts { display: flex; flex-wrap: wrap; gap: 8px; }
 .tl-pdp-opt {
@@ -1367,7 +1587,622 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
 .tl-pdp-opt:disabled { opacity: 0.45; cursor: not-allowed; text-decoration: line-through; }
 .tl-pdp-opt:focus-visible { outline: 2px solid var(--tl-green); outline-offset: 2px; }
 
-.tl-pdp-seller { border: 1px solid var(--tl-line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 6px; }
+.tl-pdp-seller {
+  background: var(--shop-card-surface);
+  border: 1px solid var(--shop-card-edge);
+  border-radius: var(--shop-radius-card);
+  box-shadow: var(--shop-shadow-1);
+  padding: 14px 16px;
+  display: grid;
+  gap: 6px;
+}
+/* The self-declaration disclaimer keeps every word, at footnote size. */
+.tl-pdp-seller .tl-shop-hint { font-size: 11.5px; }
 .tl-pdp-shopname { margin: 0; display: flex; align-items: center; gap: 4px; font-weight: 600; }
 .tl-pdp-note { margin: 0; font-size: 13px; color: var(--tl-fg-3); }
 .tl-pdp-cta { display: grid; gap: 8px; }
+
+/* ── Thanh hành động dính đáy (chỉ mobile) ────────────────────────────────
+ * Trang sản phẩm, giỏ hàng và trang đặt hàng đều dài hơn một màn hình, nên nút
+ * chính trôi khỏi tầm nhìn khi người mua đọc tiếp. Thanh này CHỈ hiện khi nút
+ * trong trang đã trôi đi, nên không bao giờ có hai nút chính cùng lúc trên màn
+ * hình — vẫn đúng luật "một hành động chính mỗi màn".
+ * Đáy đo theo var(--shop-bottomnav) — R5 #5: trước đây hằng số 72 viết cứng ở
+ * đây còn toast tính theo 56, hai thanh nằm chồng nhau trên iOS. */
+.tl-shop-buybar {
+  position: fixed; left: 0; right: 0;
+  bottom: calc(var(--shop-bottomnav) + var(--shop-safe-b));
+  z-index: 60;
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px;
+  background: var(--tl-bg);
+  border-top: 1px solid var(--tl-border);
+  box-shadow: 0 -6px 20px rgb(0 0 0 / 12%);
+  transform: translateY(110%);
+  transition: transform 200ms ease-out;
+}
+.tl-shop-buybar[data-shown="true"] { transform: translateY(0); }
+.tl-shop-buybar-price {
+  margin: 0; font-size: 16px; font-weight: 700;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+/* Giá gạch trong thanh mua: nhỏ, trước giá bán, không badge; ẩn dưới 360px. */
+.tl-shop-buybar-price .tl-shop-price-was { font-size: 12.5px; font-weight: 500; margin-right: 6px; }
+@media (max-width: 359px) { .tl-shop-buybar-price .tl-shop-price-was { display: none; } }
+/* Dòng phụ dưới giá (tên shop / số món) — không bao giờ đẩy thanh cao thêm. */
+.tl-shop-buybar-sub {
+  margin: 0; font-size: 11.5px; color: var(--tl-fg-3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 16ch;
+}
+.tl-shop-buybar .tl-shop-btn { flex: 1; min-height: 46px; }
+@media (min-width: 900px) { .tl-shop-buybar { display: none; } }
+@media (prefers-reduced-motion: reduce) { .tl-shop-buybar { transition: none; } }
+
+/* Chừa chỗ cho thanh dính để nó không che dòng cuối của nội dung.
+   Trên .tl-pdp (khối bên trong) thì 76px là cộng thêm vào padding của trang.
+   Trên chính .tl-shop-page thì phải CỘNG vào 96px sẵn có — nếu không, class
+   này lại ghi đè xuống 76px và ăn mất phần chừa cho bottom nav. */
+@media (max-width: 899px) {
+  .tl-shop-has-buybar { padding-bottom: 76px; }
+  .tl-shop-page.tl-shop-has-buybar { padding-bottom: calc(96px + 76px); }
+}
+
+/* ── Shop UI polish R1 ────────────────────────────────────────────────────
+ * Seller-list thumbnails: the real cover in the box the layout already
+ * reserves (44px table row, 56px mobile card — width set by the parent). */
+.tl-shop-thumb {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  border-radius: var(--tl-radius);
+  overflow: hidden;
+  background: var(--tl-surface-2);
+  border: 1px solid var(--tl-border);
+  display: grid;
+  place-items: center;
+  color: var(--tl-fg-3);
+}
+.tl-shop-thumb .tl-shop-sk { width: 100%; height: 100%; border-radius: 0; }
+.tl-shop-thumb-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Shop monogram — accent arrives as --mono-accent, whose value is a token. */
+.tl-shop-monogram {
+  border-radius: var(--tl-radius-lg);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  flex: none;
+  color: var(--tl-fg);
+  background: color-mix(in srgb, var(--mono-accent) 16%, var(--tl-surface));
+  border: 1px solid color-mix(in srgb, var(--mono-accent) 45%, transparent);
+}
+
+/* Storefront header (R3 + R5): a 72px monogram-or-logo, the name, one row of
+   pills — and, only once the seller has PUBLISHED one, a cover banner on top.
+   The catalogue is the page's main character; identity stays short. */
+.tl-shop-storehead { margin-bottom: 4px; }
+.tl-shop-storehead-cover {
+  display: block;
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--shop-radius-card);
+  background: var(--tl-surface-2);
+  margin-bottom: 12px;
+}
+@media (min-width: 768px) {
+  .tl-shop-storehead-cover { height: 160px; }
+}
+.tl-shop-storehead-logo {
+  width: 72px;
+  height: 72px;
+  flex: none;
+  object-fit: cover;
+  border-radius: var(--shop-radius-card);
+  border: 1px solid var(--tl-border);
+  background: var(--tl-surface-2);
+}
+.tl-shop-storehead-row {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.tl-shop-storehead .tl-shop-monogram { border-radius: var(--shop-radius-card); }
+.tl-shop-storehead-id { min-width: 0; }
+.tl-shop-storehead-id .tl-shop-h1 { font-size: 24px; line-height: 28px; margin-bottom: 0; }
+.tl-shop-storehead-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.tl-shop-storehead-meta {
+  margin: 0;
+  font-size: 13px;
+  color: var(--tl-fg-3);
+  font-variant-numeric: tabular-nums;
+}
+.tl-shop-storehead-intro {
+  font-size: 13.5px;
+  margin-bottom: 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Store footer: the full-sentence policies and the honest no-contact copy,
+   verbatim, below the catalogue instead of above it. */
+.tl-shop-storefoot {
+  border-top: 1px solid var(--tl-border);
+  padding: 20px 0;
+  margin-top: 28px;
+}
+.tl-shop-storefoot .tl-shop-deflist { font-size: 13px; }
+
+/* Seller dashboard: the CTA row and the four numbers. */
+.tl-shop-cta-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+@media (max-width: 559px) {
+  .tl-shop-cta-row .tl-shop-btn { flex: 1 1 100%; }
+}
+.tl-shop-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--shop-gap);
+  margin-bottom: 16px;
+}
+@media (min-width: 768px) {
+  .tl-shop-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.tl-shop-stat {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  background: var(--tl-surface);
+  border: 1px solid var(--tl-border);
+  border-radius: var(--tl-radius);
+  padding: 14px;
+  min-height: 76px;
+  color: inherit;
+}
+.tl-shop-stat-n {
+  font-size: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--tl-fg);
+}
+.tl-shop-stat-l { font-size: 12px; color: var(--tl-fg-3); }
+.tl-shop-stat--attn { border-color: color-mix(in srgb, var(--shop-danger) 45%, transparent); }
+.tl-shop-stat--attn .tl-shop-stat-n { color: var(--shop-danger); }
+
+/* Pressed feedback, everywhere a shop button or stat card is tapped.
+   (prefers-reduced-motion is already neutralised by the block above.) */
+.tl-shop-btn:active:not(:disabled),
+.tl-shop-stat:active { transform: translateY(1px); }
+
+/* Sell landing: hero + editorial FAQ rhythm instead of six identical grey
+   boxes. Copy is untouched — only the frames changed. */
+.tl-shop-hero .tl-shop-sub { font-size: 15px; }
+@media (max-width: 559px) {
+  .tl-shop-hero .tl-shop-btn { display: flex; width: 100%; }
+}
+.tl-shop-faq { margin-top: 28px; }
+.tl-shop-faq > section { border-top: 1px solid var(--tl-border); padding: 16px 0; }
+.tl-shop-faq .tl-shop-h2 {
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tl-shop-faq .tl-shop-h2 svg { color: var(--tl-fg-3); flex: none; }
+.tl-shop-faq > section > div { font-size: 13.5px; line-height: 1.55; color: var(--tl-fg-2); }
+.tl-shop-faq strong { color: var(--tl-fg); font-weight: 650; }
+/* The one deliberate point of colour: the verified-badge item. */
+.tl-shop-faq > .tl-shop-faq--verify {
+  border-left: 3px solid var(--shop-verified);
+  padding-left: 14px;
+}
+
+/* Application timeline: the step that has not happened yet — hollow dashed
+   dot, muted text, no promised date. */
+.tl-shop-timeline li.is-next::before {
+  background: transparent;
+  border: 1px dashed var(--tl-border-2);
+}
+.tl-shop-timeline li.is-next .tl-shop-timeline-what { color: var(--tl-fg-3); }
+
+/* Buyer-facing empties: the no-photo card says so, and empty states carry a
+   small decorative icon above their title. */
+.tl-pcard-noimg {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  color: var(--tl-fg-3);
+  font-size: 11px;
+}
+.tl-shop-empty > svg {
+  display: block;
+  margin: 0 auto 10px;
+  color: var(--tl-fg-3);
+}
+
+/* ── R4 — ShopHome hero card (04-ux-spec-round4) ──────────────────────────
+ * Visual wrapper for h1 + sub + search on /shop only. Deliberately NOT
+ * .tl-shop-hero: that block is the sell landing's and its mobile rule
+ * (.tl-shop-hero .tl-shop-btn { width: 100% }) would break the "Tìm" button.
+ * ------------------------------------------------------------------------ */
+.tl-shop-herocard {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--shop-radius-card);
+  border: 1px solid var(--shop-hero-edge);
+  background: linear-gradient(135deg, var(--shop-hero-tint-strong), var(--shop-hero-tint-weak) 58%, var(--tl-surface));
+  box-shadow: var(--shop-shadow-1);
+  padding: 18px 16px 16px;
+  margin-bottom: 14px;
+}
+.tl-shop-herocard-title { color: var(--shop-hero-ink); margin-bottom: 4px; position: relative; }
+.tl-shop-herocard-sub {
+  color: var(--shop-hero-sub-ink);
+  font-size: 13.5px;
+  margin: 0 0 12px;
+  max-width: 52ch;
+  position: relative;
+}
+.tl-shop-herocard-search { position: relative; }
+/* Inside the hero the button joins the pill language of the input. */
+.tl-shop-herocard-search .tl-shop-btn { border-radius: 999px; }
+/* Input states: default/focus-visible come from the global rules; hover is the
+   only addition. No disabled/loading/error/success — submitting navigates
+   immediately, there is nothing to wait for or to fail inline. */
+.tl-shop-herocard-search input:hover { border-color: var(--tl-border-2); }
+.tl-shop-herocard-art {
+  position: absolute;
+  right: -18px;
+  top: -14px;
+  color: var(--shop-hero-art-ink);
+  opacity: 0.14;
+  pointer-events: none;
+}
+@media (min-width: 768px) {
+  .tl-shop-herocard { padding: 26px 24px 22px; }
+  .tl-shop-herocard-search { max-width: 560px; }
+  .tl-shop-herocard-art { right: 8px; top: 50%; translate: 0 -50%; width: 180px; height: 180px; }
+}
+@media (max-width: 359px) {
+  .tl-shop-herocard { padding: 14px; }
+  .tl-shop-herocard-art { display: none; }
+  .tl-shop-herocard-sub {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* ══ Phase 3 — cart, checkout, order ═══════════════════════════════════════
+   Four blocks, and no fifth. Everything else these screens use already exists
+   above; redefining a class here would give two rules the same name and the
+   loser would depend on file order. */
+
+/* 1 · The button state nobody wrote (C4).
+   .tl-shop-btn:disabled is opacity .45, which is right for "you may not press
+   this" and wrong for "this is working" — the label "Đang gửi đơn…" is the one
+   the buyer most needs to read. `progress` is also the honest cursor. */
+.tl-shop-btn[aria-busy="true"]:disabled { opacity: 1; cursor: progress; }
+
+/* 2 · Label — value row (M4). Money in a table wants a horizontal scroller at
+   320px; this is a flex row, so it wraps nothing and scrolls nowhere. The
+   value carries tabular-nums, or the digits shift column between rows. */
+.tl-shop-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13.5px;
+  padding: 6px 0;
+}
+.tl-shop-row > :last-child {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.tl-shop-row--total {
+  border-top: 1px solid var(--tl-border);
+  margin-top: 4px;
+  padding-top: 10px;
+  font-size: 15px;
+}
+
+/* 3 · The toast (§4.1). Fixed, so it never pushes the page out from under the
+   thumb that just tapped. Below the sheet (70/71), above the sticky bar (35). */
+.tl-shop-toast {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--shop-bottomnav) + var(--shop-safe-b) + 8px);
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--tl-bg-elev);
+  border: 1px solid var(--tl-border-2);
+  border-radius: var(--tl-radius);
+  padding: 10px 12px;
+  box-shadow: var(--shop-shadow-2);
+  font-size: 13.5px;
+  /* The repo has no --ease-* token; the literal is the same curve the rest of
+     the Line uses inline. */
+  animation: tl-shop-toast-in 160ms ease-out both;
+}
+.tl-shop-toast > span { flex: 1; min-width: 0; }
+@keyframes tl-shop-toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (min-width: 768px) {
+  .tl-shop-toast { left: auto; right: 16px; max-width: 380px; }
+}
+/* The blanket reduced-motion rule above is scoped to `.tl-shop`, and this is
+   fixed to the viewport rather than nested inside it — so it declares its own
+   or it animates for somebody who asked us not to. */
+@media (prefers-reduced-motion: reduce) {
+  .tl-shop-toast { animation: none; }
+}
+
+/* 4 · The breadcrumb row that hosts the cart badge (C1). Crumbs take the
+   space, the badge sits at the end; with no crumbs (on /shop and
+   /shop/search) the badge still ends up on the right. */
+.tl-shop-topline {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.tl-shop-topline > .tl-shop-crumbs { flex: 1; min-width: 0; }
+
+/* Cụm nổi mobile: Đơn của tôi + giỏ. Desktop: chỉ là wrapper flex ngang trong topline.
+   Mọi style riêng của FAB nằm trong max-width 899px — .tl-shop-btn gốc có nền/viền
+   riêng, reset ở desktop sẽ phá nút "Đơn của tôi". */
+.tl-shop-fab { display: flex; align-items: center; gap: 8px; }
+/* Nhãn chữ chỉ mở trên desktop; mobile FAB là icon-only. */
+.tl-shop-fab-label { display: none; }
+
+@media (max-width: 899px) {
+  .tl-shop-fab {
+    position: fixed;
+    right: 12px;
+    bottom: calc(var(--shop-bottomnav) + var(--shop-safe-b) + 12px);
+    z-index: 44; /* buybar 60 > toast 45 > FAB 44 > header 40 */
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  .tl-shop-fab > a {
+    background: var(--tl-bg-elev);
+    border: 1px solid var(--tl-border-2);
+    border-radius: var(--tl-radius);
+    box-shadow: var(--shop-shadow-2);
+  }
+  /* 56px: PO 29/08 — 48px nhìn nhỏ so với card; cả hai nút chỉ có icon. */
+  .tl-shop-fab > .tl-shop-iconbtn { width: 56px; height: 56px; }
+  /* Nút giỏ: màu nút "Tìm" (--tl-green) pha sáng hơn một bậc; icon dùng ink on-accent. */
+  .tl-shop-fab > .tl-shop-fab-cart {
+    background: color-mix(in srgb, var(--tl-green) 82%, white);
+    border-color: color-mix(in srgb, var(--tl-green) 82%, white);
+    color: var(--shop-on-accent);
+  }
+  .tl-shop-fab > .tl-shop-fab-cart:hover { background: var(--tl-green); color: var(--shop-on-accent); }
+  /* Badge trên nền xanh: đảo sang ink/bg để còn đọc được. */
+  .tl-shop-fab > .tl-shop-fab-cart .tl-shop-cart-count {
+    top: 6px;
+    right: 6px;
+    min-width: 20px;
+    height: 20px;
+    background: var(--tl-fg);
+    color: var(--tl-bg);
+  }
+  /* "2 light" — 2 lớp sáng xanh tĩnh, chỉ khi có hàng trong giỏ */
+  .tl-shop-fab > .tl-shop-iconbtn.is-lit {
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--tl-green) 18%, transparent),
+      0 0 18px color-mix(in srgb, var(--tl-green) 35%, transparent),
+      var(--shop-shadow-2);
+  }
+  /* PDP: buybar hiện thì nhường chỗ */
+  body:has(.tl-shop-buybar[data-shown="true"]) .tl-shop-fab { display: none; }
+  /* Chừa đáy để card cuối không bị FAB che (cùng cơ chế .tl-shop-has-buybar) */
+  .tl-shop-page.tl-shop-has-fab { padding-bottom: calc(96px + 132px); } /* 56 + 8 + 56 + 12 */
+}
+
+@media (min-width: 900px) {
+  .tl-shop-fab { position: static; flex-direction: row; gap: 10px; }
+  /* Desktop: hai nút pill 44px có chữ — Đơn (viền) + Giỏ (xanh, đậm nhất trên topline). */
+  .tl-shop-fab > .tl-shop-iconbtn {
+    width: auto;
+    height: var(--shop-tap);
+    padding: 0 16px 0 14px;
+    gap: 8px;
+    border-radius: 999px;
+    border: 1px solid var(--tl-border-2);
+    background: var(--tl-surface-2);
+    color: var(--tl-fg);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .tl-shop-fab > .tl-shop-iconbtn:hover { background: var(--tl-surface); }
+  .tl-shop-fab > .tl-shop-iconbtn svg { width: 20px; height: 20px; }
+  .tl-shop-fab-label { display: inline; }
+  .tl-shop-fab > .tl-shop-fab-cart,
+  .tl-shop-fab > .tl-shop-fab-cart:hover {
+    background: var(--tl-green);
+    border-color: var(--tl-green);
+    color: var(--shop-on-accent);
+  }
+  .tl-shop-fab > .tl-shop-fab-cart:hover { background: var(--tl-green-dim); border-color: var(--tl-green-dim); }
+  /* Số món: inline trong pill thay vì bám góc. */
+  .tl-shop-fab > .tl-shop-fab-cart .tl-shop-cart-count {
+    position: static;
+    margin-left: 2px;
+    min-width: 20px;
+    height: 20px;
+    background: var(--tl-fg);
+    color: var(--tl-bg);
+  }
+}
+
+/* 5 · Phase 3 · an order past the deadline the seller promised themselves.
+   Icon and words carry the meaning (see DueLine); this stripe is the third
+   channel, never the only one. Inline on a table cell, block on a card — one
+   rule, because `border-inline-start` behaves for both. */
+.tl-shop-overdue {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-inline-start: 3px solid var(--shop-danger);
+  padding-inline-start: 9px;
+  font-size: 13px;
+}
+li.tl-shop-overdue { display: flex; }
+
+/* ══ R5 · audit UI toàn bộ màn Shop (round5-ui-audit) ══════════════════════
+   Không token mới, không màu mới. Sáu class, mỗi class trả lời đúng một mục
+   trong bảng audit; phần còn lại của bản sửa là JSX dùng lại class đã có. */
+
+/* #20 · Khoảng cách giữa các khối. Trước đó là 5 giá trị inline khác nhau
+   trong 6 file, nên hai màn cạnh nhau thở khác nhau. Section đầu tiên không
+   tự đẩy mình xuống — tiêu đề trang đã có margin của nó rồi. */
+.tl-shop-section { margin-top: 22px; }
+.tl-shop-section:first-of-type { margin-top: 16px; }
+
+/* #12 · Hàng nút liên hệ. KHÔNG dùng .tl-shop-cta-row: quy tắc mobile của nó
+   kéo mỗi nút thành một hàng riêng, đúng thứ audit bảo bỏ. Ở đây các nút chia
+   nhau một hàng ngang và chỉ xuống dòng khi thật sự không đủ chỗ. */
+.tl-shop-contactrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tl-shop-contactrow .tl-shop-btn { flex: 1 1 auto; min-width: 44px; }
+
+/* #15 · Link chính của một thẻ đơn. `color: inherit` không gạch chân trông
+   như chữ thường, nên nó có mũi tên riêng và phản hồi khi chạm. */
+.tl-shop-rowlink {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--shop-tap);
+  color: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.tl-shop-rowlink > span:first-child { flex: 1; min-width: 0; }
+.tl-shop-rowlink svg { flex: none; color: var(--tl-fg-3); }
+.tl-shop-rowlink:active { transform: scale(0.99); }
+
+/* #17 · Hàng thao tác của một dòng giỏ hàng. Stepper bên trái, "Bỏ" nhỏ dạt
+   sang phải — vẫn có chữ (chốt: đọc được quan trọng hơn gọn). */
+.tl-shop-line-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tl-shop-line-actions > .tl-shop-btn { margin-inline-start: auto; padding: 0 10px; }
+
+/* #6 · Skeleton đúng hình. Ba hình dạng, không còn khối xám 88/68/100/92px
+   tuỳ hứng: một khung ảnh, một dòng chữ, một thẻ. */
+.tl-shop-sk--media,
+.tl-shop-sk--line,
+.tl-shop-sk--title,
+.tl-shop-sk--card { display: block; }
+.tl-shop-sk--media {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-height: 46svh;
+  border-radius: var(--shop-radius-card);
+}
+@supports not (height: 1svh) { .tl-shop-sk--media { max-height: 46vh; } }
+.tl-shop-sk--line { height: 13px; margin-bottom: 8px; }
+.tl-shop-sk--title { height: 24px; width: 70%; margin-bottom: 12px; }
+.tl-shop-sk--card { height: 84px; border-radius: var(--tl-radius); margin-bottom: 10px; }
+.tl-shop-sk--thumb { width: 56px; height: 56px; border-radius: 8px; flex: none; }
+.tl-shop-skrow { display: flex; gap: 8px; }
+
+/* ══ R6 · quét nốt style nội tuyến + khung xương cho màn người bán ══════════
+   Không token mới, không màu mới, không file CSS mới. Đây là những giá trị đã
+   được gõ lại bằng tay ở 6 file màn Shop — mỗi cái xuất hiện từ 3 lần trở lên,
+   nên nó đáng có một cái tên thay vì một object style ở mỗi chỗ dùng. */
+
+/* Đoạn văn nằm sát trong một thẻ/hàng: không có margin của riêng nó, vì hàng
+   hoặc thẻ bao ngoài mới là thứ quyết định khoảng cách. */
+.tl-shop-flush   { margin: 0; }
+.tl-shop-flush-t { margin-top: 0; }
+.tl-shop-flush-b { margin-bottom: 0; }
+
+/* Cột co giãn trong một hàng flex. `min-width: 0` là phần quan trọng: thiếu nó
+   thì tên sản phẩm dài phá vỡ hàng thay vì bị cắt bằng ellipsis. */
+.tl-shop-grow { flex: 1; min-width: 0; }
+
+/* <ul> chỉ dùng để gom các thẻ — dấu chấm đầu dòng và thụt lề mặc định của
+   trình duyệt không có việc gì ở đây, nhưng ngữ nghĩa danh sách thì có. */
+.tl-shop-plainlist { list-style: none; margin: 0; padding: 0; }
+
+/* Một hàng đơn hàng: ảnh/monogram bên trái, nội dung bên phải. Dùng chung cho
+   thẻ thật và cho khung xương của nó, nên hai cái không thể lệch nhau nữa. */
+.tl-shop-orderrow { display: flex; gap: 12px; margin-bottom: 10px; }
+.tl-shop-orderrow-body { display: flex; flex-direction: column; gap: 4px; }
+
+/* Khung xương của một ô thống kê — đúng chiều cao tối thiểu của .tl-shop-stat
+   để lưới không nhảy khi số liệu về. */
+.tl-shop-sk--tile { display: block; min-height: 76px; border-radius: var(--tl-radius); }
+
+/* Khung xương của một chip lọc (.tl-shop-cat) — viên thuốc 88×44, không co. */
+.tl-shop-sk--chip { width: 88px; height: 44px; border-radius: 999px; flex: none; }
+
+/* Khung xương của một monogram shop 56px. Bo góc đọc từ chính token mà
+   .tl-shop-monogram dùng, thay vì gõ tay 12px ở chỗ dùng. */
+.tl-shop-sk--mono {
+  display: block;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--tl-radius-lg);
+  flex: none;
+}
+
+/* Nhóm trường không cần khung: <fieldset> vẫn là ngữ nghĩa đúng cho một nhóm
+   input có <legend>, nhưng viền và padding mặc định của trình duyệt thì không.
+   Bốn màn Shop đang tự tay khai lại đúng ba dòng này. */
+.tl-shop-fieldset { border: 0; margin: 0; padding: 0; }
+
+/* Ô ảnh của một dòng giỏ hàng. Ảnh thật, ô "chưa có ảnh" và khung xương đều
+   phải vừa khít 68px và bo cùng một góc — trước đây ba chỗ tự khai lại. */
+.tl-shop-line-media > * { display: block; width: 100%; border-radius: 8px; }
+.tl-shop-line-media > img { height: auto; }
+.tl-shop-line-media > :not(img) { aspect-ratio: 1 / 1; }
+
+/* Cột chữ của thanh mua dính đáy (giá + tên shop). `min-width: 0` để tên shop
+   dài bị cắt bằng ellipsis thay vì đẩy nút mua ra khỏi màn hình. */
+.tl-shop-buybar > div { min-width: 0; }
+
+/* Banner "mất kết nối" (PageStates.tsx) treo ở App.tsx, ngoài .tl-shop, nên nó
+   không biết gì về thanh mua. Đo được ở 390×640: cả hai cùng nằm ở dải
+   516–568px, banner đè lên đúng nút Mua. Quy tắc này chỉ tồn tại khi shop.css
+   được nạp — tức là chỉ trên các màn Shop, đúng nơi có thanh mua — và chỉ khớp
+   khi thanh đang thật sự hiện, nên mọi màn khác giữ nguyên vị trí cũ. */
+body:has(.tl-shop-buybar[data-shown="true"]) .tl-offline-banner {
+  /* 72px = chiều cao BottomNav (viết thẳng, vì --shop-bottomnav khai trên
+     .tl-shop và banner không nằm trong đó); 68px = chiều cao thanh mua. */
+  bottom: calc(72px + env(safe-area-inset-bottom, 0px) + 68px);
+}
+/* Từ 768px trở lên BottomNav đã ẩn nên banner về sát mép; thanh mua vẫn ở trên
+   nó (bottom 72 + safe) và hai cái không còn gặp nhau. */
+@media (min-width: 768px) {
+  body:has(.tl-shop-buybar[data-shown="true"]) .tl-offline-banner { bottom: 0; }
+}

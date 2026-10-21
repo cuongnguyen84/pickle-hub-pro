@@ -89,8 +89,7 @@ export function mediaBox(
 }
 
 /**
- * The catalogue is nearly empty during the pilot, and the honest thing is to
- * say so rather than pad the page.
+ * A compact catalogue should say so rather than pad the page.
  *
  * `sparse` is not an error and not "no results" — it is a real, small
  * catalogue, and the copy for it should invite the buyer to look at all of it

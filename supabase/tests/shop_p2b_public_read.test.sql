@@ -13,7 +13,7 @@
 
 BEGIN;
 
-SELECT plan(65);
+SELECT plan(75);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 
@@ -32,11 +32,17 @@ INSERT INTO public.shop_pilot_members (user_id) VALUES
   ('60000001-0000-4000-8000-000000000001'::uuid),
   ('60000002-0000-4000-8000-000000000002'::uuid) ON CONFLICT DO NOTHING;
 
-INSERT INTO public.shops (id, slug, name, state, owner_user_id, region, intro, verified_at, verified_method) VALUES
+-- ordering_enabled / shipping_fee_vnd are set at INSERT because the guard
+-- trigger is BEFORE UPDATE only, and it pins ordering_enabled for anybody who
+-- is not an admin.
+INSERT INTO public.shops (id, slug, name, state, owner_user_id, region, intro, verified_at, verified_method,
+                          ordering_enabled, shipping_fee_vnd) VALUES
   ('61000001-0000-4000-8000-000000000001'::uuid, 'pub-shop-a', 'Shop Công Khai', 'active',
-   '60000001-0000-4000-8000-000000000001'::uuid, 'Hà Nội', 'Chuyên vợt', NOW(), 'giay-phep-kinh-doanh'),
+   '60000001-0000-4000-8000-000000000001'::uuid, 'Hà Nội', 'Chuyên vợt', NOW(), 'giay-phep-kinh-doanh',
+   true, 30000),
   ('61000002-0000-4000-8000-000000000002'::uuid, 'pub-shop-b', 'Shop Bị Gỡ', 'suspended',
-   '60000002-0000-4000-8000-000000000002'::uuid, NULL, NULL, NULL, NULL);
+   '60000002-0000-4000-8000-000000000002'::uuid, NULL, NULL, NULL, NULL,
+   false, 0);
 
 INSERT INTO public.shop_members (shop_id, user_id, role) VALUES
   ('61000001-0000-4000-8000-000000000001'::uuid, '60000001-0000-4000-8000-000000000001'::uuid, 'owner'),
@@ -455,6 +461,100 @@ SELECT is(
 SELECT is(
   ((public.shop_public_shop('pub-shop-a')) -> 'shop') ->> 'slug',
   'pub-shop-a', 'và nó lại là đường dẫn đang dùng');
+
+-- ─── The two keys Phase 3 added to the projection (20260818120000) ──────────
+-- Without them the product page has no way to know a shop paused selling: it
+-- renders "Thêm vào giỏ", the buyer presses it, and the refusal arrives two
+-- screens later. Neither key is a secret — both are facts a buyer needs
+-- BEFORE they type an address.
+
+-- "Không phải hằng số trong hàm" is a claim about the FUNCTION, not about the
+-- caller: product_public_projection is SECURITY DEFINER, so it returns the same
+-- JSON to anyone allowed to call it. The role is dropped for these two because
+-- since 20260818130000 anon holds no SELECT on `shops` at all, so the
+-- comparison side of the assertion would raise 42501 and abort the whole file.
+-- The property that genuinely needs anon is "an anonymous buyer can READ these
+-- keys", and that is the pair below, back under the role.
+RESET ROLE;
+SELECT is(
+  (public.product_public_projection('62000001-0000-4000-8000-000000000001'::uuid, false)) -> 'shop' -> 'ordering_enabled',
+  to_jsonb((SELECT ordering_enabled FROM public.shops WHERE id = '61000001-0000-4000-8000-000000000001'::uuid)),
+  'giá trị lấy thẳng từ bảng shops, không phải hằng số trong hàm');
+SELECT is(
+  (public.product_public_projection('62000001-0000-4000-8000-000000000001'::uuid, false)) -> 'shop' -> 'shipping_fee_vnd',
+  to_jsonb((SELECT shipping_fee_vnd FROM public.shops WHERE id = '61000001-0000-4000-8000-000000000001'::uuid)),
+  'phí ship cũng vậy');
+
+SET LOCAL role anon;
+SET LOCAL request.jwt.claims TO '{"role":"anon"}';
+
+SELECT is(
+  ((public.product_public_projection('62000001-0000-4000-8000-000000000001'::uuid, false)) -> 'shop') ->> 'ordering_enabled',
+  'true', 'người mua ẩn danh đọc được công tắc bán hàng của shop');
+SELECT is(
+  ((public.product_public_projection('62000001-0000-4000-8000-000000000001'::uuid, false)) -> 'shop') ->> 'shipping_fee_vnd',
+  '30000', 'và phí vận chuyển của shop');
+
+-- …and the table itself stays shut to them, which is the other half of the
+-- same guarantee: the projection is the door, not one door among several.
+SELECT throws_ok(
+  $$ SELECT ordering_enabled FROM public.shops $$, '42501', NULL,
+  'nhưng KHÔNG đọc được thẳng bảng shops');
+
+-- The public door inherits both, because it calls the same projection.
+SELECT is(
+  (((public.shop_public_product('vot-cong-khai')) -> 'product') -> 'shop') ->> 'shipping_fee_vnd',
+  '30000', 'shop_public_product kế thừa cả hai khoá mà không cần sửa gì');
+
+-- Old keys, unchanged, on BOTH doors. A key list rather than a spot check:
+-- the failure mode of CREATE OR REPLACE is dropping something, not mistyping
+-- the thing you were adding.
+SELECT is(
+  (SELECT array_agg(k ORDER BY k)
+   FROM jsonb_object_keys((public.product_public_projection('62000001-0000-4000-8000-000000000001'::uuid, false)) -> 'shop') k),
+  ARRAY['name','ordering_enabled','region','return_note','shipping_fee_vnd','shipping_note','slug','verified'],
+  'đường công khai: 6 khoá cũ còn nguyên, chỉ thêm đúng 2 khoá mới');
+
+SET LOCAL role authenticated;
+SET LOCAL request.jwt.claims TO '{"sub":"60000001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
+
+SELECT is(
+  (SELECT array_agg(k ORDER BY k)
+   FROM jsonb_object_keys((public.product_public_projection('62000001-0000-4000-8000-000000000001'::uuid, true)) -> 'shop') k),
+  ARRAY['name','ordering_enabled','region','return_note','shipping_fee_vnd','shipping_note','slug','verified'],
+  'đường _as_seller cũng vậy — hai đường không lệch khoá');
+
+-- ─── Giá gốc trên card tìm kiếm ─────────────────────────────────────────────
+-- 780000 / 1000000 → floor(100 - 78) = 22.
+
+SET LOCAL role postgres;
+SELECT set_config('shop.privileged_write', 'on', true);
+INSERT INTO public.products (id, shop_id, slug, title, description, category_slug, status, is_published, created_at)
+VALUES ('62000020-0000-4000-8000-000000000020'::uuid, '61000001-0000-4000-8000-000000000001'::uuid,
+        'vot-giam-gia', 'Vợt Giảm Giá', 'Đang giảm giá.', 'vot', 'approved', true, now());
+INSERT INTO public.product_variants (product_id, shop_id, price_vnd, compare_at_price_vnd, stock_on_hand, position)
+VALUES ('62000020-0000-4000-8000-000000000020'::uuid, '61000001-0000-4000-8000-000000000001'::uuid, 780000, 1000000, 2, 0);
+INSERT INTO public.product_media (product_id, shop_id, draft_path, rendition_source_path, public_path, state, verified_at, position)
+VALUES ('62000020-0000-4000-8000-000000000020'::uuid, '61000001-0000-4000-8000-000000000001'::uuid,
+        '61000001-0000-4000-8000-000000000001/62000020-0000-4000-8000-000000000020/orig.jpg',
+        '61000001-0000-4000-8000-000000000001/62000020-0000-4000-8000-000000000020/rendition.webp',
+        '61000001-0000-4000-8000-000000000001/62000020-0000-4000-8000-000000000020/pub-v1.webp',
+        'approved', now(), 0);
+SELECT set_config('shop.privileged_write', 'off', true);
+
+SET LOCAL role anon;
+SET LOCAL request.jwt.claims TO '{"role":"anon"}';
+
+SELECT is(
+  (SELECT (card ->> 'discount_pct_max')::int
+   FROM jsonb_array_elements((public.shop_public_search('Giảm Giá')) -> 'rows') card
+   WHERE card ->> 'slug' = 'vot-giam-gia'),
+  22, 'card mang discount_pct_max = 22 (floor, không làm tròn lên)');
+SELECT is(
+  (SELECT (card ->> 'compare_at_min')::int
+   FROM jsonb_array_elements((public.shop_public_search('Giảm Giá')) -> 'rows') card
+   WHERE card ->> 'slug' = 'vot-giam-gia'),
+  1000000, 'và compare_at_min là giá gốc của phiên bản rẻ nhất');
 
 SELECT * FROM finish();
 ROLLBACK;

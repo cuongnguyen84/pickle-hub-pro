@@ -18,17 +18,32 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle, ImageOff, Plus, Search } from "lucide-react";
+import { AlertTriangle, FileUp, ImageOff, PackageOpen, Plus, Search, SearchX, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, SellerShell } from "@/components/shop/ShopShell";
-import { ErrorState, LoadingState } from "@/components/states/PageStates";
+import { ShopErrorNotice } from "@/components/shop/ShopNotice";
 import { useMyShopMembership, useShopCategories, useShopProfile } from "@/hooks/shop/useShopProfile";
+import { useSignedPreviews } from "@/hooks/shop/useSignedPreviews";
+import { publicMediaUrl } from "@/lib/shop/publicCatalog";
 import {
   EMPTY_FILTERS,
   PAGE_SIZE,
   PRODUCT_SORTS,
   hasActiveFilter,
   useProductStatusCounts,
+  useDeleteProducts,
+  useSetProductDiscount,
   useSellerProducts,
   type ProductListFilters,
   type ProductSort,
@@ -41,7 +56,15 @@ import {
   summarise,
 } from "@/lib/shop/productState";
 import { shopErrorMessage } from "@/lib/shop/errors";
+import { discountPct } from "@/lib/shop/discount";
 import type { ProductStatus, SellerProductRow } from "@/integrations/supabase/shop-schema";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "";
+
+/** The media row the list shows for a product: the lowest position — position
+ *  0 IS the main image, and a page that was reordered keeps that promise. */
+const coverMedia = (media: SellerProductRow["product_media"]) =>
+  media.length ? media.reduce((a, b) => (b.position < a.position ? b : a)) : null;
 
 const SHOP_STATE_NOTICE: Record<string, string> = {
   pending_activation:
@@ -93,11 +116,29 @@ export default function SellerProducts() {
     </ShopScrollShell>
   );
 
-  if (membership.isLoading || profile.isLoading) return <LoadingState fullScreen />;
+  // Khung xương đúng hình trang: tiêu đề, dòng phụ, hàng chip lọc, ba thẻ sản
+  // phẩm. Đi qua `shell` nên thanh điều hướng Kênh người bán có mặt ngay.
+  if (membership.isLoading || profile.isLoading) {
+    return shell(
+      <div aria-busy="true" aria-label="Đang tải danh sách sản phẩm">
+        <span className="tl-shop-sk tl-shop-sk--title" />
+        <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "60%" }} />
+        <div className="tl-shop-cats">
+          <span className="tl-shop-sk tl-shop-sk--chip" />
+          <span className="tl-shop-sk tl-shop-sk--chip" />
+          <span className="tl-shop-sk tl-shop-sk--chip" />
+        </div>
+        {[0, 1, 2].map((i) => (
+          <span key={i} className="tl-shop-sk tl-shop-sk--card" />
+        ))}
+      </div>,
+    );
+  }
 
   if (membership.isError || profile.isError) {
     return shell(
-      <ErrorState
+      <ShopErrorNotice
+        title="Chưa tải được shop của anh/chị."
         onRetry={() => {
           void membership.refetch();
           void profile.refetch();
@@ -119,18 +160,24 @@ export default function SellerProducts() {
 
   const addButton =
     canWrite && !shopBlocked ? (
-      <Link to="/seller/products/new" className="tl-shop-btn tl-shop-btn--sm tl-shop-btn--primary">
-        <Plus size={15} aria-hidden="true" />
-        Thêm
-      </Link>
+      <span style={{ display: "flex", gap: 8 }}>
+        <Link to="/seller/products/import" className="tl-shop-btn tl-shop-btn--sm">
+          <FileUp size={15} aria-hidden="true" />
+          Nhập Excel + AI
+        </Link>
+        <Link to="/seller/products/new" className="tl-shop-btn tl-shop-btn--sm tl-shop-btn--primary">
+          <Plus size={15} aria-hidden="true" />
+          Thêm
+        </Link>
+      </span>
     ) : undefined;
 
   return shell(
     <>
       <h1 className="tl-shop-h1">Sản phẩm</h1>
+      {/* R5 #4 — "trang mua hàng chưa mở" stopped being true in Phase 3. */}
       <p className="tl-shop-sub">
-        Danh mục của shop. Người mua chỉ thấy sản phẩm đã duyệt và đang bật bán — trang mua hàng
-        chưa mở trong giai đoạn này.
+        Danh mục của shop. Người mua chỉ thấy sản phẩm đã duyệt và đang bật bán.
       </p>
 
       {!canWrite && (
@@ -265,12 +312,53 @@ function ProductList({
   onClearFilters: () => void;
   onPage: (page: number) => void;
 }) {
+  // ONE mint for the whole page: every draft-only cover path goes into a single
+  // createSignedUrls call, not one per card. Hooks run before any early return.
+  const rows = query.data?.rows;
+  const deleteProducts = useDeleteProducts();
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [confirmIds, setConfirmIds] = useState<string[] | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const draftPaths = useMemo(
+    () =>
+      (rows ?? [])
+        .map((r) => coverMedia(r.product_media ?? []))
+        .filter((m): m is NonNullable<typeof m> => !!m && !m.public_path && !!m.draft_path)
+        .map((m) => m.draft_path),
+    [rows],
+  );
+  const previews = useSignedPreviews(draftPaths);
+  useEffect(() => {
+    const visible = new Set((rows ?? []).map((row) => row.id));
+    setSelectedIds((current) => current.filter((id) => visible.has(id)));
+  }, [rows]);
+
+  const toggleProduct = (productId: string, checked: boolean) =>
+    setSelectedIds((current) => checked
+      ? [...new Set([...current, productId])]
+      : current.filter((id) => id !== productId));
+
+  const confirmDelete = async () => {
+    if (!confirmIds?.length) return;
+    setDeleteError(null);
+    try {
+      await deleteProducts.mutateAsync(confirmIds);
+      setSelectedIds((current) => current.filter((id) => !confirmIds.includes(id)));
+      setConfirmIds(null);
+    } catch (error) {
+      const message = error instanceof Error && error.message.includes("product_has_orders")
+        ? "Không thể xoá sản phẩm đã phát sinh đơn hàng. Anh/chị có thể ngừng bán sản phẩm đó."
+        : shopErrorMessage(error);
+      setDeleteError(message);
+    }
+  };
+
   if (query.isLoading) {
     return (
       <div aria-busy="true" aria-live="polite">
         <p className="tl-shop-hint">Đang tải danh sách sản phẩm…</p>
         {[0, 1, 2].map((i) => (
-          <div key={i} className="tl-shop-sk" style={{ height: 76, borderRadius: 10, marginBottom: 10 }} />
+          <div key={i} className="tl-shop-sk tl-shop-sk--card" />
         ))}
       </div>
     );
@@ -301,6 +389,7 @@ function ProductList({
   if (result.total === 0 && catalogEmpty) {
     return (
       <div className="tl-shop-empty">
+        <PackageOpen size={28} aria-hidden="true" />
         <p className="tl-shop-empty-title">Chưa có sản phẩm nào</p>
         <p>Một sản phẩm cần tên, ngành hàng và giá là lưu được. Ảnh thêm sau.</p>
         {canWrite && (
@@ -315,6 +404,7 @@ function ProductList({
   if (result.total === 0) {
     return (
       <div className="tl-shop-empty">
+        <SearchX size={28} aria-hidden="true" />
         <p className="tl-shop-empty-title">Không có sản phẩm nào khớp</p>
         <p>
           {hasActiveFilter(filters)
@@ -333,11 +423,28 @@ function ProductList({
 
   return (
     <>
-      <p className="tl-shop-count" role="status">
-        {result.total === result.rows.length && filters.page === 0
-          ? `${result.total} sản phẩm`
-          : `${from}–${to} trên ${result.total} sản phẩm`}
-      </p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <p className="tl-shop-count" role="status">
+          {result.total === result.rows.length && filters.page === 0
+            ? `${result.total} sản phẩm`
+            : `${from}–${to} trên ${result.total} sản phẩm`}
+          {selectedIds.length > 0 ? ` · Đã chọn ${selectedIds.length}` : ""}
+        </p>
+        {canWrite && selectedIds.length > 0 && (
+          <button
+            type="button"
+            className="tl-shop-btn tl-shop-btn--sm"
+            style={{ color: "var(--shop-danger)" }}
+            onClick={() => {
+              setDeleteError(null);
+              setConfirmIds(selectedIds);
+            }}
+          >
+            <Trash2 size={15} aria-hidden="true" />
+            Xoá {selectedIds.length} sản phẩm
+          </button>
+        )}
+      </div>
 
       {/* Desktop table */}
       <div className="tl-shop-tablewrap" tabIndex={0} data-desktop-only style={{ marginTop: 10 }}>
@@ -345,9 +452,19 @@ function ProductList({
           <caption className="tl-shop-sr">Sản phẩm của shop</caption>
           <thead>
             <tr>
+              {canWrite && (
+                <th scope="col" style={{ width: 44 }}>
+                  <Checkbox
+                    checked={result.rows.length > 0 && result.rows.every((row) => selectedIds.includes(row.id))}
+                    onCheckedChange={(checked) => setSelectedIds(checked ? result.rows.map((row) => row.id) : [])}
+                    aria-label="Chọn tất cả sản phẩm trên trang"
+                  />
+                </th>
+              )}
               <th scope="col">Sản phẩm</th>
               <th scope="col">Trạng thái</th>
               <th scope="col">Giá</th>
+              <th scope="col">Giảm</th>
               <th scope="col">Tồn kho</th>
               <th scope="col">Cập nhật</th>
               <th scope="col">
@@ -357,7 +474,18 @@ function ProductList({
           </thead>
           <tbody>
             {result.rows.map((row) => (
-              <ProductTableRow key={row.id} row={row} canWrite={canWrite} />
+              <ProductTableRow
+                key={row.id}
+                row={row}
+                canWrite={canWrite}
+                previews={previews}
+                selected={selectedIds.includes(row.id)}
+                onSelectedChange={(checked) => toggleProduct(row.id, checked)}
+                onDelete={() => {
+                  setDeleteError(null);
+                  setConfirmIds([row.id]);
+                }}
+              />
             ))}
           </tbody>
         </table>
@@ -370,7 +498,18 @@ function ProductList({
           desktop table at 1440px, caught by the QA sweep. */}
       <ul data-mobile-only style={{ listStyle: "none", margin: "10px 0 0", padding: 0 }}>
         {result.rows.map((row) => (
-          <ProductCard key={row.id} row={row} canWrite={canWrite} />
+          <ProductCard
+            key={row.id}
+            row={row}
+            canWrite={canWrite}
+            previews={previews}
+            selected={selectedIds.includes(row.id)}
+            onSelectedChange={(checked) => toggleProduct(row.id, checked)}
+            onDelete={() => {
+              setDeleteError(null);
+              setConfirmIds([row.id]);
+            }}
+          />
         ))}
       </ul>
 
@@ -397,22 +536,86 @@ function ProductList({
           </button>
         </nav>
       )}
+
+      <AlertDialog open={confirmIds !== null} onOpenChange={(open) => !open && !deleteProducts.isPending && setConfirmIds(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xoá {confirmIds?.length ?? 0} sản phẩm?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sản phẩm và ảnh liên quan sẽ bị xoá vĩnh viễn. Sản phẩm đã phát sinh đơn hàng sẽ được giữ lại để bảo toàn lịch sử mua bán.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {deleteError && <p className="text-sm text-destructive" role="alert">{deleteError}</p>}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteProducts.isPending}>Huỷ</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteProducts.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(event) => {
+                event.preventDefault();
+                void confirmDelete();
+              }}
+            >
+              {deleteProducts.isPending ? "Đang xoá…" : "Xoá vĩnh viễn"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
 
-/** The photo slot. It never pretends: step 6 owns uploading, and the private
- *  draft bucket needs a signed URL nobody is minting yet, so a product with no
- *  photo says it has no photo. */
-const Thumb = ({ count }: { count: number }) => (
-  <span
-    className="tl-shop-media"
-    aria-hidden="true"
-    style={{ display: "grid", placeItems: "center", width: "100%" }}
-  >
-    {count === 0 ? <ImageOff size={18} /> : <span className="tl-shop-media-label">{count} ảnh</span>}
-  </span>
-);
+/** The photo slot — the real cover, not a count.
+ *
+ *  Four states, in order of truth:
+ *    · no media at all           → ImageOff (the pill next door already says it)
+ *    · public_path               → <img> straight away, no mint, never expires
+ *    · draft-only, URL not back  → shimmer (chưa-tải ≠ không-có)
+ *    · mint failed / img 404     → ImageOff, no notice, no retry
+ *
+ *  Decorative: alt="" + aria-hidden — the link is the title, not the thumb. */
+function Thumb({
+  media,
+  previews,
+}: {
+  media: SellerProductRow["product_media"];
+  previews: Record<string, string>;
+}) {
+  const [broken, setBroken] = useState(false);
+  const cover = coverMedia(media ?? []);
+  // "" means the mint settled without a URL (useSignedPreviews marks failures);
+  // undefined means it has not settled yet.
+  const src = cover
+    ? cover.public_path
+      ? publicMediaUrl(SUPABASE_URL, cover.public_path)
+      : previews[cover.draft_path]
+    : undefined;
+
+  // A new src deserves a fresh try — without this, one 404 pins ImageOff
+  // forever, even after the seller replaces the photo.
+  useEffect(() => {
+    setBroken(false);
+  }, [src]);
+
+  return (
+    <span className="tl-shop-thumb" aria-hidden="true">
+      {!cover || broken || src === "" ? (
+        <ImageOff size={18} />
+      ) : src === undefined ? (
+        <span className="tl-shop-sk" />
+      ) : (
+        <img
+          className="tl-shop-thumb-img"
+          src={src}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onError={() => setBroken(true)}
+        />
+      )}
+    </span>
+  );
+}
 
 const StatusPill = ({ status }: { status: ProductStatus }) => (
   <span
@@ -426,14 +629,37 @@ const StatusPill = ({ status }: { status: ProductStatus }) => (
 const dmy = (iso: string) =>
   new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
 
-function ProductTableRow({ row, canWrite }: { row: SellerProductRow; canWrite: boolean }) {
+function ProductTableRow({
+  row,
+  canWrite,
+  previews,
+  selected,
+  onSelectedChange,
+  onDelete,
+}: {
+  row: SellerProductRow;
+  canWrite: boolean;
+  previews: Record<string, string>;
+  selected: boolean;
+  onSelectedChange: (checked: boolean) => void;
+  onDelete: () => void;
+}) {
   const s = summarise(row);
   return (
     <tr>
+      {canWrite && (
+        <td>
+          <Checkbox
+            checked={selected}
+            onCheckedChange={(checked) => onSelectedChange(checked === true)}
+            aria-label={`Chọn sản phẩm ${row.title}`}
+          />
+        </td>
+      )}
       <th scope="row" style={{ fontWeight: 550, maxWidth: 320 }}>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <span style={{ width: 44, flex: "none" }}>
-            <Thumb count={s.mediaCount} />
+            <Thumb media={row.product_media ?? []} previews={previews} />
           </span>
           <span>
             {row.title}
@@ -454,26 +680,63 @@ function ProductTableRow({ row, canWrite }: { row: SellerProductRow; canWrite: b
         )}
       </td>
       <td style={{ fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{s.price}</td>
+      <td><DiscountCell row={row} canWrite={canWrite} /></td>
       <td style={{ fontVariantNumeric: "tabular-nums" }}>{s.stock}</td>
       <td style={{ whiteSpace: "nowrap" }}>{dmy(row.updated_at)}</td>
       <td>
-        {/* Everyone gets a link; what it opens is decided by state and role
-            inside the editor, and by the database regardless. */}
-        <Link to={`/seller/products/${row.id}/edit`} className="tl-shop-btn tl-shop-btn--sm">
-          {canWrite && s.canEdit ? "Sửa" : "Xem"}
-        </Link>
+        <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+          {/* Everyone gets a link; what it opens is decided by state and role
+              inside the editor, and by the database regardless. */}
+          <Link to={`/seller/products/${row.id}/edit`} className="tl-shop-btn tl-shop-btn--sm">
+            {canWrite && s.canEdit ? "Sửa" : "Xem"}
+          </Link>
+          {canWrite && (
+            <button
+              type="button"
+              className="tl-shop-btn tl-shop-btn--sm"
+              style={{ color: "var(--shop-danger)" }}
+              onClick={onDelete}
+              aria-label={`Xoá sản phẩm ${row.title}`}
+            >
+              <Trash2 size={15} aria-hidden="true" />
+              Xoá
+            </button>
+          )}
+        </div>
       </td>
     </tr>
   );
 }
 
-function ProductCard({ row, canWrite }: { row: SellerProductRow; canWrite: boolean }) {
+function ProductCard({
+  row,
+  canWrite,
+  previews,
+  selected,
+  onSelectedChange,
+  onDelete,
+}: {
+  row: SellerProductRow;
+  canWrite: boolean;
+  previews: Record<string, string>;
+  selected: boolean;
+  onSelectedChange: (checked: boolean) => void;
+  onDelete: () => void;
+}) {
   const s = summarise(row);
   const action = canWrite && s.canEdit ? "Sửa" : "Xem";
   return (
     <li className="tl-shop-card" style={{ display: "flex", gap: 12, marginBottom: 10 }}>
+      {canWrite && (
+        <Checkbox
+          checked={selected}
+          onCheckedChange={(checked) => onSelectedChange(checked === true)}
+          aria-label={`Chọn sản phẩm ${row.title}`}
+          style={{ marginTop: 12 }}
+        />
+      )}
       <span style={{ width: 56, flex: "none" }}>
-        <Thumb count={s.mediaCount} />
+        <Thumb media={row.product_media ?? []} previews={previews} />
       </span>
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
         {/* ONE interactive element per card, and it is the title.
@@ -504,6 +767,7 @@ function ProductCard({ row, canWrite }: { row: SellerProductRow; canWrite: boole
         <div className="tl-shop-hint" style={{ marginTop: 0 }}>
           {s.price} · Tồn kho: {s.stock} · Cập nhật {dmy(row.updated_at)}
         </div>
+        <DiscountCell row={row} canWrite={canWrite} />
         {row.applicant_note && (
           <p className="tl-shop-hint" style={{ marginTop: 0, color: "var(--shop-danger)" }}>
             {row.applicant_note}
@@ -514,7 +778,77 @@ function ProductCard({ row, canWrite }: { row: SellerProductRow; canWrite: boole
             {s.nextAction}
           </p>
         )}
+        {canWrite && (
+          <button
+            type="button"
+            className="tl-shop-btn tl-shop-btn--sm"
+            style={{ alignSelf: "flex-start", color: "var(--shop-danger)" }}
+            onClick={onDelete}
+          >
+            <Trash2 size={15} aria-hidden="true" />
+            Xoá
+          </button>
+        )}
       </div>
     </li>
+  );
+}
+
+/** % giảm hiện tại của một sản phẩm: từ phiên bản rẻ nhất còn bán. */
+const currentDiscountPct = (row: SellerProductRow): number | null => {
+  const live = row.product_variants.filter((v) => v.retired_at === null);
+  if (!live.length) return null;
+  const cheapest = live.reduce((a, b) => (b.price_vnd < a.price_vnd ? b : a));
+  return discountPct(cheapest.price_vnd, cheapest.compare_at_price_vnd);
+};
+
+/**
+ * Ô "% giảm" ngay trên danh sách — sản phẩm đang bán không phải gỡ xuống để
+ * đặt giảm giá (PO 29/08). Server TRỪ THẲNG vào giá bán: giá gốc là neo, giá
+ * bán mới = neo × (100 − %); gõ 0 (hoặc xoá trắng) là bỏ giảm, giá về đúng
+ * neo. Lưu khi blur hoặc Enter.
+ */
+function DiscountCell({ row, canWrite }: { row: SellerProductRow; canWrite: boolean }) {
+  const current = currentDiscountPct(row);
+  const setDiscount = useSetProductDiscount();
+  const [text, setText] = useState(current == null ? "" : String(current));
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => { setText(current == null ? "" : String(current)); }, [current]);
+  const canSet = canWrite && !["archived", "suspended"].includes(row.status);
+
+  if (!canSet) {
+    return <span style={{ fontVariantNumeric: "tabular-nums" }}>{current == null ? "—" : `-${current}%`}</span>;
+  }
+  const commit = () => {
+    const pct = text.trim() === "" ? 0 : Number(text);
+    if (!Number.isInteger(pct) || pct < 0 || pct > 90) {
+      setError("0–90");
+      return;
+    }
+    setError(null);
+    if (pct === (current ?? 0)) return;
+    setDiscount.mutate({ productId: row.id, pct }, {
+      onError: (e) => setError(shopErrorMessage(e)),
+    });
+  };
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}>
+      <input
+        className="tl-shop-input"
+        style={{ width: 64, minHeight: 36, padding: "0 8px", fontVariantNumeric: "tabular-nums" }}
+        inputMode="numeric"
+        value={text}
+        placeholder="0"
+        aria-label={`% giảm giá cho ${row.title}`}
+        aria-invalid={!!error}
+        disabled={setDiscount.isPending}
+        onChange={(e) => setText(e.target.value.replace(/\D/g, "").slice(0, 2))}
+        onBlur={commit}
+        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); } }}
+      />
+      <span className="tl-shop-hint" style={{ marginTop: 0 }}>%</span>
+      {setDiscount.isPending && <span className="tl-shop-hint" style={{ marginTop: 0 }}>đang lưu…</span>}
+      {error && <span className="tl-shop-hint" style={{ marginTop: 0, color: "var(--shop-danger)" }} role="alert">{error}</span>}
+    </span>
   );
 }

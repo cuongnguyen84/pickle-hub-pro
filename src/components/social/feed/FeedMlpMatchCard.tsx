@@ -99,7 +99,10 @@ export function FeedMlpMatchCard({
   }
 
   const { team_a, team_b, games } = notes;
+  // See FeedMatchCard: `!winnerIsA` would badge team B on an unresolved
+  // matchup, where winning_team is still NULL.
   const winnerIsA = match.winning_team === "a";
+  const winnerIsB = match.winning_team === "b";
 
   const animDelay =
     staggerIndex != null && staggerIndex >= 0 && staggerIndex < 6
@@ -238,7 +241,7 @@ export function FeedMlpMatchCard({
         >
           VS
         </div>
-        <TeamSide team={team_b} isWinner={!winnerIsA} align="right" />
+        <TeamSide team={team_b} isWinner={winnerIsB} align="right" />
       </Link>
 
       {/* GAME DETAILS toggle button */}

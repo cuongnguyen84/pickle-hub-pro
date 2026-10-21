@@ -274,12 +274,60 @@ describe('scheduleMatches — pair-aware (the d941747e7ab4 bug)', () => {
     expect(Math.max(...loads) - Math.min(...loads)).toBeLessThanOrEqual(2);
   });
 
-  it('home court preferred; spares shared; empty courts → []', () => {
+  it('every chosen court is a candidate; home court only breaks a tie', () => {
     const all = naiveGroup(0, 0);
     const sched = scheduleMatches(all, [1, 2, 3, 4], 3, null, 20);
-    // group 0 home = court 1; may overflow to spare court 4 only
-    for (const s of sched) expect([1, 4]).toContain(s.court);
+    const used = new Set(sched.map((s) => s.court));
+    expect(used.size).toBeGreaterThan(1);
+    for (const court of used) expect([1, 2, 3, 4]).toContain(court);
+    const slot0 = sched.filter((s) => s.slot === 0).map((s) => s.court);
+    expect(new Set(slot0).size).toBeGreaterThan(1);
     expect(scheduleMatches(all, [], 3, '08:30', 20)).toEqual([]);
+  });
+
+  it('two courts run one group of 6 in parallel from 19:00', () => {
+    const ids = Array.from({ length: 6 }, (_, i) => `p${i}`);
+    const matches = generateCircleMethodMatches(ids).map((m, i) => ({
+      matchId: `m${i}`,
+      player1: m.player1,
+      player2: m.player2,
+      groupIndex: 0,
+    }));
+    const sched = scheduleMatches(matches, [1, 2], 1, '19:00', 20);
+    expect(sched).toHaveLength(15);
+    const bySlot = new Map<number, Set<number>>();
+    for (const s of sched) {
+      const courts = bySlot.get(s.slot) ?? new Set<number>();
+      courts.add(s.court);
+      bySlot.set(s.slot, courts);
+    }
+    expect([...bySlot.values()].some((courts) => courts.has(1) && courts.has(2))).toBe(true);
+    expect(new Set(sched.map((s) => s.court))).toEqual(new Set([1, 2]));
+    expect(sched.some((s) => s.startAt === '19:00' && s.court === 1)).toBe(true);
+    expect(sched.some((s) => s.startAt === '19:00' && s.court === 2)).toBe(true);
+    expect(Math.max(...sched.map((s) => s.slot))).toBeLessThan(14);
+  });
+
+  it('one group of 6 on 2 courts does not park the next match on the same court while the other court was idle', () => {
+    const ids = ['A', 'B', 'C', 'D', 'E', 'F'];
+    const matches = generateCircleMethodMatches(ids).map((m, i) => ({
+      matchId: `m${i}`,
+      player1: m.player1,
+      player2: m.player2,
+      groupIndex: 0,
+    }));
+    const sched = scheduleMatches(matches, [1, 2], 1, '19:00', 20);
+    const ordered = [...sched].sort((a, b) => a.displayOrder - b.displayOrder);
+    const usedAt = (slot: number) => new Set(sched.filter((s) => s.slot === slot).map((s) => s.court));
+    for (let i = 0; i < ordered.length - 1; i++) {
+      const a = ordered[i];
+      const b = ordered[i + 1];
+      const sameCourtBackToBack = a.court === b.court && b.slot === a.slot + 1;
+      const otherCourtIdle = !usedAt(a.slot).has(a.court === 1 ? 2 : 1);
+      expect(sameCourtBackToBack && otherCourtIdle).toBe(false);
+    }
+    const loads = [1, 2].map((c) => sched.filter((s) => s.court === c).length);
+    expect(Math.max(...loads) - Math.min(...loads)).toBeLessThanOrEqual(1);
   });
 });
 

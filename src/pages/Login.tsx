@@ -14,9 +14,6 @@ import { getEmailVerificationRedirectUrl, getPasswordResetRedirectUrl, getSiteUr
 import { safeInternalPath } from "@/lib/auth/safeRedirect";
 import { postLoginTarget } from "@/lib/auth/postLoginRedirect";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { isNativeApp } from "@/lib/capacitor-utils";
-import { Browser } from "@capacitor/browser";
-import { setOAuthInProgress } from "@/hooks/useDeepLinkHandler";
 import "@/styles/the-line.css";
 
 const Login = () => {
@@ -128,15 +125,10 @@ const Login = () => {
     setIsSubmitting(true);
 
     try {
-      const redirectTo = isNativeApp()
-        ? `${getSiteUrl()}/auth/callback?native=1`
-        : `${getSiteUrl()}/auth/callback`;
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo,
-          skipBrowserRedirect: isNativeApp(),
+          redirectTo: `${getSiteUrl()}/auth/callback`,
           queryParams: {
             access_type: "offline",
             prompt: "consent",
@@ -145,11 +137,6 @@ const Login = () => {
       });
 
       if (error) throw error;
-
-      if (isNativeApp() && data?.url) {
-        setOAuthInProgress(true);
-        await Browser.open({ url: data.url, presentationStyle: 'popover' });
-      }
     } catch (err: unknown) {
       console.error("[OAuth] Error:", err);
       toast({
@@ -165,24 +152,14 @@ const Login = () => {
   const handleAppleSignIn = async () => {
     setIsSubmitting(true);
     try {
-      const redirectTo = isNativeApp()
-        ? `${getSiteUrl()}/auth/callback?native=1`
-        : `${getSiteUrl()}/auth/callback`;
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: "apple",
         options: {
-          redirectTo,
-          skipBrowserRedirect: isNativeApp(),
+          redirectTo: `${getSiteUrl()}/auth/callback`,
         },
       });
 
       if (error) throw error;
-
-      if (isNativeApp() && data?.url) {
-        setOAuthInProgress(true);
-        await Browser.open({ url: data.url, presentationStyle: 'popover' });
-      }
     } catch (err: unknown) {
       toast({
         variant: "destructive",

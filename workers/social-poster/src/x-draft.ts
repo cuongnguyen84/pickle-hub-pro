@@ -31,13 +31,14 @@
 
 import { checkXBody, type XEnv } from './x';
 import { isPromotionalSource } from './promo-filter';
+import { recordPromoShadow } from './promo-shadow';
 import {
   buildRoundupBody,
   proTourProviderFilter,
   type RoundupMatch,
 } from './x-roundup';
 
-const NEWS_SELECT = 'id,title,summary,content_html,category,importance,published_at,source';
+const NEWS_SELECT = 'id,slug,title,summary,content_html,category,importance,published_at,source';
 
 /**
  * How many news posts one run may create. Cuong dropped the 2-4/day editorial
@@ -76,6 +77,9 @@ export interface XDraftEnv extends XEnv {
   SOCIAL_POSTER_SECRET?: string;
   X_DRAFT_LIMIT?: string;
   X_DRAFT_LOOKBACK_HOURS?: string;
+  /** TypeSafe shadow mode — see src/promo-shadow.ts. Absent => off. */
+  TYPESAFE_API_KEY?: string;
+  TYPESAFE_MODEL?: string;
 }
 
 export interface NewsRow {
@@ -87,6 +91,16 @@ export interface NewsRow {
   importance: number;
   published_at: string;
   source?: string | null;
+  slug?: string | null;
+}
+
+/**
+ * EN article URL, replied under the post (status link_url). Free since X went
+ * through Chrome on 19/10/2026; via the API the reply costs $0.20, so revisit
+ * this if X_VIA_BROWSER goes back to "0".
+ */
+export function newsLinkUrl(slug: string | null | undefined): string | null {
+  return slug ? `https://www.thepicklehub.net/news/${slug}` : null;
 }
 
 export interface XDraftBody {
@@ -340,6 +354,7 @@ async function insertDraft(env: XDraftEnv, row: NewsRow, body: string): Promise<
       status: NEW_ROW_STATUS,
       source_table: 'news_items',
       source_id: row.id,
+      link_url: newsLinkUrl(row.slug),
     }),
   });
   if (!res.ok) throw new Error(`x_posts insert failed: ${res.status} ${await res.text()}`);
@@ -385,7 +400,7 @@ async function draftProTourRoundup(
   // across days while fixtures exist, the scraper is behind rather than the
   // sport being idle, and `unresolved_and_overdue` in the database says which.
   if (rows.length === 0) {
-    return { roundup: 'skipped', reason: 'no_results_verified_in_24h' };
+    return { roundup: 'skipped', roundup_reason: 'no_results_verified_in_24h' };
   }
 
   const text = buildRoundupBody(rows, rows.map((r) => r.source_provider));
@@ -396,7 +411,7 @@ async function draftProTourRoundup(
     // only by hand-querying the database.
     return {
       roundup: 'skipped',
-      reason: 'verified_but_unrenderable',
+      roundup_reason: 'verified_but_unrenderable',
       matches_seen: rows.length,
       with_winner: rows.filter((r) => r.winning_team === 'a' || r.winning_team === 'b').length,
     };
@@ -410,7 +425,7 @@ async function draftProTourRoundup(
   dupUrl.searchParams.set('limit', '1');
   const dupRes = await fetch(dupUrl.toString(), { headers: restHeaders(env) });
   if (dupRes.ok && ((await dupRes.json()) as unknown[]).length > 0) {
-    return { roundup: 'skipped', reason: 'already_posted_today' };
+    return { roundup: 'skipped', roundup_reason: 'already_posted_today' };
   }
 
   if (body.dry_run) {
@@ -446,13 +461,22 @@ export async function handleXDraft(
   try {
     roundup = await draftProTourRoundup(env, body);
   } catch (err) {
-    roundup = { roundup: 'error', detail: String(err).slice(0, 200) };
+    roundup = { roundup: 'error', roundup_reason: String(err).slice(0, 200) };
   }
 
   const [candidates, drafted] = await Promise.all([
     fetchEnglishNews(env, body),
     fetchDraftedIds(env),
   ]);
+  // Shadow mode (2026-09-21): the English half of the comparison. Logged
+  // BEFORE ranking, because rankNewsCandidates drops the promotional rows and
+  // those are exactly the ones the trial is about. Nothing below reads it.
+  await recordPromoShadow(
+    env,
+    'x',
+    candidates.filter((row) => !drafted.has(row.id)).map((row) => ({ ...row, language: 'en' })),
+  );
+
   const ranked = rankNewsCandidates(candidates, drafted);
   if (ranked.length === 0) return { drafted: 0, reason: 'no_new_news', ...roundup };
 

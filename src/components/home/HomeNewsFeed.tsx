@@ -101,7 +101,7 @@ export function HomeNewsFeed({ language, limit = 4, news, isLoading = false }: H
                   {thumbnail ? (
                     <img
                       src={thumbnail}
-                      alt=""
+                      alt={item.title}
                       width={84}
                       height={84}
                       loading="lazy"

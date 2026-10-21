@@ -148,14 +148,13 @@ describe.skipIf(!up)("P2b.7.6 media lifecycle — the whole loop", () => {
     if (fe) throw fe;
 
     const { data: v } = await admin.from("products").select("version").eq("id", productId).single();
+    // Từ 20260818170000 `product_submit` đi thẳng tới `approved` — không còn
+    // bước admin duyệt ở giữa, và gọi `product_decide('approve')` ở đây sẽ
+    // raise vì sản phẩm đã approved rồi.
     const { error: sbe } = await owner.client.rpc("product_submit", {
       _product_id: productId, _expected_version: v.version, _client_token: `p2b7m-sub-${run}`,
     });
     if (sbe) throw sbe;
-    const { error: de } = await adminUser.client.rpc("product_decide", {
-      _product_id: productId, _decision: "approve", _client_token: `p2b7m-ap-${run}`,
-    });
-    if (de) throw de;
   }, 60_000);
 
   afterAll(async () => {
@@ -381,8 +380,10 @@ describe.skipIf(!up)("P2b.7.6 media lifecycle — the whole loop", () => {
     });
     expect(fe).toBeNull();
 
-    // Publish it, the way the worker would: copy, then commit.
-    const logoPublicKey = `${shopId}/profile/logo/live-${run}.webp`;
+    // Publish it, the way the worker would: copy, then commit. Since
+    // 20260817090000 the key is DETERMINISTIC — commit refuses anything but
+    // the row's current <shop>/profile/<purpose>/<id>/v<version>/live.webp.
+    const logoPublicKey = `${shopId}/profile/logo/${init.media_id}/v${init.version}/live.webp`;
     const { data: blob } = await admin.storage.from(DRAFT).download(init.rendition_path);
     const { error: upErr } = await admin.storage.from(PUBLIC_BUCKET)
       .upload(logoPublicKey, new Uint8Array(await blob.arrayBuffer()), {

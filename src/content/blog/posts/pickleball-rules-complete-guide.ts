@@ -4,6 +4,10 @@ const post: BlogPost = {
   slug: "pickleball-rules-complete-guide",
   publishedDate: "2026-04-19",
   updatedDate: "2026-04-19",
+  heroImage: {
+    src: "/images/blog/pickleball-rules-complete-guide-hero.webp",
+    alt: "Pickleball rules infographic: a regulation 44x20 ft court with the 7-ft kitchen (non-volley zone), cross-court serve, the two-bounce rule and 0-0-2 scoring"
+  },
   author: "Cuong Nguyen",
   tags: ["pickleball rules", "beginner", "kitchen rule", "serving", "scoring", "ppa tour asia"],
   ctaPath: "/tools/quick-tables",
@@ -277,7 +281,7 @@ const post: BlogPost = {
           heading: "Tải xuống, tham chiếu và công cụ",
           content: "Với BTC giải đấu và trọng tài, một công cụ chấm điểm số loại bỏ hầu hết tranh cãi ở châu Á — các câu hỏi về số điểm và số người giao biến mất khi điểm được chiếu lên mọi điện thoại ngoài sân.",
           internalLinks: [
-            { text: "Công cụ chấm điểm Pickleball miễn phí (Quick Tables)", path: "/tools/quick-tables" },
+            { text: "Công cụ chấm điểm Pickleball miễn phí (Quick Tables)", path: "/vi/tools/quick-tables" },
             { text: "Hướng dẫn tổ chức giải Pickleball (tiếng Anh)", path: "/blog/how-to-organize-pickleball-tournament" },
             { text: "Luật tính điểm Pickleball (tiếng Anh)", path: "/blog/pickleball-scoring-rules-guide" },
             { text: "Luật Pickleball cơ bản (tiếng Việt)", path: "/blog/pickleball-rules-complete-guide" }

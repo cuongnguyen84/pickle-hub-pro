@@ -152,3 +152,23 @@ describe('resolveBracketConflicts — anchor mạnh gặp floater yếu nhất k
     for (const m of pairings) expect(m.player1.sourceGroupId).not.toBe(m.player2.sourceGroupId);
   });
 });
+
+describe('parity với native QuickTableSeedingV2Tests.resolveBracketConflictsKeepsWinnersVsRunnersUp', () => {
+  it('giải 5c86f3d9551a: seed 1&8 bảng A, 3&6 bảng C → nhất luôn gặp nhì, khác bảng, 1→7, 3→5', () => {
+    const groupOf: Record<number, string> = { 1: 'A', 2: 'D', 3: 'C', 4: 'B', 5: 'D', 6: 'C', 7: 'B', 8: 'A' };
+    const seeded: SeededPlayer[] = Array.from({ length: 8 }, (_, i) => ({
+      playerId: `s${i + 1}`, name: `s${i + 1}`, seed: i + 1, sourceGroupId: groupOf[i + 1],
+      wins: 0, pointDiff: 0, pointsFor: 0, tier: i < 4 ? 'winner' : 'runner_up',
+    }));
+    const { pairings, hasConflicts } = resolveBracketConflicts(generateBracketPairings(seeded));
+    expect(hasConflicts).toBe(false);
+    expect(pairings).toHaveLength(4);
+    for (const m of pairings) {
+      expect(m.player1.seed).toBeLessThanOrEqual(4);
+      expect(m.player2.seed).toBeGreaterThanOrEqual(5);
+      expect(m.player1.sourceGroupId).not.toBe(m.player2.sourceGroupId);
+    }
+    expect(pairings.find(p => p.player1.seed === 1)!.player2.seed).toBe(7);
+    expect(pairings.find(p => p.player1.seed === 3)!.player2.seed).toBe(5);
+  });
+});

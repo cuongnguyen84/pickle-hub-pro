@@ -104,3 +104,47 @@ describe("formatRelative", () => {
     },
   );
 });
+
+describe("formatRelative — Vietnamese", () => {
+  const at = (ms: number) => new Date(NOW.getTime() + ms).toISOString();
+
+  // Until 2026-08-19 this helper had no locale at all and returned "10h ago"
+  // on every Vietnamese page across seven surfaces, for an audience that is
+  // ~95% Vietnamese. These pin the strings so it cannot silently regress to
+  // English again.
+  it("says vừa xong inside the first minute, in both directions", () => {
+    for (const ms of [0, 20_000, -20_000]) {
+      expect(formatRelative(at(ms), "vi")).toBe("vừa xong");
+    }
+  });
+
+  it("puts the unit before the marker for the past", () => {
+    expect(formatRelative(at(-5 * 60_000), "vi")).toBe("5 phút trước");
+    expect(formatRelative(at(-3 * 3_600_000), "vi")).toBe("3 giờ trước");
+    expect(formatRelative(at(-4 * 86_400_000), "vi")).toBe("4 ngày trước");
+  });
+
+  it("uses the trong-prefix for the future, not a past-tense suffix", () => {
+    // Vietnamese marks the future with a prefix where English uses "in", so
+    // the string differs in shape and not merely in vocabulary.
+    expect(formatRelative(at(5 * 60_000), "vi")).toBe("trong 5 phút");
+    expect(formatRelative(at(3 * 3_600_000), "vi")).toBe("trong 3 giờ");
+    expect(formatRelative(at(4 * 86_400_000), "vi")).toBe("trong 4 ngày");
+    for (const ms of [2 * 60_000, 3 * 3_600_000, 4 * 86_400_000]) {
+      expect(formatRelative(at(ms), "vi")).not.toContain("trước");
+    }
+  });
+
+  it("keeps English as the default so an un-migrated caller is unchanged", () => {
+    expect(formatRelative(at(-5 * 60_000))).toBe("5m ago");
+    expect(formatRelative(at(-5 * 60_000), "en")).toBe("5m ago");
+  });
+
+  it("returns empty for a missing or unparseable value in either locale", () => {
+    for (const lang of ["vi", "en"] as const) {
+      expect(formatRelative(null, lang)).toBe("");
+      expect(formatRelative(undefined, lang)).toBe("");
+      expect(formatRelative("not-a-date", lang)).toBe("");
+    }
+  });
+});

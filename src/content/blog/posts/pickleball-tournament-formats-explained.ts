@@ -181,7 +181,7 @@ const post: BlogPost = {
             "Flex → Tùy chỉnh, mọi kích thước, tùy thiết kế."
           ],
           internalLinks: [
-            { text: "Tạo Bracket Pickleball miễn phí (mọi thể thức)", path: "/tools" },
+            { text: "Tạo Bracket Pickleball miễn phí (mọi thể thức)", path: "/vi/tools" },
             { text: "Cách tổ chức giải pickleball từ A-Z", path: "/blog/how-to-organize-pickleball-tournament" },
             { text: "Hub Tổ chức giải Pickleball — thể thức, bracket, chấm điểm & livestream", path: "/blog/tournament-organizer-hub" }
           ]

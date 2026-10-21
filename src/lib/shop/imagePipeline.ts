@@ -8,10 +8,17 @@
 // and none of it is trusted downstream — it exists so a seller on 4G uploads
 // 200 KB instead of 5 MB, and so their GPS coordinates never leave the phone.
 //
-// EXIF removal is a property of the re-encode, not a step: drawing a decoded
+// EXIF removal is a property of the re-encode for WebP: drawing a decoded
 // bitmap onto a canvas and asking for WebP produces pixels and nothing else.
-// There is no metadata to strip because none is carried across. The test
-// asserts that on real bytes rather than trusting the sentence.
+// It is NOT true of the JPEG fallback. WebKit encodes JPEG through ImageIO,
+// which writes its own APP1 (a 76-byte Exif with the orientation tag) and an
+// APP13 Photoshop block into a file that came from a canvas. The worker's
+// inspectJpeg treats any APP1 as "this was not re-encoded" and refuses the
+// publish with rendition_metadata_present — which is why every logo and cover
+// uploaded from an iPhone was verified and then never reached the shop page
+// (production bytes, 2026-08-17). So the JPEG branch strips those segments
+// itself, before the bytes leave the phone. The server check is unchanged and
+// still the boundary: this only makes our own encoder's output conform to it.
 // ============================================================================
 
 /** Mirrors shop_media_limits(). A parity test reads the SQL and compares. */
@@ -116,6 +123,70 @@ export function targetSize(width: number, height: number, cap: number = IMAGE_LI
 }
 
 /**
+ * Drop the metadata segments a JPEG encoder wrote by itself.
+ *
+ * Keeps SOI, APP0/JFIF and every structural segment; drops APP1–APP15 (Exif,
+ * XMP, the Photoshop IRB WebKit adds) and COM, then copies the scan verbatim.
+ * Anything that does not walk cleanly is returned untouched: this is a
+ * conformance step for our own output, and the worker still refuses whatever
+ * it does not like.
+ */
+export function stripJpegMetadata(bytes: Uint8Array): Uint8Array {
+  if (bytes.length < 4 || bytes[0] !== 0xff || bytes[1] !== 0xd8) return bytes;
+  const keep: Array<[number, number]> = [[0, 2]];
+  let at = 2;
+  let dropped = false;
+
+  while (at < bytes.length) {
+    if (bytes[at] !== 0xff) return bytes;
+    let m = at + 1;
+    while (m < bytes.length && bytes[m] === 0xff) m += 1;
+    if (m >= bytes.length) return bytes;
+    const marker = bytes[m];
+
+    // Standalone markers carry no length.
+    if (marker === 0xd8 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
+      keep.push([at, m + 1]);
+      at = m + 1;
+      continue;
+    }
+    if (marker === 0xd9) {
+      keep.push([at, m + 1]);
+      at = m + 1;
+      continue;
+    }
+    if (m + 2 >= bytes.length) return bytes;
+    const len = (bytes[m + 1] << 8) | bytes[m + 2];
+    if (len < 2 || m + 1 + len > bytes.length) return bytes;
+    const end = m + 1 + len;
+
+    if ((marker >= 0xe1 && marker <= 0xef) || marker === 0xfe) {
+      dropped = true;
+    } else {
+      keep.push([at, end]);
+    }
+
+    // Entropy-coded data follows SOS and is not segment-structured; the rest of
+    // the file travels as it is.
+    if (marker === 0xda) {
+      keep.push([end, bytes.length]);
+      break;
+    }
+    at = end;
+  }
+
+  if (!dropped) return bytes;
+  const size = keep.reduce((n, [from, to]) => n + (to - from), 0);
+  const out = new Uint8Array(size);
+  let cursor = 0;
+  for (const [from, to] of keep) {
+    out.set(bytes.subarray(from, to), cursor);
+    cursor += to - from;
+  }
+  return out;
+}
+
+/**
  * One image, from a File to the rendition the server will verify.
  *
  * WebP first; a browser whose encoder hands back the wrong type (iOS Safari
@@ -184,6 +255,20 @@ export async function processImage(
       throw new ImageRejected(
         "Trình duyệt này không nén được ảnh. Hãy thử cập nhật trình duyệt hoặc chọn ảnh khác.",
       );
+    }
+    // Only the JPEG branch: a canvas WebP carries no chunks to remove, and
+    // re-wrapping it would cost a full copy of the bytes for nothing.
+    if (blob.type === IMAGE_LIMITS.renditionFallbackType) {
+      const raw = new Uint8Array(await blob.arrayBuffer());
+      const clean = stripJpegMetadata(raw);
+      if (clean !== raw) {
+        return {
+          blob: new Blob([clean.buffer as ArrayBuffer], { type: blob.type }),
+          width,
+          height,
+          sourceType,
+        };
+      }
     }
     return { blob, width, height, sourceType };
   } finally {

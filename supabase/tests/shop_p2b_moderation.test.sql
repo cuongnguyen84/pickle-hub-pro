@@ -120,7 +120,21 @@ INSERT INTO t_mod VALUES ('v2',
 SELECT is(
   (public.product_submit((SELECT v FROM t_mod WHERE k='p1'),
      (SELECT version FROM public.products WHERE id=(SELECT v FROM t_mod WHERE k='p1')), 'tok-sub-p1')) ->> 'ok',
-  'true', 'người bán gửi duyệt');
+  'true', 'người bán đăng bán');
+
+-- Từ 20260818170000 thao tác người bán đi thẳng tới `approved`, nên KHÔNG còn
+-- luồng nào sinh ra `pending_review`. File này kiểm cỗ máy kiểm duyệt của
+-- admin, thứ vẫn còn nguyên và vẫn phải chạy: cho hàng cũ đang kẹt ở hàng đợi,
+-- và cho lúc cần bật lại cổng. Nên trạng thái ấy được DỰNG THẲNG ở fixture thay
+-- vì nhờ một luồng người bán không còn tạo ra nó — một fixture đi vòng qua
+-- luồng đã đổi là một fixture kiểm sai thứ.
+SET LOCAL role postgres;
+SELECT set_config('shop.privileged_write', 'on', true);
+UPDATE public.products SET status = 'pending_review'
+WHERE id = (SELECT v FROM t_mod WHERE k='p1');
+SELECT set_config('shop.privileged_write', 'off', true);
+SET LOCAL role authenticated;
+SET LOCAL request.jwt.claims TO '{"sub":"5c0d0001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
 
 -- ─── Nobody but an admin with 2FA decides ───────────────────────────────────
 
@@ -287,10 +301,17 @@ SET LOCAL request.jwt.claims TO '{"sub":"5c0d0001-0000-4000-8000-000000000001","
 SELECT is(
   (public.product_submit((SELECT v FROM t_mod WHERE k='p1'),
      (SELECT version FROM public.products WHERE id=(SELECT v FROM t_mod WHERE k='p1')), 'tok-sub-p1b')) ->> 'ok',
-  'true', 'người bán sửa xong và gửi lại');
+  'true', 'người bán sửa xong và đăng lại');
 
 -- Q3: the taxonomy moved underneath the queue.
+-- Trạng thái hàng đợi lại được dựng thẳng, cùng lý do như ở trên: câu hỏi của
+-- mục này là "preflight duyệt của admin có bắt được ngành hàng vừa bị tắt
+-- không", và nó cần một hàng đang ở `pending_review` để hỏi.
 SET LOCAL role postgres;
+SELECT set_config('shop.privileged_write', 'on', true);
+UPDATE public.products SET status = 'pending_review'
+WHERE id = (SELECT v FROM t_mod WHERE k='p1');
+SELECT set_config('shop.privileged_write', 'off', true);
 UPDATE public.product_categories SET is_active = false WHERE slug = 'vot';
 SET LOCAL role authenticated;
 SET LOCAL request.jwt.claims TO '{"sub":"5c0d0004-0000-4000-8000-000000000004","role":"authenticated","aal":"aal2"}';

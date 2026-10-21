@@ -53,27 +53,56 @@ export function roundRank(round: string | null | undefined): number {
   return 50;
 }
 
-/** "Ben Johns" → "Johns". Surnames only; full names do not fit in 280. */
-function shortName(p: RoundupParticipant): string {
-  const raw = (p.profile?.display_name ?? p.profile?.username ?? '').trim();
+function fullName(p: RoundupParticipant): string {
+  return (p.profile?.display_name ?? p.profile?.username ?? '').trim();
+}
+
+/** "Ben Johns" → "Johns". Only used for pairs, where 280 leaves no room. */
+function surname(p: RoundupParticipant): string {
+  const raw = fullName(p);
   if (!raw) return '';
   const parts = raw.split(/\s+/);
   return parts[parts.length - 1];
 }
 
+/**
+ * One participant on a side means one entity — an MLP franchise, or a singles
+ * player — and its name is printed whole. Two or more means a doubles pair, and
+ * only then are surnames used, because "Waters/Khlif" is unambiguous where a
+ * truncated franchise is not.
+ *
+ * Surnames everywhere was the first version and it mangled exactly the rows it
+ * was pointed at: "Brooklyn Pickleball Team" became "Team", "New Jersey 5s"
+ * became "5s". Last-word is a rule about people, and MLP sides are not people.
+ */
 function side(match: RoundupMatch, team: string): string {
-  return match.participants
+  const members = match.participants
     .filter((p) => p.team === team)
-    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-    .map(shortName)
-    .filter(Boolean)
-    .join('/');
+    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+  if (members.length === 1) return fullName(members[0]);
+  return members.map(surname).filter(Boolean).join('/');
 }
 
-/** "11-6, 11-9" — same shape the rest of the codebase renders scores in. */
+/**
+ * "11-6, 11-9" — same shape the rest of the codebase renders scores in.
+ *
+ * Trailing 0-0 pairs are dropped. An MLP match is best-of-four plus a
+ * DreamBreaker and the score arrays are fixed length, so a team that wins 3-0
+ * leaves [11,11,11,0] / [2,4,5,0] behind. Printing that produced
+ * "11-2, 11-4, 11-5, 0-0" — a fourth game that was never played, stated as
+ * fact. Only trailing pairs are trimmed: a 0-0 in the middle would be data
+ * corruption, and hiding it would misrepresent the match rather than tidy it.
+ */
 export function formatScores(a: number[] | null, b: number[] | null): string {
   if (!a?.length || !b?.length) return '';
-  return a.map((s, i) => `${s}-${b[i] ?? 0}`).join(', ');
+  const games = a.map((s, i) => [s, b[i] ?? 0] as const);
+  while (games.length > 0) {
+    const last = games[games.length - 1];
+    if (last[0] === 0 && last[1] === 0) games.pop();
+    else break;
+  }
+  if (games.length === 0) return '';
+  return games.map(([x, y]) => `${x}-${y}`).join(', ');
 }
 
 /**

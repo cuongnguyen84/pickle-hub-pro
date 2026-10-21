@@ -28,6 +28,7 @@ export interface PublicVariant {
   option_key: string | null;
   sku: string | null;
   price_vnd: number;
+  compare_at_price_vnd?: number | null;
   availability: Availability;
   media_id: string | null;
 }
@@ -144,3 +145,21 @@ export const activeMediaId = (
   resolved?.media_id ??
   matching(variants, selection).find((v) => v.media_id)?.media_id ??
   primaryMediaId;
+
+/**
+ * Which photo the gallery shows once the buyer has TAPPED one.
+ *
+ * R5 #3. `activeMediaId` alone is a function of the variant, so on a product
+ * with five photos and no options — a used paddle, the common case — every
+ * thumbnail resolved to the same id and tapping 2..5 did nothing at all.
+ *
+ * A picked id wins, but only while it still exists in `media`: a stale pick
+ * (the product changed under a cached page) falls back to the variant's photo
+ * rather than blanking the gallery.
+ */
+export const shownMediaId = (
+  pickedMediaId: string | null,
+  media: readonly { id: string }[],
+  variantMediaId: string | null,
+): string | null =>
+  pickedMediaId && media.some((m) => m.id === pickedMediaId) ? pickedMediaId : variantMediaId;

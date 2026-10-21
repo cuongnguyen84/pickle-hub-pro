@@ -161,7 +161,7 @@ async function alertOtpDeliveryFailure(detail: string): Promise<void> {
   const tgChat = Deno.env.get("TELEGRAM_CHAT_ID") ?? "";
   if (!tgToken || !tgChat) return;
   try {
-    const text = `🔴 OTP không gửi được — đăng ký sự kiện đang HỎNG\n${detail}`;
+    const text = `[Grok Bot] 🔴 OTP không gửi được — đăng ký sự kiện đang HỎNG\n${detail}`;
     await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

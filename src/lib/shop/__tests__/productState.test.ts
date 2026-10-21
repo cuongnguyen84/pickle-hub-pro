@@ -89,7 +89,11 @@ describe("every status is presentable", () => {
 
   it("says whether a buyer can see it, not just the state name", () => {
     expect(PRODUCT_STATUS_HINT.draft).toMatch(/chưa thấy/i);
-    expect(PRODUCT_STATUS_HINT.approved).toMatch(/bật bán/i);
+    // `approved` từng nghĩa là "đã qua duyệt, còn chờ bật bán". Từ
+    // 20260818170000 nó là trạng thái mà thao tác của chính người bán chạm
+    // tới, nên câu mô tả phải nói ĐANG BÁN chứ không phải còn một bước nữa.
+    expect(PRODUCT_STATUS_HINT.approved).toMatch(/đang bán/i);
+    expect(PRODUCT_STATUS_HINT.suspended).toMatch(/quản trị viên/i);
   });
 });
 

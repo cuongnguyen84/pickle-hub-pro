@@ -1,1 +1,0 @@
-import{t as e}from"./index-Cy_AlGop.js";const s=e;function i(a){return a.display_name&&a.display_name.trim()||a.username||"Người chơi"}function n(a){return(a.trim()[0]||"?").toUpperCase()}export{n as a,i as p,s};

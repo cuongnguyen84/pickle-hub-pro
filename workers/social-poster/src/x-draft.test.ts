@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   checkXDraft,
+  newsLinkUrl,
 
   rankNewsCandidates,
   unsourcedNumbers,
@@ -152,6 +153,8 @@ describe('isPromotionalSource', () => {
 
   // The one that actually reached the queue on 2026-08-17 and had to be
   // deleted by hand. It matched none of the original sponsorship patterns.
+  // The category argument no longer does any work, so this now proves what it
+  // was always supposed to: the keyword layer catches it on its own.
   it('blocks the paddle release that got through the first version', () => {
     expect(
       isPromotionalSource(
@@ -161,8 +164,6 @@ describe('isPromotionalSource', () => {
         'equipment',
       ),
     ).toBe(true);
-    // ...and still blocks it with the category stripped, via the gear patterns,
-    // because 256 of 392 rows in the feed carry no category at all.
     expect(
       isPromotionalSource(
         'Six Zero Expands Gemstone Paddle Line With Boulder Opal Release',
@@ -171,7 +172,9 @@ describe('isPromotionalSource', () => {
     ).toBe(true);
   });
 
-  it('blocks the business-category brand tour', () => {
+  // Brand marketing shaped as an event. It used to be stopped by the `business`
+  // category; that category is gone, so it has to be stopped by a pattern.
+  it('blocks the brand tour without help from the category', () => {
     expect(
       isPromotionalSource(
         'PB5star Launches Cross-Country Road Trip to Promote Pickleball Brand',
@@ -180,6 +183,27 @@ describe('isPromotionalSource', () => {
         'business',
       ),
     ).toBe(true);
+    expect(
+      isPromotionalSource(
+        'PB5star Launches Cross-Country Road Trip to Promote Pickleball Brand',
+        null,
+      ),
+    ).toBe(true);
+  });
+
+  // The regression this whole change exists for. Every one of these was blocked
+  // in production purely by its category, and promo_filter_shadow scored them
+  // 0.03-0.08 — coaching and league news, not adverts.
+  it.each([
+    ['Pickleball Elbow Recovery Strategies According to Connor Derrickson', 'equipment'],
+    ['How to Read a Lob in Pickleball: Four Key Signs to Spot Early', 'equipment'],
+    ['Zane Navratil Breaks Down Pickleball Stacking Methods', 'equipment'],
+    ['Protect Your Pickleball Shoulder From Serve Injuries', 'equipment'],
+    ['Samin Odhwani rời ghế ủy viên Major League Pickleball', 'business'],
+    ['Kỹ thuật tăng tốc bóng pickleball hiệu quả', 'equipment'],
+    ['Cải thiện độ ổn định cú dink trong pickleball', 'equipment'],
+  ])('no longer blocks the coaching piece: %s', (title, category) => {
+    expect(isPromotionalSource(title, null, null, category)).toBe(false);
   });
 
   it('keeps the categories that are instructional rather than commercial', () => {
@@ -204,6 +228,9 @@ describe('isPromotionalSource', () => {
   });
 
   it.each([
+    // The one real advert in the first 21 shadow rows (noul 0.82). It was
+    // blocked by category before; check the keyword layer holds it now.
+    'CURREX ra mắt lót giày SUPPORTSTP phục vụ sinh hoạt hàng ngày',
     'Joola trình làng bộ sưu tập giày mới',
     'Selkirk mở bán vợt Luxx tại Việt Nam',
     'Giảm giá 30% toàn bộ vợt Six Zero',
@@ -263,5 +290,57 @@ describe('xDraftLimit', () => {
     expect(xDraftLimit({} as never, 4)).toBe(4);
     expect(xDraftLimit({} as never, 999)).toBe(10);
     expect(xDraftLimit({ X_DRAFT_LIMIT: 'nonsense' } as never)).toBe(8);
+  });
+});
+
+describe('newsLinkUrl', () => {
+  it('points at the EN article, null without a slug', () => {
+    expect(newsLinkUrl('a-b-1')).toBe('https://www.thepicklehub.net/news/a-b-1');
+    expect(newsLinkUrl(null)).toBeNull();
+  });
+});
+
+// Owner rule 2026-10-21: no posts about products at all, paddles included. The
+// first case is the Selkirk ball/warranty post that reached TA Pickleball that
+// morning; the rest are the gear pieces from the two weeks before it.
+describe('gear and product pieces (owner rule 2026-10-21)', () => {
+  it.each([
+    'Bóng Pickleball Selkirk S2 Pro Ra Mắt Bảo Hành',
+    'Selkirk S2 Pro Pickleball Ball Launches With Warranty',
+    'Đánh giá vợt Gearbox Pressure X',
+    'Gearbox Pressure X Paddle Review',
+    'Chris Olson Hướng Dẫn Cách Chọn Vợt Pickleball',
+    'Chris Olson Shares Pickleball Paddle Buying Strategy',
+    'Cách nhận biết vợt pickleball hỏng',
+    'How to Tell If Your Pickleball Paddle Is Dead',
+    'Vợt pickleball tốt nhất cho nữ: Lựa chọn hàng đầu',
+    'Best pickleball paddles for women: Top choices for 2026',
+    'Giày Pickleball SQAIRZ XRZ2 Đánh Giá Độ Bền Và Độ Ổn Định',
+    'Hướng Dẫn Chọn Mua Vợt Honolulu',
+    'Volair và 11SIX24 hợp tác công nghệ vợt',
+    'Dylan Frazier Kết Hợp Volair Ra Mắt Dụng Cụ Pickleball Star Wars',
+    'Cảnh báo bóng Life Time giả mạo',
+    'Ed Ju Warns Pickleball Community About Suspected Fake Life Time Balls',
+    'So sánh vợt Joola Perseus và Selkirk Vanguard',
+    'Franklin X-40 vs Dura Fast 40: which outdoor ball wins on price',
+    'Best portable pickleball nets for your driveway',
+    'Top pickleball gear deals this week',
+  ])('blocks: %s', (title) => {
+    expect(isPromotionalSource(title, null, null, 'equipment')).toBe(true);
+  });
+
+  it.each([
+    ['Kỹ thuật sửa lỗi góc mặt vợt đánh topspin pickleball hiệu quả', 'equipment'],
+    ['Chiến thuật pickleball: Quan sát vợt thay vì bóng', 'equipment'],
+    ['Mastering Pickleball Strategy: Watch the Paddle Not the Ball', 'equipment'],
+    ['Kỹ thuật đứng chờ và hạ đầu vợt tấn công bóng dink', 'equipment'],
+    ['Quy định pháp lý vợt pickleball và danh sách phê duyệt', 'equipment'],
+    ['Quy tắc trang phục và giày dép khi chơi pickleball', 'equipment'],
+    ['Lựa chọn vị trí đánh đôi pickleball', 'equipment'],
+    ['Elliott Schupp vô địch đôi nam PPA Tour tại Virginia Beach', 'player'],
+    ['Selkirk Red Rock Open: Ben Johns wins the men\'s singles', 'tournament'],
+    ['DUPR Ra Mắt Gói DUPR+ Cung Cấp Thống Kê Nâng Cao', 'equipment'],
+  ])('keeps coaching, rules and results: %s', (title, category) => {
+    expect(isPromotionalSource(title, null, null, category)).toBe(false);
   });
 });

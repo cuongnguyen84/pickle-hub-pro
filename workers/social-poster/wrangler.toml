@@ -25,6 +25,8 @@
 #     SUPABASE_SERVICE_ROLE_KEY     Reads news_items, upserts fb_post_log.
 #     SOCIAL_POSTER_SECRET          Dedicated secret for cron + /run.
 #     SOCIAL_POSTER_ADMIN_SECRET    Dedicated secret for manual admin runs.
+#     TELEGRAM_BOT_TOKEN            Optional. Absent => no post notifications;
+#     TELEGRAM_CHAT_ID              the pipelines run exactly as before.
 #     FB_PAGE_ID                    Numeric Page ID, e.g. 100000123456789.
 #     FB_PAGE_ACCESS_TOKEN          Long-lived (never-expire) Page token.
 #     FB_SECONDARY_PAGE_ACCESS_TOKEN Long-lived token for TA Pickleball.
@@ -36,6 +38,13 @@
 #                                   tokens themselves live in Postgres, never here,
 #                                   because X rotates the refresh token on use and
 #                                   a wrangler secret cannot be rewritten at runtime.
+#     TYPESAFE_API_KEY              Optional, TRIAL ONLY (started 2026-09-21).
+#                                   Turns on shadow logging in src/promo-shadow.ts:
+#                                   every run also asks TypeSafe's Jev whether the
+#                                   candidates are adverts and writes both verdicts
+#                                   to promo_filter_shadow. It changes no decision.
+#                                   Delete the secret to turn the trial off — the
+#                                   pipelines then run exactly as they did before.
 #
 # Why a Worker and not a Supabase Edge Function?
 #   - Graph API is sometimes flaky from Supabase's Tokyo region; Cloudflare
@@ -58,19 +67,47 @@ FB_POST_MIN_GAP_MINUTES = "15"
 # drained by the catchup cron next morning. Manual /run with news_item_id
 # bypasses this window.
 FB_POST_WINDOW_VN = "7-21"
+# How stale an article may be and still be posted. Repairing a failed origin
+# creates a NEW news_items row carrying the ORIGINAL published_at, so without
+# this a recovery run manufactures fresh-looking candidates for week-old
+# stories — which is what put 7-to-10-day-old posts on both pages on 17/08.
+FB_MAX_ITEM_AGE_DAYS = "3"
 GEMINI_MODEL = "gemini-flash-lite-latest"
 FB_SECONDARY_PAGE_ID = "376956272170210"
 FB_SECONDARY_START_AT = "2026-07-31T10:04:31Z"
-# X pacing. 2-4 posts/day is the playbook target and the X free tier write
-# budget is small, so the gap is deliberately much wider than Facebook's.
-# No posting window: the X account is English-language and its audience is
-# not on Vietnam hours.
-X_POST_MIN_GAP_MINUTES = "90"
+# TA Pickleball is posted from Cuong's own Chrome session, not the Graph API
+# (2026-10-18: API posts on that page were barely distributed). The Worker only
+# serves the next item + caption as a dry run to scripts/ops/fb_browser_post.py
+# and refuses to publish there. Set to "0" to hand the page back to the API.
+FB_SECONDARY_VIA_BROWSER = "1"
+# 20/10: page ThePickleHub cũng đăng qua Chrome (scripts/ops/fb_browser_post.py). "0" + deploy = về API.
+FB_PRIMARY_VIA_BROWSER = "1"
+# No pacing. Cuong's call on 2026-08-17: news should reach X as it arrives, not
+# on a drip. The drain still publishes one row per tick, so the real ceiling is
+# the 5-minute cron, and the queue only ever holds genuinely new stories —
+# x-draft skips any news_item that already has an x_posts row.
+#
+# The old 90 came from a 2-4 posts/day playbook target. That target still holds
+# editorially; it is now the writer's job, not the Worker's. Raise this again if
+# a busy day ever reads as a firehose.
+#
+# No posting window either: the X account is English and its audience is not on
+# Vietnam hours.
+X_POST_MIN_GAP_MINUTES = "0"
 # Link goes in a reply, not the post body — a bare link in the body suppresses
 # reach in the "For you" ranking. Wait long enough that the reply lands after
 # the post has been distributed, short enough that early readers still see it.
 X_LINK_COMMENT_DELAY_SECONDS = "90"
 X_MAX_ATTEMPTS = "3"
+# 19/10/2026: X is posted from Cuong's logged-in Chrome (scripts/ops/x_browser_post.py
+# + launchd com.picklehub.x-browser), same move as TA Pickleball. /x/run only
+# answers dry runs while this is "1". Set "0" + deploy to go back to the API.
+X_VIA_BROWSER = "1"
+# Shadow-mode model. An alias moves when TypeSafe ships a release, so pin a
+# version here ("jev-1.13.0") if two weeks of rows need to come from one model.
+# The response reports which version actually answered and that is what gets
+# logged, so an unnoticed move shows up in the data rather than hiding in it.
+TYPESAFE_MODEL = "jev-latest"
 
 [observability]
 enabled = true

@@ -1,0 +1,88 @@
+[
+  {
+    "path": "/blog/vietnam-pickleball-tournament-calendar-2026",
+    "http": 200,
+    "indexStatus": {
+      "verdict": "PASS",
+      "coverageState": "Submitted and indexed",
+      "robotsTxtState": "ALLOWED",
+      "indexingState": "INDEXING_ALLOWED",
+      "lastCrawlTime": "2026-09-06T09:57:53Z",
+      "pageFetchState": "SUCCESSFUL",
+      "googleCanonical": "https://www.thepicklehub.net/blog/vietnam-pickleball-tournament-calendar-2026",
+      "userCanonical": "https://www.thepicklehub.net/blog/vietnam-pickleball-tournament-calendar-2026",
+      "sitemap": [
+        "https://www.thepicklehub.net/sitemap-static.xml",
+        "https://www.thepicklehub.net/sitemap.xml"
+      ],
+      "referringUrls": [
+        "https://www.thepicklehub.net/vi/blog/lich-giai-pickleball-viet-nam-2026"
+      ],
+      "crawledAs": "MOBILE"
+    },
+    "error": null
+  },
+  {
+    "path": "/tools",
+    "http": 200,
+    "indexStatus": {
+      "verdict": "PASS",
+      "coverageState": "Submitted and indexed",
+      "robotsTxtState": "ALLOWED",
+      "indexingState": "INDEXING_ALLOWED",
+      "lastCrawlTime": "2026-09-03T08:34:07Z",
+      "pageFetchState": "SUCCESSFUL",
+      "googleCanonical": "https://www.thepicklehub.net/tools",
+      "userCanonical": "https://www.thepicklehub.net/tools",
+      "referringUrls": [
+        "https://www.thepicklehub.net/"
+      ],
+      "crawledAs": "MOBILE"
+    },
+    "error": null
+  },
+  {
+    "path": "/vi/blog/lich-thi-dau-pickleball-world-cup-2026-da-nang",
+    "http": 200,
+    "indexStatus": {
+      "verdict": "PASS",
+      "coverageState": "Submitted and indexed",
+      "robotsTxtState": "ALLOWED",
+      "indexingState": "INDEXING_ALLOWED",
+      "lastCrawlTime": "2026-09-13T07:58:14Z",
+      "pageFetchState": "SUCCESSFUL",
+      "googleCanonical": "https://www.thepicklehub.net/vi/blog/lich-thi-dau-pickleball-world-cup-2026-da-nang",
+      "userCanonical": "https://www.thepicklehub.net/vi/blog/lich-thi-dau-pickleball-world-cup-2026-da-nang",
+      "sitemap": [
+        "https://www.thepicklehub.net/sitemap-blog.xml",
+        "https://www.thepicklehub.net/sitemap.xml"
+      ],
+      "crawledAs": "MOBILE"
+    },
+    "error": null
+  },
+  {
+    "path": "/blog/best-pickleball-tournament-software-2026",
+    "http": 200,
+    "indexStatus": {
+      "verdict": "PASS",
+      "coverageState": "Submitted and indexed",
+      "robotsTxtState": "ALLOWED",
+      "indexingState": "INDEXING_ALLOWED",
+      "lastCrawlTime": "2026-09-04T10:34:25Z",
+      "pageFetchState": "SUCCESSFUL",
+      "googleCanonical": "https://www.thepicklehub.net/blog/best-pickleball-tournament-software-2026",
+      "userCanonical": "https://www.thepicklehub.net/blog/best-pickleball-tournament-software-2026",
+      "sitemap": [
+        "https://www.thepicklehub.net/sitemap-static.xml",
+        "https://www.thepicklehub.net/sitemap.xml"
+      ],
+      "referringUrls": [
+        "https://www.thepicklehub.net/blog",
+        "https://www.thepicklehub.net/vi/blog/phan-mem-to-chuc-giai-pickleball-2026"
+      ],
+      "crawledAs": "MOBILE"
+    },
+    "error": null
+  }
+]

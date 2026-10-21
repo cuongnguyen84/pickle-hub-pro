@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Check, Clock, Pencil, Play, Radio, MapPin } from 'lucide-react';
 import { useI18n } from '@/i18n';
+import { localePath } from '@/lib/locale-path';
 import type { QuickTableMatch, QuickTablePlayer } from '@/hooks/useQuickTable';
 
 interface QuickTableMatchRowProps {
@@ -20,12 +21,22 @@ export default function QuickTableMatchRow({
   match, index, player1, player2, canEdit, onScoreUpdate, onCourtNameUpdate, formatPlayerName,
 }: QuickTableMatchRowProps) {
   const navigate = useNavigate();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
   const [s1, setS1] = useState<string>(match.score1?.toString() ?? '');
   const [s2, setS2] = useState<string>(match.score2?.toString() ?? '');
   const [editingCourtName, setEditingCourtName] = useState(false);
   const [courtNameValue, setCourtNameValue] = useState(match.court_name ?? '');
+  useEffect(() => {
+    setS1(match.score1?.toString() ?? '');
+    setS2(match.score2?.toString() ?? '');
+    setIsEditing(false);
+    setCourtNameValue(match.court_name ?? '');
+    setEditingCourtName(false);
+    // Only when the row is a different match. A score refresh must not wipe a number being typed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [match.id]);
+
   const isCompleted = match.status === 'completed';
   const isLive = !!('live_referee_id' in match && match.live_referee_id);
 
@@ -51,7 +62,7 @@ export default function QuickTableMatchRow({
   };
 
   const handleOpenScoring = () => {
-    navigate(`/tools/quick-tables/referee/${match.id}`);
+    navigate(localePath(`/tools/quick-tables/referee/${match.id}`, language === 'vi' ? 'vi' : 'en'));
   };
 
   // ─── Token-driven container styling ──────────────────────────────────────
@@ -65,13 +76,13 @@ export default function QuickTableMatchRow({
 
   const winnerColor = 'var(--tl-green)';
   const playerNameStyle = (isWinner: boolean): React.CSSProperties => ({
-    flex: 1,
-    minWidth: 0,
-    // Match names are operational information: never hide a player behind an
-    // ellipsis. Let long singles/doubles names wrap on both desktop and mobile.
+    flex: '1 1 auto',
+    minWidth: 'min-content',
+    // Keep each name on a word boundary. anywhere/break-word was cutting
+    // "Phúc" into "Phú/c" when the 1024px row squeezed this column.
     whiteSpace: 'normal',
-    overflowWrap: 'anywhere',
-    wordBreak: 'break-word',
+    overflowWrap: 'normal',
+    wordBreak: 'normal',
     lineHeight: 1.35,
     fontSize: 14.5,
     fontWeight: isWinner ? 700 : 500,
@@ -266,7 +277,7 @@ export default function QuickTableMatchRow({
           </div>
         </div>
 
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
           <span style={{ ...playerNameStyle(match.winner_id === match.player1_id), textAlign: 'right' }}>
             {formatPlayerName(player1)}
           </span>

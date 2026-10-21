@@ -45,11 +45,6 @@ vi.mock("@/components/shop/ShopShell", () => ({
   DefList: () => null,
 }));
 
-vi.mock("@/components/states/PageStates", () => ({
-  LoadingState: () => <p>loading</p>,
-  ErrorState: () => <p>error</p>,
-}));
-
 vi.mock("@/hooks/shop/useShopProfile", () => ({
   useMyShopMembership: () => ({ data: { shop_id: "shop-1", role: "owner" }, isLoading: false, isError: false, refetch: vi.fn() }),
   useShopProfile: () => ({ data: { id: "shop-1", state: "active" }, isLoading: false, isError: false, refetch: vi.fn() }),
@@ -72,6 +67,8 @@ vi.mock("@/hooks/shop/useProductSubmit", () => ({
   useSubmitPreflight: () => ({ data: [], isLoading: false, refetch: vi.fn() }),
   useSubmitProduct: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useWithdrawSubmission: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  // P4c: đường quay lại cho hàng đang bán. Màn này gọi nó vô điều kiện.
+  useEditAgain: () => ({ mutateAsync: vi.fn(), isPending: false, isError: false, error: null }),
   useProductPreview: () => ({ data: null }),
 }));
 

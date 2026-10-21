@@ -2,14 +2,13 @@
 // /shop/sell — prototype S01 in production.
 // ----------------------------------------------------------------------------
 // Requirements are readable BEFORE the user starts, and nothing here invents a
-// review SLA or a permanent fee promise — the pilot has measured neither.
+// review SLA or a permanent fee promise.
 // ============================================================================
 
 import { Link } from "react-router-dom";
 import { Check, Clock, ShieldCheck } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, ShopHeader } from "@/components/shop/ShopShell";
-import { LoadingState } from "@/components/states/PageStates";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyApplication, useShopPilotAccess } from "@/hooks/shop/useSellerApplication";
 import { canEdit, isTerminal } from "@/lib/shop/applicationState";
@@ -28,7 +27,22 @@ export default function SellLanding() {
   const pilot = useShopPilotAccess();
   const app = useMyApplication();
 
-  if (user && (pilot.isLoading || app.isLoading)) return <LoadingState fullScreen />;
+  // Màn thứ 9 — spinner toàn màn nuốt luôn tiêu đề và nút Quay lại, nên trong
+  // lúc chờ người dùng không biết mình đang ở đâu. Khung xương đi qua đúng vỏ.
+  if (user && (pilot.isLoading || app.isLoading)) {
+    return (
+      <ShopScrollShell>
+        <DynamicMeta title="Bán hàng trên ThePickleHub" noindex />
+        <ShopHeader title="Bán hàng trên ThePickleHub" backTo="/" />
+        <main className="tl-shop-page tl-shop-page--narrow" aria-busy="true" aria-label="Đang tải">
+          <div className="tl-shop-sk tl-shop-sk--title" />
+          <div className="tl-shop-sk tl-shop-sk--line" />
+          <div className="tl-shop-sk tl-shop-sk--line" />
+          <div className="tl-shop-sk tl-shop-sk--card" />
+        </main>
+      </ShopScrollShell>
+    );
+  }
 
   const status = app.data?.status;
   const cta = (() => {
@@ -48,26 +62,29 @@ export default function SellLanding() {
       <DynamicMeta title="Bán hàng trên ThePickleHub" noindex />
       <ShopHeader title="Bán hàng trên ThePickleHub" backTo="/" />
       <main className="tl-shop-page tl-shop-page--narrow">
-        <h1 className="tl-shop-h1">Bán đồ pickleball trên ThePickleHub</h1>
-        <p className="tl-shop-sub">
-          Người chơi đã ở đây để xem giải đấu và tìm sân. Đăng sản phẩm để họ tìm thấy anh/chị.
-        </p>
+        <div className="tl-shop-hero">
+          <p className="tl-shop-eyebrow">Kênh người bán · Hiện chưa thu phí</p>
+          <h1 className="tl-shop-h1">Bán đồ pickleball trên ThePickleHub</h1>
+          <p className="tl-shop-sub">
+            Người chơi đã ở đây để xem giải đấu và tìm sân. Đăng sản phẩm để họ tìm thấy anh/chị.
+          </p>
 
-        {user && !pilot.data && (
-          <div className="tl-shop-notice tl-shop-notice--warn">
-            <div>
-              <strong>Shop đang chạy thử nghiệm kín.</strong> Tài khoản của anh/chị chưa nằm
-              trong nhóm thử nghiệm. Nếu muốn tham gia, nhắn cho ThePickleHub.
+          {user && !pilot.data && (
+            <div className="tl-shop-notice tl-shop-notice--warn">
+              <div>
+                <strong>Đăng ký mở shop hiện áp dụng theo lời mời.</strong> Nếu muốn hợp tác,
+                anh/chị nhắn cho ThePickleHub để được hướng dẫn.
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {cta && (
-          <div style={{ margin: "20px 0 28px" }}>
-            <Link to={cta.to} className="tl-shop-btn tl-shop-btn--primary">{cta.label}</Link>
-            <p className="tl-shop-hint">Điền được tới đâu lưu tới đó, không phải làm một lần.</p>
-          </div>
-        )}
+          {cta && (
+            <div style={{ margin: "20px 0 28px" }}>
+              <Link to={cta.to} className="tl-shop-btn tl-shop-btn--primary">{cta.label}</Link>
+              <p className="tl-shop-hint">Điền được tới đâu lưu tới đó, không phải làm một lần.</p>
+            </div>
+          )}
+        </div>
 
         <section aria-labelledby="s01-req">
           <h2 className="tl-shop-h2" id="s01-req">Cần chuẩn bị gì</h2>
@@ -84,48 +101,46 @@ export default function SellLanding() {
           </ul>
         </section>
 
-        <section aria-labelledby="s01-docs">
-          <h2 className="tl-shop-h2" id="s01-docs">Giấy tờ</h2>
-          <div className="tl-shop-notice">
+        <div className="tl-shop-faq">
+          <section aria-labelledby="s01-docs">
+            <h2 className="tl-shop-h2" id="s01-docs">Giấy tờ</h2>
             <div>
-              <strong>Giai đoạn thử nghiệm không thu giấy tờ.</strong> Không cần ảnh CCCD, không
-              cần tài khoản ngân hàng. Nếu cần đối chiếu, quản trị viên liên hệ trực tiếp.
+              <strong>Hồ sơ ban đầu không yêu cầu giấy tờ.</strong> Không cần ảnh CCCD hoặc
+              tài khoản ngân hàng. Nếu cần đối chiếu, quản trị viên sẽ liên hệ trực tiếp.
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section aria-labelledby="s01-time">
-          <h2 className="tl-shop-h2" id="s01-time">Bao lâu thì được duyệt</h2>
-          <div className="tl-shop-notice">
-            <Clock size={16} aria-hidden="true" />
+          <section aria-labelledby="s01-time">
+            <h2 className="tl-shop-h2" id="s01-time">
+              <Clock size={16} aria-hidden="true" />
+              Bao lâu thì được duyệt
+            </h2>
             <div>
-              Hồ sơ do <strong>người</strong> xem, không phải máy tự duyệt. Chúng tôi chưa cam
-              kết thời gian cụ thể vì lượng hồ sơ còn ít và chưa đo được.
+              Hồ sơ do <strong>đội ngũ ThePickleHub</strong> xem, không phải máy tự duyệt.
+              Anh/chị sẽ nhận thông báo ngay khi có kết quả hoặc cần bổ sung thông tin.
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section aria-labelledby="s01-fee">
-          <h2 className="tl-shop-h2" id="s01-fee">Phí</h2>
-          <div className="tl-shop-notice">
+          <section aria-labelledby="s01-fee">
+            <h2 className="tl-shop-h2" id="s01-fee">Phí</h2>
             <div>
               <strong>Hiện chưa thu phí</strong> đăng bán hay hoa hồng. Nếu sau này có thu, chúng
               tôi báo trước và anh/chị được quyền dừng bán. Chúng tôi không nói &ldquo;miễn phí
               trọn đời&rdquo; vì không hứa được điều đó.
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section aria-labelledby="s01-verify">
-          <h2 className="tl-shop-h2" id="s01-verify">Huy hiệu &ldquo;Đã xác minh&rdquo;</h2>
-          <div className="tl-shop-notice tl-shop-notice--info">
-            <ShieldCheck size={16} aria-hidden="true" />
+          <section aria-labelledby="s01-verify" className="tl-shop-faq--verify">
+            <h2 className="tl-shop-h2" id="s01-verify">
+              <ShieldCheck size={16} aria-hidden="true" />
+              Huy hiệu &ldquo;Đã xác minh&rdquo;
+            </h2>
             <div>
               Huy hiệu nói rằng ThePickleHub đã kiểm tra <strong>anh/chị là ai</strong>. Nó không
               phải bảo đảm chất lượng hàng hoá, và người mua được cho biết đúng như vậy.
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
       </main>
     </ShopScrollShell>
   );

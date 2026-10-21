@@ -65,7 +65,7 @@ const post: BlogPost = {
         },
         {
           heading: "ThePickleHub — Free Live Tournament Streaming",
-          content: "The Pickle Hub provides free livestream capabilities for tournament organizers and fans. All tournaments hosted on The Pickle Hub platform are streamed for free to the public.",
+          content: "ThePickleHub provides free livestream capabilities for tournament organizers and fans. All tournaments hosted on ThePickleHub are streamed for free to the public.",
           listItems: [
             "Cost: Completely free for viewers",
             "Coverage: Local club tournaments, regional events, and PPA Tour Asia tournaments",
@@ -107,7 +107,7 @@ const post: BlogPost = {
         },
         {
           heading: "Multi-Court Viewing — A Game Changer",
-          content: "One unique feature of PickleballTV and The Pickle Hub is multi-court viewing. Instead of watching a single court feed, you can view up to 6 courts simultaneously on one screen.",
+          content: "One unique feature of PickleballTV and ThePickleHub is multi-court viewing. Instead of watching a single court feed, you can view up to 6 courts simultaneously on one screen.",
           listItems: [
             "Major tournaments run 8-12 courts at once — multi-court lets you follow multiple matches",
             "Reduces downtime between your favorite player's matches",
@@ -139,7 +139,7 @@ const post: BlogPost = {
         },
         {
           heading: "The Future of Pickleball Streaming in Asia",
-          content: "Asia is the fastest-growing pickleball market in the world. Vietnam leads with 88% awareness and 37% of the population having played. Thailand, Malaysia, Japan, and Singapore are growing markets with increasing demand for live tournament coverage. The Pickle Hub is helping tournament organizers in Asia reach global audiences through free livestreaming, while PickleballTV is expanding its international catalog. By the end of 2026, Asian pickleball fans will have more live content available than ever before."
+          content: "Asia is the fastest-growing pickleball market in the world. Vietnam leads with 88% awareness and 37% of the population having played. Thailand, Malaysia, Japan, and Singapore are growing markets with increasing demand for live tournament coverage. ThePickleHub is helping tournament organizers in Asia reach global audiences through free livestreaming, while PickleballTV is expanding its international catalog. By the end of 2026, Asian pickleball fans will have more live content available than ever before."
         }
       ],
       faqItems: [
@@ -203,7 +203,7 @@ const post: BlogPost = {
         },
         {
           heading: "ThePickleHub — Phát Trực Tiếp Miễn Phí",
-          content: "The Pickle Hub cung cấp phát trực tiếp miễn phí cho tổ chức viên giải đấu và người xem.",
+          content: "ThePickleHub cung cấp phát trực tiếp miễn phí cho tổ chức viên giải đấu và người xem.",
           listItems: [
             "Hoàn toàn miễn phí cho người xem",
             "Giải đấu câu lạc bộ, sự kiện khu vực, PPA Tour Asia",
@@ -241,7 +241,7 @@ const post: BlogPost = {
         },
         {
           heading: "Xem Nhiều Sân — Tính Năng Đột Phá",
-          content: "PickleballTV và The Pickle Hub cho phép xem đến 6 sân cùng lúc:",
+          content: "PickleballTV và ThePickleHub cho phép xem đến 6 sân cùng lúc:",
           listItems: [
             "Giải lớn chạy 8-12 sân — xem nhiều trận cùng lúc",
             "Giảm thời gian chờ giữa các trận của tay vợt yêu thích",
@@ -273,7 +273,7 @@ const post: BlogPost = {
         },
         {
           heading: "Tương Lai Streaming Pickleball Tại Châu Á",
-          content: "Châu Á là thị trường pickleball phát triển nhanh nhất thế giới. Việt Nam dẫn đầu với 88% nhận thức và 37% dân số đã chơi. Thái Lan, Malaysia, Nhật Bản, Singapore đang tăng trưởng mạnh. The Pickle Hub giúp tổ chức viên giải đấu châu Á tiếp cận khán giả toàn cầu qua livestream miễn phí. Đến cuối 2026, fan pickleball châu Á sẽ có nhiều nội dung trực tiếp hơn bao giờ hết."
+          content: "Châu Á là thị trường pickleball phát triển nhanh nhất thế giới. Việt Nam dẫn đầu với 88% nhận thức và 37% dân số đã chơi. Thái Lan, Malaysia, Nhật Bản, Singapore đang tăng trưởng mạnh. ThePickleHub giúp tổ chức viên giải đấu châu Á tiếp cận khán giả toàn cầu qua livestream miễn phí. Đến cuối 2026, fan pickleball châu Á sẽ có nhiều nội dung trực tiếp hơn bao giờ hết."
         }
       ],
       faqItems: [

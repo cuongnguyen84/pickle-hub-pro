@@ -14,15 +14,29 @@
 
 import { useEffect } from "react";
 
-export function useNoindex(): void {
+/**
+ * @param options.enabled  false leaves the page indexable. Lets a component
+ *   decide per-render without breaking the rules of hooks — the news article
+ *   page noindexes its EN half and leaves the VI half alone (C3, 2026-08-25).
+ * @param options.content  the directive to emit. Defaults to the private-route
+ *   policy, "noindex, nofollow". Content that should still pass equity through
+ *   its outbound links wants "noindex, follow" instead.
+ */
+export function useNoindex(options?: {
+  enabled?: boolean;
+  content?: string;
+}): void {
+  const enabled = options?.enabled ?? true;
+  const content = options?.content ?? "noindex, nofollow";
   useEffect(() => {
+    if (!enabled) return;
     const meta = document.createElement("meta");
     meta.name = "robots";
-    meta.content = "noindex, nofollow";
+    meta.content = content;
     meta.setAttribute("data-noindex-hook", "1");
     document.head.appendChild(meta);
     return () => {
       meta.remove();
     };
-  }, []);
+  }, [enabled, content]);
 }

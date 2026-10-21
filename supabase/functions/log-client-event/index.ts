@@ -69,6 +69,19 @@ Deno.serve(async (req) => {
     ? parseCspClientErrors(body, user?.id ?? null, userAgent)
     : parseJsClientError(type, body, user?.id ?? null, userAgent);
   if (parsed.tooLarge) return empty(413);
+  // Everything in the batch was third-party injected code (see
+  // isThirdPartyCspReport). The request was well-formed and we understood it —
+  // it just describes software we do not ship — so this is a 204, not the 400
+  // we return for a body we could not parse. It also returns BEFORE the rate
+  // limiter, so Facebook's in-app browser scripts no longer spend the budget
+  // that a real error from the same reader needs.
+  if (parsed.rows.length === 0 && parsed.injectedCount > 0) {
+    // The one trace of a dropped report. These rows are unrecoverable once
+    // filtered, so the drop rate has to be visible somewhere or a filter that
+    // starts eating too much would look exactly like a quiet week.
+    console.log(`log-client-event dropped ${parsed.injectedCount} third-party report(s)`);
+    return empty(204);
+  }
   if (parsed.rawCount === 0 || parsed.rows.length === 0) return empty(400);
 
   const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
@@ -80,7 +93,10 @@ Deno.serve(async (req) => {
   const { data: rateData, error: rateError } = await serviceClient
     .rpc("consume_client_error_rate_limit", {
       p_identity_hash: identityHash,
-      p_event_count: parsed.rawCount,
+      // Charge for what we are about to store, not for what the browser sent:
+      // a mixed batch must not spend a real reader's budget on the injected
+      // half of it. Never below 1 — we only reach here with rows to insert.
+      p_event_count: Math.max(parsed.rawCount - parsed.injectedCount, 1),
       p_limit: eventLimit,
       p_window_seconds: RATE_WINDOW_SECONDS,
     })

@@ -58,9 +58,9 @@ INSERT INTO public.shop_members (shop_id, user_id, role) VALUES
 -- something, and a fixture without one is testing a product a seller could not
 -- actually submit.
 INSERT INTO public.products (id, shop_id, slug, title, description, category_slug, status) VALUES
-  ('6b000001-0000-4000-8000-000000000001'::uuid, '6a000001-0000-4000-8000-000000000001'::uuid, 'med-prod-a', 'Med Prod A', 'Mô tả A', 'vot', 'draft'),
-  ('6b000002-0000-4000-8000-000000000002'::uuid, '6a000002-0000-4000-8000-000000000002'::uuid, 'med-prod-b', 'Med Prod B', 'Mô tả B', 'vot', 'draft'),
-  ('6b000003-0000-4000-8000-000000000003'::uuid, '6a000001-0000-4000-8000-000000000001'::uuid, 'med-prod-locked', 'Med Prod Locked', 'Mô tả C', 'vot', 'draft');
+  ('6b000001-0000-4000-8000-000000000001'::uuid, '6a000001-0000-4000-8000-000000000001'::uuid, 'med-prod-a', 'Med Prod A', 'Vợt A, mặt carbon, lõi 16mm, cán 4.25 inch, mới.', 'vot', 'draft'),
+  ('6b000002-0000-4000-8000-000000000002'::uuid, '6a000002-0000-4000-8000-000000000002'::uuid, 'med-prod-b', 'Med Prod B', 'Vợt B, mặt sợi thuỷ tinh, lõi 13mm, hàng mới.', 'vot', 'draft'),
+  ('6b000003-0000-4000-8000-000000000003'::uuid, '6a000001-0000-4000-8000-000000000001'::uuid, 'med-prod-locked', 'Med Prod Locked', 'Vợt C, mặt carbon thô, lõi 16mm, hàng trưng bày.', 'vot', 'draft');
 
 -- The insert trigger forces every new product to 'draft', including this one,
 -- so the queued state has to be set the way the RPCs set it.

@@ -156,7 +156,7 @@ const post: BlogPost = {
           heading: "Bước 3 — Tạo bracket",
           content: "Tạo bracket là việc tốn thời gian nhất với người tổ chức lần đầu. Bắt đầu từ công cụ, rồi dùng hai hướng dẫn để chọn cỡ bảng, chia seed và vận hành từng thể thức:",
           internalLinks: [
-            { text: "Tạo Bracket Pickleball miễn phí — Bracket trong 60 giây, không cần đăng ký", path: "/tools" },
+            { text: "Tạo Bracket Pickleball miễn phí — Bracket trong 60 giây, không cần đăng ký", path: "/vi/tools" },
             { text: "Cách tạo Bracket giải Pickleball — Từng bước, kèm cỡ bảng cho 4–64 người", path: "/blog/how-to-create-pickleball-bracket" },
             { text: "Cách tổ chức giải vòng tròn Pickleball — Lịch, bye và tiebreaker", path: "/blog/pickleball-round-robin-generator-guide" }
           ]
@@ -197,10 +197,10 @@ const post: BlogPost = {
           heading: "Công cụ miễn phí dùng được ngay hôm nay",
           content: "Mỗi hướng dẫn ở trên đều dẫn về một trong các công cụ này — không cần đăng ký, không cần thẻ tín dụng, bracket và chấm điểm realtime tức thì:",
           internalLinks: [
-            { text: "Quick Tables — Bracket vòng tròn cho 2–200 người", path: "/tools/quick-tables" },
-            { text: "Bracket Loại kép — Bracket thắng/thua cho 4–32 đội", path: "/tools/doubles-elimination" },
-            { text: "MLP Team Match — Lineup, dreambreaker, bảng xếp hạng đội", path: "/tools/team-match" },
-            { text: "Flex Tournament — Bracket tùy chỉnh cho mọi thể thức không chuẩn", path: "/tools/flex-tournament" }
+            { text: "Quick Tables — Bracket vòng tròn cho 2–200 người", path: "/vi/tools/quick-tables" },
+            { text: "Bracket Loại kép — Bracket thắng/thua cho 4–32 đội", path: "/vi/tools/doubles-elimination" },
+            { text: "MLP Team Match — Lineup, dreambreaker, bảng xếp hạng đội", path: "/vi/tools/team-match" },
+            { text: "Flex Tournament — Bracket tùy chỉnh cho mọi thể thức không chuẩn", path: "/vi/tools/flex-tournament" }
           ]
         }
       ],

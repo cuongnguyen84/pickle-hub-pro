@@ -47,6 +47,11 @@ test.describe("visual regression", () => {
     // QA-05 locales: VI mirrors of the two most content-distinct routes.
     { name: "rankings-vi", path: "/vi/rankings" },
     { name: "news-vi", path: "/vi/news" },
+    // Shop UI polish R1: the two anonymous-renderable shop surfaces. A PDP is
+    // deliberately NOT pinned — the pilot catalogue has no slug stable enough
+    // to freeze into a baseline yet.
+    { name: "shop-home", path: "/shop" },
+    { name: "shop-sell", path: "/shop/sell" },
   ];
 
   for (const p of PAGES) {

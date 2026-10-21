@@ -275,13 +275,16 @@ SELECT is(
 SET LOCAL role anon;
 SET LOCAL request.jwt.claims TO '{"role":"anon"}';
 
--- anon holds a SELECT grant on shops (public catalogue reads land here later)
--- but the policy only exposes state='active', so a pending_activation shop is
--- invisible rather than forbidden.
-SELECT is(
-  (SELECT count(*)::int FROM public.shops),
-  0,
-  'anon CANNOT see a pending_activation shop'
+-- Until 20260818130000 anon held a SELECT grant on shops, and this asserted
+-- the weaker "the policy hides it": zero rows rather than an error. It was the
+-- grant that let `?select=owner_user_id` answer with a real uid on production.
+-- anon now holds no grant at all, so the answer is a hard 42501 — the same
+-- shape as shop_applications below, and a stronger thing to assert.
+SELECT throws_ok(
+  $$ SELECT count(*) FROM public.shops $$,
+  '42501',
+  NULL,
+  'anon CANNOT read shops at all — not even to be told the row is hidden'
 );
 
 -- shop_applications has NO grant for anon at all, so this is a hard 42501

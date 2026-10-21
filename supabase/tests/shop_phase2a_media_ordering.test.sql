@@ -9,7 +9,7 @@
 
 BEGIN;
 
-SELECT plan(73);
+SELECT plan(74);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 
@@ -79,8 +79,8 @@ SELECT ok(
   NOT (SELECT has_table_privilege('authenticated','public.shop_profile_media','UPDATE')),
   'and cannot UPDATE it either, so public_path is unreachable from a user JWT');
 SELECT ok(
-  (SELECT has_table_privilege('anon','public.shop_profile_media','SELECT')),
-  'anon has the SELECT grant its public policy needs');
+  NOT (SELECT has_table_privilege('anon','public.shop_profile_media','SELECT')),
+  'and anon holds no SELECT at all — the public door is shop_public_shop');
 
 -- The composite FK is what makes cross-product assignment impossible.
 SELECT ok(
@@ -409,8 +409,16 @@ SELECT is(
 
 SET LOCAL role anon;
 SET LOCAL request.jwt.claims TO '{"role":"anon"}';
-SELECT is((SELECT count(*)::int FROM public.shop_profile_media), 0,
-  'khách KHÔNG thấy logo/bìa chưa được công bố');
+-- Was `is(count(*), 0)` — anon held a grant and the `TO public` policy filtered
+-- the unpublished rows away. Since 20260818140000 anon holds no grant on this
+-- table, so the answer is a refusal. The table carries draft_path, the private
+-- original; the public rendition travels inside shop_public_shop instead.
+--
+-- (The error names `shops`, not this table: the policy's EXISTS pulls `shops`
+-- into the plan and Postgres checks every relation in it. Both are denied.)
+SELECT throws_ok(
+  $$ SELECT count(*)::int FROM public.shop_profile_media $$, '42501', NULL,
+  'khách KHÔNG đọc được bảng logo/bìa — kể cả để biết là chưa công bố');
 
 -- The worker publishes. This is the only route to a public_path.
 SET LOCAL role postgres;
@@ -424,14 +432,27 @@ SELECT throws_ok(
   format($$ SELECT public.shop_profile_media_publish_commit(%L::uuid, '7d000002-0000-4000-8000-000000000002/cuop.webp') $$,
     (SELECT v FROM t_med WHERE k='cover')),
   '22023', NULL, 'đường dẫn công khai ngoài thư mục shop bị từ chối');
+-- Since 20260817090000 commit refuses everything but the row's CURRENT
+-- deterministic key (stale-plan race), so the arbitrary key this test used to
+-- pass is now itself a refusal case.
+SELECT throws_ok(
+  format($$ SELECT public.shop_profile_media_publish_commit(%L::uuid, '7d000001-0000-4000-8000-000000000001/profile/cover/public.webp') $$,
+    (SELECT v FROM t_med WHERE k='cover')),
+  '22023', NULL, 'một khoá không đúng phiên bản hiện tại cũng bị từ chối');
 SELECT ok(
   public.shop_profile_media_publish_commit((SELECT v FROM t_med WHERE k='cover'),
-    '7d000001-0000-4000-8000-000000000001/profile/cover/public.webp'),
-  'worker công bố được ảnh bìa đã xác minh');
+    (SELECT shop_id::text || '/profile/' || purpose::text || '/' || id::text || '/v' || version::text || '/live.webp'
+     FROM public.shop_profile_media WHERE id = (SELECT v FROM t_med WHERE k='cover'))),
+  'worker công bố được ảnh bìa đã xác minh — theo đúng khoá phiên bản hiện tại');
 
+-- Read through the public DOOR, not the table: since 20260818140000 anon holds
+-- no grant on shop_profile_media, and the surface a buyer actually sees is
+-- shop_public_shop's JSON. Asserting the table would have been asserting a
+-- path no browser takes.
 SET LOCAL role anon;
 SET LOCAL request.jwt.claims TO '{"role":"anon"}';
-SELECT is((SELECT count(*)::int FROM public.shop_profile_media), 1,
+SELECT ok(
+  ((public.shop_public_shop('anh-sai-gon')) -> 'shop') ->> 'cover_path' IS NOT NULL,
   'giờ khách mới thấy ảnh bìa');
 
 -- A shop leaving active takes its public face with it, synchronously.
@@ -449,7 +470,10 @@ SELECT is(
 
 SET LOCAL role anon;
 SET LOCAL request.jwt.claims TO '{"role":"anon"}';
-SELECT is((SELECT count(*)::int FROM public.shop_profile_media), 0,
+-- Same door as above. A suspended shop answers `found: false` outright, so the
+-- cover is gone with the whole storefront rather than merely blanked.
+SELECT is(
+  (public.shop_public_shop('anh-sai-gon')) ->> 'found', 'false',
   'shop bị tạm ngưng thì ảnh bìa biến mất khỏi bề mặt công khai NGAY');
 
 SET LOCAL role postgres;

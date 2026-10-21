@@ -10,17 +10,12 @@ import {
 import { marketSegmentForCountry } from "../../../functions/_lib/rum-context";
 
 const rumMocks = vi.hoisted(() => ({
-  getPlatform: vi.fn<() => "ios" | "android" | "web">(() => "web"),
   onCLS: vi.fn(),
   onFCP: vi.fn(),
   onINP: vi.fn(),
   onLCP: vi.fn(),
   onTTFB: vi.fn(),
   trackEvent: vi.fn(),
-}));
-
-vi.mock("@/lib/capacitor-utils", () => ({
-  getPlatform: rumMocks.getPlatform,
 }));
 
 vi.mock("@/utils/ga", () => ({
@@ -192,7 +187,6 @@ describe("RUM dimensions", () => {
 
   it("initializes all observers and reports a cached market segment", async () => {
     vi.stubEnv("DEV", false);
-    rumMocks.getPlatform.mockReturnValue("ios");
 
     const requestIdleCallback = vi.fn((callback: IdleRequestCallback) => {
       callback({
@@ -241,7 +235,7 @@ describe("RUM dimensions", () => {
     expect(rumMocks.trackEvent).toHaveBeenCalledWith(
       "web_vital",
       expect.objectContaining({
-        app_surface: "capacitor_ios",
+        app_surface: "web",
         device_class: "mobile",
         locale: "vi",
         market_segment: "vn",

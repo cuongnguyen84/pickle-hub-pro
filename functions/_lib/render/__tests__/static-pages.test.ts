@@ -22,5 +22,18 @@ describe("static bot pages", () => {
     expect(response.status).toBe(404);
     expect(html).toContain(`href="${SITE}/vi"`);
     expect(html).not.toContain(`href="${SITE}/vi/"`);
+    expect(html).toContain(`${SITE}/llms.txt`);
+    expect(html).toContain(`${SITE}/sitemap.xml`);
+  });
+
+  it("negotiates an agent-friendly markdown 404 without changing its status", async () => {
+    const response = render404("/missing", SITE, "text/markdown");
+    const markdown = await response.text();
+
+    expect(response.status).toBe(404);
+    expect(response.headers.get("content-type")).toContain("text/markdown");
+    expect(response.headers.get("vary")).toBe("Accept");
+    expect(markdown).toContain("# 404 — Page not found");
+    expect(markdown).toContain(`${SITE}/openapi.json`);
   });
 });

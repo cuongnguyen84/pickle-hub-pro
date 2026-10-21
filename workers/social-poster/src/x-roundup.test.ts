@@ -28,12 +28,29 @@ const match = (over: Partial<RoundupMatch> = {}): RoundupMatch => ({
 
 describe('formatMatchLine', () => {
   it('puts the winner first with their scores first', () => {
-    expect(formatMatchLine(match())).toBe('Johns d. Staksrud 11-6, 11-9');
+    expect(formatMatchLine(match())).toBe('Ben Johns d. Federico Staksrud 11-6, 11-9');
   });
 
   it('flips the score order when team B won', () => {
     expect(formatMatchLine(match({ winning_team: 'b' })))
-      .toBe('Staksrud d. Johns 6-11, 9-11');
+      .toBe('Federico Staksrud d. Ben Johns 6-11, 9-11');
+  });
+
+  // MLP sides are franchises, one participant each. Surnames-everywhere turned
+  // "Brooklyn Pickleball Team" into "Team" and "New Jersey 5s" into "5s".
+  it('prints a one-participant side whole, because it is a team not a person', () => {
+    const m = match({
+      participants: [p('a', 'Columbus Sliders'), p('b', 'Brooklyn Pickleball Team')],
+      winning_team: 'b',
+      team_a_score: [4, 13],
+      team_b_score: [11, 11],
+    });
+    expect(formatMatchLine(m)).toBe('Brooklyn Pickleball Team d. Columbus Sliders 11-4, 11-13');
+  });
+
+  it('prints a singles player whole too', () => {
+    const m = match({ participants: [p('a', 'Ben Johns'), p('b', 'Federico Staksrud')] });
+    expect(formatMatchLine(m)).toBe('Ben Johns d. Federico Staksrud 11-6, 11-9');
   });
 
   it('joins a doubles pair with a slash, in position order', () => {
@@ -69,6 +86,26 @@ describe('formatScores', () => {
     expect(formatScores([11, 4], [9, 11])).toBe('11-9, 4-11');
     expect(formatScores(null, [9])).toBe('');
     expect(formatScores([], [])).toBe('');
+  });
+
+  // Production row, St. Louis Shock d. Texas Ranchers: MLP arrays are fixed
+  // length, so a 3-0 win leaves an unplayed fourth game as zeros. Printing it
+  // stated a game that never happened as fact, on an account that now posts
+  // without review.
+  it('drops the unplayed games a 3-0 MLP win leaves behind', () => {
+    expect(formatScores([11, 11, 11, 0], [2, 4, 5, 0])).toBe('11-2, 11-4, 11-5');
+    expect(formatScores([11, 11, 0, 0], [2, 4, 0, 0])).toBe('11-2, 11-4');
+  });
+
+  it('keeps a real 0 that is not a trailing pair', () => {
+    // A shut-out game is 11-0 and must survive; only 0-0 means "not played".
+    expect(formatScores([11, 11], [0, 4])).toBe('11-0, 11-4');
+    // A mid-match 0-0 is data corruption, not padding — do not hide it.
+    expect(formatScores([11, 0, 11], [2, 0, 5])).toBe('11-2, 0-0, 11-5');
+  });
+
+  it('returns nothing when every game is unplayed', () => {
+    expect(formatScores([0, 0], [0, 0])).toBe('');
   });
 });
 

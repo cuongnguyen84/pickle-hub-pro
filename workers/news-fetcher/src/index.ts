@@ -1,8 +1,9 @@
 // ============================================================================
 // news-fetcher — Cloudflare Worker
 // ----------------------------------------------------------------------------
-// Pulls pickleball news from the active news_sources rows, parses RSS/Atom,
-// and writes deduped source material into the protected news_origins queue.
+// Pulls pickleball news from the active news_sources rows, parses RSS/Atom or
+// an explicitly allowlisted source API, and writes deduped source material
+// into the protected news_origins queue.
 //
 // Phase 2 of the news aggregator feature. See:
 //   - supabase/migrations/20260519000000_news_aggregator_phase_1.sql
@@ -30,6 +31,7 @@ export interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   SCRAPER_AUTH_SECRET: string;
+  PICKLE_ASIA_API_KEY?: string;
 }
 
 interface NewsSource {
@@ -37,7 +39,7 @@ interface NewsSource {
   name: string;
   base_url: string;
   feed_url: string | null;
-  feed_type: "rss" | "atom" | "html_scrape" | "manual";
+  feed_type: "rss" | "atom" | "html_scrape" | "json_api" | "manual";
   language: "en" | "vi";
   trust_tier: number;
   auto_publish: boolean;
@@ -50,6 +52,8 @@ interface ParsedItem {
   summary: string;
   image_url: string | null;
   published_at: string; // ISO
+  // undefined: fetch the article page; null: source API supplied no full body.
+  raw_body?: string | null;
 }
 
 interface SourceRunResult {
@@ -65,14 +69,50 @@ interface SourceRunResult {
 }
 
 class IngestError extends Error {
-  constructor(public readonly failed: number) {
+  readonly failed: number;
+  constructor(failed: number) {
     super(`${failed} news origin insert(s) failed`);
+    this.failed = failed;
   }
 }
 
 // Four active sources × 8 article fetches + feed/DB/health calls stays below
 // the Workers free-plan subrequest ceiling on a scheduled invocation.
 const MAX_ITEMS_PER_FEED = 8;
+// Trần 50 subrequest/lần chạy của Workers free là ràng buộc thật, và nó tính
+// CẢ RUN chứ không tính theo nguồn. Chi phí cố định với 10 nguồn: 10 feed/listing/API
+// + ~10 dedupe + ~5 insert + 10 PATCH + 2 job-health ≈ 37. Phần còn lại chia cho
+// việc tải body bài — đếm chung một ngân sách để thêm nguồn không âm thầm
+// đẩy run qua trần. Bài vượt ngân sách KHÔNG insert (để lần chạy sau lấy đủ
+// body), backlog tự rút cạn qua các run 2h kế tiếp. Pickle Asia trả body ngay
+// trong JSON nên không tiêu ngân sách fetch bài.
+const MAX_ARTICLE_FETCHES_PER_RUN = 10;
+// Thử lại feed tối đa 2 lần cho CẢ run (không phải mỗi nguồn) — nếu mỗi nguồn
+// được thử lại thì 9 nguồn cùng hỏng sẽ đẩy run qua trần 50 subrequest.
+const MAX_FEED_RETRIES_PER_RUN = 2;
+
+// Một chuỗi User-Agent duy nhất cho MỌI request ra ngoài (feed, listing, trang
+// bài). Trước 2026-09-01 chuỗi này là "ThePickleHub-news-fetcher/1.0 (+...)" —
+// lễ phép và trung thực, nhưng KHÔNG theo khuôn "Mozilla/5.0 (compatible;
+// <bot>; +<url>)" mà Googlebot/Bingbot dùng, nên WAF của pickleball.com bắt
+// đầu trả 403 cho nó từ 2026-08-28: 4 ngày, ~48 lượt fetch, 1/9 nguồn chết âm
+// thầm (run vẫn ở trạng thái "warning" nên không ai bị đánh thức).
+//
+// Đo tay 2026-09-01 trên https://pickleball.com/api/feed:
+//   "ThePickleHub-news-fetcher/1.0 (+...)"                          → 403
+//   + Accept / Accept-Language / Accept-Encoding                     → 403
+//   "SimplePie/1.5 (Feed Parser)"                                    → 403
+//   "Mozilla/5.0 (compatible; ThePickleHub-news-fetcher/1.0; +...)"  → 200
+//
+// Nên đổi KHUÔN, không đổi DANH TÍNH: vẫn tự khai đúng tên bot + URL liên hệ,
+// chỉ bọc trong tiền tố "Mozilla/5.0 (compatible; …)" mà bộ lọc mong đợi.
+// KHÔNG giả dạng trình duyệt. robots.txt của pickleball.com cho phép "/" với
+// mọi user-agent, nên đây là đi đúng cửa chứ không phải lách. Đã thử lại cả 9
+// nguồn với chuỗi mới: 8 nguồn giữ nguyên mã trạng thái, pickleball-com
+// 403 → 200.
+export const NEWS_FETCHER_USER_AGENT =
+  "Mozilla/5.0 (compatible; ThePickleHub-news-fetcher/1.0; +https://www.thepicklehub.net)";
+
 const MAX_AGE_DAYS = 30;
 const TITLE_LIMIT = 120;
 const SUMMARY_LIMIT = 300;
@@ -222,12 +262,14 @@ async function recordJobRun(
 async function runAllSources(env: Env): Promise<SourceRunResult[]> {
   const sources = await fetchActiveSources(env);
   const results: SourceRunResult[] = [];
+  // Ngân sách dùng chung cho cả run, các nguồn tiêu theo thứ tự.
+  const budget: FetchBudget = { left: MAX_ARTICLE_FETCHES_PER_RUN, retries: MAX_FEED_RETRIES_PER_RUN };
 
   for (const source of sources) {
     const started = Date.now();
     try {
-      const items = await fetchAndParse(source, env);
-      const counts = await ingestItems(env, source, items);
+      const items = await fetchAndParse(source, env, budget);
+      const counts = await ingestItems(env, source, items, budget);
       const result: SourceRunResult = {
         source_id: source.id,
         ok: true,
@@ -280,7 +322,7 @@ async function fetchActiveSources(env: Env): Promise<NewsSource[]> {
   const scrapeIds = Object.keys(HTML_SCRAPE_CONFIGS).join(",");
   const url =
     `${env.SUPABASE_URL}/rest/v1/news_sources` +
-    `?active=eq.true&or=(feed_type.in.(rss,atom),id.in.(${scrapeIds}))&select=*`;
+    `?active=eq.true&or=(feed_type.in.(rss,atom,json_api),id.in.(${scrapeIds}))&select=*`;
   const res = await fetch(url, { headers: pgHeaders(env) });
   if (!res.ok) throw new Error(`fetchActiveSources ${res.status}`);
   return (await res.json()) as NewsSource[];
@@ -325,6 +367,12 @@ async function markSourceError(
   }
 }
 
+interface FetchBudget {
+  left: number;
+  /** Số lần được thử lại feed trong CẢ run — xem MAX_FEED_RETRIES_PER_RUN. */
+  retries: number;
+}
+
 interface IngestCounts {
   inserted: number;
   dup: number;
@@ -332,10 +380,33 @@ interface IngestCounts {
   failed: number;
 }
 
+// source_url là khoá dedupe DUY NHẤT, nên link phải được chuẩn hoá trước khi
+// so trùng — nếu không, cùng một bài với utm khác nhau sẽ vào DB hai lần.
+export function normalizeItemLink(raw: string): string {
+  // Feed pickleball.com trả <link> không có scheme ("pickleball.com/news/…")
+  // — thêm scheme trước, không thì bị loại sạch ở bước validate.
+  const withScheme = raw && !/^https?:\/\//i.test(raw) ? `https://${raw}` : raw;
+  let url: URL;
+  try {
+    url = new URL(withScheme);
+  } catch {
+    return withScheme; // để isSafePublicFeedUrl loại ở bước sau
+  }
+  // Pickleball Rookie gắn ?utm_source=rss&utm_medium=rss&utm_campaign=<slug>
+  // vào mọi link. Tham số tracking không đổi nội dung bài.
+  for (const key of [...url.searchParams.keys()]) {
+    if (key.startsWith("utm_") || key === "fbclid" || key === "gclid") {
+      url.searchParams.delete(key);
+    }
+  }
+  return url.toString().replace(/\?$/, "");
+}
+
 async function ingestItems(
   env: Env,
   source: NewsSource,
-  items: ParsedItem[]
+  items: ParsedItem[],
+  budget: FetchBudget
 ): Promise<IngestCounts> {
   const ageCutoff = Date.now() - MAX_AGE_DAYS * 86_400_000;
   let inserted = 0;
@@ -350,11 +421,7 @@ async function ingestItems(
   // tốn body fetch cho bài thật sự mới.
   const fresh: ParsedItem[] = [];
   for (const item of items) {
-    // Feed pickleball.com trả <link> không có scheme ("pickleball.com/news/…")
-    // — chuẩn hoá trước khi validate, không thì bị loại sạch.
-    if (item.link && !/^https?:\/\//i.test(item.link)) {
-      item.link = `https://${item.link}`;
-    }
+    item.link = normalizeItemLink(item.link);
     const publishedMs = Date.parse(item.published_at);
     if (!Number.isFinite(publishedMs) || publishedMs < ageCutoff) {
       old += 1;
@@ -388,15 +455,24 @@ async function ingestItems(
     }
     const publishedMs = Date.parse(item.published_at);
 
-    let rawBody: string | null = null;
-    try {
-      rawBody = await fetchArticleBody(item.link);
-    } catch (error) {
-      console.warn(
-        `[${source.id}] full article unavailable for ${item.link}: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
+    let rawBody: string | null = item.raw_body ?? null;
+    if (item.raw_body === undefined) {
+      if (budget.left <= 0) {
+        // Hết ngân sách subrequest: bỏ qua, KHÔNG insert — run sau sẽ lấy lại
+        // bài này kèm body đầy đủ thay vì chôn nó thành brief vĩnh viễn.
+        console.log(`[${source.id}] hoãn ${item.link} — hết ngân sách fetch của run`);
+        break;
+      }
+      budget.left -= 1;
+      try {
+        rawBody = await fetchArticleBody(item.link);
+      } catch (error) {
+        console.warn(
+          `[${source.id}] full article unavailable for ${item.link}: ${
+            error instanceof Error ? error.message : String(error)
+          }`
+        );
+      }
     }
 
     originRows.push({
@@ -488,12 +564,20 @@ export function isSafePublicFeedUrl(raw: string): boolean {
 
 interface HtmlScrapeConfig {
   origin: string;
-  // Slug bài nằm ở root ("/122-shot-rally.../"); loại trang mục bằng prefix.
-  excludePrefixes: string[];
-  titleSuffix: string; // cắt " | PPA Tour" khỏi og:title
+  // Đường og-meta (PPA): slug bài nằm ở root ("/122-shot-rally.../"), loại
+  // trang mục bằng prefix, rồi fetch từng bài để đọc og:title + published_time.
+  excludePrefixes?: string[];
+  titleSuffix?: string; // cắt " | PPA Tour" khỏi og:title
+  // Đường listing-card (APP): card trên trang listing đã có sẵn tiêu đề, ngày
+  // và ảnh, trong khi trang bài KHÔNG có <meta article:published_time> nên
+  // đường og-meta ở trên vô dụng. Lấy hết từ listing = 1 subrequest/nguồn.
+  listingCards?: {
+    splitOn: string; // chuỗi mở đầu mỗi card trong HTML
+    linkPrefix: string; // prefix path của bài, vd "/news/"
+  };
 }
 
-const HTML_SCRAPE_CONFIGS: Record<string, HtmlScrapeConfig> = {
+export const HTML_SCRAPE_CONFIGS: Record<string, HtmlScrapeConfig> = {
   "ppa-tour": {
     origin: "https://www.ppatour.com",
     excludePrefixes: [
@@ -501,6 +585,14 @@ const HTML_SCRAPE_CONFIGS: Record<string, HtmlScrapeConfig> = {
       "/rankings", "/leaderboards", "/news", "/blog", "/_next",
     ],
     titleSuffix: " | PPA Tour",
+  },
+  // APP Pickleball — site Webflow, listing /news là CMS collection list.
+  app: {
+    origin: "https://www.theapp.global",
+    listingCards: {
+      splitOn: 'role="listitem" class="w-dyn-item"',
+      linkPrefix: "/news/",
+    },
   },
 };
 
@@ -517,32 +609,98 @@ function metaContent(html: string, property: string): string | null {
   return match ? match[1].trim() : null;
 }
 
-function decodeEntities(value: string): string {
-  // &amp; decode CUỐI CÙNG — decode trước sẽ mở đường double-unescape
-  // (&amp;lt; → &lt; → <), CodeQL js/double-escaping.
-  return value
-    .replace(/&#x27;|&#39;/g, "'").replace(/&quot;/g, '"')
-    .replace(/&lt;/g, "<").replace(/&gt;/g, ">")
-    .replace(/&amp;/g, "&");
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ",
+};
+
+// MỘT lượt quét duy nhất: thứ vừa giải mã không bị quét lại, nên không có cửa
+// double-unescape (&amp;lt; → &lt; → <), CodeQL js/double-escaping.
+// Phải xử cả entity SỐ: feed WordPress của MLP viết "&#038;" và "&#8211;",
+// trước đây lọt nguyên vào tiêu đề bài đã đăng.
+export function decodeEntities(value: string): string {
+  return value.replace(/&(#x[0-9a-fA-F]{1,6}|#\d{1,7}|[a-zA-Z]{2,8});/g, (match, entity: string) => {
+    if (entity.startsWith("#")) {
+      const code = entity[1] === "x" || entity[1] === "X"
+        ? Number.parseInt(entity.slice(2), 16)
+        : Number.parseInt(entity.slice(1), 10);
+      if (!Number.isFinite(code) || code <= 0 || code > 0x10ffff) return match;
+      try {
+        return String.fromCodePoint(code);
+      } catch {
+        return match;
+      }
+    }
+    return NAMED_ENTITIES[entity.toLowerCase()] ?? match;
+  });
 }
 
-async function scrapeHtmlListing(env: Env, source: NewsSource): Promise<ParsedItem[]> {
+// Card Webflow: <div role="listitem" …> … class="card_news_content" …
+// <span>Tiêu đề</span> … <span>August 22, 2026</span> … href="/news/slug".
+// Không có year-less date nên Date.parse("August 22, 2026") là đủ.
+export function parseListingCards(html: string, config: HtmlScrapeConfig): ParsedItem[] {
+  const cards = config.listingCards;
+  if (!cards) return [];
+  const items: ParsedItem[] = [];
+  const seen = new Set<string>();
+
+  for (const chunk of html.split(cards.splitOn).slice(1)) {
+    const path = chunk.match(
+      new RegExp(`href="(${cards.linkPrefix}[a-z0-9][a-z0-9-]*)"`),
+    )?.[1];
+    const title = chunk.match(/card_news_content[\s\S]{0,600}?<span>([^<]{5,})<\/span>/)?.[1];
+    const date = chunk.match(/>([A-Z][a-z]+ \d{1,2}, 20\d\d)</)?.[1];
+    if (!path || !title || !date) continue;
+
+    const link = config.origin + path;
+    if (seen.has(link)) continue;
+    const publishedMs = Date.parse(`${date} UTC`);
+    if (!Number.isFinite(publishedMs)) continue;
+    seen.add(link);
+
+    const image = chunk.match(/src="(https:\/\/[^"]+\.(?:avif|jpg|jpeg|png|webp))"/i)?.[1] ?? null;
+    items.push({
+      title: decodeEntities(title).slice(0, TITLE_LIMIT),
+      link,
+      summary: "",
+      image_url: image,
+      published_at: new Date(publishedMs).toISOString(),
+    });
+    if (items.length >= MAX_ITEMS_PER_FEED) break;
+  }
+
+  return items;
+}
+
+async function scrapeHtmlListing(
+  env: Env,
+  source: NewsSource,
+  budget: FetchBudget
+): Promise<ParsedItem[]> {
   const config = HTML_SCRAPE_CONFIGS[source.id];
   if (!config) throw new Error(`html_scrape source ${source.id} chưa có cấu hình scrape`);
   if (!source.feed_url) throw new Error("source has no feed_url");
 
   const listingRes = await fetch(source.feed_url, {
-    headers: { "User-Agent": "ThePickleHub-news-fetcher/1.0 (+https://www.thepicklehub.net)" },
+    headers: { "User-Agent": NEWS_FETCHER_USER_AGENT },
     signal: AbortSignal.timeout(12_000),
   });
   if (!listingRes.ok) throw new Error(`listing HTTP ${listingRes.status}`);
   const listingHtml = await listingRes.text();
 
+  if (config.listingCards) {
+    const cardItems = parseListingCards(listingHtml, config);
+    // Fail loud: Webflow đổi layout thì phải thấy đỏ, không im lặng về 0 bài.
+    if (cardItems.length === 0) {
+      throw new Error("listing card không parse được bài nào — layout có thể đã đổi");
+    }
+    return cardItems;
+  }
+
   // Slug root một cấp, dạng bài viết (dài, có gạch ngang), giữ thứ tự listing.
   const links: string[] = [];
   for (const match of listingHtml.matchAll(/href="(\/[a-z0-9][a-z0-9-]{11,}\/)"/g)) {
     const path = match[1];
-    if (config.excludePrefixes.some((prefix) => path.startsWith(prefix + "/") || path === prefix + "/")) continue;
+    if ((config.excludePrefixes ?? []).some((prefix) => path.startsWith(prefix + "/") || path === prefix + "/")) continue;
     if (!path.includes("-")) continue;
     const url = config.origin + path;
     if (!links.includes(url)) links.push(url);
@@ -562,9 +720,13 @@ async function scrapeHtmlListing(env: Env, source: NewsSource): Promise<ParsedIt
   const fresh = links.filter((url) => !known.has(url)).slice(0, SCRAPE_MAX_NEW_PER_RUN);
   const items: ParsedItem[] = [];
   for (const url of fresh) {
+    // Mỗi bài ở đường og-meta tốn 1 fetch meta + 1 fetch body ở ingestItems,
+    // nên phải giữ chỗ 2 slot mới được đi tiếp.
+    if (budget.left < 2) break;
+    budget.left -= 1;
     try {
       const articleRes = await fetch(url, {
-        headers: { "User-Agent": "ThePickleHub-news-fetcher/1.0 (+https://www.thepicklehub.net)" },
+        headers: { "User-Agent": NEWS_FETCHER_USER_AGENT },
         signal: AbortSignal.timeout(12_000),
       });
       if (!articleRes.ok) continue;
@@ -572,8 +734,9 @@ async function scrapeHtmlListing(env: Env, source: NewsSource): Promise<ParsedIt
       const rawTitle = metaContent(html, "og:title");
       const published = metaContent(html, "article:published_time");
       if (!rawTitle || !published) continue;
-      const title = decodeEntities(rawTitle.endsWith(config.titleSuffix)
-        ? rawTitle.slice(0, -config.titleSuffix.length)
+      const suffix = config.titleSuffix;
+      const title = decodeEntities(suffix && rawTitle.endsWith(suffix)
+        ? rawTitle.slice(0, -suffix.length)
         : rawTitle);
       // published_time của site không mang timezone — coi là UTC.
       const publishedIso = /Z$|[+-]\d\d:?\d\d$/.test(published) ? published : `${published}Z`;
@@ -591,23 +754,19 @@ async function scrapeHtmlListing(env: Env, source: NewsSource): Promise<ParsedIt
   return items;
 }
 
-async function fetchAndParse(source: NewsSource, env: Env): Promise<ParsedItem[]> {
-  if (source.feed_type === "html_scrape") return scrapeHtmlListing(env, source);
+async function fetchAndParse(
+  source: NewsSource,
+  env: Env,
+  budget: FetchBudget
+): Promise<ParsedItem[]> {
+  if (source.feed_type === "html_scrape") return scrapeHtmlListing(env, source, budget);
+  if (source.feed_type === "json_api") return fetchPickleAsiaJson(source, env);
   if (!source.feed_url) throw new Error("source has no feed_url");
   if (!isSafePublicFeedUrl(source.feed_url)) {
     throw new Error(`unsafe feed_url rejected: ${source.feed_url}`);
   }
 
-  const res = await fetch(source.feed_url, {
-    headers: {
-      "User-Agent": "ThePickleHub-news-fetcher/1.0 (+https://www.thepicklehub.net)",
-      Accept: "application/rss+xml, application/atom+xml, application/xml;q=0.9",
-    },
-    // 12s ceiling — sources sometimes hang on cold cache. Worker scheduled
-    // handler has 30s total budget, leave headroom for other sources.
-    signal: AbortSignal.timeout(12_000),
-  });
-
+  const res = await fetchFeedWithRetry(source.feed_url, budget);
   if (!res.ok) throw new Error(`feed HTTP ${res.status}`);
   const xml = await res.text();
   const parsed = xmlParser.parse(xml);
@@ -617,6 +776,263 @@ async function fetchAndParse(source: NewsSource, env: Env): Promise<ParsedItem[]
   throw new Error(`Unsupported feed_type ${source.feed_type}`);
 }
 
+interface PickleAsiaPost {
+  slug?: unknown;
+  title?: unknown;
+  excerpt?: unknown;
+  content?: unknown;
+  hero_image_url?: unknown;
+  published_at?: unknown;
+  status?: unknown;
+}
+
+const PICKLE_ASIA_ORIGIN = "https://pickle.asia";
+const PICKLE_ASIA_API_HOST = "idepcrgxqnyexinwjqjj.supabase.co";
+const PICKLE_ASIA_API_URL = `https://${PICKLE_ASIA_API_HOST}/rest/v1/blog_posts`;
+const MAX_JSON_FEED_CHARS = 2_500_000;
+const MAX_PICKLE_POST_HTML_CHARS = 200_000;
+
+function isAsciiWhitespace(char: string): boolean {
+  return char === " " || char === "\n" || char === "\r" || char === "\t" || char === "\f";
+}
+
+function findTagEnd(html: string, start: number): number {
+  let quote = "";
+  for (let i = start; i < html.length; i += 1) {
+    const char = html[i];
+    if (quote) {
+      if (char === quote) quote = "";
+    } else if (char === '"' || char === "'") {
+      quote = char;
+    } else if (char === ">") {
+      return i;
+    }
+  }
+  return -1;
+}
+
+function startsWithAsciiIgnoreCase(value: string, needle: string, at: number): boolean {
+  if (at + needle.length > value.length) return false;
+  for (let i = 0; i < needle.length; i += 1) {
+    const code = value.charCodeAt(at + i);
+    const folded = code >= 65 && code <= 90 ? code + 32 : code;
+    if (folded !== needle.charCodeAt(i)) return false;
+  }
+  return true;
+}
+
+function findAsciiIgnoreCase(value: string, needle: string, from: number): number {
+  for (let i = from; i <= value.length - needle.length; i += 1) {
+    if (startsWithAsciiIgnoreCase(value, needle, i)) return i;
+  }
+  return -1;
+}
+
+function findClosingTag(value: string, name: string, from: number): number {
+  const needle = `</${name}`;
+  let cursor = from;
+  for (;;) {
+    const candidate = findAsciiIgnoreCase(value, needle, cursor);
+    if (candidate === -1) return -1;
+    const after = value[candidate + needle.length] ?? "";
+    if (after === ">" || isAsciiWhitespace(after)) return candidate;
+    cursor = candidate + 1;
+  }
+}
+
+// Pickle Asia supplies source-controlled HTML inside JSON. Parse it with a
+// bounded, single-pass scanner rather than feeding it into the legacy regex
+// extractor used by HTML pages. Script/style blocks and malformed trailing
+// tags are dropped; paragraph-like tags become plain-text separators.
+function pickleAsiaPlainText(html: string): string {
+  html = html.slice(0, MAX_PICKLE_POST_HTML_CHARS);
+  const pieces: string[] = [];
+  let cursor = 0;
+
+  while (cursor < html.length) {
+    if (html[cursor] !== "<") {
+      const nextTag = html.indexOf("<", cursor);
+      if (nextTag === -1) {
+        pieces.push(html.slice(cursor));
+        break;
+      }
+      pieces.push(html.slice(cursor, nextTag));
+      cursor = nextTag;
+      continue;
+    }
+    if (html.startsWith("<!--", cursor)) {
+      const commentEnd = html.indexOf("-->", cursor + 4);
+      if (commentEnd === -1) break;
+      cursor = commentEnd + 3;
+      continue;
+    }
+
+    const tagEnd = findTagEnd(html, cursor + 1);
+    if (tagEnd === -1) break;
+    let nameStart = cursor + 1;
+    while (nameStart < tagEnd && isAsciiWhitespace(html[nameStart])) nameStart += 1;
+    const closing = html[nameStart] === "/";
+    if (closing) nameStart += 1;
+    while (nameStart < tagEnd && isAsciiWhitespace(html[nameStart])) nameStart += 1;
+    let nameEnd = nameStart;
+    while (nameEnd < tagEnd) {
+      const code = html.charCodeAt(nameEnd);
+      if (!((code >= 65 && code <= 90) || (code >= 97 && code <= 122) || (code >= 48 && code <= 57))) {
+        break;
+      }
+      nameEnd += 1;
+    }
+    const name = html.slice(nameStart, nameEnd).toLowerCase();
+
+    if (!closing && (name === "script" || name === "style")) {
+      const closeStart = findClosingTag(html, name, tagEnd + 1);
+      if (closeStart === -1) break;
+      const closeEnd = findTagEnd(html, closeStart + name.length + 2);
+      if (closeEnd === -1) break;
+      cursor = closeEnd + 1;
+      continue;
+    }
+    if (["p", "h1", "h2", "h3", "h4", "li", "br", "blockquote"].includes(name)) {
+      pieces.push("\n\n");
+    }
+    cursor = tagEnd + 1;
+  }
+
+  const decoded = decodeEntities(pieces.join(""));
+  const normalized: string[] = [];
+  let pendingWhitespace = "";
+  for (const char of decoded) {
+    if (char === "\n" || char === "\r") {
+      pendingWhitespace = "\n\n";
+    } else if (isAsciiWhitespace(char)) {
+      if (!pendingWhitespace) pendingWhitespace = " ";
+    } else {
+      if (pendingWhitespace && normalized.length > 0) normalized.push(pendingWhitespace);
+      normalized.push(char);
+      pendingWhitespace = "";
+    }
+  }
+  return normalized.join("").trim().slice(0, 30_000);
+}
+
+export function parsePickleAsiaPosts(payload: unknown): ParsedItem[] {
+  if (!Array.isArray(payload)) return [];
+
+  const items: ParsedItem[] = [];
+  for (const value of payload) {
+    if (items.length >= MAX_ITEMS_PER_FEED) break;
+    if (!value || typeof value !== "object") continue;
+    const post = value as PickleAsiaPost;
+    if (post.status !== "published") continue;
+
+    const slug = typeof post.slug === "string" ? post.slug.trim() : "";
+    const title = typeof post.title === "string" ? pickleAsiaPlainText(post.title) : "";
+    const published = typeof post.published_at === "string" ? Date.parse(post.published_at) : NaN;
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || !title || !Number.isFinite(published)) {
+      continue;
+    }
+
+    const content = typeof post.content === "string" ? pickleAsiaPlainText(post.content) : "";
+    items.push({
+      title,
+      link: `${PICKLE_ASIA_ORIGIN}/blogs/${slug}`,
+      summary: typeof post.excerpt === "string" ? pickleAsiaPlainText(post.excerpt) : "",
+      image_url: typeof post.hero_image_url === "string" ? post.hero_image_url : null,
+      published_at: new Date(published).toISOString(),
+      raw_body: content.length >= MIN_FULL_BODY_CHARS ? content : null,
+    });
+  }
+  return items;
+}
+
+async function fetchPickleAsiaJson(source: NewsSource, env: Env): Promise<ParsedItem[]> {
+  if (source.id !== "pickle-asia") throw new Error("JSON API source is not allowlisted");
+  if (!env.PICKLE_ASIA_API_KEY) throw new Error("PICKLE_ASIA_API_KEY is not configured");
+
+  // The endpoint lives in code rather than news_sources so a database row
+  // cannot redirect this secret-bearing request to another host.
+  const url = new URL(PICKLE_ASIA_API_URL);
+  url.searchParams.set(
+    "select",
+    "slug,title,excerpt,content,hero_image_url,published_at,status",
+  );
+  url.searchParams.set("status", "eq.published");
+  url.searchParams.set("order", "published_at.desc");
+  url.searchParams.set("limit", String(MAX_ITEMS_PER_FEED));
+
+  const res = await fetch(url, {
+    headers: {
+      apikey: env.PICKLE_ASIA_API_KEY,
+      Accept: "application/json",
+      "User-Agent": NEWS_FETCHER_USER_AGENT,
+    },
+    redirect: "manual",
+    signal: AbortSignal.timeout(12_000),
+  });
+  if (!res.ok) throw new Error(`Pickle Asia API HTTP ${res.status}`);
+  if (new URL(res.url).hostname !== PICKLE_ASIA_API_HOST) {
+    throw new Error("Pickle Asia API redirected to an unexpected host");
+  }
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.toLowerCase().includes("application/json")) {
+    throw new Error(`unsupported Pickle Asia content-type ${contentType}`);
+  }
+  const body = await res.text();
+  if (body.length > MAX_JSON_FEED_CHARS) {
+    throw new Error(`Pickle Asia API response exceeds ${MAX_JSON_FEED_CHARS} characters`);
+  }
+
+  let payload: unknown;
+  try {
+    payload = JSON.parse(body);
+  } catch {
+    throw new Error("Pickle Asia API returned invalid JSON");
+  }
+  const items = parsePickleAsiaPosts(payload);
+  if (items.length === 0) throw new Error("Pickle Asia API returned no parseable published posts");
+  return items;
+}
+
+/** Lỗi mạng nhất thời (timeout / abort) — đáng thử lại; HTTP 4xx/5xx thì không. */
+export function isTransientFetchError(error: unknown): boolean {
+  const name = (error as { name?: string } | null)?.name;
+  return name === "TimeoutError" || name === "AbortError";
+}
+
+// pickleball-com abort ~4/15 lần cron trong khi đo từ edge Cloudflare feed đó
+// trả lời trong 250ms — tức là sự cố NHẤT THỜI chứ không phải chậm kinh niên,
+// nên nới thời gian chờ không chữa được mà thử lại thì chữa được. Lần thử lại
+// chỉ tốn ~250ms trong trường hợp thường vì nó chỉ chạy khi đã hỏng.
+async function fetchFeedWithRetry(feedUrl: string, budget: FetchBudget): Promise<Response> {
+  try {
+    return await fetchFeedOnce(feedUrl);
+  } catch (error) {
+    if (budget.retries <= 0 || !isTransientFetchError(error)) throw error;
+    budget.retries -= 1;
+    console.warn(
+      `[feed] thử lại ${feedUrl} sau lỗi nhất thời: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+    return await fetchFeedOnce(feedUrl);
+  }
+}
+
+async function fetchFeedOnce(feedUrl: string): Promise<Response> {
+  return await fetch(feedUrl, {
+    headers: {
+      "User-Agent": NEWS_FETCHER_USER_AGENT,
+      Accept: "application/rss+xml, application/atom+xml, application/xml;q=0.9",
+    },
+    // 20s (trước là 12s). Đo từ chính edge Cloudflare: feed pickleball.com trả
+    // lời 250ms, lần đầu 2.4s — nên 20s là dư sức cho đường bình thường, và
+    // những lần abort là sự cố nhất thời, xử bằng thử lại chứ không phải bằng
+    // nới thêm. Đây là thời gian CHỜ mạng, không tính vào 30s CPU của
+    // scheduled handler.
+    signal: AbortSignal.timeout(20_000),
+  });
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseRss(parsed: any): ParsedItem[] {
   const channel = parsed?.rss?.channel;
@@ -624,7 +1040,7 @@ function parseRss(parsed: any): ParsedItem[] {
   if (!Array.isArray(items)) return [];
 
   return items.slice(0, MAX_ITEMS_PER_FEED).map((item) => {
-    const title = textOf(item.title);
+    const title = decodeEntities(textOf(item.title));
     const link = textOf(item.link);
     const pubDate = textOf(item.pubDate) || textOf(item["dc:date"]);
     const description = stripHtml(
@@ -663,7 +1079,7 @@ function parseAtom(parsed: any): ParsedItem[] {
   if (!Array.isArray(entries)) return [];
 
   return entries.slice(0, MAX_ITEMS_PER_FEED).map((entry) => {
-    const title = textOf(entry.title);
+    const title = decodeEntities(textOf(entry.title));
     // <link href="..." rel="alternate" />
     let link = "";
     if (Array.isArray(entry.link)) {
@@ -711,7 +1127,7 @@ async function fetchArticleBody(rawUrl: string): Promise<string | null> {
 
   const res = await fetch(rawUrl, {
     headers: {
-      "User-Agent": "ThePickleHub-news-fetcher/1.0 (+https://www.thepicklehub.net)",
+      "User-Agent": NEWS_FETCHER_USER_AGENT,
       Accept: "text/html,application/xhtml+xml",
     },
     redirect: "follow",

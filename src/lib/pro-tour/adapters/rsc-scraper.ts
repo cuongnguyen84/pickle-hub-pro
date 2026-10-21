@@ -91,6 +91,16 @@ export const rscScraperAdapter: ProTourAdapter<ScraperEnv> = {
       throw new Error(`rsc_scraper: URL not recognised: ${url}`);
     }
     const html = await renderWithBrowser(env, url);
+    // 2026-09-09: the bracket site intermittently serves a ~1KB JS-challenge
+    // shell instead of the RSC payload. Parsing it yields 0 matches and the
+    // run used to report "success, imported 0" — a silent empty scrape that
+    // also advanced next_scrape_at past live matches. Fail loudly so the
+    // 1-minute tick simply retries.
+    if (!html.includes("__next_f")) {
+      throw new Error(
+        `rsc_scraper: source returned a shell/challenge page (${html.length} bytes) — no RSC payload`,
+      );
+    }
     return parseTournamentHtml(html, url);
   },
 };
@@ -240,6 +250,11 @@ const MATCH_ID_RE = /\\"id\\":\\"([a-f0-9-]{36})\\"/g;
 const MATCH_DATE_RE = /\\"date\\":\\"([^"\\]+)\\"/;
 const MATCH_COURT_RE = /\\"court\\":\\"([^"\\]*)\\"/;
 const MATCH_BRACKET_TYPE_RE = /\\"inBracketType\\":\\"([^"\\]+)\\"/;
+// matchStatus mapping observed live on the 2026 KL Cup qualifiers
+// (2026-09-09): 1 = scheduled, 2 = IN PROGRESS (the bracket page shows the
+// red LIVE badge and per-game points), 4 = finished. Anything else is
+// treated as not-live; the flag only decorates, never gates data.
+const MATCH_STATUS_RE = /\\"matchStatus\\":(\d+)/;
 const MATCH_TEAM_BLOCK_RE =
   /\\"id\\":\\"[a-f0-9-]{36}\\",\\"players\\":\[([^\]]+)\],\\"seedNumber\\":(\d+|null),\\"games\\":\[([^\]]*)\],\\"isWinner\\":(true|false)/g;
 const PLAYER_NAME_RE = /\\"([^"\\]+)\\"/g;
@@ -265,9 +280,13 @@ const ROUND_TITLE_TO_CODE: Array<{ pattern: RegExp; code: string }> = [
   { pattern: /^(third\s+place|bronze(?:\s+medal)?\s+match)$/i, code: "3P" },
   { pattern: /^(semi[-\s]?finals?|sf)$/i, code: "SF" },
   { pattern: /^(quarter[-\s]?finals?|qf)$/i, code: "QF" },
-  { pattern: /^(round\s+of\s+16|r16)$/i, code: "R16" },
-  { pattern: /^(round\s+of\s+32|r32)$/i, code: "R32" },
-  { pattern: /^(round\s+of\s+64|r64)$/i, code: "R64" },
+  // 2026-09-09 (KL Cup): the source titles these "Round 64" — no "of" —
+  // so every main-draw early round fell through to the coarse "W" and the
+  // page showed a meaningless "EARLY ROUNDS" heading.
+  { pattern: /^(round\s+(?:of\s+)?16|r16)$/i, code: "R16" },
+  { pattern: /^(round\s+(?:of\s+)?32|r32)$/i, code: "R32" },
+  { pattern: /^(round\s+(?:of\s+)?64|r64)$/i, code: "R64" },
+  { pattern: /^(round\s+(?:of\s+)?128|r128)$/i, code: "R128" },
 ];
 
 function canonicalRoundName(rawTitle: string, bracketType: string): string {
@@ -309,8 +328,15 @@ function extractMatches(html: string, sourceUrl: string): ScrapedMatch[] {
   // Net effect on the PPA Finals fixture: SF2 record showed SF1's
   // teams + date; the actual Final match showed SF2's teams + date.
   // Scoping matchSlice to the matchId position fixes both.
-  for (const teamsMatch of html.matchAll(MATCH_TEAMS_MARKER)) {
-    const teamsIdx = teamsMatch.index ?? 0;
+  const teamsMarkers = Array.from(html.matchAll(MATCH_TEAMS_MARKER));
+  for (let ti = 0; ti < teamsMarkers.length; ti++) {
+    const teamsIdx = teamsMarkers[ti].index ?? 0;
+    // 2026-09-09 (KL Cup R16): a slot whose opponent is still TBD has only
+    // ONE team block, and the fixed +5000 window then swallowed the NEXT
+    // match's first team — the page showed a sliding chain of fabricated
+    // pairings ("Kim vs Khlif", "Khlif vs Wong", …). The next teams-marker
+    // is a hard boundary no current-match team block can live beyond.
+    const nextTeamsIdx = teamsMarkers[ti + 1]?.index ?? html.length;
 
     const lookBehindStart = Math.max(0, teamsIdx - 3000);
     const lookBehindWindow = html.slice(lookBehindStart, teamsIdx);
@@ -328,12 +354,13 @@ function extractMatches(html: string, sourceUrl: string): ScrapedMatch[] {
     // \"id\":\"<uuid>\""). Slice from here forward so per-match regexes
     // can't see previous-match residue.
     const matchIdStart = lookBehindStart + matchIdLocalIdx;
-    const forwardEnd = Math.min(html.length, teamsIdx + 5000);
+    const forwardEnd = Math.min(html.length, teamsIdx + 5000, nextTeamsIdx);
     const matchSlice = html.slice(matchIdStart, forwardEnd);
 
     const dateRaw = matchSlice.match(MATCH_DATE_RE)?.[1] ?? "";
     const court = matchSlice.match(MATCH_COURT_RE)?.[1] ?? null;
     const bracketType = matchSlice.match(MATCH_BRACKET_TYPE_RE)?.[1] ?? "";
+    const isLiveNow = matchSlice.match(MATCH_STATUS_RE)?.[1] === "2";
 
     // Round title lives BEFORE the match record (in the round wrapper).
     // Scan from start-of-html to matchIdStart and pick the LAST title —
@@ -346,9 +373,15 @@ function extractMatches(html: string, sourceUrl: string): ScrapedMatch[] {
     const round_name = canonicalRoundName(lastRoundTitle, bracketType);
 
     const teamBlocks = Array.from(matchSlice.matchAll(MATCH_TEAM_BLOCK_RE));
-    if (teamBlocks.length < 2) continue;
+    if (teamBlocks.length === 0) continue;
     const team_one = parseTeamBlock(teamBlocks[0]);
-    const team_two = parseTeamBlock(teamBlocks[1]);
+    // One block = the opponent is TBD (waiting on a feeder match). Emit the
+    // match with an empty second side so the page can show "vs TBD" instead
+    // of dropping the slot — or worse, borrowing the neighbour's team.
+    const team_two: ParsedTeam =
+      teamBlocks.length > 1
+        ? parseTeamBlock(teamBlocks[1])
+        : { seed: null, scores: [], isWinner: false, displayNames: [], externalIds: [] };
 
     // Determine winner from team.isWinner flags. Drop inconclusive
     // matches (both teams isWinner=false) into winner_team=null;
@@ -368,6 +401,9 @@ function extractMatches(html: string, sourceUrl: string): ScrapedMatch[] {
       court,
       played_at: parsePpaDate(dateRaw),
       source_url: sourceUrl,
+      // Live badge for the results page; cleared by the next re-scrape
+      // once the source flips the match to finished.
+      notes: isLiveNow ? '{"live":true}' : null,
     });
   }
 

@@ -28,9 +28,16 @@ const HOST = "https://www.thepicklehub.net";
 const HUMAN = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15";
 const BOT = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
 
-const BUYER = ["/shop", "/shop/search", "/shop/category/vot", "/shop/product/vot-joola", "/shop/store/pickle-gear"];
+// The catalogue — governed by the launch flag.
+const BUYER = ["/shop", "/shop/category/vot", "/shop/product/vot-joola", "/shop/store/pickle-gear"];
 const VI_BUYER = BUYER.map((p) => `/vi${p}`);
-const PRIVATE = ["/seller", "/seller/products", "/vi/seller", "/shop/sell", "/admin/shop/products"];
+// Phase 4: /shop/search left BUYER for PRIVATE. Not because it holds anything
+// private, but because it is noindex on both sides of the gate — which is the
+// property every assertion in this file is actually keyed on.
+const PRIVATE = [
+  "/seller", "/seller/products", "/vi/seller", "/shop/sell", "/admin/shop/products",
+  "/shop/search", "/vi/shop/search",
+];
 
 /** The SPA shell `next()` would hand back. Distinctive, so a test can tell
  *  whether the bot got the real page or the noindex shell. */
@@ -143,7 +150,9 @@ describe("the pilot Shop answers noindex at the edge, to a crawler", () => {
 const ROUTE_CLASSES = [
   { name: "shop home", path: "/shop", kind: "buyer" },
   { name: "shop home (vi)", path: "/vi/shop", kind: "buyer" },
-  { name: "search", path: "/shop/search?q=vot", kind: "buyer" },
+  // Phase 4: noindex whatever the flag says — one result page per query
+  // string is thin duplicate content of the catalogue's own products.
+  { name: "search", path: "/shop/search?q=vot", kind: "private" },
   { name: "category", path: "/shop/category/vot", kind: "buyer" },
   { name: "PDP", path: "/shop/product/vot-joola-2026", kind: "buyer" },
   { name: "store", path: "/shop/store/pickle-gear", kind: "buyer" },
@@ -212,7 +221,7 @@ describe("robots.txt during the pilot", () => {
       await (await robots({ request: new Request(`${HOST}/robots.txt`), env } as any)).text();
 
     const pilot = await call({});
-    for (const p of ["/shop/search", "/shop/category", "/shop/product", "/shop/store"]) {
+    for (const p of ["/shop/category", "/shop/product", "/shop/store"]) {
       expect(pilot, p).toContain(`Disallow: ${p}`);
       expect(pilot, `/vi${p}`).toContain(`Disallow: /vi${p}`);
     }
@@ -223,6 +232,8 @@ describe("robots.txt during the pilot", () => {
     expect(launched, "the seller surfaces are not the flag's to open")
       .toContain("Disallow: /seller");
     expect(launched).toContain("Disallow: /shop/sell");
+    expect(launched, "search is not the flag's to open either")
+      .toContain("Disallow: /shop/search");
     expect(launched, "the buyer catalogue opens with the flag")
       .not.toContain("Disallow: /shop/product");
   });

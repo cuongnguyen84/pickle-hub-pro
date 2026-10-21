@@ -8,6 +8,7 @@
 // ============================================================================
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { edgeError, edgeErrorMessage } from "@/lib/shop/errors";
 import { shopFrom, shopRpc } from "@/integrations/supabase/shop-client";
 import { productKeys } from "@/hooks/shop/useSellerProducts";
 import type { ProductMediaRow, ShopProfileMediaRow } from "@/integrations/supabase/shop-schema";
@@ -91,6 +92,51 @@ export const useDeleteProfileMedia = (shopId: string | null) => {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: shopMediaKeys.profile(shopId) });
     },
+  });
+};
+
+/**
+ * Publish every verified logo/cover of the shop to the public bucket, via the
+ * worker that holds the only service-role over it (pattern: usePublishProduct).
+ * The plan and every path are decided in Postgres; the client only names the
+ * shop. Partial success is real success: a failed cover does not roll back a
+ * committed logo, so the result is inspected rather than assumed.
+ */
+export const usePublishProfileMedia = (shopId: string | null) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      // Imported lazily: client.ts creates the SDK client at module load and
+      // THROWS without env vars — a top-level import here took the whole
+      // MediaEditor test import-chain down on CI, where no .env exists.
+      const { supabase } = await import("@/integrations/supabase/client");
+      // The Response comes back unread on the error path — it is the only place
+      // the worker's `failed[0].error` and the RPC's Vietnamese refusal exist.
+      // 20s, because the seller must never be left with a spinner and no
+      // button: publish_profile copies at most two items, so a call still
+      // running at 20s is not slow, it is gone.
+      const { data, error, response } = await supabase.functions.invoke("shop-media-lifecycle", {
+        body: { action: "publish_profile", shop_id: shopId },
+        timeout: 20_000,
+      });
+      if (error) throw edgeError(await edgeErrorMessage(error, response));
+      const result = data as {
+        ok?: boolean;
+        published?: { media_id: string; target: string }[];
+        failed?: { media_id: string; error: string }[];
+      };
+      // Only reachable if the worker starts answering 200 for a partial
+      // publish; today a partial is a 502 and lands above.
+      if (!result?.ok) {
+        throw edgeError(
+          await edgeErrorMessage(null, new Response(JSON.stringify(result ?? {}), { status: 200 })),
+        );
+      }
+      return result;
+    },
+    // Settled, not just success: a partial failure still committed some rows,
+    // and the screen must show the server's truth either way.
+    onSettled: () => void qc.invalidateQueries({ queryKey: shopMediaKeys.profile(shopId) }),
   });
 };
 

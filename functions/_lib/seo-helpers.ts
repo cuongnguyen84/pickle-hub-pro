@@ -182,6 +182,74 @@ export function pickMetaDescription(
   return out.trim() + "...";
 }
 
+/** Uppercase only the first character; leaves the rest of the string alone. */
+export function upperFirst(s: string): string {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
+/**
+ * Assemble a meta description from priority-ordered segments, appending each
+ * one only while the running string still fits the byte budget.
+ *
+ * Why this exists (CTR-01, 2026-08-18): every caller that built a description
+ * by concatenating a fixed template ran the same risk — Vietnamese diacritics
+ * cost 2-3 UTF-8 bytes each, so a string that looks comfortably short in
+ * characters blows the 160-byte budget and pickMetaDescription ellipsises it
+ * mid-word. On the venue pages that cut landed on the generic boilerplate tail
+ * AND took the city keyword with it, on 78% of rows.
+ *
+ * Ordering the segments by value and dropping from the end instead means a
+ * long venue name loses boilerplate rather than facts, and the output is
+ * truncation-free by construction. `core` is always included even if it alone
+ * exceeds the budget — pickMetaDescription remains the single place allowed to
+ * ellipsise, so a pathological name still degrades safely rather than throwing.
+ */
+export function fitSegments(
+  core: string,
+  segments: string[],
+  maxLength = PICK_META_MAX_LENGTH,
+): string {
+  const byteLength = (s: string) => new TextEncoder().encode(s).length;
+  let out = core;
+  for (const segment of segments) {
+    if (!segment) continue;
+    if (byteLength(out + segment) <= maxLength) out += segment;
+  }
+  return out;
+}
+
+/**
+ * Join a variable-length `lead` (a venue/tournament name we do not control)
+ * to a fixed `tail` we must not lose, shrinking the lead at WORD boundaries
+ * until the pair fits the budget.
+ *
+ * Without this, a pathologically long name pushes the pair past 160 bytes and
+ * the downstream byte cut lands mid-word inside the tail — the venue test hit
+ * exactly that, producing "…Rất Dài Rất Dài tại Hà...". Trimming whole words
+ * off the lead instead keeps the tail (which carries the city keyword) intact
+ * and ends the sentence cleanly.
+ */
+export function fitLead(
+  lead: string,
+  tail: string,
+  maxLength = PICK_META_MAX_LENGTH,
+): string {
+  const byteLength = (s: string) => new TextEncoder().encode(s).length;
+  if (byteLength(lead + tail) <= maxLength) return lead + tail;
+
+  const words = lead.split(/\s+/).filter(Boolean);
+  // "…" is one code point / 3 UTF-8 bytes, versus 3 bytes for "..." — same
+  // cost, but it reads as an intentional elision rather than a broken string.
+  while (words.length > 1) {
+    words.pop();
+    const candidate = `${words.join(" ")}…`;
+    if (byteLength(candidate + tail) <= maxLength) return candidate + tail;
+  }
+  // Single unsplittable word longer than the budget: hand it to
+  // pickMetaDescription, which stays the only place allowed to hard-cut.
+  return lead + tail;
+}
+
 /* ─── Feed (CollectionPage / ItemList) ────────────────────────────────── */
 
 export interface FeedSeoParticipant {

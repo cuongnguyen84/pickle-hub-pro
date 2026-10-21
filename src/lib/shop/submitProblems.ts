@@ -49,6 +49,8 @@ const COPY: Record<string, string> = {
   title_missing: "Chưa có tên sản phẩm, hoặc tên quá ngắn.",
   category_missing: "Chưa chọn ngành hàng.",
   description_missing: "Chưa có mô tả sản phẩm.",
+  description_too_short:
+    "Mô tả quá ngắn — viết ít nhất 40 ký tự về tình trạng thật của hàng. Thông số kỹ thuật đã có ô riêng.",
   option_graph_invalid: "Bộ tuỳ chọn chưa hợp lệ — kiểm tra lại nhóm và giá trị.",
   no_variant: "Sản phẩm chưa có phiên bản nào đang bán.",
   default_variant_broken: "Sản phẩm đơn phải có đúng một phiên bản.",

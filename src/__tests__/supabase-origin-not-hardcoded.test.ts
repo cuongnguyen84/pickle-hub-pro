@@ -75,6 +75,26 @@ describe("no environment is hardcoded into a shipped asset", () => {
     expect(config).toContain('viteEnv.VITE_SUPABASE_URL || "https://ajvlcamxemgbxduhiqrl.supabase.co"');
   });
 
+  it("rewrites the _headers the build actually emitted, and never skips it quietly", () => {
+    const config = read("vite.config.ts");
+
+    // 2026-08-18: the rewrite read a hardcoded "dist/_headers" while the build
+    // wrote wherever outDir pointed, and returned silently when that path did
+    // not exist. Under `--outDir` that combination shipped the literal
+    // %SUPABASE_ORIGIN% marker as the CSP report-uri — an unparseable URL, so
+    // every violation report is discarded and the client_errors CSP feed goes
+    // quiet with nothing to notice.
+    expect(config).not.toContain('"dist/_headers"');
+    expect(config).toContain("resolvedOutDir = path.resolve(resolved.root, resolved.build.outDir)");
+    expect(config).toContain('path.resolve(resolvedOutDir, "_headers")');
+
+    // Absence is tolerated in exactly one case: publicDir was never copied, so
+    // there is no emitted file to get wrong. Every other miss must throw.
+    expect(config).toContain("if (!copiesPublicDir) return;");
+    expect(config).toContain("public/_headers was not copied into the ");
+    expect(config).not.toMatch(/if \(!fs\.existsSync\(headers\)\) return;/);
+  });
+
   it("errorReporter falls back the same way, and reads the env first", () => {
     const reporter = read("src/lib/errorReporter.ts");
 

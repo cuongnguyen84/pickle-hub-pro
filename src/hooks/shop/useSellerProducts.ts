@@ -20,6 +20,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { escapeLike, shopFrom, shopRpc } from "@/integrations/supabase/shop-client";
+import { parseCompareAt } from "@/lib/shop/discount";
 import type {
   ProductMediaRow,
   ProductRow,
@@ -78,10 +79,10 @@ export const productKeys = {
 const PRODUCT_COLUMNS =
   "id,shop_id,slug,title,description,category_slug,condition,status,is_published," +
   "in_stock,availability_updated_at,submitted_at,decided_at,applicant_note," +
-  "requested_fields,version,client_token,option_groups,created_at,updated_at";
+  "requested_fields,version,client_token,option_groups,specs,created_at,updated_at";
 
 const LIST_COLUMNS =
-  `${PRODUCT_COLUMNS},product_variants(id,price_vnd,stock_on_hand,position,sku,retired_at),product_media(id,position)`;
+  `${PRODUCT_COLUMNS},product_variants(id,price_vnd,compare_at_price_vnd,stock_on_hand,position,sku,retired_at),product_media(id,position,public_path,draft_path)`;
 
 export interface ProductListResult {
   rows: SellerProductRow[];
@@ -186,9 +187,15 @@ export interface ProductDraft {
   description: string;
   category_slug: string;
   condition: "new" | "used";
+  /** Thông số kỹ thuật theo ngành hàng. Chỉ gửi khi SỬA — product_create
+   *  không nhận specs, và màn thêm sản phẩm nói thẳng "lưu nháp trước", đúng
+   *  như nó đang làm với ảnh. */
+  specs: Record<string, string>;
   /** Kept as the seller typed it. Parsed and validated in Postgres, which is
    *  the only place that may decide what a price is. */
   price_vnd: string;
+  /** Giá gốc; "" gửi thành null. */
+  compare_at_price_vnd: string;
   stock_on_hand: string;
 }
 
@@ -214,6 +221,7 @@ export const useCreateProduct = (shopId: string | null) => {
           category_slug: input.draft.category_slug,
           condition: input.draft.condition,
           price_vnd: input.draft.price_vnd,
+          compare_at_price_vnd: parseCompareAt(input.draft.compare_at_price_vnd).value,
           stock_on_hand: input.draft.stock_on_hand,
         },
       }),
@@ -236,14 +244,21 @@ export const useUpdateProduct = (productId: string | null) => {
   return useMutation({
     mutationFn: async (input: {
       expectedVersion: number;
-      patch: Partial<Pick<ProductDraft, "title" | "description" | "category_slug" | "condition">>;
-      variant?: { price_vnd?: string; stock_on_hand?: string; sku?: string };
+      patch: Partial<
+        Pick<ProductDraft, "title" | "description" | "category_slug" | "condition" | "specs">
+      >;
+      // KHÔNG có `variant` ở đây, một cách có chủ ý. RPC vẫn nhận `_variant`
+      // — đó là API hợp lệ của máy chủ — nhưng màn hình sửa sản phẩm không có
+      // ô giá nào, nên mọi con số gửi từ đây đều là số ôi thiu ghi đè lên thứ
+      // bảng phiên bản vừa lưu. Đó là lỗi đã ăn mất hai lần sửa giá thật ngày
+      // 18/08, và nó sống được vì cái tham số này tồn tại để ai đó điền vào.
+      // Bỏ nó đi làm cho lỗi không viết ra được nữa, thay vì chỉ không xảy ra.
     }) =>
       await shopRpc<ProductRow>("product_update", {
         _product_id: productId,
         _expected_version: input.expectedVersion,
         _patch: input.patch,
-        _variant: input.variant ?? null,
+        _variant: null,
       }),
     onSuccess: () => {
       // Refetch rather than patching the cache: the variant write happened in
@@ -274,6 +289,33 @@ export const useArchiveProduct = () => {
         _product_id: input.productId,
       }),
     onSuccess: (_data, input) => {
+      void qc.invalidateQueries({ queryKey: productKeys.one(input.productId) });
+      void qc.invalidateQueries({ queryKey: productKeys.all });
+    },
+  });
+};
+
+export const useDeleteProducts = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (productIds: string[]) =>
+      await shopRpc<string[]>("products_delete", { _product_ids: productIds }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: productKeys.all });
+    },
+  });
+};
+
+/**
+ * % giảm trên sản phẩm đang bán, từ danh sách — không phải gỡ xuống sửa.
+ * Server trừ thẳng vào giá bán, lấy giá gốc làm neo; 0 là bỏ giảm, giá về neo.
+ */
+export const useSetProductDiscount = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { productId: string; pct: number }) =>
+      await shopRpc<ProductRow>("product_discount_set", { _product_id: input.productId, _pct: input.pct }),
+    onSuccess: (_row, input) => {
       void qc.invalidateQueries({ queryKey: productKeys.one(input.productId) });
       void qc.invalidateQueries({ queryKey: productKeys.all });
     },

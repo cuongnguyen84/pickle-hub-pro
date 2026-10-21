@@ -23,7 +23,7 @@ import {
   SellerRulesAcceptance,
   type SellerRulesState,
 } from "@/components/shop/SellerRulesAcceptance";
-import { ErrorState, LoadingState } from "@/components/states/PageStates";
+import { ShopErrorNotice } from "@/components/shop/ShopNotice";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import {
   applicationErrorMessage,
@@ -196,12 +196,12 @@ export default function SellerApplication() {
   );
 
   // Focus the step heading, unless a moderator deep-linked a specific field.
-  // Gated on the SAME condition that renders the form (pilot AND application
+  // Gated on the SAME condition that renders the form (invitation AND application
   // both loaded): any earlier pass runs against a skeleton, focusField finds
   // no element and gives up silently, and the deps never re-fired it — so the
   // deep link focused only when every query happened to be cached. CP27
   // case 8 caught it, twice: the first fix gated on the application load
-  // alone and the pilot-access query was the one still in flight.
+  // alone and the invitation-access query was the one still in flight.
   useEffect(() => {
     if (pilot.isLoading || remote.isLoading) return undefined;
     if (!focusTarget) {
@@ -254,14 +254,30 @@ export default function SellerApplication() {
     }
   };
 
-  if (pilot.isLoading || remote.isLoading) return <LoadingState fullScreen />;
+  // Khung xương đúng hình biểu mẫu nhiều bước: thanh tiến trình, tiêu đề bước,
+  // rồi các khối trường. Header có nút Quay lại hiện ngay từ đầu.
+  if (pilot.isLoading || remote.isLoading) {
+    return (
+      <ShopScrollShell>
+        <ShopHeader title="Hồ sơ đăng ký bán hàng" backTo="/shop/sell" />
+        <main className="tl-shop-page tl-shop-page--narrow" aria-busy="true" aria-label="Đang tải hồ sơ đăng ký">
+          <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "40%" }} />
+          <span className="tl-shop-sk tl-shop-sk--title" />
+          <span className="tl-shop-sk tl-shop-sk--card" />
+          <span className="tl-shop-sk tl-shop-sk--card" />
+          <span className="tl-shop-sk tl-shop-sk--card" />
+        </main>
+      </ShopScrollShell>
+    );
+  }
 
   if (pilot.isError || remote.isError) {
     return (
       <ShopScrollShell>
         <ShopHeader title="Hồ sơ đăng ký bán hàng" backTo="/shop/sell" />
         <main className="tl-shop-page tl-shop-page--narrow">
-          <ErrorState
+          <ShopErrorNotice
+            title="Chưa tải được trang đăng ký."
             onRetry={() => {
               void pilot.refetch();
               void remote.refetch();
@@ -280,10 +296,10 @@ export default function SellerApplication() {
       <ShopScrollShell>
         <ShopHeader title="Hồ sơ đăng ký bán hàng" backTo="/" />
         <main className="tl-shop-page tl-shop-page--narrow">
-          <h1 className="tl-shop-h1">Shop đang chạy thử nghiệm kín</h1>
+          <h1 className="tl-shop-h1">Đăng ký mở shop theo lời mời</h1>
           <p className="tl-shop-sub">
-            Tài khoản của anh/chị chưa nằm trong nhóm thử nghiệm nên chưa mở hồ sơ được. Nếu
-            anh/chị muốn tham gia, nhắn cho ThePickleHub.
+            Tài khoản này chưa được mời mở hồ sơ. Nếu muốn hợp tác bán hàng, anh/chị nhắn cho
+            ThePickleHub để được hướng dẫn.
           </p>
           <Link to="/" className="tl-shop-btn">
             Về trang chủ
@@ -328,7 +344,7 @@ export default function SellerApplication() {
     switch (step) {
       case 0:
         return (
-          <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+          <fieldset className="tl-shop-fieldset">
             <legend className="tl-shop-label" style={{ padding: 0, marginBottom: 10 }}>
               Anh/chị bán với tư cách nào?
             </legend>
@@ -426,9 +442,9 @@ export default function SellerApplication() {
         return (
           <div className="tl-shop-notice tl-shop-notice--info">
             <div>
-              <strong>Giai đoạn thử nghiệm không thu giấy tờ.</strong> Nếu cần đối chiếu thêm,
-              quản trị viên sẽ liên hệ trực tiếp qua số điện thoại anh/chị đã điền. Bấm Tiếp để
-              sang bước cuối.
+              <strong>Hồ sơ ban đầu không yêu cầu tải giấy tờ.</strong> Nếu cần đối chiếu thêm,
+              quản trị viên sẽ liên hệ trực tiếp qua số điện thoại anh/chị đã điền. Bấm Tiếp
+              để sang bước cuối.
             </div>
           </div>
         );

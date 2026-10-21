@@ -136,7 +136,7 @@ const post: BlogPost = {
           ],
           internalLinks: [
             { text: "Hướng dẫn đầy đủ: Cách tổ chức giải pickleball", path: "/blog/how-to-organize-pickleball-tournament" },
-            { text: "Tạo bracket miễn phí cho giải đấu", path: "/tools" },
+            { text: "Tạo bracket miễn phí cho giải đấu", path: "/vi/tools" },
             { text: "Luật Pickleball đầy đủ (chuẩn 2026)", path: "/blog/pickleball-rules-complete-guide" },
             { text: "Hub Tổ chức giải Pickleball — mọi hướng dẫn & công cụ", path: "/blog/tournament-organizer-hub" }
           ]
