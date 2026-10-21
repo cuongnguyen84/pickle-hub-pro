@@ -40,7 +40,7 @@ export interface GameTemplateItem {
 interface GameTemplateEditorProps {
   templates: GameTemplateItem[];
   onChange: (templates: GameTemplateItem[]) => void;
-  rosterSize: 4 | 6 | 8;
+  rosterSize: number;
   // Total-score mode overrides each game's target with pointsPerGame (native parity).
   totalScoreMode?: boolean;
   pointsPerGame?: number;
@@ -69,8 +69,10 @@ const DEFAULT_TEMPLATES: Record<4 | 6 | 8, GameTemplateItem[]> = {
   ],
 };
 
-export function getDefaultTemplates(rosterSize: 4 | 6 | 8): GameTemplateItem[] {
-  return DEFAULT_TEMPLATES[rosterSize].map(t => ({ ...t }));
+// Số người tự nhập → lấy bộ game của preset gần nhất (≤4 → 4, ≤6 → 6, còn lại → 8).
+export function getDefaultTemplates(rosterSize: number): GameTemplateItem[] {
+  const preset = rosterSize <= 4 ? 4 : rosterSize <= 6 ? 6 : 8;
+  return DEFAULT_TEMPLATES[preset].map(t => ({ ...t }));
 }
 
 export function GameTemplateEditor({ templates, onChange, rosterSize, totalScoreMode = false, pointsPerGame = 7 }: GameTemplateEditorProps) {

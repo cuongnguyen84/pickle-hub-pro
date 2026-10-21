@@ -61,6 +61,23 @@ try:
 except ImportError:
     SSL_CTX = ssl.create_default_context()
 
+# --- Force IPv4 -------------------------------------------------------------
+# 2026-09-11: IPv6 SYN to Google (2001:4860::/32) is never answered on Cuong's
+# network; urllib tries AAAA first and hangs in SYN_SENT until the timeout.
+# Filter getaddrinfo down to AF_INET so every urlopen here goes over IPv4.
+import socket as _socket  # noqa: E402
+
+_real_getaddrinfo = _socket.getaddrinfo
+
+
+def _ipv4_only_getaddrinfo(*args, **kwargs):
+    res = _real_getaddrinfo(*args, **kwargs)
+    v4 = [r for r in res if r[0] == _socket.AF_INET]
+    return v4 or res
+
+
+_socket.getaddrinfo = _ipv4_only_getaddrinfo
+
 SITE_ORIGIN = "https://www.thepicklehub.net"
 GOOGLEBOT_UA = (
     "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"

@@ -78,6 +78,21 @@ describe("eventsOnLive", () => {
     expect(eventsOnLive([m], before)).toHaveLength(1);
     expect(eventsOnLive([m], after)).toHaveLength(1);
   });
+  it("retires a finished event from the homepage one day after the final", () => {
+    // KL Cup ended 13/09; on 15/09 it was still on the homepage (bug report
+    // with screenshot) while /live rightly still carried it.
+    const dayAfter = Date.parse("2026-09-14T12:00:00+08:00");
+    const twoDaysAfter = Date.parse("2026-09-15T12:00:00+08:00");
+    expect(eventsOnLive([m], dayAfter, "home")).toHaveLength(1);
+    expect(eventsOnLive([m], twoDaysAfter, "home")).toHaveLength(0);
+    expect(eventsOnLive([m], twoDaysAfter, "live")).toHaveLength(1);
+  });
+  it("still shows an upcoming or running event on the homepage", () => {
+    const weekBefore = Date.parse("2026-09-03T12:00:00+08:00");
+    const midEvent = Date.parse("2026-09-11T12:00:00+08:00");
+    expect(eventsOnLive([m], weekBefore, "home")).toHaveLength(1);
+    expect(eventsOnLive([m], midEvent, "home")).toHaveLength(1);
+  });
   it("drops it outside that window and sorts by start date", () => {
     const old = meta({ slug: "old", startDate: "2026-07-01", endDate: "2026-07-05" });
     const now = Date.parse("2026-09-10T12:00:00+08:00");

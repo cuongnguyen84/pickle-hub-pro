@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useI18n } from "@/i18n";
+import { withoutLocale } from "@/lib/locale-path";
 import { Home, Radio, MoreHorizontal, Wrench, Newspaper, Store, type LucideIcon } from "lucide-react";
 import { isIOS } from "@/lib/platform";
 import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
@@ -85,18 +86,20 @@ const BottomNav = () => {
     if (isSuccess && liveCount > 0) setLiveSlot(true);
   }, [isSuccess, liveCount]);
 
+  const path = withoutLocale(location.pathname);
   if (
-    location.pathname.startsWith("/admin") ||
-    location.pathname.startsWith("/creator") ||
-    location.pathname.startsWith("/embed") ||
-    location.pathname.startsWith("/tools/quick-tables/referee") || // full-screen live-scoring tool
+    path.startsWith("/admin") ||
+    path.startsWith("/creator") ||
+    path.startsWith("/embed") ||
+    path.startsWith("/tools/quick-tables/referee") || // full-screen live-scoring tool
+    path.startsWith("/tools/quick-tables/chat") || // ô nhập chat dính đáy màn hình
     // Kênh người bán + quản trị Shop có thanh điều hướng riêng của shell; để
     // thanh 5 mục này hiện nữa là hai thanh chồng nhau ở đáy điện thoại.
     // (/admin/shop đã nằm trong /admin ở trên.)
-    location.pathname.startsWith("/seller") ||
-    location.pathname.startsWith("/proto/shop/seller") ||
-    location.pathname.startsWith("/proto/shop/admin") ||
-    /\/tools\/team-match\/match\/[^/]+\/score/.test(location.pathname) // team-match referee scoring
+    path.startsWith("/seller") ||
+    path.startsWith("/proto/shop/seller") ||
+    path.startsWith("/proto/shop/admin") ||
+    /\/tools\/team-match\/match\/[^/]+\/score/.test(path) // team-match referee scoring
   ) {
     return null;
   }

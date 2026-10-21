@@ -31,6 +31,7 @@
 | DEBT-06 | 0.5d | **geo-check rate-limit** (ip-api 45 req/min free — spam làm fail-open) — copy pattern newsletter-subscribe | Nếu thấy geo-check lỗi quota trong log |
 | DEBT-07 | 0d (config) | **Bật lại Migration-drift + Milestone-due workflows** (đang MÙ) — và cân nhắc branch protection main (require quality+smoke; giờ gate đã xanh trung thực nên không còn chặn oan) | Khi Cuong xác nhận budget Actions chịu được (~2 workflow cron nhẹ) |
 | DEBT-08 | 0.5d | Doc stale còn lại: CLAUDE.md §Known Bugs cập nhật theo audit; do-đợt-nào-tiện | Gộp PR docs bất kỳ |
+| DEBT-09 | 1d | **Trả lại 100 KB CODE đã nới 1/10/2026** (anh Cuong duyệt): trang /blog đang tải nguyên chunk `metadata` (24,6 KB gz, phình theo mỗi bài) → tách bản danh sách rút gọn (slug/tiêu đề/ngày/ảnh) cho /blog, phần SEO đầy đủ chỉ cho SSR; rồi hạ CODE về lại 1800. CONTENT tổng chỉ báo cáo từ cùng ngày (chunk bài lazy theo slug, trần 20 KB/bài giữ nguyên) | Khi CODE vượt 1850 KB, hoặc đợt perf kế tiếp |
 
 ## C. Ứng viên build — CHỜ DATA, chưa cam kết
 

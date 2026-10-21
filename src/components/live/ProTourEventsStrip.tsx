@@ -3,7 +3,9 @@
 // linking to their results page (/live/pro/<slug>). Registry-driven: it
 // reads src/content/pro-tour-events.ts and fetches nothing, so it costs the
 // live page no request and needs no mock in its error-state tests. It
-// self-hides when no event is within its window.
+// self-hides when no event is within its window — and the window depends on
+// the surface: the homepage drops a finished event after a day, /live keeps
+// it a fortnight (RETIRE_DAYS).
 // ============================================================================
 
 import { Link } from "react-router-dom";
@@ -12,6 +14,7 @@ import {
   eventsOnLive,
   formatEventDates,
   type ProTourEventMeta,
+  type ProTourSurface,
 } from "@/content/pro-tour-events";
 import { useProTourEvents } from "@/hooks/useProTourEvents";
 
@@ -23,9 +26,13 @@ const PHASE_LABEL = {
   finished: { vi: "Đã kết thúc", en: "Finished" },
 } as const;
 
-export function ProTourEventsStrip({ language, now = Date.now() }: { language: Lang; now?: number }) {
+export function ProTourEventsStrip({
+  language,
+  now = Date.now(),
+  surface = "live",
+}: { language: Lang; now?: number; surface?: ProTourSurface }) {
   const { data } = useProTourEvents();
-  const events = eventsOnLive(data ?? [], now);
+  const events = eventsOnLive(data ?? [], now, surface);
   // Loading and empty render the same nothing: the strip is a bonus row,
   // never a layout anchor, so it must not reserve space it may not fill.
   if (events.length === 0) return null;

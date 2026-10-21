@@ -89,3 +89,11 @@ scripts/seo/.seo_drift.db
 
 # Local coverage output (vitest --coverage)
 coverage/
+
+# Cloudflare local development artifacts
+.wrangler/
+.dev.vars
+
+# Worktrees tạm của agent (Codex / chief) — không thuộc lịch sử repo
+.codex/
+.claude/chief/

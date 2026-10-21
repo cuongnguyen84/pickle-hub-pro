@@ -40,7 +40,7 @@
 import { handleXRun, xHealth, type XRunBody } from './x';
 import { handleXDraft, type XDraftBody } from './x-draft';
 import { isPromotionalSource } from './promo-filter';
-import { notifyPosted } from './notify';
+import { recordPromoShadow } from './promo-shadow';
 
 export interface Env {
   // vars
@@ -52,6 +52,8 @@ export interface Env {
   GEMINI_MODEL: string;
   FB_SECONDARY_PAGE_ID?: string;
   FB_SECONDARY_START_AT?: string;
+  FB_SECONDARY_VIA_BROWSER?: string;
+  FB_PRIMARY_VIA_BROWSER?: string;
   // secrets
   SUPABASE_SERVICE_ROLE_KEY: string;
   SOCIAL_POSTER_SECRET: string;
@@ -70,6 +72,10 @@ export interface Env {
   // Facebook pipeline is untouched.
   X_CLIENT_ID?: string;
   X_CLIENT_SECRET?: string;
+  // TypeSafe shadow mode — see src/promo-shadow.ts. Absent => no shadow
+  // logging and both pipelines behave exactly as they did before.
+  TYPESAFE_API_KEY?: string;
+  TYPESAFE_MODEL?: string;
 }
 
 interface NewsItem {
@@ -108,6 +114,10 @@ interface FacebookPage {
   id: string;
   accessToken: string;
   startAt: string | null;
+  // Published by scripts/ops/fb_browser_post.py through Cuong's own Chrome
+  // session, not by this Worker. The Worker still picks the item and writes
+  // the caption (dry run); it never calls the Graph API for this page.
+  viaBrowser: boolean;
 }
 
 // A 'pending' row older than this is considered orphaned (the Worker that
@@ -151,6 +161,7 @@ interface SupabaseWebhookPayload {
 interface RunBody {
   news_item_id?: string;
   dry_run?: boolean;
+  page_key?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -276,6 +287,7 @@ export function configuredPages(env: Env): FacebookPage[] {
     id: env.FB_PAGE_ID,
     accessToken: env.FB_PAGE_ACCESS_TOKEN,
     startAt: null,
+    viaBrowser: env.FB_PRIMARY_VIA_BROWSER === '1',
   }];
   if (env.FB_SECONDARY_PAGE_ID && env.FB_SECONDARY_PAGE_ACCESS_TOKEN) {
     pages.push({
@@ -283,6 +295,7 @@ export function configuredPages(env: Env): FacebookPage[] {
       id: env.FB_SECONDARY_PAGE_ID,
       accessToken: env.FB_SECONDARY_PAGE_ACCESS_TOKEN,
       startAt: env.FB_SECONDARY_START_AT ?? null,
+      viaBrowser: env.FB_SECONDARY_VIA_BROWSER === '1',
     });
   }
   return pages;
@@ -298,6 +311,11 @@ async function handleRun(env: Env, body: RunBody): Promise<Response> {
   const results: unknown[] = [];
 
   for (const page of pages) {
+    if (body.page_key && body.page_key !== page.key) continue;
+    if (!dryRun && page.viaBrowser) {
+      results.push({ page_key: page.key, skipped: true, reason: 'browser_mode' });
+      continue;
+    }
     if (!dryRun && !body.news_item_id) {
       const retried = await retryLinkComment(env, page);
       if (retried) {
@@ -445,12 +463,7 @@ async function processNewsItem(
     if (appComment.status !== 'posted') {
       console.warn('[social-poster] app CTA comment failed:', appComment.error);
     }
-    await notifyPosted(env, {
-      platform: 'Facebook',
-      account: page.key,
-      body: item.title,
-      url: `https://facebook.com/${postedId}`,
-    });
+    // 20/10/2026: no per-post Telegram; the Grok Bot digest counts fb_post_log.
     await updateLinkComment(env, page.id, item.id, comment, 1);
     return {
       posted: true,
@@ -569,10 +582,23 @@ async function pickNextNewsItem(env: Env, page: FacebookPage): Promise<NewsItem 
   // 'posted' = done, 'skipped' = intentionally not posting (e.g. backlog the
   // admin chose to drop). PostgREST has no anti-join, so we fetch the
   // excluded ids separately.
+  //
+  // published_at has two lower bounds: when this page started posting at all,
+  // and how stale an article may be. Take the later of the two.
+  const ageCutoff = new Date(
+    Date.now() - facebookMaxItemAgeDays(env) * 24 * 3600_000,
+  ).toISOString();
+  const floor = laterOf(page.startAt, ageCutoff);
+
+  // Only log rows written since the floor can belong to a candidate (a row is
+  // created after its item is published). Without this bound the query passed
+  // PostgREST's silent 1000-row cap on 2026-10-18 (1046 rows per page), the
+  // newest posted ids fell off, and the picker served an already-posted item.
   const doneUrl = new URL(`${env.SUPABASE_URL}/rest/v1/fb_post_log`);
   doneUrl.searchParams.set('select', 'news_item_id');
   doneUrl.searchParams.set('status', 'in.(posted,skipped)');
   doneUrl.searchParams.set('page_id', `eq.${page.id}`);
+  doneUrl.searchParams.set('created_at', `gte.${floor}`);
   const postedRes = await fetch(doneUrl.toString(), { headers: supabaseRestHeaders(env) });
   if (!postedRes.ok) {
     throw new Error(`pickNext done query failed: ${postedRes.status} ${await postedRes.text()}`);
@@ -598,16 +624,10 @@ async function pickNextNewsItem(env: Env, page: FacebookPage): Promise<NewsItem 
   const url = new URL(`${env.SUPABASE_URL}/rest/v1/news_items`);
   // title/summary/category ride along so promotional rows can be dropped during
   // selection. Still no content_html, so the scan stays cheap.
-  url.searchParams.set('select', 'id,title,summary,category');
+  url.searchParams.set('select', 'id,title,summary,category,published_at');
   url.searchParams.set('language', 'eq.vi');
   url.searchParams.set('ai_translated', 'eq.true');
   url.searchParams.set('status', 'eq.published');
-  // published_at has two lower bounds: when this page started posting at all,
-  // and how stale an article may be. Take the later of the two.
-  const ageCutoff = new Date(
-    Date.now() - facebookMaxItemAgeDays(env) * 24 * 3600_000,
-  ).toISOString();
-  const floor = laterOf(page.startAt, ageCutoff);
   url.searchParams.set('published_at', `gte.${floor}`);
   url.searchParams.set('order', 'importance.desc,published_at.desc');
   url.searchParams.set('limit', String(scanLimit));
@@ -620,15 +640,36 @@ async function pickNextNewsItem(env: Env, page: FacebookPage): Promise<NewsItem 
     title: string;
     summary: string | null;
     category: string | null;
+    published_at: string;
   }>;
   const done = new Set(postedIds);
+  const now = Date.now();
+
+  // Shadow mode (2026-09-21): record what Jev would have said about these
+  // same candidates. Observational only — the `nextId` below is still the
+  // regex's call, and a failure in here returns 0 rather than throwing.
+  //
+  // ponytail: this sits inside the per-page picker, so two configured pages
+  // ask about their overlapping queues twice. The unique key on
+  // promo_filter_shadow drops the second write, and the duplicate model call
+  // costs a fraction of a cent. Hoist it out of the page loop if the trial
+  // ever runs on more than two pages.
+  await recordPromoShadow(
+    env,
+    'facebook',
+    rows.filter((r) => !done.has(r.id)).map((r) => ({ ...r, language: 'vi' })),
+  );
+
   // Adverts are excluded here rather than in checkEligible on purpose. A
   // checkEligible rejection writes no fb_post_log row, so the item stays
   // unposted and gets picked again on the next tick — one paddle release at the
   // head of the queue would stall the whole pipeline, which is the same shape
   // as the bug this function was just fixed for.
   const nextId = rows.find(
-    (r) => !done.has(r.id) && !isPromotionalSource(r.title, r.summary, null, r.category),
+    (r) =>
+      !done.has(r.id) &&
+      !isPromotionalSource(r.title, r.summary, null, r.category) &&
+      !isStaleTournamentNews(r.category, r.published_at, now),
   )?.id;
   return nextId ? await fetchNewsItemById(env, nextId) : null;
 }
@@ -645,6 +686,18 @@ export function pickNextId(
 ): string | null {
   const done = new Set(doneIds);
   return orderedIds.slice(0, scanLimit).find((id) => !done.has(id)) ?? null;
+}
+
+// Tin giải hết hạn nhanh hơn 3 ngày chung: 19/10 job Chrome kẹt limit 6 tiếng,
+// backlog đăng "bán kết Virginia Beach" sau khi chung kết đã lên.
+export const TOURNAMENT_MAX_AGE_MS = 24 * 3600_000;
+
+export function isStaleTournamentNews(
+  category: string | null,
+  publishedAt: string,
+  now: number,
+): boolean {
+  return category === 'tournament' && now - Date.parse(publishedAt) > TOURNAMENT_MAX_AGE_MS;
 }
 
 export function pickNextScanLimit(doneCount: number): number {

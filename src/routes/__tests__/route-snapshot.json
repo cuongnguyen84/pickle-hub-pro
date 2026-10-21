@@ -444,6 +444,10 @@
     "element": "<QuickTableRefereeScoring />"
   },
   {
+    "path": "/vi/tools/quick-tables/referee/:matchId",
+    "element": "<ViLanguageWrapper><QuickTableRefereeScoring /></ViLanguageWrapper>"
+  },
+  {
     "path": "/tools/team-match",
     "element": "<TeamMatchList />"
   },
@@ -654,6 +658,10 @@
   {
     "path": "/shop/sell",
     "element": "<SellLanding />"
+  },
+  {
+    "path": "/vi/shop/sell",
+    "element": "<ViLanguageWrapper><SellLanding /></ViLanguageWrapper>"
   },
   {
     "path": "/seller",
@@ -950,5 +958,21 @@
   {
     "path": "/vi/contact",
     "element": "<ViLanguageWrapper><Contact /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/authors/cuong-nguyen",
+    "element": "<Author />"
+  },
+  {
+    "path": "/vi/authors/cuong-nguyen",
+    "element": "<ViLanguageWrapper><Author /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/tools/quick-tables/chat",
+    "element": "<QuickTableChat />"
+  },
+  {
+    "path": "/vi/tools/quick-tables/chat",
+    "element": "<ViLanguageWrapper><QuickTableChat /></ViLanguageWrapper>"
   }
 ]

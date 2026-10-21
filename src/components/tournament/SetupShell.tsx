@@ -10,6 +10,7 @@ import { LogIn } from "lucide-react";
 import { TheLineLayout } from "@/components/layout";
 import { useI18n } from "@/i18n";
 import { getLoginUrl } from "@/lib/auth-config";
+import { localePath } from "@/lib/locale-path";
 import { surfaceCard, stepHeadingStyle } from "./setup-styles";
 
 // ─── Breadcrumb: Bracket Lab / <tool> / Tạo mới|New ─────────────────────────
@@ -18,9 +19,9 @@ export function SetupBreadcrumb({ toolLabel, toolPath }: { toolLabel: string; to
   const { language } = useI18n();
   return (
     <nav className="tl-breadcrumb">
-      <Link to="/tools">Bracket Lab</Link>
+      <Link to={localePath("/tools", language === "vi" ? "vi" : "en")}>{language === "vi" ? "Công cụ" : "Bracket Lab"}</Link>
       <span className="sep">/</span>
-      <Link to={toolPath}>{toolLabel}</Link>
+      <Link to={localePath(toolPath, language === "vi" ? "vi" : "en")}>{toolLabel}</Link>
       <span className="sep">/</span>
       <span className="current">{language === "vi" ? "Tạo mới" : "New"}</span>
     </nav>

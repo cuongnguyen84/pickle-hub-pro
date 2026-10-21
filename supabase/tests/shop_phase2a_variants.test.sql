@@ -9,7 +9,7 @@
 
 BEGIN;
 
-SELECT plan(101);
+SELECT plan(105);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 
@@ -609,15 +609,30 @@ SELECT lives_ok(
   format($$ SELECT public.product_discount_set(%L::uuid, 50) $$, (SELECT v FROM t_var WHERE k='p2')),
   'sản phẩm đang bán vẫn đặt được % giảm');
 SELECT is(
+  (SELECT price_vnd FROM public.product_variants
+   WHERE product_id=(SELECT v FROM t_var WHERE k='p2') AND retired_at IS NULL),
+  495000, '50% trên giá 990000 → giá bán còn 495000, trừ thẳng chứ không thổi giá gốc');
+SELECT is(
   (SELECT compare_at_price_vnd FROM public.product_variants
    WHERE product_id=(SELECT v FROM t_var WHERE k='p2') AND retired_at IS NULL),
-  1980000, '50% trên giá 990000 → giá gốc 1980000');
+  990000, 'và giá gốc gạch ngang là giá cũ 990000');
 SELECT is(
   (SELECT status::text FROM public.products WHERE id=(SELECT v FROM t_var WHERE k='p2')),
   'approved', 'và sản phẩm vẫn ở trên kệ, không bị kéo về nháp');
 SELECT lives_ok(
+  format($$ SELECT public.product_discount_set(%L::uuid, 20) $$, (SELECT v FROM t_var WHERE k='p2')),
+  'đổi sang % khác vẫn chạy');
+SELECT is(
+  (SELECT price_vnd FROM public.product_variants
+   WHERE product_id=(SELECT v FROM t_var WHERE k='p2') AND retired_at IS NULL),
+  792000, 'và tính lại từ giá gốc 990000 chứ không giảm chồng giảm');
+SELECT lives_ok(
   format($$ SELECT public.product_discount_set(%L::uuid, 0) $$, (SELECT v FROM t_var WHERE k='p2')),
   '0% là bỏ giảm giá');
+SELECT is(
+  (SELECT price_vnd FROM public.product_variants
+   WHERE product_id=(SELECT v FROM t_var WHERE k='p2') AND retired_at IS NULL),
+  990000, 'giá bán quay lại đúng giá gốc cũ');
 SELECT is(
   (SELECT compare_at_price_vnd FROM public.product_variants
    WHERE product_id=(SELECT v FROM t_var WHERE k='p2') AND retired_at IS NULL),

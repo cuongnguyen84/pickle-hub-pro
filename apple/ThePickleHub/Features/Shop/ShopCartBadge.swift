@@ -67,3 +67,52 @@ struct ShopCartToolbarButton: View {
         .task { await badge.refresh() }
     }
 }
+
+/// Buyer shortcuts that sit on the marketplace canvas rather than competing
+/// with the navigation title. The cart is the primary commerce action; orders
+/// stays visually quieter but remains a full-size, always-visible target.
+struct ShopFloatingActions: View {
+    @State private var badge = ShopCartBadge.shared
+
+    var body: some View {
+        HStack(spacing: TLSpacing.sm) {
+            NavigationLink(value: ShopRoute.orders) {
+                Image(systemName: "shippingbox.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(TLColor.fg)
+                    .frame(width: 50, height: 50)
+                    .background(TLColor.surface, in: Circle())
+                    .overlay(Circle().strokeBorder(TLColor.border2))
+            }
+            .accessibilityLabel("Đơn mua")
+
+            NavigationLink(value: ShopRoute.cart) {
+                HStack(spacing: 7) {
+                    Image(systemName: "cart.fill")
+                        .font(.system(size: 16, weight: .bold))
+                    Text("Giỏ")
+                        .font(TLType.titleSans(13))
+                    if badge.count > 0 {
+                        Text(badge.count > 99 ? "99+" : "\(badge.count)")
+                            .font(TLType.dataMono(11))
+                            .monospacedDigit()
+                            .padding(.horizontal, 7)
+                            .frame(minHeight: 26)
+                            .background(TLColor.accentInk.opacity(0.12), in: Capsule())
+                    }
+                }
+                .foregroundStyle(TLColor.accentInk)
+                .padding(.horizontal, TLSpacing.md)
+                .frame(minHeight: 50)
+                .background(TLColor.accent, in: Capsule())
+            }
+            .accessibilityLabel(badge.count > 0
+                                ? "Giỏ hàng, \(badge.count) món"
+                                : "Giỏ hàng")
+        }
+        .padding(5)
+        .background(.regularMaterial, in: Capsule())
+        .overlay(Capsule().strokeBorder(TLColor.border))
+        .task { await badge.refresh() }
+    }
+}

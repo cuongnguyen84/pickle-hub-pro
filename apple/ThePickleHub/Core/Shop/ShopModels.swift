@@ -70,6 +70,8 @@ struct ShopProductCardSummary: Identifiable, Codable, Hashable, Sendable {
     let seller: ShopSellerSummary
     let priceMinVND: Int?
     let priceMaxVND: Int?
+    var discountPercentMax: Int? = nil
+    var compareAtMinVND: Int? = nil
     let availability: ShopPublicAvailability
     let coverURL: URL?
     let coverLabel: String
@@ -125,6 +127,7 @@ struct ShopVariant: Identifiable, Codable, Hashable, Sendable {
     let sku: String?
     let optionValues: [String: String]
     let priceVND: Int
+    var compareAtPriceVND: Int? = nil
     let stockOnHand: Int?
     let mediaID: UUID?
     var publicAvailability: ShopPublicAvailability? = nil
@@ -132,6 +135,12 @@ struct ShopVariant: Identifiable, Codable, Hashable, Sendable {
     var isAvailable: Bool {
         if let publicAvailability { return publicAvailability != .outOfStock }
         return stockOnHand.map { $0 > 0 } ?? true
+    }
+
+    var discountPercent: Int? {
+        guard let compareAtPriceVND, compareAtPriceVND > priceVND else { return nil }
+        let percent = (compareAtPriceVND - priceVND) * 100 / compareAtPriceVND
+        return percent >= 1 ? percent : nil
     }
 }
 
@@ -153,6 +162,7 @@ struct ShopProduct: Identifiable, Codable, Hashable, Sendable {
     var maximumPriceVND: Int { variants.map(\.priceVND).max() ?? minimumPriceVND }
     var hasPriceRange: Bool { minimumPriceVND != maximumPriceVND }
     var isAvailable: Bool { seller.isActive && variants.contains(where: \.isAvailable) }
+    var maximumDiscountPercent: Int? { variants.compactMap(\.discountPercent).max() }
 
     func mediaIndex(for variant: ShopVariant?) -> Int {
         guard let mediaID = variant?.mediaID,
@@ -250,6 +260,7 @@ enum ShopRoute: Hashable {
     case store(String)
     case wishlist
     case cart
+    case orders
     case checkout(String)
     case order(String)
 }
@@ -361,6 +372,7 @@ struct ShopSePayCheckout: Codable, Equatable, Sendable, Identifiable {
     let amountVND: Int
     let memo: String
     let status: String
+
     enum CodingKeys: String, CodingKey {
         case memo, status
         case qrURL = "qr_url"

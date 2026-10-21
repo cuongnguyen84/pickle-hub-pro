@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import PlayoffBracket, { type SwapSlot } from '@/components/tournament/PlayoffBracket';
+import { uniquePlayoffMatches } from '@/lib/quick-table-playoff-dedupe';
 import type { QuickTableMatch, QuickTablePlayer, QuickTableGroup } from '@/hooks/useQuickTable';
 
 interface QuickTablePlayoffViewProps {
@@ -27,15 +28,7 @@ export default function QuickTablePlayoffView({
     return map;
   }, [groups]);
 
-  const uniqueMatches = useMemo(() => {
-    const seen = new Set<number>();
-    return matches.filter(m => {
-      const num = m.playoff_match_number || 0;
-      if (seen.has(num)) return false;
-      seen.add(num);
-      return true;
-    }).sort((a, b) => (a.playoff_match_number || 0) - (b.playoff_match_number || 0));
-  }, [matches]);
+  const uniqueMatches = useMemo(() => uniquePlayoffMatches(matches), [matches]);
 
   const playersWithSeed = useMemo(() => {
     return players.map(p => ({

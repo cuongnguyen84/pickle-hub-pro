@@ -1,3 +1,4 @@
+import { renderAuthor } from "./_lib/render/author";
 /**
  * Cloudflare Pages Functions Middleware
  *
@@ -8,6 +9,7 @@
  */
 
 import { BOT_UA, detectLang, stripLangPrefix } from "./_lib/utils";
+import { isPublicContentPath, servePublicPage } from "./_lib/public-page";
 import { isKnownSpaPath } from "./_lib/spa-routes";
 import { createSupabaseClient } from "./_lib/supabase";
 import {
@@ -901,7 +903,15 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         headers,
       });
     }
-    // Normal user, public route → serve SPA
+    // Public editorial pages carry their own content and metadata before JS.
+    if (request.method === "GET" && isPublicContentPath(pathname)) {
+      const response = await servePublicPage(await next(), () => routeAndRender(
+        pathname, env, env.CANONICAL_HOST || "https://www.thepicklehub.net",
+      ));
+      const headers = new Headers(response.headers);
+      applySecurityHeaders(headers);
+      return new Response(response.body, { status: response.status, headers });
+    }
     return next();
   }
 
@@ -1270,7 +1280,59 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // preview post now links on to it in both locales.
   // v116 (2026-09-09): the KL Cup results post gets its own hero — it had been
   // sharing the preview post's image, so both shipped the same og:image.
-  const cacheKey = `pr:v116:${url.pathname}`;
+  // v117 (2026-09-10): /live/pro/<slug> and its /vi twin shipped two <h1>s —
+  // renderProTourEvent opened its bodyContent with a heading but never passed
+  // omitAutoHeader, so buildHtml() added the decorated title as a second one.
+  // v118 (2026-09-10): the pro calendar was missing the whole PPA Asia 125
+  // series (four stops, two of them still to play in October) and carried
+  // five events under names without their title sponsor, so /tournaments
+  // and its SportsEvent JSON-LD both served an incomplete season.
+  // v119 (2026-09-10): the Hong Kong Slam preview gained the prize and
+  // points table PPA published on September 1 — the page about the biggest
+  // purse in Asian pickleball had no breakdown of it at all.
+  // v120 (2026-09-10): new post ppa-tour-europe-2026-27-schedule (EN +
+  // VI) — first page outside the Asian beat, published 13 days before the
+  // tour's opening stop in Barcelona.
+  // v121 (2026-09-10): KL Cup results post refreshed for day two — the
+  // opening still said "qualifying today" and "no main-draw match has been
+  // played yet" a day after both stopped being true.
+  // v122 (2026-09-10): hero wired on the PPA Tour Europe post, so
+  // og:image moves off the site-wide fallback on both locales.
+  // v123 (2026-09-10): both Kuala Lumpur Cup posts now bridge the three
+  // names one player is filed under, so a reader following the link to the
+  // Shenzhen gold post does not think it is about someone else.
+  // v124 (2026-09-10): every VI post now renders its FAQ in the
+  // prerendered body, not only as FAQPage JSON-LD. Every cached VI blog
+  // page is missing that section and has to be re-rendered.
+  // v125: refreshed calendar/access copy, author identities and related links.
+  // v126 (2026-09-16): /live and /vi/live no longer list replays — the
+  // "Xem lại" section, its ItemList entries and the copy pointing at it are
+  // gone. Every cached live hub still carries them.
+  // v127 (2026-09-16): /live/<id> stops listing ended siblings too, and the
+  // World Cup 2026 results article is linked from both homes, the live hub
+  // and every stream page.
+  // v128 (2026-10-05): refresh the VI footwork article after its cover image
+  // was added to the published CMS row.
+  // v129 (2026-10-05): refresh the VI singles strategy cover image.
+  // v130 (2026-10-12): VI shop product titles/descriptions lead with the
+  // category keyword ("Vợt pickleball <tên>"); category pages gain a buying
+  // guide paragraph.
+  // v131 (2026-10-20): Hong Kong Slam results refresh, and the schedule plus
+  // preview now link to that results page.
+  // v132 (2026-10-20): new chat-draw guide on the blog index and sitemap.
+  // v133 (2026-10-20): the chat-draw guide title leads with AI.
+  // v134 (2026-10-20): English title is "AI pickleball round robin" plus a pasted list.
+  // v135 (2026-10-20): the chat guide example is 44 teams, 11 groups, 2 or 3 brackets.
+  // v136 (2026-10-20): the chat guide covers several photos and a Google Sheet link.
+  // v137 (2026-10-20): the chat-draw guide hero has a 768w card, so its
+  // article <img> now includes that srcset.
+  // v138 (2026-10-20): the English chat-draw guide uses English UI screenshots.
+  // The Vietnamese article keeps the Vietnamese images.
+  // v139 (2026-10-21): those English cards were rebuilt. The first pass baked
+  // in a broken <img>, so the article now points at the -en-v2 files.
+  // v140 (2026-10-21): quick-table share cards name the tournament in plain
+  // Vietnamese and declare the real 1024×1024 preview image size.
+  const cacheKey = `pr:v140:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
@@ -1420,6 +1482,8 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string, accep
   const supabase = createSupabaseClient(env);
   let match: RegExpMatchArray | null;
 
+  if (path === "/authors/cuong-nguyen") return renderAuthor(siteUrl, lang);
+
   // Vietnamese home
   if (lang === "vi" && (path === "/" || path === "")) {
     return await renderHomeVi(supabase, siteUrl);
@@ -1567,7 +1631,7 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string, accep
 
   // Tool instances (noindex)
   match = path.match(/^\/tools\/quick-tables\/([^/]+)$/);
-  if (match) return await renderQuickTable(supabase, match[1], siteUrl);
+  if (match) return await renderQuickTable(supabase, match[1], siteUrl, { pageUrl: `${siteUrl}${rawPath}`, lang });
 
   match = path.match(/^\/tools\/team-match\/([^/]+)$/);
   if (match) return await renderTeamMatch(supabase, match[1], siteUrl);

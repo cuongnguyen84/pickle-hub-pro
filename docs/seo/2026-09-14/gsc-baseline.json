@@ -1,0 +1,27 @@
+{
+  "site": "sc-domain:thepicklehub.net",
+  "window": {
+    "current": [
+      "2026-08-15",
+      "2026-09-11"
+    ],
+    "previous": [
+      "2026-07-18",
+      "2026-08-14"
+    ]
+  },
+  "totals": {
+    "current": {
+      "clicks": 12374,
+      "impressions": 123375,
+      "ctr": 10.03,
+      "position": 7.1
+    },
+    "previous": {
+      "clicks": 817,
+      "impressions": 39781,
+      "ctr": 2.05,
+      "position": 9.0
+    }
+  }
+}

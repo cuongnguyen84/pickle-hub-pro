@@ -88,3 +88,35 @@ jobs:
           name: codeql-sarif
           path: codeql-results/
           retention-days: 30
+
+  # 2026-10-20: one Telegram per red streak on main, plus one when green again.
+  notify:
+    needs: [npm-audit, codeql]
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: scripts/ci
+      - name: Telegram (first failure / recovered)
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GH_TOKEN: ${{ github.token }}
+          NOTIFY_EVENT: push
+          FAILED: ${{ contains(needs.*.result, 'failure') }}
+        run: |
+          RUN="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          if [ "$FAILED" = "true" ]; then
+            scripts/ci/telegram-notify.sh first-failure "Security checks FAILED on main (npm audit / CodeQL)
+          Commit: ${GITHUB_SHA:0:7}
+          Run: ${RUN}"
+          else
+            scripts/ci/telegram-notify.sh recovered "Security checks green again on main
+          Commit: ${GITHUB_SHA:0:7}
+          Run: ${RUN}"
+          fi

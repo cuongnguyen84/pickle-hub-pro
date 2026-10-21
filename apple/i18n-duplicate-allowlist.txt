@@ -154,6 +154,11 @@ BỊ TỪ CHỐI
 Đang đăng ký
 Đơn nam
 Đơn nữ
+Đôi nam nữ
+Tranh hạng 3
+VÔ ĐỊCH
+Tìm vận động viên
+ĐANG DIỄN RA
 Vòng tròn
 Vòng \(r.round)
 Loại trực tiếp
@@ -297,3 +302,14 @@ SẮP TỚI
 # --- 28/08: cùng nghĩa ở cả hai chỗ (tab Cộng đồng / nút sao chép) ---
 Cộng đồng
 Sao chép \(label)
+
+# --- Hợp nhất nhánh chợ ↔ main 15/09: chuỗi một nghĩa, hai nơi dùng ---
+# "đ"/"Đ": viết tắt đơn vị tiền và chữ cái đầu tên đội, cùng nghĩa ở cả hai nơi.
+đ
+Đ
+# Nhãn giá gốc gạch ngang: thẻ sản phẩm và ô giá dùng chung một câu.
+Giá gốc \(ShopMoney.vnd(originalPrice))
+# Băng trạng thái trực tiếp: tab Trực tiếp và bảng World Cup nói cùng một điều.
+đang có trận trực tiếp
+# Lối vào danh sách đơn: huy hiệu giỏ hàng và màn chi tiết đơn.
+Đơn mua

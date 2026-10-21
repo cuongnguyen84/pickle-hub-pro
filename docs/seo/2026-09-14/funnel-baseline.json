@@ -1,0 +1,69 @@
+{
+  "dimensionHeaders": [
+    {
+      "name": "eventName"
+    }
+  ],
+  "metricHeaders": [
+    {
+      "name": "eventCount",
+      "type": "TYPE_INTEGER"
+    }
+  ],
+  "rows": [
+    {
+      "dimensionValues": [
+        {
+          "value": "web_vital"
+        }
+      ],
+      "metricValues": [
+        {
+          "value": "67350"
+        }
+      ]
+    },
+    {
+      "dimensionValues": [
+        {
+          "value": "organizer_tournament_creation_started"
+        }
+      ],
+      "metricValues": [
+        {
+          "value": "32"
+        }
+      ]
+    },
+    {
+      "dimensionValues": [
+        {
+          "value": "organizer_tournament_created"
+        }
+      ],
+      "metricValues": [
+        {
+          "value": "7"
+        }
+      ]
+    },
+    {
+      "dimensionValues": [
+        {
+          "value": "organizer_tournament_submit_attempted"
+        }
+      ],
+      "metricValues": [
+        {
+          "value": "7"
+        }
+      ]
+    }
+  ],
+  "rowCount": 4,
+  "metadata": {
+    "currencyCode": "USD",
+    "timeZone": "Asia/Saigon"
+  },
+  "kind": "analyticsData#runReport"
+}

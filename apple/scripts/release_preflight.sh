@@ -5,6 +5,7 @@ apple_root="$(cd "$(dirname "$0")/.." && pwd)"
 archive_path=""
 ipa_path=""
 shipping=false
+release_source=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -20,6 +21,11 @@ while [[ $# -gt 0 ]]; do
       ;;
     --shipping)
       shipping=true
+      release_source=true
+      shift
+      ;;
+    --release-source)
+      release_source=true
       shift
       ;;
     *)
@@ -37,6 +43,31 @@ for command_name in xcodegen xcodebuild plutil sips rg jq unzip codesign securit
 done
 
 cd "$apple_root"
+
+if [[ "$release_source" == true ]]; then
+  command -v git >/dev/null || fail "missing command: git"
+  git rev-parse --is-inside-work-tree >/dev/null 2>&1 || fail "release source is not inside a Git worktree"
+  git fetch origin main --prune >/dev/null 2>&1 || fail "cannot fetch origin/main; release freshness is unverified"
+
+  release_base="refs/remotes/origin/main"
+  git show-ref --verify --quiet "$release_base" || fail "missing origin/main after fetch"
+  if ! git merge-base --is-ancestor "$release_base" HEAD; then
+    divergence="$(git rev-list --left-right --count HEAD..."$release_base")"
+    ahead_count="${divergence%%[[:space:]]*}"
+    behind_count="${divergence##*[[:space:]]}"
+    fail "release HEAD omits origin/main ($behind_count commit(s) behind, $ahead_count local commit(s) ahead); rebase/merge from the latest main before building"
+  fi
+
+  if [[ -n "$(git status --porcelain --untracked-files=normal)" ]]; then
+    fail "release worktree is dirty; commit the exact source to make the build reproducible"
+  fi
+
+  upstream_ref="$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)"
+  [[ -n "$upstream_ref" ]] || fail "release branch has no upstream; push it before building"
+  [[ "$(git rev-parse HEAD)" == "$(git rev-parse "$upstream_ref")" ]] \
+    || fail "release HEAD differs from $upstream_ref; push/pull before building"
+  pass "release source contains latest origin/main, is clean, and is pushed at $(git rev-parse --short HEAD)"
+fi
 
 plutil -lint ThePickleHub/App/Info.plist >/dev/null
 plutil -lint ThePickleHub/App/PrivacyInfo.xcprivacy >/dev/null
@@ -182,10 +213,10 @@ debug_shop_pilot_normalized="$(printf '%s' "$debug_shop_pilot_flag" | tr '[:uppe
 [[ "$shop_built_in_normalized" =~ ^(yes|true|1)$ ]] || fail "Release candidate must compile the native Shop surface"
 [[ "$shop_pilot_normalized" =~ ^(yes|true|1)$ ]] || fail "Release candidate must enable the controlled Shop pilot"
 [[ "$debug_shop_built_in_normalized" =~ ^(yes|true|1)$ ]] || fail "Debug must compile the native Shop surface for QA parity"
-[[ ! "$debug_shop_pilot_normalized" =~ ^(yes|true|1)$ ]] || fail "Debug Shop pilot must fail closed by default"
+[[ "$debug_shop_pilot_normalized" =~ ^(yes|true|1)$ ]] || fail "Debug must enable Shop as well — QA has to see the tab bar real buyers see"
 version_at_least "$marketing_version" "2.1.0" || fail "Shop MVP requires marketing version 2.1.0 or later"
 [[ "$build_number" -ge 9 ]] || fail "Shop MVP requires build number 9 or later"
-pass "Shop MVP is built in, Release pilot is enabled and Debug remains fail closed"
+pass "Shop is built in and enabled in both Debug and Release"
 
 firebase_config_is_valid() {
   [[ "$firebase_google_app_id" =~ ^1:[0-9]{6,}:ios:[A-Fa-f0-9]{8,}$ ]] &&

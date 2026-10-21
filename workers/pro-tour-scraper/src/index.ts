@@ -123,6 +123,9 @@ interface ScrapeRequestBody {
 interface ScrapeResult {
   ok: boolean;
   skipped?: boolean;
+  /** "event_not_active" (skipped) · "render_transient" (Browser Rendering
+   *  timeout / 5xx / empty payload — the next cron tick retries, nothing
+   *  for a human to do) · "scrape_failed" (parse/ingest error). */
   error_code?: string;
   log_id?: string;
   matches_extracted: number;
@@ -212,31 +215,57 @@ async function runScheduledBatch(env: Env): Promise<void> {
           // live instead of catching it on the next 6h tick.
           if (result.ok && !result.skipped) {
             await updateWatchlistAfterScrape(env, row.id, row.scrape_frequency, liveNow);
-            return result;
+            return { row, result };
           }
           console.error(
             `[scheduled] scrape failed for ${row.tournament_url}; ` +
               "next_scrape_at NOT advanced. Will retry next cron tick. " +
               `error: ${result.error ?? "unknown"}`,
           );
-          return result;
+          return { row, result };
     }));
 
-    const succeeded = results.filter((result) => result.ok && !result.skipped).length;
-    const skipped = results.filter((result) => result.skipped).length;
-    const failed = results.filter((result) => !result.ok).length;
-    const matches = results.reduce((sum, result) => sum + result.matches_extracted, 0);
+    const succeeded = results.filter(({ result }) => result.ok && !result.skipped).length;
+    const skipped = results.filter(({ result }) => result.skipped).length;
+    const matches = results.reduce((sum, { result }) => sum + result.matches_extracted, 0);
+    // 2026-09-11 alert storm (258 Telegram pages in 24h): every tick with
+    // one Browser Rendering timeout among 4 scrapes was recorded as a
+    // "warning" run, and errors-telegram-alert pages once per run. A
+    // transient render error on a row that succeeded a minute ago and
+    // will be retried a minute from now is not an incident. It only
+    // becomes one when the SAME row keeps failing — i.e. it has been
+    // sitting past due for WATCHLIST_STALL_MS (failures never advance
+    // next_scrape_at, so past-due age == failing streak).
+    const nowMs = Date.now();
+    const failures = results.filter(({ result }) => !result.ok);
+    const persistent = failures.filter(
+      ({ row, result }) => result.error_code !== "render_transient" || isRowStalled(row, nowMs),
+    );
+    const transient = failures.length - persistent.length;
+    const failed = persistent.length;
     const status = failed === 0 ? (skipped === due.length && due.length > 0 ? "skipped" : "success")
       : failed < due.length ? "warning" : "failed";
-    const recordGate = failed > 0 || startedAt.getUTCMinutes() === 0;
+    const minute = startedAt.getUTCMinutes();
+    // Hourly heartbeat, or a persistent failure on a 10-minute tick.
+    // Transient-only ticks are NOT recorded: pro_tour_ingestion_logs
+    // (admin Logs tab) still has the row-level failure for forensics.
+    const recordGate = minute === 0 || (failed > 0 && minute % STALL_RECORD_EVERY_MIN === 0);
     if (!recordGate) return;
+    const stalledUrls = persistent.map(({ row }) => row.tournament_url);
     await recordProTourJobRun(env, {
       externalRunId, status, startedAt,
       summary: due.length === 0
         ? "No Pro Tour watchlist rows were due"
-        : `${succeeded} succeeded, ${skipped} skipped, ${failed} failed`,
-      metrics: { due: due.length, succeeded, skipped_inactive: skipped, failed, matches_imported: matches },
-      errorMessage: results.filter((result) => !result.ok).map((result) => result.error ?? "unknown").join("; ") || null,
+        : `${succeeded} succeeded, ${skipped} skipped, ${failed} failed` +
+          (transient > 0 ? `, ${transient} transient (auto-retry)` : ""),
+      metrics: {
+        due: due.length, succeeded, skipped_inactive: skipped, failed,
+        transient_failed: transient, matches_imported: matches,
+      },
+      errorMessage: failed > 0
+        ? `${failed} source(s) failing for over ${WATCHLIST_STALL_MS / 60_000} min: ` +
+          stalledUrls.map((url) => url.split("?")[0]).join(" ; ")
+        : null,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -327,6 +356,7 @@ async function runScrape(
       );
       return {
         ok: false,
+        error_code: "render_transient",
         matches_extracted: 0,
         players_extracted: 0,
         error: msg,
@@ -366,6 +396,7 @@ async function runScrape(
     // detail is in the log row above (admin Logs tab) + wrangler tail.
     return {
       ok: false,
+      error_code: isTransientRenderError(errMsg) ? "render_transient" : "scrape_failed",
       matches_extracted: 0,
       players_extracted: 0,
       error: "scrape_failed — see admin Logs tab",
@@ -646,6 +677,38 @@ interface WatchlistRow {
   id: string;
   tournament_url: string;
   scrape_frequency: "daily" | "weekly" | "on_event_end" | "manual";
+  /** Failed scrapes never advance this (see runScheduledBatch), so
+   *  "how far past due" == "how long this row has been failing". */
+  next_scrape_at: string | null;
+}
+
+/** A row still due this long after its slot has been failing on every
+ *  tick in between (1-minute cron) — that is a broken source, not a
+ *  Browser Rendering hiccup, and the only failure worth paging on. */
+const WATCHLIST_STALL_MS = 20 * 60_000;
+/** Persistent failures get a job-run row (→ Telegram) on these ticks only;
+ *  a 1-minute cron would otherwise write 1440 warning rows a day. */
+const STALL_RECORD_EVERY_MIN = 10;
+
+function isRowStalled(row: WatchlistRow, now: number): boolean {
+  if (!row.next_scrape_at) return false;
+  const due = new Date(row.next_scrape_at).getTime();
+  return Number.isFinite(due) && now - due >= WATCHLIST_STALL_MS;
+}
+
+/** Browser Rendering infrastructure errors (timeouts, target closed,
+ *  5xx, non-JSON bodies) and empty payloads: the same URL succeeds on
+ *  the next tick ~95% of the time (2026-09-10: 215 failed / 4453 ok,
+ *  every one of them a 6001/6002 timeout). Parse + ingest errors are
+ *  NOT transient — those need a code change. */
+function isTransientRenderError(message: string): boolean {
+  return (
+    message.includes("[render-http]") ||
+    message.includes("[render-fetch]") ||
+    message.includes("[render-parse]") ||
+    message.includes("render-fetch hit") ||
+    message.includes("Scrape returned 0 matchups")
+  );
 }
 
 async function fetchDueWatchlistRows(env: Env): Promise<WatchlistRow[]> {
@@ -666,7 +729,7 @@ async function fetchDueWatchlistRows(env: Env): Promise<WatchlistRow[]> {
   const nowIso = new Date().toISOString();
   const url =
     `${env.SUPABASE_URL}/rest/v1/pro_tour_watchlist` +
-    `?select=id,tournament_url,scrape_frequency` +
+    `?select=id,tournament_url,scrape_frequency,next_scrape_at` +
     `&status=eq.active` +
     `&or=(and(next_scrape_at.is.null,scrape_frequency.in.(daily,weekly)),next_scrape_at.lte.${nowIso})` +
     // 2026-09-09: no cap meant 10 due rows in one tick — each scrape costs

@@ -34,9 +34,14 @@ export interface ProCalendarEvent {
    * fact-checked posts names the organiser — an absent `organizer` is valid
    * schema.org, a wrong one is a false entity claim. Do NOT default this to
    * "PPA Tour Asia": that is the sanctioning tour, not automatically the
-   * organiser. Two events on this calendar are deliberately left blank —
-   * the Heineken Pickleball World Cup (Da Nang) and the Hong Kong Slam
-   * (organised by F-Sports Promotions per our own preview post).
+   * organiser. Events deliberately left blank — the Heineken Pickleball World
+   * Cup (Da Nang), the Hong Kong Slam (organised by F-Sports Promotions per
+   * our own preview post), and the whole PPA Asia 125 series. The 125s are
+   * third-party events the tour sanctions rather than runs: the organizers'
+   * own pages credit PickleGO (PickleSlam) and MSPL Sports with Tomaz
+   * Pickleball Club (Tomaz Cup). We have no post of our own naming those yet,
+   * so the field stays absent rather than guessing "PPA Tour Asia" — which
+   * would be exactly the false entity claim this rule exists to stop.
    */
   organizer?: string;
   prizeEn?: string;
@@ -60,6 +65,18 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
     prizeVi: "tối đa 300.000 USD",
     blogEn: "/blog/vietnam-hosts-ppa-tour-asia-2026",
     blogVi: "/vi/blog/viet-nam-dang-cai-ppa-tour-asia-2026",
+  },
+  {
+    id: "pickleslam-2026",
+    nameEn: "PickleSlam 2026",
+    nameVi: "PickleSlam 2026",
+    placeEn: "Jurong, Singapore",
+    placeVi: "Jurong, Singapore",
+    startDate: "2026-04-11",
+    endDate: "2026-04-18",
+    tier: "PPA Asia 125",
+    prizeEn: "$10,000",
+    prizeVi: "10.000 USD",
   },
   {
     id: "panas-kuala-lumpur-open-2026",
@@ -89,8 +106,8 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
   },
   {
     id: "china-open-2026",
-    nameEn: "China Open (Beijing)",
-    nameVi: "China Open (Bắc Kinh)",
+    nameEn: "Capital Securities Beijing Open",
+    nameVi: "Capital Securities Beijing Open",
     placeEn: "Beijing, China",
     placeVi: "Bắc Kinh, Trung Quốc",
     startDate: "2026-06-17",
@@ -104,8 +121,8 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
   },
   {
     id: "tokyo-open-2026",
-    nameEn: "Tokyo Open",
-    nameVi: "Tokyo Open",
+    nameEn: "Sansan Tokyo Open",
+    nameVi: "Sansan Tokyo Open",
     placeEn: "Tokyo, Japan",
     placeVi: "Tokyo, Nhật Bản",
     startDate: "2026-07-01",
@@ -117,8 +134,8 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
   },
   {
     id: "singapore-open-2026",
-    nameEn: "Singapore Open",
-    nameVi: "Singapore Open",
+    nameEn: "Leapmotor Singapore Open",
+    nameVi: "Leapmotor Singapore Open",
     placeEn: "Singapore",
     placeVi: "Singapore",
     startDate: "2026-07-23",
@@ -132,8 +149,8 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
   },
   {
     id: "hcmc-open-2026",
-    nameEn: "Ho Chi Minh City Open",
-    nameVi: "Ho Chi Minh City Open",
+    nameEn: "MB Ho Chi Minh City Open",
+    nameVi: "MB Ho Chi Minh City Open",
     placeEn: "Ho Chi Minh City, Vietnam",
     placeVi: "TP.HCM, Việt Nam",
     startDate: "2026-08-06",
@@ -164,6 +181,18 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
     prizeVi: "70.000 USD",
     blogEn: "/blog/shenzhen-open-2026-preview",
     blogVi: "/vi/blog/shenzhen-open-2026-lich-thi-dau-cach-xem",
+  },
+  {
+    id: "tomaz-cup-2026",
+    nameEn: "Tomaz Cup",
+    nameVi: "Tomaz Cup",
+    placeEn: "Kuala Lumpur, Malaysia",
+    placeVi: "Kuala Lumpur, Malaysia",
+    startDate: "2026-08-27",
+    endDate: "2026-08-29",
+    tier: "PPA Asia 125",
+    prizeEn: "$15,000",
+    prizeVi: "15.000 USD",
   },
   {
     id: "pickleball-world-cup-2026",
@@ -199,9 +228,21 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
     blogVi: "/vi/blog/kuala-lumpur-cup-2026-lich-thi-dau-cach-xem",
   },
   {
+    id: "shandong-challenger-2026",
+    nameEn: "Shandong Challenger",
+    nameVi: "Shandong Challenger",
+    placeEn: "Shandong, China",
+    placeVi: "Sơn Đông, Trung Quốc",
+    startDate: "2026-10-04",
+    endDate: "2026-10-07",
+    tier: "PPA Asia 125",
+    prizeEn: "$15,000",
+    prizeVi: "15.000 USD",
+  },
+  {
     id: "hong-kong-slam-2026",
-    nameEn: "Hong Kong Slam",
-    nameVi: "Hong Kong Slam",
+    nameEn: "Hang Seng Bank Hong Kong Slam",
+    nameVi: "Hang Seng Bank Hong Kong Slam",
     placeEn: "Hong Kong",
     placeVi: "Hồng Kông",
     startDate: "2026-10-19",
@@ -214,6 +255,18 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
     prizeVi: "tối đa 1.100.000 USD",
     blogEn: "/blog/hong-kong-slam-2026-preview",
     blogVi: "/vi/blog/hong-kong-slam-2026",
+  },
+  {
+    id: "nanjing-125-2026",
+    nameEn: "PPA Asia 125 CHN Nanjing",
+    nameVi: "PPA Asia 125 CHN Nanjing",
+    placeEn: "Nanjing, China",
+    placeVi: "Nam Kinh, Trung Quốc",
+    startDate: "2026-10-28",
+    endDate: "2026-10-31",
+    tier: "PPA Asia 125",
+    // No prize money: the organizers' page carries the date and city but has
+    // published no purse for this stop. Absent beats invented.
   },
 ];
 

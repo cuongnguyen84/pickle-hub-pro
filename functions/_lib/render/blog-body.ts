@@ -1,3 +1,4 @@
+import { authorIdentity } from "../../../src/content/authors";
 // ============================================================================
 // EN blog post body → bot-visible HTML + FAQPage schema.
 // ----------------------------------------------------------------------------
@@ -153,8 +154,10 @@ export async function renderEnBlogBody(
   const post: BlogPost | undefined = await loadBlogPost(slug);
   if (!post) return "";
   const en = post.content.en;
+  const identity = authorIdentity(post.author, siteUrl);
+  const byline = 'url' in identity ? `<a href="${escapeHtml(identity.url!)}">${escapeHtml(identity.name)}</a>` : escapeHtml(identity.name);
   return (
-    `<article><h1>${escapeHtml(en.title)}</h1>${heroFigure(post.heroImage)}` +
+    `<article><h1>${escapeHtml(en.title)}</h1><p>By ${byline} · Updated <time datetime="${escapeHtml(post.updatedDate)}">${escapeHtml(post.updatedDate)}</time></p>${heroFigure(post.heroImage)}` +
     `${renderSections(en, siteUrl, liveBlocks)}${renderFaq(en)}</article>`
   );
 }

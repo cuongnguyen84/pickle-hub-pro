@@ -1,3 +1,4 @@
+import { PublicSeoHandoff } from "./components/seo/PublicSeoHandoff";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/toaster";
@@ -120,6 +121,7 @@ const SellerOrderDetail = lazyRetry(() => import("./pages/shop/SellerOrderDetail
 const Tools = lazyRetry(() => import("./pages/Tools"));
 const QuickTables = lazyRetry(() => import("./pages/QuickTables"));
 const QuickTableSetup = lazyRetry(() => import("./pages/QuickTableSetup"));
+const QuickTableChat = lazyRetry(() => import("./pages/QuickTableChat"));
 const QuickTableView = lazyRetry(() => import("./pages/QuickTableView"));
 const ParentTournamentPage = lazyRetry(() => import("./pages/ParentTournamentPage"));
 const QuickTableRefereeScoring = lazyRetry(() => import("./pages/QuickTableRefereeScoring"));
@@ -127,6 +129,7 @@ const TeamMatchScoring = lazyRetry(() => import("./pages/TeamMatchScoring"));
 const JoinTeam = lazyRetry(() => import("./pages/JoinTeam"));
 const Privacy = lazyRetry(() => import("./pages/Privacy"));
 const Terms = lazyRetry(() => import("./pages/Terms"));
+const Author = lazyRetry(() => import("./pages/Author"));
 const About = lazyRetry(() => import("./pages/About"));
 const Contact = lazyRetry(() => import("./pages/Contact"));
 const Advertise = lazyRetry(() => import("./pages/Advertise"));
@@ -670,9 +673,11 @@ const MIRRORED: MirroredRoute[] = [
   { path: "/forum/new", element: <ForumPostCreate /> },
   { path: "/tools", element: <Tools /> },
   { path: "/tools/quick-tables", element: <QuickTables /> },
+  { path: "/tools/quick-tables/chat", element: <QuickTableChat /> },
   { path: "/tools/quick-tables/parent/:shareId", element: <ParentTournamentPage /> },
   { path: "/tools/quick-tables/:shareId", element: <ConditionalAuth><QuickTableView /></ConditionalAuth> },
   { path: "/tools/quick-tables/:shareId/setup", element: <QuickTableSetup /> },
+  { path: "/tools/quick-tables/referee/:matchId", element: <QuickTableRefereeScoring /> },
   { path: "/tools/team-match", element: <TeamMatchList /> },
   { path: "/tools/team-match/new", element: <TeamMatchSetup /> },
   { path: "/tools/team-match/match/:matchId/score", element: <TeamMatchScoring /> },
@@ -688,6 +693,7 @@ const MIRRORED: MirroredRoute[] = [
   { path: "/tools/dashboard/:type/:id", element: <TournamentDashboard /> },
   { path: "/privacy", element: <Privacy /> },
   { path: "/terms", element: <Terms /> },
+  { path: "/authors/cuong-nguyen", element: <Author /> },
   { path: "/about", element: <About /> },
   { path: "/contact", element: <Contact /> },
   { path: "/advertise", element: <Advertise /> },
@@ -709,6 +715,7 @@ const App = () => (
               <PageTracker />
               <LivestreamGateAttribution />
               <ScrollToTop />
+              <PublicSeoHandoff />
 
               <SkipToContent />
               <BottomNav />
@@ -831,7 +838,6 @@ const App = () => (
                     <Route path="/share/live/:id" element={<ShareRedirect type="live" />} />
                     <Route path="/share/video/:id" element={<ShareRedirect type="video" />} />
                     {/* Tools routes */}
-                    <Route path="/tools/quick-tables/referee/:matchId" element={<QuickTableRefereeScoring />} />
                     {/* Team Match routes */}
                     {/* Doubles Elimination routes */}
                     {/* Flex Tournament routes */}
@@ -886,6 +892,7 @@ const App = () => (
                     {/* Shop marketplace — Phase 1. Seller + admin surfaces are
                         auth-gated here and re-authorised server-side by RLS. */}
                     <Route path="/shop/sell" element={<SellLanding />} />
+                    <Route path="/vi/shop/sell" element={<ViLanguageWrapper><SellLanding /></ViLanguageWrapper>} />
                     <Route path="/seller" element={<RequireAuth><SellerHome /></RequireAuth>} />
                     <Route path="/seller/application" element={<RequireAuth><SellerApplication /></RequireAuth>} />
                     <Route path="/seller/application/status" element={<RequireAuth><SellerApplicationStatus /></RequireAuth>} />
