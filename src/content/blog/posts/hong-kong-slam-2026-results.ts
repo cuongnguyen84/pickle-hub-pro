@@ -32,7 +32,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Hong Kong Slam 2026 results and daily scores",
-          "content": "Last updated: October 22, 2026, 21:00 Vietnam time. ThePickleHub publishes this Hong Kong Slam 2026 results page from the official PPA scores feed for October 19–25, 2026 at Kai Tak Arena, Hong Kong. The feed currently contains 228 matches, including 208 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: October 23, 2026, 01:00 Vietnam time. ThePickleHub publishes this Hong Kong Slam 2026 results page from the official PPA scores feed for October 19–25, 2026 at Kai Tak Arena, Hong Kong. The feed currently contains 228 matches, including 208 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -329,7 +329,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Hong Kong Slam 2026",
-          "content": "Cập nhật: 21:00 ngày 22/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Hong Kong Slam 2026 từ feed điểm số chính thức của PPA cho thời gian 19–25/10/2026 tại Kai Tak Arena, Hong Kong. Feed hiện có 228 trận, gồm 208 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 01:00 ngày 23/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Hong Kong Slam 2026 từ feed điểm số chính thức của PPA cho thời gian 19–25/10/2026 tại Kai Tak Arena, Hong Kong. Feed hiện có 228 trận, gồm 208 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
