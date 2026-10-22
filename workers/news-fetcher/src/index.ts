@@ -52,6 +52,9 @@ interface ParsedItem {
   summary: string;
   image_url: string | null;
   published_at: string; // ISO
+  // Danh mục do nguồn tự gắn (RSS <category>, Atom <category term>) — chỉ
+  // dùng cho bộ lọc advertorial ở ingestItems, không lưu xuống DB.
+  categories?: string[];
   // undefined: fetch the article page; null: source API supplied no full body.
   raw_body?: string | null;
 }
@@ -63,6 +66,7 @@ interface SourceRunResult {
   inserted: number;
   skipped_dup: number;
   skipped_old: number;
+  skipped_ads: number;
   failed: number;
   error: string | null;
   duration_ms: number;
@@ -277,6 +281,7 @@ async function runAllSources(env: Env): Promise<SourceRunResult[]> {
         inserted: counts.inserted,
         skipped_dup: counts.dup,
         skipped_old: counts.old,
+        skipped_ads: counts.ads,
         failed: counts.failed,
         error: null,
         duration_ms: Date.now() - started,
@@ -292,6 +297,7 @@ async function runAllSources(env: Env): Promise<SourceRunResult[]> {
         inserted: 0,
         skipped_dup: 0,
         skipped_old: 0,
+        skipped_ads: 0,
         failed: err instanceof IngestError ? err.failed : 0,
         error: message,
         duration_ms: Date.now() - started,
@@ -377,6 +383,7 @@ interface IngestCounts {
   inserted: number;
   dup: number;
   old: number;
+  ads: number;
   failed: number;
 }
 
@@ -412,6 +419,7 @@ async function ingestItems(
   let inserted = 0;
   let dup = 0;
   let old = 0;
+  let ads = 0;
   let failed = 0;
   const originRows: Array<Record<string, unknown>> = [];
 
@@ -430,6 +438,11 @@ async function ingestItems(
     if (!item.title.trim() || !isSafePublicFeedUrl(item.link)) {
       failed += 1;
       console.warn(`[${source.id}] invalid feed item skipped: ${item.link}`);
+      continue;
+    }
+    if (isAdvertorialItem(item)) {
+      ads += 1;
+      console.log(`[${source.id}] bỏ bài advertorial/sponsored: ${item.title}`);
       continue;
     }
     fresh.push(item);
@@ -519,7 +532,60 @@ async function ingestItems(
   if (failed > 0) {
     throw new IngestError(failed);
   }
-  return { inserted, dup, old, failed };
+  return { inserted, dup, old, ads, failed };
+}
+
+// ---------------------------------------------------------------------------
+// Bộ lọc advertorial cho pipeline TIN TỨC (việc mở rộng 22/10/2026).
+//
+// Cường chốt: pipeline lấy thêm bài REVIEW SẢN PHẨM (đánh giá vợt/dụng cụ là
+// nội dung biên tập thật, phải QUA), nhưng bài quảng cáo/advertorial/sponsored
+// thì BỎ. Đây KHÔNG phải bộ lọc promo của social-poster: bộ lọc đó chặn cả
+// review/bài về sản phẩm vì luật đăng mạng xã hội khác hẳn — không được dùng
+// lại ở đây, và bộ lọc này cũng không thay đổi luật đăng social.
+//
+// Chỉ chặn khi nguồn TỰ KHAI quảng cáo, bằng chứng rõ ràng:
+//   - category đúng nhãn: sponsored / advertorial / paid content /
+//     partner content / promoted / brand studio;
+//   - tiêu đề hoặc tóm tắt chứa "sponsored", "advertorial", "paid post",
+//     "partner content", "sponsored content".
+// Bài review, tin đối tác ("DUPR and X partner to grow pickleball…"), tin ra
+// mắt sản phẩm KHÔNG nằm trong các mẫu trên và phải qua bình thường.
+// ---------------------------------------------------------------------------
+const ADVERTORIAL_CATEGORIES: ReadonlyArray<string> = [
+  "sponsored",
+  "sponsored content",
+  "advertorial",
+  "paid content",
+  "paid post",
+  "partner content",
+  "promoted",
+  "brand studio",
+];
+
+const ADVERTORIAL_PATTERNS: ReadonlyArray<RegExp> = [
+  /\bsponsored\b/i,
+  /\badvertorial\b/i,
+  /\bpaid (?:post|content|partnership)\b/i,
+  /\bpartner content\b/i,
+  /\bpromoted content\b/i,
+];
+
+/** Bài nguồn tự khai là quảng cáo thì bỏ. Exported for tests. */
+export function isAdvertorialItem(item: {
+  title: string;
+  summary?: string;
+  categories?: string[];
+}): boolean {
+  if (
+    (item.categories ?? []).some((category) =>
+      ADVERTORIAL_CATEGORIES.includes(category.trim().toLowerCase()),
+    )
+  ) {
+    return true;
+  }
+  const text = `${item.title} ${item.summary ?? ""}`;
+  return ADVERTORIAL_PATTERNS.some((pattern) => pattern.test(text));
 }
 
 // ---------------------------------------------------------------------------
@@ -568,12 +634,24 @@ interface HtmlScrapeConfig {
   // trang mục bằng prefix, rồi fetch từng bài để đọc og:title + published_time.
   excludePrefixes?: string[];
   titleSuffix?: string; // cắt " | PPA Tour" khỏi og:title
+  // Đường og-meta MỞ RỘNG (Times Now, Dink Authority — thêm 22/10/2026): khi
+  // có linkPrefixes thì link bài không nằm ở root mà nằm dưới prefix cố định,
+  // và "listing" có thể là sitemap.xml (<loc>) thay vì trang HTML (href).
+  // Chỉ giữ link cùng origin, path bắt đầu bằng một prefix, và (nếu đặt)
+  // chứa linkMustContain — Times Now dùng "-article-" để phân biệt bài thật
+  // với trang mục/chủ đề. Sitemap có <lastmod> thì sắp xếp mới nhất trước.
+  linkPrefixes?: string[];
+  linkMustContain?: string;
   // Đường listing-card (APP): card trên trang listing đã có sẵn tiêu đề, ngày
   // và ảnh, trong khi trang bài KHÔNG có <meta article:published_time> nên
   // đường og-meta ở trên vô dụng. Lấy hết từ listing = 1 subrequest/nguồn.
   listingCards?: {
     splitOn: string; // chuỗi mở đầu mỗi card trong HTML
     linkPrefix: string; // prefix path của bài, vd "/news/"
+    // Card kiểu DUPR: tiêu đề/tóm tắt nằm trong thẻ có class riêng thay vì
+    // khuôn card_news_content > span của APP.
+    titleClass?: string;
+    summaryClass?: string;
   };
 }
 
@@ -593,6 +671,36 @@ export const HTML_SCRAPE_CONFIGS: Record<string, HtmlScrapeConfig> = {
       splitOn: 'role="listitem" class="w-dyn-item"',
       linkPrefix: "/news/",
     },
+  },
+  // DUPR Blog — Webflow, listing chuyển về /blog (trang /post cũ trả 404 từ
+  // 10/2026; /post/<slug> là tiền tố của TRANG BÀI). Card bloggrid_card có sẵn
+  // tiêu đề (h4.card_content_title), tóm tắt ẩn và ngày — cùng đường
+  // listing-card như APP, 1 subrequest/nguồn. Nguồn chính chủ (rating).
+  "dupr-blog": {
+    origin: "https://www.dupr.com",
+    listingCards: {
+      splitOn: "bloggrid_card",
+      linkPrefix: "/post/",
+      titleClass: "card_content_title",
+      summaryClass: "card_content_summary",
+    },
+  },
+  // Times Now — chuyên mục Pickleball. Không có RSS (các endpoint rssfeeds
+  // đều 404, probe 22/10/2026); trang mục server-render sẵn link bài dạng
+  // /sports/pickleball/<slug>-article-<id>, trang bài có đủ og:title +
+  // article:published_time → đường og-meta mở rộng.
+  "times-now": {
+    origin: "https://www.timesnownews.com",
+    linkPrefixes: ["/sports/pickleball/"],
+    linkMustContain: "-article-",
+  },
+  // Dink Authority Magazine — Next.js, không RSS (/feed trả 404). Sitemap
+  // liệt kê bài dưới /news/, /players/, /tips/ kèm lastmod thật từng bài;
+  // trang bài có đủ og:title + article:published_time → đường og-meta qua
+  // sitemap. Bản /es/, /pt/ tự bị loại vì path không khớp prefix tiếng Anh.
+  "dink-authority": {
+    origin: "https://www.dinkauthoritymagazine.com",
+    linkPrefixes: ["/news/", "/players/", "/tips/"],
   },
 };
 
@@ -647,7 +755,13 @@ export function parseListingCards(html: string, config: HtmlScrapeConfig): Parse
     const path = chunk.match(
       new RegExp(`href="(${cards.linkPrefix}[a-z0-9][a-z0-9-]*)"`),
     )?.[1];
-    const title = chunk.match(/card_news_content[\s\S]{0,600}?<span>([^<]{5,})<\/span>/)?.[1];
+    // APP: tiêu đề trong card_news_content > span. DUPR: thẻ h4 mang
+    // class card_content_title, tóm tắt trong div card_content_summary.
+    const title = cards.titleClass
+      ? chunk.match(
+          new RegExp(`<h[1-6][^>]*class="[^"]*${cards.titleClass}[^"]*"[^>]*>([^<]{5,})<\/h[1-6]>`),
+        )?.[1]
+      : chunk.match(/card_news_content[\s\S]{0,600}?<span>([^<]{5,})<\/span>/)?.[1];
     const date = chunk.match(/>([A-Z][a-z]+ \d{1,2}, 20\d\d)</)?.[1];
     if (!path || !title || !date) continue;
 
@@ -657,11 +771,16 @@ export function parseListingCards(html: string, config: HtmlScrapeConfig): Parse
     if (!Number.isFinite(publishedMs)) continue;
     seen.add(link);
 
+    const summary = cards.summaryClass
+      ? chunk.match(
+          new RegExp(`<div[^>]*class="[^"]*${cards.summaryClass}[^"]*"[^>]*>([^<]+)<\/div>`),
+        )?.[1] ?? ""
+      : "";
     const image = chunk.match(/src="(https:\/\/[^"]+\.(?:avif|jpg|jpeg|png|webp))"/i)?.[1] ?? null;
     items.push({
-      title: decodeEntities(title).slice(0, TITLE_LIMIT),
+      title: decodeEntities(title.trim()).slice(0, TITLE_LIMIT),
       link,
-      summary: "",
+      summary: decodeEntities(summary.trim()).slice(0, SUMMARY_LIMIT),
       image_url: image,
       published_at: new Date(publishedMs).toISOString(),
     });
@@ -669,6 +788,60 @@ export function parseListingCards(html: string, config: HtmlScrapeConfig): Parse
   }
 
   return items;
+}
+
+// Trích link bài từ listing cho đường og-meta. Exported for tests.
+// - Mặc định (PPA): slug root một cấp trong href="/…/", loại trang mục bằng
+//   excludePrefixes, giữ thứ tự listing (mới nhất trước).
+// - Có linkPrefixes (Times Now / Dink Authority): nhận cả href tuyệt đối và
+//   <loc> của sitemap, chỉ giữ link cùng origin có path khớp prefix (và chứa
+//   linkMustContain nếu đặt). Sitemap kèm <lastmod> thì sắp mới nhất trước —
+//   thứ tự trong file sitemap KHÔNG theo thời gian.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function extractScrapeLinks(html: string, config: HtmlScrapeConfig): string[] {
+  const prefixes = config.linkPrefixes;
+  if (!prefixes) {
+    const links: string[] = [];
+    for (const match of html.matchAll(/href="(\/[a-z0-9][a-z0-9-]{11,}\/)"/g)) {
+      const path = match[1];
+      if ((config.excludePrefixes ?? []).some((prefix) => path.startsWith(prefix + "/") || path === prefix + "/")) continue;
+      if (!path.includes("-")) continue;
+      const url = config.origin + path;
+      if (!links.includes(url)) links.push(url);
+    }
+    return links;
+  }
+
+  const candidates: Array<{ url: string; lastmod: number }> = [];
+  const seen = new Set<string>();
+  const consider = (raw: string, lastmod: number) => {
+    let url: URL;
+    try {
+      url = new URL(raw, config.origin);
+    } catch {
+      return;
+    }
+    if (url.origin !== config.origin) return;
+    if (!prefixes.some((prefix) => url.pathname.startsWith(prefix))) return;
+    if (config.linkMustContain && !url.pathname.includes(config.linkMustContain)) return;
+    if ((config.excludePrefixes ?? []).some((prefix) => url.pathname.startsWith(prefix))) return;
+    const clean = url.origin + url.pathname;
+    if (seen.has(clean)) return;
+    seen.add(clean);
+    candidates.push({ url: clean, lastmod });
+  };
+
+  let hasLastmod = false;
+  for (const match of html.matchAll(/<loc>(https?:\/\/[^<]+)<\/loc>(?:\s*<lastmod>([^<]+)<\/lastmod>)?/g)) {
+    const lastmod = match[2] ? Date.parse(match[2]) : NaN;
+    if (Number.isFinite(lastmod)) hasLastmod = true;
+    consider(match[1], Number.isFinite(lastmod) ? lastmod : 0);
+  }
+  for (const match of html.matchAll(/href="(https?:\/\/[^"]+|\/[^"]*)"/g)) {
+    consider(match[1], 0);
+  }
+  if (hasLastmod) candidates.sort((a, b) => b.lastmod - a.lastmod);
+  return candidates.map((candidate) => candidate.url);
 }
 
 async function scrapeHtmlListing(
@@ -696,15 +869,7 @@ async function scrapeHtmlListing(
     return cardItems;
   }
 
-  // Slug root một cấp, dạng bài viết (dài, có gạch ngang), giữ thứ tự listing.
-  const links: string[] = [];
-  for (const match of listingHtml.matchAll(/href="(\/[a-z0-9][a-z0-9-]{11,}\/)"/g)) {
-    const path = match[1];
-    if ((config.excludePrefixes ?? []).some((prefix) => path.startsWith(prefix + "/") || path === prefix + "/")) continue;
-    if (!path.includes("-")) continue;
-    const url = config.origin + path;
-    if (!links.includes(url)) links.push(url);
-  }
+  const links = extractScrapeLinks(listingHtml, config);
   if (links.length === 0) throw new Error("listing không có link bài nào — cấu trúc site có thể đã đổi");
 
   // Dedupe TRƯỚC khi fetch meta: chỉ tốn subrequest cho bài thật sự mới.
@@ -1043,6 +1208,9 @@ function parseRss(parsed: any): ParsedItem[] {
     const title = decodeEntities(textOf(item.title));
     const link = textOf(item.link);
     const pubDate = textOf(item.pubDate) || textOf(item["dc:date"]);
+    const categories = (Array.isArray(item.category) ? item.category : [item.category])
+      .map((category: unknown) => textOf(category))
+      .filter((category: string) => category.length > 0);
     const description = stripHtml(
       textOf(item.description) || textOf(item["content:encoded"]) || ""
     );
@@ -1069,6 +1237,7 @@ function parseRss(parsed: any): ParsedItem[] {
       summary: description,
       image_url: image,
       published_at: new Date(pubDate || Date.now()).toISOString(),
+      categories,
     };
   });
 }
@@ -1095,6 +1264,10 @@ function parseAtom(parsed: any): ParsedItem[] {
       textOf(entry.published) ||
       textOf(entry.updated) ||
       new Date().toISOString();
+    const categories = (Array.isArray(entry.category) ? entry.category : [entry.category])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .map((category: any) => category?.["@_term"] || category?.["@_label"] || textOf(category))
+      .filter((category: string) => typeof category === "string" && category.length > 0);
     const summary = stripHtml(
       textOf(entry.summary) || textOf(entry.content) || ""
     );
@@ -1112,6 +1285,7 @@ function parseAtom(parsed: any): ParsedItem[] {
       summary,
       image_url: image,
       published_at: new Date(published).toISOString(),
+      categories,
     };
   });
 }

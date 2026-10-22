@@ -52,6 +52,21 @@ Insert a row into `news_sources` (active=true, feed_type='rss' or 'atom'). Next
 cron tick (or manual `/run`) picks it up automatically — no worker redeploy
 needed.
 
+`html_scrape` sources additionally need a config in `HTML_SCRAPE_CONFIGS`
+(this worker): listing-card mode (APP, DUPR Blog) or og-meta mode (PPA Tour;
+extended link-prefix/sitemap mode for Times Now and Dink Authority Magazine,
+added 2026-10-22). Deploy the worker before activating such a row.
+
+## Product reviews vs advertorials
+
+The ingest accepts editorial product reviews (paddle/gear reviews are real
+content since 2026-10-22) and drops only items the source itself labels as
+advertising: `isAdvertorialItem` in `src/index.ts` (sponsored / advertorial /
+paid / partner-content markers in title, summary or feed categories). This is
+deliberately narrower than the social-poster promo filter — that filter's
+"no product posts" rule governs social publishing only and does not apply
+to the news pipeline.
+
 JSON APIs require an explicit, host-and-path allowlisted adapter in this Worker.
 For Pickle Asia, deploy the Worker and set `PICKLE_ASIA_API_KEY` before applying
 the migration that activates its `json_api` source row. Its items use

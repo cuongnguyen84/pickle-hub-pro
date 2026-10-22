@@ -6,7 +6,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   decodeEntities,
+  extractScrapeLinks,
   HTML_SCRAPE_CONFIGS,
+  isAdvertorialItem,
   isTransientFetchError,
   NEWS_FETCHER_USER_AGENT,
   normalizeItemLink,
@@ -192,5 +194,99 @@ describe("parsePickleAsiaPosts", () => {
     expect(items[0].title).toBe("Short update");
     expect(items[0].link).toBe("https://pickle.asia/blogs/short-update");
     expect(items[0].raw_body).toBeNull();
+  });
+});
+
+const duprListing = readFileSync(
+  new URL("../__fixtures__/dupr-blog-listing.html", import.meta.url),
+  "utf8",
+);
+
+describe("parseListingCards — listing Webflow của DUPR Blog", () => {
+  const items = parseListingCards(duprListing, HTML_SCRAPE_CONFIGS["dupr-blog"]);
+
+  it("lấy được tiêu đề, link /post/, ngày, tóm tắt, ảnh từ card bloggrid_card", () => {
+    expect(items.length).toBeGreaterThanOrEqual(3);
+    for (const item of items) {
+      expect(item.link).toMatch(/^https:\/\/www\.dupr\.com\/post\/[a-z0-9-]+$/);
+      expect(item.title.length).toBeGreaterThanOrEqual(5);
+      expect(Number.isFinite(Date.parse(item.published_at))).toBe(true);
+    }
+  });
+
+  it("đọc đúng một bài mốc trong fixture", () => {
+    const known = items.find((item) =>
+      item.link.endsWith("/inside-riverside-the-calgary-pickleball-club-built-on-dupr"),
+    );
+    expect(known).toBeDefined();
+    expect(known?.title).toBe(
+      "Inside Riverside, the Calgary pickleball club built on DUPR",
+    );
+    expect(known?.published_at.slice(0, 10)).toBe("2026-10-20");
+    expect(known?.summary).toContain("Riverside Club is a 15-court");
+  });
+});
+
+describe("extractScrapeLinks — đường og-meta mở rộng", () => {
+  it("Times Now: chỉ giữ link bài -article- dưới mục pickleball, giữ thứ tự listing", () => {
+    const html = [
+      '<a href="https://www.timesnownews.com/sports/pickleball/first-story-article-101">a</a>',
+      '<a href="https://www.timesnownews.com/sports/cricket/other-article-102">b</a>',
+      '<a href="https://www.timesnownews.com/sports/pickleball">mục</a>',
+      '<a href="https://www.timesnownews.com/sports/pickleball/second-story-article-103">c</a>',
+      '<a href="https://www.timesnownews.com/sports/pickleball/first-story-article-101">trùng</a>',
+    ].join("\n");
+    expect(extractScrapeLinks(html, HTML_SCRAPE_CONFIGS["times-now"])).toEqual([
+      "https://www.timesnownews.com/sports/pickleball/first-story-article-101",
+      "https://www.timesnownews.com/sports/pickleball/second-story-article-103",
+    ]);
+  });
+
+  it("Dink Authority: đọc <loc> sitemap, loại bản /es/ /pt/, sắp lastmod mới nhất trước", () => {
+    const xml = [
+      "<url><loc>https://www.dinkauthoritymagazine.com/news/old-story</loc><lastmod>2026-09-01T00:00:00.000Z</lastmod></url>",
+      "<url><loc>https://www.dinkauthoritymagazine.com/es/news/historia</loc><lastmod>2026-10-22T00:00:00.000Z</lastmod></url>",
+      "<url><loc>https://www.dinkauthoritymagazine.com/tips/new-tip</loc><lastmod>2026-10-20T00:00:00.000Z</lastmod></url>",
+      "<url><loc>https://www.dinkauthoritymagazine.com/about</loc><lastmod>2026-10-21T00:00:00.000Z</lastmod></url>",
+    ].join("\n");
+    expect(extractScrapeLinks(xml, HTML_SCRAPE_CONFIGS["dink-authority"])).toEqual([
+      "https://www.dinkauthoritymagazine.com/tips/new-tip",
+      "https://www.dinkauthoritymagazine.com/news/old-story",
+    ]);
+  });
+
+  it("PPA: đường cũ giữ nguyên — slug root, loại trang mục", () => {
+    const html =
+      '<a href="/122-shot-rally-amazing-point/">x</a><a href="/about/">y</a>';
+    expect(extractScrapeLinks(html, HTML_SCRAPE_CONFIGS["ppa-tour"])).toEqual([
+      "https://www.ppatour.com/122-shot-rally-amazing-point/",
+    ]);
+  });
+});
+
+describe("isAdvertorialItem — bộ lọc advertorial của pipeline tin tức", () => {
+  it("chặn bài nguồn tự khai quảng cáo", () => {
+    expect(isAdvertorialItem({ title: "Sponsored: the only paddle you need" })).toBe(true);
+    expect(
+      isAdvertorialItem({ title: "Weekend recap", summary: "Sponsored content from PaddleCo." }),
+    ).toBe(true);
+    expect(isAdvertorialItem({ title: "Weekend recap", categories: ["News", "Sponsored"] })).toBe(true);
+    expect(isAdvertorialItem({ title: "Advertorial: inside the shoe lab" })).toBe(true);
+  });
+
+  it("CHO QUA bài review sản phẩm và tin đối tác — mục tiêu của đợt mở rộng", () => {
+    expect(
+      isAdvertorialItem({ title: "Expert review: Does the RPM Jade live up to the hype?" }),
+    ).toBe(false);
+    expect(
+      isAdvertorialItem({ title: "Gearbox GX2 Review: Is It the Best Power Paddle of 2025?" }),
+    ).toBe(false);
+    expect(isAdvertorialItem({ title: "The best full-foam (Gen 4) pickleball paddles" })).toBe(false);
+    expect(
+      isAdvertorialItem({ title: "DUPR and Pickle Time Partner to Grow Pickleball in Thailand" }),
+    ).toBe(false);
+    expect(
+      isAdvertorialItem({ title: "Weekend recap", categories: ["News & Reviews"] }),
+    ).toBe(false);
   });
 });
