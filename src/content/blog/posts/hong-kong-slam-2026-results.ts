@@ -32,7 +32,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Hong Kong Slam 2026 results and daily scores",
-          "content": "Last updated: October 22, 2026, 17:00 Vietnam time. ThePickleHub publishes this Hong Kong Slam 2026 results page from the official PPA scores feed for October 19–25, 2026 at Kai Tak Arena, Hong Kong. The feed currently contains 226 matches, including 205 completed or final records and 3 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: October 22, 2026, 19:00 Vietnam time. ThePickleHub publishes this Hong Kong Slam 2026 results page from the official PPA scores feed for October 19–25, 2026 at Kai Tak Arena, Hong Kong. The feed currently contains 228 matches, including 208 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -126,13 +126,16 @@ const post: BlogPost = {
         },
         {
           "heading": "Mixed Doubles results",
-          "content": "No champion yet. 45 completed matches, latest round first.",
+          "content": "No champion yet. 48 completed matches, latest round first.",
           "listItems": [
             "Mixed Doubles, Round 16: Anna Bright / Hayden Patriquin beat Mari Humberg / Augustus Ge (12-10, 11-2).",
             "Mixed Doubles, Round 16: Eric Oncins / Tyra Hurricane Black beat Chao Yi Wang / Armaan Bhatia (11-1, 11-3).",
             "Mixed Doubles, Round 16: Sahra Dennehy / Tama Shimabukuro beat Catherine Parenteau / Noe Khlif (11-7, 12-10).",
             "Mixed Doubles, Round 16: Jorja Johnson / JW Johnson beat Len Yang / Kiora Kunimoto (11-5, 11-5).",
             "Mixed Doubles, Round 16: Ting Chieh Wei / Hunter Johnson beat Parris Todd / Christian Alshon (final).",
+            "Mixed Doubles, Round 16: Dylan Frazier / Kaitlyn Christian beat Rachel Rohrabacher / Gabriel Tardio (12-10, 14-12).",
+            "Mixed Doubles, Round 16: Ben Johns / Anna Leigh Waters beat Alix Truong / Christopher Haworth (11-4, 11-3).",
+            "Mixed Doubles, Round 16: Jonathan Truong / Jessie Irvine beat Federico Staksrud / Danni-Elle Townsend (11-4, 3-11, 11-9).",
             "Mixed Doubles, Round 32: Mari Humberg / Augustus Ge beat Hong Kit Wong / Lingwei Kong (11-6, 11-5).",
             "Mixed Doubles, Round 32: Anna Bright / Hayden Patriquin beat Zane Navratil / Katie Morris (11-0, 11-1).",
             "Mixed Doubles, Round 32: Ben Johns / Anna Leigh Waters beat Hannah Blatt / Grayson Goldin (11-3, 11-3).",
@@ -287,16 +290,16 @@ const post: BlogPost = {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Mixed Doubles, Round 16: Rachel Rohrabacher / Gabriel Tardio vs Dylan Frazier / Kaitlyn Christian — status live.",
-            "Mixed Doubles, Round 16: Jonathan Truong / Jessie Irvine vs Federico Staksrud / Danni-Elle Townsend — status live.",
-            "Mixed Doubles, Round 16: Ben Johns / Anna Leigh Waters vs Alix Truong / Christopher Haworth — status live.",
             "Women's Doubles, Quarter Finals: Rachel Rohrabacher / Parris Todd vs Alix Truong / Jessie Irvine — status scheduled.",
             "Women's Doubles, Quarter Finals: Anna Bright / Anna Leigh Waters vs Sahra Dennehy / Danni-Elle Townsend — status scheduled.",
             "Women's Doubles, Quarter Finals: Tyra Hurricane Black / Jorja Johnson vs Mari Humberg / Cailyn Campbell — status scheduled.",
             "Women's Doubles, Quarter Finals: Sofia Sewing / Catherine Parenteau vs Judit Castillo / Kiora Kunimoto — status scheduled.",
             "Men's Doubles, Quarter Finals: Zane Navratil / George Wall vs Connor Garnett / Dylan Frazier — status scheduled.",
             "Men's Doubles, Quarter Finals: Ben Johns / Gabriel Tardio vs Collin Johns / Len Yang — status scheduled.",
-            "Men's Doubles, Quarter Finals: Tama Shimabukuro / JW Johnson vs Eric Oncins / Noe Khlif — status scheduled."
+            "Men's Doubles, Quarter Finals: Tama Shimabukuro / JW Johnson vs Eric Oncins / Noe Khlif — status scheduled.",
+            "Men's Doubles, Quarter Finals: Federico Staksrud / Hayden Patriquin vs Quan Do / Hien Truong — status scheduled.",
+            "Mixed Doubles, Quarter Finals: Jorja Johnson / JW Johnson vs Eric Oncins / Tyra Hurricane Black — status scheduled.",
+            "Mixed Doubles, Quarter Finals: Ben Johns / Anna Leigh Waters vs Jonathan Truong / Jessie Irvine — status scheduled."
           ]
         },
         {
@@ -326,7 +329,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Hong Kong Slam 2026",
-          "content": "Cập nhật: 17:00 ngày 22/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Hong Kong Slam 2026 từ feed điểm số chính thức của PPA cho thời gian 19–25/10/2026 tại Kai Tak Arena, Hong Kong. Feed hiện có 226 trận, gồm 205 bản ghi đã kết thúc/chung cuộc và 3 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 19:00 ngày 22/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Hong Kong Slam 2026 từ feed điểm số chính thức của PPA cho thời gian 19–25/10/2026 tại Kai Tak Arena, Hong Kong. Feed hiện có 228 trận, gồm 208 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -420,13 +423,16 @@ const post: BlogPost = {
         },
         {
           "heading": "Kết quả Đôi nam nữ",
-          "content": "Chưa có nhà vô địch. 45 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Chưa có nhà vô địch. 48 trận đã kết thúc, vòng mới nhất ở trên.",
           "listItems": [
             "Đôi nam nữ, Round 16: Anna Bright / Hayden Patriquin thắng Mari Humberg / Augustus Ge (12-10, 11-2).",
             "Đôi nam nữ, Round 16: Eric Oncins / Tyra Hurricane Black thắng Chao Yi Wang / Armaan Bhatia (11-1, 11-3).",
             "Đôi nam nữ, Round 16: Sahra Dennehy / Tama Shimabukuro thắng Catherine Parenteau / Noe Khlif (11-7, 12-10).",
             "Đôi nam nữ, Round 16: Jorja Johnson / JW Johnson thắng Len Yang / Kiora Kunimoto (11-5, 11-5).",
             "Đôi nam nữ, Round 16: Ting Chieh Wei / Hunter Johnson thắng Parris Todd / Christian Alshon (final).",
+            "Đôi nam nữ, Round 16: Dylan Frazier / Kaitlyn Christian thắng Rachel Rohrabacher / Gabriel Tardio (12-10, 14-12).",
+            "Đôi nam nữ, Round 16: Ben Johns / Anna Leigh Waters thắng Alix Truong / Christopher Haworth (11-4, 11-3).",
+            "Đôi nam nữ, Round 16: Jonathan Truong / Jessie Irvine thắng Federico Staksrud / Danni-Elle Townsend (11-4, 3-11, 11-9).",
             "Đôi nam nữ, Round 32: Mari Humberg / Augustus Ge thắng Hong Kit Wong / Lingwei Kong (11-6, 11-5).",
             "Đôi nam nữ, Round 32: Anna Bright / Hayden Patriquin thắng Zane Navratil / Katie Morris (11-0, 11-1).",
             "Đôi nam nữ, Round 32: Ben Johns / Anna Leigh Waters thắng Hannah Blatt / Grayson Goldin (11-3, 11-3).",
@@ -581,16 +587,16 @@ const post: BlogPost = {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đôi nam nữ, Round 16: Rachel Rohrabacher / Gabriel Tardio gặp Dylan Frazier / Kaitlyn Christian — trạng thái live.",
-            "Đôi nam nữ, Round 16: Jonathan Truong / Jessie Irvine gặp Federico Staksrud / Danni-Elle Townsend — trạng thái live.",
-            "Đôi nam nữ, Round 16: Ben Johns / Anna Leigh Waters gặp Alix Truong / Christopher Haworth — trạng thái live.",
             "Đôi nữ, Quarter Finals: Rachel Rohrabacher / Parris Todd gặp Alix Truong / Jessie Irvine — trạng thái scheduled.",
             "Đôi nữ, Quarter Finals: Anna Bright / Anna Leigh Waters gặp Sahra Dennehy / Danni-Elle Townsend — trạng thái scheduled.",
             "Đôi nữ, Quarter Finals: Tyra Hurricane Black / Jorja Johnson gặp Mari Humberg / Cailyn Campbell — trạng thái scheduled.",
             "Đôi nữ, Quarter Finals: Sofia Sewing / Catherine Parenteau gặp Judit Castillo / Kiora Kunimoto — trạng thái scheduled.",
             "Đôi nam, Quarter Finals: Zane Navratil / George Wall gặp Connor Garnett / Dylan Frazier — trạng thái scheduled.",
             "Đôi nam, Quarter Finals: Ben Johns / Gabriel Tardio gặp Collin Johns / Len Yang — trạng thái scheduled.",
-            "Đôi nam, Quarter Finals: Tama Shimabukuro / JW Johnson gặp Eric Oncins / Noe Khlif — trạng thái scheduled."
+            "Đôi nam, Quarter Finals: Tama Shimabukuro / JW Johnson gặp Eric Oncins / Noe Khlif — trạng thái scheduled.",
+            "Đôi nam, Quarter Finals: Federico Staksrud / Hayden Patriquin gặp Quan Do / Hien Truong — trạng thái scheduled.",
+            "Đôi nam nữ, Quarter Finals: Jorja Johnson / JW Johnson gặp Eric Oncins / Tyra Hurricane Black — trạng thái scheduled.",
+            "Đôi nam nữ, Quarter Finals: Ben Johns / Anna Leigh Waters gặp Jonathan Truong / Jessie Irvine — trạng thái scheduled."
           ]
         },
         {
