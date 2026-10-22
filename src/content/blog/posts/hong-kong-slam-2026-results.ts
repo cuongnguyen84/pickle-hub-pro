@@ -32,7 +32,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Hong Kong Slam 2026 results and daily scores",
-          "content": "Last updated: October 22, 2026, 11:00 Vietnam time. ThePickleHub publishes this Hong Kong Slam 2026 results page from the official PPA scores feed for October 19–25, 2026 at Kai Tak Arena, Hong Kong. The feed currently contains 216 matches, including 186 completed or final records and 2 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: October 22, 2026, 13:00 Vietnam time. ThePickleHub publishes this Hong Kong Slam 2026 results page from the official PPA scores feed for October 19–25, 2026 at Kai Tak Arena, Hong Kong. The feed currently contains 219 matches, including 193 completed or final records and 1 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -50,16 +50,23 @@ const post: BlogPost = {
         },
         {
           "heading": "Women's Doubles results",
-          "content": "No champion yet. 8 completed matches, latest round first.",
+          "content": "No champion yet. 15 completed matches, latest round first.",
           "listItems": [
+            "Women's Doubles, Round 16: Tyra Hurricane Black / Jorja Johnson beat Albie Huang / Andie Dikosavljevic (11-6, 11-3).",
+            "Women's Doubles, Round 16: Sofia Sewing / Catherine Parenteau beat Xiao Yi Wang-Beckvall / Aiko Yoshitomi (11-8, 11-4).",
+            "Women's Doubles, Round 16: Sahra Dennehy / Danni-Elle Townsend beat Allyce Jones / Kaitlyn Christian (11-7, 4-11, 11-6).",
+            "Women's Doubles, Round 16: Alix Truong / Jessie Irvine beat Lingwei Kong / Yufei Long (11-5, 9-11, 12-10).",
+            "Women's Doubles, Round 16: Anna Bright / Anna Leigh Waters beat Jamie Haas / Rika Fujiwara (11-0, 11-3).",
+            "Women's Doubles, Round 16: Judit Castillo / Kiora Kunimoto beat Lacy Schneemann / Ting Chieh Wei (11-8, 11-3).",
+            "Women's Doubles, Round 16: Mari Humberg / Cailyn Campbell beat Chao Yi Wang / Nok Yiu Tang (11-3, 6-11, 11-4).",
             "Women's Doubles, Round 32: Judit Castillo / Kiora Kunimoto beat Kaitlynn Hart / Katie Morris (11-8, 11-4).",
-            "Women's Doubles, Round 32: Jamie Haas / Rika Fujiwara beat Sophia Nhi Huynh / HO Tam (11-3, 9-11, 11-3).",
-            "Women's Doubles, Round 32: Hannah Blatt / Kei Sawaki beat Mayu Ito / Sophia Phuong Anh Tran (11-8, 11-6).",
-            "Women's Doubles, Round 32: Xiao Yi Wang-Beckvall / Aiko Yoshitomi beat Lynn Lim / Kwan Wun Man (11-5, 11-1).",
             "Women's Doubles, Round 32: Mari Humberg / Cailyn Campbell beat Trang Huynh / Yu-Chieh Hsieh (11-3, 11-5).",
-            "Women's Doubles, Round 32: Lingwei Kong / Yufei Long beat Pei-Yu Lai / Seina Shima (11-0, 11-5).",
             "Women's Doubles, Round 32: Sahra Dennehy / Danni-Elle Townsend beat Yunqi He / Ying Suet Lam (11-2, 11-1).",
-            "Women's Doubles, Round 32: Albie Huang / Andie Dikosavljevic beat Jaeda Minniefield / Mihae Kwon (11-6, 11-9)."
+            "Women's Doubles, Round 32: Albie Huang / Andie Dikosavljevic beat Jaeda Minniefield / Mihae Kwon (11-6, 11-9).",
+            "Women's Doubles, Round 32: Lingwei Kong / Yufei Long beat Pei-Yu Lai / Seina Shima (11-0, 11-5).",
+            "Women's Doubles, Round 32: Xiao Yi Wang-Beckvall / Aiko Yoshitomi beat Lynn Lim / Kwan Wun Man (11-5, 11-1).",
+            "Women's Doubles, Round 32: Jamie Haas / Rika Fujiwara beat Sophia Nhi Huynh / HO Tam (11-3, 9-11, 11-3).",
+            "Women's Doubles, Round 32: Hannah Blatt / Kei Sawaki beat Mayu Ito / Sophia Phuong Anh Tran (11-8, 11-6)."
           ]
         },
         {
@@ -197,7 +204,7 @@ const post: BlogPost = {
             "Women's Singles, Round 64: Anni Xie beat Yuet Magdaleine Wong (11-4, 11-6).",
             "Women's Singles, Round 64: Andie Dikosavljevic beat Yuheng Ma (11-0, 11-1).",
             "Women's Singles, Round 64: Aiko Yoshitomi beat Qiana Yang (11-0, 11-5).",
-            "Women's Singles, Round 64: Marcela Aguila Ampon beat Tzu-En Chiu (11-1, 11-6).",
+            "Women's Singles, Round 64: Marcela Aguila Ampon beat TZU-EN CHIU (11-1, 11-6).",
             "Women's Singles, Round 64: Nok Yiu Tang beat Kwan Wun Man (11-5, 11-0).",
             "Women's Singles, Round 64: Zhe Chen beat Sofia Sewing (final).",
             "Women's Singles, Round 64: Kaitlynn Hart beat Miyu Hazawa (2-11, 11-5, 11-7).",
@@ -268,16 +275,16 @@ const post: BlogPost = {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Women's Doubles, Round 16: Sofia Sewing / Catherine Parenteau vs Xiao Yi Wang-Beckvall / Aiko Yoshitomi — status live.",
-            "Women's Doubles, Round 16: Tyra Hurricane Black / Jorja Johnson vs Albie Huang / Andie Dikosavljevic — status live.",
-            "Women's Doubles, Round 16: Rachel Rohrabacher / Parris Todd vs Hannah Blatt / Kei Sawaki — status scheduled.",
-            "Women's Doubles, Round 16: Lacy Schneemann / Ting Chieh Wei vs Judit Castillo / Kiora Kunimoto — status scheduled.",
-            "Women's Doubles, Round 16: Chao Yi Wang / Nok Yiu Tang vs Mari Humberg / Cailyn Campbell — status scheduled.",
-            "Women's Doubles, Round 16: Anna Bright / Anna Leigh Waters vs Jamie Haas / Rika Fujiwara — status scheduled.",
-            "Women's Doubles, Round 16: Allyce Jones / Kaitlyn Christian vs Sahra Dennehy / Danni-Elle Townsend — status scheduled.",
-            "Women's Doubles, Round 16: Alix Truong / Jessie Irvine vs Lingwei Kong / Yufei Long — status scheduled.",
+            "Women's Doubles, Round 16: Rachel Rohrabacher / Parris Todd vs Hannah Blatt / Kei Sawaki — status live.",
+            "Women's Doubles, Quarter Finals: Anna Bright / Anna Leigh Waters vs Sahra Dennehy / Danni-Elle Townsend — status scheduled.",
+            "Women's Doubles, Quarter Finals: Tyra Hurricane Black / Jorja Johnson vs Mari Humberg / Cailyn Campbell — status scheduled.",
+            "Women's Doubles, Quarter Finals: Sofia Sewing / Catherine Parenteau vs Judit Castillo / Kiora Kunimoto — status scheduled.",
             "Men's Doubles, Round 16: Collin Johns / Len Yang vs Eunggwon Kim / Hong Kit Wong — status scheduled.",
-            "Men's Doubles, Round 16: Ben Johns / Gabriel Tardio vs Luc Pham / Will Mackinnon — status scheduled."
+            "Men's Doubles, Round 16: Ben Johns / Gabriel Tardio vs Luc Pham / Will Mackinnon — status scheduled.",
+            "Men's Doubles, Round 16: Connor Garnett / Dylan Frazier vs Jonathan Truong / Max Freeman — status scheduled.",
+            "Men's Doubles, Round 16: Augustus Ge / Armaan Bhatia vs Quan Do / Hien Truong — status scheduled.",
+            "Men's Doubles, Round 16: Tama Shimabukuro / JW Johnson vs Casey Diamond / Tyson McGuffin — status scheduled.",
+            "Men's Doubles, Round 16: Federico Staksrud / Hayden Patriquin vs Robert Stirling / Joey Wild — status scheduled."
           ]
         },
         {
@@ -307,7 +314,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Hong Kong Slam 2026",
-          "content": "Cập nhật: 11:00 ngày 22/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Hong Kong Slam 2026 từ feed điểm số chính thức của PPA cho thời gian 19–25/10/2026 tại Kai Tak Arena, Hong Kong. Feed hiện có 216 trận, gồm 186 bản ghi đã kết thúc/chung cuộc và 2 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 13:00 ngày 22/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Hong Kong Slam 2026 từ feed điểm số chính thức của PPA cho thời gian 19–25/10/2026 tại Kai Tak Arena, Hong Kong. Feed hiện có 219 trận, gồm 193 bản ghi đã kết thúc/chung cuộc và 1 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -325,16 +332,23 @@ const post: BlogPost = {
         },
         {
           "heading": "Kết quả Đôi nữ",
-          "content": "Chưa có nhà vô địch. 8 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Chưa có nhà vô địch. 15 trận đã kết thúc, vòng mới nhất ở trên.",
           "listItems": [
+            "Đôi nữ, Round 16: Tyra Hurricane Black / Jorja Johnson thắng Albie Huang / Andie Dikosavljevic (11-6, 11-3).",
+            "Đôi nữ, Round 16: Sofia Sewing / Catherine Parenteau thắng Xiao Yi Wang-Beckvall / Aiko Yoshitomi (11-8, 11-4).",
+            "Đôi nữ, Round 16: Sahra Dennehy / Danni-Elle Townsend thắng Allyce Jones / Kaitlyn Christian (11-7, 4-11, 11-6).",
+            "Đôi nữ, Round 16: Alix Truong / Jessie Irvine thắng Lingwei Kong / Yufei Long (11-5, 9-11, 12-10).",
+            "Đôi nữ, Round 16: Anna Bright / Anna Leigh Waters thắng Jamie Haas / Rika Fujiwara (11-0, 11-3).",
+            "Đôi nữ, Round 16: Judit Castillo / Kiora Kunimoto thắng Lacy Schneemann / Ting Chieh Wei (11-8, 11-3).",
+            "Đôi nữ, Round 16: Mari Humberg / Cailyn Campbell thắng Chao Yi Wang / Nok Yiu Tang (11-3, 6-11, 11-4).",
             "Đôi nữ, Round 32: Judit Castillo / Kiora Kunimoto thắng Kaitlynn Hart / Katie Morris (11-8, 11-4).",
-            "Đôi nữ, Round 32: Jamie Haas / Rika Fujiwara thắng Sophia Nhi Huynh / HO Tam (11-3, 9-11, 11-3).",
-            "Đôi nữ, Round 32: Hannah Blatt / Kei Sawaki thắng Mayu Ito / Sophia Phuong Anh Tran (11-8, 11-6).",
-            "Đôi nữ, Round 32: Xiao Yi Wang-Beckvall / Aiko Yoshitomi thắng Lynn Lim / Kwan Wun Man (11-5, 11-1).",
             "Đôi nữ, Round 32: Mari Humberg / Cailyn Campbell thắng Trang Huynh / Yu-Chieh Hsieh (11-3, 11-5).",
-            "Đôi nữ, Round 32: Lingwei Kong / Yufei Long thắng Pei-Yu Lai / Seina Shima (11-0, 11-5).",
             "Đôi nữ, Round 32: Sahra Dennehy / Danni-Elle Townsend thắng Yunqi He / Ying Suet Lam (11-2, 11-1).",
-            "Đôi nữ, Round 32: Albie Huang / Andie Dikosavljevic thắng Jaeda Minniefield / Mihae Kwon (11-6, 11-9)."
+            "Đôi nữ, Round 32: Albie Huang / Andie Dikosavljevic thắng Jaeda Minniefield / Mihae Kwon (11-6, 11-9).",
+            "Đôi nữ, Round 32: Lingwei Kong / Yufei Long thắng Pei-Yu Lai / Seina Shima (11-0, 11-5).",
+            "Đôi nữ, Round 32: Xiao Yi Wang-Beckvall / Aiko Yoshitomi thắng Lynn Lim / Kwan Wun Man (11-5, 11-1).",
+            "Đôi nữ, Round 32: Jamie Haas / Rika Fujiwara thắng Sophia Nhi Huynh / HO Tam (11-3, 9-11, 11-3).",
+            "Đôi nữ, Round 32: Hannah Blatt / Kei Sawaki thắng Mayu Ito / Sophia Phuong Anh Tran (11-8, 11-6)."
           ]
         },
         {
@@ -472,7 +486,7 @@ const post: BlogPost = {
             "Đơn nữ, Round 64: Anni Xie thắng Yuet Magdaleine Wong (11-4, 11-6).",
             "Đơn nữ, Round 64: Andie Dikosavljevic thắng Yuheng Ma (11-0, 11-1).",
             "Đơn nữ, Round 64: Aiko Yoshitomi thắng Qiana Yang (11-0, 11-5).",
-            "Đơn nữ, Round 64: Marcela Aguila Ampon thắng Tzu-En Chiu (11-1, 11-6).",
+            "Đơn nữ, Round 64: Marcela Aguila Ampon thắng TZU-EN CHIU (11-1, 11-6).",
             "Đơn nữ, Round 64: Nok Yiu Tang thắng Kwan Wun Man (11-5, 11-0).",
             "Đơn nữ, Round 64: Zhe Chen thắng Sofia Sewing (final).",
             "Đơn nữ, Round 64: Kaitlynn Hart thắng Miyu Hazawa (2-11, 11-5, 11-7).",
@@ -543,16 +557,16 @@ const post: BlogPost = {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đôi nữ, Round 16: Sofia Sewing / Catherine Parenteau gặp Xiao Yi Wang-Beckvall / Aiko Yoshitomi — trạng thái live.",
-            "Đôi nữ, Round 16: Tyra Hurricane Black / Jorja Johnson gặp Albie Huang / Andie Dikosavljevic — trạng thái live.",
-            "Đôi nữ, Round 16: Rachel Rohrabacher / Parris Todd gặp Hannah Blatt / Kei Sawaki — trạng thái scheduled.",
-            "Đôi nữ, Round 16: Lacy Schneemann / Ting Chieh Wei gặp Judit Castillo / Kiora Kunimoto — trạng thái scheduled.",
-            "Đôi nữ, Round 16: Chao Yi Wang / Nok Yiu Tang gặp Mari Humberg / Cailyn Campbell — trạng thái scheduled.",
-            "Đôi nữ, Round 16: Anna Bright / Anna Leigh Waters gặp Jamie Haas / Rika Fujiwara — trạng thái scheduled.",
-            "Đôi nữ, Round 16: Allyce Jones / Kaitlyn Christian gặp Sahra Dennehy / Danni-Elle Townsend — trạng thái scheduled.",
-            "Đôi nữ, Round 16: Alix Truong / Jessie Irvine gặp Lingwei Kong / Yufei Long — trạng thái scheduled.",
+            "Đôi nữ, Round 16: Rachel Rohrabacher / Parris Todd gặp Hannah Blatt / Kei Sawaki — trạng thái live.",
+            "Đôi nữ, Quarter Finals: Anna Bright / Anna Leigh Waters gặp Sahra Dennehy / Danni-Elle Townsend — trạng thái scheduled.",
+            "Đôi nữ, Quarter Finals: Tyra Hurricane Black / Jorja Johnson gặp Mari Humberg / Cailyn Campbell — trạng thái scheduled.",
+            "Đôi nữ, Quarter Finals: Sofia Sewing / Catherine Parenteau gặp Judit Castillo / Kiora Kunimoto — trạng thái scheduled.",
             "Đôi nam, Round 16: Collin Johns / Len Yang gặp Eunggwon Kim / Hong Kit Wong — trạng thái scheduled.",
-            "Đôi nam, Round 16: Ben Johns / Gabriel Tardio gặp Luc Pham / Will Mackinnon — trạng thái scheduled."
+            "Đôi nam, Round 16: Ben Johns / Gabriel Tardio gặp Luc Pham / Will Mackinnon — trạng thái scheduled.",
+            "Đôi nam, Round 16: Connor Garnett / Dylan Frazier gặp Jonathan Truong / Max Freeman — trạng thái scheduled.",
+            "Đôi nam, Round 16: Augustus Ge / Armaan Bhatia gặp Quan Do / Hien Truong — trạng thái scheduled.",
+            "Đôi nam, Round 16: Tama Shimabukuro / JW Johnson gặp Casey Diamond / Tyson McGuffin — trạng thái scheduled.",
+            "Đôi nam, Round 16: Federico Staksrud / Hayden Patriquin gặp Robert Stirling / Joey Wild — trạng thái scheduled."
           ]
         },
         {
