@@ -142,13 +142,13 @@ BEGIN
   IF COALESCE(p_start_time, '') <> ''
      AND p_start_time !~ '^([01][0-9]|2[0-3]):[0-5][0-9]$' THEN
     RETURN json_build_object('success', false, 'error', 'INVALID_START_TIME');
-  END IF
+  END IF;
 
   IF p_group_courts IS NOT NULL THEN
     IF jsonb_typeof(p_group_courts) <> 'array'
        OR jsonb_array_length(p_group_courts) > 26 THEN
       RETURN json_build_object('success', false, 'error', 'INVALID_GROUP_COURTS');
-    END IF
+    END IF;
     FOR v_group_court_item IN SELECT value FROM jsonb_array_elements(p_group_courts)
     LOOP
       IF jsonb_typeof(v_group_court_item) = 'null' THEN
@@ -159,7 +159,7 @@ BEGIN
       ELSE
         RETURN json_build_object('success', false, 'error', 'INVALID_GROUP_COURTS');
       END IF;
-    END LOOP
+    END LOOP;
   END IF;
 
   DROP TABLE IF EXISTS pg_temp.qt_setup_player_map;
@@ -276,7 +276,7 @@ BEGIN
         v_court_texts := array_append(v_court_texts, v_pin::text);
       END IF;
     END LOOP;
-  END IF
+  END IF;
   v_court_count := cardinality(v_courts);
 
   IF v_table.format::text = 'round_robin' THEN
