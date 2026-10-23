@@ -204,15 +204,37 @@ def _vi_results_summary(draws):
     return f'<div class="tl-rb-summary"><h3>Tóm tắt giải</h3>{rows}</div>'
 
 
+def _results_anchor(division):
+    """Same slug rule as the generator/React/blog-body anchors: đ->d before
+    NFKD (it has no decomposition), apostrophes dropped, diacritics stripped."""
+    import re as _re
+    import unicodedata as _ud
+    s = str(division).replace("đ", "d").replace("Đ", "D").replace("'", "").replace("’", "")
+    s = _ud.normalize("NFKD", s)
+    s = "".join(ch for ch in s if not _ud.combining(ch)).lower()
+    return "rb-" + _re.sub(r"[^a-z0-9]+", "-", s).strip("-")
+
 def vi_html(vi):
     e = html.escape
     parts = []
+    boards = [s["resultsBoard"] for s in vi["sections"] if s.get("resultsBoard")]
+    chips_done = False
     for s in vi["sections"]:
-        parts.append(f"<h2>{e(s['heading'])}</h2>")
+        if s.get("resultsBoard"):
+            anchor = _results_anchor(s["resultsBoard"].get("division", ""))
+            parts.append(f'<h2 id="{anchor}">{e(s["heading"])}</h2>')
+        else:
+            parts.append(f"<h2>{e(s['heading'])}</h2>")
         parts += [f"<p>{e(p.strip())}</p>" for p in str(s["content"]).split("\n\n") if p.strip()]
         if s.get("resultsSummary"):
             parts.append(_vi_results_summary(s["resultsSummary"]))
         if s.get("resultsBoard"):
+            if not chips_done and len(boards) > 1:
+                chips = "".join(
+                    f'<a class="tl-rb-chip" href="#{_results_anchor(b.get("division", ""))}">{e(str(b.get("division", "")))}</a>'
+                    for b in boards)
+                parts.append(f'<nav class="tl-rb-chips">{chips}</nav>')
+                chips_done = True
             parts.append(_vi_results_board(s["resultsBoard"]))
         for tag, key in (("ul", "listItems"), ("ol", "orderedList")):
             if s.get(key) and not s.get("resultsBoard"):
