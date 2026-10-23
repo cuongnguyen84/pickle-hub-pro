@@ -53,7 +53,7 @@ describe('public editorial HTML', () => {
     expect(home).toContain('rel="preload"');
     expect(home).toContain('as="image"');
     expect(home).toContain('fetchpriority="high"');
-    expect(home).toContain('hong-kong-slam-2026-preview-hero-768.webp');
+    expect(home).toContain('mlp-asia-draft-2026-viet-panthers-hero-768.webp');
     const post = lcpPreloadTag('/blog/what-is-dupr-pickleball-rating-system');
     expect(post).toContain('dupr-pickleball-rating-hero-768.webp');
     expect(post).toContain('imagesrcset=');
