@@ -72,11 +72,12 @@ private struct QTChatInvokeBody: Encodable {
     let facts: String
 }
 
-private struct QTChatInvokeResponse: Decodable {
+private struct QTChatInvokeResponse: Decodable, Sendable {
     let reply: String?
     let intent: String
     let unmet: String?
     let patch: [String: QTChatJSONValue]?
+    let error: String?
 }
 
 /// Gọi edge function dùng chung với web; lỗi tạm thời thử lại đúng 1 lần
@@ -314,7 +315,7 @@ final class QuickTableChatViewModel {
             }
             let trusted = QTChatEngine.trustPatch(res.patch ?? [:], text: text, slot: slot)
             let patch = QTChatEngine.dropInventedRoster(
-                QTChatPatch.fromModelJSON(trusted), text: text, before: draft.entries)
+                QTChatPatch.fromModelJSON(trusted), text, draft.entries)
             let patched = QTChatEngine.applyPatch(draft, patch)
             let spoken = QTChatEngine.applySpokenEdit(patched, text)
             let next = spoken ?? patched
