@@ -32,7 +32,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Hong Kong Slam 2026 results and daily scores",
-          "content": "Last updated: October 23, 2026, 17:00 Vietnam time. ThePickleHub publishes this Hong Kong Slam 2026 results page from the official PPA scores feed for October 19–25, 2026 at Kai Tak Arena, Hong Kong. The feed currently contains 237 matches, including 227 completed or final records and 1 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: October 23, 2026, 19:00 Vietnam time. ThePickleHub publishes this Hong Kong Slam 2026 results page from the official PPA scores feed for October 19–25, 2026 at Kai Tak Arena, Hong Kong. The feed currently contains 238 matches, including 228 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -134,8 +134,9 @@ const post: BlogPost = {
         },
         {
           "heading": "Mixed Doubles results",
-          "content": "No champion yet. 51 completed matches, latest round first.",
+          "content": "No champion yet. 52 completed matches, latest round first.",
           "listItems": [
+            "Mixed Doubles, Quarter Finals: Ting Chieh Wei / Hunter Johnson beat Dylan Frazier / Kaitlyn Christian (5-11, 11-5, 11-9).",
             "Mixed Doubles, Quarter Finals: Jorja Johnson / JW Johnson beat Eric Oncins / Tyra Hurricane Black (9-11, 11-8, 11-2).",
             "Mixed Doubles, Quarter Finals: Ben Johns / Anna Leigh Waters beat Jonathan Truong / Jessie Irvine (11-1, 11-0).",
             "Mixed Doubles, Quarter Finals: Anna Bright / Hayden Patriquin beat Sahra Dennehy / Tama Shimabukuro (11-9, 11-5).",
@@ -309,12 +310,12 @@ const post: BlogPost = {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Mixed Doubles, Quarter Finals: Ting Chieh Wei / Hunter Johnson vs Dylan Frazier / Kaitlyn Christian — status live.",
             "Women's Doubles, Semi-Finals: Tyra Hurricane Black / Jorja Johnson vs Rachel Rohrabacher / Parris Todd — status scheduled.",
             "Women's Doubles, Semi-Finals: Anna Bright / Anna Leigh Waters vs Sofia Sewing / Catherine Parenteau — status scheduled.",
             "Men's Doubles, Semi-Finals: Ben Johns / Gabriel Tardio vs Tama Shimabukuro / JW Johnson — status scheduled.",
             "Men's Doubles, Semi-Finals: Federico Staksrud / Hayden Patriquin vs Connor Garnett / Dylan Frazier — status scheduled.",
             "Mixed Doubles, Semi-Finals: Anna Bright / Hayden Patriquin vs Jorja Johnson / JW Johnson — status scheduled.",
+            "Mixed Doubles, Semi-Finals: Ben Johns / Anna Leigh Waters vs Ting Chieh Wei / Hunter Johnson — status scheduled.",
             "Women's Singles, Semi-Finals: Andie Dikosavljevic vs Sahra Dennehy — status scheduled.",
             "Women's Singles, Semi-Finals: Judit Castillo vs Kiora Kunimoto — status scheduled.",
             "Men's Singles, Semi-Finals: Noe Khlif vs Tama Shimabukuro — status scheduled.",
@@ -348,7 +349,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Hong Kong Slam 2026",
-          "content": "Cập nhật: 17:00 ngày 23/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Hong Kong Slam 2026 từ feed điểm số chính thức của PPA cho thời gian 19–25/10/2026 tại Kai Tak Arena, Hong Kong. Feed hiện có 237 trận, gồm 227 bản ghi đã kết thúc/chung cuộc và 1 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 19:00 ngày 23/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Hong Kong Slam 2026 từ feed điểm số chính thức của PPA cho thời gian 19–25/10/2026 tại Kai Tak Arena, Hong Kong. Feed hiện có 238 trận, gồm 228 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -450,8 +451,9 @@ const post: BlogPost = {
         },
         {
           "heading": "Kết quả Đôi nam nữ",
-          "content": "Chưa có nhà vô địch. 51 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Chưa có nhà vô địch. 52 trận đã kết thúc, vòng mới nhất ở trên.",
           "listItems": [
+            "Đôi nam nữ, Quarter Finals: Ting Chieh Wei / Hunter Johnson thắng Dylan Frazier / Kaitlyn Christian (5-11, 11-5, 11-9).",
             "Đôi nam nữ, Quarter Finals: Jorja Johnson / JW Johnson thắng Eric Oncins / Tyra Hurricane Black (9-11, 11-8, 11-2).",
             "Đôi nam nữ, Quarter Finals: Ben Johns / Anna Leigh Waters thắng Jonathan Truong / Jessie Irvine (11-1, 11-0).",
             "Đôi nam nữ, Quarter Finals: Anna Bright / Hayden Patriquin thắng Sahra Dennehy / Tama Shimabukuro (11-9, 11-5).",
@@ -625,12 +627,12 @@ const post: BlogPost = {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đôi nam nữ, Quarter Finals: Ting Chieh Wei / Hunter Johnson gặp Dylan Frazier / Kaitlyn Christian — trạng thái live.",
             "Đôi nữ, Semi-Finals: Tyra Hurricane Black / Jorja Johnson gặp Rachel Rohrabacher / Parris Todd — trạng thái scheduled.",
             "Đôi nữ, Semi-Finals: Anna Bright / Anna Leigh Waters gặp Sofia Sewing / Catherine Parenteau — trạng thái scheduled.",
             "Đôi nam, Semi-Finals: Ben Johns / Gabriel Tardio gặp Tama Shimabukuro / JW Johnson — trạng thái scheduled.",
             "Đôi nam, Semi-Finals: Federico Staksrud / Hayden Patriquin gặp Connor Garnett / Dylan Frazier — trạng thái scheduled.",
             "Đôi nam nữ, Semi-Finals: Anna Bright / Hayden Patriquin gặp Jorja Johnson / JW Johnson — trạng thái scheduled.",
+            "Đôi nam nữ, Semi-Finals: Ben Johns / Anna Leigh Waters gặp Ting Chieh Wei / Hunter Johnson — trạng thái scheduled.",
             "Đơn nữ, Semi-Finals: Andie Dikosavljevic gặp Sahra Dennehy — trạng thái scheduled.",
             "Đơn nữ, Semi-Finals: Judit Castillo gặp Kiora Kunimoto — trạng thái scheduled.",
             "Đơn nam, Semi-Finals: Noe Khlif gặp Tama Shimabukuro — trạng thái scheduled.",
