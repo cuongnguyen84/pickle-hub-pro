@@ -26,6 +26,7 @@ import { blogHeroSrcSet, heroDimsProps } from "@/lib/image-utils";
 import { AdSlot } from "@/components/monetization/AdSlot";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WorldCupResultsBoard } from "@/components/live/WorldCupResultsBoard";
+import { ResultsHub, ResultsSummary } from "@/components/blog/ResultsBoard";
 
 /**
  * /blog/:slug — English long-form article page.
@@ -297,7 +298,19 @@ const BlogPost = () => {
 
           <AdSlot slot="blogInArticle" minHeight={120} className="my-6" />
           <div className="tl-longform">
-            {content.sections.map((section, idx) => (
+            {content.sections.map((section, idx) => {
+              // Results posts: every resultsBoard section is rendered by one
+              // ResultsHub (sticky chips + player search), mounted at the
+              // first board section; the other board sections render nothing.
+              if (section.resultsBoard) {
+                const firstBoardIdx = content.sections.findIndex(
+                  (s) => s.resultsBoard,
+                );
+                return idx === firstBoardIdx ? (
+                  <ResultsHub key={idx} sections={content.sections} />
+                ) : null;
+              }
+              return (
               <section key={idx}>
                 {section.heading && <h2>{section.heading}</h2>}
                 {section.image && (
@@ -331,6 +344,9 @@ const BlogPost = () => {
                   </figure>
                 )}
                 <p>{section.content}</p>
+                {section.resultsSummary && section.resultsSummary.length > 0 && (
+                  <ResultsSummary draws={section.resultsSummary} />
+                )}
                 {section.listItems && section.listItems.length > 0 && (
                   <ul>
                     {section.listItems.map((item, i) => (
@@ -385,7 +401,8 @@ const BlogPost = () => {
                   </p>
                 )}
               </section>
-            ))}
+              );
+            })}
 
             {content.howToSteps && content.howToSteps.length > 0 && (
               <section>

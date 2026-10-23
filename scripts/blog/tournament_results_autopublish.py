@@ -84,28 +84,121 @@ def _match_line(match, vi=False):
     return f"{division}, {label}: {_names(a)} vs {_names(b)} — status {status}."
 
 
+ROUND_VI = {"Final": "Chung kết", "Finals": "Chung kết",
+            "Semi Finals": "Bán kết", "Semi Final": "Bán kết", "Semifinals": "Bán kết", "Semifinal": "Bán kết",
+            "Quarter Finals": "Tứ kết", "Quarter Final": "Tứ kết", "Quarterfinals": "Tứ kết", "Quarterfinal": "Tứ kết",
+            "Round 16": "Vòng 16", "Round 32": "Vòng 32", "Round 64": "Vòng 64", "Round 128": "Vòng 128",
+            "Round Robin": "Vòng bảng"}
+
+
+def _division(match, vi: bool = False) -> str:
+    """Division label exactly as the prose line renders it (draw grouping key)."""
+    return _match_line(match, vi).split(",", 1)[0]
+
+
+def _round_label(match, vi: bool = False) -> str:
+    label = str(match.get("roundLabel") or "Vòng chưa ghi nhãn")
+    return ROUND_VI.get(label, label) if vi else label
+
+
+def _anchor(division: str) -> str:
+    """In-page anchor id for a draw section — the same slug rule the TS
+    renderers apply to the board's division name (strip diacritics,
+    lowercase, non-alphanumerics collapse to single dashes)."""
+    import unicodedata
+    # đ/Đ has no NFKD decomposition — map it first or "Đôi nữ" loses the d;
+    # apostrophes drop out entirely ("Women's" → "womens", not "women-s").
+    slug = unicodedata.normalize("NFKD", division.replace("Đ", "D").replace("đ", "d").replace("'", "").replace("’", "")).encode("ascii", "ignore").decode()
+    slug = re.sub(r"[^a-z0-9]+", "-", slug.lower()).strip("-")
+    return f"rb-{slug}"
+
+
+def _round_collapsed(match) -> bool:
+    """Early rounds start collapsed: Round of 32 and below, plus qualifiers.
+    Judged on the raw feed label so EN and VI boards agree."""
+    label = str(match.get("roundLabel") or "")
+    m = re.search(r"(?i)round\s+(?:of\s+)?(\d+)", label)
+    return bool((m and int(m.group(1)) >= 32) or re.search(r"(?i)qualif", label))
+
+
+def _match_struct(match) -> dict:
+    """The board form of a completed match — same facts as _match_line,
+    kept structured (winner/loser/set scores) for the results board."""
+    a, b = match["teams"]
+    winner = a if a.get("winner") else b
+    loser = b if winner is a else a
+    sets = [[x, y] for x, y in zip(winner.get("games") or [], loser.get("games") or [])
+            if x is not None and y is not None and (x or y)]  # unplayed game 3 comes back as 0-0
+    out = {"winner": _names(winner), "loser": _names(loser), "sets": sets}
+    if match["status"] in {"walkover", "retired"}:
+        out["status"] = match["status"]
+    return out
+
+
+def _board(rows: list, division: str, vi: bool = False) -> dict:
+    """Group a draw's completed matches (already sorted latest round first)
+    into rounds for the structured board. Champion mirrors draw_sections."""
+    top = rows[0]
+    champion = None
+    if re.fullmatch(r"(?i)finals?", str(top.get("roundLabel") or "").strip()):
+        champion = _names(top["teams"][0] if top["teams"][0].get("winner") else top["teams"][1])
+    rounds: list = []
+    for m in rows:
+        label = _round_label(m, vi)
+        if not rounds or rounds[-1]["label"] != label:
+            entry = {"label": label, "matches": []}
+            if _round_collapsed(m):
+                entry["collapsed"] = True
+            rounds.append(entry)
+        rounds[-1]["matches"].append(_match_struct(m))
+    board = {"division": division, "rounds": rounds}
+    if champion:
+        board["champion"] = champion
+    return board
+
+
+def draw_summaries(finals: list, vi: bool = False) -> list:
+    """One summary row per draw for the page-top card on the intro section."""
+    by_div: dict[str, list] = {}
+    for m in finals:
+        by_div.setdefault(_division(m, vi), []).append(m)
+    out = []
+    for division, rows in by_div.items():
+        rows = sorted(rows, key=lambda m: (int(m.get("roundNumber", 0) or 0), str(m.get("dateKey", ""))), reverse=True)
+        board = _board(rows, division, vi)
+        deepest = _round_label(rows[0], vi)
+        if board.get("champion"):
+            note = f"Hoàn tất · {len(rows)} trận" if vi else f"Complete · {len(rows)} matches"
+            out.append({"division": division, "champion": board["champion"], "note": note, "anchor": _anchor(division)})
+        else:
+            note = (f"Đã tới {deepest} · {len(rows)} trận" if vi
+                    else f"Through to the {deepest} · {len(rows)} matches")
+            out.append({"division": division, "note": note, "anchor": _anchor(division)})
+    return out
+
+
 def draw_sections(finals: list, vi: bool = False) -> list:
     """One section per division with EVERY completed match, latest round first.
 
     Readers search for the whole draw ("ppa brisbane results"); the old 20-row
     cap left the page showing only the last rounds and none of the early ones.
+    Matches ship as the structured resultsBoard; renderers fall back to the
+    prose lead in `content` only, so no listItems are emitted for draws.
     """
     by_div: dict[str, list] = {}
     for m in finals:
-        by_div.setdefault(_match_line(m, vi).split(",", 1)[0], []).append(m)
+        by_div.setdefault(_division(m, vi), []).append(m)
     out = []
     for division, rows in by_div.items():
         rows.sort(key=lambda m: (int(m.get("roundNumber", 0) or 0), str(m.get("dateKey", ""))), reverse=True)
-        top = rows[0]
-        champion = None
-        if re.fullmatch(r"(?i)finals?", str(top.get("roundLabel") or "").strip()):
-            champion = _names(top["teams"][0] if top["teams"][0].get("winner") else top["teams"][1])
+        board = _board(rows, division, vi)
+        champion = board.get("champion")
         if vi:
             lead = (f"Vô địch: {champion}. " if champion else "Chưa có nhà vô địch. ") + f"{len(rows)} trận đã kết thúc, vòng mới nhất ở trên."
-            out.append({"heading": f"Kết quả {division}", "content": lead, "listItems": [_match_line(m, True) for m in rows]})
+            out.append({"heading": f"Kết quả {division}", "content": lead, "resultsBoard": board})
         else:
             lead = (f"Champion: {champion}. " if champion else "No champion yet. ") + f"{len(rows)} completed matches, latest round first."
-            out.append({"heading": f"{division} results", "content": lead, "listItems": [_match_line(m) for m in rows]})
+            out.append({"heading": f"{division} results", "content": lead, "resultsBoard": board})
     return out
 
 
@@ -138,13 +231,13 @@ def package(event: dict, feed: dict, now: datetime) -> dict:
     en_live = [_match_line(m) for m in (live + upcoming)[:10]] or ["No match is currently marked live or scheduled in the official feed."]
     vi_live = [_match_line(m, True) for m in (live + upcoming)[:10]] or ["Nguồn chính thức hiện không đánh dấu trận nào đang diễn ra hoặc sắp đấu."]
     en_sections = [
-        {"heading": en_h, "content": f"Last updated: {stamp_en}. ThePickleHub publishes this {name} results page from the official PPA scores feed for {event['dates_en']} at {venue}. The feed currently contains {len(matches)} matches, including {len(finals)} completed or final records and {len(live)} live records. A missing score remains unconfirmed until the official feed supplies it.", "internalLinks": en_links},
+        {"heading": en_h, "content": f"Last updated: {stamp_en}. ThePickleHub publishes this {name} results page from the official PPA scores feed for {event['dates_en']} at {venue}. The feed currently contains {len(matches)} matches, including {len(finals)} completed or final records and {len(live)} live records. A missing score remains unconfirmed until the official feed supplies it.", "internalLinks": en_links, "resultsSummary": draw_summaries(finals)},
         *en_draw,
         {"heading": "Live and upcoming status", "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.", "listItems": en_live},
         {"heading": "How to read this update", "content": f"ThePickleHub checks the event id, match status, two-team structure and unique winner flag before updating this page. The page is checked every few hours during the event and refreshed whenever the source snapshot changes. Event dates: {event['dates_en']}. Venue: {venue}. Official source: {source}."},
     ]
     vi_sections = [
-        {"heading": f"Kết quả {base} {year}", "content": f"Cập nhật: {stamp_vi}. ThePickleHub đăng trang kết quả {base} {year} từ feed điểm số chính thức của PPA cho thời gian {event['dates_vi']} tại {venue}. Feed hiện có {len(matches)} trận, gồm {len(finals)} bản ghi đã kết thúc/chung cuộc và {len(live)} bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.", "internalLinks": vi_links},
+        {"heading": f"Kết quả {base} {year}", "content": f"Cập nhật: {stamp_vi}. ThePickleHub đăng trang kết quả {base} {year} từ feed điểm số chính thức của PPA cho thời gian {event['dates_vi']} tại {venue}. Feed hiện có {len(matches)} trận, gồm {len(finals)} bản ghi đã kết thúc/chung cuộc và {len(live)} bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.", "internalLinks": vi_links, "resultsSummary": draw_summaries(finals, True)},
         *vi_draw,
         {"heading": "Trận đang đấu và sắp đấu", "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.", "listItems": vi_live},
         {"heading": "Cách kiểm chứng cập nhật", "content": f"ThePickleHub kiểm tra event id, trạng thái trận, cấu trúc hai đội và cờ người thắng duy nhất trước khi cập nhật. Trong thời gian giải, trang được kiểm tra vài giờ một lần và cập nhật ngay khi snapshot nguồn thay đổi. Thời gian giải: {event['dates_vi']}. Địa điểm: {venue}. Nguồn chính thức: {source}."},

@@ -1,6 +1,14 @@
 # Prerender cache-key version changelog (pr:vN) — moved verbatim from functions/_middleware.ts (SEO-04)
 
 
+## pr:v144 → pr:v145 — 2026-10-23 (structured results board on blog results posts)
+
+functions/_lib/render/blog-body.ts now renders BlogSection.resultsBoard /
+resultsSummary (summary card, draw chips, round groups, winner/loser rows,
+collapsed early rounds) for autopublished tournament results posts instead of
+prose bullet lists, so every cached bot render of a results post is stale.
+
+
 ## pr:v31 → pr:v32 — 2026-07-26 (EN blog posts finally have a body)
 
 renderBlogPost now emits the post's own sections + FAQ + HowTo schema instead of

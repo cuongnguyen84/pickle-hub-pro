@@ -4564,3 +4564,84 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   .tl-ai-cta { animation: none; transition: none; }
   .tl-ai-cta:hover { transform: none; }
 }
+
+/* ========== Results board (blog results posts) ==========
+   Structured tournament results emitted by the autopublish generator as
+   BlogSection.resultsBoard / resultsSummary. Rendered by the React
+   ResultsBoard (EN human path), functions/_lib/render/blog-body.ts (bot
+   path) and team_wriai.vi_html (VI body) — one class system for all three. */
+[data-theme="the-line"] .tl-rb-summary {
+  background: var(--tl-surface); border: 1px solid var(--tl-border);
+  border-radius: var(--tl-radius-lg); padding: 14px 16px; margin: 18px 0 6px;
+}
+[data-theme="the-line"] .tl-rb-summary h3 {
+  margin: 0 0 6px; font-size: 12px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--tl-fg-3);
+}
+[data-theme="the-line"] .tl-rb-srow {
+  display: flex; justify-content: space-between; gap: 12px;
+  padding: 7px 0; border-top: 1px solid var(--tl-border);
+}
+[data-theme="the-line"] .tl-rb-srow:first-of-type { border-top: none; }
+[data-theme="the-line"] .tl-rb-sdiv { color: var(--tl-fg-2); }
+[data-theme="the-line"] .tl-rb-sval { font-weight: 600; text-align: right; }
+[data-theme="the-line"] .tl-rb-sval small {
+  display: block; color: var(--tl-fg-3); font-weight: 400; font-size: 12px;
+}
+[data-theme="the-line"] .tl-rb-sticky {
+  position: sticky; top: 64px; z-index: 30;
+  background: color-mix(in oklab, var(--tl-bg) 88%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  backdrop-filter: blur(14px) saturate(1.1);
+  padding: 8px 0 10px; margin-top: 10px;
+}
+[data-theme="the-line"] .tl-rb-chips {
+  display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+  padding-bottom: 8px;
+}
+[data-theme="the-line"] .tl-rb-chips::-webkit-scrollbar { display: none; }
+[data-theme="the-line"] .tl-rb-chip {
+  white-space: nowrap; border: 1px solid var(--tl-border);
+  background: var(--tl-surface); color: var(--tl-fg);
+  border-radius: 999px; padding: 7px 13px; font-size: 13.5px;
+  text-decoration: none;
+}
+[data-theme="the-line"] .tl-rb-search {
+  width: 100%; background: var(--tl-surface);
+  border: 1px solid var(--tl-border); border-radius: var(--tl-radius);
+  color: var(--tl-fg); padding: 10px 12px; font-size: 14.5px;
+}
+[data-theme="the-line"] .tl-rb-search::placeholder { color: var(--tl-fg-3); }
+[data-theme="the-line"] .tl-longform section[id^="rb-"] { scroll-margin-top: 150px; }
+[data-theme="the-line"] .tl-rb-drawsub { color: var(--tl-fg-3); font-size: 13px; margin-top: -6px; }
+[data-theme="the-line"] .tl-rb-round {
+  font-size: 12.5px; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--tl-green); margin: 18px 0 8px;
+}
+[data-theme="the-line"] .tl-rb-match {
+  background: var(--tl-surface); border: 1px solid var(--tl-border);
+  border-radius: var(--tl-radius-lg); padding: 9px 12px; margin-bottom: 8px;
+  display: flex; justify-content: space-between; gap: 12px;
+}
+[data-theme="the-line"] .tl-rb-teams { min-width: 0; }
+[data-theme="the-line"] .tl-rb-win { font-weight: 700; color: var(--tl-fg); }
+[data-theme="the-line"] .tl-rb-win::after { content: " ✓"; color: var(--tl-green); font-weight: 400; }
+[data-theme="the-line"] .tl-rb-lose { color: var(--tl-fg-2); }
+[data-theme="the-line"] .tl-rb-status {
+  color: var(--tl-fg-3); font-size: 12px; text-transform: capitalize;
+}
+[data-theme="the-line"] .tl-rb-sets {
+  font-family: "Geist Mono", ui-monospace, monospace; font-size: 13px;
+  text-align: right; white-space: nowrap; color: var(--tl-fg-2);
+  font-variant-numeric: tabular-nums;
+}
+[data-theme="the-line"] .tl-rb-sets strong { color: var(--tl-fg); }
+[data-theme="the-line"] .tl-rb-details {
+  background: var(--tl-surface-2); border: 1px solid var(--tl-border);
+  border-radius: var(--tl-radius-lg); padding: 4px 12px; margin: 10px 0;
+}
+[data-theme="the-line"] .tl-rb-details summary {
+  cursor: pointer; padding: 8px 0; font-weight: 600;
+  color: var(--tl-fg-2); font-size: 14px;
+}
+[data-theme="the-line"] .tl-rb-details .tl-rb-match { background: var(--tl-surface); }
