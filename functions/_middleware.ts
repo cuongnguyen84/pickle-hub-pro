@@ -9,7 +9,7 @@ import { renderAuthor } from "./_lib/render/author";
  */
 
 import { BOT_UA, detectLang, stripLangPrefix } from "./_lib/utils";
-import { isPublicContentPath, servePublicPage } from "./_lib/public-page";
+import { isPublicContentPath, servePublicPage, type PublicPagePartsCache } from "./_lib/public-page";
 import { isKnownSpaPath } from "./_lib/spa-routes";
 import { createSupabaseClient } from "./_lib/supabase";
 import {
@@ -908,9 +908,45 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
     // Public editorial pages carry their own content and metadata before JS.
     if (request.method === "GET" && isPublicContentPath(pathname)) {
+      // Perf (2026-10-24): the render behind servePublicPage is anonymous
+      // (no cookies/Authorization — see PublicPagePartsCache), so cache the
+      // extracted parts in the same KV the bot prerender uses and splice
+      // them into the CURRENT deployment's shell per request. Key shares
+      // the prerender version prefix so a version bump clears both.
+      // TTL is pathCacheTtl capped at 300s: public pages promise current
+      // content (live results), and 5 minutes still amortizes the render
+      // across effectively all repeat traffic. ?nocache=1 bypasses, same
+      // as the bot path.
+      let publicCache: PublicPagePartsCache | null = null;
+      if (env.PRERENDER_CACHE && url.searchParams.get("nocache") !== "1") {
+        const cacheKey = `pr:v145:human:${url.pathname}`;
+        const ttl = Math.min(pathCacheTtl(pathname), 300);
+        publicCache = {
+          get: () => env.PRERENDER_CACHE.get(cacheKey),
+          put: (value: string) => {
+            // SEO-05 integrity guard, same rule as the bot path: never
+            // cache parts whose canonical belongs to another entity.
+            try {
+              const parsed = JSON.parse(value) as { head?: string };
+              if (!parsed.head || !canonicalConsistent(parsed.head, url.pathname).ok) {
+                return Promise.resolve();
+              }
+            } catch {
+              return Promise.resolve();
+            }
+            context.waitUntil(
+              env.PRERENDER_CACHE.put(cacheKey, value, { expirationTtl: ttl }).then(
+                () => {},
+                () => {},
+              ),
+            );
+            return Promise.resolve();
+          },
+        };
+      }
       const response = await servePublicPage(await next(), () => routeAndRender(
         pathname, env, env.CANONICAL_HOST || "https://www.thepicklehub.net",
-      ), 2500, pathname);
+      ), 2500, pathname, publicCache);
       const headers = new Headers(response.headers);
       applySecurityHeaders(headers);
       return new Response(response.body, { status: response.status, headers });
