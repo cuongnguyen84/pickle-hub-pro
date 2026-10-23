@@ -10,6 +10,29 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-world-championships-2026-results",
+    "publishedDate": "2026-11-02",
+    "updatedDate": "2026-10-23",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball",
+      "results",
+      "ppa world championships",
+      "2026"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "titleEn": "World Championship 2026 Results: Daily Scores and Confirmed Winners",
+    "titleVi": "Kết quả World Championship 2026: cập nhật hằng ngày",
+    "metaTitleEn": "PPA World Championships Results 2026: World Championship Scores",
+    "metaTitleVi": "Kết quả PPA World Championships 2026: World Championship",
+    "metaDescriptionEn": "PPA World Championships results: World Championship 2026 results and daily scores from the official PPA feed, checked by ThePickleHub.",
+    "metaDescriptionVi": "Kết quả World Championship 2026 từ feed PPA chính thức, được ThePickleHub kiểm chứng."
+  },
+  {
     "slug": "mlp-asia-draft-2026-viet-panthers",
     "publishedDate": "2026-10-23",
     "updatedDate": "2026-10-23",
