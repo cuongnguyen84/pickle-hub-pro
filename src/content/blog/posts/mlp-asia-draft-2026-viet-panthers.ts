@@ -18,6 +18,10 @@ const post: BlogPost = {
     en: "Watch live tournaments on ThePickleHub",
     vi: "Xem giải trực tiếp trên ThePickleHub",
   },
+  heroImage: {
+    src: "/images/blog/mlp-asia-draft-2026-viet-panthers-hero.webp",
+    alt: "Viet Panthers launch press conference for the first MLP Asia season, with the team's official logo unveiled (Photo: MLP Asia via Pickleball News Asia)",
+  },
   content: {
     en: {
       title: "MLP Asia Draft 2026: Viet Panthers Bet Big on 15-Year-Old Tama Shimabukuro",
