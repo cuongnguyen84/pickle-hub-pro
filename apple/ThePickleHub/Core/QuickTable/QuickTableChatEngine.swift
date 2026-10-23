@@ -1124,3 +1124,11 @@ extension QTChatEngine {
         return d.isDoubles == false ? "người" : "đội"
     }
 }
+
+extension QTChatEngine {
+    /// Câu "nháp chưa đổi" — một nguồn duy nhất (view model so khớp chuỗi này
+    /// để nhận biết lượt không thay đổi nháp, như web).
+    static func unchangedReply(_ lang: String) -> String {
+        lang == "en" ? unchangedEN : unchangedVI
+    }
+}
