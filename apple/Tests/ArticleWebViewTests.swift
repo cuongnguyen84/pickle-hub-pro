@@ -39,4 +39,19 @@ struct ArticleWebViewTests {
     func metadataEscaping() {
         #expect(ArticleHTML.escapeText("A < B & \"C\"") == "A &lt; B &amp; &quot;C&quot;")
     }
+
+    @Test("Results board styles ship in the document template")
+    func resultsBoardStyles() {
+        let document = ArticleDocument.document("<div class=\"tl-rb-summary\"></div>")
+        // Khuôn tổng quát cho bài kết quả (web PR #917/#918): summary, chip neo,
+        // thẻ trận, thắng/thua, cột tỉ số, vòng thu gọn — thiếu một là bài kết
+        // quả trong app hiển thị mất thiết kế.
+        for marker in [".tl-rb-summary", ".tl-rb-chips", ".tl-rb-chip", ".tl-rb-sticky",
+                       ".tl-rb-match", ".tl-rb-win", ".tl-rb-lose", ".tl-rb-sets",
+                       ".tl-rb-round", ".tl-rb-details", ".tl-rb-status"] {
+            #expect(document.contains(marker), "\(marker)")
+        }
+        // Sticky của app bám đỉnh trang bài (web dùng top 64px cho header cố định).
+        #expect(document.contains(".tl-rb-sticky {position: sticky; top: 0;"))
+    }
 }
