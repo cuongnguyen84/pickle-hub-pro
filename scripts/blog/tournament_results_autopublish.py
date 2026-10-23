@@ -341,6 +341,56 @@ def _sync_main() -> None:
         raise RuntimeError("autopublish_rebase_failed")
 
 
+# --- Publish guard + pipeline fingerprint (incident 2026-10-24) -----------
+# The supervisor is a long-lived process that imports this module ONCE; a
+# checkout pull updates the disk but not the code already in RAM, so on
+# 2026-10-24 the 01:00 slot regenerated a results page with the pre-redesign
+# writer and silently overwrote the structured results board with prose.
+# Two defences, both cheap and deterministic:
+#
+# 1. _assert_results_boards: when the official feed contains completed
+#    matches, the package AND the written post file MUST carry structured
+#    resultsBoard sections. A stale/broken generator fails loudly here
+#    (the coverage layer turns the exception into a blocked task + alert)
+#    instead of committing a format regression. Events with no completed
+#    match yet are exempt — the prose fallback section is legitimate then.
+_FINAL_STATUSES = {"final", "completed", "finished", "walkover", "retired"}
+
+
+def _assert_results_boards(pkg: dict, feed: dict, post_text: str | None = None) -> None:
+    finals = [m for m in feed["matches"] if m["status"] in _FINAL_STATUSES]
+    if not finals:
+        return
+    for lang in ("en", "vi"):
+        if not any("resultsBoard" in section for section in pkg[lang]["sections"]):
+            raise RuntimeError(f"results_board_missing_in_package:{lang}")
+    if post_text is not None and "resultsBoard" not in post_text:
+        raise RuntimeError("results_board_missing_in_output")
+
+
+# 2. PIPELINE_FINGERPRINT: sha256 over the pipeline source files, computed
+#    ONCE at import time — i.e. over the code this process actually loaded,
+#    not the (possibly newer) files on disk. publish_event stamps it into
+#    the commit message as "[pipeline:<fp12>]" so the ops freshness check
+#    can compare the running pipeline against main 1:1 instead of inferring
+#    staleness from output shape.
+_PIPELINE_FILES = ("scripts/blog/tournament_results_autopublish.py",
+                   "scripts/ops/team_wriai.py",
+                   "scripts/ops/team_tournament_coverage.py")
+
+
+def _pipeline_fingerprint() -> str:
+    h = hashlib.sha256()
+    for rel in _PIPELINE_FILES:
+        try:
+            h.update((REPO / rel).read_bytes())
+        except OSError:
+            h.update(f"missing:{rel}".encode())
+    return h.hexdigest()[:12]
+
+
+PIPELINE_FINGERPRINT = _pipeline_fingerprint()
+
 def publish_event(event: dict, now: datetime | None = None, push: bool = True) -> dict:
     """Fetch, validate and publish one changed official score snapshot.
 
@@ -364,11 +414,14 @@ def publish_event(event: dict, now: datetime | None = None, push: bool = True) -
     pkg = package(event, feed, now)
     # The first publication date is stable; only updatedDate changes thereafter.
     pkg["publishedDate"] = event.get("published", event["start_date"])
+    _assert_results_boards(pkg, feed)
     write_source(pkg, event, today)
+    post_text = (REPO / "src/content/blog/posts" / f"{pkg['slug']}.ts").read_text(encoding="utf-8")
+    _assert_results_boards(pkg, feed, post_text)
     _upsert_vi(pkg)
     files = [f"src/content/blog/posts/{pkg['slug']}.ts", "src/content/blog/metadata.ts", "src/content/blog/posts/all.ts"]
     subprocess.run(["git", "add", "--", *files], cwd=REPO, check=True)
-    subprocess.run(["git", "commit", "-m", f"content(blog): update {pkg['slug']}"], cwd=REPO, check=True, stdout=subprocess.DEVNULL)
+    subprocess.run(["git", "commit", "-m", f"content(blog): update {pkg['slug']} [pipeline:{PIPELINE_FINGERPRINT}]"], cwd=REPO, check=True, stdout=subprocess.DEVNULL)
     head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO, capture_output=True, text=True, check=True).stdout.strip()
     if push:
         if subprocess.run(["git", "push", "origin", "HEAD:main"], cwd=REPO).returncode:

@@ -117,6 +117,34 @@ class TournamentAutopublishTests(unittest.TestCase):
         self.assertEqual(vi[0]["note"], "Đã tới Bán kết · 2 trận")
         self.assertEqual(vi[0]["anchor"], "rb-doi-nu")
 
+    def test_results_board_guard(self):
+        # Incident 2026-10-24: a stale in-memory generator shipped prose
+        # for a feed WITH finals. The guard must fire then, and only then.
+        event = {"title": "Test Open 2026", "start_date": "2026-10-01", "dates_en": "October 1-3, 2026",
+                 "dates_vi": "1-3/10/2026", "source": "/official", "slug": "test-open-2026-results",
+                 "vi_slug": "ket-qua-test-open-2026"}
+        now = datetime(2026, 10, 1, tzinfo=timezone.utc)
+        pkg = autopublish.package(event, feed("final"), now)
+        autopublish._assert_results_boards(pkg, feed("final"))
+        autopublish._assert_results_boards(pkg, feed("final"), '"resultsBoard": {}')
+        with self.assertRaisesRegex(RuntimeError, "results_board_missing_in_output"):
+            autopublish._assert_results_boards(pkg, feed("final"), "prose only, no board")
+        stale = copy.deepcopy(pkg)
+        for lang in ("en", "vi"):
+            for section in stale[lang]["sections"]:
+                section.pop("resultsBoard", None)
+        with self.assertRaisesRegex(RuntimeError, "results_board_missing_in_package"):
+            autopublish._assert_results_boards(stale, feed("final"))
+        # No completed match yet: the prose fallback is legitimate, no raise.
+        early = autopublish.package(event, feed("scheduled"), now)
+        autopublish._assert_results_boards(early, feed("scheduled"), "prose only, no board")
+
+    def test_pipeline_fingerprint_is_stable_and_shaped(self):
+        fp = autopublish.PIPELINE_FINGERPRINT
+        self.assertEqual(len(fp), 12)
+        self.assertTrue(all(c in "0123456789abcdef" for c in fp))
+        self.assertEqual(fp, autopublish._pipeline_fingerprint())
+
 
 if __name__ == "__main__":
     unittest.main()
