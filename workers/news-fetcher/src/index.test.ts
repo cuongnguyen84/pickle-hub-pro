@@ -10,6 +10,7 @@ import {
   HTML_SCRAPE_CONFIGS,
   isAdvertorialItem,
   isTransientFetchError,
+  isWithinMaxAge,
   NEWS_FETCHER_USER_AGENT,
   normalizeItemLink,
   parseListingCards,
@@ -111,6 +112,33 @@ describe("isTransientFetchError", () => {
     expect(isTransientFetchError(new TypeError("bad url"))).toBe(false);
     expect(isTransientFetchError(null)).toBe(false);
     expect(isTransientFetchError("timeout")).toBe(false);
+  });
+});
+
+describe("isWithinMaxAge — lọc độ tươi khi quét ứng viên og-meta", () => {
+  const NOW = Date.parse("2026-10-23T06:00:00.000Z");
+  const daysAgo = (d: number) => new Date(NOW - d * 86_400_000).toISOString();
+
+  it("nhận bài trong 30 ngày, loại bài già hơn và ngày hỏng", () => {
+    expect(isWithinMaxAge(daysAgo(0), NOW)).toBe(true);
+    expect(isWithinMaxAge(daysAgo(29), NOW)).toBe(true);
+    expect(isWithinMaxAge(daysAgo(30), NOW)).toBe(true); // đúng biên: giữ
+    expect(isWithinMaxAge(daysAgo(31), NOW)).toBe(false);
+    expect(isWithinMaxAge(daysAgo(154), NOW)).toBe(false);
+    expect(isWithinMaxAge("không-phải-ngày", NOW)).toBe(false);
+    expect(isWithinMaxAge("", NOW)).toBe(false);
+  });
+
+  it("mô phỏng sitemap lastmod lẫn cũ/mới (ca Dink Authority): quét qua bài cũ, dừng khi đủ bài tươi", () => {
+    // Tuổi đăng theo đúng thứ tự lastmod đo thật 23/10/2026 — bài tươi nằm
+    // rải rác sau bài cũ, nên trần quét phải sâu hơn số bài cần gom.
+    const agesByLastmodOrder = [0, 154, 56, 170, 493, 202, 32, 6, 7, 9, 8, 3];
+    const collected: string[] = [];
+    for (const age of agesByLastmodOrder.slice(0, 12)) {
+      if (collected.length >= 4) break;
+      if (isWithinMaxAge(daysAgo(age), NOW)) collected.push(daysAgo(age));
+    }
+    expect(collected).toEqual([daysAgo(0), daysAgo(6), daysAgo(7), daysAgo(9)]);
   });
 });
 
