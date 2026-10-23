@@ -34,6 +34,7 @@ struct CreateQuickTableView: View {
 
     // After RPC
     @State private var createdTable: QTTable?
+    @State private var showChatCreate = false
     @State private var roster: [PlayerField] = []
     @State private var assignmentMode = "auto"   // auto | manual
     @State private var courts = ""
@@ -170,6 +171,23 @@ struct CreateQuickTableView: View {
                     if restoredDraft {
                         DraftRestoredBanner { startOverFromDraft() }
                     }
+                    if step == .count {
+                        Button { showChatCreate = true } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "sparkles").foregroundStyle(TLColor.accentText)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Tạo giải bằng chat AI").font(TLFont.sans(14.5, .semibold)).foregroundStyle(TLColor.fg)
+                                    Text("Kể về giải hoặc dán danh sách — trợ lý chia bảng giúp bạn").font(TLFont.sans(12)).foregroundStyle(TLColor.fg2)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold)).foregroundStyle(TLColor.fg3)
+                            }
+                            .padding(14)
+                            .background(TLColor.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.accent.opacity(0.35), lineWidth: 1))
+                        }
+                        .buttonStyle(.plain)
+                    }
                     switch step {
                     case .count: stepCount
                     case .format: stepFormat
@@ -202,6 +220,13 @@ struct CreateQuickTableView: View {
             .onChange(of: draftSnapshot) { _, snap in draft.save(snap) }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .background { draft.flush(draftSnapshot) }
+            }
+            .sheet(isPresented: $showChatCreate) {
+                QuickTableChatView { shareID, name in
+                    showChatCreate = false
+                    dismiss()
+                    onCreated(shareID, name)
+                }
             }
         }
     }
