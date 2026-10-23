@@ -12,7 +12,7 @@ import Foundation
 // luồng chat (gồm luật vòng tròn 1 bảng + vòng trực tiếp 2/4 đội của PR web
 // #920) port 1:1 theo bản TypeScript, test mirror ở QuickTableChatEngineTests.
 
-struct QTChatEntry: Equatable {
+struct QTChatEntry: Equatable, Sendable {
     var p1: String
     var p2: String?
     var team: String?
@@ -23,7 +23,7 @@ struct QTChatEntry: Equatable {
     var label: String { p2.map { "\(p1) & \($0)" } ?? p1 }
 }
 
-struct QTChatDraft: Equatable {
+struct QTChatDraft: Equatable, Sendable {
     var isDoubles: Bool?
     var playerCount: Int?
     var groupCount: Int?
@@ -47,7 +47,7 @@ struct QTChatDraft: Equatable {
 /// Bản vá đã gõ kiểu (từ mô hình hoặc từ readUserFacts). Mọi trường đều tuỳ
 /// chọn; `advancePerGroup`/`playerCount` phân biệt "không nói" với "xoá" qua
 /// các cờ clear* (web dùng null tường minh trong JSON).
-struct QTChatPatch {
+struct QTChatPatch: Sendable {
     var isDoubles: Bool?
     var playerCount: Int?
     var clearPlayerCount = false
@@ -880,7 +880,7 @@ enum QTChatEngine {
 
 /// Giá trị JSON tự do — giữ nguyên `null` tường minh (web phân biệt "không
 /// nói" với "xoá" bằng null, vd player_count: null = xoá số lượng).
-enum QTChatJSONValue: Equatable, Codable {
+enum QTChatJSONValue: Equatable, Codable, Sendable {
     case string(String)
     case number(Double)
     case bool(Bool)
