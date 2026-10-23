@@ -151,6 +151,56 @@ enum ArticleDocument {
           hr { border: none; border-top: 1px solid #22252a; margin: 22px 0; }
           table { width: 100%; border-collapse: collapse; }
           td, th { border: 1px solid #22252a; padding: 6px 8px; }
+          /* Results board (bài kết quả giải): port nguyên khối .tl-rb-* của web
+             (src/styles/the-line.css), biến --tl-* đã quy về literal theo palette trên.
+             Khuôn TỔNG QUÁT cho mọi bài kết quả do generator xuất bản — markup nằm
+             sẵn trong content_html, chỉ cần CSS này để hiển thị đúng thiết kế. */
+          .tl-rb-summary {background: #131416; border: 1px solid #22252a;
+            border-radius: 14px; padding: 14px 16px; margin: 18px 0 6px; }
+          .tl-rb-summary h3 {margin: 0 0 6px; font-size: 12px; letter-spacing: 0.08em;
+            text-transform: uppercase; color: #93908a; }
+          .tl-rb-srow {display: flex; justify-content: space-between; gap: 12px;
+            padding: 7px 0; border-top: 1px solid #22252a; }
+          .tl-rb-srow:first-of-type {border-top: none; }
+          .tl-rb-sdiv {color: #c7c3bb; }
+          .tl-rb-sval {font-weight: 600; text-align: right; }
+          .tl-rb-sval small {display: block; color: #93908a; font-weight: 400; font-size: 12px; }
+          .tl-rb-sticky {position: sticky; top: 0; z-index: 30;
+            background: color-mix(in oklab, #08090a 88%, transparent);
+            -webkit-backdrop-filter: blur(14px) saturate(1.1);
+            backdrop-filter: blur(14px) saturate(1.1);
+            padding: 8px 0 10px; margin-top: 10px; }
+          .tl-rb-chips {display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+            padding-bottom: 8px; }
+          .tl-rb-chips::-webkit-scrollbar {display: none; }
+          .tl-rb-chip {white-space: nowrap; border: 1px solid #22252a;
+            background: #131416; color: #f5f3ee;
+            border-radius: 999px; padding: 7px 13px; font-size: 13.5px;
+            text-decoration: none; }
+          .tl-rb-search {width: 100%; background: #131416;
+            border: 1px solid #22252a; border-radius: 10px;
+            color: #f5f3ee; padding: 10px 12px; font-size: 14.5px; }
+          .tl-rb-search::placeholder {color: #93908a; }
+          .tl-rb-drawsub {color: #93908a; font-size: 13px; margin-top: -6px; }
+          .tl-rb-round {font-size: 12.5px; letter-spacing: 0.07em; text-transform: uppercase;
+            color: #b5e853; margin: 18px 0 8px; }
+          .tl-rb-match {background: #131416; border: 1px solid #22252a;
+            border-radius: 14px; padding: 9px 12px; margin-bottom: 8px;
+            display: flex; justify-content: space-between; gap: 12px; }
+          .tl-rb-teams {min-width: 0; }
+          .tl-rb-win {font-weight: 700; color: #f5f3ee; }
+          .tl-rb-win::after {content: " ✓"; color: #b5e853; font-weight: 400; }
+          .tl-rb-lose {color: #c7c3bb; }
+          .tl-rb-status {color: #93908a; font-size: 12px; text-transform: capitalize; }
+          .tl-rb-sets {font-family: "Geist Mono", ui-monospace, monospace; font-size: 13px;
+            text-align: right; white-space: nowrap; color: #c7c3bb;
+            font-variant-numeric: tabular-nums; }
+          .tl-rb-sets strong {color: #f5f3ee; }
+          .tl-rb-details {background: #1a1c1f; border: 1px solid #22252a;
+            border-radius: 14px; padding: 4px 12px; margin: 10px 0; }
+          .tl-rb-details summary {cursor: pointer; padding: 8px 0; font-weight: 600;
+            color: #c7c3bb; font-size: 14px; }
+          .tl-rb-details .tl-rb-match {background: #131416; }
         </style></head>
         <body>\(body)</body></html>
         """

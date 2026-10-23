@@ -65,6 +65,29 @@ final class QuickTableViewModel {
     var playoffDivision = 0
     var confirmSeries = false
 
+    // Giải 1 bảng vòng tròn: số đội lấy vào vòng loại trực tiếp do chủ giải
+    // chọn trên banner (nil = theo cỡ chốt trên giải / mặc định của cỡ bảng).
+    var singleAdvanceChoice: Int?
+
+    /// Các mức lấy đội cho giải đúng 1 bảng (PR web #920): cỡ chốt sẵn trên
+    /// giải (luồng chat ghi playoff_series_sizes) đứng đầu, sau đó [4]/[2]
+    /// theo cỡ bảng từ QTChatEngine.singleGroupPlayoffPlans.
+    func singleGroupTakeOptions(_ d: QuickTableDetail) -> [Int] {
+        guard d.groups.count == 1, let size = groupSizes(d).first else { return [] }
+        var out: [Int] = []
+        if let saved = d.table.playoffSeriesSizes?.first, saved >= 2, saved <= size { out.append(saved) }
+        for plan in QTChatEngine.singleGroupPlayoffPlans(size) {
+            if let v = plan.first, !out.contains(v) { out.append(v) }
+        }
+        return out
+    }
+
+    func singleGroupTake(_ d: QuickTableDetail) -> Int? {
+        let options = singleGroupTakeOptions(d)
+        if let choice = singleAdvanceChoice, options.contains(choice) { return choice }
+        return options.first
+    }
+
     func groupSizes(_ d: QuickTableDetail) -> [Int] {
         d.groups.map { g in d.players.filter { $0.groupID == g.id }.count }
     }
@@ -231,12 +254,37 @@ final class QuickTableViewModel {
     func startPlayoff(shareID: String) async {
         guard let d = detail else { return }
         if seriesCount(d) > 1 { confirmSeries = true; return }
+        if d.groups.count == 1 {
+            await runSingleGroupPlayoff(take: singleGroupTake(d) ?? 2)
+            return
+        }
         if d.groups.count == 3 || d.groups.count == 6 {
             await runPlayoffV2(shareID: shareID, advancePerGroup: 2)
             return
         }
         pendingQualified = QTPlayoff.qualify(groups: d.groups, players: d.players, topPerGroup: 2).qualified
         await runPlayoff(shareID: shareID, wildcards: [])
+    }
+
+    /// Giải 1 bảng vòng tròn: lấy `take` đội đầu bảng theo thứ tự BXH, cặp đấu
+    /// hạt giống qua QTSeries.bracket (4 đội → BK 1v4/2v3; 2 đội → CK 1v2),
+    /// rồi đi đúng đường preview + confirm như playoff nhiều bảng. (PR web
+    /// #920: 1 bảng vẫn có vòng loại trực tiếp.)
+    @MainActor
+    private func runSingleGroupPlayoff(take: Int) async {
+        guard let d = detail, let group = d.groups.first else { return }
+        let qualified = QTPlayoff.qualify(groups: [group], players: d.players, topPerGroup: take).qualified
+        let bracket = QTSeries.bracket(qualified.map { $0.player })
+        guard qualified.count >= 2, !bracket.isEmpty else {
+            playoffError = String(localized: "Bảng chưa đủ đội để sinh vòng loại trực tiếp.")
+            return
+        }
+        playoffError = nil
+        pendingQualified = qualified
+        pendingPlayoff = PendingPlayoff(
+            qualified: qualified.map { ($0.player.id, $0.seed) },
+            wildcards: [],
+            bracket: bracket)
     }
 
     @MainActor
@@ -1142,6 +1190,14 @@ struct QuickTableDetailView: View {
                 .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.accent.opacity(0.4), lineWidth: 1))
             }
             .buttonStyle(.plain).disabled(model.generatingPlayoff)
+            if let d = model.detail, d.groups.count == 1, model.singleGroupTakeOptions(d).count > 1 {
+                Picker("Lấy vào vòng loại", selection: Binding(get: { model.singleGroupTake(d) ?? 2 }, set: { model.singleAdvanceChoice = $0 })) {
+                    ForEach(model.singleGroupTakeOptions(d), id: \.self) { take in
+                        Text(take == 2 ? String(localized: "Lấy 2 đội — chung kết") : String(localized: "Lấy \(take) đội")).tag(take)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
             if let d = model.detail, model.seriesCap(d) > 1 {
                 Picker("Số nhánh playoff", selection: Binding(get: { model.seriesCount(d) }, set: { model.seriesChoice = $0 })) {
                     ForEach(1...model.seriesCap(d), id: \.self) { k in
