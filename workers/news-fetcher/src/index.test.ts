@@ -10,6 +10,7 @@ import {
   HTML_SCRAPE_CONFIGS,
   isAdvertorialItem,
   isTransientFetchError,
+  isTransientListingStatus,
   isWithinMaxAge,
   NEWS_FETCHER_USER_AGENT,
   normalizeItemLink,
@@ -115,30 +116,21 @@ describe("isTransientFetchError", () => {
   });
 });
 
-describe("isWithinMaxAge — lọc độ tươi khi quét ứng viên og-meta", () => {
-  const NOW = Date.parse("2026-10-23T06:00:00.000Z");
-  const daysAgo = (d: number) => new Date(NOW - d * 86_400_000).toISOString();
-
-  it("nhận bài trong 30 ngày, loại bài già hơn và ngày hỏng", () => {
-    expect(isWithinMaxAge(daysAgo(0), NOW)).toBe(true);
-    expect(isWithinMaxAge(daysAgo(29), NOW)).toBe(true);
-    expect(isWithinMaxAge(daysAgo(30), NOW)).toBe(true); // đúng biên: giữ
-    expect(isWithinMaxAge(daysAgo(31), NOW)).toBe(false);
-    expect(isWithinMaxAge(daysAgo(154), NOW)).toBe(false);
-    expect(isWithinMaxAge("không-phải-ngày", NOW)).toBe(false);
-    expect(isWithinMaxAge("", NOW)).toBe(false);
-  });
-
-  it("mô phỏng sitemap lastmod lẫn cũ/mới (ca Dink Authority): quét qua bài cũ, dừng khi đủ bài tươi", () => {
-    // Tuổi đăng theo đúng thứ tự lastmod đo thật 23/10/2026 — bài tươi nằm
-    // rải rác sau bài cũ, nên trần quét phải sâu hơn số bài cần gom.
-    const agesByLastmodOrder = [0, 154, 56, 170, 493, 202, 32, 6, 7, 9, 8, 3];
-    const collected: string[] = [];
-    for (const age of agesByLastmodOrder.slice(0, 12)) {
-      if (collected.length >= 4) break;
-      if (isWithinMaxAge(daysAgo(age), NOW)) collected.push(daysAgo(age));
-    }
-    expect(collected).toEqual([daysAgo(0), daysAgo(6), daysAgo(7), daysAgo(9)]);
+describe("isTransientListingStatus", () => {
+  it("nhận 403/429/5xx là nhất thời, còn lại là hỏng thật", () => {
+    // 403: chớp nhoáng Cloudflare phía nhà xuất bản (ca Times Now 23/10/2026,
+    // đo đối chứng từ cùng egress Workers luôn trả 200).
+    expect(isTransientListingStatus(403)).toBe(true);
+    expect(isTransientListingStatus(429)).toBe(true);
+    expect(isTransientListingStatus(500)).toBe(true);
+    expect(isTransientListingStatus(502)).toBe(true);
+    expect(isTransientListingStatus(503)).toBe(true);
+    expect(isTransientListingStatus(504)).toBe(true);
+    expect(isTransientListingStatus(200)).toBe(false);
+    expect(isTransientListingStatus(301)).toBe(false);
+    expect(isTransientListingStatus(400)).toBe(false);
+    expect(isTransientListingStatus(404)).toBe(false);
+    expect(isTransientListingStatus(410)).toBe(false);
   });
 });
 
@@ -316,5 +308,32 @@ describe("isAdvertorialItem — bộ lọc advertorial của pipeline tin tức"
     expect(
       isAdvertorialItem({ title: "Weekend recap", categories: ["News & Reviews"] }),
     ).toBe(false);
+  });
+});
+
+describe("isWithinMaxAge — lọc độ tươi khi quét ứng viên og-meta", () => {
+  const NOW = Date.parse("2026-10-23T06:00:00.000Z");
+  const daysAgo = (d: number) => new Date(NOW - d * 86_400_000).toISOString();
+
+  it("nhận bài trong 30 ngày, loại bài già hơn và ngày hỏng", () => {
+    expect(isWithinMaxAge(daysAgo(0), NOW)).toBe(true);
+    expect(isWithinMaxAge(daysAgo(29), NOW)).toBe(true);
+    expect(isWithinMaxAge(daysAgo(30), NOW)).toBe(true); // đúng biên: giữ
+    expect(isWithinMaxAge(daysAgo(31), NOW)).toBe(false);
+    expect(isWithinMaxAge(daysAgo(154), NOW)).toBe(false);
+    expect(isWithinMaxAge("không-phải-ngày", NOW)).toBe(false);
+    expect(isWithinMaxAge("", NOW)).toBe(false);
+  });
+
+  it("mô phỏng sitemap lastmod lẫn cũ/mới (ca Dink Authority): quét qua bài cũ, dừng khi đủ bài tươi", () => {
+    // Tuổi đăng theo đúng thứ tự lastmod đo thật 23/10/2026 — bài tươi nằm
+    // rải rác sau bài cũ, nên trần quét phải sâu hơn số bài cần gom.
+    const agesByLastmodOrder = [0, 154, 56, 170, 493, 202, 32, 6, 7, 9, 8, 3];
+    const collected: string[] = [];
+    for (const age of agesByLastmodOrder.slice(0, 12)) {
+      if (collected.length >= 4) break;
+      if (isWithinMaxAge(daysAgo(age), NOW)) collected.push(daysAgo(age));
+    }
+    expect(collected).toEqual([daysAgo(0), daysAgo(6), daysAgo(7), daysAgo(9)]);
   });
 });
