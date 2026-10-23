@@ -119,7 +119,7 @@ def problems(pkg, en_slugs, vi_slugs, override=False):
 
 def _post_obj(pkg, today):
     def lang(l):
-        keep = ("heading", "content", "listItems", "orderedList", "internalLinks", "table")
+        keep = ("heading", "content", "listItems", "orderedList", "internalLinks", "table", "resultsBoard", "resultsSummary")
         return {"title": l["title"], "metaTitle": l["metaTitle"], "metaDescription": l["metaDescription"],
                 "sections": [{k: s[k] for k in keep if s.get(k)} for s in l["sections"]],
                 "faqItems": [{"question": f["question"], "answer": f["answer"]} for f in l["faqItems"]]}
@@ -174,14 +174,48 @@ def metadata_entry(pkg, today):
     return "  " + json.dumps(meta, ensure_ascii=False, indent=2).replace("\n", "\n  ") + ",\n"
 
 
+def _vi_results_board(board):
+    """Static VI rendering of a resultsBoard — same tl-rb-* classes and the
+    same facts as the EN React board; collapsed rounds use native details."""
+    e = html.escape
+    out = ['<div class="tl-rb">']
+    for r in board.get("rounds", []):
+        matches = "".join(
+            '<div class="tl-rb-match"><div class="tl-rb-teams">'
+            f'<div class="tl-rb-win">{e(str(m["winner"]))}</div>'
+            f'<div class="tl-rb-lose">{e(str(m["loser"]))}</div></div>'
+            f'<div class="tl-rb-sets">{" · ".join(f"{a}-{b}" for a, b in m.get("sets", []))}</div></div>'
+            for m in r.get("matches", []))
+        if r.get("collapsed"):
+            out.append(f'<details class="tl-rb-details"><summary>{e(str(r["label"]))} — {len(r.get("matches", []))} trận</summary>{matches}</details>')
+        else:
+            out.append(f'<h3 class="tl-rb-round">{e(str(r["label"]))}</h3>{matches}')
+    out.append("</div>")
+    return "".join(out)
+
+
+def _vi_results_summary(draws):
+    e = html.escape
+    rows = "".join(
+        f'<div class="tl-rb-srow"><span class="tl-rb-sdiv">{e(str(d["division"]))}</span>'
+        f'<span class="tl-rb-sval">{e(str(d["champion"])) if d.get("champion") else "Chưa có nhà vô địch"}'
+        f'<small>{e(str(d["note"]))}</small></span></div>'
+        for d in draws)
+    return f'<div class="tl-rb-summary"><h3>Tóm tắt giải</h3>{rows}</div>'
+
+
 def vi_html(vi):
     e = html.escape
     parts = []
     for s in vi["sections"]:
         parts.append(f"<h2>{e(s['heading'])}</h2>")
         parts += [f"<p>{e(p.strip())}</p>" for p in str(s["content"]).split("\n\n") if p.strip()]
+        if s.get("resultsSummary"):
+            parts.append(_vi_results_summary(s["resultsSummary"]))
+        if s.get("resultsBoard"):
+            parts.append(_vi_results_board(s["resultsBoard"]))
         for tag, key in (("ul", "listItems"), ("ol", "orderedList")):
-            if s.get(key):
+            if s.get(key) and not s.get("resultsBoard"):
                 parts.append(f"<{tag}>" + "".join(f"<li>{e(str(i))}</li>" for i in s[key]) + f"</{tag}>")
         t = s.get("table")
         if t:
