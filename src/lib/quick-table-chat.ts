@@ -712,6 +712,14 @@ export function readUserFacts(text: string): Partial<Draft> {
   // Thể thức vòng tròn một bảng nói bằng lời ("không chia bảng") cũng là 1 bảng.
   if (wantsSingleGroupRoundRobin(text)) out.group_count = 1;
 
+  // "lấy 4 đội vào trực tiếp", "top 2 vào bán kết", "take 4 into the knockout":
+  // số đội đi tiếp mỗi bảng nói thẳng, không cần chữ "mỗi bảng".
+  const advDirect = folded.match(/(?:top|lay|chon|take)\s*(\d{1,2})\s*(?:doi|nguoi|vdv|teams?|players?)?\s*(?:vao|di|into)?\s*(?:vong\s*)?(?:the\s+)?(?:truc tiep|ban ket|chung ket|playoff|knockout)/);
+  if (advDirect) {
+    const n = Number(advDirect[1]);
+    if (n >= 1 && n <= 8) out.advance_per_group = n;
+  }
+
   const labeled = text.match(/(?:tên giải|ten giai|tên là|ten la|gọi là|goi la|name is|named)\s*[:：]?\s*([^,\n]+)/i);
   const lead = text.match(/^(?:giải|giai)\s+([^,\n]+)/i);
   const rawName = (labeled?.[1] ?? lead?.[1] ?? "")
@@ -901,7 +909,29 @@ export function keepOrAssign(prev: number[], count: number, prevGroups: number, 
 export function playoffSummary(d: Draft, lang: "vi" | "en"): string | null {
   const g = d.group_count ?? 0;
   const vi = lang === "vi";
-  if (g < 2) return g === 1 ? (vi ? "Một bảng vòng tròn, không có vòng loại trực tiếp" : "One round-robin group, no playoff") : null;
+  if (g < 2) {
+    if (g !== 1) return null;
+    // Một bảng vẫn được đánh vòng loại trực tiếp: lấy 2 hoặc 4 đội đầu bảng,
+    // cặp đấu theo hạt giống cao gặp thấp (1–4, 2–3 / chung kết 1–2).
+    const adv = d.advance_per_group;
+    const u = d.is_doubles === false ? (vi ? "người" : "players") : (vi ? "đội" : "teams");
+    if (adv === 4) {
+      return vi
+        ? `Vòng loại trực tiếp: lấy 4 ${u} đầu bảng — Bán kết: ${u} 1 gặp ${u} 4, ${u} 2 gặp ${u} 3`
+        : `Knockout: top 4 ${u} advance — Semifinals: seed 1 vs seed 4, seed 2 vs seed 3`;
+    }
+    if (adv === 2) {
+      return vi
+        ? `Vòng loại trực tiếp: lấy 2 ${u} đầu bảng — Chung kết: ${u} 1 gặp ${u} 2`
+        : `Knockout: top 2 ${u} advance — Final: seed 1 vs seed 2`;
+    }
+    if (adv) {
+      return vi
+        ? `Vòng loại trực tiếp: lấy ${adv} ${u} đầu bảng`
+        : `Knockout: top ${adv} ${u} advance`;
+    }
+    return vi ? "Một bảng vòng tròn" : "One round-robin group";
+  }
   const adv = d.advance_per_group;
   if (adv) {
     const n = adv * g;
@@ -934,8 +964,8 @@ export function factualAck(before: Draft, after: Draft, lang: "vi" | "en", reque
   } else if (rrSingle && after.group_count === 1 && knownField && findGroupOption(entryCount(after), 1)) {
     // Đòi thể thức thì câu trả lời phải gọi tên thể thức + hệ quả, không đáp cụt số bảng.
     bits.push(vi
-      ? `Đã chia 1 bảng đấu vòng tròn: các ${u} gặp nhau vòng tròn, xếp hạng theo điểm. 1 bảng nên không có vòng loại trực tiếp`
-      : `Split into 1 round-robin group: every ${u} plays each other, ranked by points. A single group has no knockout round`);
+      ? `Đã chia 1 bảng đấu vòng tròn: các ${u} gặp nhau vòng tròn, xếp hạng theo điểm`
+      : `Split into 1 round-robin group: every ${u} plays each other, ranked by points`);
   } else if (after.group_count && after.group_count !== before.group_count && findGroupOption(entryCount(after), after.group_count)) {
     bits.push(vi ? `Đã chia ${after.group_count} bảng.` : `Split into ${after.group_count} groups.`);
     // Nguyên tắc chung: luôn gọi tên thể thức đã chọn — 1 bảng là vòng tròn, không loại trực tiếp.
@@ -947,8 +977,10 @@ export function factualAck(before: Draft, after: Draft, lang: "vi" | "en", reque
   if (after.name && after.name !== before.name) bits.push(vi ? `Tên giải: ${after.name}.` : `Name: ${after.name}.`);
   if (after.advance_per_group && after.advance_per_group !== before.advance_per_group) {
     const ps = playoffSummary(after, lang) ?? "";
-    // Đã nêu thể thức vòng tròn ở bit chia bảng thì không lặp lại ở bit này.
-    if (ps && !bits.join(" ").includes(vi ? "vòng tròn" : "round-robin")) bits.push(ps);
+    // Bit chia bảng đã gọi tên thể thức thì không lặp lại câu thể thức thuần;
+    // câu cặp đấu vòng loại là nội dung khác, vẫn phải nêu.
+    const plainFormatLine = ps === (vi ? "Một bảng vòng tròn" : "One round-robin group");
+    if (ps && !(plainFormatLine && bits.join(" ").includes(vi ? "vòng tròn" : "round-robin"))) bits.push(ps);
   }
   const prev = before.entries ?? [];
   const next = after.entries ?? [];
