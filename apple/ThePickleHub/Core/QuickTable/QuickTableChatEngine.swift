@@ -871,3 +871,256 @@ enum QTChatEngine {
                   : "I didn't quite get that — let's continue with the current draft."
     }
 }
+
+// MARK: - PR-2: cầu nối với edge function `quick-table-chat`
+//
+// Các hàm tất định còn lại của web mà PR-1 chưa cần: lọc bản vá của mô hình
+// (trustPatch), trả lời tại chỗ bước sân/giờ (localSlotPatch), bảng số liệu
+// gửi kèm cho mô hình (chatFacts), và cầu nối JSON patch <-> QTChatPatch.
+
+/// Giá trị JSON tự do — giữ nguyên `null` tường minh (web phân biệt "không
+/// nói" với "xoá" bằng null, vd player_count: null = xoá số lượng).
+enum QTChatJSONValue: Equatable, Codable {
+    case string(String)
+    case number(Double)
+    case bool(Bool)
+    case array([QTChatJSONValue])
+    case object([String: QTChatJSONValue])
+    case null
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.singleValueContainer()
+        if c.decodeNil() { self = .null; return }
+        if let b = try? c.decode(Bool.self) { self = .bool(b); return }
+        if let n = try? c.decode(Double.self) { self = .number(n); return }
+        if let s = try? c.decode(String.self) { self = .string(s); return }
+        if let a = try? c.decode([QTChatJSONValue].self) { self = .array(a); return }
+        if let o = try? c.decode([String: QTChatJSONValue].self) { self = .object(o); return }
+        self = .null
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer()
+        switch self {
+        case .string(let s): try c.encode(s)
+        case .number(let n): try c.encode(n)
+        case .bool(let b): try c.encode(b)
+        case .array(let a): try c.encode(a)
+        case .object(let o): try c.encode(o)
+        case .null: try c.encodeNil()
+        }
+    }
+
+    var intValue: Int? { if case .number(let n) = self { return Int(n) }; return nil }
+    var stringValue: String? { if case .string(let s) = self { return s }; return nil }
+    var boolValue: Bool? { if case .bool(let b) = self { return b }; return nil }
+}
+
+extension QTChatPatch {
+    /// Dịch patch JSON của mô hình (khoá snake_case) sang QTChatPatch.
+    static func fromModelJSON(_ obj: [String: QTChatJSONValue]) -> QTChatPatch {
+        var p = QTChatPatch()
+        if let v = obj["is_doubles"] { p.isDoubles = v.boolValue }
+        if let v = obj["player_count"] {
+            if v == .null { p.clearPlayerCount = true } else { p.playerCount = v.intValue }
+        }
+        if let v = obj["group_count"] { p.groupCount = v.intValue }
+        if let v = obj["name"] { p.name = v.stringValue }
+        if let v = obj["entries"], case .array(let items) = v {
+            p.entries = items.compactMap { item -> QTChatEntry? in
+                guard case .object(let e) = item, let p1 = e["p1"]?.stringValue, !p1.isEmpty else { return nil }
+                return QTChatEntry(p1: p1, p2: e["p2"]?.stringValue, team: e["team"]?.stringValue,
+                                   seed: e["seed"]?.intValue)
+            }
+        }
+        if let v = obj["roster_mode"] { p.rosterMode = v.stringValue }
+        if let v = obj["courts"], case .array(let items) = v { p.courts = items.compactMap { $0.intValue } }
+        if let v = obj["group_courts"], case .array(let items) = v {
+            p.groupCourts = items.map { $0.intValue }
+        }
+        if let v = obj["start_time"] { p.startTime = v.stringValue }
+        if let v = obj["time_done"] { p.timeDone = v.boolValue }
+        if let v = obj["default_sets"] { p.defaultSets = v.intValue }
+        if let v = obj["series"] { p.series = v.intValue }
+        if let v = obj["series_sizes"], case .array(let items) = v { p.seriesSizes = items.compactMap { $0.intValue } }
+        if let v = obj["series_style"] { p.seriesStyle = v.stringValue }
+        if obj["series_mode"]?.stringValue == "by_rank" { p.seriesModeByRank = true }
+        if let v = obj["advance_per_group"] {
+            if v == .null { p.clearAdvancePerGroup = true } else { p.advancePerGroup = v.intValue }
+        }
+        return p
+    }
+}
+
+extension QTChatEngine {
+    /// "nhất vào A, nhì vào B" — không phải "nhất nhì cùng vào A". (web wantsRankSeries)
+    static func wantsRankSeries(_ text: String) -> Bool {
+        let t = text.lowercased()
+        if test("mỗi hạng|moi hang|từng hạng|tung hang|mỗi thứ hạng|each place|each rank|one series per|per place", in: t) { return true }
+        let toA = test("nhất\\s*(?:bảng\\s*)?(?:vào|sang|→|->)\\s*(?:series\\s*)?a\\b", in: t)
+            && test("nhì\\s*(?:bảng\\s*)?(?:vào|sang|→|->)", in: t)
+        let toEn = test("1st\\s*(?:place\\s*)?(?:to|into)\\s*(?:series\\s*)?a\\b", in: t)
+            && test("2nd\\s*(?:place\\s*)?(?:to|into)", in: t)
+        return toA || toEn
+    }
+
+    /// AI hay tự điền mặc định cho trường người dùng chưa hề nhắc (vd "8 sân" →
+    /// start_time 08:00). Chỉ giữ các trường tuỳ chọn khi đúng bước đang hỏi
+    /// hoặc tin nhắn có nhắc tới. (web trustPatch — chạy trên JSON thô.)
+    static func trustPatch(_ obj: [String: QTChatJSONValue], text: String, slot: QTChatSlot) -> [String: QTChatJSONValue] {
+        var p = obj
+        let t = text.lowercased()
+        let said = { (pattern: String) in test(pattern, in: t) }
+        let byRank = wantsRankSeries(text)
+        if slot != .startTime && !said("\\d\\s*(h|g|giờ|gio|:\\d)|\\b(am|pm)\\b|sáng|chiều|tối|trưa|morning|evening|o'?clock") { p["start_time"] = nil }
+        if slot != .courts && !said("sân|san\\b|court") { p["courts"] = nil }
+        // Gán sân theo bảng chỉ tin khi câu có nhắc cả sân lẫn bảng.
+        if !said("sân|san\\b|court") || !said("bảng|bang\\b|group") { p["group_courts"] = nil }
+        if slot != .series && !said("nhánh|nhanh|series|vàng|bạc|đồng|gold|silver|bronze|top\\s*\\d|bracket|vòng trong|vòng loại|knockout|playoff") && !byRank {
+            p["series"] = nil; p["series_style"] = nil; p["series_sizes"] = nil; p["series_mode"] = nil
+        }
+        if byRank {
+            p["series_mode"] = .string("by_rank")
+            p["series"] = nil
+            p["series_sizes"] = nil
+        }
+        if !said("set|bo\\d|best of|ván|van\\b") { p["default_sets"] = nil }
+        return p
+    }
+
+    /// Trả lời bước số sân/giờ không cần AI: "8", "8 sân" / "7h", "19:30", "7h30". (web localSlotPatch)
+    static func localSlotPatch(_ text: String, slot: QTChatSlot) -> QTChatPatch? {
+        let t = text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        if slot == .courts {
+            guard let g = firstGroups("^(\\d{1,2})\\s*(sân|san|courts?)?$", in: t),
+                  let n = g[1].flatMap({ Int($0) }), (1...50).contains(n) else { return nil }
+            var p = QTChatPatch()
+            p.courts = Array(1...n)
+            return p
+        }
+        if slot == .startTime {
+            if test("^(bây giờ|bay gio|now)$", in: t) {
+                let now = Date()
+                let cal = Calendar.current
+                var p = QTChatPatch()
+                p.startTime = String(format: "%02d:%02d", cal.component(.hour, from: now), cal.component(.minute, from: now))
+                return p
+            }
+            if test("^(để sau|de sau|later|skip|bỏ qua|bo qua|chưa biết|chua biet)$", in: t) {
+                var p = QTChatPatch()
+                p.timeDone = true
+                return p
+            }
+            guard let g = firstGroups("^(\\d{1,2})\\s*(?:h|g|giờ|:)?\\s*(\\d{2})?$", in: t),
+                  let h = g[1].flatMap({ Int($0) }) else { return nil }
+            let mm = g[2].flatMap { Int($0) } ?? 0
+            if h > 23 || mm > 59 { return nil }
+            var p = QTChatPatch()
+            p.startTime = String(format: "%02d:%02d", h, mm)
+            return p
+        }
+        return nil
+    }
+
+    /// Số liệu do code tính, gửi kèm cho AI để nó TRẢ LỜI câu hỏi bằng con số
+    /// thật thay vì tự bịa. (web chatFacts — port nguyên văn, kể cả dòng mô tả
+    /// 1 bảng ở describe(): câu trả lời cuối vẫn qua replyFromDraft/factualAck
+    /// phía client như web.)
+    static func chatFacts(_ d: QTChatDraft, lang: String) -> String {
+        let n = entryCount(d)
+        if n < 2 { return "" }
+        let en = lang == "en"
+        let u = d.isDoubles == false ? (en ? "players" : "người") : (en ? "teams" : "đội")
+        let style = d.seriesStyle ?? "series"
+        func range(_ o: GroupOption) -> String {
+            o.sizes[0] == o.sizes[o.sizes.count - 1] ? "\(o.sizes[0])" : "\(o.sizes[o.sizes.count - 1])–\(o.sizes[0])"
+        }
+        func describe(_ o: GroupOption) -> String {
+            if o.groupCount < 2 { return "1 bảng vòng tròn \(n) \(u), không có vòng loại trực tiếp." }
+            let a = QTSeries.plan(sizes: o.sizes, k: 1)![0]
+            let wc = a.size - 2 * o.groupCount
+            var lines = [
+                "\(o.groupCount) bảng × \(range(o)) \(u): vòng loại trực tiếp lấy nhất và nhì \(o.groupCount) bảng = \(2 * o.groupCount)"
+                + (wc > 0 ? " + \(wc) \(u) hạng 3 = \(a.size)" : "")
+                + " → \(a.bracket) suất\(a.byes > 0 ? " (\(a.byes) \(u) xếp cao được nghỉ vòng đầu)" : ""); \(n - a.size) \(u) dừng ở vòng bảng."
+            ]
+            for k in 2...maxSeries {
+                if let plan = QTSeries.plan(sizes: o.sizes, k: k) {
+                    lines.append("  \(k) vòng loại mặc định: \(plan.enumerated().map { seriesLine(seriesName(style, $0.offset, "vi"), $0.element.size, $0.element.byes, "vi", u) }.joined(separator: "; ")).")
+                    continue
+                }
+                var top = 1
+                while top * 2 <= n / 2 { top *= 2 }
+                let alt = resolveSeriesSizes([top] + Array(repeating: 0, count: k - 1), total: n)
+                lines.append("  \(k) vòng loại theo luật mặc định: KHÔNG chia được."
+                    + (alt != nil ? " Muốn \(k) vòng loại thì đặt cỡ tuỳ chỉnh, ví dụ \(alt!.enumerated().map { seriesLine(seriesName(style, $0.offset, "vi"), $0.element, QTSeedingV2.nextPowerOf2($0.element) - $0.element, "vi", u) }.joined(separator: "; "))." : ""))
+            }
+            return lines.joined(separator: "\n")
+        }
+        var options = groupChoices(n)
+        let chosen = findGroupOption(n, d.groupCount)
+        if let chosen, !options.contains(where: { $0.groupCount == chosen.groupCount }) { options.append(chosen) }
+        let plan = draftSeriesPlan(d)
+        return ([
+            "Số \(u): \(n).",
+            "Chia bảng: \(minGroup)–\(maxGroup) \(u) thì được đúng 1 bảng vòng tròn. Hoặc 2–\(maxGroups) bảng, mỗi bảng \(minGroup)–\(maxGroup) \(u). Một số cách:",
+        ] + options.map(describe) + [
+            chosen != nil ? "Đang chọn: \(chosen!.groupCount) bảng × \(range(chosen!))." : "Chưa chọn cách chia bảng.",
+            (d.advancePerGroup != nil && d.groupCount != nil)
+                ? "ĐÃ CHỐT: đúng \(d.advancePerGroup!) mỗi bảng = \(d.advancePerGroup! * d.groupCount!) vào vòng loại trực tiếp. KHÔNG lấy thêm hạng 3."
+                : "",
+            plan != nil ? "Vòng loại đang chọn: \(plan!.enumerated().map { seriesLine(seriesName(style, $0.offset, "vi"), $0.element.size, $0.element.byes, "vi", u) }.joined(separator: "; "))." : "",
+            chosen != nil ? "Mỗi hạng một vòng loại: \(rankSeriesSizes(chosen!.sizes) != nil ? rankSeriesSizes(chosen!.sizes)!.enumerated().map { seriesLine(seriesName("series", $0.offset, "vi"), $0.element, QTSeedingV2.nextPowerOf2($0.element) - $0.element, "vi", u) }.joined(separator: "; ") + "." : "không tách được (một hạng cần ít nhất 2 đội).")" : "",
+            "Xếp hạng toàn giải để chia vòng loại: mọi đội nhất bảng (so khác bảng bằng tỉ lệ thắng, rồi hiệu số trung bình mỗi trận, rồi điểm ghi trung bình mỗi trận), rồi mọi đội nhì, rồi hạng 3. Luật mặc định gộp nhất và nhì vào vòng đầu. \"Mỗi hạng một vòng loại\" thì nhất → Vòng loại 1, nhì → Vòng loại 2, ba → Vòng loại 3. Hạng chỉ còn 1 đội thì đội đó không đi tiếp. Vòng không chẵn 2/4/8/16/32 thì đội xếp cao được nghỉ vòng đầu.",
+        ] as [String]).filter { !$0.isEmpty }.joined(separator: "\n")
+    }
+
+    /// Đúng logic bước Tạo của web create(): số nhánh hiệu lực + cỡ tuỳ chỉnh.
+    static func createPlan(_ d: QTChatDraft) -> (seriesCount: Int, customSizes: [Int]?) {
+        let custom = customSeries(d)
+        if let custom { return (custom.count, custom) }
+        return (min(d.series ?? 1, seriesCap(d)), nil)
+    }
+
+    /// Payload danh sách cho setupRoster (web buildRoster): nhãn "p1 & p2".
+    static func buildRoster(_ d: QTChatDraft) -> [(name: String, p1: String, p2: String?, team: String?, seed: Int?)] {
+        (d.entries ?? []).map { (name: $0.label, p1: $0.p1, p2: $0.p2, team: $0.team, seed: $0.seed) }
+    }
+}
+
+extension QTChatEngine {
+    /// Ghép các dòng tên lẻ thành đội (web pairEntries): sequential = 1+2,
+    /// 3+4…; random = trộn rồi ghép; each_line = giữ nguyên (mỗi dòng 1 đội).
+    static func pairEntries(_ entries: [QTChatEntry], mode: String) -> [QTChatEntry] {
+        if mode == "each_line" { return entries }
+        var list = entries
+        if mode == "random" { list.shuffle() }
+        var out: [QTChatEntry] = []
+        var i = 0
+        while i + 1 < list.count {
+            let a = list[i]
+            let b = list[i + 1]
+            out.append(QTChatEntry(p1: a.p1, p2: b.p1,
+                                   team: (a.team != nil && a.team == b.team) ? a.team : nil))
+            i += 2
+        }
+        return out
+    }
+
+    /// Dòng mô tả vòng loại đang chọn (cho câu trả lời sau khi đổi cỡ nhánh —
+    /// web QuickTableChat.send nối thêm khi series_sizes vừa đổi).
+    static func seriesPlanLine(_ d: QTChatDraft, lang: String) -> String? {
+        guard let plan = draftSeriesPlan(d) else { return nil }
+        let style = d.seriesStyle ?? "series"
+        let u = unit(d, lang)
+        return plan.enumerated()
+            .map { seriesLine(seriesName(style, $0.offset, lang), $0.element.size, $0.element.byes, lang, u) }
+            .joined(separator: " · ")
+    }
+
+    /// Đơn vị đếm theo thể thức + ngôn ngữ (web copy unit()).
+    static func unit(_ d: QTChatDraft, _ lang: String) -> String {
+        if lang == "en" { return d.isDoubles == false ? "players" : "teams" }
+        return d.isDoubles == false ? "người" : "đội"
+    }
+}
