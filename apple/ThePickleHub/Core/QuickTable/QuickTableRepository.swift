@@ -234,6 +234,36 @@ struct QuickTableRepository {
         return table
     }
 
+    private struct ChatSettingsPatch: Encodable {
+        let default_sets: Int?
+        let courts: [String]?
+        let start_time: String?
+        let playoff_series: Int?
+        let playoff_series_style: String?
+    }
+
+    private struct SeriesSizesPatch: Encodable { let playoff_series_sizes: [Int] }
+
+    /// Cài đặt sau tạo giải của luồng chat (đúng web QuickTableChat.create):
+    /// default_sets / sân + giờ (khi chưa có danh sách) / số nhánh playoff ghi
+    /// một PATCH; playoff_series_sizes ghi RIÊNG để lỡ cột chưa có trên DB thì
+    /// các cài đặt còn lại vẫn lưu được.
+    func applyChatSettings(tableID: UUID, defaultSets: Int?, courts: [String]?,
+                           startTime: String?, playoffSeries: Int?,
+                           playoffSeriesStyle: String?, playoffSeriesSizes: [Int]?) async {
+        let patch = ChatSettingsPatch(
+            default_sets: defaultSets, courts: courts, start_time: startTime,
+            playoff_series: playoffSeries, playoff_series_style: playoffSeriesStyle)
+        if patch.default_sets != nil || patch.courts != nil || patch.playoff_series != nil {
+            try? await client.from("quick_tables").update(patch).eq("id", value: tableID).execute()
+        }
+        if let playoffSeriesSizes {
+            try? await client.from("quick_tables")
+                .update(SeriesSizesPatch(playoff_series_sizes: playoffSeriesSizes))
+                .eq("id", value: tableID).execute()
+        }
+    }
+
     struct RosterEntry {
         let name: String                 // nhãn gộp ("A & B" cho đôi, tên cho đơn)
         var player1Name: String? = nil
@@ -255,6 +285,9 @@ struct QuickTableRepository {
         let p_group_assignments: [Int]
         let p_courts: [Int]
         let p_start_time: String?
+        /// Gán sân theo bảng (PR web #910): mảng theo chỉ số bảng, null = không
+        /// gán. RPC có DEFAULT NULL nên không gửi vẫn gọi được.
+        let p_group_courts: [Int?]?
     }
     private struct AtomicLifecycleResult: Decodable {
         let success: Bool
@@ -267,7 +300,8 @@ struct QuickTableRepository {
     /// lifecycle status in one transaction.
     func setupRoster(tableID: UUID, players: [RosterEntry], groupCount: Int,
                      assignments explicitAssignments: [Int]? = nil,
-                     courts: [String], startTime: String?) async throws {
+                     courts: [String], startTime: String?,
+                     groupCourts: [Int?]? = nil) async throws {
         let roster = players
             .map { RosterEntry(name: $0.name.trimmingCharacters(in: .whitespacesAndNewlines),
                                player1Name: $0.player1Name?.nonEmpty, player2Name: $0.player2Name?.nonEmpty,
@@ -311,7 +345,8 @@ struct QuickTableRepository {
                 ) },
                 p_group_assignments: assignments,
                 p_courts: courts.compactMap { Int($0.trimmingCharacters(in: .whitespaces)) },
-                p_start_time: startTime?.nonEmpty
+                p_start_time: startTime?.nonEmpty,
+                p_group_courts: groupCourts
             ))
             .execute().value
         guard result.success else {
