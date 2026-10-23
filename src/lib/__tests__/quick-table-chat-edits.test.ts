@@ -11,6 +11,7 @@ import {
   nextSlot,
   playoffSummary,
   readUserFacts,
+  wantsSingleGroupRoundRobin,
   replyFromDraft,
   type Draft,
   type Entry,
@@ -242,5 +243,64 @@ describe("playoffSummary", () => {
     const text = playoffSummary({ group_count: 3, advance_per_group: 2, series: 1, series_sizes: [6] }, "vi");
     expect(text).toContain("đúng 2 mỗi bảng");
     expect(text).toContain("không lấy thêm hạng 3");
+  });
+});
+
+describe("single-group round robin (log 46)", () => {
+  const eight = teams(["An", "Bình", "Chi", "Dũng", "Em", "Phong", "Giang", "Hà"]);
+
+  it("detects the format ask in VI and EN phrasings", () => {
+    for (const t of [
+      "Không chia bảng mà đánh vòng tròn",
+      "khong chia bang, danh vong tron",
+      "đánh vòng tròn 1 bảng thôi",
+      "chỉ đánh vòng tròn, một bảng duy nhất",
+      "no groups, just round robin",
+      "single group round robin please",
+    ]) expect(wantsSingleGroupRoundRobin(t)).toBe(true);
+    for (const t of [
+      "chia 2 bảng, đánh vòng tròn lấy nhất nhì",
+      "đánh vòng tròn 2 bảng",
+      "chia 2 bảng",
+      "đánh vòng tròn",
+    ]) expect(wantsSingleGroupRoundRobin(t)).toBe(false);
+  });
+
+  it("pins group_count = 1 from the spoken format ask, never overriding an explicit count", () => {
+    expect(readUserFacts("Không chia bảng mà đánh vòng tròn").group_count).toBe(1);
+    expect(readUserFacts("đánh vòng tròn 2 bảng").group_count).toBe(2);
+    expect(readUserFacts("chia 2 bảng").group_count).toBe(2);
+  });
+
+  it("answers the VI format ask by naming round robin and the no-knockout consequence", () => {
+    const before: Draft = { is_doubles: true, entries: eight, group_count: 2 };
+    const after: Draft = { is_doubles: true, entries: eight, group_count: 1 };
+    const ack = factualAck(before, after, "vi", "Không chia bảng mà đánh vòng tròn");
+    expect(ack).toContain("Đã chia 1 bảng");
+    expect(ack).toContain("vòng tròn");
+    expect(ack).toContain("xếp hạng theo điểm");
+    expect(ack).toContain("không có vòng loại trực tiếp");
+  });
+
+  it("answers the EN format ask the same way", () => {
+    const before: Draft = { is_doubles: true, entries: eight, group_count: 2 };
+    const after: Draft = { is_doubles: true, entries: eight, group_count: 1 };
+    const ack = factualAck(before, after, "en", "no groups, just round robin");
+    expect(ack).toContain("round-robin group");
+    expect(ack).toContain("no knockout round");
+  });
+
+  it("names the format for a plain one-group split too", () => {
+    const after: Draft = { is_doubles: true, entries: eight, group_count: 1 };
+    const ack = factualAck({}, after, "vi", "1 bảng");
+    expect(ack).toContain("Đã chia 1 bảng");
+    expect(ack).toContain("Một bảng vòng tròn, không có vòng loại trực tiếp");
+  });
+
+  it("keeps multi-group wording free of the round-robin claim", () => {
+    const after: Draft = { is_doubles: true, entries: eight, group_count: 2 };
+    const ack = factualAck({}, after, "vi", "chia 2 bảng");
+    expect(ack).toContain("Đã chia 2 bảng");
+    expect(ack).not.toContain("vòng tròn");
   });
 });
