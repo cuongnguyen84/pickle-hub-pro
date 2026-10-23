@@ -11,11 +11,13 @@ import {
   nextSlot,
   playoffSummary,
   readUserFacts,
+  wantsSingleGroupRoundRobin,
   replyFromDraft,
   type Draft,
   type Entry,
 } from "@/lib/quick-table-chat";
 import { generateCircleMethodMatches, scheduleMatches } from "@/lib/round-robin";
+import { singleGroupPlayoffPlans, seriesDraws } from "@/lib/quick-table-series";
 
 const teams = (names: string[]): Entry[] => names.map((p1) => ({ p1 }));
 
@@ -243,4 +245,199 @@ describe("playoffSummary", () => {
     expect(text).toContain("đúng 2 mỗi bảng");
     expect(text).toContain("không lấy thêm hạng 3");
   });
+});
+
+describe("single-group round robin (log 46)", () => {
+  const eight = teams(["An", "Bình", "Chi", "Dũng", "Em", "Phong", "Giang", "Hà"]);
+
+  it("detects the format ask in VI and EN phrasings", () => {
+    for (const t of [
+      "Không chia bảng mà đánh vòng tròn",
+      "khong chia bang, danh vong tron",
+      "đánh vòng tròn 1 bảng thôi",
+      "chỉ đánh vòng tròn, một bảng duy nhất",
+      "no groups, just round robin",
+      "single group round robin please",
+    ]) expect(wantsSingleGroupRoundRobin(t)).toBe(true);
+    for (const t of [
+      "chia 2 bảng, đánh vòng tròn lấy nhất nhì",
+      "đánh vòng tròn 2 bảng",
+      "chia 2 bảng",
+      "đánh vòng tròn",
+    ]) expect(wantsSingleGroupRoundRobin(t)).toBe(false);
+  });
+
+  it("pins group_count = 1 from the spoken format ask, never overriding an explicit count", () => {
+    expect(readUserFacts("Không chia bảng mà đánh vòng tròn").group_count).toBe(1);
+    expect(readUserFacts("đánh vòng tròn 2 bảng").group_count).toBe(2);
+    expect(readUserFacts("chia 2 bảng").group_count).toBe(2);
+  });
+
+  it("answers the VI format ask by naming round robin and the no-knockout consequence", () => {
+    const before: Draft = { is_doubles: true, entries: eight, group_count: 2 };
+    const after: Draft = { is_doubles: true, entries: eight, group_count: 1 };
+    const ack = factualAck(before, after, "vi", "Không chia bảng mà đánh vòng tròn");
+    expect(ack).toContain("Đã chia 1 bảng");
+    expect(ack).toContain("vòng tròn");
+    expect(ack).toContain("xếp hạng theo điểm");
+    expect(ack).not.toContain("không có vòng loại trực tiếp");
+  });
+
+  it("answers the EN format ask the same way", () => {
+    const before: Draft = { is_doubles: true, entries: eight, group_count: 2 };
+    const after: Draft = { is_doubles: true, entries: eight, group_count: 1 };
+    const ack = factualAck(before, after, "en", "no groups, just round robin");
+    expect(ack).toContain("round-robin group");
+    expect(ack).not.toContain("no knockout");
+  });
+
+  it("names the format for a plain one-group split too", () => {
+    const after: Draft = { is_doubles: true, entries: eight, group_count: 1 };
+    const ack = factualAck({}, after, "vi", "1 bảng");
+    expect(ack).toContain("Đã chia 1 bảng");
+    expect(ack).toContain("Một bảng vòng tròn");
+    expect(ack).not.toContain("không có vòng loại trực tiếp");
+  });
+
+  it("keeps multi-group wording free of the round-robin claim", () => {
+    const after: Draft = { is_doubles: true, entries: eight, group_count: 2 };
+    const ack = factualAck({}, after, "vi", "chia 2 bảng");
+    expect(ack).toContain("Đã chia 2 bảng");
+    expect(ack).not.toContain("vòng tròn");
+  });
+});
+
+describe("knockout after a single round-robin group", () => {
+  const eight = teams(["An", "Bình", "Chi", "Dũng", "Em", "Phong", "Giang", "Hà"]);
+
+  it("parses the advance count said without 'each group'", () => {
+    expect(readUserFacts("lấy 4 đội vào trực tiếp").advance_per_group).toBe(4);
+    expect(readUserFacts("top 2 vào bán kết").advance_per_group).toBe(2);
+    expect(readUserFacts("take 4 into the knockout").advance_per_group).toBe(4);
+    expect(readUserFacts("chọn 4 đội vào vòng tròn").advance_per_group).toBeUndefined();
+  });
+
+  it("summarizes top-4 and top-2 knockouts with the seed pairings", () => {
+    const base: Draft = { is_doubles: true, entries: eight, group_count: 1 };
+    expect(playoffSummary({ ...base, advance_per_group: 4 }, "vi")).toContain("Bán kết: đội 1 gặp đội 4, đội 2 gặp đội 3");
+    expect(playoffSummary({ ...base, advance_per_group: 2 }, "vi")).toContain("Chung kết: đội 1 gặp đội 2");
+    expect(playoffSummary({ ...base, advance_per_group: 4 }, "en")).toContain("seed 1 vs seed 4, seed 2 vs seed 3");
+    expect(playoffSummary(base, "vi")).toBe("Một bảng vòng tròn");
+  });
+
+  it("states the pairings in the chat reply when the knockout is set in the same turn", () => {
+    const before: Draft = { is_doubles: true, entries: eight, group_count: 2 };
+    const after: Draft = { is_doubles: true, entries: eight, group_count: 1, advance_per_group: 4 };
+    const ack = factualAck(before, after, "vi", "Không chia bảng mà đánh vòng tròn, lấy 4 đội vào trực tiếp");
+    expect(ack).toContain("vòng tròn");
+    expect(ack).toContain("Bán kết: đội 1 gặp đội 4, đội 2 gặp đội 3");
+    expect(ack.match(/vòng tròn/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(ack).not.toContain("không có vòng loại trực tiếp");
+  });
+
+  it("offers top-4 then top-2 plans for one group, sized to the group", () => {
+    expect(singleGroupPlayoffPlans(8)).toEqual([[4], [2]]);
+    expect(singleGroupPlayoffPlans(4)).toEqual([[4], [2]]);
+    expect(singleGroupPlayoffPlans(3)).toEqual([[2]]);
+    expect(singleGroupPlayoffPlans(2)).toEqual([]);
+  });
+});
+
+describe("round robin with 5, 6 and 7 teams, then a knockout (Cường's cases)", () => {
+  const cases = [
+    { n: 5, total: 10 },
+    { n: 6, total: 15 },
+    { n: 7, total: 21 },
+  ];
+  for (const { n, total } of cases) {
+    describe(`${n} teams`, () => {
+      const ids = Array.from({ length: n }, (_, i) => `T${i + 1}`);
+      const games = generateCircleMethodMatches(ids);
+
+      it(`plays exactly ${total} matches, every pair meeting once`, () => {
+        expect(games.length).toBe(total);
+        const pairs = new Set(games.map((m) => [m.player1, m.player2].sort().join("|")));
+        expect(pairs.size).toBe(total);
+        for (const id of ids) expect(games.filter((m) => m.player1 === id || m.player2 === id).length).toBe(n - 1);
+      });
+
+      it("odd fields rest exactly one team per round, each team exactly once", () => {
+        const rounds = new Map<number, Set<string>>();
+        for (const m of games) {
+          const s = rounds.get(m.rrRoundNumber) ?? new Set<string>();
+          s.add(m.player1); s.add(m.player2);
+          rounds.set(m.rrRoundNumber, s);
+        }
+        if (n % 2 === 1) {
+          expect(rounds.size).toBe(n);
+          const rests = new Map(ids.map((id) => [id, 0]));
+          for (const s of rounds.values()) {
+            const resting = ids.filter((id) => !s.has(id));
+            expect(resting.length).toBe(1);
+            rests.set(resting[0], (rests.get(resting[0]) ?? 0) + 1);
+          }
+          for (const id of ids) expect(rests.get(id)).toBe(1);
+        } else {
+          expect(rounds.size).toBe(n - 1);
+          for (const s of rounds.values()) expect(s.size).toBe(n);
+        }
+      });
+
+      // Mô phỏng kết quả tất định: hạt giống thấp thắng mọi trận, thắng 11 điểm,
+      // đội thua ghi điểm bằng thứ hạng của mình — số trận thắng phân định hết.
+      const stats = new Map(ids.map((id) => [id, { played: 0, won: 0, pf: 0, pd: 0 }]));
+      for (const m of games) {
+        const a = ids.indexOf(m.player1), b = ids.indexOf(m.player2);
+        const w = a < b ? m.player1 : m.player2;
+        const l = a < b ? m.player2 : m.player1;
+        const loserPoints = Math.max(a, b);
+        const ws = stats.get(w)!, ls = stats.get(l)!;
+        ws.played += 1; ls.played += 1;
+        ws.won += 1;
+        ws.pf += 11; ws.pd += 11 - loserPoints;
+        ls.pf += loserPoints; ls.pd += loserPoints - 11;
+      }
+      const rankedIds = [...ids].sort((x, y) => {
+        const A = stats.get(x)!, B = stats.get(y)!;
+        return B.won - A.won || B.pd - A.pd || B.pf - A.pf;
+      });
+
+      it("standings from those results rank T1..Tn in seed order", () => {
+        expect(rankedIds).toEqual(ids);
+        expect(stats.get(ids[0])?.won).toBe(n - 1);
+        expect(stats.get(ids[n - 1])?.won).toBe(0);
+      });
+
+      const players = rankedIds.map((id) => ({
+        id, name: id, group_id: "g1",
+        matches_played: stats.get(id)!.played, matches_won: stats.get(id)!.won,
+        point_diff: stats.get(id)!.pd, points_for: stats.get(id)!.pf,
+      }));
+      const pairSets = (sizes: number[]) =>
+        seriesDraws(["g1"], players, sizes)[0].map((p) => [p.player1.playerId, p.player2.playerId].sort().join("|")).sort();
+
+      it("top 4 from these standings meet 1v4 and 2v3 in the semifinals", () => {
+        expect(pairSets([4])).toEqual([`${ids[0]}|${ids[3]}`, `${ids[1]}|${ids[2]}`].sort());
+      });
+
+      it("top 2 from these standings meet 1v2 in the final", () => {
+        expect(pairSets([2])).toEqual([`${ids[0]}|${ids[1]}`]);
+      });
+
+      it("chat replies name the format and the pairings for this field size", () => {
+        const entries = teams(ids.map((id) => `Đội ${id}`));
+        const before: Draft = { is_doubles: true, entries, group_count: 2 };
+        const after4: Draft = { is_doubles: true, entries, group_count: 1, advance_per_group: 4 };
+        const vi = factualAck(before, after4, "vi", "Không chia bảng mà đánh vòng tròn, lấy 4 đội vào trực tiếp");
+        expect(vi).toContain("1 bảng đấu vòng tròn");
+        expect(vi).toContain("Bán kết: đội 1 gặp đội 4, đội 2 gặp đội 3");
+        const after2: Draft = { ...after4, advance_per_group: 2 };
+        const vi2 = factualAck(before, after2, "vi", "Không chia bảng mà đánh vòng tròn, lấy 2 đội vào trực tiếp");
+        expect(vi2).toContain("Chung kết: đội 1 gặp đội 2");
+        const en = factualAck(before, after4, "en", "no groups, just round robin, take 4 into the knockout");
+        expect(en).toContain("round-robin group");
+        expect(en).toContain("seed 1 vs seed 4, seed 2 vs seed 3");
+      });
+    });
+  }
 });

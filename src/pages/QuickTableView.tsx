@@ -49,7 +49,7 @@ import {
 import { QuickTableShareActions } from '@/components/quicktable/QuickTableShareActions';
 import { scheduleMatches } from '@/lib/round-robin';
 import { playoffStartTime, schedulePlayoff } from '@/lib/quick-table-playoff-schedule';
-import { maxSeries, rankSeriesSizes, resolveSeriesSizes, seriesDraws, seriesLine, seriesName, seriesPlan, seriesPreview, seriesDrawPreview, slot } from '@/lib/quick-table-series';
+import { maxSeries, rankSeriesSizes, resolveSeriesSizes, seriesDraws, seriesLine, seriesName, seriesPlan, singleGroupPlayoffPlans, seriesPreview, seriesDrawPreview, slot } from '@/lib/quick-table-series';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -366,7 +366,11 @@ const QuickTableView = () => {
   // null = không có cách chia hợp lệ (rankSeriesSizes / resolveSeriesSizes).
   const sameSizes = (a: number[], b?: number[] | null) => !!b && a.join() === b.join();
   const extras = [customSizes, rankSizes].filter((p): p is number[] => !!p && !defaultPlans.some((d) => sameSizes(d, p)));
-  const planOptions = [...extras.filter((p, i) => extras.findIndex((q) => sameSizes(q, p)) === i), ...defaultPlans];
+  // Một bảng vòng tròn: seriesPlan/rankSeriesSizes chỉ chạy cho ≥2 bảng, nên bổ sung
+  // kế hoạch lấy 2/4 đội đầu bảng vào vòng loại trực tiếp (cặp hạt giống do seriesDraws lo).
+  const singleGroupPlans = groupSizesNow.length === 1 ? singleGroupPlayoffPlans(groupSizesNow[0]) : [];
+  const planOptions = [...extras.filter((p, i) => extras.findIndex((q) => sameSizes(q, p)) === i), ...defaultPlans,
+    ...singleGroupPlans.filter((p) => !defaultPlans.some((d) => sameSizes(d, p)) && !extras.some((e) => sameSizes(e, p)))];
   const defaultPlanIdx = customSizes
     ? planOptions.findIndex((p) => sameSizes(p, customSizes))
     : planOptions.findIndex((p) => p.length === Math.min(table?.playoff_series ?? 1, seriesCap));
@@ -885,7 +889,7 @@ const QuickTableView = () => {
     statusKey === 'completed' ? 'var(--tl-fg-3)' :
     statusKey === 'playoff' || statusKey === 'group_stage' ? 'var(--tl-green)' :
     'var(--tl-gold)';
-  const playoffLockedReason = (table.group_count ?? 0) < 2
+  const playoffLockedReason = (table.group_count ?? 0) < 2 && planOptions.length === 0
     ? t.quickTable.view.playoffLockedOneGroup
     : !groupStageComplete
       ? t.quickTable.view.playoffLockedWaiting

@@ -69,6 +69,16 @@ export function seriesPlan(sizes: number[], k: number): SeriesSlot[] | null {
  * Mỗi hạng trong bảng một nhánh: [số đội nhất, số đội nhì, …].
  * Hạng còn đúng 1 đội không thành nhánh. null khi không ra được 2 nhánh.
  */
+/** Một bảng vòng tròn: các cỡ vòng loại trực tiếp lấy từ đầu bảng — 2 đội (chung kết)
+ * hoặc 4 đội (bán kết 1–4, 2–3). Trả về danh sách các KẾ HOẠCH (mỗi kế hoạch là
+ * một mảng cỡ nhánh, ở đây luôn là 1 nhánh). */
+export function singleGroupPlayoffPlans(groupSize: number): number[][] {
+  const plans: number[][] = [];
+  if (groupSize >= 4) plans.push([4]);
+  if (groupSize >= 3) plans.push([2]);
+  return plans;
+}
+
 export function rankSeriesSizes(groupSizes: number[]): number[] | null {
   if (groupSizes.length < 2) return null;
   const depth = Math.min(RANK_SERIES_CAP, Math.max(0, ...groupSizes));
