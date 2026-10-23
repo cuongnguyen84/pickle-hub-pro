@@ -864,6 +864,61 @@ export function extractScrapeLinks(html: string, config: HtmlScrapeConfig): stri
   return candidates.map((candidate) => candidate.url);
 }
 
+// Mã trạng thái coi là NHẤT THỜI ở đường listing scrape. 403 nằm trong danh
+// sách này vì bằng chứng đo thật (23/10/2026): Times Now trả "listing HTTP
+// 403" cho worker ở 2 tick liên tiếp (11:00 và 13:00) trong khi cùng URL đó,
+// từ cùng egress Cloudflare Workers và bằng đúng User-Agent hiện tại, luôn
+// trả 200 — tức là cái 403 là chớp nhoáng của lớp Cloudflare phía nhà xuất
+// bản, không phải chặn theo UA/danh tính. Kèm 429 và 5xx như thường lệ. Các
+// mã còn lại (404, 410, 400…) là hỏng thật — thử lại chỉ tốn ngân sách.
+export function isTransientListingStatus(status: number): boolean {
+  return status === 403 || status === 429 || (status >= 500 && status <= 504);
+}
+
+// Độ trễ trước lần thử lại của đường scrape. Đường feed thử lại ngay lập tức
+// vì lỗi của nó là abort/timeout phía mạng; còn lỗi ở đây là WAF chớp nhoáng
+// thì cần một nhịp thở ngắn mới có tác dụng.
+const SCRAPE_LISTING_RETRY_DELAY_MS = 2_000;
+
+// Như fetchFeedWithRetry của đường feed: tối đa MỘT lần thử lại, trừ vào
+// ngân sách retry dùng chung của cả run (budget.retries), và chỉ khi lỗi là
+// nhất thời — timeout/abort (isTransientFetchError) hoặc mã trạng thái nhất
+// thời ở trên. Khác đường feed ở điểm có độ trễ trước lần thử lại.
+async function fetchListingWithRetry(
+  listingUrl: string,
+  budget: FetchBudget,
+): Promise<Response> {
+  let firstError: unknown = null;
+  try {
+    const res = await fetchListingOnce(listingUrl);
+    if (res.ok || !isTransientListingStatus(res.status)) return res;
+    firstError = new Error(`listing HTTP ${res.status}`);
+  } catch (error) {
+    if (!isTransientFetchError(error)) throw error;
+    firstError = error;
+  }
+  if (budget.retries <= 0) {
+    throw firstError instanceof Error
+      ? firstError
+      : new Error(`listing fetch failed: ${String(firstError)}`);
+  }
+  budget.retries -= 1;
+  console.warn(
+    `[scrape] thử lại ${listingUrl} sau lỗi nhất thời: ${
+      firstError instanceof Error ? firstError.message : String(firstError)
+    }`,
+  );
+  await new Promise((resolve) => setTimeout(resolve, SCRAPE_LISTING_RETRY_DELAY_MS));
+  return await fetchListingOnce(listingUrl);
+}
+
+async function fetchListingOnce(listingUrl: string): Promise<Response> {
+  return await fetch(listingUrl, {
+    headers: { "User-Agent": NEWS_FETCHER_USER_AGENT },
+    signal: AbortSignal.timeout(12_000),
+  });
+}
+
 async function scrapeHtmlListing(
   env: Env,
   source: NewsSource,
@@ -873,10 +928,7 @@ async function scrapeHtmlListing(
   if (!config) throw new Error(`html_scrape source ${source.id} chưa có cấu hình scrape`);
   if (!source.feed_url) throw new Error("source has no feed_url");
 
-  const listingRes = await fetch(source.feed_url, {
-    headers: { "User-Agent": NEWS_FETCHER_USER_AGENT },
-    signal: AbortSignal.timeout(12_000),
-  });
+  const listingRes = await fetchListingWithRetry(source.feed_url, budget);
   if (!listingRes.ok) throw new Error(`listing HTTP ${listingRes.status}`);
   const listingHtml = await listingRes.text();
 
