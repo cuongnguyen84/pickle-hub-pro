@@ -22,7 +22,7 @@ const post: BlogPost = {
   "content": {
     "en": {
       "title": "World Championship 2026 Results: Daily Scores and Confirmed Winners",
-      "metaTitle": "PPA World Championships Results 2026: World Championship Scores",
+      "metaTitle": "PPA World Championships Results 2026: World Championship",
       "metaDescription": "PPA World Championships results: World Championship 2026 results and daily scores from the official PPA feed, checked by ThePickleHub.",
       "sections": [
         {
