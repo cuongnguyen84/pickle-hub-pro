@@ -708,6 +708,27 @@ export const HTML_SCRAPE_CONFIGS: Record<string, HtmlScrapeConfig> = {
 // Workers; backlog tự rút cạn qua các run 2h kế tiếp.
 const SCRAPE_MAX_NEW_PER_RUN = 4;
 
+// Trần SỐ ỨNG VIÊN được quét meta trong một run, trước khi lọc độ tươi.
+// Tách khỏi SCRAPE_MAX_NEW_PER_RUN vì thứ tự ứng viên không đáng tin như
+// nhau ở mọi nguồn: listing HTML thường mới-nhất-trước theo ngày đăng,
+// nhưng sitemap chỉ có <lastmod> — và có nhà xuất bản chạm sửa hàng loạt
+// làm lastmod của bài cũ vọt lên đầu (ca Dink Authority 23/10/2026: 4 ứng
+// viên đầu theo lastmod có tuổi đăng 0/154/56/170 ngày, 3 bài bị bộ lọc
+// tuổi ở ingest loại sạch, nguồn ra 0 bài trong im lặng dù fetch "thành
+// công"). Quét sâu tới trần này, dừng sớm ngay khi gom đủ
+// SCRAPE_MAX_NEW_PER_RUN bài CÒN TƯƠI; ngân sách subrequest chung của run
+// (budget) vẫn là chốt cứng trên cả hai trần.
+const SCRAPE_MAX_SCAN_PER_RUN = 12;
+
+// Độ tươi theo ngày ĐĂNG, cùng biên với bộ lọc tuổi của ingestItems
+// (MAX_AGE_DAYS, tính ở thời điểm `nowMs`): bài cũ hơn là "già", ngày không
+// parse được cũng coi là già — khớp đúng cách ingest sẽ xử lý bài đó, để
+// khâu quét không tốn công gom bài mà ingest chắc chắn loại.
+export function isWithinMaxAge(publishedIso: string, nowMs: number): boolean {
+  const publishedMs = Date.parse(publishedIso);
+  return Number.isFinite(publishedMs) && publishedMs >= nowMs - MAX_AGE_DAYS * 86_400_000;
+}
+
 function metaContent(html: string, property: string): string | null {
   const match = html.match(
     new RegExp(`<meta[^>]+(?:property|name)=["']${property}["'][^>]+content=["']([^"']*)["']`, "i"),
@@ -933,9 +954,12 @@ async function scrapeHtmlListing(
     dupRes.ok ? ((await dupRes.json()) as { source_url: string }[]).map((row) => row.source_url) : [],
   );
 
-  const fresh = links.filter((url) => !known.has(url)).slice(0, SCRAPE_MAX_NEW_PER_RUN);
+  // Quét tối đa SCRAPE_MAX_SCAN_PER_RUN ứng viên chưa biết, nhưng chỉ gom
+  // tối đa SCRAPE_MAX_NEW_PER_RUN bài còn tươi — xem chú thích ở hằng số.
+  const fresh = links.filter((url) => !known.has(url)).slice(0, SCRAPE_MAX_SCAN_PER_RUN);
   const items: ParsedItem[] = [];
   for (const url of fresh) {
+    if (items.length >= SCRAPE_MAX_NEW_PER_RUN) break;
     // Mỗi bài ở đường og-meta tốn 1 fetch meta + 1 fetch body ở ingestItems,
     // nên phải giữ chỗ 2 slot mới được đi tiếp.
     if (budget.left < 2) break;
@@ -956,6 +980,12 @@ async function scrapeHtmlListing(
         : rawTitle);
       // published_time của site không mang timezone — coi là UTC.
       const publishedIso = /Z$|[+-]\d\d:?\d\d$/.test(published) ? published : `${published}Z`;
+      // Bỏ qua bài đã quá tuổi ngay tại đây (cùng biên với ingest) để suất
+      // gom của run dành cho bài tươi phía sau trong danh sách ứng viên.
+      if (!isWithinMaxAge(publishedIso, Date.now())) {
+        console.log(`[${source.id}] bỏ ứng viên quá tuổi (${published}) — ${url}`);
+        continue;
+      }
       items.push({
         title: title.slice(0, TITLE_LIMIT),
         link: url,
