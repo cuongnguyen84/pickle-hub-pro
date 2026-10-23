@@ -6514,6 +6514,7 @@ export type Database = {
           default_sets: number | null
           format: Database["public"]["Enums"]["quick_table_format"]
           group_count: number | null
+          group_courts: Json | null
           id: string
           is_doubles: boolean
           is_public: boolean
@@ -6545,6 +6546,7 @@ export type Database = {
           default_sets?: number | null
           format: Database["public"]["Enums"]["quick_table_format"]
           group_count?: number | null
+          group_courts?: Json | null
           id?: string
           is_doubles?: boolean
           is_public?: boolean
@@ -6576,6 +6578,7 @@ export type Database = {
           default_sets?: number | null
           format?: Database["public"]["Enums"]["quick_table_format"]
           group_count?: number | null
+          group_courts?: Json | null
           id?: string
           is_doubles?: boolean
           is_public?: boolean
@@ -12017,6 +12020,7 @@ export type Database = {
         Args: {
           p_courts?: Json
           p_group_assignments: Json
+          p_group_courts?: Json
           p_roster: Json
           p_start_time?: string
           p_table_id: string
