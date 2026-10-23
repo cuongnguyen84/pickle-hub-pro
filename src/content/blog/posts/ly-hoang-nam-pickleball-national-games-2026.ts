@@ -17,6 +17,10 @@ const post: BlogPost = {
     en: "Browse tournaments on ThePickleHub",
     vi: "Xem các giải đấu trên ThePickleHub",
   },
+  heroImage: {
+    src: "/images/blog/ly-hoang-nam-pickleball-national-games-2026-hero.webp",
+    alt: "Ly Hoang Nam in action on the pickleball court ahead of the 2026 National Games (Photo: BongdaPlus)",
+  },
   content: {
     en: {
       title: "Ly Hoang Nam Switches to Pickleball for Vietnam's 2026 National Games",
