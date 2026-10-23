@@ -4,9 +4,10 @@ name: Playwright full (auth + journeys + contract)
 # written but never wired into CI — playwright.yml only runs e2e:smoke.
 #
 # Budget math (Actions minutes are a scarce resource here — two depletion
-# incidents in 07/2026): one run ≈ npm ci 2' + chromium install 3' + suites
-# ~10' ≈ 15 min. Weekly schedule = ~65 min/month. Deliberately NOT on
-# pull_request/push — that would be ~15 min × every PR sync. Escalate to a
+# incidents in 07/2026): one run ≈ npm ci 2' + suites ~10' ≈ 12 min (browsers
+# come from the pinned Playwright container image since 2026-10-23 — no more
+# apt install step). Weekly schedule = ~55 min/month. Deliberately NOT on
+# pull_request/push — that would be ~12 min × every PR sync. Escalate to a
 # path-filtered PR trigger only if a weekly cadence proves too slow to catch
 # regressions.
 #
@@ -24,9 +25,40 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Resolve the exact Playwright version the repo pins BEFORE the full job,
+  # because `container:` cannot read step outputs from the same job — and an
+  # unpinned/floating image is exactly the flake this replaces. Same pattern
+  # as playwright.yml (2026-10-23).
+  resolve-playwright:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          # 22, exactly — same supabase-js/WebSocket constraint as playwright.yml.
+          node-version: 22
+          cache: npm
+
+      - name: Install npm deps
+        run: npm ci
+
+      - name: Resolve Playwright version
+        id: resolve
+        run: echo "version=$(npx playwright --version | sed 's/Version //')" >> "$GITHUB_OUTPUT"
+
   full:
+    needs: resolve-playwright
     timeout-minutes: 30
     runs-on: ubuntu-latest
+    # The official image ships the pinned browsers + their system libraries
+    # under /ms-playwright. This removes the apt step entirely — the ubuntu
+    # mirror timeouts that chronically flaked `playwright install --with-deps`
+    # (same failure class fixed for the smoke workflow in PR #913).
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.resolve-playwright.outputs.version }}-noble
 
     env:
       PLAYWRIGHT_BASE_URL: https://www.thepicklehub.net
@@ -43,9 +75,8 @@ jobs:
       - name: Install npm deps
         run: npm ci
 
-      # auth/journeys/contract all run on Desktop Chrome only.
-      - name: Install Playwright browser (Chromium only)
-        run: npx playwright install --with-deps chromium
+      # auth/journeys/contract all run on Desktop Chrome only — chromium is
+      # already in the container image, no install step needed.
 
       - name: Run auth + journeys + contract suites
         env:

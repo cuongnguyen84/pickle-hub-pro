@@ -16,9 +16,42 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Resolve the exact Playwright version the repo pins BEFORE the visual job,
+  # because `container:` cannot read step outputs from the same job — and an
+  # unpinned/floating image is exactly the flake this replaces. Same pattern
+  # as playwright.yml (2026-10-23). The resolve job mirrors this workflow's
+  # own node pin (20).
+  resolve-playwright:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install npm deps
+        run: npm ci
+
+      - name: Resolve Playwright version
+        id: resolve
+        run: echo "version=$(npx playwright --version | sed 's/Version //')" >> "$GITHUB_OUTPUT"
+
   visual:
+    needs: resolve-playwright
     timeout-minutes: 15
     runs-on: ubuntu-latest
+    # The official image ships the pinned browsers + their system libraries
+    # under /ms-playwright. This removes the apt step entirely — the ubuntu
+    # mirror timeouts that chronically flaked `playwright install --with-deps`
+    # (same failure class fixed for the smoke workflow in PR #913). The
+    # baseline gate step also runs inside the container; it only lists files,
+    # so the have=0 path costs one container boot and nothing else changes.
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.resolve-playwright.outputs.version }}-noble
     steps:
       - uses: actions/checkout@v7
 
@@ -40,9 +73,7 @@ jobs:
       - name: Install deps
         if: steps.gate.outputs.have == '1'
         run: npm ci
-      - name: Install Playwright browser
-        if: steps.gate.outputs.have == '1'
-        run: npx playwright install --with-deps chromium
+      # Chromium is already in the container image — no install step needed.
 
       - name: Point at PR preview if available
         if: steps.gate.outputs.have == '1' && github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork
