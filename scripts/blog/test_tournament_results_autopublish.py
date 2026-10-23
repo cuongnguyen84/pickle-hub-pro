@@ -51,6 +51,24 @@ class TournamentAutopublishTests(unittest.TestCase):
         self.assertNotIn("2026 2026", str(pkg))
         self.assertIn("07:00 Vietnam time", pkg["en"]["sections"][0]["content"])  # 00:00 UTC
 
+    def test_generated_seo_strings_stay_within_byte_budgets(self):
+        # Regression 2026-10-24: the long search name "PPA World Championships"
+        # produced a 63-byte metaTitleEn and turned main CI red
+        # (seo-byte-budget hard gate: titles <= 60 bytes, descriptions <= 160).
+        event = {"title": "World Championship 2026", "name": "World Championship 2026",
+                 "search_name": "PPA World Championships", "start_date": "2026-11-02",
+                 "dates_en": "November 2-8, 2026", "dates_vi": "2-8/11/2026",
+                 "source": "/official", "slug": "world-championship-2026-results",
+                 "vi_slug": "ket-qua-world-championship-2026"}
+        pkg = autopublish.package(event, feed(), datetime(2026, 11, 2, tzinfo=timezone.utc))
+        self.assertEqual(pkg["en"]["metaTitle"],
+                         "PPA World Championships Results 2026: World Championship")
+        for value, limit in [(pkg["en"]["metaTitle"], autopublish.SEO_TITLE_MAX_BYTES),
+                             (pkg["vi"]["metaTitle"], autopublish.SEO_TITLE_MAX_BYTES),
+                             (pkg["en"]["metaDescription"], autopublish.SEO_DESCRIPTION_MAX_BYTES),
+                             (pkg["vi"]["metaDescription"], autopublish.SEO_DESCRIPTION_MAX_BYTES)]:
+            self.assertLessEqual(len(value.encode("utf-8")), limit)
+
     def test_pro_prefixed_division_is_translated(self):
         match = feed()["matches"][0] | {"division": "Pro Men's Singles"}
         self.assertTrue(autopublish._match_line(match, vi=True).startswith("Đơn nam,"))

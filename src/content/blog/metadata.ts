@@ -27,7 +27,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     },
     "titleEn": "World Championship 2026 Results: Daily Scores and Confirmed Winners",
     "titleVi": "Kết quả World Championship 2026: cập nhật hằng ngày",
-    "metaTitleEn": "PPA World Championships Results 2026: World Championship Scores",
+    "metaTitleEn": "PPA World Championships Results 2026: World Championship",
     "metaTitleVi": "Kết quả PPA World Championships 2026: World Championship",
     "metaDescriptionEn": "PPA World Championships results: World Championship 2026 results and daily scores from the official PPA feed, checked by ThePickleHub.",
     "metaDescriptionVi": "Kết quả World Championship 2026 từ feed PPA chính thức, được ThePickleHub kiểm chứng."
