@@ -27,6 +27,10 @@ export const blogMetadata: BlogPostMetadata[] = [
       "en": "Watch live tournaments on ThePickleHub",
       "vi": "Xem giải trực tiếp trên ThePickleHub"
     },
+    "heroImage": {
+      "src": "/images/blog/mlp-asia-draft-2026-viet-panthers-hero.webp",
+      "alt": "Viet Panthers launch press conference for the first MLP Asia season, with the team's official logo unveiled (Photo: MLP Asia via Pickleball News Asia)"
+    },
     "titleEn": "MLP Asia Draft 2026: Viet Panthers Bet Big on 15-Year-Old Tama Shimabukuro",
     "titleVi": "Draft MLP Asia 2026: Viet Panthers đặt cược lớn vào Tama Shimabukuro, 15 tuổi",
     "metaTitleEn": "MLP Asia Draft: Viet Panthers Pick Shimabukuro",
@@ -52,6 +56,10 @@ export const blogMetadata: BlogPostMetadata[] = [
       "en": "Browse tournaments on ThePickleHub",
       "vi": "Xem các giải đấu trên ThePickleHub"
     },
+    "heroImage": {
+      "src": "/images/blog/jogarbola-team-pickleball-vietnam-hero.webp",
+      "alt": "The full Jogarbola pickleball team at the official launch ceremony in Vietnam (Photo: Bao Phap Luat)"
+    },
     "titleEn": "Team Pickleball Jogarbola: Vietnam's Sponsorship Game Grows Up",
     "titleVi": "Team Pickleball Jogarbola ra mắt: khi thương hiệu Việt đầu tư nghiêm túc vào vận động viên",
     "metaTitleEn": "Jogarbola Pickleball Team: Sponsorship Analysis",
@@ -75,6 +83,10 @@ export const blogMetadata: BlogPostMetadata[] = [
     "ctaLabel": {
       "en": "Browse tournaments on ThePickleHub",
       "vi": "Xem các giải đấu trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/ly-hoang-nam-pickleball-national-games-2026-hero.webp",
+      "alt": "Ly Hoang Nam in action on the pickleball court ahead of the 2026 National Games (Photo: BongdaPlus)"
     },
     "titleEn": "Ly Hoang Nam Switches to Pickleball for Vietnam's 2026 National Games",
     "titleVi": "Lý Hoàng Nam chơi pickleball tại Đại hội Thể thao toàn quốc 2026: cột mốc cho cả hai môn thể thao",
