@@ -173,4 +173,100 @@ struct QuickTableChatEngineTests {
             #expect(ack.contains("Bán kết: đội 1 gặp đội 4, đội 2 gặp đội 3"), "\(n) đội: \(ack)")
         }
     }
+
+    // MARK: PR-2 — trustPatch / localSlotPatch / chatFacts / cầu nối JSON
+
+    @Test("trustPatch drops fields the user never mentioned")
+    func trustPatchDropsUnmentioned() {
+        let patch: [String: QTChatJSONValue] = [
+            "start_time": .string("08:00"), "courts": .array([.number(1), .number(2)]),
+            "series": .number(2), "default_sets": .number(3), "group_courts": .array([.number(1)]),
+        ]
+        let out = QTChatEngine.trustPatch(patch, text: "16 đội chia 4 bảng", slot: .groups)
+        #expect(out["start_time"] == nil)
+        #expect(out["courts"] == nil)          // không nhắc sân
+        #expect(out["series"] == nil)          // không nhắc nhánh/vòng loại
+        #expect(out["default_sets"] == nil)    // không nhắc set
+        #expect(out["group_courts"] == nil)    // nhắc bảng nhưng không nhắc sân
+        let out2 = QTChatEngine.trustPatch(patch, text: "8 sân, 7h bắt đầu", slot: .groups)
+        #expect(out2["courts"] != nil)
+        #expect(out2["start_time"] != nil)
+    }
+
+    @Test("trustPatch by-rank sets series_mode and clears sizes")
+    func trustPatchByRank() {
+        let patch: [String: QTChatJSONValue] = ["series": .number(1), "series_sizes": .array([.number(8)])]
+        let out = QTChatEngine.trustPatch(patch, text: "nhất vào A, nhì vào B", slot: .series)
+        #expect(out["series_mode"] == .string("by_rank"))
+        #expect(out["series"] == nil)
+        #expect(out["series_sizes"] == nil)
+    }
+
+    @Test("localSlotPatch answers courts and time steps locally")
+    func localSlotPatchCases() {
+        #expect(QTChatEngine.localSlotPatch("8", slot: .courts)?.courts == [1, 2, 3, 4, 5, 6, 7, 8])
+        #expect(QTChatEngine.localSlotPatch("8 sân", slot: .courts)?.courts?.count == 8)
+        #expect(QTChatEngine.localSlotPatch("7h30", slot: .startTime)?.startTime == "07:30")
+        #expect(QTChatEngine.localSlotPatch("19:30", slot: .startTime)?.startTime == "19:30")
+        #expect(QTChatEngine.localSlotPatch("để sau", slot: .startTime)?.timeDone == true)
+        #expect(QTChatEngine.localSlotPatch("abc", slot: .courts) == nil)
+        #expect(QTChatEngine.localSlotPatch("25h", slot: .startTime) == nil)
+    }
+
+    @Test("Model JSON patch bridges to QTChatPatch with explicit nulls")
+    func patchBridging() {
+        let obj: [String: QTChatJSONValue] = [
+            "player_count": .null,
+            "advance_per_group": .number(2),
+            "is_doubles": .bool(true),
+            "entries": .array([.object(["p1": .string("Nam"), "p2": .string("Hùng")])]),
+            "group_courts": .array([.number(1), .null, .number(2)]),
+        ]
+        let p = QTChatPatch.fromModelJSON(obj)
+        #expect(p.clearPlayerCount)
+        #expect(p.advancePerGroup == 2)
+        #expect(p.isDoubles == true)
+        #expect(p.entries?.count == 1 && p.entries?.first?.p2 == "Hùng")
+        #expect(p.groupCourts?.count == 3 && p.groupCourts?[0] == 1 && p.groupCourts?[1] == nil && p.groupCourts?[2] == 2)
+    }
+
+    @Test("chatFacts carries real computed numbers for the model")
+    func chatFactsContent() {
+        var d = QTChatDraft()
+        d.isDoubles = true
+        d.entries = (1...16).map { QTChatEntry(p1: "Đội \($0)") }
+        d.groupCount = 4
+        let facts = QTChatEngine.chatFacts(d, lang: "vi")
+        #expect(facts.contains("Số đội: 16"))
+        #expect(facts.contains("Đang chọn: 4 bảng"))
+        var small = QTChatDraft()
+        small.entries = (1...5).map { QTChatEntry(p1: "Đội \($0)") }
+        small.groupCount = 1
+        #expect(QTChatEngine.chatFacts(small, lang: "vi").contains("Số đội: 5"))
+        #expect(QTChatEngine.chatFacts(QTChatDraft(), lang: "vi") == "")
+    }
+
+    @Test("createPlan mirrors web create(): locked advance becomes custom sizes")
+    func createPlanLockedAdvance() {
+        var d = QTChatDraft()
+        d.isDoubles = true
+        d.entries = (1...16).map { QTChatEntry(p1: "Đội \($0)") }
+        d.groupCount = 4
+        var patch = QTChatPatch()
+        patch.advancePerGroup = 2
+        let locked = QTChatEngine.applyPatch(d, patch)
+        let plan = QTChatEngine.createPlan(locked)
+        #expect(plan.customSizes == [8])
+        #expect(plan.seriesCount == 1)
+    }
+
+    @Test("pairEntries pairs sequentially and keeps each_line")
+    func pairEntriesCases() {
+        let singles = ["A", "B", "C", "D"].map { QTChatEntry(p1: $0) }
+        let paired = QTChatEngine.pairEntries(singles, mode: "sequential")
+        #expect(paired.count == 2)
+        #expect(paired[0].p1 == "A" && paired[0].p2 == "B")
+        #expect(paired[1].p1 == "C" && paired[1].p2 == "D")
+        #expect(QTChatEngine.pairEntries(singles, mode: "each_line").count == 4)
+    }
 }
