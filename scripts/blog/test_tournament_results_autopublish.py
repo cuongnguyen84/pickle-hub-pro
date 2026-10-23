@@ -58,6 +58,47 @@ class TournamentAutopublishTests(unittest.TestCase):
         self.assertTrue(autopublish._match_line(match, vi=True).startswith("Đôi nam nữ,"))
         self.assertTrue(autopublish._match_line(match).startswith("Mixed Doubles,"))
 
+    def _final(self, label, round_number, winner="A", loser="B", games_w=(11, 11), games_l=(3, 5)):
+        return {"id": label, "division": "Women's Doubles", "roundNumber": round_number,
+                "roundLabel": label, "status": "final", "dateKey": "2026-10-23",
+                "teams": [{"players": [winner], "winner": True, "games": list(games_w)},
+                          {"players": [loser], "winner": False, "games": list(games_l)}]}
+
+    def test_board_groups_rounds_and_collapses_early_rounds(self):
+        rows = [self._final("Quarter Finals", 3), self._final("Round 16", 2), self._final("Round 32", 1)]
+        board = autopublish._board(rows, "Women's Doubles")
+        self.assertEqual([r["label"] for r in board["rounds"]], ["Quarter Finals", "Round 16", "Round 32"])
+        self.assertNotIn("collapsed", board["rounds"][0])
+        self.assertNotIn("collapsed", board["rounds"][1])  # Round 16 stays open
+        self.assertTrue(board["rounds"][2]["collapsed"])  # Round 32 collapses
+        match = board["rounds"][0]["matches"][0]
+        self.assertEqual(match, {"winner": "A", "loser": "B", "sets": [[11, 3], [11, 5]]})
+
+    def test_board_localizes_rounds_and_derives_champion(self):
+        rows = [self._final("Finals", 5, winner="Champ"), self._final("Semi Finals", 4)]
+        board = autopublish._board(rows, "Đôi nữ", vi=True)
+        self.assertEqual(board["champion"], "Champ")
+        self.assertEqual([r["label"] for r in board["rounds"]], ["Chung kết", "Bán kết"])
+
+    def test_anchor_slug_matches_renderer_rule(self):
+        self.assertEqual(autopublish._anchor("Women's Doubles"), "rb-womens-doubles")
+        self.assertEqual(autopublish._anchor("Đôi nữ"), "rb-doi-nu")
+        self.assertEqual(autopublish._anchor("Đôi nam nữ"), "rb-doi-nam-nu")
+
+    def test_draw_sections_ship_board_not_prose_list(self):
+        sections = autopublish.draw_sections([self._final("Quarter Finals", 3)])
+        self.assertIn("resultsBoard", sections[0])
+        self.assertNotIn("listItems", sections[0])
+
+    def test_summaries_carry_anchor_and_status(self):
+        rows = [self._final("Semi Finals", 4), self._final("Quarter Finals", 3)]
+        en = autopublish.draw_summaries(rows)
+        self.assertEqual(en[0]["note"], "Through to the Semi Finals · 2 matches")
+        self.assertEqual(en[0]["anchor"], "rb-womens-doubles")
+        vi = autopublish.draw_summaries(rows, vi=True)
+        self.assertEqual(vi[0]["note"], "Đã tới Bán kết · 2 trận")
+        self.assertEqual(vi[0]["anchor"], "rb-doi-nu")
+
 
 if __name__ == "__main__":
     unittest.main()
