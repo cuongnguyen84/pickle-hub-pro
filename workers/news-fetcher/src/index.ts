@@ -759,7 +759,7 @@ export function parseListingCards(html: string, config: HtmlScrapeConfig): Parse
     // class card_content_title, tóm tắt trong div card_content_summary.
     const title = cards.titleClass
       ? chunk.match(
-          new RegExp(`<h[1-6][^>]*class="[^"]*${cards.titleClass}[^"]*"[^>]*>([^<]{5,})<\/h[1-6]>`),
+          new RegExp(`<h[1-6][^>]*class="[^"]*${cards.titleClass}[^"]*"[^>]*>([^<]{5,})</h[1-6]>`),
         )?.[1]
       : chunk.match(/card_news_content[\s\S]{0,600}?<span>([^<]{5,})<\/span>/)?.[1];
     const date = chunk.match(/>([A-Z][a-z]+ \d{1,2}, 20\d\d)</)?.[1];
@@ -773,7 +773,7 @@ export function parseListingCards(html: string, config: HtmlScrapeConfig): Parse
 
     const summary = cards.summaryClass
       ? chunk.match(
-          new RegExp(`<div[^>]*class="[^"]*${cards.summaryClass}[^"]*"[^>]*>([^<]+)<\/div>`),
+          new RegExp(`<div[^>]*class="[^"]*${cards.summaryClass}[^"]*"[^>]*>([^<]+)</div>`),
         )?.[1] ?? ""
       : "";
     const image = chunk.match(/src="(https:\/\/[^"]+\.(?:avif|jpg|jpeg|png|webp))"/i)?.[1] ?? null;
@@ -797,7 +797,6 @@ export function parseListingCards(html: string, config: HtmlScrapeConfig): Parse
 //   <loc> của sitemap, chỉ giữ link cùng origin có path khớp prefix (và chứa
 //   linkMustContain nếu đặt). Sitemap kèm <lastmod> thì sắp mới nhất trước —
 //   thứ tự trong file sitemap KHÔNG theo thời gian.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function extractScrapeLinks(html: string, config: HtmlScrapeConfig): string[] {
   const prefixes = config.linkPrefixes;
   if (!prefixes) {
