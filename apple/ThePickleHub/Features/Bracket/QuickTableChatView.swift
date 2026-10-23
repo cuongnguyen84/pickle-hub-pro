@@ -239,7 +239,7 @@ final class QuickTableChatViewModel {
         draft = locked
         failedText = nil
         let q = question(for: QTChatEngine.nextSlot(locked))
-        let unchangedText = lang == "vi" ? "Bản nháp chưa đổi." : "The draft did not change."
+        let unchangedText = QTChatEngine.unchangedReply(lang)
         let unchanged = (ack ?? "").isEmpty || ack == unchangedText
         var text = [ack?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "", q]
             .filter { !$0.isEmpty }
@@ -601,7 +601,7 @@ struct QuickTableChatView: View {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 12) {
                     summaryField("Thể thức", d.isDoubles == nil ? nil : (d.isDoubles! ? "Đôi" : "Đơn"))
-                    summaryField("Số lượng", n > 0 ? "\(n)" : d.playerCount.map { "\($0)" })
+                    summaryField("Tổng số", n > 0 ? "\(n)" : d.playerCount.map { "\($0)" })
                     summaryField("Chia bảng", d.groupCount.map { "\($0) bảng" })
                     summaryField("Tên giải", d.name)
                 }
