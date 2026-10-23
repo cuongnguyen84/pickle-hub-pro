@@ -67,4 +67,56 @@ describe('public editorial HTML', () => {
     expect(related.every((p) => p.slug.includes('world-cup'))).toBe(true);
     expect(getRelatedPosts('missing-post')).toEqual([]);
   });
+
+
+  // Minimal HTMLRewriter stand-in for the Node test env: records the
+  // handlers servePublicPage registers and applies head-append + #root
+  // inner-content to the shell text, which is all these tests assert on.
+  class FakeHTMLRewriter {
+    handlers = new Map<string, { element(el: unknown): void }>();
+    on(selector: string, handler: { element(el: unknown): void }) { this.handlers.set(selector, handler); return this; }
+    transform(response: Response) {
+      return (async () => {
+        let text = await response.text();
+        const appended: string[] = [];
+        this.handlers.get('head')?.element({ append: (html: string) => { appended.push(html); } });
+        let root = '';
+        this.handlers.get('#root')?.element({ setInnerContent: (html: string) => { root = html; } });
+        text = text.replace('</head>', `${appended.join('')}
+</head>`).replace('<div id="root"></div>', `<div id="root">${root}</div>`);
+        return new Response(text, { status: response.status, headers: response.headers });
+      })();
+    }
+  }
+  it('serves extracted parts from the parts cache without re-rendering', async () => {
+    vi.stubGlobal('HTMLRewriter', FakeHTMLRewriter);
+    const shell = () => new Response('<html><head><title>shell</title></head><body><div id="root"></div></body></html>', { headers: { 'content-type': 'text/html' } });
+    let stored: string | null = null;
+    let renders = 0;
+    const cache = { get: async () => stored, put: async (v: string) => { stored = v; } };
+    const render = async () => { renders++; return renderTools(site, '/tools', 'en'); };
+    const first = await servePublicPage(shell(), render, 2500, '/tools', cache);
+    expect(first.headers.get('X-Public-Render')).toBe('content');
+    expect(renders).toBe(1);
+    expect(stored).toContain('Sign in to create');
+    const second = await servePublicPage(shell(), render, 2500, '/tools', cache);
+    expect(second.headers.get('X-Public-Render')).toBe('content-cache');
+    expect(renders).toBe(1);
+    expect(await second.text()).toContain('Sign in to create');
+  });
+  it('falls back to a fresh render when the parts cache is corrupt', async () => {
+    const shell = new Response('<html><head><title>shell</title></head><body><div id="root"></div></body></html>', { headers: { 'content-type': 'text/html' } });
+    const cache = { get: async () => '{not json', put: async () => {} };
+    const result = await servePublicPage(shell, async () => renderTools(site, '/tools', 'en'), 2500, '/tools', cache);
+    expect(result.headers.get('X-Public-Render')).toBe('content');
+    expect(await result.text()).toContain('Sign in to create');
+  });
+  it('does not cache non-200 renders', async () => {
+    const shell = new Response('<html><head><title>shell</title></head><body><div id="root"></div></body></html>', { headers: { 'content-type': 'text/html' } });
+    let puts = 0;
+    const cache = { get: async () => null, put: async () => { puts++; } };
+    const result = await servePublicPage(shell, async () => new Response('gone', { status: 410 }), 2500, '/tools', cache);
+    expect(result.status).toBe(410);
+    expect(puts).toBe(0);
+  });
 });
