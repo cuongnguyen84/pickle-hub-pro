@@ -17,6 +17,7 @@ import {
   type Entry,
 } from "@/lib/quick-table-chat";
 import { generateCircleMethodMatches, scheduleMatches } from "@/lib/round-robin";
+import { singleGroupPlayoffPlans } from "@/lib/quick-table-series";
 
 const teams = (names: string[]): Entry[] => names.map((p1) => ({ p1 }));
 
@@ -279,7 +280,7 @@ describe("single-group round robin (log 46)", () => {
     expect(ack).toContain("Đã chia 1 bảng");
     expect(ack).toContain("vòng tròn");
     expect(ack).toContain("xếp hạng theo điểm");
-    expect(ack).toContain("không có vòng loại trực tiếp");
+    expect(ack).not.toContain("không có vòng loại trực tiếp");
   });
 
   it("answers the EN format ask the same way", () => {
@@ -287,14 +288,15 @@ describe("single-group round robin (log 46)", () => {
     const after: Draft = { is_doubles: true, entries: eight, group_count: 1 };
     const ack = factualAck(before, after, "en", "no groups, just round robin");
     expect(ack).toContain("round-robin group");
-    expect(ack).toContain("no knockout round");
+    expect(ack).not.toContain("no knockout");
   });
 
   it("names the format for a plain one-group split too", () => {
     const after: Draft = { is_doubles: true, entries: eight, group_count: 1 };
     const ack = factualAck({}, after, "vi", "1 bảng");
     expect(ack).toContain("Đã chia 1 bảng");
-    expect(ack).toContain("Một bảng vòng tròn, không có vòng loại trực tiếp");
+    expect(ack).toContain("Một bảng vòng tròn");
+    expect(ack).not.toContain("không có vòng loại trực tiếp");
   });
 
   it("keeps multi-group wording free of the round-robin claim", () => {
@@ -302,5 +304,41 @@ describe("single-group round robin (log 46)", () => {
     const ack = factualAck({}, after, "vi", "chia 2 bảng");
     expect(ack).toContain("Đã chia 2 bảng");
     expect(ack).not.toContain("vòng tròn");
+  });
+});
+
+describe("knockout after a single round-robin group", () => {
+  const eight = teams(["An", "Bình", "Chi", "Dũng", "Em", "Phong", "Giang", "Hà"]);
+
+  it("parses the advance count said without 'each group'", () => {
+    expect(readUserFacts("lấy 4 đội vào trực tiếp").advance_per_group).toBe(4);
+    expect(readUserFacts("top 2 vào bán kết").advance_per_group).toBe(2);
+    expect(readUserFacts("take 4 into the knockout").advance_per_group).toBe(4);
+    expect(readUserFacts("chọn 4 đội vào vòng tròn").advance_per_group).toBeUndefined();
+  });
+
+  it("summarizes top-4 and top-2 knockouts with the seed pairings", () => {
+    const base: Draft = { is_doubles: true, entries: eight, group_count: 1 };
+    expect(playoffSummary({ ...base, advance_per_group: 4 }, "vi")).toContain("Bán kết: đội 1 gặp đội 4, đội 2 gặp đội 3");
+    expect(playoffSummary({ ...base, advance_per_group: 2 }, "vi")).toContain("Chung kết: đội 1 gặp đội 2");
+    expect(playoffSummary({ ...base, advance_per_group: 4 }, "en")).toContain("seed 1 vs seed 4, seed 2 vs seed 3");
+    expect(playoffSummary(base, "vi")).toBe("Một bảng vòng tròn");
+  });
+
+  it("states the pairings in the chat reply when the knockout is set in the same turn", () => {
+    const before: Draft = { is_doubles: true, entries: eight, group_count: 2 };
+    const after: Draft = { is_doubles: true, entries: eight, group_count: 1, advance_per_group: 4 };
+    const ack = factualAck(before, after, "vi", "Không chia bảng mà đánh vòng tròn, lấy 4 đội vào trực tiếp");
+    expect(ack).toContain("vòng tròn");
+    expect(ack).toContain("Bán kết: đội 1 gặp đội 4, đội 2 gặp đội 3");
+    expect(ack.match(/vòng tròn/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(ack).not.toContain("không có vòng loại trực tiếp");
+  });
+
+  it("offers top-4 then top-2 plans for one group, sized to the group", () => {
+    expect(singleGroupPlayoffPlans(8)).toEqual([[4], [2]]);
+    expect(singleGroupPlayoffPlans(4)).toEqual([[4], [2]]);
+    expect(singleGroupPlayoffPlans(3)).toEqual([[2]]);
+    expect(singleGroupPlayoffPlans(2)).toEqual([]);
   });
 });
