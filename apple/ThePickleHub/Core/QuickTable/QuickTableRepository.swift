@@ -255,10 +255,10 @@ struct QuickTableRepository {
             default_sets: defaultSets, courts: courts, start_time: startTime,
             playoff_series: playoffSeries, playoff_series_style: playoffSeriesStyle)
         if patch.default_sets != nil || patch.courts != nil || patch.playoff_series != nil {
-            try? await client.from("quick_tables").update(patch).eq("id", value: tableID).execute()
+            _ = try? await client.from("quick_tables").update(patch).eq("id", value: tableID).execute()
         }
         if let playoffSeriesSizes {
-            try? await client.from("quick_tables")
+            _ = try? await client.from("quick_tables")
                 .update(SeriesSizesPatch(playoff_series_sizes: playoffSeriesSizes))
                 .eq("id", value: tableID).execute()
         }
