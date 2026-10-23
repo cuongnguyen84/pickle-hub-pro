@@ -18,6 +18,10 @@ const post: BlogPost = {
     en: "Browse tournaments on ThePickleHub",
     vi: "Xem các giải đấu trên ThePickleHub",
   },
+  heroImage: {
+    src: "/images/blog/jogarbola-team-pickleball-vietnam-hero.webp",
+    alt: "The full Jogarbola pickleball team at the official launch ceremony in Vietnam (Photo: Bao Phap Luat)",
+  },
   content: {
     en: {
       title: "Team Pickleball Jogarbola: Vietnam's Sponsorship Game Grows Up",
