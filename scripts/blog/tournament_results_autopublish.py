@@ -202,6 +202,26 @@ def draw_sections(finals: list, vi: bool = False) -> list:
     return out
 
 
+# SERP byte budgets, mirrored by the hard CI gate
+# (src/content/blog/__tests__/seo-byte-budget.test.ts): the renderer truncates
+# titles at 60 UTF-8 bytes and descriptions at 160 (functions/_lib/html.ts),
+# so generated SEO strings are clamped HERE, at generation time. A long event
+# name ("PPA World Championships", 2026-10-24) otherwise ships an ellipsised
+# title and turns main CI red on the next results refresh.
+SEO_TITLE_MAX_BYTES = 60
+SEO_DESCRIPTION_MAX_BYTES = 160
+
+
+def clamp_seo_bytes(text: str, limit: int) -> str:
+    """Clamp `text` to `limit` UTF-8 bytes at a word boundary, so the string
+    still reads naturally — never mid-word, never half a diacritic."""
+    if len(text.encode("utf-8")) <= limit:
+        return text
+    cut = text.encode("utf-8")[:limit].decode("utf-8", errors="ignore")
+    head, sep, _ = cut.rpartition(" ")
+    return (head if sep else cut).rstrip(" :|—–-·")
+
+
 def package(event: dict, feed: dict, now: datetime) -> dict:
     matches = feed["matches"]
     finals = [m for m in matches if m["status"] in {"final", "completed", "finished", "walkover", "retired"}]
@@ -219,10 +239,11 @@ def package(event: dict, feed: dict, now: datetime) -> dict:
     # search_name = how people actually query the event (GSC 10/2026: "ppa chicago results"
     # had 4x the impressions of the sponsor-name query), so it leads the title when set.
     alias = event.get("search_name")
-    en_meta = f"{alias} Results {year}: {base} Scores" if alias else f"{base} Results {year} | Daily Scores"
-    vi_meta = f"Kết quả {alias} {year}: {base}" if alias else f"Kết quả {base} {year} mỗi ngày"
+    en_meta = clamp_seo_bytes(f"{alias} Results {year}: {base} Scores" if alias else f"{base} Results {year} | Daily Scores", SEO_TITLE_MAX_BYTES)
+    vi_meta = clamp_seo_bytes(f"Kết quả {alias} {year}: {base}" if alias else f"Kết quả {base} {year} mỗi ngày", SEO_TITLE_MAX_BYTES)
     en_h = f"{alias} results: {name} daily scores" if alias else f"{name} results and daily scores"
-    en_desc = (f"{alias} results: " if alias else "") + f"{name} results and daily scores from the official PPA feed, checked by ThePickleHub."
+    en_desc = clamp_seo_bytes((f"{alias} results: " if alias else "") + f"{name} results and daily scores from the official PPA feed, checked by ThePickleHub.", SEO_DESCRIPTION_MAX_BYTES)
+    vi_desc = clamp_seo_bytes(f"Kết quả {base} {year} từ feed PPA chính thức, được ThePickleHub kiểm chứng.", SEO_DESCRIPTION_MAX_BYTES)
     related = event.get("related") or []
     en_links = [{"text": "Official event scores", "path": source}] + [{"text": r["en"], "path": r["path"]} for r in related]
     vi_links = [{"text": "Nguồn điểm số chính thức", "path": source}] + [{"text": r["vi"], "path": r["vi_path"]} for r in related]
@@ -244,7 +265,7 @@ def package(event: dict, feed: dict, now: datetime) -> dict:
     ]
     faq_en = [{"question": "Where do these results come from?", "answer": f"The official PPA scores feed: {source}."}, {"question": "Are scheduled matches final results?", "answer": "No. Only an official final or completed status with one winner is presented as a result."}, {"question": "When is this page updated?", "answer": "Every few hours while the event is on, whenever the verified official score snapshot changes."}]
     faq_vi = [{"question": "Kết quả lấy từ đâu?", "answer": f"Từ feed điểm số PPA chính thức: {source}."}, {"question": "Trận scheduled có phải kết quả không?", "answer": "Không. Chỉ bản ghi final hoặc completed có đúng một người thắng mới được trình bày là kết quả."}, {"question": "Trang cập nhật khi nào?", "answer": "Vài giờ một lần trong thời gian giải, mỗi khi snapshot điểm số chính thức đã kiểm chứng thay đổi."}]
-    package = {"verdict": "NEW", "unverified": [], "slug": event["slug"], "tags": event.get("tags", ["pickleball", "results", "2026"]), "ctaPath": "/live", "ctaLabel": {"en": "Follow live scores on ThePickleHub", "vi": "Theo dõi điểm số trên ThePickleHub"}, "en": {"title": f"{name} Results: Daily Scores and Confirmed Winners", "metaTitle": en_meta, "metaDescription": en_desc, "sections": en_sections, "faqItems": faq_en}, "vi": {"slug": event["vi_slug"], "title": f"Kết quả {base} {year}: cập nhật hằng ngày", "metaTitle": vi_meta, "metaDescription": f"Kết quả {base} {year} từ feed PPA chính thức, được ThePickleHub kiểm chứng.", "excerpt": f"Kết quả {base} {year} cập nhật từ nguồn điểm số PPA chính thức.", "focusKeyword": f"kết quả {base.lower()} {year}", "sections": vi_sections, "faqItems": faq_vi}}
+    package = {"verdict": "NEW", "unverified": [], "slug": event["slug"], "tags": event.get("tags", ["pickleball", "results", "2026"]), "ctaPath": "/live", "ctaLabel": {"en": "Follow live scores on ThePickleHub", "vi": "Theo dõi điểm số trên ThePickleHub"}, "en": {"title": f"{name} Results: Daily Scores and Confirmed Winners", "metaTitle": en_meta, "metaDescription": en_desc, "sections": en_sections, "faqItems": faq_en}, "vi": {"slug": event["vi_slug"], "title": f"Kết quả {base} {year}: cập nhật hằng ngày", "metaTitle": vi_meta, "metaDescription": vi_desc, "excerpt": f"Kết quả {base} {year} cập nhật từ nguồn điểm số PPA chính thức.", "focusKeyword": f"kết quả {base.lower()} {year}", "sections": vi_sections, "faqItems": faq_vi}}
     # Keep the editorial hero attached to every future source-driven refresh.
     if event.get("hero_image"):
         package["heroImage"] = event["hero_image"]
