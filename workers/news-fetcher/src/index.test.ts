@@ -10,6 +10,7 @@ import {
   HTML_SCRAPE_CONFIGS,
   isAdvertorialItem,
   isTransientFetchError,
+  isTransientListingStatus,
   NEWS_FETCHER_USER_AGENT,
   normalizeItemLink,
   parseListingCards,
@@ -111,6 +112,24 @@ describe("isTransientFetchError", () => {
     expect(isTransientFetchError(new TypeError("bad url"))).toBe(false);
     expect(isTransientFetchError(null)).toBe(false);
     expect(isTransientFetchError("timeout")).toBe(false);
+  });
+});
+
+describe("isTransientListingStatus", () => {
+  it("nhận 403/429/5xx là nhất thời, còn lại là hỏng thật", () => {
+    // 403: chớp nhoáng Cloudflare phía nhà xuất bản (ca Times Now 23/10/2026,
+    // đo đối chứng từ cùng egress Workers luôn trả 200).
+    expect(isTransientListingStatus(403)).toBe(true);
+    expect(isTransientListingStatus(429)).toBe(true);
+    expect(isTransientListingStatus(500)).toBe(true);
+    expect(isTransientListingStatus(502)).toBe(true);
+    expect(isTransientListingStatus(503)).toBe(true);
+    expect(isTransientListingStatus(504)).toBe(true);
+    expect(isTransientListingStatus(200)).toBe(false);
+    expect(isTransientListingStatus(301)).toBe(false);
+    expect(isTransientListingStatus(400)).toBe(false);
+    expect(isTransientListingStatus(404)).toBe(false);
+    expect(isTransientListingStatus(410)).toBe(false);
   });
 });
 
