@@ -10,6 +10,80 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "mlp-asia-draft-2026-viet-panthers",
+    "publishedDate": "2026-10-23",
+    "updatedDate": "2026-10-23",
+    "author": "The PickleHub Team",
+    "tags": [
+      "mlp asia",
+      "major league pickleball",
+      "viet panthers",
+      "tama shimabukuro",
+      "draft mlp asia 2026",
+      "pickleball viet nam"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Watch live tournaments on ThePickleHub",
+      "vi": "Xem giải trực tiếp trên ThePickleHub"
+    },
+    "titleEn": "MLP Asia Draft 2026: Viet Panthers Bet Big on 15-Year-Old Tama Shimabukuro",
+    "titleVi": "Draft MLP Asia 2026: Viet Panthers đặt cược lớn vào Tama Shimabukuro, 15 tuổi",
+    "metaTitleEn": "MLP Asia Draft: Viet Panthers Pick Shimabukuro",
+    "metaTitleVi": "Draft MLP Asia: Viet Panthers chọn Shimabukuro",
+    "metaDescriptionEn": "Viet Panthers took 15-year-old Tama Shimabukuro first overall in the first MLP Asia draft, then added Kaitlyn Christian and Ho Tam. Analysis.",
+    "metaDescriptionVi": "Viet Panthers chọn Shimabukuro (15 tuổi) ở lượt 1 Draft MLP Asia, thêm Kaitlyn Christian, Hồ Tâm. Phân tích đội hình, mùa giải đầu."
+  },
+  {
+    "slug": "jogarbola-team-pickleball-vietnam",
+    "publishedDate": "2026-10-23",
+    "updatedDate": "2026-10-23",
+    "author": "The PickleHub Team",
+    "tags": [
+      "jogarbola",
+      "tai tro the thao",
+      "pickleball viet nam",
+      "do minh quan",
+      "truong vinh hien",
+      "trinh linh giang"
+    ],
+    "ctaPath": "/tournaments",
+    "ctaLabel": {
+      "en": "Browse tournaments on ThePickleHub",
+      "vi": "Xem các giải đấu trên ThePickleHub"
+    },
+    "titleEn": "Team Pickleball Jogarbola: Vietnam's Sponsorship Game Grows Up",
+    "titleVi": "Team Pickleball Jogarbola ra mắt: khi thương hiệu Việt đầu tư nghiêm túc vào vận động viên",
+    "metaTitleEn": "Jogarbola Pickleball Team: Sponsorship Analysis",
+    "metaTitleVi": "Team Jogarbola: tài trợ VĐV pickleball Việt Nam",
+    "metaDescriptionEn": "Jogarbola has launched a pro pickleball team with Do Minh Quan, Truong Vinh Hien and Trinh Linh Giang. What athlete sponsorship means for Vietnam.",
+    "metaDescriptionVi": "Jogarbola ra mắt Team Pickleball với Đỗ Minh Quân, Trịnh Linh Giang, Trương Vinh Hiển. Xu hướng tài trợ VĐV pickleball Việt."
+  },
+  {
+    "slug": "ly-hoang-nam-pickleball-national-games-2026",
+    "publishedDate": "2026-10-23",
+    "updatedDate": "2026-10-23",
+    "author": "The PickleHub Team",
+    "tags": [
+      "ly hoang nam",
+      "dai hoi the thao toan quoc 2026",
+      "pickleball viet nam",
+      "djoy nam sai gon",
+      "cong an nhan dan"
+    ],
+    "ctaPath": "/tournaments",
+    "ctaLabel": {
+      "en": "Browse tournaments on ThePickleHub",
+      "vi": "Xem các giải đấu trên ThePickleHub"
+    },
+    "titleEn": "Ly Hoang Nam Switches to Pickleball for Vietnam's 2026 National Games",
+    "titleVi": "Lý Hoàng Nam chơi pickleball tại Đại hội Thể thao toàn quốc 2026: cột mốc cho cả hai môn thể thao",
+    "metaTitleEn": "Ly Hoang Nam Plays Pickleball at National Games",
+    "metaTitleVi": "Hoàng Nam đấu pickleball ở Đại hội toàn quốc",
+    "metaDescriptionEn": "Pickleball debuts at Vietnam's National Games in Nov 2026, and tennis star Ly Hoang Nam will play it for the People's Public Security team. Analysis.",
+    "metaDescriptionVi": "Pickleball lần đầu vào Đại hội toàn quốc (23–29/11/2026): Lý Hoàng Nam khoác áo Công an nhân dân. Ý nghĩa cột mốc này."
+  },
+  {
     "slug": "create-tournament-by-chat",
     "publishedDate": "2026-10-20",
     "updatedDate": "2026-10-20",
