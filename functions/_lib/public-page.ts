@@ -26,7 +26,7 @@ export function lcpPreloadTag(pathname: string): string {
     const first = pinWorldCupResults(
       [...blogMetadata].sort(byEffectiveDateDesc((p) => p.publishedDate, (p) => p.updatedDate)),
       (p) => p.slug,
-    )[0];
+    ).find((p) => p.heroImage?.src);
     return first?.heroImage?.src ? imagePreload(first.heroImage.src, HOME_LCP_SIZES) : "";
   }
   const blog = pathname.match(/^\/blog\/([^/]+)$/);
