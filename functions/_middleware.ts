@@ -1346,7 +1346,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v144 (2026-10-21): VI blog bodies demote their own <h1> to <h2> (one H1
   // per page), short club descriptions enriched, org meta fallback is
   // org-specific — PR #906 renders must not be served from v143 entries.
-  const cacheKey = `pr:v144:${url.pathname}`;
+  // v145 (2026-10-23): blog results posts render the structured results
+  // board (summary card, round groups, winner/loser rows) on the bot path
+  // instead of prose lists — cached thin renders must not be served.
+  const cacheKey = `pr:v145:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
