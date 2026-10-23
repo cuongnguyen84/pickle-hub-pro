@@ -646,6 +646,26 @@ export function lockAdvance(d: Draft): Draft {
 }
 
 /** Số liệu người dùng đã nói trong câu, không cần mô hình. */
+/** "Không chia bảng", "đánh vòng tròn 1 bảng", "just round robin, no groups":
+ * người dùng đòi THỂ THỨC vòng tròn một bảng, không phải điền số bảng thường.
+ * Một bảng trong sản phẩm này luôn là vòng tròn (xem playoffSummary). */
+export function wantsSingleGroupRoundRobin(text: string): boolean {
+  const folded = fold(text)
+    .replace(/\bvongtron\b/g, "vong tron")
+    .replace(/\broundrobin\b/g, "round robin");
+  if (/\bkhong chia bang\b/.test(folded)) return true;
+  const rr = /\bvong tron\b/.test(folded) || /\bround[ -]robin\b/.test(folded);
+  if (!rr) return false;
+  return (
+    /\b(1|mot)\s+bang\b/.test(folded) ||
+    /\bbang duy nhat\b/.test(folded) ||
+    /\bchi (danh )?vong tron\b/.test(folded) ||
+    /\b(single|one) group\b/.test(folded) ||
+    /\bno groups?\b/.test(folded) ||
+    /\b(just|only) round[ -]robin\b/.test(folded)
+  );
+}
+
 export function readUserFacts(text: string): Partial<Draft> {
   const folded = fold(text)
     .replace(/\bvongtron\b/g, "vong tron")
@@ -688,6 +708,9 @@ export function readUserFacts(text: string): Partial<Draft> {
       out.group_count = g;
     }
   }
+
+  // Thể thức vòng tròn một bảng nói bằng lời ("không chia bảng") cũng là 1 bảng.
+  if (wantsSingleGroupRoundRobin(text)) out.group_count = 1;
 
   const labeled = text.match(/(?:tên giải|ten giai|tên là|ten la|gọi là|goi la|name is|named)\s*[:：]?\s*([^,\n]+)/i);
   const lead = text.match(/^(?:giải|giai)\s+([^,\n]+)/i);
@@ -903,16 +926,29 @@ export function factualAck(before: Draft, after: Draft, lang: "vi" | "en", reque
   const asked = request ? readUserFacts(request) : {};
   const knownField = entryCount(after) >= 2;
   const askedGroupsOk = !!asked.group_count && knownField && !!findGroupOption(entryCount(after), asked.group_count);
+  const rrSingle = !!request && wantsSingleGroupRoundRobin(request);
   if (asked.group_count && knownField && !askedGroupsOk) {
     bits.push(vi
       ? `Không chia được ${asked.group_count} bảng (mỗi bảng 3–8 ${u}).`
       : `Can't make ${asked.group_count} groups (3–8 ${u} each).`);
+  } else if (rrSingle && after.group_count === 1 && knownField && findGroupOption(entryCount(after), 1)) {
+    // Đòi thể thức thì câu trả lời phải gọi tên thể thức + hệ quả, không đáp cụt số bảng.
+    bits.push(vi
+      ? `Đã chia 1 bảng đấu vòng tròn: các ${u} gặp nhau vòng tròn, xếp hạng theo điểm. 1 bảng nên không có vòng loại trực tiếp`
+      : `Split into 1 round-robin group: every ${u} plays each other, ranked by points. A single group has no knockout round`);
   } else if (after.group_count && after.group_count !== before.group_count && findGroupOption(entryCount(after), after.group_count)) {
     bits.push(vi ? `Đã chia ${after.group_count} bảng.` : `Split into ${after.group_count} groups.`);
+    // Nguyên tắc chung: luôn gọi tên thể thức đã chọn — 1 bảng là vòng tròn, không loại trực tiếp.
+    if (after.group_count === 1) {
+      const ps = playoffSummary(after, lang);
+      if (ps) bits.push(ps);
+    }
   }
   if (after.name && after.name !== before.name) bits.push(vi ? `Tên giải: ${after.name}.` : `Name: ${after.name}.`);
   if (after.advance_per_group && after.advance_per_group !== before.advance_per_group) {
-    bits.push(playoffSummary(after, lang) ?? "");
+    const ps = playoffSummary(after, lang) ?? "";
+    // Đã nêu thể thức vòng tròn ở bit chia bảng thì không lặp lại ở bit này.
+    if (ps && !bits.join(" ").includes(vi ? "vòng tròn" : "round-robin")) bits.push(ps);
   }
   const prev = before.entries ?? [];
   const next = after.entries ?? [];
