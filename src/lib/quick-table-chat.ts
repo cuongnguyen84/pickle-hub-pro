@@ -27,6 +27,8 @@ export interface Draft {
   entries?: Entry[];
   roster_mode?: RosterMode;
   courts?: number[];
+  /** gán cứng từng bảng vào một sân: index 0 = bảng A; null = không gán (xếp tự do) */
+  group_courts?: (number | null)[];
   start_time?: string;
   default_sets?: 1 | 3 | 5;
   /** số nhánh playoff sau vòng bảng (Series A/B/C), 1 = chỉ top 2 */
@@ -197,6 +199,51 @@ function sanitizeEntries(raw: unknown): Entry[] | undefined {
   return out;
 }
 
+const groupLetter = (i: number) => String.fromCharCode(65 + i);
+
+/** Chuẩn hoá mảng gán sân theo bảng: tối đa MAX_GROUPS phần tử, sân 1–99, còn lại null. */
+export function sanitizeGroupCourts(raw: unknown): (number | null)[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const out = raw.slice(0, MAX_GROUPS).map((v) => {
+    const n = Number(v);
+    return Number.isInteger(n) && n >= 1 && n < 100 ? n : null;
+  });
+  return out.some((c) => c != null) ? out : undefined;
+}
+
+/** "Bảng A → sân 1 · Bảng B → sân 2" — dùng cho câu xác nhận và màn tổng kết. */
+export function groupCourtsLine(d: Draft, lang: "vi" | "en"): string | null {
+  const pins = (d.group_courts ?? [])
+    .map((court, i) => (court != null ? { court, i } : null))
+    .filter((x): x is { court: number; i: number } => x != null);
+  if (!pins.length) return null;
+  return pins
+    .map(({ court, i }) => lang === "vi" ? `Bảng ${groupLetter(i)} → sân ${court}` : `Group ${groupLetter(i)} → court ${court}`)
+    .join(" · ");
+}
+
+/**
+ * Câu trả lời BẮT BUỘC có khi AI không đáp ứng được (intent unsupported /
+ * off_topic) mà model lại trả reply rỗng — ca 01:51 ngày 22/10/2026: người
+ * dùng xin gán sân theo bảng, AI im lặng, hội thoại đứt. Nhắc lại yêu cầu
+ * (unmet), nói rõ chưa hỗ trợ, gợi ý cách gần nhất, và flow vẫn đi tiếp vì
+ * client sẽ hỏi câu kế tiếp như thường.
+ */
+export function fallbackReply(intent: string, unmet: string | null, lang: "vi" | "en"): string {
+  const vi = lang === "vi";
+  if (intent === "unsupported") {
+    return vi
+      ? `Mình chưa hỗ trợ${unmet ? ` yêu cầu này: ${unmet}` : " yêu cầu này"}. Bạn cứ tạo giải như bình thường trước — các thiết lập nâng cao (gán sân, thể thức riêng…) có thể chỉnh thêm ở trang giải sau khi tạo. Mình tiếp tục nhé.`
+      : `I can't do that yet${unmet ? `: ${unmet}` : ""}. Go ahead and create the tournament as usual — advanced settings can be adjusted on the tournament page afterwards. Let's continue.`;
+  }
+  if (intent === "off_topic") {
+    return vi
+      ? "Mình chỉ giúp tạo giải chia bảng ở đây. Mình tiếp tục với giải của bạn nhé."
+      : "I can only help create group-stage tournaments here. Let's continue with yours.";
+  }
+  return vi ? "Mình chưa rõ ý bạn — mình tiếp tục với bản nháp hiện tại nhé." : "I didn't quite get that — let's continue with the current draft.";
+}
+
 /**
  * Áp bản vá từ AI vào nháp. Không tin AI: mọi trường đều được kiểm kiểu/khoảng.
  * Khi AI gửi danh sách mà không kèm số lượng → số lượng theo danh sách
@@ -229,6 +276,15 @@ export function applyPatch(d: Draft, patch: unknown): Draft {
   if (Array.isArray(p.courts)) {
     const courts = [...new Set(p.courts.map(Number).filter((c) => Number.isInteger(c) && c > 0 && c < 100))];
     if (courts.length) { next.courts = courts; next.courts_done = true; }
+  }
+  const pins = sanitizeGroupCourts(p.group_courts);
+  if (pins) {
+    next.group_courts = pins;
+    // Sân được gán cho bảng cũng là sân của giải: gộp vào danh sách sân để
+    // bước hỏi sân coi như đã trả lời và RPC nhận đủ sân khi tạo giải.
+    const pinned = pins.filter((c): c is number => c != null);
+    next.courts = [...new Set([...(next.courts ?? []), ...pinned])].sort((a, b) => a - b);
+    next.courts_done = true;
   }
   if (typeof p.start_time === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(p.start_time)) {
     next.start_time = p.start_time;
@@ -478,6 +534,9 @@ export function trustPatch(patch: unknown, text: string, slot: Slot): Record<str
   const byRank = wantsRankSeries(text);
   if (slot !== "start_time" && !said(/\d\s*(h|g|giờ|gio|:\d)|\b(am|pm)\b|sáng|chiều|tối|trưa|morning|evening|o'?clock/)) delete p.start_time;
   if (slot !== "courts" && !said(/sân|san\b|court/)) delete p.courts;
+  // Gán sân theo bảng chỉ tin khi câu có nhắc cả sân lẫn bảng — tránh model
+  // tự bịa (cùng triết lý với courts ở trên).
+  if (!said(/sân|san\b|court/) || !said(/bảng|bang\b|group/)) delete p.group_courts;
   if (slot !== "series" && !said(/nhánh|nhanh|series|vàng|bạc|đồng|gold|silver|bronze|top\s*\d|bracket|vòng trong|vòng loại|knockout|playoff/) && !byRank) {
     delete p.series; delete p.series_style; delete p.series_sizes; delete p.series_mode;
   }
@@ -640,6 +699,22 @@ export function readUserFacts(text: string): Partial<Draft> {
     .trim();
   if (rawName.length >= 2 && rawName.length <= 80) out.name = rawName;
 
+  // Gán sân theo bảng: "Group A plays in court 1, Group B plays in court 2"
+  // / "bảng A sân 1, bảng B sân 2" / "sân 1 cho bảng A". Bắt TỪNG cặp —
+  // ca thật 01:51 22/10/2026 từng bị hiểu thành unsupported + reply rỗng.
+  const pins: (number | null)[] = [];
+  let pinFound = false;
+  const pinPair = (letter: string, court: number) => {
+    const idx = letter.charCodeAt(0) - 97;
+    if (idx < 0 || idx >= MAX_GROUPS || !(court >= 1 && court < 100)) return;
+    while (pins.length <= idx) pins.push(null);
+    pins[idx] = court;
+    pinFound = true;
+  };
+  for (const m of folded.matchAll(/(?:group|bang)\s*([a-z])\b[^,;.]{0,40}?(?:court|san)\s*(\d{1,2})\b/g)) pinPair(m[1], Number(m[2]));
+  for (const m of folded.matchAll(/(?:court|san)\s*(\d{1,2})\b[^,;.]{0,25}?(?:cho|for)\s*(?:group|bang)\s*([a-z])\b/g)) pinPair(m[2], Number(m[1]));
+  if (pinFound) out.group_courts = pins;
+
   const courts = folded.match(/\b(\d{1,2})\s*(?:san|courts?)\b/);
   if (courts) {
     const n = Number(courts[1]);
@@ -718,6 +793,17 @@ export function applySpokenEdit(draft: Draft, text: string): Draft | null {
   if (Object.keys(facts).length) {
     next = applyPatch(next, facts);
     touched = true;
+  }
+  // "Mỗi bảng một sân" / "each group its own court": gán lần lượt các sân đã
+  // biết cho từng bảng. Chưa biết sân hoặc chưa biết số bảng thì thôi — model
+  // hoặc câu hỏi sân của flow sẽ lo tiếp.
+  if (!next.group_courts && /moi bang (mot|1) san|each group .*own court|one court per group/.test(fold(text))) {
+    const g = next.group_count ?? 0;
+    const cs = next.courts ?? [];
+    if (g >= 2 && cs.length >= g) {
+      next = { ...next, group_courts: cs.slice(0, g) };
+      touched = true;
+    }
   }
   const placeholders = placeholderEntries(text, next);
   if (placeholders) {
@@ -863,6 +949,10 @@ export function factualAck(before: Draft, after: Draft, lang: "vi" | "en", reque
   }
   if (after.courts?.join() !== before.courts?.join() && after.courts?.length) {
     bits.push(vi ? `${after.courts.length} sân, đánh song song.` : `${after.courts.length} courts, playing at the same time.`);
+  }
+  if ((after.group_courts ?? []).join() !== (before.group_courts ?? []).join()) {
+    const line = groupCourtsLine(after, lang);
+    if (line) bits.push(line);
   }
   if (after.start_time && after.start_time !== before.start_time) bits.push(after.start_time);
   const sentences = bits

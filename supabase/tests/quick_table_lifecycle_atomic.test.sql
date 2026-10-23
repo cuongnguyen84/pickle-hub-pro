@@ -7,8 +7,8 @@ SELECT plan(52);
 
 SELECT has_function(
   'public', 'setup_quick_table_roster_atomic',
-  ARRAY['uuid', 'jsonb', 'jsonb', 'jsonb', 'text'],
-  'atomic QuickTable setup RPC exists'
+  ARRAY['uuid', 'jsonb', 'jsonb', 'jsonb', 'text', 'jsonb'],
+  'atomic QuickTable setup RPC exists (with p_group_courts since 20261022233000)'
 );
 SELECT has_function(
   'public', 'create_quick_table_playoff_atomic',
@@ -17,12 +17,12 @@ SELECT has_function(
 );
 SELECT ok(has_function_privilege(
   'authenticated',
-  'public.setup_quick_table_roster_atomic(uuid,jsonb,jsonb,jsonb,text)',
+  'public.setup_quick_table_roster_atomic(uuid,jsonb,jsonb,jsonb,text,jsonb)',
   'EXECUTE'
 ), 'authenticated may set up QuickTable atomically');
 SELECT ok(NOT has_function_privilege(
   'anon',
-  'public.setup_quick_table_roster_atomic(uuid,jsonb,jsonb,jsonb,text)',
+  'public.setup_quick_table_roster_atomic(uuid,jsonb,jsonb,jsonb,text,jsonb)',
   'EXECUTE'
 ), 'anon may not set up QuickTable atomically');
 SELECT ok(has_function_privilege(

@@ -87,6 +87,7 @@ export function useQuickTableMutations() {
     groupAssignments?: number[],
     courts: number[] = [],
     startTime: string | null = null,
+    groupCourts?: (number | null)[],
   ): Promise<boolean> => {
     setPendingFor('setupRosterAtomic', true);
     try {
@@ -120,7 +121,12 @@ export function useQuickTableMutations() {
         p_group_assignments: assignments as Json,
         p_courts: courts as Json,
         p_start_time: startTime as string | undefined, // RPC DEFAULT NULL; Args type doesn't model that.
-      });
+        // p_group_courts có từ migration 20261022233000 (gán cứng sân theo
+        // bảng); types sinh từ schema cũ chưa có tham số này nên cast.
+        ...(groupCourts?.some((court) => court != null)
+          ? { p_group_courts: groupCourts as unknown as Json }
+          : {}),
+      } as never);
       const result = (data ?? {}) as Record<string, unknown>;
       if (error || result.success !== true) throw error ?? new Error(String(result.error ?? 'SETUP_FAILED'));
       return true;

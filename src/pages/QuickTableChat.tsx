@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 import { rankSeriesSizes, seriesLine, seriesName, seriesPlan, slot as seriesSlot, type SeriesStyle } from "@/lib/quick-table-series";
 import {
   applyPatch, applySpokenEdit, buildRoster, chatFacts, customSeries, defaultName, draftSeriesPlan, dropInventedRoster, duplicateIndexes, entryCount, entryLabel, factualAck, findGroupOption, googleSheetRef, groupChoices,
-  groupSizes, keepOrAssign, localSlotPatch, lockAdvance, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, messageNeedsModel, nextSlot, pairEntries, parseSheet, playoffSummary, previewAssignments, replyFromDraft, seriesCap, trustPatch,
+  fallbackReply, groupCourtsLine, groupSizes, keepOrAssign, localSlotPatch, lockAdvance, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, messageNeedsModel, nextSlot, pairEntries, parseSheet, playoffSummary, previewAssignments, replyFromDraft, seriesCap, trustPatch,
   type Draft, type Entry, type GroupOption, type PairingMode, type Slot,
 } from "@/lib/quick-table-chat";
 
@@ -639,12 +639,18 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       pushBot(c.aiError);
       return;
     }
-    const res = data as { reply?: string; intent: string; patch: unknown };
+    const res = data as { reply?: string; intent: string; patch: unknown; unmet?: string | null };
     const said = typeof res.reply === "string" ? res.reply : "";
     if (res.intent !== "fill" && res.intent !== "answer") {
       const spoken = applySpokenEdit(draft, msg.text);
       const next = spoken ?? draft;
-      advance(next, replyFromDraft(draft, next, said, lang, msg.text));
+      // Yêu cầu chưa đáp ứng mà AI trả reply rỗng (ca sân-theo-bảng 01:51
+      // 22/10) → dùng câu fallback tử tế thay vì "bản nháp chưa đổi" chung
+      // chung: nhắc lại yêu cầu, nói rõ chưa hỗ trợ, flow vẫn đi tiếp.
+      const ack = !said.trim() && JSON.stringify(next) === JSON.stringify(draft)
+        ? fallbackReply(res.intent, res.unmet ?? null, lang)
+        : replyFromDraft(draft, next, said, lang, msg.text);
+      advance(next, ack);
       return;
     }
     // Ảnh đã được đọc ở vòng trên. Ở đây chỉ còn chữ người dùng gõ.
@@ -823,7 +829,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     if (field === "roster") { d.entries = undefined; d.roster_mode = undefined; d.options_done = false; }
     if (field === "name") d.name = undefined;
     if (field === "extra") d.options_done = false;
-    if (field === "courts") { d.courts = undefined; d.start_time = undefined; d.courts_done = false; d.time_done = false; }
+    if (field === "courts") { d.courts = undefined; d.group_courts = undefined; d.start_time = undefined; d.courts_done = false; d.time_done = false; }
     advance(d);
   };
 
@@ -861,6 +867,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
         assignments.length === draft.entries.length ? assignments : undefined,
         draft.courts ?? [],
         draft.start_time ?? null,
+        draft.group_courts,
       );
     }
     setCreating(false);
@@ -1326,7 +1333,7 @@ function DraftPanel({ draft, c, lang, onEdit, onEntries }: {
     [c.fGroups, findGroupOption(n, draft.group_count) ? [c.groupLabel(findGroupOption(n, draft.group_count)!), playoffSummary(draft, lang) ?? seriesLabel(draft, lang)].filter(Boolean).join(" · ") : c.empty, "groups"],
     [c.fRoster, draft.entries?.length ? `${draft.entries.length} ${c.unit(draft)}` : draft.roster_mode === "registration" ? c.rosterReg : draft.roster_mode === "later" ? c.rosterLater : c.empty, "roster"],
     [c.fName, draft.name ?? c.empty, "name"],
-    [c.fCourts, draft.courts?.length ? [c.courts(draft.courts), draft.start_time].filter(Boolean).join(" · ") : c.empty, "courts"],
+    [c.fCourts, draft.courts?.length || groupCourtsLine(draft, lang) ? [draft.courts?.length ? c.courts(draft.courts) : null, groupCourtsLine(draft, lang), draft.start_time].filter(Boolean).join(" · ") : c.empty, "courts"],
     [c.fExtra, extras || c.empty, "extra"],
   ];
   return (
@@ -1391,6 +1398,7 @@ function ConfirmCard({ draft, c, lang, groups, creating, onCreate, onEdit, onRes
     playoffSummary(draft, lang) ?? seriesLabel(draft, lang),
     draft.default_sets && draft.default_sets > 1 ? c.optSets(draft.default_sets) : null,
     draft.courts?.length ? c.courts(draft.courts) : null,
+    groupCourtsLine(draft, lang),
     draft.start_time ?? null,
   ].filter(Boolean).join(" · ");
   return (
