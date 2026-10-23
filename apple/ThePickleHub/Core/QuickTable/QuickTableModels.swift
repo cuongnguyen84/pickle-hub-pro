@@ -24,6 +24,9 @@ struct QTTable: Decodable, Equatable {
     /// Series A/B/C sau vòng bảng (web 2026-10-19): số nhánh dự kiến + kiểu tên (series | medal).
     var playoffSeries: Int? = nil
     var playoffSeriesStyle: String? = nil
+    /// Cỡ từng nhánh khi chủ giải chốt cỡ tuỳ chỉnh (web playoff_series_sizes,
+    /// vd giải 1 bảng vòng tròn lấy 4 đội → [4]).
+    var playoffSeriesSizes: [Int]? = nil
 
     var displayName: String { name?.nonEmpty ?? "Giải đấu" }
     var isPlayoffStage: Bool { status == "playoff" || status == "completed" }
@@ -57,6 +60,7 @@ struct QTTable: Decodable, Equatable {
         case startTime = "start_time"
         case playoffSeries = "playoff_series"
         case playoffSeriesStyle = "playoff_series_style"
+        case playoffSeriesSizes = "playoff_series_sizes"
     }
 }
 
