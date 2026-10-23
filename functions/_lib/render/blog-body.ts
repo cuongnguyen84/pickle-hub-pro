@@ -88,16 +88,93 @@ export function renderSectionLink(siteUrl: string, l: { text: string; path: stri
   return `<li><a href="${href}"${rel}>${escapeHtml(l.text)}</a></li>`;
 }
 
+/** In-page anchor id for a draw — same slug rule as the generator's
+ *  `_anchor` and the React board (đ→d first: no NFKD decomposition). */
+function resultsAnchor(division: string): string {
+  const slug = division
+    .replace(/Đ/g, "D")
+    .replace(/đ/g, "d")
+    .replace(/['’]/g, "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return `rb-${slug}`;
+}
+
+function renderResultsSummary(
+  draws: NonNullable<BlogPostContent["sections"][number]["resultsSummary"]>,
+): string {
+  const rows = draws
+    .map(
+      (d) =>
+        `<div class="tl-rb-srow"><span class="tl-rb-sdiv">${escapeHtml(d.division)}</span>` +
+        `<span class="tl-rb-sval">${escapeHtml(d.champion ?? "No champion yet")}<small>${escapeHtml(d.note)}</small></span></div>`,
+    )
+    .join("");
+  return `<div class="tl-rb-summary"><h3>Tournament summary</h3>${rows}</div>`;
+}
+
+function renderResultsBoard(
+  board: NonNullable<BlogPostContent["sections"][number]["resultsBoard"]>,
+): string {
+  const out: string[] = ['<div class="tl-rb">'];
+  for (const r of board.rounds) {
+    const matches = r.matches
+      .map(
+        (m) =>
+          `<div class="tl-rb-match"><div class="tl-rb-teams">` +
+          `<div class="tl-rb-win">${escapeHtml(m.winner)}</div>` +
+          `<div class="tl-rb-lose">${escapeHtml(m.loser)}</div>` +
+          (m.status ? `<div class="tl-rb-status">${escapeHtml(m.status)}</div>` : "") +
+          `</div><div class="tl-rb-sets">${m.sets.map(([w, l]) => `<strong>${w}</strong>-${l}`).join(" · ")}</div></div>`,
+      )
+      .join("");
+    if (r.collapsed) {
+      out.push(
+        `<details class="tl-rb-details"><summary>${escapeHtml(r.label)} — ${r.matches.length} ${r.matches.length === 1 ? "match" : "matches"}</summary>${matches}</details>`,
+      );
+    } else {
+      out.push(`<h3 class="tl-rb-round">${escapeHtml(r.label)}</h3>${matches}`);
+    }
+  }
+  out.push("</div>");
+  return out.join("");
+}
+
 function renderSections(
   content: BlogPostContent,
   siteUrl: string,
   liveBlocks: Record<string, string> = {},
 ): string {
   const out: string[] = [];
+  const boardSections = content.sections.filter((s) => s.resultsBoard);
+  let chipsRendered = false;
   for (const s of content.sections) {
-    out.push(`<h2>${escapeHtml(s.heading)}</h2>`);
+    if (s.resultsBoard && !chipsRendered) {
+      chipsRendered = true;
+      const chips = boardSections
+        .map(
+          (b) =>
+            `<a class="tl-rb-chip" href="#${resultsAnchor(b.resultsBoard!.division)}">${escapeHtml(b.resultsBoard!.division)}</a>`,
+        )
+        .join("");
+      out.push(`<nav class="tl-rb-chips">${chips}</nav>`);
+    }
+    out.push(
+      s.resultsBoard
+        ? `<h2 id="${resultsAnchor(s.resultsBoard.division)}">${escapeHtml(s.heading)}</h2>`
+        : `<h2>${escapeHtml(s.heading)}</h2>`,
+    );
     out.push(`<p>${escapeHtml(s.content)}</p>`);
-    if (s.listItems?.length) {
+    if (s.resultsSummary?.length) {
+      out.push(renderResultsSummary(s.resultsSummary));
+    }
+    if (s.resultsBoard) {
+      out.push(renderResultsBoard(s.resultsBoard));
+    }
+    if (s.listItems?.length && !s.resultsBoard) {
       out.push(`<ul>${s.listItems.map(renderListItem).join("")}</ul>`);
     }
     if (s.orderedList?.length) {
