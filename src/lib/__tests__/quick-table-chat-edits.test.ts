@@ -4,6 +4,7 @@ import {
   applySpokenEdit,
   dropInventedRoster,
   factualAck,
+  fallbackReply,
   findGroupOption,
   messageNeedsModel,
   keepOrAssign,
@@ -482,5 +483,29 @@ describe("state checks and duplicate lists (log 50-52)", () => {
   it("reports honestly when groups are not drawn yet", () => {
     const ack = factualAck({ entries: nine }, { entries: nine }, "vi", "kiểm tra giúp tôi mỗi bảng có mấy đội");
     expect(ack).toContain("chưa chia bảng");
+  });
+});
+
+describe("unsupported formats are named, never silently mapped (Cường 21:35 24/10)", () => {
+  it("names double elimination + nearest alternative in English", () => {
+    const ack = factualAck({}, { entries: teams(["A", "B", "C", "D", "E", "F"]) }, "en", "Make it double elimination");
+    expect(ack).toContain("Double elimination isn't supported yet");
+    expect(ack).toContain("single-elimination playoff");
+  });
+
+  it("names it in Vietnamese when asked in Vietnamese", () => {
+    const ack = factualAck({}, {}, "vi", "làm thể thức loại kép cho tôi");
+    expect(ack).toContain("chưa được hỗ trợ");
+    expect(ack).toContain("loại trực tiếp");
+  });
+
+  it("fallbackReply uses the format-specific note when unmet names it", () => {
+    const r = fallbackReply("unsupported", "double elimination bracket", "en");
+    expect(r).toContain("Double elimination isn't supported yet");
+  });
+
+  it("does not fire for a plain single-elimination request", () => {
+    const ack = factualAck({}, { entries: teams(["A", "B", "C", "D"]) }, "vi", "vào playoff loại trực tiếp");
+    expect(ack).not.toContain("chưa được hỗ trợ");
   });
 });

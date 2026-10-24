@@ -307,4 +307,31 @@ struct QuickTableChatEngineTests {
         #expect(ack.contains("không cộng trùng"))
         #expect(!ack.contains("Đã nhận 9"))
     }
+
+    // MARK: thể thức chưa hỗ trợ phải nói thẳng (luật Cường 21:35 24/10)
+
+    @Test func unsupportedFormatIsNamedWithAlternativeEN() {
+        let ack = E.factualAck(before: QTChatDraft(), after: QTChatDraft(entries: teams(6)), lang: "en",
+                               request: "Make it double elimination")
+        #expect(ack.contains("Double elimination isn't supported yet"))
+        #expect(ack.contains("single-elimination playoff"))
+    }
+
+    @Test func unsupportedFormatIsNamedWithAlternativeVI() {
+        let ack = E.factualAck(before: QTChatDraft(), after: QTChatDraft(), lang: "vi",
+                               request: "làm thể thức loại kép cho tôi")
+        #expect(ack.contains("chưa được hỗ trợ"))
+        #expect(ack.contains("loại trực tiếp"))
+    }
+
+    @Test func fallbackReplyNamesUnsupportedFormat() {
+        let r = E.fallbackReply(intent: "unsupported", unmet: "double elimination bracket", lang: "en")
+        #expect(r.contains("Double elimination isn't supported yet"))
+    }
+
+    @Test func plainSingleEliminationDoesNotTriggerNote() {
+        let ack = E.factualAck(before: QTChatDraft(), after: QTChatDraft(entries: teams(4)), lang: "vi",
+                               request: "vào playoff loại trực tiếp")
+        #expect(!ack.contains("chưa được hỗ trợ"))
+    }
 }

@@ -229,9 +229,27 @@ export function groupCourtsLine(d: Draft, lang: "vi" | "en"): string | null {
  * (unmet), nói rõ chưa hỗ trợ, gợi ý cách gần nhất, và flow vẫn đi tiếp vì
  * client sẽ hỏi câu kế tiếp như thường.
  */
+/**
+ * Thể thức hệ thống CHƯA hỗ trợ mà người dùng gọi đích danh. Luật Cường chốt
+ * 21:35 24/10: phải nói thẳng chưa hỗ trợ + gợi ý thay thế gần nhất, tuyệt đối
+ * không lặng lẽ ánh xạ sang thể thức khác. Trả null khi không khớp thể thức nào.
+ */
+export function unsupportedFormatNote(text: string, lang: "vi" | "en"): string | null {
+  const t = fold(text);
+  if (!t) return null;
+  if (/(double elimination|double-elimination|double elim|loai kep|loai truc tiep kep|nhanh thang nhanh thua|losers? bracket)/.test(t)) {
+    return lang === "vi"
+      ? "Thể thức loại kép (double elimination) chưa được hỗ trợ. Thay thế gần nhất: đấu vòng tròn ở vòng bảng rồi vào playoff loại trực tiếp — mình làm theo cách đó cho bạn nhé"
+      : "Double elimination isn't supported yet. The closest alternative is a round-robin group stage feeding a single-elimination playoff — I can set it up that way for you";
+  }
+  return null;
+}
+
 export function fallbackReply(intent: string, unmet: string | null, lang: "vi" | "en"): string {
   const vi = lang === "vi";
   if (intent === "unsupported") {
+    const fmt = unsupportedFormatNote(unmet ?? "", lang);
+    if (fmt) return `${fmt}.`;
     return vi
       ? `Mình chưa hỗ trợ${unmet ? ` yêu cầu này: ${unmet}` : " yêu cầu này"}. Bạn cứ tạo giải như bình thường trước — các thiết lập nâng cao (gán sân, thể thức riêng…) có thể chỉnh thêm ở trang giải sau khi tạo. Mình tiếp tục nhé.`
       : `I can't do that yet${unmet ? `: ${unmet}` : ""}. Go ahead and create the tournament as usual — advanced settings can be adjusted on the tournament page afterwards. Let's continue.`;
@@ -978,6 +996,8 @@ export function factualAck(before: Draft, after: Draft, lang: "vi" | "en", reque
   const vi = lang === "vi";
   const u = after.is_doubles === false ? (vi ? "người" : "players") : (vi ? "đội" : "teams");
   const bits: string[] = [];
+  const fmtNote = request ? unsupportedFormatNote(request, lang) : null;
+  if (fmtNote) bits.push(fmtNote);
   const asked = request ? readUserFacts(request) : {};
   const knownField = entryCount(after) >= 2;
   const askedGroupsOk = !!asked.group_count && knownField && !!findGroupOption(entryCount(after), asked.group_count);

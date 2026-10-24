@@ -775,6 +775,9 @@ enum QTChatEngine {
         let vi = lang == "vi"
         let u = after.isDoubles == false ? (vi ? "người" : "players") : (vi ? "đội" : "teams")
         var bits: [String] = []
+        if !request.isEmpty, let fmtNote = unsupportedFormatNote(request, lang: lang) {
+            bits.append(fmtNote)
+        }
         let asked = request.isEmpty ? QTChatPatch() : readUserFacts(request)
         let knownField = entryCount(after) >= 2
         let askedGroupsOk = asked.groupCount != nil && knownField
@@ -898,9 +901,24 @@ enum QTChatEngine {
     }
 
     /// Câu trả lời dự phòng không bao giờ rỗng (luật #910: unsupported cũng phải có câu).
+    /// Thể thức hệ thống CHƯA hỗ trợ mà người dùng gọi đích danh (luật Cường
+    /// 21:35 24/10): nói thẳng chưa hỗ trợ + gợi ý thay thế gần nhất, không
+    /// lặng lẽ ánh xạ sang thể thức khác. Nil khi không khớp thể thức nào.
+    static func unsupportedFormatNote(_ text: String, lang: String) -> String? {
+        let t = fold(text)
+        if t.isEmpty { return nil }
+        if test("(double elimination|double-elimination|double elim|loai kep|loai truc tiep kep|nhanh thang nhanh thua|losers? bracket)", in: t) {
+            return lang == "vi"
+                ? "Thể thức loại kép (double elimination) chưa được hỗ trợ. Thay thế gần nhất: đấu vòng tròn ở vòng bảng rồi vào playoff loại trực tiếp — mình làm theo cách đó cho bạn nhé"
+                : "Double elimination isn't supported yet. The closest alternative is a round-robin group stage feeding a single-elimination playoff — I can set it up that way for you"
+        }
+        return nil
+    }
+
     static func fallbackReply(intent: String, unmet: String?, lang: String) -> String {
         let vi = lang == "vi"
         if intent == "unsupported" {
+            if let fmt = unsupportedFormatNote(unmet ?? "", lang: lang) { return fmt + "." }
             return vi
                 ? "Mình chưa hỗ trợ\(unmet.map { " yêu cầu này: \($0)" } ?? " yêu cầu này"). Bạn cứ tạo giải như bình thường trước — các thiết lập nâng cao (gán sân, thể thức riêng…) có thể chỉnh thêm ở trang giải sau khi tạo. Mình tiếp tục nhé."
                 : "I can't do that yet\(unmet.map { ": \($0)" } ?? ""). Go ahead and create the tournament as usual — advanced settings can be adjusted on the tournament page afterwards. Let's continue."
