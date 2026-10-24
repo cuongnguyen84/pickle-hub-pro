@@ -313,3 +313,6 @@ Giá gốc \(ShopMoney.vnd(originalPrice))
 đang có trận trực tiếp
 # Lối vào danh sách đơn: huy hiệu giỏ hàng và màn chi tiết đơn.
 Đơn mua
+# Thẻ "Tạo giải bằng chat AI" dùng chung: CreateQuickTableView + HomeView (PR entry chat ở Home)
+Tạo giải bằng chat AI
+Kể về giải hoặc dán danh sách — trợ lý chia bảng giúp bạn
