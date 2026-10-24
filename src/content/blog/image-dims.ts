@@ -138,6 +138,8 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/pickleball-volley-technique-hero.webp": [1200, 675],
   "/images/blog/pickleball-vs-padel-vs-paddle-tennis-hero-768.webp": [768, 512],
   "/images/blog/pickleball-vs-padel-vs-paddle-tennis-hero.webp": [1536, 1024],
+  "/images/blog/pickleball-world-championships-2026-results-hero-768.webp": [768, 512],
+  "/images/blog/pickleball-world-championships-2026-results-hero.webp": [1536, 1024],
   "/images/blog/pickleball-world-cup-2026-da-nang-hero-768.webp": [768, 512],
   "/images/blog/pickleball-world-cup-2026-da-nang-hero.webp": [1536, 1024],
   "/images/blog/pickleball-world-cup-2026-da-nang-how-to-watch-hero-768.webp": [768, 403],
