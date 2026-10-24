@@ -188,6 +188,10 @@ export const blogMetadata: BlogPostMetadata[] = [
       "en": "Browse all Bac Ninh courts",
       "vi": "Xem tất cả sân ở Bắc Ninh"
     },
+    "heroImage": {
+      "src": "/images/blog/pickleball-courts-bac-ninh-2026-hero.webp",
+      "alt": "A row of outdoor pickleball courts in a Vietnamese town in the morning"
+    },
     "titleEn": "Pickleball Courts in Bac Ninh 2026: 15 Venues, 84 Courts by Ward",
     "titleVi": "Sân pickleball Bắc Ninh 2026: 15 địa điểm, 84 sân theo khu vực",
     "metaTitleEn": "Pickleball Courts in Bac Ninh 2026: Venues & Court Counts",
@@ -212,6 +216,10 @@ export const blogMetadata: BlogPostMetadata[] = [
     "ctaLabel": {
       "en": "See all Hà Tĩnh venues",
       "vi": "Xem 11 sân pickleball Hà Tĩnh"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-courts-ha-tinh-2026-hero.webp",
+      "alt": "Pickleball courts by the coast in central Vietnam at sunset"
     },
     "titleEn": "Pickleball Courts in Hà Tĩnh 2026: 11 Venues, Areas and Hourly Rates",
     "titleVi": "Sân pickleball Hà Tĩnh 2026: 11 sân, khu vực và giá thuê theo giờ",
@@ -383,6 +391,10 @@ export const blogMetadata: BlogPostMetadata[] = [
       "en": "Find a pickleball club",
       "vi": "Tìm câu lạc bộ pickleball"
     },
+    "heroImage": {
+      "src": "/images/blog/vietnam-pickleball-community-guide-2026-hero.webp",
+      "alt": "A group of amateur pickleball players with paddles gathered courtside"
+    },
     "titleEn": "Vietnam Pickleball Community 2026: How to Find Groups, Clubs and Local Tournaments",
     "titleVi": "Cộng đồng pickleball Việt Nam: Tìm nhóm, CLB và giải",
     "metaTitleEn": "Vietnam Pickleball Community 2026: Groups, Clubs, Events",
@@ -527,6 +539,10 @@ export const blogMetadata: BlogPostMetadata[] = [
     "ctaLabel": {
       "en": "Build your draw in Bracket Lab",
       "vi": "Tạo bảng đấu với Bracket Lab"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-recovery-rest-hydration-hero.webp",
+      "alt": "A pickleball player resting on a bench courtside with a water bottle, towel and paddle"
     },
     "titleEn": "Pickleball Recovery: Rest, Hydration and Listening to Your Body",
     "titleVi": "Phục hồi sau khi chơi pickleball: nghỉ ngơi, bù nước và theo dõi cơ thể",
@@ -789,6 +805,10 @@ export const blogMetadata: BlogPostMetadata[] = [
     "ctaLabel": {
       "en": "Browse the court directory",
       "vi": "Xem danh bạ sân pickleball"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-courts-vietnam-guide-2026-hero.webp",
+      "alt": "An aerial view of a large pickleball complex with many courts in a Vietnamese city"
     },
     "titleEn": "Pickleball Courts in Vietnam 2026: 821 Venues in 84 Cities",
     "titleVi": "Sân pickleball tại Việt Nam 2026: 821 sân ở 84 thành phố",
