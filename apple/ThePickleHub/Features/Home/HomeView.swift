@@ -6,6 +6,10 @@ import SwiftUI
 struct HomeView: View {
     @State private var model = HomeViewModel()
     @State private var openURL: IdentifiedURL?
+    @State private var showChatCreate = false
+    @State private var createdTable: CreatedTableRef?
+
+    private struct CreatedTableRef: Identifiable, Hashable { let id: String; let name: String } // id = share_id
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let openLiveTab: () -> Void
 
@@ -25,6 +29,7 @@ struct HomeView: View {
                         WorldCupHomeLiveCard(openLiveTab: openLiveTab)
                         ProTourEventsStrip(surface: .home)
                         partnerCard
+                        aiChatEntry
                         if ShopFeatureGate.isEnabled {
                             shopEntry
                         }
@@ -72,6 +77,41 @@ struct HomeView: View {
         .task { await model.load() }
         .refreshable { await model.load() }
         .sheet(item: $openURL) { SafariView(url: $0.url).ignoresSafeArea() }
+        .sheet(isPresented: $showChatCreate) {
+            AuthenticationRequiredView {
+                QuickTableChatView { shareID, name in
+                    showChatCreate = false
+                    createdTable = CreatedTableRef(id: shareID, name: name)
+                }
+            }
+        }
+        .navigationDestination(item: $createdTable) { ref in
+            QuickTableDetailView(shareID: ref.id, fallbackName: ref.name)
+        }
+    }
+
+    // MARK: AI chat entry
+
+    /// Entry point to the AI tournament chat (2.2.0 headline feature) — the
+    /// same card + sheet the create wizard leads with, surfaced on Home so
+    /// users don't have to find the wizard first.
+    private var aiChatEntry: some View {
+        Button { showChatCreate = true } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "sparkles").foregroundStyle(TLColor.accentText)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Tạo giải bằng chat AI").font(TLFont.sans(14.5, .semibold)).foregroundStyle(TLColor.fg)
+                    Text("Kể về giải hoặc dán danh sách — trợ lý chia bảng giúp bạn").font(TLFont.sans(12)).foregroundStyle(TLColor.fg2)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold)).foregroundStyle(TLColor.fg3)
+            }
+            .padding(14)
+            .background(TLColor.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.accent.opacity(0.35), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Tạo giải bằng chat AI")
     }
 
     private var shopEntry: some View {
