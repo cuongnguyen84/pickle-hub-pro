@@ -85,11 +85,25 @@ jobs:
           # back to testing production instead of the preview (2026-07-22).
           SLUG=$(echo "$SLUG" | cut -c1-28 | sed 's/-*$//')
           PREVIEW="https://${SLUG}.pickle-hub-pro.pages.dev"
-          for i in $(seq 1 10); do
-            STATUS=$(curl -sI "$PREVIEW" -o /dev/null -w '%{http_code}')
-            [ "$STATUS" = "200" ] && { echo "PLAYWRIGHT_BASE_URL=$PREVIEW" >> "$GITHUB_ENV"; break; }
+          # 2026-10-24: the step shell runs with -e, so a single transient
+          # curl failure (SSL error 35 seen 4x on the #929 branch while the
+          # preview itself answered 200) used to kill the whole step at
+          # once. Tolerate probe errors inside the loop and only fail after
+          # the full 10-minute window with no 200 at all.
+          READY=0
+          for i in $(seq 1 20); do
+            STATUS=$(curl -sI --max-time 20 "$PREVIEW" -o /dev/null -w '%{http_code}' || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "PLAYWRIGHT_BASE_URL=$PREVIEW" >> "$GITHUB_ENV"
+              READY=1
+              break
+            fi
             echo "[$i] preview not ready ($STATUS) — sleeping 30s"; sleep 30
           done
+          if [ "$READY" != "1" ]; then
+            echo "::error::PR preview $PREVIEW never returned 200 after 10 minutes"
+            exit 1
+          fi
 
       - name: Visual diff (advisory)
         id: visual
