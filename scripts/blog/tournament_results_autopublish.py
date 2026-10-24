@@ -157,6 +157,65 @@ def _board(rows: list, division: str, vi: bool = False) -> dict:
     return board
 
 
+def _match_fixture(match) -> dict:
+    """The board form of a match that has not been played — two teams, no
+    winner, no sets. Renderers branch on teamA/teamB so a fixture can never
+    be presented as a result."""
+    a, b = match["teams"]
+    return {"teamA": _names(a), "teamB": _names(b), "sets": []}
+
+
+def _board_fixtures(rows: list, division: str, vi: bool = False) -> dict:
+    """Group a draw's unplayed matches into rounds for the structured
+    board, earliest round first (a schedule reads in play order, unlike
+    results which lead with the latest round)."""
+    rows = sorted(rows, key=lambda m: (int(m.get("roundNumber", 0) or 0), str(m.get("dateKey", ""))))
+    rounds: list = []
+    for m in rows:
+        label = _round_label(m, vi)
+        if not rounds or rounds[-1]["label"] != label:
+            entry = {"label": label, "matches": []}
+            if _round_collapsed(m):
+                entry["collapsed"] = True
+            rounds.append(entry)
+        rounds[-1]["matches"].append(_match_fixture(m))
+    return {"division": division, "rounds": rounds}
+
+
+def draw_sections_scheduled(pending: list, vi: bool = False) -> list:
+    """One section per division with EVERY unplayed match as a fixture
+    board — the pre-event form of draw_sections. Without this, an event
+    with no finals yet rendered as a 10-line prose list (the old format
+    flagged on the World Championships page, 2026-10-24)."""
+    by_div: dict[str, list] = {}
+    for m in pending:
+        by_div.setdefault(_division(m, vi), []).append(m)
+    out = []
+    for division, rows in by_div.items():
+        rows.sort(key=lambda m: (int(m.get("roundNumber", 0) or 0), str(m.get("dateKey", ""))))
+        board = _board_fixtures(rows, division, vi)
+        if vi:
+            lead = f"{len(rows)} trận đã lên lịch, vòng sớm nhất ở trên."
+            out.append({"heading": f"Lịch thi đấu {division}", "content": lead, "resultsBoard": board})
+        else:
+            lead = f"{len(rows)} matches scheduled, earliest round first."
+            out.append({"heading": f"{division} schedule", "content": lead, "resultsBoard": board})
+    return out
+
+
+def draw_summaries_scheduled(pending: list, vi: bool = False) -> list:
+    """Summary rows for a draw with no completed matches yet — the
+    page-top card still appears, counting scheduled matches per draw."""
+    by_div: dict[str, list] = {}
+    for m in pending:
+        by_div.setdefault(_division(m, vi), []).append(m)
+    out = []
+    for division, rows in by_div.items():
+        note = f"Đã lên lịch · {len(rows)} trận" if vi else f"Scheduled · {len(rows)} matches"
+        out.append({"division": division, "note": note, "anchor": _anchor(division)})
+    return out
+
+
 def draw_summaries(finals: list, vi: bool = False) -> list:
     """One summary row per draw for the page-top card on the intro section."""
     by_div: dict[str, list] = {}
@@ -247,20 +306,36 @@ def package(event: dict, feed: dict, now: datetime) -> dict:
     related = event.get("related") or []
     en_links = [{"text": "Official event scores", "path": source}] + [{"text": r["en"], "path": r["path"]} for r in related]
     vi_links = [{"text": "Nguồn điểm số chính thức", "path": source}] + [{"text": r["vi"], "path": r["vi_path"]} for r in related]
-    en_draw = draw_sections(finals) or [{"heading": "Confirmed results", "content": "No final result has been published in the official feed yet."}]
-    vi_draw = draw_sections(finals, True) or [{"heading": "Kết quả đã xác nhận", "content": "Nguồn chính thức chưa công bố kết quả chung cuộc nào."}]
-    en_live = [_match_line(m) for m in (live + upcoming)[:10]] or ["No match is currently marked live or scheduled in the official feed."]
-    vi_live = [_match_line(m, True) for m in (live + upcoming)[:10]] or ["Nguồn chính thức hiện không đánh dấu trận nào đang diễn ra hoặc sắp đấu."]
+    pending = live + upcoming
+    if finals:
+        en_draw, vi_draw = draw_sections(finals), draw_sections(finals, True)
+        en_summary, vi_summary = draw_summaries(finals), draw_summaries(finals, True)
+    elif pending:
+        # No completed match yet: the page must still ship the structured
+        # format — summary card + fixture boards for every scheduled match
+        # — not the old prose fallback (Cường's ruling, 2026-10-24).
+        en_draw, vi_draw = draw_sections_scheduled(pending), draw_sections_scheduled(pending, True)
+        en_summary, vi_summary = draw_summaries_scheduled(pending), draw_summaries_scheduled(pending, True)
+    else:
+        en_draw = [{"heading": "Confirmed results", "content": "No final result has been published in the official feed yet."}]
+        vi_draw = [{"heading": "Kết quả đã xác nhận", "content": "Nguồn chính thức chưa công bố kết quả chung cuộc nào."}]
+        en_summary, vi_summary = [], []
+    en_live = [_match_line(m) for m in pending[:10]] or ["No match is currently marked live or scheduled in the official feed."]
+    vi_live = [_match_line(m, True) for m in pending[:10]] or ["Nguồn chính thức hiện không đánh dấu trận nào đang diễn ra hoặc sắp đấu."]
+    # The prose status list only survives when completed draws anchor the
+    # page; next to fixture boards it would just duplicate them.
+    en_status = [{"heading": "Live and upcoming status", "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.", "listItems": en_live}] if finals else []
+    vi_status = [{"heading": "Trận đang đấu và sắp đấu", "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.", "listItems": vi_live}] if finals else []
     en_sections = [
-        {"heading": en_h, "content": f"Last updated: {stamp_en}. ThePickleHub publishes this {name} results page from the official PPA scores feed for {event['dates_en']} at {venue}. The feed currently contains {len(matches)} matches, including {len(finals)} completed or final records and {len(live)} live records. A missing score remains unconfirmed until the official feed supplies it.", "internalLinks": en_links, "resultsSummary": draw_summaries(finals)},
+        {"heading": en_h, "content": f"Last updated: {stamp_en}. ThePickleHub publishes this {name} results page from the official PPA scores feed for {event['dates_en']} at {venue}. The feed currently contains {len(matches)} matches, including {len(finals)} completed or final records and {len(live)} live records. A missing score remains unconfirmed until the official feed supplies it.", "internalLinks": en_links, "resultsSummary": en_summary},
         *en_draw,
-        {"heading": "Live and upcoming status", "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.", "listItems": en_live},
+        *en_status,
         {"heading": "How to read this update", "content": f"ThePickleHub checks the event id, match status, two-team structure and unique winner flag before updating this page. The page is checked every few hours during the event and refreshed whenever the source snapshot changes. Event dates: {event['dates_en']}. Venue: {venue}. Official source: {source}."},
     ]
     vi_sections = [
-        {"heading": f"Kết quả {base} {year}", "content": f"Cập nhật: {stamp_vi}. ThePickleHub đăng trang kết quả {base} {year} từ feed điểm số chính thức của PPA cho thời gian {event['dates_vi']} tại {venue}. Feed hiện có {len(matches)} trận, gồm {len(finals)} bản ghi đã kết thúc/chung cuộc và {len(live)} bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.", "internalLinks": vi_links, "resultsSummary": draw_summaries(finals, True)},
+        {"heading": f"Kết quả {base} {year}", "content": f"Cập nhật: {stamp_vi}. ThePickleHub đăng trang kết quả {base} {year} từ feed điểm số chính thức của PPA cho thời gian {event['dates_vi']} tại {venue}. Feed hiện có {len(matches)} trận, gồm {len(finals)} bản ghi đã kết thúc/chung cuộc và {len(live)} bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.", "internalLinks": vi_links, "resultsSummary": vi_summary},
         *vi_draw,
-        {"heading": "Trận đang đấu và sắp đấu", "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.", "listItems": vi_live},
+        *vi_status,
         {"heading": "Cách kiểm chứng cập nhật", "content": f"ThePickleHub kiểm tra event id, trạng thái trận, cấu trúc hai đội và cờ người thắng duy nhất trước khi cập nhật. Trong thời gian giải, trang được kiểm tra vài giờ một lần và cập nhật ngay khi snapshot nguồn thay đổi. Thời gian giải: {event['dates_vi']}. Địa điểm: {venue}. Nguồn chính thức: {source}."},
     ]
     faq_en = [{"question": "Where do these results come from?", "answer": f"The official PPA scores feed: {source}."}, {"question": "Are scheduled matches final results?", "answer": "No. Only an official final or completed status with one winner is presented as a result."}, {"question": "When is this page updated?", "answer": "Every few hours while the event is on, whenever the verified official score snapshot changes."}]
