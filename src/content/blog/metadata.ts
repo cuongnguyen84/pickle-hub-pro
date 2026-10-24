@@ -802,6 +802,10 @@ export const blogMetadata: BlogPostMetadata[] = [
       "en": "Browse the court directory",
       "vi": "Xem danh bạ sân pickleball"
     },
+    "heroImage": {
+      "src": "/images/blog/pickleball-courts-vietnam-guide-2026-hero.webp",
+      "alt": "An aerial view of a large pickleball complex with many courts in a Vietnamese city"
+    },
     "titleEn": "Pickleball Courts in Vietnam 2026: 821 Venues in 84 Cities",
     "titleVi": "Sân pickleball tại Việt Nam 2026: 821 sân ở 84 thành phố",
     "metaTitleEn": "Pickleball Courts in Vietnam 2026: 821 Venues",

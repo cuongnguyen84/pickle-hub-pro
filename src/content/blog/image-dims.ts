@@ -96,6 +96,8 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/pickleball-courts-hai-phong-2026-hero.webp": [1200, 675],
   "/images/blog/pickleball-courts-nha-trang-2026-hero-768.webp": [768, 432],
   "/images/blog/pickleball-courts-nha-trang-2026-hero.webp": [1200, 675],
+  "/images/blog/pickleball-courts-vietnam-guide-2026-hero-768.webp": [768, 512],
+  "/images/blog/pickleball-courts-vietnam-guide-2026-hero.webp": [1536, 1024],
   "/images/blog/pickleball-courts-vinh-2026-hero-768.webp": [768, 439],
   "/images/blog/pickleball-courts-vinh-2026-hero.webp": [1200, 686],
   "/images/blog/pickleball-courts-vung-tau-2026-hero-768.webp": [768, 432],
