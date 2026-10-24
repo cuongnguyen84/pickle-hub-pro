@@ -442,7 +442,10 @@ return ({
           "vendor-react": ["react", "react-dom", "react-router-dom"],
           "vendor-supabase": ["@supabase/supabase-js"],
           "vendor-ui": [
-            "sonner",
+            // PERF PR-C (2026-10-24): sonner intentionally NOT here — the
+            // Sonner overlay is lazy-loaded after first paint, so its
+            // package must fall into that lazy chunk, not the preloaded
+            // vendor-ui chunk.
             "@radix-ui/react-dialog",
             "@radix-ui/react-dropdown-menu",
             "@radix-ui/react-popover",
