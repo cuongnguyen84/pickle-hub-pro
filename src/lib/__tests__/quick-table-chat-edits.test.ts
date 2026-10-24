@@ -441,3 +441,46 @@ describe("round robin with 5, 6 and 7 teams, then a knockout (Cường's cases)"
     });
   }
 });
+
+describe("state checks and duplicate lists (log 50-52)", () => {
+  const nine = teams(["Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India"]);
+  const drawn: Draft = { entries: nine, group_count: 3, is_doubles: true };
+
+  it("answers a group check from the real draw instead of repeating a receipt", () => {
+    const ack = factualAck(drawn, drawn, "en", "Check the groups — how many teams are in each group?");
+    expect(ack).toContain("Current draw: 9 teams in 3 groups");
+    expect(ack).toContain("Group 1: 3");
+    expect(ack).toContain("Group 3: 3");
+    expect(ack).not.toContain("did not change");
+  });
+
+  it("treats a re-pasted identical list as idempotent and reports state (evidence turn)", () => {
+    const after = applyPatch(drawn, { entries: nine });
+    const request = [...nine.map((e) => e.p1), "Once it draws the groups, check that each group has 3 teams. Tell me what it shows."].join("\n");
+    const reply = replyFromDraft(drawn, after!, "I've added 9 teams.", "en", request);
+    expect(reply).not.toContain("I've added");
+    expect(reply).toContain("same list as before");
+    expect(reply).toContain("nothing was added twice");
+    expect(reply).toContain("Current draw: 9 teams in 3 groups");
+  });
+
+  it("notes a duplicate paste in Vietnamese without re-claiming receipt", () => {
+    const request = nine.map((e) => e.p1).join("\n");
+    const ack = factualAck(drawn, drawn, "vi", request);
+    expect(ack).toContain("giống hệt danh sách đã nhận");
+    expect(ack).toContain("không cộng trùng");
+    expect(ack).not.toContain("Đã nhận 9");
+  });
+
+  it("still acks a genuinely new list", () => {
+    const before: Draft = { entries: nine.slice(0, 4), is_doubles: true };
+    const after = applyPatch(before, { entries: nine });
+    const ack = factualAck(before, after!, "en", nine.map((e) => e.p1).join("\n"));
+    expect(ack).toContain("Got 5 teams");
+  });
+
+  it("reports honestly when groups are not drawn yet", () => {
+    const ack = factualAck({ entries: nine }, { entries: nine }, "vi", "kiểm tra giúp tôi mỗi bảng có mấy đội");
+    expect(ack).toContain("chưa chia bảng");
+  });
+});

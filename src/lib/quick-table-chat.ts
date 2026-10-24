@@ -666,6 +666,31 @@ export function wantsSingleGroupRoundRobin(text: string): boolean {
   );
 }
 
+/** Người dùng đòi kiểm chứng trạng thái hiện tại (số bảng, mỗi bảng mấy đội, bản chia hiện tại ra sao). */
+export function wantsStateCheck(text: string): boolean {
+  const t = fold(text);
+  if (!t) return false;
+  if (/(kiem tra|kiem chung|check lai|xem lai|cho toi biet|noi cho toi|bao lai ket qua)/.test(t)) return true;
+  if (/(moi bang|bang co may|may doi moi bang|so doi moi bang)/.test(t)) return true;
+  if (/\b(check|verify|confirm|tell me|show me)\b/.test(t) && /(group|draw|bang|team|doi|list|danh sach)/.test(t)) return true;
+  if (/(each group|per group|every group|what it shows|what does it show)/.test(t)) return true;
+  return false;
+}
+
+/** Tóm tắt bản chia bảng THẬT hiện tại để trả lời yêu cầu kiểm chứng — không suy đoán. */
+export function drawStateSummary(d: Draft, lang: "vi" | "en"): string | null {
+  const n = entryCount(d);
+  if (n < 2) return null;
+  const vi = lang === "vi";
+  const u = d.is_doubles === false ? (vi ? "người" : "players") : (vi ? "đội" : "teams");
+  const sizes = groupSizes(d);
+  if (d.group_count && sizes.length === d.group_count && sizes.length > 0) {
+    const per = sizes.map((sz, i) => (vi ? `bảng ${i + 1}: ${sz}` : `Group ${i + 1}: ${sz}`)).join(", ");
+    return vi ? `Hiện tại: ${n} ${u}, ${d.group_count} bảng — ${per}` : `Current draw: ${n} ${u} in ${d.group_count} groups — ${per}`;
+  }
+  return vi ? `Hiện tại: ${n} ${u}, chưa chia bảng` : `Current draw: ${n} ${u}, groups not drawn yet`;
+}
+
 export function readUserFacts(text: string): Partial<Draft> {
   const folded = fold(text)
     .replace(/\bvongtron\b/g, "vong tron")
@@ -987,6 +1012,15 @@ export function factualAck(before: Draft, after: Draft, lang: "vi" | "en", reque
   const added = next.filter((e) => !prev.some((p) => fold(entryLabel(p)) === fold(entryLabel(e))));
   const listed = looksLikeNameList(request) || (added.length > 0 && added.every((e) => fold(request).includes(fold(e.p1))));
   const samples = /ten mau|ten cap mau|dung mau|chua co ten|sample name/.test(fold(request));
+  // Dán lại đúng danh sách đã có: idempotent — không cộng trùng, không lặp câu
+  // "đã nhận", mà đáp bằng trạng thái hiện tại (ca log 50–52 ngày 24/10).
+  const dupList = prev.length >= 2 && next.length === prev.length && added.length === 0
+    && looksLikeNameList(request) && prev.every((e) => fold(request).includes(fold(e.p1)));
+  if (dupList) {
+    bits.push(vi
+      ? `Danh sách này giống hệt danh sách đã nhận — ${prev.length} ${u} đã có sẵn, không cộng trùng`
+      : `This is the same list as before — I already have these ${prev.length} ${u}, nothing was added twice`);
+  }
   if (added.length && samples) {
     const shown = added.slice(0, 6).map(entryLabel).join(", ");
     const more = added.length > 6 ? (vi ? ` và ${added.length - 6} nữa` : ` and ${added.length - 6} more`) : "";
@@ -1023,6 +1057,11 @@ export function factualAck(before: Draft, after: Draft, lang: "vi" | "en", reque
     if (line) bits.push(line);
   }
   if (after.start_time && after.start_time !== before.start_time) bits.push(after.start_time);
+  // Đòi kiểm chứng thì phải trả lời bằng trạng thái thật, kể cả khi nháp không đổi.
+  if (request && wantsStateCheck(request)) {
+    const state = drawStateSummary(after, lang);
+    if (state && !bits.includes(state)) bits.push(state);
+  }
   const sentences = bits
     .map((s) => s.trim().replace(/^[.\s]+|[.\s]+$/g, ""))
     .filter(Boolean);
@@ -1032,6 +1071,7 @@ export function factualAck(before: Draft, after: Draft, lang: "vi" | "en", reque
 const stripClaims = (reply: string) =>
   reply
     .replace(/(?:đã|da)\s+(?:nhận|nhan|chia|đổi|doi|xếp|xep|ghép|ghep|cập nhật|cap nhat)\s+[^.!\n]*/gi, "")
+    .replace(/\b(?:i(?:'ve| have)?\s+)?(?:added|received|split|renamed|updated|entered|registered|moved|swapped)\b[^.!?\n]*/gi, "")
     .replace(/\s+/g, " ")
     .trim();
 
