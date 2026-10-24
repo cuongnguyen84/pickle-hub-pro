@@ -191,6 +191,7 @@ enum ArticleDocument {
           .tl-rb-win {font-weight: 700; color: #f5f3ee; }
           .tl-rb-win::after {content: " ✓"; color: #b5e853; font-weight: 400; }
           .tl-rb-lose {color: #c7c3bb; }
+          .tl-rb-team {color: #f5f3ee; }
           .tl-rb-status {color: #93908a; font-size: 12px; text-transform: capitalize; }
           .tl-rb-sets {font-family: "Geist Mono", ui-monospace, monospace; font-size: 13px;
             text-align: right; white-space: nowrap; color: #c7c3bb;

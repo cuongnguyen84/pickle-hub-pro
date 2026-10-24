@@ -32,9 +32,42 @@ class TournamentAutopublishTests(unittest.TestCase):
                  "vi_slug": "ket-qua-test-open", "tags": ["test", "results", "2026"]}
         pkg = autopublish.package(event, feed(), datetime(2026, 10, 1, tzinfo=timezone.utc))
         body = " ".join(s["content"] + " " + " ".join(s.get("listItems", [])) for s in pkg["en"]["sections"])
-        self.assertIn("status scheduled", body)
         self.assertNotIn("beat B", body)
         self.assertIn("ThePickleHub", pkg["en"]["sections"][0]["content"])
+        # A scheduled match ships as a fixture (teamA/teamB), never a result:
+        # no winner key anywhere in the boards, and no prose list section.
+        boards = [s["resultsBoard"] for s in pkg["en"]["sections"] if s.get("resultsBoard")]
+        self.assertTrue(boards)
+        match = boards[0]["rounds"][0]["matches"][0]
+        self.assertEqual(match, {"teamA": "A", "teamB": "B", "sets": []})
+        self.assertFalse(any(s.get("listItems") for s in pkg["en"]["sections"]))
+
+    def test_scheduled_only_package_ships_fixture_boards_and_summary(self):
+        event = {"name": "Test Open", "dates_en": "October 1–3, 2026", "dates_vi": "1–3/10/2026",
+                 "venue": "Test venue", "source": "/official", "slug": "test-open-results",
+                 "vi_slug": "ket-qua-test-open", "tags": ["test", "results", "2026"]}
+        pkg = autopublish.package(event, feed(), datetime(2026, 10, 1, tzinfo=timezone.utc))
+        summary = pkg["en"]["sections"][0]["resultsSummary"]
+        self.assertEqual(len(summary), 1)
+        self.assertEqual(summary[0]["note"], "Scheduled · 1 matches")
+        self.assertNotIn("champion", summary[0])
+        vi_summary = pkg["vi"]["sections"][0]["resultsSummary"]
+        self.assertEqual(vi_summary[0]["note"], "Đã lên lịch · 1 trận")
+        vi_boards = [s for s in pkg["vi"]["sections"] if s.get("resultsBoard")]
+        self.assertEqual(vi_boards[0]["heading"], "Lịch thi đấu Đơn nam")
+
+    def test_fixture_board_orders_rounds_earliest_first(self):
+        rows = [self._sched("Quarter Finals", 3), self._sched("Round 32", 1), self._sched("Round 16", 2)]
+        board = autopublish._board_fixtures(rows, "Women's Doubles")
+        self.assertEqual([r["label"] for r in board["rounds"]], ["Round 32", "Round 16", "Quarter Finals"])
+        self.assertTrue(board["rounds"][0]["collapsed"])  # Round 32 collapses
+        self.assertNotIn("champion", board)
+
+    def _sched(self, label, round_number):
+        return {"id": label, "division": "Women's Doubles", "roundNumber": round_number,
+                "roundLabel": label, "status": "scheduled", "dateKey": "2026-11-02",
+                "teams": [{"players": ["A"], "winner": False, "games": []},
+                          {"players": ["B"], "winner": False, "games": []}]}
 
     def test_titles_do_not_repeat_the_year_and_lead_with_search_name(self):
         event = {"title": "Test Open 2026", "start_date": "2026-10-01", "dates_en": "October 1–3, 2026",

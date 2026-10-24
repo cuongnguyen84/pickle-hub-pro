@@ -178,14 +178,21 @@ def _vi_results_board(board):
     """Static VI rendering of a resultsBoard — same tl-rb-* classes and the
     same facts as the EN React board; collapsed rounds use native details."""
     e = html.escape
+    def match_html(m):
+        if m.get("teamA"):
+            # Fixture: chưa đấu — hai đội trung tính, không người thắng/tỷ số.
+            return ('<div class="tl-rb-match"><div class="tl-rb-teams">'
+                    f'<div class="tl-rb-team">{e(str(m["teamA"]))}</div>'
+                    f'<div class="tl-rb-team">{e(str(m.get("teamB", "")))}</div></div>'
+                    '<div class="tl-rb-sets"></div></div>')
+        return ('<div class="tl-rb-match"><div class="tl-rb-teams">'
+                f'<div class="tl-rb-win">{e(str(m["winner"]))}</div>'
+                f'<div class="tl-rb-lose">{e(str(m["loser"]))}</div></div>'
+                f'<div class="tl-rb-sets">{" · ".join(f"{a}-{b}" for a, b in m.get("sets", []))}</div></div>')
+
     out = ['<div class="tl-rb">']
     for r in board.get("rounds", []):
-        matches = "".join(
-            '<div class="tl-rb-match"><div class="tl-rb-teams">'
-            f'<div class="tl-rb-win">{e(str(m["winner"]))}</div>'
-            f'<div class="tl-rb-lose">{e(str(m["loser"]))}</div></div>'
-            f'<div class="tl-rb-sets">{" · ".join(f"{a}-{b}" for a, b in m.get("sets", []))}</div></div>'
-            for m in r.get("matches", []))
+        matches = "".join(match_html(m) for m in r.get("matches", []))
         if r.get("collapsed"):
             out.append(f'<details class="tl-rb-details"><summary>{e(str(r["label"]))} — {len(r.get("matches", []))} trận</summary>{matches}</details>')
         else:

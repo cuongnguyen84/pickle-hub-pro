@@ -23,6 +23,10 @@ const post: BlogPost = {
     "en": "Find a pickleball club",
     "vi": "Tìm câu lạc bộ pickleball"
   },
+  "heroImage": {
+    "src": "/images/blog/vietnam-pickleball-community-guide-2026-hero.webp",
+    "alt": "A group of amateur pickleball players with paddles gathered courtside"
+  },
   "content": {
     "en": {
       "title": "Vietnam Pickleball Community 2026: How to Find Groups, Clubs and Local Tournaments",

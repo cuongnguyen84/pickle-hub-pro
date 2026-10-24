@@ -4627,6 +4627,7 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
 [data-theme="the-line"] .tl-rb-win { font-weight: 700; color: var(--tl-fg); }
 [data-theme="the-line"] .tl-rb-win::after { content: " ✓"; color: var(--tl-green); font-weight: 400; }
 [data-theme="the-line"] .tl-rb-lose { color: var(--tl-fg-2); }
+[data-theme="the-line"] .tl-rb-team { color: var(--tl-fg); }
 [data-theme="the-line"] .tl-rb-status {
   color: var(--tl-fg-3); font-size: 12px; text-transform: capitalize;
 }

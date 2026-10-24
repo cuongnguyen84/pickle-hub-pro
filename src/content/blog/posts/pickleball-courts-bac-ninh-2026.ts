@@ -22,6 +22,10 @@ const post: BlogPost = {
     "en": "Browse all Bac Ninh courts",
     "vi": "Xem tất cả sân ở Bắc Ninh"
   },
+  "heroImage": {
+    "src": "/images/blog/pickleball-courts-bac-ninh-2026-hero.webp",
+    "alt": "A row of outdoor pickleball courts in a Vietnamese town in the morning"
+  },
   "content": {
     "en": {
       "title": "Pickleball Courts in Bac Ninh 2026: 15 Venues, 84 Courts by Ward",

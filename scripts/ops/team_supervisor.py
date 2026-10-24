@@ -942,6 +942,35 @@ def queue_wriai(store):
         store.put(f"wriai_override:{tid}", True)
 
 
+def run_tournament_tick(now, timeout=300):
+    """Run one tournament-coverage tick in a fresh worker process.
+
+    Returns queue_due's created task ids. Raises on worker failure, timeout,
+    or unparsable output — the caller records the same editorial task the
+    old in-process call recorded on exception.
+    """
+    worker = Path(__file__).resolve().parent / "tournament_tick.py"
+    env = dict(os.environ)
+    env["PICKLEHUB_REPO"] = str(REPO)
+    env["PICKLEHUB_TEAM_HOME"] = str(ROOT)
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(worker), "--now", now.isoformat()],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO, env=env)
+    except subprocess.TimeoutExpired:
+        raise TimeoutError(f"tournament_tick worker timed out after {timeout}s")
+    if proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout).strip().splitlines()
+        raise RuntimeError("tournament_tick worker failed: " + (detail[-1] if detail else f"exit {proc.returncode}"))
+    try:
+        result = json.loads(proc.stdout.strip())
+    except ValueError:
+        raise RuntimeError("tournament_tick worker returned unparsable output")
+    if not result.get("ok"):
+        raise RuntimeError(f"tournament_tick worker error: {result.get('error', 'unknown')}")
+    return result.get("created", [])
+
+
 def tick(store, full=False, allow_ai=True):
     store.put("heartbeat", time.time())
     try:
@@ -961,9 +990,15 @@ def tick(store, full=False, allow_ai=True):
         store.task("wriai", "editorial", "Hộp chờ Wriai đọc được", "resolved")
     except Exception as exc:
         store.task("wriai", "editorial", "Không đọc được hộp chờ Wriai", evidence={"error": clean_error(exc)})
-    from team_tournament_coverage import queue_due
+    # 2026-10-24 (phuong an A): chay coverage tick trong worker process moi
+    # thay vi import queue_due trong tien trinh daemon — Python cache module
+    # o sys.modules nen git pull khong nap duoc code pipeline moi (incident
+    # stale-code 01:00 va 13:00 ngay 24/10). Worker import lai toan bo
+    # pipeline tu dia nen code moi co hieu luc ngay tick ke tiep, khong can
+    # restart daemon. Store la SQLite (khong cache RAM) nen daemon doc duoc
+    # task/outbox worker da commit ngay trong cung tick.
     try:
-        queue_due(store, now)
+        run_tournament_tick(now)
     except Exception as exc:
         store.task("tournament-coverage", "editorial", "Lịch theo dõi giải cần kiểm tra", evidence={"error": clean_error(exc)})
     work_queue(store, allow_ai)
