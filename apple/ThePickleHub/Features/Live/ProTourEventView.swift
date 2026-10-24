@@ -51,6 +51,7 @@ final class ProTourEventViewModel {
 struct ProTourEventView: View {
     @State private var model: ProTourEventViewModel
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.requestReview) private var requestReview
     @Environment(\.openURL) private var openURL
 
     init(slug: String) {
@@ -85,6 +86,23 @@ struct ProTourEventView: View {
             }
         }
         .refreshable { await model.load(forceResults: true) }
+        .onChange(of: model.phase) { _, phase in
+            // B3: viewing loaded results is a positive moment; a failed
+            // load taints the session so no prompt follows an error.
+            switch phase {
+            case .loaded where model.results != .empty:
+                if ReviewPromptStore.shared.recordPositive(.resultsViewed) {
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(700))
+                        requestReview()
+                    }
+                }
+            case .failed:
+                ReviewPromptStore.shared.recordError()
+            default:
+                break
+            }
+        }
     }
 
     @ViewBuilder

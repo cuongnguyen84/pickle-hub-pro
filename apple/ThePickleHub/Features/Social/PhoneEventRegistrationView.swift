@@ -4,6 +4,7 @@ import SwiftUI
 struct PhoneEventRegistrationView: View {
     let event: SocialEvent
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.requestReview) private var requestReview
     @State private var phone = ""
     @State private var email = ""
     @State private var name = ""
@@ -34,6 +35,16 @@ struct PhoneEventRegistrationView: View {
                     PlayerRegistrationView(token: completedToken)
                 }
                 .toolbar { closeToolbar }
+                .onChange(of: completedToken) { _, token in
+                    // B3: a completed registration is a positive moment.
+                    guard token != nil else { return }
+                    if ReviewPromptStore.shared.recordPositive(.registration) {
+                        Task { @MainActor in
+                            try? await Task.sleep(for: .milliseconds(700))
+                            requestReview()
+                        }
+                    }
+                }
             } else {
                 registrationForm
                     .navigationTitle("Đăng ký")
@@ -217,6 +228,7 @@ struct PhoneEventRegistrationView: View {
                 }
             }
         } catch {
+            ReviewPromptStore.shared.recordError()
             message = error.localizedDescription
             if !sent {
                 turnstileToken = nil
