@@ -1,8 +1,9 @@
 import { PublicSeoHandoff } from "./components/seo/PublicSeoHandoff";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "next-themes";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+// PERF PR-C (2026-10-24): Toaster + Sonner are lazy overlays (see
+// DeferredToasters below) — neither is needed for first paint, and keeping
+// them static pulled sonner + the radix toast stack into the entry graph.
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType } from "react-router-dom";
@@ -10,7 +11,7 @@ import { SkipToContent } from "@/components/layout/SkipToContent";
 import { I18nProvider } from "@/i18n";
 import { LoadingState, OfflineBanner } from "@/components/states/PageStates";
 import { ConfirmProvider } from "@/hooks/useConfirm";
-import { lazy, Suspense, Component, ReactNode, useLayoutEffect } from "react";
+import { lazy, Suspense, Component, ReactNode, useEffect, useLayoutEffect, useState } from "react";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { useLivestreamGateAttribution } from "@/lib/livestreamGateAttribution";
 import BottomNav from "@/components/layout/BottomNav";
@@ -234,6 +235,14 @@ const Rankings = lazyRetry(() => import("./pages/Rankings"));
 const PpaRankings = lazyRetry(() => import("./pages/PpaRankings"));
 
 // Lazy load redirect pages
+// PERF PR-C: toast overlays load after first paint (DeferredToasters).
+const Toaster = lazy(() =>
+  import("@/components/ui/toaster").then((m) => ({ default: m.Toaster })),
+);
+const Sonner = lazy(() =>
+  import("@/components/ui/sonner").then((m) => ({ default: m.Toaster })),
+);
+
 const QuickTableRedirect = lazy(() =>
   import("./pages/redirects/QuickTableRedirects").then((m) => ({ default: m.QuickTableRedirect })),
 );
@@ -328,7 +337,20 @@ import { shouldPrefetchHomeData } from "@/lib/prefetch-policy";
 // Do not make venue/article LCP compete with three homepage API requests and a
 // high-priority livestream thumbnail. Those requests used to run on every URL.
 if (typeof window !== "undefined" && shouldPrefetchHomeData(window.location.pathname)) {
-  prefetchHomeData(queryClient);
+  // PERF PR-C: defer the warm-up to idle time. It used to fire the moment
+  // this module was evaluated — three API requests competing with the very
+  // first paint the prefetch is meant to speed up. The server-spliced
+  // public HTML (PR-A) already carries the content; this only warms the
+  // client cache a beat later.
+  const startPrefetch = () => prefetchHomeData(queryClient);
+  const requestIdle = (
+    window as unknown as { requestIdleCallback?: typeof window.requestIdleCallback }
+  ).requestIdleCallback;
+  if (typeof requestIdle === "function") {
+    requestIdle(startPrefetch, { timeout: 2000 });
+  } else {
+    window.setTimeout(startPrefetch, 200);
+  }
 }
 
 // Route-transition fallback = shared LoadingState (DS-04). It calls useI18n(),
@@ -501,6 +523,55 @@ class ChunkErrorBoundary extends Component<
 const NotificationsRealtimeInitializer = (): null => {
   useUnifiedNotificationsRealtime();
   return null;
+};
+
+// PERF PR-C: true once the browser is idle (requestIdleCallback with the
+// same fallback shape as webVitalsRum). Used to keep non-critical boot
+// work out of the first-paint window.
+const useIdleReady = (timeoutMs = 2000): boolean => {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const requestIdle = (
+      window as unknown as { requestIdleCallback?: typeof window.requestIdleCallback }
+    ).requestIdleCallback;
+    if (typeof requestIdle === "function") {
+      const id = requestIdle(() => setReady(true), { timeout: timeoutMs });
+      return () => {
+        const cancelIdle = (
+          window as unknown as { cancelIdleCallback?: (handle: number) => void }
+        ).cancelIdleCallback;
+        if (typeof cancelIdle === "function") cancelIdle(id);
+      };
+    }
+    const t = globalThis.setTimeout(() => setReady(true), 200);
+    return () => globalThis.clearTimeout(t);
+  }, [timeoutMs]);
+  return ready;
+};
+
+// The realtime channel is pure overhead before first paint — and for
+// anonymous visitors it never delivers anything at all. Mount it at idle;
+// notification badges still load through their normal queries.
+const DeferredRealtimeGate = (): ReactNode => {
+  const ready = useIdleReady();
+  return ready ? <NotificationsRealtimeInitializer /> : null;
+};
+
+// Toast overlays mount right after the first commit. Toasts dispatched
+// before mount are held by the use-toast store / sonner queue and render
+// when the layer arrives, so nothing is lost by the one-frame delay.
+const DeferredToasters = (): ReactNode => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  if (!mounted) return null;
+  return (
+    <Suspense fallback={null}>
+      <Toaster />
+      <Sonner />
+    </Suspense>
+  );
 };
 
 // Component to track page views for GA4
@@ -707,11 +778,10 @@ const App = () => (
         <AuthProvider>
           <TooltipProvider>
            <ConfirmProvider>
-            <Toaster />
-            <Sonner />
+            <DeferredToasters />
             <OfflineBanner />
             <BrowserRouter>
-              <NotificationsRealtimeInitializer />
+              <DeferredRealtimeGate />
               <PageTracker />
               <LivestreamGateAttribution />
               <ScrollToTop />
