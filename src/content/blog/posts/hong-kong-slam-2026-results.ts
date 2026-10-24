@@ -32,7 +32,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Hong Kong Slam 2026 results and daily scores",
-          "content": "Last updated: October 24, 2026, 17:00 Vietnam time. ThePickleHub publishes this Hong Kong Slam 2026 results page from the official PPA scores feed for October 19–25, 2026 at Kai Tak Arena, Hong Kong. The feed currently contains 242 matches, including 237 completed or final records and 1 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: October 24, 2026, 19:00 Vietnam time. ThePickleHub publishes this Hong Kong Slam 2026 results page from the official PPA scores feed for October 19–25, 2026 at Kai Tak Arena, Hong Kong. The feed currently contains 243 matches, including 238 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -60,7 +60,7 @@ const post: BlogPost = {
             },
             {
               "division": "Mixed Doubles",
-              "note": "Through to the Semi-Finals · 53 matches",
+              "note": "Through to the Semi-Finals · 54 matches",
               "anchor": "rb-mixed-doubles"
             },
             {
@@ -1206,13 +1206,31 @@ const post: BlogPost = {
         },
         {
           "heading": "Mixed Doubles results",
-          "content": "No champion yet. 53 completed matches, latest round first.",
+          "content": "No champion yet. 54 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Mixed Doubles",
             "rounds": [
               {
                 "label": "Semi-Finals",
                 "matches": [
+                  {
+                    "winner": "Anna Bright / Hayden Patriquin",
+                    "loser": "Jorja Johnson / JW Johnson",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        9,
+                        11
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  },
                   {
                     "winner": "Ben Johns / Anna Leigh Waters",
                     "loser": "Ting Chieh Wei / Hunter Johnson",
@@ -3576,9 +3594,9 @@ const post: BlogPost = {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Mixed Doubles, Semi-Finals: Anna Bright / Hayden Patriquin vs Jorja Johnson / JW Johnson — status live.",
             "Women's Doubles, Finals: Anna Bright / Anna Leigh Waters vs Tyra Hurricane Black / Jorja Johnson — status scheduled.",
             "Men's Doubles, Finals: Ben Johns / Gabriel Tardio vs Federico Staksrud / Hayden Patriquin — status scheduled.",
+            "Mixed Doubles, Finals: Ben Johns / Anna Leigh Waters vs Anna Bright / Hayden Patriquin — status scheduled.",
             "Women's Singles, Finals: Judit Castillo vs Andie Dikosavljevic — status scheduled.",
             "Men's Singles, Finals: Tama Shimabukuro vs Hunter Johnson — status scheduled."
           ]
@@ -3610,7 +3628,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Hong Kong Slam 2026",
-          "content": "Cập nhật: 17:00 ngày 24/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Hong Kong Slam 2026 từ feed điểm số chính thức của PPA cho thời gian 19–25/10/2026 tại Kai Tak Arena, Hong Kong. Feed hiện có 242 trận, gồm 237 bản ghi đã kết thúc/chung cuộc và 1 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 19:00 ngày 24/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Hong Kong Slam 2026 từ feed điểm số chính thức của PPA cho thời gian 19–25/10/2026 tại Kai Tak Arena, Hong Kong. Feed hiện có 243 trận, gồm 238 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -3638,7 +3656,7 @@ const post: BlogPost = {
             },
             {
               "division": "Đôi nam nữ",
-              "note": "Đã tới Semi-Finals · 53 trận",
+              "note": "Đã tới Semi-Finals · 54 trận",
               "anchor": "rb-doi-nam-nu"
             },
             {
@@ -4784,13 +4802,31 @@ const post: BlogPost = {
         },
         {
           "heading": "Kết quả Đôi nam nữ",
-          "content": "Chưa có nhà vô địch. 53 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Chưa có nhà vô địch. 54 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đôi nam nữ",
             "rounds": [
               {
                 "label": "Semi-Finals",
                 "matches": [
+                  {
+                    "winner": "Anna Bright / Hayden Patriquin",
+                    "loser": "Jorja Johnson / JW Johnson",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        9,
+                        11
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  },
                   {
                     "winner": "Ben Johns / Anna Leigh Waters",
                     "loser": "Ting Chieh Wei / Hunter Johnson",
@@ -7154,9 +7190,9 @@ const post: BlogPost = {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đôi nam nữ, Semi-Finals: Anna Bright / Hayden Patriquin gặp Jorja Johnson / JW Johnson — trạng thái live.",
             "Đôi nữ, Finals: Anna Bright / Anna Leigh Waters gặp Tyra Hurricane Black / Jorja Johnson — trạng thái scheduled.",
             "Đôi nam, Finals: Ben Johns / Gabriel Tardio gặp Federico Staksrud / Hayden Patriquin — trạng thái scheduled.",
+            "Đôi nam nữ, Finals: Ben Johns / Anna Leigh Waters gặp Anna Bright / Hayden Patriquin — trạng thái scheduled.",
             "Đơn nữ, Finals: Judit Castillo gặp Andie Dikosavljevic — trạng thái scheduled.",
             "Đơn nam, Finals: Tama Shimabukuro gặp Hunter Johnson — trạng thái scheduled."
           ]
