@@ -277,7 +277,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     "slug": "ppa-brisbane-2026-results",
     "publishedDate": "2026-10-13",
-    "updatedDate": "2026-10-18",
+    "updatedDate": "2026-10-24",
     "author": "The PickleHub Team",
     "tags": [
       "pickleball",
@@ -305,7 +305,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     "slug": "virginia-beach-open-2026-results",
     "publishedDate": "2026-10-12",
-    "updatedDate": "2026-10-18",
+    "updatedDate": "2026-10-24",
     "author": "The PickleHub Team",
     "tags": [
       "pickleball",
@@ -564,7 +564,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     "slug": "veolia-chicago-cup-2026-results",
     "publishedDate": "2026-10-05",
-    "updatedDate": "2026-10-13",
+    "updatedDate": "2026-10-24",
     "author": "The PickleHub Team",
     "tags": [
       "pickleball",
