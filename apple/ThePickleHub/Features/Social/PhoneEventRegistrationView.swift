@@ -1,9 +1,11 @@
+import StoreKit
 import SwiftUI
 
 /// Native guest registration using phone OTP, Turnstile and VietQR payment.
 struct PhoneEventRegistrationView: View {
     let event: SocialEvent
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.requestReview) private var requestReview
     @State private var phone = ""
     @State private var email = ""
     @State private var name = ""
@@ -38,6 +40,19 @@ struct PhoneEventRegistrationView: View {
                 registrationForm
                     .navigationTitle("Đăng ký")
                     .toolbar { closeToolbar }
+            }
+        }
+        // B3: a completed registration is a positive moment. This onChange must
+        // live OUTSIDE the `if let completedToken` branch: in there the name is
+        // the unwrapped String, which both breaks the nil check at compile time
+        // and would miss the nil→token transition that creates the branch.
+        .onChange(of: completedToken) { _, token in
+            guard token != nil else { return }
+            if ReviewPromptStore.shared.recordPositive(.registration) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(700))
+                    requestReview()
+                }
             }
         }
         .task {
@@ -217,6 +232,7 @@ struct PhoneEventRegistrationView: View {
                 }
             }
         } catch {
+            ReviewPromptStore.shared.recordError()
             message = error.localizedDescription
             if !sent {
                 turnstileToken = nil
