@@ -21,6 +21,10 @@ const post: BlogPost = {
     "en": "See all Hà Tĩnh venues",
     "vi": "Xem 11 sân pickleball Hà Tĩnh"
   },
+  "heroImage": {
+    "src": "/images/blog/pickleball-courts-ha-tinh-2026-hero.webp",
+    "alt": "Pickleball courts by the coast in central Vietnam at sunset"
+  },
   "content": {
     "en": {
       "title": "Pickleball Courts in Hà Tĩnh 2026: 11 Venues, Areas and Hourly Rates",

@@ -22,6 +22,10 @@ const post: BlogPost = {
     "en": "Build your draw in Bracket Lab",
     "vi": "Tạo bảng đấu với Bracket Lab"
   },
+  "heroImage": {
+    "src": "/images/blog/pickleball-recovery-rest-hydration-hero.webp",
+    "alt": "A pickleball player resting on a bench courtside with a water bottle, towel and paddle"
+  },
   "content": {
     "en": {
       "title": "Pickleball Recovery: Rest, Hydration and Listening to Your Body",
