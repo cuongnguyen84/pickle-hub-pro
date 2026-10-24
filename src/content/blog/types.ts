@@ -29,9 +29,15 @@ export interface BlogSection {
 }
 
 export interface ResultsBoardMatch {
-  winner: string;
-  loser: string;
-  /** Set scores as [winner, loser] pairs, in set order. */
+  /** Completed match: the winner's name (absent on a fixture). */
+  winner?: string;
+  /** Completed match: the loser's name (absent on a fixture). */
+  loser?: string;
+  /** Fixture (not yet played): the two teams, with no winner or score.
+   *  Renderers branch on teamA so a fixture is never shown as a result. */
+  teamA?: string;
+  teamB?: string;
+  /** Set scores as [winner, loser] pairs, in set order. Empty on fixtures. */
   sets: [number, number][];
   /** Non-standard endings worth surfacing: "walkover" | "retired". */
   status?: string;

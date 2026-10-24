@@ -49,6 +49,19 @@ export function ResultsSummary({ draws }: { draws: ResultsSummaryDraw[] }) {
 }
 
 function MatchRow({ match }: { match: ResultsBoardData["rounds"][number]["matches"][number] }) {
+  if (match.teamA) {
+    // Fixture: not played yet — two neutral team lines, no winner styling,
+    // no score. Never render a fixture with the result layout.
+    return (
+      <div className="tl-rb-match">
+        <div className="tl-rb-teams">
+          <div className="tl-rb-team">{match.teamA}</div>
+          <div className="tl-rb-team">{match.teamB}</div>
+        </div>
+        <div className="tl-rb-sets" />
+      </div>
+    );
+  }
   return (
     <div className="tl-rb-match">
       <div className="tl-rb-teams">
@@ -82,8 +95,8 @@ function DrawBoard({
       matches: q
         ? r.matches.filter(
             (m) =>
-              m.winner.toLowerCase().includes(q) ||
-              m.loser.toLowerCase().includes(q),
+              (m.winner ?? m.teamA ?? "").toLowerCase().includes(q) ||
+              (m.loser ?? m.teamB ?? "").toLowerCase().includes(q),
           )
         : r.matches,
     }))

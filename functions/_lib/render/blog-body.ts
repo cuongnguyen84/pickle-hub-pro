@@ -116,7 +116,7 @@ function renderResultsSummary(
   return `<div class="tl-rb-summary"><h3>Tournament summary</h3>${rows}</div>`;
 }
 
-function renderResultsBoard(
+export function renderResultsBoard(
   board: NonNullable<BlogPostContent["sections"][number]["resultsBoard"]>,
 ): string {
   const out: string[] = ['<div class="tl-rb">'];
@@ -124,11 +124,17 @@ function renderResultsBoard(
     const matches = r.matches
       .map(
         (m) =>
-          `<div class="tl-rb-match"><div class="tl-rb-teams">` +
-          `<div class="tl-rb-win">${escapeHtml(m.winner)}</div>` +
-          `<div class="tl-rb-lose">${escapeHtml(m.loser)}</div>` +
-          (m.status ? `<div class="tl-rb-status">${escapeHtml(m.status)}</div>` : "") +
-          `</div><div class="tl-rb-sets">${m.sets.map(([w, l]) => `<strong>${w}</strong>-${l}`).join(" · ")}</div></div>`,
+          m.teamA
+            ? // Fixture: not played yet — neutral team lines, no winner, no score.
+              `<div class="tl-rb-match"><div class="tl-rb-teams">` +
+              `<div class="tl-rb-team">${escapeHtml(m.teamA)}</div>` +
+              `<div class="tl-rb-team">${escapeHtml(m.teamB ?? "")}</div>` +
+              `</div><div class="tl-rb-sets"></div></div>`
+            : `<div class="tl-rb-match"><div class="tl-rb-teams">` +
+              `<div class="tl-rb-win">${escapeHtml(m.winner ?? "")}</div>` +
+              `<div class="tl-rb-lose">${escapeHtml(m.loser ?? "")}</div>` +
+              (m.status ? `<div class="tl-rb-status">${escapeHtml(m.status)}</div>` : "") +
+              `</div><div class="tl-rb-sets">${m.sets.map(([w, l]) => `<strong>${w}</strong>-${l}`).join(" · ")}</div></div>`,
       )
       .join("");
     if (r.collapsed) {
