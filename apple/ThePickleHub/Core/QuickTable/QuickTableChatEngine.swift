@@ -745,10 +745,39 @@ enum QTChatEngine {
     private static let unchangedEN = "The draft did not change."
 
     /// Câu trả lời chỉ nói điều bản nháp thực sự đổi.
+    /// Người dùng đòi kiểm chứng trạng thái hiện tại (số bảng, mỗi bảng mấy đội...).
+    static func wantsStateCheck(_ text: String) -> Bool {
+        let t = fold(text)
+        if t.isEmpty { return false }
+        if test("(kiem tra|kiem chung|check lai|xem lai|cho toi biet|noi cho toi|bao lai ket qua)", in: t) { return true }
+        if test("(moi bang|bang co may|may doi moi bang|so doi moi bang)", in: t) { return true }
+        if test("\\b(check|verify|confirm|tell me|show me)\\b", in: t)
+            && test("(group|draw|bang|team|doi|list|danh sach)", in: t) { return true }
+        if test("(each group|per group|every group|what it shows|what does it show)", in: t) { return true }
+        return false
+    }
+
+    /// Tóm tắt bản chia bảng THẬT hiện tại để trả lời yêu cầu kiểm chứng.
+    static func drawStateSummary(_ d: QTChatDraft, lang: String) -> String? {
+        let n = entryCount(d)
+        if n < 2 { return nil }
+        let vi = lang == "vi"
+        let u = d.isDoubles == false ? (vi ? "người" : "players") : (vi ? "đội" : "teams")
+        let sizes = groupSizes(d)
+        if let gc = d.groupCount, sizes.count == gc, !sizes.isEmpty {
+            let per = sizes.enumerated().map { i, sz in vi ? "bảng \(i + 1): \(sz)" : "Group \(i + 1): \(sz)" }.joined(separator: ", ")
+            return vi ? "Hiện tại: \(n) \(u), \(gc) bảng — \(per)" : "Current draw: \(n) \(u) in \(gc) groups — \(per)"
+        }
+        return vi ? "Hiện tại: \(n) \(u), chưa chia bảng" : "Current draw: \(n) \(u), groups not drawn yet"
+    }
+
     static func factualAck(before: QTChatDraft, after: QTChatDraft, lang: String, request: String = "") -> String {
         let vi = lang == "vi"
         let u = after.isDoubles == false ? (vi ? "người" : "players") : (vi ? "đội" : "teams")
         var bits: [String] = []
+        if !request.isEmpty, let fmtNote = unsupportedFormatNote(request, lang: lang) {
+            bits.append(fmtNote)
+        }
         let asked = request.isEmpty ? QTChatPatch() : readUserFacts(request)
         let knownField = entryCount(after) >= 2
         let askedGroupsOk = asked.groupCount != nil && knownField
@@ -786,6 +815,15 @@ enum QTChatEngine {
         let listed = looksLikeNameList(request)
             || (!added.isEmpty && added.allSatisfy { fold(request).contains(fold($0.p1)) })
         let samples = test("ten mau|ten cap mau|dung mau|chua co ten|sample name", in: fold(request))
+        // Dán lại đúng danh sách đã có: idempotent — không cộng trùng, không lặp
+        // câu "đã nhận", đáp bằng trạng thái hiện tại (ca log 50–52 ngày 24/10).
+        let dupList = prev.count >= 2 && next.count == prev.count && added.isEmpty
+            && looksLikeNameList(request) && prev.allSatisfy { fold(request).contains(fold($0.p1)) }
+        if dupList {
+            bits.append(vi
+                ? "Danh sách này giống hệt danh sách đã nhận — \(prev.count) \(u) đã có sẵn, không cộng trùng"
+                : "This is the same list as before — I already have these \(prev.count) \(u), nothing was added twice")
+        }
         if !added.isEmpty && samples {
             let shown = added.prefix(6).map { $0.label }.joined(separator: ", ")
             let more = added.count > 6 ? (vi ? " và \(added.count - 6) nữa" : " and \(added.count - 6) more") : ""
@@ -826,6 +864,11 @@ enum QTChatEngine {
             if let line = groupCourtsLine(after, lang: lang) { bits.append(line) }
         }
         if let st = after.startTime, st != before.startTime { bits.append(st) }
+        // Đòi kiểm chứng thì trả lời bằng trạng thái thật, kể cả khi nháp không đổi.
+        if !request.isEmpty && wantsStateCheck(request), let state = drawStateSummary(after, lang: lang),
+           !bits.contains(state) {
+            bits.append(state)
+        }
         let sentences = bits
             .map { $0.trimmingCharacters(in: CharacterSet(charactersIn: ". ")) }
             .filter { !$0.isEmpty }
@@ -836,6 +879,9 @@ enum QTChatEngine {
     private static func stripClaims(_ reply: String) -> String {
         var s = reply.replacingOccurrences(
             of: "(?:đã|da)\\s+(?:nhận|nhan|chia|đổi|doi|xếp|xep|ghép|ghep|cập nhật|cap nhat)\\s+[^.!\\n]*",
+            with: "", options: [.regularExpression, .caseInsensitive])
+        s = s.replacingOccurrences(
+            of: "\\b(?:i(?:'ve| have)?\\s+)?(?:added|received|split|renamed|updated|entered|registered|moved|swapped)\\b[^.!?\\n]*",
             with: "", options: [.regularExpression, .caseInsensitive])
         s = s.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
         return s.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -855,9 +901,24 @@ enum QTChatEngine {
     }
 
     /// Câu trả lời dự phòng không bao giờ rỗng (luật #910: unsupported cũng phải có câu).
+    /// Thể thức hệ thống CHƯA hỗ trợ mà người dùng gọi đích danh (luật Cường
+    /// 21:35 24/10): nói thẳng chưa hỗ trợ + gợi ý thay thế gần nhất, không
+    /// lặng lẽ ánh xạ sang thể thức khác. Nil khi không khớp thể thức nào.
+    static func unsupportedFormatNote(_ text: String, lang: String) -> String? {
+        let t = fold(text)
+        if t.isEmpty { return nil }
+        if test("(double elimination|double-elimination|double elim|loai kep|loai truc tiep kep|nhanh thang nhanh thua|losers? bracket)", in: t) {
+            return lang == "vi"
+                ? "Thể thức loại kép (double elimination) chưa được hỗ trợ. Thay thế gần nhất: đấu vòng tròn ở vòng bảng rồi vào playoff loại trực tiếp — mình làm theo cách đó cho bạn nhé"
+                : "Double elimination isn't supported yet. The closest alternative is a round-robin group stage feeding a single-elimination playoff — I can set it up that way for you"
+        }
+        return nil
+    }
+
     static func fallbackReply(intent: String, unmet: String?, lang: String) -> String {
         let vi = lang == "vi"
         if intent == "unsupported" {
+            if let fmt = unsupportedFormatNote(unmet ?? "", lang: lang) { return fmt + "." }
             return vi
                 ? "Mình chưa hỗ trợ\(unmet.map { " yêu cầu này: \($0)" } ?? " yêu cầu này"). Bạn cứ tạo giải như bình thường trước — các thiết lập nâng cao (gán sân, thể thức riêng…) có thể chỉnh thêm ở trang giải sau khi tạo. Mình tiếp tục nhé."
                 : "I can't do that yet\(unmet.map { ": \($0)" } ?? ""). Go ahead and create the tournament as usual — advanced settings can be adjusted on the tournament page afterwards. Let's continue."

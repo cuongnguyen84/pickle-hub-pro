@@ -269,4 +269,69 @@ struct QuickTableChatEngineTests {
         #expect(paired[1].p1 == "C" && paired[1].p2 == "D")
         #expect(QTChatEngine.pairEntries(singles, mode: "each_line").count == 4)
     }
+
+    // MARK: kiểm chứng trạng thái + dán trùng danh sách (log 50–52)
+
+    private func nineDrawn() -> QTChatDraft {
+        QTChatDraft(isDoubles: true, groupCount: 3,
+                    entries: ["Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India"]
+                        .map { QTChatEntry(p1: $0) })
+    }
+
+    @Test func stateCheckAnswersFromRealDraw() {
+        let drawn = nineDrawn()
+        let ack = E.factualAck(before: drawn, after: drawn, lang: "en",
+                               request: "Check the groups — how many teams are in each group?")
+        #expect(ack.contains("Current draw: 9 teams in 3 groups"))
+        #expect(ack.contains("Group 1: 3"))
+        #expect(ack.contains("Group 3: 3"))
+        #expect(!ack.contains("did not change"))
+    }
+
+    @Test func duplicatePasteIsIdempotentAndReportsState() {
+        let drawn = nineDrawn()
+        let request = (["Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India"]
+            + ["Once it draws the groups, check that each group has 3 teams. Tell me what it shows."]).joined(separator: "\n")
+        let reply = E.replyFromDraft(before: drawn, after: drawn, llmReply: "I've added 9 teams.", lang: "en", request: request)
+        #expect(!reply.contains("I've added"))
+        #expect(reply.contains("same list as before"))
+        #expect(reply.contains("nothing was added twice"))
+        #expect(reply.contains("Current draw: 9 teams in 3 groups"))
+    }
+
+    @Test func duplicatePasteVietnameseDoesNotReclaimReceipt() {
+        let drawn = nineDrawn()
+        let request = ["Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India"].joined(separator: "\n")
+        let ack = E.factualAck(before: drawn, after: drawn, lang: "vi", request: request)
+        #expect(ack.contains("giống hệt danh sách đã nhận"))
+        #expect(ack.contains("không cộng trùng"))
+        #expect(!ack.contains("Đã nhận 9"))
+    }
+
+    // MARK: thể thức chưa hỗ trợ phải nói thẳng (luật Cường 21:35 24/10)
+
+    @Test func unsupportedFormatIsNamedWithAlternativeEN() {
+        let ack = E.factualAck(before: QTChatDraft(), after: QTChatDraft(entries: teams(6)), lang: "en",
+                               request: "Make it double elimination")
+        #expect(ack.contains("Double elimination isn't supported yet"))
+        #expect(ack.contains("single-elimination playoff"))
+    }
+
+    @Test func unsupportedFormatIsNamedWithAlternativeVI() {
+        let ack = E.factualAck(before: QTChatDraft(), after: QTChatDraft(), lang: "vi",
+                               request: "làm thể thức loại kép cho tôi")
+        #expect(ack.contains("chưa được hỗ trợ"))
+        #expect(ack.contains("loại trực tiếp"))
+    }
+
+    @Test func fallbackReplyNamesUnsupportedFormat() {
+        let r = E.fallbackReply(intent: "unsupported", unmet: "double elimination bracket", lang: "en")
+        #expect(r.contains("Double elimination isn't supported yet"))
+    }
+
+    @Test func plainSingleEliminationDoesNotTriggerNote() {
+        let ack = E.factualAck(before: QTChatDraft(), after: QTChatDraft(entries: teams(4)), lang: "vi",
+                               request: "vào playoff loại trực tiếp")
+        #expect(!ack.contains("chưa được hỗ trợ"))
+    }
 }
