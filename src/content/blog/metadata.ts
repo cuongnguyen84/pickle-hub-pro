@@ -140,7 +140,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     "slug": "hong-kong-slam-2026-results",
     "publishedDate": "2026-10-19",
-    "updatedDate": "2026-10-23",
+    "updatedDate": "2026-10-24",
     "author": "The PickleHub Team",
     "tags": [
       "pickleball",
