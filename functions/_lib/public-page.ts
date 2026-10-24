@@ -59,13 +59,70 @@ export function publicPageParts(html: string): { head: string; body: string; lan
   };
 }
 
+/**
+ * Server-side cache for extracted public-page parts (head SEO nodes + body
+ * + lang) — NEVER for the spliced document. The shell is re-read from the
+ * current deployment on every request and the parts are spliced into it,
+ * so a cached part can never point at chunk hashes a newer deploy removed
+ * (the 2026-09-08 stale-shell incident). The render behind these parts is
+ * anonymous: routeAndRender receives only pathname/env/siteUrl/accept and
+ * never reads cookies or Authorization, and sign-in state lives in the
+ * client (Supabase JWT in localStorage) — the parts are byte-identical for
+ * every visitor, so sharing them across visitors leaks nothing.
+ */
+export interface PublicPagePartsCache {
+  get(): Promise<string | null>;
+  put(value: string): Promise<void>;
+}
+
+interface PublicPageParts {
+  head: string;
+  body: string;
+  lang: string;
+}
+
+function spliceParts(shell: Response, parts: PublicPageParts, pathname: string, renderTag: string): Response {
+  const headers = new Headers(shell.headers);
+  headers.set('Cache-Control', 'no-store');
+  headers.set('Vary', 'User-Agent');
+  headers.set('X-Public-Render', renderTag);
+  headers.delete('Content-Length');
+  headers.delete('ETag');
+  const response = new Response(shell.body, { status: shell.status, headers });
+  const remove = { element(el: Element) { el.remove(); } };
+  const preload = lcpPreloadTag(pathname);
+  return new HTMLRewriter()
+    .on('html', { element(el) { el.setAttribute('lang', parts.lang); } })
+    .on('title, meta[name="description"], meta[name="robots"], meta[property^="og:"], meta[property^="article:"], meta[name^="twitter:"], link[rel="canonical"], link[hreflang], script[type="application/ld+json"]', remove)
+    .on('head', { element(el) {
+      el.append(parts.head, { html: true });
+      if (preload) el.append(`\n${preload}`, { html: true });
+    } })
+    .on('#root', { element(el) { el.setInnerContent(`<div data-public-content>${parts.body}</div>`, { html: true }); } })
+    .transform(response);
+}
+
 export async function servePublicPage(
   shell: Response,
   render: () => Promise<Response>,
   budgetMs = 2500,
   pathname = "",
+  cache?: PublicPagePartsCache | null,
 ): Promise<Response> {
   if (shell.status !== 200 || !shell.headers.get('content-type')?.includes('text/html')) return shell;
+  if (cache) {
+    try {
+      const raw = await cache.get();
+      if (raw) {
+        const parts = JSON.parse(raw) as PublicPageParts;
+        if (typeof parts?.head === 'string' && typeof parts?.body === 'string' && typeof parts?.lang === 'string') {
+          return spliceParts(shell, parts, pathname, 'content-cache');
+        }
+      }
+    } catch {
+      // Cache read/parse/splice failure: fall through to a fresh render.
+    }
+  }
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     const page = await Promise.race([
@@ -75,24 +132,14 @@ export async function servePublicPage(
     // Preserve real missing-article statuses and alternate-slug redirects.
     if (page.status !== 200) return page;
     const parts = publicPageParts(await page.text());
-    const headers = new Headers(shell.headers);
-    headers.set('Cache-Control', 'no-store');
-    headers.set('Vary', 'User-Agent');
-    headers.set('X-Public-Render', 'content');
-    headers.delete('Content-Length');
-    headers.delete('ETag');
-    const response = new Response(shell.body, { status: shell.status, headers });
-    const remove = { element(el: Element) { el.remove(); } };
-    const preload = lcpPreloadTag(pathname);
-    return new HTMLRewriter()
-      .on('html', { element(el) { el.setAttribute('lang', parts.lang); } })
-      .on('title, meta[name="description"], meta[name="robots"], meta[property^="og:"], meta[property^="article:"], meta[name^="twitter:"], link[rel="canonical"], link[hreflang], script[type="application/ld+json"]', remove)
-      .on('head', { element(el) {
-        el.append(parts.head, { html: true });
-        if (preload) el.append(`\n${preload}`, { html: true });
-      } })
-      .on('#root', { element(el) { el.setInnerContent(`<div data-public-content>${parts.body}</div>`, { html: true }); } })
-      .transform(response);
+    if (cache) {
+      try {
+        await cache.put(JSON.stringify(parts));
+      } catch {
+        // A failed cache write costs an entry, never the response.
+      }
+    }
+    return spliceParts(shell, parts, pathname, 'content');
   } catch (error) {
     // A data outage must not prevent the interactive application from booting.
     console.warn('Public HTML fallback:', error instanceof Error ? error.message : 'render-error');
