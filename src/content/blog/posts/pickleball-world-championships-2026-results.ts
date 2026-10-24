@@ -21,7 +21,7 @@ const post: BlogPost = {
   },
   "heroImage": {
     "src": "/images/blog/pickleball-world-championships-2026-results-hero.webp",
-    "alt": "Doubles players rallying at the net during a professional pickleball championship match"
+    "alt": "Doubles players rallying at the net during a professional pickleball championship match, with the Opendoor Pickleball World Championships badge"
   },
   "content": {
     "en": {
