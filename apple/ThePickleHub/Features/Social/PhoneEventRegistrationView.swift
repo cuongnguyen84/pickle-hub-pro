@@ -1,3 +1,4 @@
+import StoreKit
 import SwiftUI
 
 /// Native guest registration using phone OTP, Turnstile and VietQR payment.
