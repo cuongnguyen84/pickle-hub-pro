@@ -4,6 +4,9 @@ import { renderTools } from '../render/tools';
 import { renderAuthor } from '../render/author';
 import { renderEnBlogBody } from '../render/blog-body';
 import { getRelatedPosts } from '../../../src/content/blog/related';
+import { blogMetadata } from '../../../src/content/blog/metadata';
+import { byEffectiveDateDesc, pinWorldCupResults } from '../../../src/lib/blogOrder';
+import { blogHeroSrcSet } from '../../../src/lib/image-utils';
 import { authorIdentity } from '../../../src/content/authors';
 
 const site = 'https://www.thepicklehub.net';
@@ -53,7 +56,17 @@ describe('public editorial HTML', () => {
     expect(home).toContain('rel="preload"');
     expect(home).toContain('as="image"');
     expect(home).toContain('fetchpriority="high"');
-    expect(home).toContain('mlp-asia-draft-2026-viet-panthers-hero-768.webp');
+    // The homepage hero is DERIVED from the newest post that has one (the
+    // same rule lcpPreloadTag applies) — never hardcode a post's filename
+    // here: every results refresh bumps updatedDate and would break this
+    // test without any rendering change (seen 2026-10-24 on PR #929).
+    const lead = pinWorldCupResults(
+      [...blogMetadata].sort(byEffectiveDateDesc((p) => p.publishedDate, (p) => p.updatedDate)),
+      (p) => p.slug,
+    ).find((p) => p.heroImage?.src);
+    expect(lead?.heroImage?.src).toBeTruthy();
+    const leadHero = blogHeroSrcSet(lead!.heroImage!.src)?.small ?? lead!.heroImage!.src;
+    expect(home).toContain(leadHero.split('/').pop());
     const post = lcpPreloadTag('/blog/what-is-dupr-pickleball-rating-system');
     expect(post).toContain('dupr-pickleball-rating-hero-768.webp');
     expect(post).toContain('imagesrcset=');
