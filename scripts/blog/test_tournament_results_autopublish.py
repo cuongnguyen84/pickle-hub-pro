@@ -289,6 +289,100 @@ class PublishWorktreeTests(unittest.TestCase):
             autopublish._prepare_publish_worktree(push=False)
         self.assertTrue((wt / "someone-elses-file.txt").exists())
 
+    def test_published_result_stamps_the_generating_code(self):
+        result = autopublish.publish_event(dict(self.EVENT), now=datetime(2026, 10, 3, tzinfo=timezone.utc), push=True)
+        self.assertEqual(result["pipeline"], autopublish.PIPELINE_FINGERPRINT)
+        self.assertFalse(result["reexec"])
+
+
+import json
+from unittest import mock
+
+
+class ReexecPublishTests(unittest.TestCase):
+    """Re-exec fix (2026-10-26) for the 2026-10-24 stale-code incident:
+    a supervisor tick imports this module BEFORE its checkout pull lands,
+    so the first publish after a merge generated with pre-merge code.
+    publish_event must hand the publish to a fresh process whenever the
+    pipeline files on disk no longer match the loaded fingerprint."""
+
+    EVENT = {"key": "test-open-2026", "result_source": "https://example.test/feed", "event_id": "event-1"}
+
+    def _patch(self, **attrs):
+        saved = {k: getattr(autopublish, k) for k in attrs}
+        for k, v in attrs.items():
+            setattr(autopublish, k, v)
+        self.addCleanup(lambda: [setattr(autopublish, k, v) for k, v in saved.items()])
+
+    def test_delegate_decision_matrix(self):
+        self._patch(_disk_pipeline_fingerprint=lambda: autopublish.PIPELINE_FINGERPRINT)
+        self.assertFalse(autopublish._should_delegate_publish())
+        self._patch(_disk_pipeline_fingerprint=lambda: "different-fp12")
+        self.assertTrue(autopublish._should_delegate_publish())
+        # A re-exec child never delegates again, even if the disk moved on.
+        with mock.patch.dict(os.environ, {autopublish._REEXEC_ENV: "1"}):
+            self.assertFalse(autopublish._should_delegate_publish())
+
+    def test_publish_event_delegates_instead_of_generating_when_stale(self):
+        def forbidden_worktree(push):
+            raise AssertionError("stale process must not generate locally")
+        self._patch(
+            fetch=lambda url, eid: (feed("final"), "feed-fp"),
+            should_publish=lambda event, fp: True,
+            _should_delegate_publish=lambda: True,
+            _delegate_publish=lambda event, now, push: {"status": "published", "pipeline": "newfp"},
+            _prepare_publish_worktree=forbidden_worktree,
+        )
+        result = autopublish.publish_event(dict(self.EVENT), now=datetime(2026, 10, 26, tzinfo=timezone.utc), push=True)
+        self.assertEqual(result["status"], "published")
+        self.assertEqual(result["pipeline"], "newfp")
+        self.assertTrue(result["reexec"])
+
+    def test_reexec_child_roundtrip_and_error_reporting(self):
+        self._patch(publish_event=lambda event, now=None, push=True: {"status": "published", "head": "abc123"})
+        with tempfile.TemporaryDirectory() as td:
+            payload, result = Path(td) / "payload.json", Path(td) / "result.json"
+            payload.write_text(json.dumps({"event": dict(self.EVENT), "now": "2026-10-26T00:00:00+00:00",
+                                           "push": True, "result_path": str(result)}))
+            self.assertEqual(autopublish._reexec_main(str(payload)), 0)
+            self.assertEqual(json.loads(result.read_text()), {"status": "published", "head": "abc123"})
+        def boom(event, now=None, push=True):
+            raise ValueError("feed_down")
+        self._patch(publish_event=boom)
+        with tempfile.TemporaryDirectory() as td:
+            payload, result = Path(td) / "payload.json", Path(td) / "result.json"
+            payload.write_text(json.dumps({"event": dict(self.EVENT), "now": "2026-10-26T00:00:00+00:00",
+                                           "push": True, "result_path": str(result)}))
+            self.assertEqual(autopublish._reexec_main(str(payload)), 1)
+            self.assertIn("feed_down", json.loads(result.read_text())["error"])
+
+    def test_delegate_spawns_marked_child_and_returns_its_result(self):
+        seen = {}
+        def fake_run(argv, **kwargs):
+            seen["argv"], seen["env"] = argv, kwargs.get("env") or {}
+            payload = json.loads(Path(argv[3]).read_text())
+            Path(payload["result_path"]).write_text(json.dumps({"status": "published", "pipeline": "childfp"}))
+            return subprocess.CompletedProcess(argv, 0, "", "")
+        with mock.patch.object(subprocess, "run", fake_run):
+            result = autopublish._delegate_publish(dict(self.EVENT), datetime(2026, 10, 26, tzinfo=timezone.utc), True)
+        self.assertEqual(result, {"status": "published", "pipeline": "childfp"})
+        self.assertEqual(seen["argv"][1:], [str(Path(autopublish.__file__).resolve()), "--reexec-publish", seen["argv"][3]])
+        self.assertEqual(seen["env"][autopublish._REEXEC_ENV], "1")
+
+    def test_delegate_child_failure_is_loud_never_a_stale_fallback(self):
+        def failing_run(argv, **kwargs):
+            payload = json.loads(Path(argv[3]).read_text())
+            Path(payload["result_path"]).write_text(json.dumps({"error": "ValueError:feed_down"}))
+            return subprocess.CompletedProcess(argv, 1, "", "")
+        with mock.patch.object(subprocess, "run", failing_run):
+            with self.assertRaisesRegex(RuntimeError, "reexec_publish_failed"):
+                autopublish._delegate_publish(dict(self.EVENT), datetime(2026, 10, 26, tzinfo=timezone.utc), True)
+        def crashed_run(argv, **kwargs):
+            return subprocess.CompletedProcess(argv, 2, "", "segfault-ish")
+        with mock.patch.object(subprocess, "run", crashed_run):
+            with self.assertRaisesRegex(RuntimeError, "reexec_publish_failed:exit=2"):
+                autopublish._delegate_publish(dict(self.EVENT), datetime(2026, 10, 26, tzinfo=timezone.utc), True)
+
 
 if __name__ == "__main__":
     unittest.main()

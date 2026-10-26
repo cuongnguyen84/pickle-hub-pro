@@ -15,6 +15,7 @@ import re
 import string
 import subprocess
 import sys
+import tempfile
 import urllib.request
 import urllib.parse
 import ssl
@@ -554,6 +555,91 @@ def _publish_once(root: Path, event: dict, feed: dict, now: datetime, push: bool
     return pkg, head
 
 
+# --- Re-exec when the in-memory code is stale (incident 2026-10-24) ------
+# Defence 2 above (the fingerprint stamp) DETECTED the stale-code lag; this
+# removes it. Within one supervisor tick the module is imported BEFORE the
+# tick's checkout pull lands, so the first publish after every merge ran
+# the pre-merge code still held in RAM (01:00 after #917, 13:00 after
+# #930 — each stamped with the old [pipeline:fp]). publish_event now
+# compares the fingerprint of the code this process LOADED
+# (PIPELINE_FINGERPRINT, captured at import) with the fingerprint of the
+# pipeline files ON DISK at publish time. On a mismatch the publish is
+# delegated to a fresh child process that imports the new code, and the
+# child's result is returned verbatim — the same tick publishes with the
+# new code instead of the next one. The child is marked with an env flag
+# so it can never delegate again (no loop: if yet another merge lands
+# mid-run, the child publishes with its loaded code and the following
+# tick catches up). A failed child is a LOUD failure — never a silent
+# fallback to generating with stale code.
+_REEXEC_ENV = "TPH_AUTOPUBLISH_REEXEC"
+_REEXEC_TIMEOUT = 900
+
+
+def _disk_pipeline_fingerprint() -> str:
+    """Fingerprint of the pipeline files on disk, anchored at THIS file's
+    tree (not the REPO global, which tests may swap): the invariant is
+    "the code on disk now" vs "the code this process loaded at import"."""
+    root = Path(__file__).resolve().parents[2]
+    h = hashlib.sha256()
+    for rel in _PIPELINE_FILES:
+        try:
+            h.update((root / rel).read_bytes())
+        except OSError:
+            h.update(f"missing:{rel}".encode())
+    return h.hexdigest()[:12]
+
+
+def _should_delegate_publish() -> bool:
+    return os.environ.get(_REEXEC_ENV) != "1" and _disk_pipeline_fingerprint() != PIPELINE_FINGERPRINT
+
+
+def _delegate_publish(event: dict, now: datetime, push: bool) -> dict:
+    """Re-run this publish in a fresh process importing the on-disk code.
+
+    The event travels as JSON (it originates from the coverage config
+    JSON) and the result comes back through a file, because the publish
+    path itself may print (the node barrel step inherits stdout)."""
+    with tempfile.TemporaryDirectory(prefix="autopublish-reexec-") as td:
+        payload_path = Path(td) / "payload.json"
+        result_path = Path(td) / "result.json"
+        payload_path.write_text(json.dumps({
+            "event": event,
+            "now": now.isoformat(),
+            "push": push,
+            "result_path": str(result_path),
+        }), encoding="utf-8")
+        env = dict(os.environ, **{_REEXEC_ENV: "1"})
+        try:
+            proc = subprocess.run(
+                [sys.executable, str(Path(__file__).resolve()), "--reexec-publish", str(payload_path)],
+                capture_output=True, text=True, timeout=_REEXEC_TIMEOUT, env=env)
+        except subprocess.TimeoutExpired:
+            raise RuntimeError("reexec_publish_timeout") from None
+        if result_path.exists():
+            result = json.loads(result_path.read_text(encoding="utf-8"))
+            if "error" in result:
+                raise RuntimeError(f"reexec_publish_failed:{result['error']}")
+            return result
+        tail = (proc.stderr or proc.stdout or "").strip()[-300:]
+        raise RuntimeError(f"reexec_publish_failed:exit={proc.returncode}:{tail}")
+
+
+def _reexec_main(payload_path: str) -> int:
+    """Child entry point: publish with freshly imported code and write the
+    result (or the error) to the payload's result_path for the parent."""
+    payload = json.loads(Path(payload_path).read_text(encoding="utf-8"))
+    result_path = Path(payload["result_path"])
+    try:
+        result = publish_event(payload["event"],
+                               now=datetime.fromisoformat(payload["now"]),
+                               push=bool(payload["push"]))
+    except Exception as exc:  # noqa: BLE001 — reported to the parent verbatim
+        result_path.write_text(json.dumps({"error": f"{type(exc).__name__}:{exc}"}), encoding="utf-8")
+        return 1
+    result_path.write_text(json.dumps(result), encoding="utf-8")
+    return 0
+
+
 def publish_event(event: dict, now: datetime | None = None, push: bool = True) -> dict:
     """Fetch, validate and publish one changed official score snapshot.
 
@@ -566,6 +652,13 @@ def publish_event(event: dict, now: datetime | None = None, push: bool = True) -
     feed, fingerprint = fetch(event["result_source"], event["event_id"])
     if not should_publish(event, fingerprint):
         return {"status": "unchanged", "fingerprint": fingerprint}
+    if _should_delegate_publish():
+        # The checkout moved after this process imported the module (a
+        # merge landed): hand the whole publish to a fresh process running
+        # the new code, in this same tick.
+        result = _delegate_publish(event, now, push)
+        result["reexec"] = True
+        return result
     root = _prepare_publish_worktree(push)
     try:
         pkg, head = _publish_once(root, event, feed, now, push)
@@ -577,4 +670,15 @@ def publish_event(event: dict, now: datetime | None = None, push: bool = True) -
     remember(event, fingerprint)
     # What production must serve once the deploy lands; checked by team_tournament_coverage.verify_live.
     marker = pkg["en"]["sections"][0]["content"].split(". ", 1)[0]
-    return {"status": "published", "fingerprint": fingerprint, "head": head, "pushed": push, "slug": pkg["slug"], "marker": marker}
+    # `pipeline` = the fingerprint of the code that ACTUALLY generated this
+    # publish; the ops freshness check compares it (and the commit stamp)
+    # against main. `reexec` False here: this process generated it itself.
+    return {"status": "published", "fingerprint": fingerprint, "head": head, "pushed": push,
+            "slug": pkg["slug"], "marker": marker, "pipeline": PIPELINE_FINGERPRINT, "reexec": False}
+
+
+if __name__ == "__main__":
+    # Internal only: the re-exec child spawned by _delegate_publish.
+    if len(sys.argv) == 3 and sys.argv[1] == "--reexec-publish":
+        raise SystemExit(_reexec_main(sys.argv[2]))
+    raise SystemExit("usage: tournament_results_autopublish.py --reexec-publish <payload.json>")
