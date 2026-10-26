@@ -10,6 +10,34 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "dragon-medals-ppa-tour-asia",
+    "publishedDate": "2026-10-26",
+    "updatedDate": "2026-10-26",
+    "author": "The PickleHub Team",
+    "tags": [
+      "ppa tour asia",
+      "dragon medals",
+      "huy chuong rong",
+      "hong kong slam",
+      "pickleball viet nam"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Watch live tournaments on ThePickleHub",
+      "vi": "Xem giải trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/huy-chuong-rong-ppa-tour-asia-hero.webp",
+      "alt": "Gold medal with a carved dragon head on a pickleball court at night (illustration)"
+    },
+    "titleEn": "PPA Tour Asia's Dragon Medals: Why a Dragon, and Why a Lotus?",
+    "titleVi": "Huy chương hình rồng của PPA Tour Asia: vì sao là rồng, và vì sao có hoa sen?",
+    "metaTitleEn": "PPA Tour Asia's Dragon Medals, Explained",
+    "metaTitleVi": "Huy chương rồng PPA Tour Asia: ý nghĩa",
+    "metaDescriptionEn": "Why PPA Tour Asia's 2026 medals carry a dragon and a lotus — and how every stop became one piece of a season-long set players chased to Hong Kong.",
+    "metaDescriptionVi": "Ý nghĩa bộ huy chương rồng PPA Tour Asia 2026: rồng châu Á, hoa sen và cuộc săn mảnh ghép qua các chặng của tay vợt Việt Nam."
+  },
+  {
     "slug": "pickleball-world-championships-2026-results",
     "publishedDate": "2026-11-02",
     "updatedDate": "2026-10-24",

@@ -54,6 +54,8 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/how-to-play-pickleball-hero.webp": [1600, 900],
   "/images/blog/how-to-watch-ppa-tour-live-2026-hero-768.webp": [768, 512],
   "/images/blog/how-to-watch-ppa-tour-live-2026-hero.webp": [1536, 1024],
+  "/images/blog/huy-chuong-rong-ppa-tour-asia-hero-768.webp": [768, 512],
+  "/images/blog/huy-chuong-rong-ppa-tour-asia-hero.webp": [1920, 1280],
   "/images/blog/jogarbola-team-pickleball-vietnam-hero-768.webp": [768, 523],
   "/images/blog/jogarbola-team-pickleball-vietnam-hero.webp": [780, 531],
   "/images/blog/khoi-dong-tranh-chan-thuong-giay-san.webp": [1200, 675],
