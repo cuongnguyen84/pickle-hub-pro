@@ -51,6 +51,10 @@ const isoWeekNumber = (d = new Date()): number => {
 };
 
 const HOME_NEWS_LIMIT = 4;
+// Homepage renders at most 6 VI blog stories; 30 most-recently-updated
+// published posts give 5x headroom while cutting the payload ~77% versus
+// fetching every published post (111 posts / ~91 KB on 2026-10-26).
+const HOME_VI_BLOG_LIMIT = 30;
 
 /* Featured story image with graceful degradation. The card src defaults to
    the -768 responsive variant and mobile srcSet picks the 768w candidate; if
@@ -135,7 +139,9 @@ const Index = () => {
   const { data: homeStats } = useHomepageStats();
   // VI homepage stories come from Supabase vi_blog_posts (mirrors /vi/blog) so
   // VI-only posts without an EN manifest entry still surface on the homepage.
-  const { data: viPosts = [], isLoading: viPostsLoading } = usePublishedViBlogPosts();
+  const { data: viPosts = [], isLoading: viPostsLoading } = usePublishedViBlogPosts({
+    limit: HOME_VI_BLOG_LIMIT,
+  });
 
   const homeNewsQuery = useNewsItems({
     limit: HOME_NEWS_LIMIT + 6,
