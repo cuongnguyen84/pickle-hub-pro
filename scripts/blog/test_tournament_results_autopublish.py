@@ -179,5 +179,116 @@ class TournamentAutopublishTests(unittest.TestCase):
         self.assertEqual(fp, autopublish._pipeline_fingerprint())
 
 
+import os
+import shutil
+import subprocess
+import tempfile
+
+
+def _git(cwd, *args):
+    return subprocess.run(["git", "-C", str(cwd), *args], capture_output=True, text=True, check=True)
+
+
+@unittest.skipUnless(shutil.which("node") and shutil.which("git"), "needs node + git")
+class PublishWorktreeTests(unittest.TestCase):
+    """Incident 2026-10-25/26: one unrelated dirty file in the working
+    checkout (Localizable.xcstrings, rewritten by an Xcode build) blocked
+    every results publish for a full finals day. publish_event must run in
+    its own worktree and be immune to the working checkout's state."""
+
+    EVENT = {"key": "test-open-2026", "name": "Test Open", "dates_en": "October 1–3, 2026",
+             "dates_vi": "1–3/10/2026", "venue": "Test venue", "source": "/official",
+             "slug": "test-open-results", "vi_slug": "ket-qua-test-open",
+             "tags": ["test", "results", "2026"], "start_date": "2026-10-01",
+             "result_source": "https://example.test/feed", "event_id": "event-1"}
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="autopublish-wt-"))
+        self.origin = self.tmp / "origin.git"
+        subprocess.run(["git", "init", "--bare", "-b", "main", str(self.origin)], check=True, capture_output=True)
+        self.main = self.tmp / "main"
+        subprocess.run(["git", "clone", "--quiet", str(self.origin), str(self.main)], check=True, capture_output=True)
+        _git(self.main, "config", "user.email", "test@example.com")
+        _git(self.main, "config", "user.name", "Test")
+        (self.main / "src/content/blog/posts").mkdir(parents=True)
+        (self.main / "src/content/blog/metadata.ts").write_text(
+            'import type { BlogPostMetadata } from "./types";\n\nexport const blogMetadata: BlogPostMetadata[] = [\n];\n')
+        (self.main / "src/content/blog/posts/all.ts").write_text("// barrel\n")
+        (self.main / "scripts").mkdir()
+        (self.main / "scripts/gen-blog-barrel.mjs").write_text(
+            'import { writeFileSync } from "node:fs";\n'
+            'writeFileSync(new URL("../src/content/blog/posts/all.ts", import.meta.url), "// barrel regenerated\\n");\n')
+        (self.main / "apple").mkdir()
+        (self.main / "apple/Localizable.xcstrings").write_text("{}\n")
+        _git(self.main, "add", "-A")
+        _git(self.main, "commit", "-m", "skeleton")
+        _git(self.main, "push", "--quiet", "origin", "main")
+        self.team_home = self.tmp / "team-home"
+        self.team_home.mkdir()
+        self._saved = (autopublish.REPO, autopublish.fetch, autopublish._upsert_vi, os.environ.get("PICKLEHUB_TEAM_HOME"))
+        autopublish.REPO = self.main
+        autopublish.fetch = lambda url, eid: (feed("final"), self.fp)
+        autopublish._upsert_vi = lambda pkg: None
+        os.environ["PICKLEHUB_TEAM_HOME"] = str(self.team_home)
+        self.fp = "fingerprint-1"
+
+    def tearDown(self):
+        autopublish.REPO, autopublish.fetch, autopublish._upsert_vi, saved_home = self._saved
+        if saved_home is None:
+            os.environ.pop("PICKLEHUB_TEAM_HOME", None)
+        else:
+            os.environ["PICKLEHUB_TEAM_HOME"] = saved_home
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _origin_has_post(self):
+        out = subprocess.run(["git", "--git-dir", str(self.origin), "ls-tree", "-r", "--name-only", "main"],
+                             capture_output=True, text=True, check=True).stdout
+        return "src/content/blog/posts/test-open-results.ts" in out
+
+    def test_dirty_unrelated_file_and_behind_checkout_cannot_block_publish(self):
+        # The incident setup: Xcode-style dirt on an unrelated tracked file,
+        # an untracked scratch file, and origin moved ahead by another clone.
+        (self.main / "apple/Localizable.xcstrings").write_text('{"dirty": true}\n')
+        (self.main / "scratch.txt").write_text("editor scratch\n")
+        other = self.tmp / "other"
+        subprocess.run(["git", "clone", "--quiet", str(self.origin), str(other)], check=True, capture_output=True)
+        _git(other, "config", "user.email", "test@example.com")
+        _git(other, "config", "user.name", "Test")
+        (other / "README.md").write_text("merged PR\n")
+        _git(other, "add", "-A"); _git(other, "commit", "-m", "some PR")
+        _git(other, "push", "--quiet", "origin", "main")
+        main_head_before = _git(self.main, "rev-parse", "HEAD").stdout.strip()
+
+        result = autopublish.publish_event(dict(self.EVENT), now=datetime(2026, 10, 3, tzinfo=timezone.utc), push=True)
+
+        self.assertEqual(result["status"], "published")
+        self.assertTrue(self._origin_has_post())
+        # The working checkout was neither cleaned nor committed over.
+        self.assertEqual(_git(self.main, "rev-parse", "HEAD").stdout.strip(), main_head_before)
+        self.assertIn("Localizable.xcstrings", _git(self.main, "status", "--porcelain").stdout)
+        # Same feed again: remembered fingerprint makes it a no-op.
+        again = autopublish.publish_event(dict(self.EVENT), now=datetime(2026, 10, 3, tzinfo=timezone.utc), push=True)
+        self.assertEqual(again["status"], "unchanged")
+
+    def test_worktree_leftover_from_crashed_run_is_reset_not_blocking(self):
+        first = autopublish.publish_event(dict(self.EVENT), now=datetime(2026, 10, 3, tzinfo=timezone.utc), push=True)
+        self.assertEqual(first["status"], "published")
+        wt = self.team_home / "publish-worktree"
+        (wt / "src/content/blog/posts/test-open-results.ts").write_text("half-written garbage")
+        (wt / "junk.txt").write_text("leftover\n")
+        self.fp = "fingerprint-2"
+        second = autopublish.publish_event(dict(self.EVENT), now=datetime(2026, 10, 4, tzinfo=timezone.utc), push=True)
+        self.assertEqual(second["status"], "published")
+        self.assertFalse((wt / "junk.txt").exists())
+
+    def test_occupied_worktree_path_fails_loudly_with_named_error(self):
+        wt = self.team_home / "publish-worktree"
+        wt.mkdir()
+        (wt / "someone-elses-file.txt").write_text("do not delete\n")
+        with self.assertRaises(autopublish.PublishWorktreeError):
+            autopublish._prepare_publish_worktree(push=False)
+        self.assertTrue((wt / "someone-elses-file.txt").exists())
+
+
 if __name__ == "__main__":
     unittest.main()
