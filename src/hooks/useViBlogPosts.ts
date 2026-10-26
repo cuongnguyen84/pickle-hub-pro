@@ -79,15 +79,38 @@ async function viBlogFetch<T>(
   return res.json();
 }
 
-export function usePublishedViBlogPosts() {
+const PUBLISHED_VI_BLOG_SELECT =
+  "?select=id,slug,title,excerpt,cover_image_url,category,published_at,updated_at,tags&status=eq.published";
+
+export function publishedViBlogPostsQuery(limit?: number): string {
+  if (limit == null) {
+    // Full listing (blog index): updated_at rides along so listings can order
+    // by the later of the two dates (see lib/blogOrder). The server order
+    // stays published_at so the payload is deterministic; the effective-date
+    // sort happens client-side.
+    return `${PUBLISHED_VI_BLOG_SELECT}&order=published_at.desc`;
+  }
+  // Limited variant (homepage): the homepage renders only the effective-date
+  // leaders — max(published_at, updated_at) — and updated_at >= published_at
+  // in practice, so the leaders are the most recently updated posts. Ordering
+  // the capped window by updated_at keeps refreshed posts the homepage
+  // intentionally resurfaces inside the cap; a published_at-ordered cap would
+  // silently drop them (verified 2026-10-26 against live data: a refreshed
+  // post ranked #31 by published_at sat at #4 by effective date, and the
+  // capped set reproduced the homepage top 6 exactly).
+  return `${PUBLISHED_VI_BLOG_SELECT}&order=updated_at.desc&limit=${limit}`;
+}
+
+export function usePublishedViBlogPosts(options?: { limit?: number }) {
+  const limit = options?.limit;
   return useQuery({
-    queryKey: ["vi-blog-posts", "published"],
+    queryKey:
+      limit == null
+        ? ["vi-blog-posts", "published"]
+        : ["vi-blog-posts", "published", "limit", limit],
     queryFn: () =>
       viBlogFetch<Pick<ViBlogPost, "id" | "slug" | "title" | "excerpt" | "cover_image_url" | "category" | "published_at" | "updated_at" | "tags">[]>(
-        // updated_at rides along so listings can order by the later of the two
-        // dates (see lib/blogOrder). The server order stays published_at so the
-        // payload is deterministic; the effective-date sort happens client-side.
-        "?select=id,slug,title,excerpt,cover_image_url,category,published_at,updated_at,tags&status=eq.published&order=published_at.desc",
+        publishedViBlogPostsQuery(limit),
       ),
     staleTime: 5 * 60 * 1000,
   });
