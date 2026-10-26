@@ -54,16 +54,24 @@ enum QTChatAttachments {
         return true
     }
 
-    /// Ảnh bất kỳ (HEIC/PNG/JPEG…) → JPEG cạnh dài ≤ 1600px, quality 0.85.
+    /// Ảnh bất kỳ (HEIC/PNG/JPEG…) → JPEG cạnh dài ≤ 1600 PIXEL, quality
+    /// 0.85. Trần tính theo pixel (như canvas của web): UIImage.size là
+    /// ĐIỂM logic (pixel ÷ scale) — dùng nó sẽ lọt ảnh chụp màn hình
+    /// 4800px @3x tưởng là 1600. Renderer cũng phải ép scale 1, mặc định
+    /// nó nhân theo scale của máy.
     static func jpegAttachment(fromImageData data: Data) -> QTChatAttachment? {
         guard let image = UIImage(data: data) else { return nil }
-        let longest = max(image.size.width, image.size.height)
+        let pixelW = image.size.width * image.scale
+        let pixelH = image.size.height * image.scale
+        let longest = max(pixelW, pixelH)
         var target = image
         if longest > CGFloat(maxImageSide) {
             let scale = CGFloat(maxImageSide) / longest
-            let size = CGSize(width: (image.size.width * scale).rounded(),
-                              height: (image.size.height * scale).rounded())
-            let renderer = UIGraphicsImageRenderer(size: size)
+            let size = CGSize(width: (pixelW * scale).rounded(),
+                              height: (pixelH * scale).rounded())
+            let format = UIGraphicsImageRendererFormat()
+            format.scale = 1
+            let renderer = UIGraphicsImageRenderer(size: size, format: format)
             target = renderer.image { _ in image.draw(in: CGRect(origin: .zero, size: size)) }
         }
         guard let jpeg = target.jpegData(compressionQuality: 0.85) else { return nil }

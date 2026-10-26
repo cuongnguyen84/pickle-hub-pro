@@ -21,24 +21,33 @@ struct QTChatAttachmentsTests {
         #expect(!QTChatAttachments.isValid([att(0)]))
     }
 
-    @Test("Images are re-encoded as JPEG with the longest side capped at 1600")
+    /// Cạnh dài nhất tính bằng PIXEL (cgImage) — UIImage.size là điểm
+    /// logic, phụ thuộc scale của máy chạy test.
+    private func pixelLongest(_ image: UIImage) -> Int {
+        max(image.cgImage?.width ?? 0, image.cgImage?.height ?? 0)
+    }
+
+    @Test("Images are re-encoded as JPEG with the longest side capped at 1600 px")
     func jpegConversion() {
         let big = UIGraphicsImageRenderer(size: CGSize(width: 2000, height: 1000)).image { ctx in
             UIColor.systemBlue.setFill(); ctx.fill(CGRect(x: 0, y: 0, width: 2000, height: 1000))
         }
-        let png = big.pngData()!
-        let converted = QTChatAttachments.jpegAttachment(fromImageData: png)
+        let bigSource = UIImage(data: big.pngData()!)!
+        #expect(pixelLongest(bigSource) > 1600) // tiền đề: ảnh nguồn thật sự vượt trần
+        let converted = QTChatAttachments.jpegAttachment(fromImageData: big.pngData()!)
         #expect(converted?.mime_type == "image/jpeg")
         let decoded = UIImage(data: Data(base64Encoded: converted!.data)!)!
-        #expect(max(decoded.size.width, decoded.size.height) <= 1600)
-        #expect(abs(max(decoded.size.width, decoded.size.height) - 1600) < 2)
+        #expect(pixelLongest(decoded) <= 1600)
+        #expect(pixelLongest(decoded) >= 1595)
 
         let small = UIGraphicsImageRenderer(size: CGSize(width: 400, height: 300)).image { ctx in
             UIColor.systemRed.setFill(); ctx.fill(CGRect(x: 0, y: 0, width: 400, height: 300))
         }
+        let smallSource = UIImage(data: small.pngData()!)!
+        #expect(pixelLongest(smallSource) <= 1600)
         let kept = QTChatAttachments.jpegAttachment(fromImageData: small.pngData()!)
         let keptImage = UIImage(data: Data(base64Encoded: kept!.data)!)!
-        #expect(keptImage.size == CGSize(width: 400, height: 300))
+        #expect(pixelLongest(keptImage) == pixelLongest(smallSource)) // dưới trần: giữ nguyên pixel
 
         #expect(QTChatAttachments.jpegAttachment(fromImageData: Data("not an image".utf8)) == nil)
     }
