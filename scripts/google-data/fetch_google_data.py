@@ -8,7 +8,8 @@ weekly report; it can also be run by hand (see README.md in this folder).
 What it does:
   * GSC Search Analytics for sc-domain:thepicklehub.net — last 28 days
     (ending 2 days ago; GSC data lags) plus the previous 28 days:
-    totals, top queries, top pages, and the pages losing the most clicks.
+    totals, a per-day series, top queries, top pages, and the pages
+    losing the most clicks.
   * GA4 Data API for property 522556358 — last 28 days (ending yesterday):
     sessions/users/views per day, top pages, top channels.
   * Writes data/google/gsc-<run-date>.json and data/google/ga4-<run-date>.json
@@ -122,6 +123,19 @@ def _gsc_totals(creds, start: date, end: date) -> dict:
             "ctr": round(r.get("ctr", 0.0), 4), "position": round(r.get("position", 0.0), 2)}
 
 
+def _gsc_daily(creds, start: date, end: date) -> list[dict]:
+    """Per-day series for the same window as the totals (dimensions=['date']).
+
+    Sorted ascending by date here — the API does not guarantee row order —
+    so week-over-week movement can be read straight off the snapshot.
+    """
+    rows = _gsc_rows(creds, start, end, ["date"], PERIOD_DAYS + 2)
+    return [{"date": r["keys"][0], "clicks": r.get("clicks", 0),
+             "impressions": r.get("impressions", 0), "ctr": round(r.get("ctr", 0.0), 4),
+             "position": round(r.get("position", 0.0), 2)}
+            for r in sorted(rows, key=lambda r: r["keys"][0])]
+
+
 def losing_pages(current_rows: list[dict], previous_rows: list[dict], limit: int = 15) -> list[dict]:
     """Pages with the biggest click drop, current period vs previous."""
     prev = {r["keys"][0]: r for r in previous_rows}
@@ -160,6 +174,7 @@ def build_gsc_snapshot(creds, today: date) -> dict:
         "period": {"start": start.isoformat(), "end": end.isoformat(), "days": PERIOD_DAYS},
         "previous_period": {"start": pstart.isoformat(), "end": pend.isoformat()},
         "totals": totals, "previous_totals": previous,
+        "daily": _gsc_daily(creds, start, end),
         "top_queries": queries, "top_pages": top_pages,
         "losing_pages": losing_pages(pages_now, pages_prev),
     }

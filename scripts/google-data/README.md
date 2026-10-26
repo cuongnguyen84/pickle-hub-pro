@@ -40,8 +40,10 @@ Snapshots land in `data/google/gsc-<date>.json` and `data/google/ga4-<date>.json
 ## What the snapshots contain
 
 - **GSC**: 28 days ending 2 days before the run (Search Console lag), plus
-  the previous 28 days — totals (clicks/impressions/CTR/position), top 25
-  queries, top 25 pages, and up to 15 pages losing the most clicks.
+  the previous 28 days — totals (clicks/impressions/CTR/position), a per-day
+  series (`daily`: date/clicks/impressions/CTR/position for the current
+  window), top 25 queries, top 25 pages, and up to 15 pages losing the
+  most clicks.
 - **GA4**: 28 days ending yesterday — daily sessions/users/views, totals,
   top 25 pages by views, top channels by sessions.
 
