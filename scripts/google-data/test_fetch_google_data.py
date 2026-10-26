@@ -108,6 +108,35 @@ class SnapshotShapeTests(unittest.TestCase):
         self.assertEqual(snap["losing_pages"][0]["page"], "/blog/x")
         self.assertEqual(snap["losing_pages"][0]["delta"], -20)
 
+    def test_gsc_snapshot_includes_sorted_daily_series(self):
+        seen_dims = []
+
+        def fake_api(creds, method, url, body=None):
+            dims = body["dimensions"]
+            seen_dims.append(dims)
+            if dims == ["date"]:
+                # Deliberately out of order: the builder must sort ascending.
+                return {"rows": [
+                    {"keys": ["2026-10-24"], "clicks": 9, "impressions": 90, "ctr": 0.1, "position": 6.25},
+                    {"keys": ["2026-10-23"], "clicks": 5, "impressions": 50, "ctr": 0.123456, "position": 4.0}]}
+            if dims == []:
+                return {"rows": [{"clicks": 14, "impressions": 140, "ctr": 0.1, "position": 5.5}]}
+            return {"rows": []}
+        original = g._api_json
+        g._api_json = fake_api
+        try:
+            snap = g.build_gsc_snapshot(_FakeCreds(), date(2026, 10, 26))
+        finally:
+            g._api_json = original
+        self.assertIn(["date"], seen_dims)
+        self.assertEqual(
+            snap["daily"],
+            [{"date": "2026-10-23", "clicks": 5, "impressions": 50, "ctr": 0.1235, "position": 4.0},
+             {"date": "2026-10-24", "clicks": 9, "impressions": 90, "ctr": 0.1, "position": 6.25}])
+        # Backward compatibility: every pre-existing key is still present.
+        for key in ("totals", "previous_totals", "top_queries", "top_pages", "losing_pages"):
+            self.assertIn(key, snap)
+
 
 class CommitSnapshotsTests(unittest.TestCase):
     def test_pathspec_commit_ignores_unrelated_dirt_and_push_failure_is_loud(self):
