@@ -6,7 +6,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   "slug": "hong-kong-slam-2026-results",
   "publishedDate": "2026-10-19",
-  "updatedDate": "2026-10-24",
+  "updatedDate": "2026-10-26",
   "author": "The PickleHub Team",
   "tags": [
     "pickleball",
@@ -32,7 +32,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Hong Kong Slam 2026 results and daily scores",
-          "content": "Last updated: October 24, 2026, 19:00 Vietnam time. ThePickleHub publishes this Hong Kong Slam 2026 results page from the official PPA scores feed for October 19–25, 2026 at Kai Tak Arena, Hong Kong. The feed currently contains 243 matches, including 238 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: October 26, 2026, 07:48 Vietnam time. ThePickleHub publishes this Hong Kong Slam 2026 results page from the official PPA scores feed for October 19–25, 2026 at Kai Tak Arena, Hong Kong. The feed currently contains 243 matches, including 243 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -50,37 +50,61 @@ const post: BlogPost = {
           "resultsSummary": [
             {
               "division": "Women's Doubles",
-              "note": "Through to the Semi-Finals · 22 matches",
+              "champion": "Anna Bright / Anna Leigh Waters",
+              "note": "Complete · 23 matches",
               "anchor": "rb-womens-doubles"
             },
             {
               "division": "Men's Doubles",
-              "note": "Through to the Semi-Finals · 54 matches",
+              "champion": "Federico Staksrud / Hayden Patriquin",
+              "note": "Complete · 55 matches",
               "anchor": "rb-mens-doubles"
             },
             {
               "division": "Mixed Doubles",
-              "note": "Through to the Semi-Finals · 54 matches",
+              "champion": "Ben Johns / Anna Leigh Waters",
+              "note": "Complete · 55 matches",
               "anchor": "rb-mixed-doubles"
             },
             {
               "division": "Women's Singles",
-              "note": "Through to the Semi-Finals · 54 matches",
+              "champion": "Andie Dikosavljevic",
+              "note": "Complete · 55 matches",
               "anchor": "rb-womens-singles"
             },
             {
               "division": "Men's Singles",
-              "note": "Through to the Semi-Finals · 54 matches",
+              "champion": "Hunter Johnson",
+              "note": "Complete · 55 matches",
               "anchor": "rb-mens-singles"
             }
           ]
         },
         {
           "heading": "Women's Doubles results",
-          "content": "No champion yet. 22 completed matches, latest round first.",
+          "content": "Champion: Anna Bright / Anna Leigh Waters. 23 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Women's Doubles",
             "rounds": [
+              {
+                "label": "Finals",
+                "matches": [
+                  {
+                    "winner": "Anna Bright / Anna Leigh Waters",
+                    "loser": "Tyra Hurricane Black / Jorja Johnson",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  }
+                ]
+              },
               {
                 "label": "Semi-Finals",
                 "matches": [
@@ -191,52 +215,6 @@ const post: BlogPost = {
                 "label": "Round 16",
                 "matches": [
                   {
-                    "winner": "Tyra Hurricane Black / Jorja Johnson",
-                    "loser": "Albie Huang / Andie Dikosavljevic",
-                    "sets": [
-                      [
-                        11,
-                        6
-                      ],
-                      [
-                        11,
-                        3
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Sahra Dennehy / Danni-Elle Townsend",
-                    "loser": "Allyce Jones / Kaitlyn Christian",
-                    "sets": [
-                      [
-                        11,
-                        7
-                      ],
-                      [
-                        4,
-                        11
-                      ],
-                      [
-                        11,
-                        6
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Judit Castillo / Kiora Kunimoto",
-                    "loser": "Lacy Schneemann / Ting Chieh Wei",
-                    "sets": [
-                      [
-                        11,
-                        8
-                      ],
-                      [
-                        11,
-                        3
-                      ]
-                    ]
-                  },
-                  {
                     "winner": "Mari Humberg / Cailyn Campbell",
                     "loser": "Chao Yi Wang / Nok Yiu Tang",
                     "sets": [
@@ -247,38 +225,6 @@ const post: BlogPost = {
                       [
                         6,
                         11
-                      ],
-                      [
-                        11,
-                        4
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Alix Truong / Jessie Irvine",
-                    "loser": "Lingwei Kong / Yufei Long",
-                    "sets": [
-                      [
-                        11,
-                        5
-                      ],
-                      [
-                        9,
-                        11
-                      ],
-                      [
-                        12,
-                        10
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Sofia Sewing / Catherine Parenteau",
-                    "loser": "Xiao Yi Wang-Beckvall / Aiko Yoshitomi",
-                    "sets": [
-                      [
-                        11,
-                        8
                       ],
                       [
                         11,
@@ -313,6 +259,84 @@ const post: BlogPost = {
                         3
                       ]
                     ]
+                  },
+                  {
+                    "winner": "Judit Castillo / Kiora Kunimoto",
+                    "loser": "Lacy Schneemann / Ting Chieh Wei",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Sahra Dennehy / Danni-Elle Townsend",
+                    "loser": "Allyce Jones / Kaitlyn Christian",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        4,
+                        11
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Tyra Hurricane Black / Jorja Johnson",
+                    "loser": "Albie Huang / Andie Dikosavljevic",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Sofia Sewing / Catherine Parenteau",
+                    "loser": "Xiao Yi Wang-Beckvall / Aiko Yoshitomi",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Alix Truong / Jessie Irvine",
+                    "loser": "Lingwei Kong / Yufei Long",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        9,
+                        11
+                      ],
+                      [
+                        12,
+                        10
+                      ]
+                    ]
                   }
                 ]
               },
@@ -320,16 +344,30 @@ const post: BlogPost = {
                 "label": "Round 32",
                 "matches": [
                   {
-                    "winner": "Xiao Yi Wang-Beckvall / Aiko Yoshitomi",
-                    "loser": "Lynn Lim / Kwan Wun Man",
+                    "winner": "Mari Humberg / Cailyn Campbell",
+                    "loser": "Trang Huynh / Yu-Chieh Hsieh",
                     "sets": [
                       [
                         11,
-                        5
+                        3
                       ],
                       [
                         11,
-                        1
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Hannah Blatt / Kei Sawaki",
+                    "loser": "Mayu Ito / Sophia Phuong Anh Tran",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        6
                       ]
                     ]
                   },
@@ -408,45 +446,51 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Hannah Blatt / Kei Sawaki",
-                    "loser": "Mayu Ito / Sophia Phuong Anh Tran",
+                    "winner": "Xiao Yi Wang-Beckvall / Aiko Yoshitomi",
+                    "loser": "Lynn Lim / Kwan Wun Man",
                     "sets": [
-                      [
-                        11,
-                        8
-                      ],
-                      [
-                        11,
-                        6
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Mari Humberg / Cailyn Campbell",
-                    "loser": "Trang Huynh / Yu-Chieh Hsieh",
-                    "sets": [
-                      [
-                        11,
-                        3
-                      ],
                       [
                         11,
                         5
+                      ],
+                      [
+                        11,
+                        1
                       ]
                     ]
                   }
                 ],
                 "collapsed": true
               }
-            ]
+            ],
+            "champion": "Anna Bright / Anna Leigh Waters"
           }
         },
         {
           "heading": "Men's Doubles results",
-          "content": "No champion yet. 54 completed matches, latest round first.",
+          "content": "Champion: Federico Staksrud / Hayden Patriquin. 55 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Men's Doubles",
             "rounds": [
+              {
+                "label": "Finals",
+                "matches": [
+                  {
+                    "winner": "Federico Staksrud / Hayden Patriquin",
+                    "loser": "Ben Johns / Gabriel Tardio",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  }
+                ]
+              },
               {
                 "label": "Semi-Finals",
                 "matches": [
@@ -1201,15 +1245,35 @@ const post: BlogPost = {
                 ],
                 "collapsed": true
               }
-            ]
+            ],
+            "champion": "Federico Staksrud / Hayden Patriquin"
           }
         },
         {
           "heading": "Mixed Doubles results",
-          "content": "No champion yet. 54 completed matches, latest round first.",
+          "content": "Champion: Ben Johns / Anna Leigh Waters. 55 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Mixed Doubles",
             "rounds": [
+              {
+                "label": "Finals",
+                "matches": [
+                  {
+                    "winner": "Ben Johns / Anna Leigh Waters",
+                    "loser": "Anna Bright / Hayden Patriquin",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  }
+                ]
+              },
               {
                 "label": "Semi-Finals",
                 "matches": [
@@ -2032,15 +2096,35 @@ const post: BlogPost = {
                 ],
                 "collapsed": true
               }
-            ]
+            ],
+            "champion": "Ben Johns / Anna Leigh Waters"
           }
         },
         {
           "heading": "Women's Singles results",
-          "content": "No champion yet. 54 completed matches, latest round first.",
+          "content": "Champion: Andie Dikosavljevic. 55 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Women's Singles",
             "rounds": [
+              {
+                "label": "Finals",
+                "matches": [
+                  {
+                    "winner": "Andie Dikosavljevic",
+                    "loser": "Judit Castillo",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  }
+                ]
+              },
               {
                 "label": "Semi-Finals",
                 "matches": [
@@ -2797,15 +2881,39 @@ const post: BlogPost = {
                 ],
                 "collapsed": true
               }
-            ]
+            ],
+            "champion": "Andie Dikosavljevic"
           }
         },
         {
           "heading": "Men's Singles results",
-          "content": "No champion yet. 54 completed matches, latest round first.",
+          "content": "Champion: Hunter Johnson. 55 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Men's Singles",
             "rounds": [
+              {
+                "label": "Finals",
+                "matches": [
+                  {
+                    "winner": "Hunter Johnson",
+                    "loser": "Tama Shimabukuro",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        6,
+                        11
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  }
+                ]
+              },
               {
                 "label": "Semi-Finals",
                 "matches": [
@@ -3587,18 +3695,15 @@ const post: BlogPost = {
                 ],
                 "collapsed": true
               }
-            ]
+            ],
+            "champion": "Hunter Johnson"
           }
         },
         {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Women's Doubles, Finals: Anna Bright / Anna Leigh Waters vs Tyra Hurricane Black / Jorja Johnson — status scheduled.",
-            "Men's Doubles, Finals: Ben Johns / Gabriel Tardio vs Federico Staksrud / Hayden Patriquin — status scheduled.",
-            "Mixed Doubles, Finals: Ben Johns / Anna Leigh Waters vs Anna Bright / Hayden Patriquin — status scheduled.",
-            "Women's Singles, Finals: Judit Castillo vs Andie Dikosavljevic — status scheduled.",
-            "Men's Singles, Finals: Tama Shimabukuro vs Hunter Johnson — status scheduled."
+            "No match is currently marked live or scheduled in the official feed."
           ]
         },
         {
@@ -3628,7 +3733,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Hong Kong Slam 2026",
-          "content": "Cập nhật: 19:00 ngày 24/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Hong Kong Slam 2026 từ feed điểm số chính thức của PPA cho thời gian 19–25/10/2026 tại Kai Tak Arena, Hong Kong. Feed hiện có 243 trận, gồm 238 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 07:48 ngày 26/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Hong Kong Slam 2026 từ feed điểm số chính thức của PPA cho thời gian 19–25/10/2026 tại Kai Tak Arena, Hong Kong. Feed hiện có 243 trận, gồm 243 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -3646,37 +3751,61 @@ const post: BlogPost = {
           "resultsSummary": [
             {
               "division": "Đôi nữ",
-              "note": "Đã tới Semi-Finals · 22 trận",
+              "champion": "Anna Bright / Anna Leigh Waters",
+              "note": "Hoàn tất · 23 trận",
               "anchor": "rb-doi-nu"
             },
             {
               "division": "Đôi nam",
-              "note": "Đã tới Semi-Finals · 54 trận",
+              "champion": "Federico Staksrud / Hayden Patriquin",
+              "note": "Hoàn tất · 55 trận",
               "anchor": "rb-doi-nam"
             },
             {
               "division": "Đôi nam nữ",
-              "note": "Đã tới Semi-Finals · 54 trận",
+              "champion": "Ben Johns / Anna Leigh Waters",
+              "note": "Hoàn tất · 55 trận",
               "anchor": "rb-doi-nam-nu"
             },
             {
               "division": "Đơn nữ",
-              "note": "Đã tới Semi-Finals · 54 trận",
+              "champion": "Andie Dikosavljevic",
+              "note": "Hoàn tất · 55 trận",
               "anchor": "rb-don-nu"
             },
             {
               "division": "Đơn nam",
-              "note": "Đã tới Semi-Finals · 54 trận",
+              "champion": "Hunter Johnson",
+              "note": "Hoàn tất · 55 trận",
               "anchor": "rb-don-nam"
             }
           ]
         },
         {
           "heading": "Kết quả Đôi nữ",
-          "content": "Chưa có nhà vô địch. 22 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Vô địch: Anna Bright / Anna Leigh Waters. 23 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đôi nữ",
             "rounds": [
+              {
+                "label": "Chung kết",
+                "matches": [
+                  {
+                    "winner": "Anna Bright / Anna Leigh Waters",
+                    "loser": "Tyra Hurricane Black / Jorja Johnson",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  }
+                ]
+              },
               {
                 "label": "Semi-Finals",
                 "matches": [
@@ -3787,52 +3916,6 @@ const post: BlogPost = {
                 "label": "Vòng 16",
                 "matches": [
                   {
-                    "winner": "Tyra Hurricane Black / Jorja Johnson",
-                    "loser": "Albie Huang / Andie Dikosavljevic",
-                    "sets": [
-                      [
-                        11,
-                        6
-                      ],
-                      [
-                        11,
-                        3
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Sahra Dennehy / Danni-Elle Townsend",
-                    "loser": "Allyce Jones / Kaitlyn Christian",
-                    "sets": [
-                      [
-                        11,
-                        7
-                      ],
-                      [
-                        4,
-                        11
-                      ],
-                      [
-                        11,
-                        6
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Judit Castillo / Kiora Kunimoto",
-                    "loser": "Lacy Schneemann / Ting Chieh Wei",
-                    "sets": [
-                      [
-                        11,
-                        8
-                      ],
-                      [
-                        11,
-                        3
-                      ]
-                    ]
-                  },
-                  {
                     "winner": "Mari Humberg / Cailyn Campbell",
                     "loser": "Chao Yi Wang / Nok Yiu Tang",
                     "sets": [
@@ -3843,38 +3926,6 @@ const post: BlogPost = {
                       [
                         6,
                         11
-                      ],
-                      [
-                        11,
-                        4
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Alix Truong / Jessie Irvine",
-                    "loser": "Lingwei Kong / Yufei Long",
-                    "sets": [
-                      [
-                        11,
-                        5
-                      ],
-                      [
-                        9,
-                        11
-                      ],
-                      [
-                        12,
-                        10
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Sofia Sewing / Catherine Parenteau",
-                    "loser": "Xiao Yi Wang-Beckvall / Aiko Yoshitomi",
-                    "sets": [
-                      [
-                        11,
-                        8
                       ],
                       [
                         11,
@@ -3909,6 +3960,84 @@ const post: BlogPost = {
                         3
                       ]
                     ]
+                  },
+                  {
+                    "winner": "Judit Castillo / Kiora Kunimoto",
+                    "loser": "Lacy Schneemann / Ting Chieh Wei",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Sahra Dennehy / Danni-Elle Townsend",
+                    "loser": "Allyce Jones / Kaitlyn Christian",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        4,
+                        11
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Tyra Hurricane Black / Jorja Johnson",
+                    "loser": "Albie Huang / Andie Dikosavljevic",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Sofia Sewing / Catherine Parenteau",
+                    "loser": "Xiao Yi Wang-Beckvall / Aiko Yoshitomi",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Alix Truong / Jessie Irvine",
+                    "loser": "Lingwei Kong / Yufei Long",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        9,
+                        11
+                      ],
+                      [
+                        12,
+                        10
+                      ]
+                    ]
                   }
                 ]
               },
@@ -3916,16 +4045,30 @@ const post: BlogPost = {
                 "label": "Vòng 32",
                 "matches": [
                   {
-                    "winner": "Xiao Yi Wang-Beckvall / Aiko Yoshitomi",
-                    "loser": "Lynn Lim / Kwan Wun Man",
+                    "winner": "Mari Humberg / Cailyn Campbell",
+                    "loser": "Trang Huynh / Yu-Chieh Hsieh",
                     "sets": [
                       [
                         11,
-                        5
+                        3
                       ],
                       [
                         11,
-                        1
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Hannah Blatt / Kei Sawaki",
+                    "loser": "Mayu Ito / Sophia Phuong Anh Tran",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        6
                       ]
                     ]
                   },
@@ -4004,45 +4147,51 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Hannah Blatt / Kei Sawaki",
-                    "loser": "Mayu Ito / Sophia Phuong Anh Tran",
+                    "winner": "Xiao Yi Wang-Beckvall / Aiko Yoshitomi",
+                    "loser": "Lynn Lim / Kwan Wun Man",
                     "sets": [
-                      [
-                        11,
-                        8
-                      ],
-                      [
-                        11,
-                        6
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Mari Humberg / Cailyn Campbell",
-                    "loser": "Trang Huynh / Yu-Chieh Hsieh",
-                    "sets": [
-                      [
-                        11,
-                        3
-                      ],
                       [
                         11,
                         5
+                      ],
+                      [
+                        11,
+                        1
                       ]
                     ]
                   }
                 ],
                 "collapsed": true
               }
-            ]
+            ],
+            "champion": "Anna Bright / Anna Leigh Waters"
           }
         },
         {
           "heading": "Kết quả Đôi nam",
-          "content": "Chưa có nhà vô địch. 54 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Vô địch: Federico Staksrud / Hayden Patriquin. 55 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đôi nam",
             "rounds": [
+              {
+                "label": "Chung kết",
+                "matches": [
+                  {
+                    "winner": "Federico Staksrud / Hayden Patriquin",
+                    "loser": "Ben Johns / Gabriel Tardio",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  }
+                ]
+              },
               {
                 "label": "Semi-Finals",
                 "matches": [
@@ -4797,15 +4946,35 @@ const post: BlogPost = {
                 ],
                 "collapsed": true
               }
-            ]
+            ],
+            "champion": "Federico Staksrud / Hayden Patriquin"
           }
         },
         {
           "heading": "Kết quả Đôi nam nữ",
-          "content": "Chưa có nhà vô địch. 54 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Vô địch: Ben Johns / Anna Leigh Waters. 55 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đôi nam nữ",
             "rounds": [
+              {
+                "label": "Chung kết",
+                "matches": [
+                  {
+                    "winner": "Ben Johns / Anna Leigh Waters",
+                    "loser": "Anna Bright / Hayden Patriquin",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  }
+                ]
+              },
               {
                 "label": "Semi-Finals",
                 "matches": [
@@ -5628,15 +5797,35 @@ const post: BlogPost = {
                 ],
                 "collapsed": true
               }
-            ]
+            ],
+            "champion": "Ben Johns / Anna Leigh Waters"
           }
         },
         {
           "heading": "Kết quả Đơn nữ",
-          "content": "Chưa có nhà vô địch. 54 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Vô địch: Andie Dikosavljevic. 55 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đơn nữ",
             "rounds": [
+              {
+                "label": "Chung kết",
+                "matches": [
+                  {
+                    "winner": "Andie Dikosavljevic",
+                    "loser": "Judit Castillo",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  }
+                ]
+              },
               {
                 "label": "Semi-Finals",
                 "matches": [
@@ -6393,15 +6582,39 @@ const post: BlogPost = {
                 ],
                 "collapsed": true
               }
-            ]
+            ],
+            "champion": "Andie Dikosavljevic"
           }
         },
         {
           "heading": "Kết quả Đơn nam",
-          "content": "Chưa có nhà vô địch. 54 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Vô địch: Hunter Johnson. 55 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đơn nam",
             "rounds": [
+              {
+                "label": "Chung kết",
+                "matches": [
+                  {
+                    "winner": "Hunter Johnson",
+                    "loser": "Tama Shimabukuro",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        6,
+                        11
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  }
+                ]
+              },
               {
                 "label": "Semi-Finals",
                 "matches": [
@@ -7183,18 +7396,15 @@ const post: BlogPost = {
                 ],
                 "collapsed": true
               }
-            ]
+            ],
+            "champion": "Hunter Johnson"
           }
         },
         {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đôi nữ, Finals: Anna Bright / Anna Leigh Waters gặp Tyra Hurricane Black / Jorja Johnson — trạng thái scheduled.",
-            "Đôi nam, Finals: Ben Johns / Gabriel Tardio gặp Federico Staksrud / Hayden Patriquin — trạng thái scheduled.",
-            "Đôi nam nữ, Finals: Ben Johns / Anna Leigh Waters gặp Anna Bright / Hayden Patriquin — trạng thái scheduled.",
-            "Đơn nữ, Finals: Judit Castillo gặp Andie Dikosavljevic — trạng thái scheduled.",
-            "Đơn nam, Finals: Tama Shimabukuro gặp Hunter Johnson — trạng thái scheduled."
+            "Nguồn chính thức hiện không đánh dấu trận nào đang diễn ra hoặc sắp đấu."
           ]
         },
         {
