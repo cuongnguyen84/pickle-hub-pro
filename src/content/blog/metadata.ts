@@ -40,7 +40,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     "slug": "pickleball-world-championships-2026-results",
     "publishedDate": "2026-11-02",
-    "updatedDate": "2026-10-24",
+    "updatedDate": "2026-10-26",
     "author": "The PickleHub Team",
     "tags": [
       "pickleball",
@@ -52,10 +52,6 @@ export const blogMetadata: BlogPostMetadata[] = [
     "ctaLabel": {
       "en": "Follow live scores on ThePickleHub",
       "vi": "Theo dõi điểm số trên ThePickleHub"
-    },
-    "heroImage": {
-      "src": "/images/blog/pickleball-world-championships-2026-results-hero.webp",
-      "alt": "Doubles players rallying at the net during a professional pickleball championship match, with the Opendoor Pickleball World Championships badge"
     },
     "titleEn": "World Championship 2026 Results: Daily Scores and Confirmed Winners",
     "titleVi": "Kết quả World Championship 2026: cập nhật hằng ngày",
