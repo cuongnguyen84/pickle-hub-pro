@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  ThePickleHub — weekly GSC/GA4 snapshot fetch.
+  Runs Mondays 07:15 Asia/Ho_Chi_Minh, ahead of the 08:00 SEO weekly job.
+  Install:  cp scripts/google-data/com.picklehub.google-data.plist ~/Library/LaunchAgents/
+            launchctl load ~/Library/LaunchAgents/com.picklehub.google-data.plist
+  Remove:   launchctl unload ~/Library/LaunchAgents/com.picklehub.google-data.plist
+            rm ~/Library/LaunchAgents/com.picklehub.google-data.plist
+  Adjust the two /Users/cm10/pickle-hub-pro paths if the repo ever moves.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.picklehub.google-data</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/cm10/pickle-hub-pro/scripts/google-data/run.sh</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/cm10/pickle-hub-pro</string>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Weekday</key>
+    <integer>1</integer>
+    <key>Hour</key>
+    <integer>7</integer>
+    <key>Minute</key>
+    <integer>15</integer>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>/Users/cm10/Library/Logs/picklehub-google-data.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/cm10/Library/Logs/picklehub-google-data.log</string>
+</dict>
+</plist>
