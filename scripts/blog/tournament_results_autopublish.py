@@ -347,13 +347,14 @@ def package(event: dict, feed: dict, now: datetime) -> dict:
     return package
 
 
-def write_source(pkg: dict, event: dict, today: str) -> None:
-    post = REPO / "src/content/blog/posts" / f"{pkg['slug']}.ts"
+def write_source(pkg: dict, event: dict, today: str, root: Path | None = None) -> None:
+    root = root or REPO
+    post = root / "src/content/blog/posts" / f"{pkg['slug']}.ts"
     published = pkg.get("publishedDate", today)
     post_text = w.post_ts(pkg, today, f"Verified tournament results generated from {event['source']}")
     post_text = post_text.replace(f'"publishedDate": "{today}"', f'"publishedDate": "{published}"', 1)
     post.write_text(post_text, encoding="utf-8")
-    metadata = REPO / "src/content/blog/metadata.ts"
+    metadata = root / "src/content/blog/metadata.ts"
     text = metadata.read_text(encoding="utf-8")
     entry = w.metadata_entry(pkg, today).replace(f'"publishedDate": "{today}"', f'"publishedDate": "{published}"', 1)
     anchor = "export const blogMetadata: BlogPostMetadata[] = [\n"
@@ -364,12 +365,11 @@ def write_source(pkg: dict, event: dict, today: str) -> None:
     else:
         text = text.replace(anchor, anchor + entry, 1)
     metadata.write_text(text, encoding="utf-8")
-    subprocess.run(["node", "scripts/gen-blog-barrel.mjs"], cwd=REPO, check=True)
+    subprocess.run(["node", str(root / "scripts/gen-blog-barrel.mjs")], cwd=root, check=True)
 
 
 def fingerprint_path(event: dict) -> Path:
-    state_root = Path(os.environ.get("PICKLEHUB_TEAM_HOME", str(Path.home() / "Library" / "Application Support" / "PickleHub" / "team-v2")))
-    return state_root / "tournament-fingerprints" / f"{event['key']}.sha256"
+    return _team_home() / "tournament-fingerprints" / f"{event['key']}.sha256"
 
 
 def should_publish(event: dict, fingerprint: str) -> bool:
@@ -409,11 +409,66 @@ def _upsert_vi(pkg: dict) -> None:
             raise RuntimeError("vi_row_write_failed")
 
 
-def _sync_main() -> None:
-    """Rebase local main onto origin/main; never leave a half-finished rebase behind."""
-    if subprocess.run(["git", "pull", "--rebase", "--quiet", "origin", "main"], cwd=REPO).returncode:
-        subprocess.run(["git", "rebase", "--abort"], cwd=REPO)
-        raise RuntimeError("autopublish_rebase_failed")
+def _team_home() -> Path:
+    return Path(os.environ.get("PICKLEHUB_TEAM_HOME", str(Path.home() / "Library" / "Application Support" / "PickleHub" / "team-v2")))
+
+
+# --- Dedicated publish worktree (incident 2026-10-25/26) -------------------
+# publish_event used to require the editor's working checkout to be clean on
+# main. One unrelated dirty file (Localizable.xcstrings, rewritten by Xcode
+# during an app build) silently blocked EVERY results publish for a full
+# finals day: the coverage layer only recorded blocked/RuntimeError. The
+# pipeline now publishes from its own git worktree under the team home,
+# reset to origin/main on every run. The working checkout's state — dirty
+# files, another branch, unpushed editor work — can no longer block or be
+# disturbed by results publishing.
+class PublishWorktreeError(RuntimeError):
+    """The dedicated publish worktree could not be prepared."""
+
+
+class _PushRejected(Exception):
+    """The publish commit was created but origin moved; regenerate once."""
+
+
+def _publish_worktree_path() -> Path:
+    return _team_home() / "publish-worktree"
+
+
+def _git(root: Path, *args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True)
+
+
+def _prepare_publish_worktree(push: bool) -> Path:
+    wt = _publish_worktree_path()
+    if wt.resolve() == REPO.resolve() or REPO.resolve() in wt.resolve().parents:
+        raise PublishWorktreeError("publish worktree must live outside the working checkout")
+    if not (wt / ".git").exists():
+        if wt.exists() and any(wt.iterdir()):
+            raise PublishWorktreeError(f"publish worktree path occupied by non-worktree content: {wt}")
+        fetched = _git(REPO, "fetch", "--quiet", "origin", "main")
+        if fetched.returncode:
+            raise PublishWorktreeError(f"publish worktree initial fetch failed: {fetched.stderr.strip()[:200]}")
+        made = _git(REPO, "worktree", "add", "--detach", str(wt), "origin/main")
+        if made.returncode:
+            # A previous worktree directory may have been deleted without
+            # unregistering; prune stale registrations and retry once.
+            _git(REPO, "worktree", "prune")
+            made = _git(REPO, "worktree", "add", "--detach", str(wt), "origin/main")
+        if made.returncode:
+            raise PublishWorktreeError(f"git worktree add failed: {made.stderr.strip()[:200]}")
+    if push:
+        fetched = _git(wt, "fetch", "--quiet", "origin", "main")
+        if fetched.returncode:
+            raise PublishWorktreeError(f"publish worktree fetch failed: {fetched.stderr.strip()[:200]}")
+        # The worktree is pipeline-owned: any leftover from a crashed run is
+        # disposable by definition, so reset hard instead of gating on it.
+        reset = _git(wt, "reset", "--hard", "--quiet", "origin/main")
+        if reset.returncode:
+            raise PublishWorktreeError(f"publish worktree reset failed: {reset.stderr.strip()[:200]}")
+        cleaned = _git(wt, "clean", "-fdq")
+        if cleaned.returncode:
+            raise PublishWorktreeError(f"publish worktree clean failed: {cleaned.stderr.strip()[:200]}")
+    return wt
 
 
 # --- Publish guard + pipeline fingerprint (incident 2026-10-24) -----------
@@ -466,43 +521,59 @@ def _pipeline_fingerprint() -> str:
 
 PIPELINE_FINGERPRINT = _pipeline_fingerprint()
 
-def publish_event(event: dict, now: datetime | None = None, push: bool = True) -> dict:
-    """Fetch, validate and publish one changed official score snapshot.
-
-    A clean checkout on ``main`` is required for push.  This prevents a
-    scheduled job from overwriting an editor's work.  ``push=False`` is useful
-    for QA and unit tests and leaves a reviewable local change only.
-    """
-    now = now or datetime.now(timezone.utc)
-    feed, fingerprint = fetch(event["result_source"], event["event_id"])
-    if not should_publish(event, fingerprint):
-        return {"status": "unchanged", "fingerprint": fingerprint}
-    status = subprocess.run(["git", "status", "--porcelain"], cwd=REPO, capture_output=True, text=True, check=True).stdout.strip()
-    branch = subprocess.run(["git", "branch", "--show-current"], cwd=REPO, capture_output=True, text=True, check=True).stdout.strip()
-    if status or branch != "main":
-        raise RuntimeError("autopublish_checkout_not_clean_main")
-    if push:
-        # PR merges land on origin between our runs; without this every push
-        # after 15/10 was rejected non-fast-forward and EN froze for 3 days.
-        _sync_main()
+def _publish_once(root: Path, event: dict, feed: dict, now: datetime, push: bool) -> tuple[dict, str]:
+    """Generate, write and commit one snapshot inside the publish worktree."""
     today = now.astimezone(timezone.utc).date().isoformat()
     pkg = package(event, feed, now)
     # The first publication date is stable; only updatedDate changes thereafter.
     pkg["publishedDate"] = event.get("published", event["start_date"])
     _assert_results_boards(pkg, feed)
-    write_source(pkg, event, today)
-    post_text = (REPO / "src/content/blog/posts" / f"{pkg['slug']}.ts").read_text(encoding="utf-8")
+    write_source(pkg, event, today, root=root)
+    post_text = (root / "src/content/blog/posts" / f"{pkg['slug']}.ts").read_text(encoding="utf-8")
     _assert_results_boards(pkg, feed, post_text)
     _upsert_vi(pkg)
     files = [f"src/content/blog/posts/{pkg['slug']}.ts", "src/content/blog/metadata.ts", "src/content/blog/posts/all.ts"]
-    subprocess.run(["git", "add", "--", *files], cwd=REPO, check=True)
-    subprocess.run(["git", "commit", "-m", f"content(blog): update {pkg['slug']} [pipeline:{PIPELINE_FINGERPRINT}]"], cwd=REPO, check=True, stdout=subprocess.DEVNULL)
-    head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO, capture_output=True, text=True, check=True).stdout.strip()
+    added = _git(root, "add", "--", *files)
+    if added.returncode:
+        raise PublishWorktreeError(f"publish worktree add failed: {added.stderr.strip()[:200]}")
+    # The daemon's environment normally provides a git identity; if the
+    # machine has none configured, supply a labeled bot identity for this
+    # commit only instead of failing the publish.
+    commit_args = ["commit", "-m", f"content(blog): update {pkg['slug']} [pipeline:{PIPELINE_FINGERPRINT}]"]
+    if not _git(root, "config", "user.email").stdout.strip():
+        commit_args = ["-c", "user.name=PickleHub Results Bot", "-c", "user.email=bot@thepicklehub.net", *commit_args]
+    committed = _git(root, *commit_args)
+    if committed.returncode:
+        raise PublishWorktreeError(f"publish worktree commit failed: {committed.stderr.strip()[:200]}")
+    head = _git(root, "rev-parse", "HEAD").stdout.strip()
     if push:
-        if subprocess.run(["git", "push", "origin", "HEAD:main"], cwd=REPO).returncode:
-            _sync_main()  # someone merged between our pull and push: rebase once, retry
-            subprocess.run(["git", "push", "origin", "HEAD:main"], cwd=REPO, check=True)
-        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO, capture_output=True, text=True, check=True).stdout.strip()
+        pushed = _git(root, "push", "origin", "HEAD:main")
+        if pushed.returncode:
+            raise _PushRejected(pushed.stderr.strip()[:200])
+        head = _git(root, "rev-parse", "HEAD").stdout.strip()
+    return pkg, head
+
+
+def publish_event(event: dict, now: datetime | None = None, push: bool = True) -> dict:
+    """Fetch, validate and publish one changed official score snapshot.
+
+    Publishing happens in a dedicated git worktree (see
+    _prepare_publish_worktree), never in the editor's working checkout, so
+    unrelated local state cannot block it.  ``push=False`` is useful for QA
+    and unit tests and leaves a reviewable commit in the worktree only.
+    """
+    now = now or datetime.now(timezone.utc)
+    feed, fingerprint = fetch(event["result_source"], event["event_id"])
+    if not should_publish(event, fingerprint):
+        return {"status": "unchanged", "fingerprint": fingerprint}
+    root = _prepare_publish_worktree(push)
+    try:
+        pkg, head = _publish_once(root, event, feed, now, push)
+    except _PushRejected:
+        # Someone merged between our fetch and push: reset the worktree to
+        # the new origin/main and regenerate once on top of it.
+        root = _prepare_publish_worktree(True)
+        pkg, head = _publish_once(root, event, feed, now, push)
     remember(event, fingerprint)
     # What production must serve once the deploy lands; checked by team_tournament_coverage.verify_live.
     marker = pkg["en"]["sections"][0]["content"].split(". ", 1)[0]
