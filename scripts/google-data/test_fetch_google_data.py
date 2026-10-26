@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -144,6 +145,57 @@ class CommitSnapshotsTests(unittest.TestCase):
         (repo / "data/google/gsc-2026-10-26.json").write_text('{"a": 2}\n')
         with self.assertRaises(g.GitPushError):
             g.commit_snapshots(repo, [f1, f2], date(2026, 10, 26))
+
+
+class CaBundleTests(unittest.TestCase):
+    """First Mac --selftest failed with CERTIFICATE_VERIFY_FAILED: macOS
+    python.org builds have no CA bundle and launchd gives a clean env."""
+
+    def _with_env(self, value, fn):
+        saved = os.environ.get("SSL_CERT_FILE")
+        if value is None:
+            os.environ.pop("SSL_CERT_FILE", None)
+        else:
+            os.environ["SSL_CERT_FILE"] = value
+        try:
+            return fn()
+        finally:
+            if saved is None:
+                os.environ.pop("SSL_CERT_FILE", None)
+            else:
+                os.environ["SSL_CERT_FILE"] = saved
+
+    def _fake_certifi(self, path):
+        import types
+        fake = types.ModuleType("certifi")
+        fake.where = lambda: str(path)
+        saved = sys.modules.get("certifi")
+        sys.modules["certifi"] = fake
+        self.addCleanup(lambda: sys.modules.__setitem__("certifi", saved) if saved else sys.modules.pop("certifi", None))
+
+    def _run_and_capture(self, env_value):
+        seen = {}
+        def fn():
+            g._ensure_ca_bundle()
+            seen["v"] = os.environ.get("SSL_CERT_FILE")
+        self._with_env(env_value, fn)
+        return seen["v"]
+
+    def test_missing_env_is_filled_from_certifi(self):
+        bundle = Path(tempfile.mkdtemp()) / "cacert.pem"; bundle.write_text("x")
+        self._fake_certifi(bundle)
+        self.assertEqual(self._run_and_capture(None), str(bundle))
+
+    def test_bogus_env_path_is_replaced(self):
+        bundle = Path(tempfile.mkdtemp()) / "cacert.pem"; bundle.write_text("x")
+        self._fake_certifi(bundle)
+        self.assertEqual(self._run_and_capture("/does/not/exist.pem"), str(bundle))
+
+    def test_valid_env_is_left_untouched(self):
+        bundle = Path(tempfile.mkdtemp()) / "cacert.pem"; bundle.write_text("x")
+        other = Path(tempfile.mkdtemp()) / "other.pem"; other.write_text("y")
+        self._fake_certifi(bundle)
+        self.assertEqual(self._run_and_capture(str(other)), str(other))
 
 
 if __name__ == "__main__":

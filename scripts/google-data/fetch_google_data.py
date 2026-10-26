@@ -65,6 +65,25 @@ def ga4_period(today: date) -> tuple[date, date]:
 
 
 # ------------------------------------------------------------ HTTP + auth
+def _ensure_ca_bundle() -> None:
+    """Point OpenSSL at certifi's CA bundle when the platform has none.
+
+    macOS python.org builds ship without a populated CA bundle, so every
+    HTTPS call dies with CERTIFICATE_VERIFY_FAILED — exactly what the first
+    --selftest on the Mac hit, in launchd's clean environment where no
+    shell profile sets SSL_CERT_FILE. run.sh exports it too; doing it here
+    as well keeps direct `python3 fetch_google_data.py` runs working.
+    """
+    current = os.environ.get("SSL_CERT_FILE")
+    if current and Path(current).exists():
+        return
+    try:
+        import certifi
+        os.environ["SSL_CERT_FILE"] = certifi.where()
+    except Exception:  # noqa: BLE001 - no certifi: leave the platform default
+        pass
+
+
 def _credentials(key_path: Path):
     from google.auth.transport.requests import Request
     from google.oauth2 import service_account
@@ -256,6 +275,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--repo", type=Path, default=None, help="repo root (default: the repo containing this script)")
     ap.add_argument("--no-commit", action="store_true", help="write snapshots but do not commit/push")
     args = ap.parse_args(argv)
+    _ensure_ca_bundle()
 
     repo = (args.repo or Path(__file__).resolve().parents[2]).resolve()
     key = args.key or Path(os.environ.get("GOOGLE_DATA_SA_KEY", repo / ".claude/secrets.local.gsc-ga4-sa.json"))
