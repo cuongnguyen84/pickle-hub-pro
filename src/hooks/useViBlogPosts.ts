@@ -101,6 +101,23 @@ export function publishedViBlogPostsQuery(limit?: number): string {
   return `${PUBLISHED_VI_BLOG_SELECT}&order=updated_at.desc&limit=${limit}`;
 }
 
+export type PublishedViBlogSummary = Pick<
+  ViBlogPost,
+  "id" | "slug" | "title" | "excerpt" | "cover_image_url" | "category" | "published_at" | "updated_at" | "tags"
+>;
+
+// Published reads are public under RLS, so — like the single-post read
+// below — they go out as publicRequest: viBlogFetch must not await
+// supabase.auth.getSession() first. That await sits ahead of the homepage's
+// blog fetch, and for a visitor with a stale stored session it can insert
+// an auth round-trip (or stall) before the request even starts. Admin
+// reads/mutations keep the session-aware path.
+export function fetchPublishedViBlogPosts(limit?: number): Promise<PublishedViBlogSummary[]> {
+  return viBlogFetch<PublishedViBlogSummary[]>(publishedViBlogPostsQuery(limit), {
+    publicRequest: true,
+  });
+}
+
 export function usePublishedViBlogPosts(options?: { limit?: number }) {
   const limit = options?.limit;
   return useQuery({
@@ -108,10 +125,7 @@ export function usePublishedViBlogPosts(options?: { limit?: number }) {
       limit == null
         ? ["vi-blog-posts", "published"]
         : ["vi-blog-posts", "published", "limit", limit],
-    queryFn: () =>
-      viBlogFetch<Pick<ViBlogPost, "id" | "slug" | "title" | "excerpt" | "cover_image_url" | "category" | "published_at" | "updated_at" | "tags">[]>(
-        publishedViBlogPostsQuery(limit),
-      ),
+    queryFn: () => fetchPublishedViBlogPosts(limit),
     staleTime: 5 * 60 * 1000,
   });
 }
