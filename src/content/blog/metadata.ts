@@ -10,6 +10,35 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "how-new-jersey-won-mlp-2026-analysis",
+    "publishedDate": "2026-10-26",
+    "updatedDate": "2026-10-26",
+    "author": "The PickleHub Team",
+    "tags": [
+      "major league pickleball",
+      "mlp 2026",
+      "new jersey 5s",
+      "dreambreaker",
+      "anna leigh waters",
+      "federico staksrud"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Watch live tournaments on ThePickleHub",
+      "vi": "Xem giải trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/new-jersey-mlp-2026-analysis-hero.webp",
+      "alt": "A four-player pickleball team lifting a championship trophy under arena lights (illustration)"
+    },
+    "titleEn": "How New Jersey finally won MLP: DreamBreakers, one trade, and the math of team pickleball",
+    "titleVi": "New Jersey vô địch MLP bằng cách nào: DreamBreaker, một thương vụ và bài toán đồng đội",
+    "metaTitleEn": "How New Jersey Finally Won MLP 2026",
+    "metaTitleVi": "New Jersey vô địch MLP 2026 bằng cách nào",
+    "metaDescriptionEn": "Two DreamBreakers, one mid-season trade and Anna Leigh Waters' absurd season line: the three lessons behind New Jersey's first MLP title.",
+    "metaDescriptionVi": "Ba bài học từ chức vô địch MLP 2026 của New Jersey: DreamBreaker, thương vụ Staksrud và sức nặng của siêu sao Waters."
+  },
+  {
     "slug": "dragon-medals-ppa-tour-asia",
     "publishedDate": "2026-10-26",
     "updatedDate": "2026-10-26",

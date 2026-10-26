@@ -3,7 +3,7 @@
 // import.meta.glob (Cloudflare Pages Functions / the SSR bot path).
 //
 // Loaders, not values, on purpose: _middleware.ts runs for EVERY request, and
-// a static import list would construct all 100 post objects at worker
+// a static import list would construct all 101 post objects at worker
 // startup. esbuild wraps dynamically-imported modules in lazy __esm() inits, so
 // a request only pays for the one post it renders.
 //
@@ -27,6 +27,7 @@ export const blogPostLoaders: Record<string, () => Promise<{ default: BlogPost }
   "hong-kong-slam-2026-preview": () => import("./hong-kong-slam-2026-preview"),
   "hong-kong-slam-2026-results": () => import("./hong-kong-slam-2026-results"),
   "hong-kong-slam-2026-schedule": () => import("./hong-kong-slam-2026-schedule"),
+  "how-new-jersey-won-mlp-2026-analysis": () => import("./how-new-jersey-won-mlp-2026-analysis"),
   "how-to-choose-a-pickleball-paddle": () => import("./how-to-choose-a-pickleball-paddle"),
   "how-to-create-pickleball-bracket": () => import("./how-to-create-pickleball-bracket"),
   "how-to-organize-pickleball-tournament": () => import("./how-to-organize-pickleball-tournament"),
