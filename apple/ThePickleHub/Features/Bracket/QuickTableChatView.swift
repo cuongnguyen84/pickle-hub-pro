@@ -1,5 +1,7 @@
+import PhotosUI
 import SwiftUI
 import Supabase
+import UniformTypeIdentifiers
 
 // ============================================================================
 // Tạo giải chia bảng bằng CHAT AI (bản native của web QuickTableChat).
@@ -10,9 +12,10 @@ import Supabase
 // ghi DB). Tạo giải bằng đúng đường của wizard: createTable (RPC quota) +
 // setupRoster (RPC atomic, kèm gán sân theo bảng p_group_courts của #910).
 //
-// Phạm vi bản này: gõ/dán chữ + chip theo bước + tạo giải trọn luồng.
-// Chưa có: đính kèm ảnh/file + link Google Sheet, sửa danh sách/Bản nháp
-// chi tiết, trộn lại bảng (web có — làm ở PR sau nếu cần).
+// Phạm vi bản này: gõ/dán chữ + chip theo bước + đính kèm ảnh/PDF/file chữ
+// (QTChatAttachments, khớp hợp đồng web) + tạo giải trọn luồng.
+// Chưa có: link Google Sheet, sửa danh sách/Bản nháp chi tiết, trộn lại
+// bảng (web có — làm ở PR sau nếu cần).
 // ============================================================================
 
 // MARK: - DTOs của edge function
@@ -70,6 +73,8 @@ private struct QTChatInvokeBody: Encodable {
     let pending: String
     let lang: String
     let facts: String
+    let attachment: QTChatAttachment?
+    let attachments: [QTChatAttachment]?
 }
 
 private struct QTChatInvokeResponse: Decodable, Sendable {
@@ -85,10 +90,12 @@ private struct QTChatInvokeResponse: Decodable, Sendable {
 private struct QTChatClient {
     private var client: SupabaseClient { SupabaseManager.shared.client }
 
-    func send(messages: [QTChatMessageDTO], draft: QTChatDraft, pending: String, lang: String) async throws -> QTChatInvokeResponse {
+    func send(messages: [QTChatMessageDTO], draft: QTChatDraft, pending: String, lang: String,
+              attachment: QTChatAttachment? = nil, attachments: [QTChatAttachment]? = nil) async throws -> QTChatInvokeResponse {
         let body = QTChatInvokeBody(
             messages: messages, draft: QTChatDraftDTO(draft), pending: pending, lang: lang,
-            facts: QTChatEngine.chatFacts(draft, lang: lang))
+            facts: QTChatEngine.chatFacts(draft, lang: lang),
+            attachment: attachment, attachments: attachments)
         do {
             return try await client.functions.invoke("quick-table-chat", options: FunctionInvokeOptions(body: body))
         } catch {
@@ -141,8 +148,11 @@ final class QuickTableChatViewModel {
     var createdTable: QTTable?
     var rosterFailed = false
     var errorText: String?
+    /// File đang chờ gửi kèm tin nhắn tiếp theo (tối đa 4, như web).
+    var staged: [QTStagedAttachment] = []
 
     private var failedText: String?
+    private var failedAttachments: (attachment: QTChatAttachment?, attachments: [QTChatAttachment]?)?
     private var history: [(draft: QTChatDraft, messages: [Msg])] = []
     private let repo = QuickTableRepository()
     private let client = QTChatClient()
@@ -169,6 +179,8 @@ final class QuickTableChatViewModel {
         messages = []
         history = []
         failedText = nil
+        failedAttachments = nil
+        staged = []
         createdTable = nil
         rosterFailed = false
         startIfNeeded()
@@ -239,6 +251,7 @@ final class QuickTableChatViewModel {
         let locked = QTChatEngine.lockAdvance(next)
         draft = locked
         failedText = nil
+        failedAttachments = nil
         let q = question(for: QTChatEngine.nextSlot(locked))
         let unchangedText = QTChatEngine.unchangedReply(lang)
         let unchanged = (ack ?? "").isEmpty || ack == unchangedText
@@ -253,11 +266,57 @@ final class QuickTableChatViewModel {
         if !text.isEmpty { pushBot(text) }
     }
 
+    // MARK: Đính kèm (ảnh/PDF/file chữ — xem QTChatAttachments)
+
+    /// Nhận một file đã chuẩn hoá từ picker: payload attachment (ảnh/PDF)
+    /// hoặc nội dung chữ (file văn bản). Kiểm trần đúng luật server ngay
+    /// tại máy để khỏi gửi một lượt chắc chắn bị 400.
+    func stagePrepared(name: String, attachment: QTChatAttachment?, textContent: String?, thumbnailData: Data?) {
+        guard attachment != nil || textContent != nil else {
+            errorText = String(localized: "Chưa đọc được file này. Thử ảnh, PDF hoặc file chữ (txt/csv).")
+            return
+        }
+        guard staged.count < QTChatAttachments.maxCount else {
+            errorText = String(localized: "Chỉ đính kèm tối đa 4 file.")
+            return
+        }
+        if let attachment {
+            let all = staged.compactMap(\.attachment) + [attachment]
+            guard QTChatAttachments.isValid(all) else {
+                errorText = String(localized: "File quá lớn — mỗi file tối đa khoảng 4,4 MB.")
+                return
+            }
+        }
+        errorText = nil
+        staged.append(QTStagedAttachment(name: name, attachment: attachment, textContent: textContent, thumbnailData: thumbnailData))
+    }
+
+    func removeStaged(_ id: QTStagedAttachment.ID) {
+        staged.removeAll { $0.id == id }
+    }
+
     func sendTapped() {
+        guard !busy, createdTable == nil else { return }
         let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty, !busy, createdTable == nil else { return }
+        if !staged.isEmpty {
+            // Có file chờ: gửi kèm luôn, kể cả chưa gõ chữ (như web).
+            let outgoing = QTChatAttachments.assemble(typedText: text, staged: staged)
+            input = ""
+            staged = []
+            Task { await process(outgoing: outgoing) }
+            return
+        }
+        guard !text.isEmpty else { return }
         input = ""
         Task { await process(text, isRetry: false) }
+    }
+
+    /// Tin có file đính kèm đi thẳng tới mô hình (như web): bỏ qua các
+    /// đường tắt tất định, vì danh sách nằm trong file phải do AI đọc.
+    private func process(outgoing: QTChatAttachments.Outgoing) async {
+        snap()
+        messages.append(Msg(role: "user", text: outgoing.text))
+        await callModel(text: outgoing.text, attachment: outgoing.attachment, attachments: outgoing.attachments)
     }
 
     private func process(_ rawText: String, isRetry: Bool) async {
@@ -292,13 +351,14 @@ final class QuickTableChatViewModel {
         await callModel(text: text)
     }
 
-    private func callModel(text: String) async {
+    private func callModel(text: String, attachment: QTChatAttachment? = nil, attachments: [QTChatAttachment]? = nil) async {
         busy = true
         errorText = nil
         let historyDTOs = messages.suffix(8).map { QTChatMessageDTO(role: $0.role, text: String($0.text.prefix(4000))) }
         let pending = slot.rawValue
         do {
-            let res = try await client.send(messages: historyDTOs, draft: draft, pending: pending, lang: lang)
+            let res = try await client.send(messages: historyDTOs, draft: draft, pending: pending, lang: lang,
+                                            attachment: attachment, attachments: attachments)
             busy = false
             if let err = res.error, !err.isEmpty { throw NSError(domain: "qtchat", code: 1, userInfo: [NSLocalizedDescriptionKey: err]) }
             let said = res.reply ?? ""
@@ -330,6 +390,7 @@ final class QuickTableChatViewModel {
         } catch {
             busy = false
             failedText = text
+            failedAttachments = (attachment, attachments)
             pushBot(String(localized: "Mình chưa nghe rõ, mạng hoặc trợ lý đang chậm. Thử lại nhé?"))
         }
     }
@@ -432,10 +493,12 @@ final class QuickTableChatViewModel {
         case .retry:
             guard let text = failedText else { return }
             failedText = nil
+            let atts = failedAttachments
+            failedAttachments = nil
             // Edge function đòi tin cuối là của người dùng: bỏ các bong bóng
             // bot (báo lỗi) nằm sau tin người dùng đó trước khi gửi lại.
             while let last = messages.last, last.role == "bot" { messages.removeLast() }
-            Task { await callModel(text: text) }
+            Task { await callModel(text: text, attachment: atts?.attachment, attachments: atts?.attachments) }
             return
         default:
             break
@@ -565,6 +628,10 @@ struct QuickTableChatView: View {
     @State private var model = QuickTableChatViewModel()
     @Environment(\.dismiss) private var dismiss
     @FocusState private var composerFocused: Bool
+    @State private var showAttachDialog = false
+    @State private var showPhotoPicker = false
+    @State private var showFileImporter = false
+    @State private var photoSelection: [PhotosPickerItem] = []
 
     var body: some View {
         NavigationStack {
@@ -575,6 +642,7 @@ struct QuickTableChatView: View {
                     createdCard(table)
                 } else {
                     chipsRow
+                    stagedRow
                     composer
                 }
             }
@@ -587,6 +655,59 @@ struct QuickTableChatView: View {
                 }
             }
             .onAppear { model.startIfNeeded() }
+            .confirmationDialog("Đính kèm", isPresented: $showAttachDialog, titleVisibility: .visible) {
+                Button("Chọn ảnh") { showPhotoPicker = true }
+                Button("Chọn tệp (PDF, file chữ)") { showFileImporter = true }
+                Button("Hủy", role: .cancel) {}
+            }
+            .photosPicker(isPresented: $showPhotoPicker, selection: $photoSelection,
+                          maxSelectionCount: max(1, QTChatAttachments.maxCount - model.staged.count),
+                          matching: .images, photoLibrary: .shared())
+            .onChange(of: photoSelection) { _, items in
+                guard !items.isEmpty else { return }
+                photoSelection = []
+                Task { await stagePhotos(items) }
+            }
+            .fileImporter(isPresented: $showFileImporter,
+                          allowedContentTypes: [.pdf, .plainText, .commaSeparatedText],
+                          allowsMultipleSelection: true) { result in
+                if case .success(let urls) = result { stageFiles(urls) }
+            }
+        }
+    }
+
+    /// Ảnh từ thư viện: chuyển JPEG ≤1600px ngoài luồng chính rồi đưa vào
+    /// hàng chờ (đúng cách web nén ảnh trước khi gửi).
+    private func stagePhotos(_ items: [PhotosPickerItem]) async {
+        for (index, item) in items.enumerated() {
+            guard let data = try? await item.loadTransferable(type: Data.self) else { continue }
+            let converted = await Task.detached(priority: .userInitiated) {
+                QTChatAttachments.jpegAttachment(fromImageData: data)
+            }.value
+            model.stagePrepared(
+                name: String(localized: "Ảnh \(index + 1)"),
+                attachment: converted,
+                textContent: nil,
+                thumbnailData: converted.flatMap { Data(base64Encoded: $0.data) })
+        }
+    }
+
+    /// Tệp từ ứng dụng Tệp: PDF đi đường attachment, txt/csv đọc thành chữ.
+    private func stageFiles(_ urls: [URL]) {
+        for url in urls {
+            guard url.startAccessingSecurityScopedResource() else { continue }
+            defer { url.stopAccessingSecurityScopedResource() }
+            guard let data = try? Data(contentsOf: url) else { continue }
+            if url.pathExtension.lowercased() == "pdf" {
+                model.stagePrepared(name: url.lastPathComponent,
+                                    attachment: QTChatAttachments.pdfAttachment(from: data),
+                                    textContent: nil, thumbnailData: nil)
+            } else {
+                model.stagePrepared(name: url.lastPathComponent,
+                                    attachment: nil,
+                                    textContent: QTChatAttachments.textContent(from: data),
+                                    thumbnailData: nil)
+            }
         }
     }
 
@@ -735,8 +856,54 @@ struct QuickTableChatView: View {
         }
     }
 
+    // MARK: File đang chờ gửi
+
+    @ViewBuilder
+    private var stagedRow: some View {
+        if !model.staged.isEmpty {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(model.staged) { item in
+                        HStack(spacing: 7) {
+                            if let thumb = item.thumbnailData, let ui = UIImage(data: thumb) {
+                                Image(uiImage: ui)
+                                    .resizable().scaledToFill()
+                                    .frame(width: 26, height: 26)
+                                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                            } else {
+                                Image(systemName: item.isTextFile ? "doc.text" : "doc.fill")
+                                    .font(.system(size: 14)).foregroundStyle(TLColor.fg2)
+                            }
+                            Text(item.name).font(TLFont.sans(12.5, .medium)).foregroundStyle(TLColor.fg).lineLimit(1)
+                            Button { model.removeStaged(item.id) } label: {
+                                Image(systemName: "xmark.circle.fill").font(.system(size: 15)).foregroundStyle(TLColor.fg3)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 6)
+                        .background(TLColor.surface, in: Capsule())
+                        .overlay(Capsule().strokeBorder(TLColor.border, lineWidth: 1))
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 6)
+            }
+        }
+    }
+
     private var composer: some View {
-        HStack(alignment: .bottom, spacing: 10) {
+        let canSend = !model.input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !model.staged.isEmpty
+        return HStack(alignment: .bottom, spacing: 10) {
+            Button { showAttachDialog = true } label: {
+                Image(systemName: "paperclip")
+                    .font(.system(size: 20))
+                    .foregroundStyle(TLColor.fg2)
+                    .frame(width: 34, height: 40)
+            }
+            .buttonStyle(.plain)
+            .disabled(model.busy || model.staged.count >= QTChatAttachments.maxCount)
+            .accessibilityLabel("Đính kèm")
             TextField("Nhắn hoặc dán danh sách…", text: $model.input, axis: .vertical)
                 .lineLimit(1...5)
                 .font(TLFont.sans(15))
@@ -750,11 +917,10 @@ struct QuickTableChatView: View {
             Button { model.sendTapped() } label: {
                 Image(systemName: "arrow.up.circle.fill")
                     .font(.system(size: 32))
-                    .foregroundStyle(model.input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || model.busy
-                        ? TLColor.fg3 : TLColor.accentText)
+                    .foregroundStyle(!canSend || model.busy ? TLColor.fg3 : TLColor.accentText)
             }
             .buttonStyle(.plain)
-            .disabled(model.input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || model.busy)
+            .disabled(!canSend || model.busy)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
