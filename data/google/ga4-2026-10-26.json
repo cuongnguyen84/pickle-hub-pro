@@ -1,0 +1,344 @@
+{
+ "source": "ga4",
+ "property": "522556358",
+ "generated_at": "2026-10-26T09:16:44.185371+07:00",
+ "period": {
+  "start": "2026-09-28",
+  "end": "2026-10-25",
+  "days": 28
+ },
+ "totals": {
+  "sessions": 5450,
+  "users": 4996,
+  "views": 14067
+ },
+ "daily": [
+  {
+   "date": "20260928",
+   "sessions": 79,
+   "totalUsers": 66,
+   "screenPageViews": 373
+  },
+  {
+   "date": "20260929",
+   "sessions": 82,
+   "totalUsers": 75,
+   "screenPageViews": 271
+  },
+  {
+   "date": "20260930",
+   "sessions": 74,
+   "totalUsers": 66,
+   "screenPageViews": 340
+  },
+  {
+   "date": "20261001",
+   "sessions": 84,
+   "totalUsers": 76,
+   "screenPageViews": 270
+  },
+  {
+   "date": "20261002",
+   "sessions": 116,
+   "totalUsers": 109,
+   "screenPageViews": 303
+  },
+  {
+   "date": "20261003",
+   "sessions": 775,
+   "totalUsers": 707,
+   "screenPageViews": 2424
+  },
+  {
+   "date": "20261004",
+   "sessions": 176,
+   "totalUsers": 157,
+   "screenPageViews": 658
+  },
+  {
+   "date": "20261005",
+   "sessions": 124,
+   "totalUsers": 114,
+   "screenPageViews": 343
+  },
+  {
+   "date": "20261006",
+   "sessions": 63,
+   "totalUsers": 52,
+   "screenPageViews": 163
+  },
+  {
+   "date": "20261007",
+   "sessions": 65,
+   "totalUsers": 54,
+   "screenPageViews": 136
+  },
+  {
+   "date": "20261008",
+   "sessions": 63,
+   "totalUsers": 60,
+   "screenPageViews": 157
+  },
+  {
+   "date": "20261009",
+   "sessions": 91,
+   "totalUsers": 83,
+   "screenPageViews": 269
+  },
+  {
+   "date": "20261010",
+   "sessions": 82,
+   "totalUsers": 71,
+   "screenPageViews": 192
+  },
+  {
+   "date": "20261011",
+   "sessions": 133,
+   "totalUsers": 127,
+   "screenPageViews": 353
+  },
+  {
+   "date": "20261012",
+   "sessions": 139,
+   "totalUsers": 128,
+   "screenPageViews": 322
+  },
+  {
+   "date": "20261013",
+   "sessions": 100,
+   "totalUsers": 94,
+   "screenPageViews": 262
+  },
+  {
+   "date": "20261014",
+   "sessions": 647,
+   "totalUsers": 618,
+   "screenPageViews": 1057
+  },
+  {
+   "date": "20261015",
+   "sessions": 136,
+   "totalUsers": 123,
+   "screenPageViews": 288
+  },
+  {
+   "date": "20261016",
+   "sessions": 136,
+   "totalUsers": 130,
+   "screenPageViews": 375
+  },
+  {
+   "date": "20261017",
+   "sessions": 149,
+   "totalUsers": 142,
+   "screenPageViews": 345
+  },
+  {
+   "date": "20261018",
+   "sessions": 194,
+   "totalUsers": 184,
+   "screenPageViews": 395
+  },
+  {
+   "date": "20261019",
+   "sessions": 326,
+   "totalUsers": 299,
+   "screenPageViews": 746
+  },
+  {
+   "date": "20261020",
+   "sessions": 245,
+   "totalUsers": 217,
+   "screenPageViews": 809
+  },
+  {
+   "date": "20261021",
+   "sessions": 280,
+   "totalUsers": 263,
+   "screenPageViews": 808
+  },
+  {
+   "date": "20261022",
+   "sessions": 152,
+   "totalUsers": 135,
+   "screenPageViews": 354
+  },
+  {
+   "date": "20261023",
+   "sessions": 264,
+   "totalUsers": 245,
+   "screenPageViews": 803
+  },
+  {
+   "date": "20261024",
+   "sessions": 249,
+   "totalUsers": 211,
+   "screenPageViews": 434
+  },
+  {
+   "date": "20261025",
+   "sessions": 426,
+   "totalUsers": 390,
+   "screenPageViews": 817
+  }
+ ],
+ "top_pages": [
+  {
+   "pagePath": "/",
+   "screenPageViews": 994,
+   "sessions": 460
+  },
+  {
+   "pagePath": "/live/903204b8-7b3c-4348-ad0f-4e937237a625",
+   "screenPageViews": 966,
+   "sessions": 727
+  },
+  {
+   "pagePath": "/login",
+   "screenPageViews": 661,
+   "sessions": 377
+  },
+  {
+   "pagePath": "/vi",
+   "screenPageViews": 424,
+   "sessions": 179
+  },
+  {
+   "pagePath": "/blog/ppa-brisbane-2026-results",
+   "screenPageViews": 409,
+   "sessions": 326
+  },
+  {
+   "pagePath": "/search",
+   "screenPageViews": 404,
+   "sessions": 33
+  },
+  {
+   "pagePath": "/tools",
+   "screenPageViews": 401,
+   "sessions": 153
+  },
+  {
+   "pagePath": "/vi/blog/ket-qua-ppa-brisbane-2026",
+   "screenPageViews": 378,
+   "sessions": 324
+  },
+  {
+   "pagePath": "/blog/hong-kong-slam-2026-results",
+   "screenPageViews": 373,
+   "sessions": 286
+  },
+  {
+   "pagePath": "/live",
+   "screenPageViews": 373,
+   "sessions": 170
+  },
+  {
+   "pagePath": "/vi/live",
+   "screenPageViews": 358,
+   "sessions": 162
+  },
+  {
+   "pagePath": "/tools/quick-tables",
+   "screenPageViews": 331,
+   "sessions": 104
+  },
+  {
+   "pagePath": "/vi/blog/ket-qua-hong-kong-slam-2026",
+   "screenPageViews": 316,
+   "sessions": 200
+  },
+  {
+   "pagePath": "/tournaments",
+   "screenPageViews": 283,
+   "sessions": 123
+  },
+  {
+   "pagePath": "/blog/veolia-chicago-cup-2026-results",
+   "screenPageViews": 277,
+   "sessions": 235
+  },
+  {
+   "pagePath": "/blog/hong-kong-slam-2026-schedule",
+   "screenPageViews": 272,
+   "sessions": 205
+  },
+  {
+   "pagePath": "/vi/blog/cach-chon-vot-pickleball",
+   "screenPageViews": 258,
+   "sessions": 247
+  },
+  {
+   "pagePath": "/blog/virginia-beach-open-2026-results",
+   "screenPageViews": 237,
+   "sessions": 209
+  },
+  {
+   "pagePath": "/auth/callback",
+   "screenPageViews": 222,
+   "sessions": 201
+  },
+  {
+   "pagePath": "/vi/tournaments",
+   "screenPageViews": 207,
+   "sessions": 92
+  },
+  {
+   "pagePath": "/blog/pickleball-world-cup-2026-da-nang-results",
+   "screenPageViews": 197,
+   "sessions": 146
+  },
+  {
+   "pagePath": "/vi/tools",
+   "screenPageViews": 195,
+   "sessions": 83
+  },
+  {
+   "pagePath": "/vi/blog/lich-thi-dau-hong-kong-slam-2026",
+   "screenPageViews": 160,
+   "sessions": 136
+  },
+  {
+   "pagePath": "/vi/blog/ket-qua-ppa-las-vegas-open-2026",
+   "screenPageViews": 155,
+   "sessions": 92
+  },
+  {
+   "pagePath": "/feed",
+   "screenPageViews": 152,
+   "sessions": 47
+  }
+ ],
+ "top_channels": [
+  {
+   "sessionDefaultChannelGroup": "Organic Search",
+   "sessions": 3040,
+   "totalUsers": 2683
+  },
+  {
+   "sessionDefaultChannelGroup": "Organic Social",
+   "sessions": 1724,
+   "totalUsers": 1460
+  },
+  {
+   "sessionDefaultChannelGroup": "Direct",
+   "sessions": 442,
+   "totalUsers": 356
+  },
+  {
+   "sessionDefaultChannelGroup": "Referral",
+   "sessions": 155,
+   "totalUsers": 85
+  },
+  {
+   "sessionDefaultChannelGroup": "Unassigned",
+   "sessions": 118,
+   "totalUsers": 116
+  },
+  {
+   "sessionDefaultChannelGroup": "AI Assistant",
+   "sessions": 28,
+   "totalUsers": 24
+  }
+ ]
+}
