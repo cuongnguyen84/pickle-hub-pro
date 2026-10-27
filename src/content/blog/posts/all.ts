@@ -3,7 +3,7 @@
 // import.meta.glob (Cloudflare Pages Functions / the SSR bot path).
 //
 // Loaders, not values, on purpose: _middleware.ts runs for EVERY request, and
-// a static import list would construct all 101 post objects at worker
+// a static import list would construct all 106 post objects at worker
 // startup. esbuild wraps dynamically-imported modules in lazy __esm() inits, so
 // a request only pays for the one post it renders.
 //
@@ -12,14 +12,18 @@ import type { BlogPost } from "../types";
 
 export const blogPostLoaders: Record<string, () => Promise<{ default: BlogPost }>> = {
   "app-tour-vs-ppa-tour-contracts-2026": () => import("./app-tour-vs-ppa-tour-contracts-2026"),
+  "best-pickleball-clubs-get-five-things-right": () => import("./best-pickleball-clubs-get-five-things-right"),
   "best-pickleball-paddles-beginners-2026": () => import("./best-pickleball-paddles-beginners-2026"),
   "best-pickleball-tournament-software-2026": () => import("./best-pickleball-tournament-software-2026"),
   "create-tournament-by-chat": () => import("./create-tournament-by-chat"),
+  "crosscourt-drop-against-hard-hitters": () => import("./crosscourt-drop-against-hard-hitters"),
   "dragon-medals-ppa-tour-asia": () => import("./dragon-medals-ppa-tour-asia"),
   "dupr-algorithm-explained-performance-vs-expectation": () => import("./dupr-algorithm-explained-performance-vs-expectation"),
   "dupr-rating-improvement-30-day-plan": () => import("./dupr-rating-improvement-30-day-plan"),
   "dupr-thepicklehub-user-guide": () => import("./dupr-thepicklehub-user-guide"),
   "dupr-vietnam-partnership-ta-pickleball-thepicklehub": () => import("./dupr-vietnam-partnership-ta-pickleball-thepicklehub"),
+  "entered-35-tournament-playing-45s-sandbagging": () => import("./entered-35-tournament-playing-45s-sandbagging"),
+  "forced-vs-unforced-errors-what-they-reveal": () => import("./forced-vs-unforced-errors-what-they-reveal"),
   "graphite-vs-carbon-pickleball-paddle": () => import("./graphite-vs-carbon-pickleball-paddle"),
   "hcmc-open-2026-preview": () => import("./hcmc-open-2026-preview"),
   "hcmc-open-2026-recap": () => import("./hcmc-open-2026-recap"),
@@ -111,6 +115,7 @@ export const blogPostLoaders: Record<string, () => Promise<{ default: BlogPost }
   "vietnam-pickleball-tournament-calendar-2026": () => import("./vietnam-pickleball-tournament-calendar-2026"),
   "virginia-beach-open-2026-results": () => import("./virginia-beach-open-2026-results"),
   "what-is-dupr-pickleball-rating-system": () => import("./what-is-dupr-pickleball-rating-system"),
+  "why-your-backhand-flick-has-no-power": () => import("./why-your-backhand-flick-has-no-power"),
   "world-pickleball-rankings-wpr-explained": () => import("./world-pickleball-rankings-wpr-explained"),
 };
 

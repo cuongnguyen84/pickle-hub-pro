@@ -10,6 +10,141 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "why-your-backhand-flick-has-no-power",
+    "publishedDate": "2026-10-27",
+    "updatedDate": "2026-10-27",
+    "author": "The PickleHub Team",
+    "tags": [
+      "backhand flick",
+      "technique",
+      "ky thuat",
+      "pickleball tips"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Watch live tournaments on ThePickleHub",
+      "vi": "Xem giải trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/why-your-backhand-flick-has-no-power-hero.webp",
+      "alt": "Close-up of a backhand flick at the kitchen line (illustration)"
+    },
+    "titleEn": "Why Your Backhand Flick Has No Power (It's Not Your Wrist)",
+    "titleVi": "Vì sao cú flick trái tay của bạn không có lực (không phải lỗi ở cổ tay)",
+    "metaTitleEn": "Why Your Backhand Flick Has No Power",
+    "metaTitleVi": "Vì sao cú flick trái tay không có lực",
+    "metaDescriptionEn": "Your backhand flick is not a wrist shot. Pro Danni-Elle Townsend explains why locking the wrist and rotating the shoulder creates real power and control.",
+    "metaDescriptionVi": "Cú flick trái tay không đến từ cổ tay. Townsend giải thích vì sao khóa cổ tay, xoay vai mới tạo lực thật và kiểm soát tốt."
+  },
+  {
+    "slug": "best-pickleball-clubs-get-five-things-right",
+    "publishedDate": "2026-10-27",
+    "updatedDate": "2026-10-27",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball clubs",
+      "clb pickleball",
+      "facilities",
+      "pickleball viet nam"
+    ],
+    "ctaPath": "/san",
+    "ctaLabel": {
+      "en": "Find courts on ThePickleHub",
+      "vi": "Tìm sân trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/best-pickleball-clubs-get-five-things-right-hero.webp",
+      "alt": "Interior of a modern indoor pickleball club with spacious courts (illustration)"
+    },
+    "titleEn": "I've Visited 75+ Pickleball Clubs. The Best Ones Get These 5 Things Right",
+    "titleVi": "Đã tới hơn 75 CLB pickleball, tôi thấy các CLB tốt nhất đều làm đúng 5 điều này",
+    "metaTitleEn": "75+ Pickleball Clubs: 5 Things the Best Get Right",
+    "metaTitleVi": "5 điều các CLB pickleball tốt nhất làm đúng",
+    "metaDescriptionEn": "Kaitlyn Kerr visited 75+ pickleball clubs in 19 states and 7 countries. The best all get the same five things right — space, sound, staying, tech, culture.",
+    "metaDescriptionVi": "Kaitlyn Kerr đã tham quan hơn 75 CLB pickleball. Các CLB tốt nhất đều làm đúng 5 điều về sân, âm thanh và con người."
+  },
+  {
+    "slug": "forced-vs-unforced-errors-what-they-reveal",
+    "publishedDate": "2026-10-27",
+    "updatedDate": "2026-10-27",
+    "author": "The PickleHub Team",
+    "tags": [
+      "forced errors",
+      "unforced errors",
+      "tam ly thi dau",
+      "pickleball tips"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Watch live tournaments on ThePickleHub",
+      "vi": "Xem giải trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/forced-vs-unforced-errors-what-they-reveal-hero.webp",
+      "alt": "A player missing a shot at the kitchen as the ball drops off the net tape (illustration)"
+    },
+    "titleEn": "Forced vs. Unforced Errors: What Your Mistakes Are Trying to Tell You",
+    "titleVi": "Lỗi ép buộc và lỗi tự phát: những sai lầm đang nói gì về lối chơi của bạn",
+    "metaTitleEn": "Forced vs Unforced Errors, Explained",
+    "metaTitleVi": "Lỗi ép buộc và lỗi tự phát khác nhau thế nào",
+    "metaDescriptionEn": "Count your errors in two columns. Forced and unforced errors have different causes — and completely different fixes. Here is how to read the ratio.",
+    "metaDescriptionVi": "Lỗi ép buộc và lỗi tự phát khác nhau ở nguyên nhân — và cách sửa. Đếm lỗi theo hai cột để biết bạn cần sửa gì."
+  },
+  {
+    "slug": "crosscourt-drop-against-hard-hitters",
+    "publishedDate": "2026-10-27",
+    "updatedDate": "2026-10-27",
+    "author": "The PickleHub Team",
+    "tags": [
+      "crosscourt drop",
+      "third shot",
+      "ky thuat",
+      "pickleball tips"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Watch live tournaments on ThePickleHub",
+      "vi": "Xem giải trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/crosscourt-drop-against-hard-hitters-hero.webp",
+      "alt": "A crosscourt drop shot arcing diagonally over a pickleball court (illustration)"
+    },
+    "titleEn": "The Crosscourt Drop: Your Best Answer to Hard Hitters",
+    "titleVi": "Cú drop chéo sân: câu trả lời tốt nhất cho người đánh mạnh",
+    "metaTitleEn": "The Crosscourt Drop vs Hard Hitters",
+    "metaTitleVi": "Drop chéo sân đấu người đánh mạnh",
+    "metaDescriptionEn": "Driving back at a banger plays their game. The crosscourt drop — longest diagonal, lowest net crossing, softest landing — is how you starve them of pace.",
+    "metaDescriptionVi": "Drop chéo sân là đáp án cho người đánh mạnh: đường bóng dài nhất, qua lưới thấp nhất, bỏ đói tốc độ của họ."
+  },
+  {
+    "slug": "entered-35-tournament-playing-45s-sandbagging",
+    "publishedDate": "2026-10-27",
+    "updatedDate": "2026-10-27",
+    "author": "The PickleHub Team",
+    "tags": [
+      "sandbagging",
+      "dupr",
+      "giai phong trao",
+      "pickleball tips"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Watch live tournaments on ThePickleHub",
+      "vi": "Xem giải trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/entered-35-tournament-playing-45s-sandbagging-hero.webp",
+      "alt": "An amateur player looking frustrated at a local pickleball tournament (illustration)"
+    },
+    "titleEn": "You Entered a 3.5 Tournament. Why Are You Playing 4.5s?",
+    "titleVi": "Bạn đăng ký giải 3.5. Sao lại phải đánh với toàn 4.5?",
+    "metaTitleEn": "Sandbagging: 3.5 Brackets Full of 4.5s",
+    "metaTitleVi": "Đăng ký giải 3.5 nhưng gặp toàn 4.5",
+    "metaDescriptionEn": "Sandbagging — entering below your true level — is amateur pickleball's most frustrating habit. Sometimes it is cheating; often the ratings are to blame.",
+    "metaDescriptionVi": "Sandbagging là đăng ký giải dưới trình độ thật. Vì sao nhánh 3.5 toàn 4.5, và người chơi lẫn BTC làm được gì?"
+  },
+  {
     "slug": "hong-kong-slam-2026-post-analysis",
     "publishedDate": "2026-10-27",
     "updatedDate": "2026-10-27",
