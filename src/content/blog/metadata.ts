@@ -216,6 +216,10 @@ export const blogMetadata: BlogPostMetadata[] = [
       "en": "Follow live scores on ThePickleHub",
       "vi": "Theo dõi điểm số trên ThePickleHub"
     },
+    "heroImage": {
+      "src": "/images/blog/pickleball-world-championships-2026-results-hero.webp",
+      "alt": "Pickleball World Championships 2026 arena with the official tournament logo (illustration)"
+    },
     "titleEn": "World Championship 2026 Results: Daily Scores and Confirmed Winners",
     "titleVi": "Kết quả World Championship 2026: cập nhật hằng ngày",
     "metaTitleEn": "PPA World Championships Results 2026: World Championship",
