@@ -11,6 +11,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, Send, Sparkles, Undo2, X, TriangleAlert } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
 import { useQuickTable } from "@/hooks/useQuickTable";
@@ -260,10 +261,10 @@ const TournamentAssistant = ({ routeScreen }: { routeScreen: AssistantScreen }) 
                     ))}
                     {m.cardState === "pending" && (
                       <div className="tl-asst-actions">
-                        <button type="button" className={m.card.danger ? "tl-btn tl-asst-danger" : "tl-btn green"} onClick={() => confirmCard(m)}>
+                        <Button type="button" size="sm" variant={m.card.danger ? "destructive" : "default"} onClick={() => confirmCard(m)}>
                           {m.card.danger ? c.confirmDanger : c.confirm}
-                        </button>
-                        <button type="button" className="tl-btn" onClick={() => cancelCard(m)}>{c.cancel}</button>
+                        </Button>
+                        <Button type="button" size="sm" variant="outline" onClick={() => cancelCard(m)}>{c.cancel}</Button>
                       </div>
                     )}
                     {m.cardState === "running" && <div className="tl-asst-result"><Loader2 className="h-3.5 w-3.5 animate-spin" />{c.running}</div>}
@@ -302,9 +303,9 @@ const TournamentAssistant = ({ routeScreen }: { routeScreen: AssistantScreen }) 
           {!user ? (
             <div className="tl-asst-compose">
               <span style={{ flex: 1, fontSize: 13, color: "var(--tl-fg-3)" }}>{c.login}</span>
-              <button type="button" className="tl-btn green" onClick={() => navigate(`${localePath("/login", lang)}?redirect=${encodeURIComponent(window.location.pathname)}`)}>
+              <Button type="button" size="sm" onClick={() => navigate(`${localePath("/login", lang)}?redirect=${encodeURIComponent(window.location.pathname)}`)}>
                 {c.loginBtn}
-              </button>
+              </Button>
             </div>
           ) : (
             <>
@@ -349,11 +350,11 @@ const TournamentAssistant = ({ routeScreen }: { routeScreen: AssistantScreen }) 
 const CSS = `
 .tl-asst-fab { position: fixed; right: 16px; bottom: var(--asst-bottom); z-index: 9990; width: 48px; height: 48px; border-radius: 999px;
   display: inline-flex; align-items: center; justify-content: center; background: var(--tl-bg, #08090a); color: var(--tl-green, #00b96b);
-  border: 1px solid var(--tl-border, #22252a); box-shadow: 0 4px 12px rgba(0,0,0,.4); transition: transform .18s ease, border-color .18s ease; }
+  border: 1px solid var(--tl-border, #22252a); box-shadow: var(--tl-shadow, none); transition: transform .18s ease, border-color .18s ease; }
 .tl-asst-fab:hover, .tl-asst-fab:focus-visible { transform: scale(1.06); border-color: var(--tl-green, #00b96b); outline: none; }
 .tl-asst-panel { position: fixed; z-index: 9990; left: 8px; right: 8px; bottom: var(--asst-bottom); height: min(72dvh, 620px);
   display: flex; flex-direction: column; background: var(--tl-bg, #08090a); color: var(--tl-fg, #f5f3ee);
-  border: 1px solid var(--tl-border, #22252a); border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,.5); overflow: hidden; }
+  border: 1px solid var(--tl-border-strong); border-radius: 14px; overflow: hidden; }
 @media (min-width: 768px) {
   .tl-asst-fab { right: 24px; bottom: 24px; }
   .tl-asst-panel { left: auto; right: 24px; bottom: 24px; width: 400px; height: min(78dvh, 640px); }
@@ -370,7 +371,6 @@ const CSS = `
 .tl-asst-msg.user { background: var(--tl-green-glow, rgba(0,185,107,.15)); }
 .tl-asst-card { align-self: stretch; border: 1px solid var(--tl-border, #22252a); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
 .tl-asst-card.danger { border-color: var(--tl-live); }
-.tl-btn.tl-asst-danger { background: var(--tl-live); border-color: var(--tl-live); color: #fff; }
 .tl-asst-line { font-weight: 500; }
 .tl-asst-warn { display: flex; gap: 6px; align-items: flex-start; color: var(--tl-amber); font-size: 12px; }
 .tl-asst-actions { display: flex; gap: 8px; margin-top: 4px; }
@@ -384,7 +384,7 @@ const CSS = `
 .tl-asst-compose textarea { flex: 1; resize: none; max-height: 120px; min-height: 40px; padding: 9px 11px; border-radius: 10px; font-size: 16px;
   background: var(--tl-surface); color: inherit; border: 1px solid var(--tl-border, #22252a); }
 .tl-asst-icon { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 999px; background: transparent; color: inherit; border: 0; }
-.tl-asst-icon.send { background: var(--tl-green, #00b96b); color: #04120b; width: 40px; height: 40px; }
+.tl-asst-icon.send { background: var(--tl-green, #00b96b); color: var(--tl-bg); width: 40px; height: 40px; }
 .tl-asst-icon:disabled { opacity: .4; }
 .tl-asst-link { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--tl-fg-3, #8a8f98); background: transparent; border: 0; padding: 4px 6px; }
 .tl-asst-link:hover { color: var(--tl-fg, #f5f3ee); }
