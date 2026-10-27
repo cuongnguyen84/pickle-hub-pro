@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmailVerificationRedirectUrl } from "@/lib/auth-config";
 import { purgeAuthSensitiveCaches } from "@/lib/pwa/cache";
+import { reportCaughtError } from "@/lib/errorReporter";
 import { trackEvent } from "@/utils/ga";
 
 interface AuthContextType {
@@ -17,6 +18,17 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Upper bound on the initial session resolution. getSession() has no
+// timeout of its own and can wedge indefinitely with a stored session —
+// the auth lock held by another tab during a stalled token refresh, or
+// the refresh request itself hanging (no fetch timeout anywhere). On
+// 2026-10-27 that left /admin on its loading skeleton forever for the
+// site owner: loading only cleared when getSession settled or an auth
+// event fired, and neither happened. After this budget the provider
+// stops blocking the UI (the session still applies if it lands later)
+// and reports the stall so it stops being invisible.
+export const AUTH_LOADING_TIMEOUT_MS = 8000;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -25,9 +37,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    let sessionSettled = false;
+    const markSessionSettled = () => {
+      sessionSettled = true;
+    };
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        markSessionSettled();
         console.log("[Auth] onAuthStateChange:", event);
         setSession(session);
         setUser(session?.user ?? null);
@@ -64,14 +82,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // THEN check for existing session. The .catch matters as much as the
+    // safety timer below: a rejected getSession (revoked/rotated refresh
+    // token) previously left `loading` true forever with an unhandled
+    // rejection as the only trace.
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        markSessionSettled();
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      })
+      .catch((err) => {
+        markSessionSettled();
+        reportCaughtError(
+          err instanceof Error ? err : new Error(String(err)),
+          "auth:getSession",
+        );
+        setLoading(false);
+      });
 
-    return () => subscription.unsubscribe();
+    const safetyTimer = setTimeout(() => {
+      if (!sessionSettled) {
+        reportCaughtError(
+          new Error(`auth session unresolved after ${AUTH_LOADING_TIMEOUT_MS}ms`),
+          "auth:loadingTimeout",
+        );
+      }
+      setLoading(false);
+    }, AUTH_LOADING_TIMEOUT_MS);
+
+    return () => {
+      clearTimeout(safetyTimer);
+      subscription.unsubscribe();
+    };
   }, [queryClient]);
 
   // Memoized so every consumer of useAuth() doesn't re-render whenever the
