@@ -91,6 +91,7 @@ const T = {
     finishedLock: "Giải đã kết thúc — chỉ còn sửa tên và mô tả.",
     notDrawn: "Giải chưa chia bảng nên chưa có đội nào trong bảng.",
     notDrawnAdd: "Giải chưa chia bảng. Thêm đội ở trang nhập danh sách hoặc duyệt đăng ký.",
+    notSaved: "Danh sách đội của giải này chưa được lưu (còn nằm trong ô nhập) — xoá hoặc sửa dòng đó ngay trên trang nhập danh sách, chưa có gì để mình xoá.",
     afterDraw: (n: string) => `Giải đã bốc thăm — xoá đội ${n} sẽ làm lệch lịch và kết quả của bảng. Mình không tự xoá.`,
     alreadyDrawn: "Giải đã chia bảng rồi. Muốn chia lại thì dùng bốc thăm lại.",
     needApproved: (k: number) => `Mới có ${k} đội được duyệt — cần ít nhất 2 để chia bảng.`,
@@ -131,6 +132,7 @@ const T = {
     finishedLock: "The tournament is over — only the name and description can change.",
     notDrawn: "Groups aren't drawn yet, so no team is in a group.",
     notDrawnAdd: "Groups aren't drawn yet. Add teams on the entry page or approve registrations.",
+    notSaved: "This tournament's list isn't saved yet (it's still in the entry form) — remove or edit that line on the entry page; there's nothing for me to delete.",
     afterDraw: (n: string) => `Groups are already drawn — removing ${n} would break that group's schedule and results. I won't remove it on my own.`,
     alreadyDrawn: "Groups are already drawn. Use a re-draw to change them.",
     needApproved: (k: number) => `Only ${k} approved teams — at least 2 are needed to draw groups.`,
@@ -177,6 +179,29 @@ const scoredIn = (s: TableState, groupId: string | null) =>
 
 const teamLabel = (p1: string, p2?: string | null) => (p2 ? `${p1} & ${p2}` : p1);
 
+const fold = (v: string) =>
+  v.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/đ/g, "d").replace(/\s+/g, " ").trim();
+
+/**
+ * Đội model nhắc tới. Model hay chép id kèm tiền tố ("id:…", "[id=…]") hoặc
+ * chỉ đưa tên — test tay 27/10: mọi lệnh xoá đội rơi vào "chưa hiểu" vì id
+ * không khớp nguyên văn. Thử id (bỏ tiền tố), rồi tên đội / tên VĐV.
+ */
+export function resolveTeam(s: TableState, raw: Record<string, unknown>): TableState["players"][number] | null {
+  const idRaw = typeof raw.team_id === "string" ? raw.team_id : "";
+  const id = idRaw.replace(/^[\s[(]*(?:team_)?id\s*[:=]\s*/i, "").replace(/[\])\s]+$/, "");
+  const byId = s.players.find((p) => p.id === id);
+  if (byId) return byId;
+  for (const q of [raw.team_name, idRaw].filter((v): v is string => typeof v === "string").map(fold)) {
+    if (!q) continue;
+    const exact = s.players.filter((p) => [p.name, p.p1, p.p2].some((n) => n && fold(n) === q));
+    if (exact.length === 1) return exact[0];
+    const part = s.players.filter((p) => fold(p.name).includes(q) || q.includes(fold(p.name)));
+    if (part.length === 1) return part[0];
+  }
+  return null;
+}
+
 /** Chỉ số bảng → số đội đang có. */
 function groupSizes(s: TableState): number[] {
   return s.groups.map((g) => s.players.filter((p) => p.group_id === g.id).length);
@@ -192,7 +217,9 @@ function validGroupCount(n: number, g: number): boolean {
  * không dùng được (model bịa id, thiếu tên…), để server nói "chưa hiểu".
  * Quyền đã kiểm trước (proposeAction).
  */
-export function buildCard(s: TableState, raw: Record<string, unknown>, lang: Lang): ActionCard | null {
+export function buildCard(
+  s: TableState, raw: Record<string, unknown>, lang: Lang, viewingGroupId: string | null = null,
+): ActionCard | null {
   const t = T[lang];
   const type = raw.type as ActionType;
   if (!ACTION_TYPES.includes(type)) return null;
@@ -247,7 +274,7 @@ export function buildCard(s: TableState, raw: Record<string, unknown>, lang: Lan
       return card({ args: { default_sets: sets }, lines: [t.sets(s.default_sets ?? 1, sets)], undo: { type, args: { default_sets: s.default_sets ?? 1 } } });
     }
     case "rename_team": {
-      const p = s.players.find((x) => x.id === raw.team_id);
+      const p = resolveTeam(s, raw);
       if (!p) return s.players.length ? null : blocked(t.notDrawn, s.requires_registration ? [{ label: t.altRegistration, prompt: "", href: regHref }] : []);
       const p1 = clean(raw.p1, 100);
       const p2 = s.is_doubles ? clean(raw.p2, 100) || p.p2 || "" : "";
@@ -283,10 +310,12 @@ export function buildCard(s: TableState, raw: Record<string, unknown>, lang: Lan
       });
     }
     case "remove_team": {
-      const p = s.players.find((x) => x.id === raw.team_id);
+      const p = resolveTeam(s, raw);
       if (!p) {
         if (s.players.length) return null;
-        return blocked(t.notDrawn, s.requires_registration ? [{ label: t.altRegistration, prompt: "", href: regHref }] : [{ label: t.altSetup, prompt: "", href: setupHref }]);
+        return s.requires_registration
+          ? blocked(t.notDrawn, [{ label: t.altRegistration, prompt: "", href: regHref }])
+          : blocked(t.notSaved, [{ label: t.altSetup, prompt: "", href: setupHref }]);
       }
       if (locked) return blocked(t.playoffLock);
       // Luật 3 của brief: đã bốc thăm thì không tự xoá — cảnh báo + phương án.
@@ -309,7 +338,9 @@ export function buildCard(s: TableState, raw: Record<string, unknown>, lang: Lan
       if (s.status !== "group_stage") {
         return locked ? blocked(t.playoffLock) : blocked(t.notDrawn, [{ label: lang === "vi" ? "Chia bảng" : "Draw groups", prompt: lang === "vi" ? "Chia bảng cho giải này" : "Draw groups for this tournament" }]);
       }
-      const ids = Array.isArray(raw.drop_team_ids) ? raw.drop_team_ids.filter((id) => s.players.some((p) => p.id === id)) : [];
+      const ids = Array.isArray(raw.drop_team_ids)
+        ? [...new Set(raw.drop_team_ids.map((v) => resolveTeam(s, { team_id: v })?.id).filter((id): id is string => !!id))]
+        : [];
       if (Array.isArray(raw.drop_team_ids) && raw.drop_team_ids.length && !ids.length) return null;
       const n = s.players.length - ids.length;
       const asked = Number(raw.group_count);
@@ -328,8 +359,19 @@ export function buildCard(s: TableState, raw: Record<string, unknown>, lang: Lan
     case "set_group_courts": {
       if (locked) return blocked(t.playoffLock);
       const groupCount = s.groups.length || s.group_count || 0;
-      if (!Array.isArray(raw.group_courts) || !groupCount) return null;
-      const pins = raw.group_courts.slice(0, groupCount).map((v) => {
+      if (!groupCount) return null;
+      // Model hay trả "bảng này sân 2" thành group + courts thay vì mảng theo
+      // thứ tự bảng (test tay 27/10) → dựng lại mảng từ bảng nói tên / bảng đang xem.
+      let list: unknown[] | null = Array.isArray(raw.group_courts) ? raw.group_courts : null;
+      const letter = typeof raw.group === "string" ? raw.group.trim().toUpperCase().charCodeAt(0) - 65 : -1;
+      const viewing = s.groups.findIndex((g) => g.id === viewingGroupId);
+      const single = Array.isArray(raw.courts) && raw.courts.length === 1 ? raw.courts[0] : list?.length === 1 ? list[0] : null;
+      const target = letter >= 0 && letter < groupCount ? letter : viewing;
+      if (single != null && target >= 0 && (!list || list.length === 1)) {
+        list = Array.from({ length: groupCount }, (_, i) => (i === target ? single : (s.group_courts?.[i] ?? 0)));
+      }
+      if (!list) return null;
+      const pins = list.slice(0, groupCount).map((v) => {
         const n = Number(v);
         return Number.isInteger(n) && n >= 1 && n < 100 ? n : null;
       });
@@ -353,11 +395,11 @@ export function buildCard(s: TableState, raw: Record<string, unknown>, lang: Lan
 
 /** Cổng quyền: chỉ chủ giải mới nhận thẻ hành động. */
 export function proposeAction(
-  s: TableState | null, role: ActorRole, raw: unknown, lang: Lang,
+  s: TableState | null, role: ActorRole, raw: unknown, lang: Lang, viewingGroupId: string | null = null,
 ): { card: ActionCard | null; refused: boolean } {
   if (!raw || typeof raw !== "object" || !s) return { card: null, refused: false };
   if (role !== "owner") return { card: null, refused: true };
-  return { card: buildCard(s, raw as Record<string, unknown>, lang), refused: false };
+  return { card: buildCard(s, raw as Record<string, unknown>, lang, viewingGroupId), refused: false };
 }
 
 export function refusalText(role: ActorRole, lang: Lang): string {
@@ -387,12 +429,12 @@ export function describeState(s: TableState, role: ActorRole, lang: Lang, viewin
       const pin = s.group_courts?.[i];
       const members = s.players
         .filter((p) => p.group_id === g.id)
-        .map((p) => `${p.name} [id:${p.id}]${p.played ? ` (${p.won ?? 0}/${p.played} thắng, hiệu số ${p.diff ?? 0})` : ""}`);
+        .map((p) => `${p.name} (team_id=${p.id})${p.played ? ` (${p.won ?? 0}/${p.played} thắng, hiệu số ${p.diff ?? 0})` : ""}`);
       const done = s.matches.filter((m) => m.group_id === g.id && !m.is_playoff);
       lines.push(`Bảng ${String.fromCharCode(65 + i)}${g.id === viewingGroup ? " (ĐANG XEM)" : ""}${pin ? ` — sân ${pin}` : ""}: ${members.join("; ")} — ${done.filter((m) => m.status === "completed").length}/${done.length} trận có kết quả.`);
     });
   } else if (s.players.length) {
-    lines.push(`Đội: ${s.players.map((p) => `${p.name} [id:${p.id}]`).join("; ")}`);
+    lines.push(`Đội: ${s.players.map((p) => `${p.name} (team_id=${p.id})`).join("; ")}`);
   }
   void lang;
   return lines.filter(Boolean).join("\n").slice(0, 9000);

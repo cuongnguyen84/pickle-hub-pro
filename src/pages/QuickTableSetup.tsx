@@ -5,7 +5,7 @@ import { DraftRestoredBanner, DraftSaveStatus } from '@/components/wizard/DraftA
 import { completeJourney, startJourney, trackJourneyStep } from '@/lib/journeys';
 import { TheLineLayout } from '@/components/layout';
 import { useQuickTable, type QuickTable } from '@/hooks/useQuickTable';
-import { useAssistantContext } from '@/lib/assistant-context';
+import { ASSISTANT_APPLIED_EVENT, useAssistantContext } from '@/lib/assistant-context';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -178,6 +178,14 @@ const QuickTableSetup = () => {
 
     loadTable();
   }, [shareId, getTableByShareId, navigate, lp]);
+
+  // Trợ lý AI nổi đổi tên/sân của giải → chỉ làm mới dòng giải, giữ nguyên form đang nhập.
+  useEffect(() => {
+    if (!shareId) return undefined;
+    const onApplied = () => { void getTableByShareId(shareId).then((d) => { if (d) setTable(d.table); }); };
+    window.addEventListener(ASSISTANT_APPLIED_EVENT, onApplied);
+    return () => window.removeEventListener(ASSISTANT_APPLIED_EVENT, onApplied);
+  }, [shareId, getTableByShareId]);
 
   const updatePlayer = (index: number, field: keyof PlayerInput, value: string) => {
     setPlayers(prev => {

@@ -1,6 +1,6 @@
 // Trợ lý AI nổi quanh giải — luật thẻ hành động (brief 27/10/2026, mục 5 + 8).
 import { describe, it, expect } from "vitest";
-import { buildCard, phaseOf, proposeAction, roleFor, type TableState } from "../../tournament-assistant/rules.ts";
+import { buildCard, phaseOf, proposeAction, resolveTeam, roleFor, type TableState } from "../../tournament-assistant/rules.ts";
 
 function table(over: Partial<TableState> = {}): TableState {
   return {
@@ -78,5 +78,42 @@ describe("thẻ xác nhận", () => {
     const s = table({ status: "playoff" });
     expect(buildCard(s, { type: "add_team", p1: "X", p2: "Y" }, "vi")!.blocked).toBeDefined();
     expect(buildCard(s, { type: "rebuild_groups" }, "vi")!.blocked).toBeDefined();
+  });
+});
+
+// Test tay 27/10: model trả id kèm tiền tố / chỉ tên đội / "bảng này" bằng group + courts.
+describe("chịu được cách model điền tham số", () => {
+  it.each([
+    [{ team_id: "p2" }],
+    [{ team_id: "team_id=p2" }],
+    [{ team_id: "[id:p2]" }],
+    [{ team_name: "Tú & Long" }],
+    [{ team_name: "tu & long" }],
+    [{ team_id: "Tú" }],
+  ])("tìm ra đội p2 từ %j", (raw) => {
+    expect(resolveTeam(table(), raw)?.id).toBe("p2");
+  });
+  it("tên mơ hồ → null", () => {
+    expect(resolveTeam(table(), { team_name: "&" })).toBeNull();
+  });
+  it("xoá đội theo tên sau bốc thăm → chặn + phương án", () => {
+    const card = buildCard(table(), { type: "remove_team", team_name: "QA Golf" }, "vi");
+    expect(card).toBeNull();
+    const ok = buildCard(table(), { type: "remove_team", team_name: "Em & Phong" }, "vi")!;
+    expect(ok.blocked?.alternatives).toHaveLength(2);
+  });
+  it("bảng này sân 2: courts [2] + bảng đang xem B", () => {
+    const card = buildCard(table(), { type: "set_group_courts", courts: [2] }, "vi", "gB")!;
+    expect(card.args.group_courts).toEqual([null, 2]);
+  });
+  it("group B + courts [2]", () => {
+    expect(buildCard(table(), { type: "set_group_courts", group: "B", courts: [2] }, "vi")!.args.group_courts).toEqual([null, 2]);
+  });
+  it("group_courts [2] một phần tử khi đang xem bảng B → bảng B", () => {
+    expect(buildCard(table(), { type: "set_group_courts", group_courts: [2] }, "vi", "gB")!.args.group_courts).toEqual([null, 2]);
+  });
+  it("chưa lưu danh sách (không đăng ký) → báo xoá trên trang nhập", () => {
+    const setup = table({ status: "setup", groups: [], players: [], matches: [] });
+    expect(buildCard(setup, { type: "remove_team", team_name: "QA Hotel" }, "vi")!.blocked?.reason).toContain("chưa được lưu");
   });
 });
