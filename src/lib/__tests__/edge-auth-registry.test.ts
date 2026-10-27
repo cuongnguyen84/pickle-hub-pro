@@ -38,12 +38,12 @@ describe("Edge Function auth registry", () => {
     const snapshot = loadRepositorySnapshot(projectRoot);
     const findings = validateRegistrySnapshot(snapshot);
 
-    // 86 since quick-table-chat (create a quick table by AI chat). The count
+    // 87 since tournament-assistant (floating AI assistant on tournament pages). The count
     // is pinned on purpose: a new Edge Function that nobody classified should
     // red this gate.
-    expect(snapshot.sourceFunctions).toHaveLength(86);
-    expect(snapshot.configFunctions).toHaveLength(86);
-    expect(Object.keys(snapshot.registry.functions ?? {})).toHaveLength(86);
+    expect(snapshot.sourceFunctions).toHaveLength(87);
+    expect(snapshot.configFunctions).toHaveLength(87);
+    expect(Object.keys(snapshot.registry.functions ?? {})).toHaveLength(87);
     expect(snapshot.registry.enforcement).toBe("strict");
     expect(findings).toEqual([]);
   });

@@ -8,6 +8,7 @@ import { useI18n } from "@/i18n";
 import { useTournamentBySlug, useTournamentContent } from "@/hooks/useSupabaseData";
 import { TournamentHero, ContentSection, CourtTabs } from "@/components/tournament";
 import { Trophy, Radio, Clock, RotateCcw, Play } from "lucide-react";
+import { useAssistantContext } from "@/lib/assistant-context";
 
 const TournamentDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -22,6 +23,15 @@ const TournamentDetail = () => {
   const { data: content, isLoading: contentLoading } = useTournamentContent(tournament?.id ?? "");
 
   const [videoFilter, setVideoFilter] = useState<"all" | "short" | "long">("all");
+
+  // Trợ lý AI nổi: giải livestream không có dữ liệu bảng ở server — chỉ trả lời theo tóm tắt này.
+  useAssistantContext(tournament ? {
+    screen: "tournament_detail",
+    label: tournament.name,
+    tournament: { kind: "tournament", slug: slug ?? "", name: tournament.name },
+    summary: `Giải "${tournament.name}", trạng thái ${tournament.status}, ${tournament.start_date ?? "?"} → ${tournament.end_date ?? "?"}. ` +
+      `Livestream: ${(content?.livestreams ?? []).map((l) => `${l.title} (${l.status})`).slice(0, 15).join("; ") || "chưa có"}.`,
+  } : null);
 
   // Process content
   const { liveStreams, scheduledStreams, replays, videos, filteredVideos } = useMemo(() => {

@@ -459,3 +459,6 @@ verify_enabled = true
 
 [functions.quick-table-chat]
 verify_jwt = false
+
+[functions.tournament-assistant]
+verify_jwt = false

@@ -5,6 +5,7 @@ import { DraftRestoredBanner, DraftSaveStatus } from '@/components/wizard/DraftA
 import { completeJourney, startJourney, trackJourneyStep } from '@/lib/journeys';
 import { TheLineLayout } from '@/components/layout';
 import { useQuickTable, type QuickTable } from '@/hooks/useQuickTable';
+import { useAssistantContext } from '@/lib/assistant-context';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -45,6 +46,12 @@ const QuickTableSetup = () => {
   } = useQuickTable();
 
   const [table, setTable] = useState<QuickTable | null>(null);
+  useAssistantContext(table ? {
+    screen: 'quick_table_setup',
+    label: table.name,
+    tournament: { kind: 'quick_table', share_id: table.share_id, name: table.name },
+    stage: 'setup',
+  } : null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [players, setPlayers] = useState<PlayerInput[]>([]);
