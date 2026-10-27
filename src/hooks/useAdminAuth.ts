@@ -33,6 +33,9 @@ export function useAdminAuth(): AdminAuthState {
       setIsCheckingRole(false);
       return;
     }
+    // Capture the id here: inside the async check below, TS cannot carry
+    // the non-null narrowing of `user` across the function boundary.
+    const userId = user.id;
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), ROLE_CHECK_TIMEOUT_MS);
@@ -43,7 +46,7 @@ export function useAdminAuth(): AdminAuthState {
         const { data, error } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", user.id)
+          .eq("user_id", userId)
           .eq("role", "admin")
           .abortSignal(controller.signal)
           .maybeSingle();
