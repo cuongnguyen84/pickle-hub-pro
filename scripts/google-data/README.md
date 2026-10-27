@@ -45,7 +45,11 @@ Snapshots land in `data/google/gsc-<date>.json` and `data/google/ga4-<date>.json
   window), top 25 queries, top 25 pages, and up to 15 pages losing the
   most clicks.
 - **GA4**: 28 days ending yesterday — daily sessions/users/views, totals,
-  top 25 pages by views, top channels by sessions.
+  top 25 pages by views, top channels by sessions, and a per-day
+  sessions/users series by referral source (`daily_by_source`:
+  date/source/medium/sessions/users for facebook.com, m.facebook.com,
+  l.facebook.com, lm.facebook.com, x.com, t.co, google and (direct) —
+  sum the Facebook rows for total Facebook sessions on a day).
 
 ## Behaviour notes
 
