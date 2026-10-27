@@ -46,6 +46,8 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/hcmc-open-2026-recap-hero.webp": [1200, 630],
   "/images/blog/hien-truong-quan-do-vietnam-pickleball-2026-hero-768.webp": [768, 432],
   "/images/blog/hien-truong-quan-do-vietnam-pickleball-2026-hero.webp": [1536, 864],
+  "/images/blog/hong-kong-slam-2026-post-analysis-hero-768.webp": [768, 512],
+  "/images/blog/hong-kong-slam-2026-post-analysis-hero.webp": [1536, 1024],
   "/images/blog/hong-kong-slam-2026-preview-hero-768.webp": [768, 432],
   "/images/blog/hong-kong-slam-2026-preview-hero.webp": [1672, 941],
   "/images/blog/how-to-choose-a-pickleball-paddle-hero-768.webp": [768, 432],

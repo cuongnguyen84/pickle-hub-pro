@@ -10,6 +10,34 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "hong-kong-slam-2026-post-analysis",
+    "publishedDate": "2026-10-27",
+    "updatedDate": "2026-10-27",
+    "author": "The PickleHub Team",
+    "tags": [
+      "hong kong slam",
+      "ppa tour asia",
+      "shimabukuro",
+      "phan tich",
+      "pickleball viet nam"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Watch live tournaments on ThePickleHub",
+      "vi": "Xem giải trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/hong-kong-slam-2026-post-analysis-hero.webp",
+      "alt": "Singles match under arena lights in a packed indoor stadium, with the PPA Pickleball Tour Asia logo (illustration)"
+    },
+    "titleEn": "Hong Kong after the storm: a week of upsets, and what back-to-back finals really cost a 15-year-old",
+    "titleVi": "Hong Kong sau cơn bão: tuần lễ của những cú sốc, và cái giá thật sự của 2 trận chung kết liên tiếp với một tay vợt 15 tuổi",
+    "metaTitleEn": "Hong Kong Slam 2026: A Week of Upsets, Analysed",
+    "metaTitleVi": "Phân tích Hong Kong Slam: tuần lễ của cú sốc",
+    "metaDescriptionEn": "Hong Kong Slam 2026 post-analysis: both singles No. 1 seeds fell in the quarterfinals, and back-to-back finals took their toll on 15-year-old Shimabukuro.",
+    "metaDescriptionVi": "Phân tích hậu Hong Kong Slam 2026: hai hạt giống số 1 đơn gục ở tứ kết, và cái giá của 2 chung kết liền với tay vợt 15 tuổi."
+  },
+  {
     "slug": "dragon-medals-ppa-tour-asia",
     "publishedDate": "2026-10-26",
     "updatedDate": "2026-10-26",
