@@ -138,6 +138,47 @@ class SnapshotShapeTests(unittest.TestCase):
             self.assertIn(key, snap)
 
 
+    def test_ga4_snapshot_includes_daily_by_source_filtered_and_sorted(self):
+        seen_dims = []
+
+        def row(d, s, m, sessions, users):
+            return {"dimensionValues": [{"value": d}, {"value": s}, {"value": m}],
+                    "metricValues": [{"value": str(sessions)}, {"value": str(users)}]}
+
+        def fake_api(creds, method, url, body=None):
+            dims = [d["name"] for d in body["dimensions"]]
+            seen_dims.append(dims)
+            if dims == ["date", "sessionSource", "sessionMedium"]:
+                # Out of order on purpose; "bing" is not a tracked source.
+                return {"rows": [
+                    row("20261025", "google", "organic", 40, 31),
+                    row("20261024", "facebook.com", "referral", 12, 9),
+                    row("20261024", "bing", "organic", 3, 3),
+                    row("20261024", "(direct)", "(none)", 55, 40),
+                    row("20261024", "google", "organic", 38, 30),
+                    row("20261024", "google", "cpc", 2, 2),
+                    row("20261025", "t.co", "referral", 4, 4)]}
+            return {"rows": []}
+        original = g._api_json
+        g._api_json = fake_api
+        try:
+            snap = g.build_ga4_snapshot(_FakeCreds(), date(2026, 10, 26))
+        finally:
+            g._api_json = original
+        self.assertIn(["date", "sessionSource", "sessionMedium"], seen_dims)
+        self.assertEqual(
+            snap["daily_by_source"],
+            [{"date": "20261024", "source": "(direct)", "medium": "(none)", "sessions": 55, "users": 40},
+             {"date": "20261024", "source": "facebook.com", "medium": "referral", "sessions": 12, "users": 9},
+             {"date": "20261024", "source": "google", "medium": "cpc", "sessions": 2, "users": 2},
+             {"date": "20261024", "source": "google", "medium": "organic", "sessions": 38, "users": 30},
+             {"date": "20261025", "source": "google", "medium": "organic", "sessions": 40, "users": 31},
+             {"date": "20261025", "source": "t.co", "medium": "referral", "sessions": 4, "users": 4}])
+        # Backward compatibility: every pre-existing key is still present.
+        for key in ("totals", "daily", "top_pages", "top_channels"):
+            self.assertIn(key, snap)
+
+
 class CommitSnapshotsTests(unittest.TestCase):
     def test_pathspec_commit_ignores_unrelated_dirt_and_push_failure_is_loud(self):
         tmp = Path(tempfile.mkdtemp(prefix="google-data-git-"))

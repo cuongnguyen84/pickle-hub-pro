@@ -11,7 +11,10 @@ What it does:
     totals, a per-day series, top queries, top pages, and the pages
     losing the most clicks.
   * GA4 Data API for property 522556358 — last 28 days (ending yesterday):
-    sessions/users/views per day, top pages, top channels.
+    sessions/users/views per day, top pages, top channels, and a per-day
+    sessions/users series for the main referral sources (the Facebook
+    family, X/Twitter, Google, direct) so questions like "how many
+    sessions came from Facebook since date X" read straight off the file.
   * Writes data/google/gsc-<run-date>.json and data/google/ga4-<run-date>.json
     in the repo and commits + pushes ONLY those two files (pathspec commit,
     so unrelated dirty files in the working tree never block or leak in).
@@ -48,6 +51,11 @@ VN = ZoneInfo("Asia/Ho_Chi_Minh")
 PERIOD_DAYS = 28
 GSC_LAG_DAYS = 2   # Search Console data is typically final after ~2-3 days.
 GA4_LAG_DAYS = 1
+# sessionSource values broken out per day in the GA4 snapshot: the social
+# referrers the team reports on, Google (organic/cpc read off the medium),
+# and direct. Anything else stays visible only via top_channels.
+GA4_TRACKED_SOURCES = ("facebook.com", "m.facebook.com", "l.facebook.com",
+                       "lm.facebook.com", "x.com", "t.co", "google", "(direct)")
 
 
 # ---------------------------------------------------------------- periods
@@ -205,6 +213,23 @@ def _ga4_rows(creds, start: date, end: date, dimensions: list[str], metrics: lis
     return rows
 
 
+def _ga4_source_daily(creds, start: date, end: date) -> list[dict]:
+    """Per-day sessions/users for the tracked referral sources.
+
+    Rows are kept only for GA4_TRACKED_SOURCES (every medium of each, so
+    google/organic vs google/cpc stay distinguishable) and sorted by
+    (date, source, medium) — the API does not guarantee row order. Dates
+    keep GA4's YYYYMMDD form, matching the snapshot's own "daily" series.
+    """
+    rows = _ga4_rows(creds, start, end, ["date", "sessionSource", "sessionMedium"],
+                     ["sessions", "totalUsers"])
+    tracked = set(GA4_TRACKED_SOURCES)
+    out = [{"date": r["date"], "source": r["sessionSource"], "medium": r["sessionMedium"],
+            "sessions": r["sessions"], "users": r["totalUsers"]}
+           for r in rows if r["sessionSource"] in tracked]
+    return sorted(out, key=lambda r: (r["date"], r["source"], r["medium"]))
+
+
 def build_ga4_snapshot(creds, today: date) -> dict:
     start, end = ga4_period(today)
     daily = sorted(_ga4_rows(creds, start, end, ["date"], ["sessions", "totalUsers", "screenPageViews"]),
@@ -221,6 +246,7 @@ def build_ga4_snapshot(creds, today: date) -> dict:
                    "users": sum(r["totalUsers"] for r in daily),
                    "views": sum(r["screenPageViews"] for r in daily)},
         "daily": daily, "top_pages": top_pages, "top_channels": channels,
+        "daily_by_source": _ga4_source_daily(creds, start, end),
     }
 
 
