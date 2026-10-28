@@ -92,6 +92,8 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/mlp-orlando-super-sunday-scoreboard.webp": [462, 769],
   "/images/blog/mlp-vs-ppa-2026-which-tour-to-watch-hero-768.webp": [768, 512],
   "/images/blog/mlp-vs-ppa-2026-which-tour-to-watch-hero.webp": [1536, 1024],
+  "/images/blog/new-jersey-mlp-2026-analysis-hero-768.webp": [768, 512],
+  "/images/blog/new-jersey-mlp-2026-analysis-hero.webp": [1920, 1280],
   "/images/blog/pickleball-club-management-software-comparison-hero-768.webp": [768, 403],
   "/images/blog/pickleball-club-management-software-comparison-hero.webp": [1731, 909],
   "/images/blog/pickleball-cost-vietnam-2026-hero-768.webp": [768, 512],
