@@ -15,6 +15,7 @@ import re
 import string
 import subprocess
 import sys
+import tempfile
 import urllib.request
 import urllib.parse
 import ssl
@@ -554,6 +555,112 @@ def _publish_once(root: Path, event: dict, feed: dict, now: datetime, push: bool
     return pkg, head
 
 
+# --- Re-exec when the in-memory code is stale (incident 2026-10-24) ------
+# Defence 2 above (the fingerprint stamp) DETECTED the stale-code lag; this
+# removes it. The first version (#950) compared the loaded fingerprint
+# against the files around __file__ — the working checkout — but that tree
+# is the wrong reference: since #941 moved publishing into a dedicated
+# worktree, NOTHING pulls the working checkout any more, so its files never
+# change, the comparison never diverged, and the re-exec never fired
+# (diagnosed on the Mac, 2026-10-27: checkout frozen at the last manual
+# pull while main moved on). The publish worktree is the one tree that IS
+# guaranteed current — _prepare_publish_worktree fetches and hard-resets
+# it to origin/main on every publish — so the comparison and the child
+# process both anchor THERE: after preparing the worktree, publish_event
+# compares the fingerprint of the code this process LOADED
+# (PIPELINE_FINGERPRINT, captured at import) with the fingerprint of the
+# pipeline files inside the worktree. On a mismatch the publish is
+# delegated to a fresh child process running the worktree's copy of this
+# script, and the child's result is returned verbatim — the same tick
+# publishes with the new code instead of the next one. The child is marked
+# with an env flag so it can never delegate again (no loop: if yet another
+# merge lands mid-run, the child publishes with its loaded code and the
+# following tick catches up). A failed child is a LOUD failure — never a
+# silent fallback to generating with stale code.
+_REEXEC_ENV = "TPH_AUTOPUBLISH_REEXEC"
+_REEXEC_TIMEOUT = 900
+
+
+def _worktree_pipeline_fingerprint(root: Path) -> str:
+    """Fingerprint of the pipeline files inside the publish worktree —
+    the freshest tree available at publish time (reset to origin/main by
+    _prepare_publish_worktree), as opposed to the possibly frozen working
+    checkout this process was imported from."""
+    h = hashlib.sha256()
+    for rel in _PIPELINE_FILES:
+        try:
+            h.update((root / rel).read_bytes())
+        except OSError:
+            h.update(f"missing:{rel}".encode())
+    return h.hexdigest()[:12]
+
+
+def _should_delegate_publish(root: Path) -> bool:
+    return os.environ.get(_REEXEC_ENV) != "1" and _worktree_pipeline_fingerprint(root) != PIPELINE_FINGERPRINT
+
+
+def _delegate_publish(root: Path, event: dict, now: datetime, push: bool) -> dict:
+    """Re-run this publish in a fresh process running the worktree's copy
+    of this script (which imports the rest of the pipeline from the
+    worktree too, so the whole child runs the new code).
+
+    The event travels as JSON (it originates from the coverage config
+    JSON) and the result comes back through a file, because the publish
+    path itself may print (the node barrel step inherits stdout)."""
+    script = root / "scripts/blog/tournament_results_autopublish.py"
+    if not script.exists():
+        raise RuntimeError("reexec_publish_failed:worktree_script_missing")
+    with tempfile.TemporaryDirectory(prefix="autopublish-reexec-") as td:
+        payload_path = Path(td) / "payload.json"
+        result_path = Path(td) / "result.json"
+        payload_path.write_text(json.dumps({
+            "event": event,
+            "now": now.isoformat(),
+            "push": push,
+            "result_path": str(result_path),
+        }), encoding="utf-8")
+        env = dict(os.environ, **{_REEXEC_ENV: "1"})
+        try:
+            proc = subprocess.run(
+                [sys.executable, str(script), "--reexec-publish", str(payload_path)],
+                capture_output=True, text=True, timeout=_REEXEC_TIMEOUT, env=env)
+        except subprocess.TimeoutExpired:
+            raise RuntimeError("reexec_publish_timeout") from None
+        if result_path.exists():
+            result = json.loads(result_path.read_text(encoding="utf-8"))
+            if "error" in result:
+                raise RuntimeError(f"reexec_publish_failed:{result['error']}")
+            return result
+        tail = (proc.stderr or proc.stdout or "").strip()[-300:]
+        raise RuntimeError(f"reexec_publish_failed:exit={proc.returncode}:{tail}")
+
+
+def _maybe_delegate_publish(root: Path, event: dict, now: datetime, push: bool) -> dict | None:
+    """The child's verbatim result (flagged reexec) when the worktree's
+    code has moved past the code this process loaded, else None."""
+    if not _should_delegate_publish(root):
+        return None
+    result = _delegate_publish(root, event, now, push)
+    result["reexec"] = True
+    return result
+
+
+def _reexec_main(payload_path: str) -> int:
+    """Child entry point: publish with freshly imported code and write the
+    result (or the error) to the payload's result_path for the parent."""
+    payload = json.loads(Path(payload_path).read_text(encoding="utf-8"))
+    result_path = Path(payload["result_path"])
+    try:
+        result = publish_event(payload["event"],
+                               now=datetime.fromisoformat(payload["now"]),
+                               push=bool(payload["push"]))
+    except Exception as exc:  # noqa: BLE001 — reported to the parent verbatim
+        result_path.write_text(json.dumps({"error": f"{type(exc).__name__}:{exc}"}), encoding="utf-8")
+        return 1
+    result_path.write_text(json.dumps(result), encoding="utf-8")
+    return 0
+
+
 def publish_event(event: dict, now: datetime | None = None, push: bool = True) -> dict:
     """Fetch, validate and publish one changed official score snapshot.
 
@@ -567,14 +674,35 @@ def publish_event(event: dict, now: datetime | None = None, push: bool = True) -
     if not should_publish(event, fingerprint):
         return {"status": "unchanged", "fingerprint": fingerprint}
     root = _prepare_publish_worktree(push)
+    delegated = _maybe_delegate_publish(root, event, now, push)
+    if delegated is not None:
+        # The worktree (reset to origin/main above) carries newer pipeline
+        # code than this process loaded: a fresh process running the
+        # worktree's code published instead, in this same tick.
+        return delegated
     try:
         pkg, head = _publish_once(root, event, feed, now, push)
     except _PushRejected:
         # Someone merged between our fetch and push: reset the worktree to
-        # the new origin/main and regenerate once on top of it.
+        # the new origin/main and regenerate once on top of it — re-checking
+        # first whether that merge also moved the pipeline code itself.
         root = _prepare_publish_worktree(True)
+        delegated = _maybe_delegate_publish(root, event, now, push)
+        if delegated is not None:
+            return delegated
         pkg, head = _publish_once(root, event, feed, now, push)
     remember(event, fingerprint)
     # What production must serve once the deploy lands; checked by team_tournament_coverage.verify_live.
     marker = pkg["en"]["sections"][0]["content"].split(". ", 1)[0]
-    return {"status": "published", "fingerprint": fingerprint, "head": head, "pushed": push, "slug": pkg["slug"], "marker": marker}
+    # `pipeline` = the fingerprint of the code that ACTUALLY generated this
+    # publish; the ops freshness check compares it (and the commit stamp)
+    # against main. `reexec` False here: this process generated it itself.
+    return {"status": "published", "fingerprint": fingerprint, "head": head, "pushed": push,
+            "slug": pkg["slug"], "marker": marker, "pipeline": PIPELINE_FINGERPRINT, "reexec": False}
+
+
+if __name__ == "__main__":
+    # Internal only: the re-exec child spawned by _delegate_publish.
+    if len(sys.argv) == 3 and sys.argv[1] == "--reexec-publish":
+        raise SystemExit(_reexec_main(sys.argv[2]))
+    raise SystemExit("usage: tournament_results_autopublish.py --reexec-publish <payload.json>")

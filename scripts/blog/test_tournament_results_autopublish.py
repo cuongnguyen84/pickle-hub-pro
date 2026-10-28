@@ -225,15 +225,21 @@ class PublishWorktreeTests(unittest.TestCase):
         _git(self.main, "push", "--quiet", "origin", "main")
         self.team_home = self.tmp / "team-home"
         self.team_home.mkdir()
-        self._saved = (autopublish.REPO, autopublish.fetch, autopublish._upsert_vi, os.environ.get("PICKLEHUB_TEAM_HOME"))
+        self._saved = (autopublish.REPO, autopublish.fetch, autopublish._upsert_vi,
+                       autopublish._worktree_pipeline_fingerprint, os.environ.get("PICKLEHUB_TEAM_HOME"))
         autopublish.REPO = self.main
         autopublish.fetch = lambda url, eid: (feed("final"), self.fp)
         autopublish._upsert_vi = lambda pkg: None
+        # The sandbox repo does not model the pipeline source tree, so the
+        # worktree fingerprint is pinned to the loaded one (no delegation);
+        # the delegation decision itself is covered by ReexecPublishTests.
+        autopublish._worktree_pipeline_fingerprint = lambda root: autopublish.PIPELINE_FINGERPRINT
         os.environ["PICKLEHUB_TEAM_HOME"] = str(self.team_home)
         self.fp = "fingerprint-1"
 
     def tearDown(self):
-        autopublish.REPO, autopublish.fetch, autopublish._upsert_vi, saved_home = self._saved
+        (autopublish.REPO, autopublish.fetch, autopublish._upsert_vi,
+         autopublish._worktree_pipeline_fingerprint, saved_home) = self._saved
         if saved_home is None:
             os.environ.pop("PICKLEHUB_TEAM_HOME", None)
         else:
@@ -288,6 +294,137 @@ class PublishWorktreeTests(unittest.TestCase):
         with self.assertRaises(autopublish.PublishWorktreeError):
             autopublish._prepare_publish_worktree(push=False)
         self.assertTrue((wt / "someone-elses-file.txt").exists())
+
+    def test_published_result_stamps_the_generating_code(self):
+        result = autopublish.publish_event(dict(self.EVENT), now=datetime(2026, 10, 3, tzinfo=timezone.utc), push=True)
+        self.assertEqual(result["pipeline"], autopublish.PIPELINE_FINGERPRINT)
+        self.assertFalse(result["reexec"])
+
+
+import json
+from unittest import mock
+
+
+class ReexecPublishTests(unittest.TestCase):
+    """Re-exec fix for the 2026-10-24 stale-code incident, reworked
+    2026-10-27: since #941 nothing pulls the working checkout any more, so
+    comparing against its files could never diverge. The comparison — and
+    the child process — anchor at the publish worktree, which
+    _prepare_publish_worktree resets to origin/main on every publish."""
+
+    EVENT = {"key": "test-open-2026", "result_source": "https://example.test/feed", "event_id": "event-1"}
+    ROOT = Path("/wt-fake")
+
+    def _patch(self, **attrs):
+        saved = {k: getattr(autopublish, k) for k in attrs}
+        for k, v in attrs.items():
+            setattr(autopublish, k, v)
+        self.addCleanup(lambda: [setattr(autopublish, k, v) for k, v in saved.items()])
+
+    def test_delegate_decision_matrix(self):
+        self._patch(_worktree_pipeline_fingerprint=lambda root: autopublish.PIPELINE_FINGERPRINT)
+        self.assertFalse(autopublish._should_delegate_publish(self.ROOT))
+        self._patch(_worktree_pipeline_fingerprint=lambda root: "different-fp12")
+        self.assertTrue(autopublish._should_delegate_publish(self.ROOT))
+        # A re-exec child never delegates again, even if the disk moved on.
+        with mock.patch.dict(os.environ, {autopublish._REEXEC_ENV: "1"}):
+            self.assertFalse(autopublish._should_delegate_publish(self.ROOT))
+
+    def test_worktree_fingerprint_anchors_at_the_given_root(self):
+        with tempfile.TemporaryDirectory() as td:
+            a, b = Path(td) / "a", Path(td) / "b"
+            for root, marker in ((a, "one"), (b, "two")):
+                (root / "scripts/blog").mkdir(parents=True)
+                (root / "scripts/blog/tournament_results_autopublish.py").write_text(marker)
+            self.assertNotEqual(autopublish._worktree_pipeline_fingerprint(a),
+                                autopublish._worktree_pipeline_fingerprint(b))
+            self.assertEqual(autopublish._worktree_pipeline_fingerprint(a),
+                             autopublish._worktree_pipeline_fingerprint(a))
+
+    def test_publish_event_delegates_with_the_prepared_worktree(self):
+        seen = {}
+        def fake_delegate(root, event, now, push):
+            seen["root"] = root
+            return {"status": "published", "pipeline": "newfp"}
+        self._patch(
+            fetch=lambda url, eid: (feed("final"), "feed-fp"),
+            should_publish=lambda event, fp: True,
+            _prepare_publish_worktree=lambda push: self.ROOT,
+            _should_delegate_publish=lambda root: True,
+            _delegate_publish=fake_delegate,
+            _publish_once=lambda *a, **k: (_ for _ in ()).throw(AssertionError("stale process must not generate locally")),
+        )
+        result = autopublish.publish_event(dict(self.EVENT), now=datetime(2026, 10, 26, tzinfo=timezone.utc), push=True)
+        self.assertEqual(seen["root"], self.ROOT)
+        self.assertEqual(result["status"], "published")
+        self.assertEqual(result["pipeline"], "newfp")
+        self.assertTrue(result["reexec"])
+
+    def test_reexec_child_roundtrip_and_error_reporting(self):
+        self._patch(publish_event=lambda event, now=None, push=True: {"status": "published", "head": "abc123"})
+        with tempfile.TemporaryDirectory() as td:
+            payload, result = Path(td) / "payload.json", Path(td) / "result.json"
+            payload.write_text(json.dumps({"event": dict(self.EVENT), "now": "2026-10-26T00:00:00+00:00",
+                                           "push": True, "result_path": str(result)}))
+            self.assertEqual(autopublish._reexec_main(str(payload)), 0)
+            self.assertEqual(json.loads(result.read_text()), {"status": "published", "head": "abc123"})
+        def boom(event, now=None, push=True):
+            raise ValueError("feed_down")
+        self._patch(publish_event=boom)
+        with tempfile.TemporaryDirectory() as td:
+            payload, result = Path(td) / "payload.json", Path(td) / "result.json"
+            payload.write_text(json.dumps({"event": dict(self.EVENT), "now": "2026-10-26T00:00:00+00:00",
+                                           "push": True, "result_path": str(result)}))
+            self.assertEqual(autopublish._reexec_main(str(payload)), 1)
+            self.assertIn("feed_down", json.loads(result.read_text())["error"])
+
+    def _fake_root(self, td):
+        root = Path(td) / "wt"
+        script = root / "scripts/blog/tournament_results_autopublish.py"
+        script.parent.mkdir(parents=True)
+        script.write_text("# worktree copy\n")
+        return root
+
+    def test_delegate_spawns_marked_child_and_returns_its_result(self):
+        seen = {}
+        def fake_run(argv, **kwargs):
+            seen["argv"], seen["env"] = argv, kwargs.get("env") or {}
+            payload = json.loads(Path(argv[3]).read_text())
+            Path(payload["result_path"]).write_text(json.dumps({"status": "published", "pipeline": "childfp"}))
+            return subprocess.CompletedProcess(argv, 0, "", "")
+        with tempfile.TemporaryDirectory() as td:
+            root = self._fake_root(td)
+            with mock.patch.object(subprocess, "run", fake_run):
+                result = autopublish._delegate_publish(root, dict(self.EVENT), datetime(2026, 10, 26, tzinfo=timezone.utc), True)
+        self.assertEqual(result, {"status": "published", "pipeline": "childfp"})
+        # The child runs the WORKTREE's copy of the script, not __file__'s.
+        self.assertEqual(seen["argv"][1], str(root / "scripts/blog/tournament_results_autopublish.py"))
+        self.assertEqual(seen["argv"][2], "--reexec-publish")
+        self.assertEqual(seen["env"][autopublish._REEXEC_ENV], "1")
+
+    def test_delegate_missing_worktree_script_is_loud(self):
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(subprocess, "run", side_effect=AssertionError("must not spawn")):
+                with self.assertRaisesRegex(RuntimeError, "worktree_script_missing"):
+                    autopublish._delegate_publish(Path(td), dict(self.EVENT), datetime(2026, 10, 26, tzinfo=timezone.utc), True)
+
+    def test_delegate_child_failure_is_loud_never_a_stale_fallback(self):
+        def failing_run(argv, **kwargs):
+            payload = json.loads(Path(argv[3]).read_text())
+            Path(payload["result_path"]).write_text(json.dumps({"error": "ValueError:feed_down"}))
+            return subprocess.CompletedProcess(argv, 1, "", "")
+        with tempfile.TemporaryDirectory() as td:
+            root = self._fake_root(td)
+            with mock.patch.object(subprocess, "run", failing_run):
+                with self.assertRaisesRegex(RuntimeError, "reexec_publish_failed"):
+                    autopublish._delegate_publish(root, dict(self.EVENT), datetime(2026, 10, 26, tzinfo=timezone.utc), True)
+        def crashed_run(argv, **kwargs):
+            return subprocess.CompletedProcess(argv, 2, "", "segfault-ish")
+        with tempfile.TemporaryDirectory() as td:
+            root = self._fake_root(td)
+            with mock.patch.object(subprocess, "run", crashed_run):
+                with self.assertRaisesRegex(RuntimeError, "reexec_publish_failed:exit=2"):
+                    autopublish._delegate_publish(root, dict(self.EVENT), datetime(2026, 10, 26, tzinfo=timezone.utc), True)
 
 
 if __name__ == "__main__":
