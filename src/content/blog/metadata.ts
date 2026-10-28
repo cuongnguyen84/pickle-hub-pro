@@ -10,6 +10,36 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "juan-benitez-coach-behind-patriquin-bright-staksrud",
+    "publishedDate": "2026-10-28",
+    "updatedDate": "2026-10-28",
+    "author": "The PickleHub Team",
+    "tags": [
+      "juan benitez",
+      "hayden patriquin",
+      "anna bright",
+      "federico staksrud",
+      "mlp nations cup",
+      "coaching",
+      "pickleball viet nam"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Watch live tournaments on ThePickleHub",
+      "vi": "Xem giải trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/juan-benitez-coach-behind-patriquin-bright-staksrud-hero.webp",
+      "alt": "A pickleball coach kneeling courtside during a timeout, instructing two seated players holding paddles in an indoor arena (illustration)"
+    },
+    "titleEn": "The Coach in the Corner: How Juan Benítez Built the Teams Beating Waters and Johns",
+    "titleVi": "Người thầy ở góc sân: Juan Benítez đã xây những đội đánh bại Waters và Johns thế nào",
+    "metaTitleEn": "Juan Benítez, Coach to Patriquin, Bright and Staksrud",
+    "metaTitleVi": "Juan Benítez: HLV của Patriquin, Bright, Staksrud",
+    "metaDescriptionEn": "Juan Benítez coaches Patriquin, Bright and Staksrud — the teams now beating Waters and Johns. This week he captains Latin America at the Nations Cup.",
+    "metaDescriptionVi": "HLV đứng sau Patriquin, Bright và Staksrud — các đội thắng Waters, Johns. Tuần này Benítez là đội trưởng Latin America ở Nations Cup."
+  },
+  {
     "slug": "why-your-backhand-flick-has-no-power",
     "publishedDate": "2026-10-27",
     "updatedDate": "2026-10-27",
