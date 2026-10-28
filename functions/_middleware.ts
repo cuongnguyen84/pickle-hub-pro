@@ -919,7 +919,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       // as the bot path.
       let publicCache: PublicPagePartsCache | null = null;
       if (env.PRERENDER_CACHE && url.searchParams.get("nocache") !== "1") {
-        const cacheKey = `pr:v145:human:${url.pathname}`;
+        const cacheKey = `pr:v146:human:${url.pathname}`;
         const ttl = Math.min(pathCacheTtl(pathname), 300);
         publicCache = {
           get: () => env.PRERENDER_CACHE.get(cacheKey),
@@ -1385,7 +1385,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v145 (2026-10-23): blog results posts render the structured results
   // board (summary card, round groups, winner/loser rows) on the bot path
   // instead of prose lists — cached thin renders must not be served.
-  const cacheKey = `pr:v145:${url.pathname}`;
+  // v146 (2026-10-28): PPA WPR snapshot on /rankings/ppa-tour moved to
+  // fetched-at 2026-10-28 (top 25 and VN highlights). Cached v145 HTML
+  // would keep the 2026-10-21 table.
+  const cacheKey = `pr:v146:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
