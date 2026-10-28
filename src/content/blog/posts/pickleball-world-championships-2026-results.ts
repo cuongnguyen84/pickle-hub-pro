@@ -27,7 +27,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: October 28, 2026, 12:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 110 matches, including 0 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: October 29, 2026, 04:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 110 matches, including 0 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -132,23 +132,8 @@ const post: BlogPost = {
                 "label": "Round 64",
                 "matches": [
                   {
-                    "teamA": "Casey Diamond / Tyson McGuffin",
-                    "teamB": "Freddie Powell / Austin Bricker",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Grayson Goldin / Brandon French",
-                    "teamB": "Anderson Scarpa / Ivan Jakovljevic",
-                    "sets": []
-                  },
-                  {
                     "teamA": "Kenta Miyoshi / James Delgado",
                     "teamB": "Daniel Phillips / Patrick Smith",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Rafael Lenhard / Elliott Schupp",
-                    "teamB": "Kyle Koszuta / Jace Morris",
                     "sets": []
                   },
                   {
@@ -157,23 +142,18 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Donald Young / Tom Protzek",
-                    "teamB": "Cason Campbell / Adam Harvey",
+                    "teamA": "Rafael Lenhard / Elliott Schupp",
+                    "teamB": "Kyle Koszuta / Jace Morris",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Dekel Bar / Wyatt Stone",
+                    "teamB": "Edward Perez / Aanik Lohani",
                     "sets": []
                   },
                   {
                     "teamA": "Yuta Funemizu / Armaan Bhatia",
                     "teamB": "Miles Hoover / Jaxon Madsen",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Harrison Brown / Lucas Pascoe",
-                    "teamB": "Braden Jacobson / Travis Rettenmaier",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Matt Wright / John Lucian Goins",
-                    "teamB": "Luke Wasson / Chuck Taylor",
                     "sets": []
                   },
                   {
@@ -192,23 +172,8 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Dekel Bar / Wyatt Stone",
-                    "teamB": "Edward Perez / Aanik Lohani",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Will Howells / Clayton Powell",
-                    "teamB": "Gregory Dow / Armaan Jiwa Mawji",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Pablo Tellez / Roscoe Bellamy",
-                    "teamB": "Jace Howard / Ethan Bakalinsky",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jonathan Truong / Max Freeman",
-                    "teamB": "Alexander Crum / Matthew Finnerty",
+                    "teamA": "Harrison Brown / Lucas Pascoe",
+                    "teamB": "Braden Jacobson / Travis Rettenmaier",
                     "sets": []
                   },
                   {
@@ -217,18 +182,23 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "AJ Koller / Connor Mogle",
-                    "teamB": "Joel Poland / Eduardo Santini Ayon",
+                    "teamA": "Grayson Goldin / Brandon French",
+                    "teamB": "Anderson Scarpa / Ivan Jakovljevic",
                     "sets": []
                   },
                   {
-                    "teamA": "Rafa Hewett / Luc Pham",
-                    "teamB": "Caden Nemoff / Maverick Messinger",
+                    "teamA": "Donald Young / Tom Protzek",
+                    "teamB": "Cason Campbell / Adam Harvey",
                     "sets": []
                   },
                   {
-                    "teamA": "Julian Arnold / Yates Johnson",
-                    "teamB": "Ross Whittaker / Mohaned Alhouni",
+                    "teamA": "Casey Diamond / Tyson McGuffin",
+                    "teamB": "Freddie Powell / Austin Bricker",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Matt Wright / John Lucian Goins",
+                    "teamB": "Luke Wasson / Chuck Taylor",
                     "sets": []
                   },
                   {
@@ -239,6 +209,36 @@ const post: BlogPost = {
                   {
                     "teamA": "Michael Loyd / Luca Mack",
                     "teamB": "Mitchell Hargreaves / Nasa Hatakeyama",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Julian Arnold / Yates Johnson",
+                    "teamB": "Ross Whittaker / Mohaned Alhouni",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Jonathan Truong / Max Freeman",
+                    "teamB": "Alexander Crum / Matthew Finnerty",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Will Howells / Clayton Powell",
+                    "teamB": "Gregory Dow / Armaan Jiwa Mawji",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Rafa Hewett / Luc Pham",
+                    "teamB": "Caden Nemoff / Maverick Messinger",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Pablo Tellez / Roscoe Bellamy",
+                    "teamB": "Jace Howard / Ethan Bakalinsky",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "AJ Koller / Connor Mogle",
+                    "teamB": "Joel Poland / Eduardo Santini Ayon",
                     "sets": []
                   }
                 ],
@@ -725,7 +725,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 12:00 ngày 28/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 110 trận, gồm 0 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 04:00 ngày 29/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 110 trận, gồm 0 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -830,23 +830,8 @@ const post: BlogPost = {
                 "label": "Vòng 64",
                 "matches": [
                   {
-                    "teamA": "Casey Diamond / Tyson McGuffin",
-                    "teamB": "Freddie Powell / Austin Bricker",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Grayson Goldin / Brandon French",
-                    "teamB": "Anderson Scarpa / Ivan Jakovljevic",
-                    "sets": []
-                  },
-                  {
                     "teamA": "Kenta Miyoshi / James Delgado",
                     "teamB": "Daniel Phillips / Patrick Smith",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Rafael Lenhard / Elliott Schupp",
-                    "teamB": "Kyle Koszuta / Jace Morris",
                     "sets": []
                   },
                   {
@@ -855,23 +840,18 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Donald Young / Tom Protzek",
-                    "teamB": "Cason Campbell / Adam Harvey",
+                    "teamA": "Rafael Lenhard / Elliott Schupp",
+                    "teamB": "Kyle Koszuta / Jace Morris",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Dekel Bar / Wyatt Stone",
+                    "teamB": "Edward Perez / Aanik Lohani",
                     "sets": []
                   },
                   {
                     "teamA": "Yuta Funemizu / Armaan Bhatia",
                     "teamB": "Miles Hoover / Jaxon Madsen",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Harrison Brown / Lucas Pascoe",
-                    "teamB": "Braden Jacobson / Travis Rettenmaier",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Matt Wright / John Lucian Goins",
-                    "teamB": "Luke Wasson / Chuck Taylor",
                     "sets": []
                   },
                   {
@@ -890,23 +870,8 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Dekel Bar / Wyatt Stone",
-                    "teamB": "Edward Perez / Aanik Lohani",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Will Howells / Clayton Powell",
-                    "teamB": "Gregory Dow / Armaan Jiwa Mawji",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Pablo Tellez / Roscoe Bellamy",
-                    "teamB": "Jace Howard / Ethan Bakalinsky",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jonathan Truong / Max Freeman",
-                    "teamB": "Alexander Crum / Matthew Finnerty",
+                    "teamA": "Harrison Brown / Lucas Pascoe",
+                    "teamB": "Braden Jacobson / Travis Rettenmaier",
                     "sets": []
                   },
                   {
@@ -915,18 +880,23 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "AJ Koller / Connor Mogle",
-                    "teamB": "Joel Poland / Eduardo Santini Ayon",
+                    "teamA": "Grayson Goldin / Brandon French",
+                    "teamB": "Anderson Scarpa / Ivan Jakovljevic",
                     "sets": []
                   },
                   {
-                    "teamA": "Rafa Hewett / Luc Pham",
-                    "teamB": "Caden Nemoff / Maverick Messinger",
+                    "teamA": "Donald Young / Tom Protzek",
+                    "teamB": "Cason Campbell / Adam Harvey",
                     "sets": []
                   },
                   {
-                    "teamA": "Julian Arnold / Yates Johnson",
-                    "teamB": "Ross Whittaker / Mohaned Alhouni",
+                    "teamA": "Casey Diamond / Tyson McGuffin",
+                    "teamB": "Freddie Powell / Austin Bricker",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Matt Wright / John Lucian Goins",
+                    "teamB": "Luke Wasson / Chuck Taylor",
                     "sets": []
                   },
                   {
@@ -937,6 +907,36 @@ const post: BlogPost = {
                   {
                     "teamA": "Michael Loyd / Luca Mack",
                     "teamB": "Mitchell Hargreaves / Nasa Hatakeyama",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Julian Arnold / Yates Johnson",
+                    "teamB": "Ross Whittaker / Mohaned Alhouni",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Jonathan Truong / Max Freeman",
+                    "teamB": "Alexander Crum / Matthew Finnerty",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Will Howells / Clayton Powell",
+                    "teamB": "Gregory Dow / Armaan Jiwa Mawji",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Rafa Hewett / Luc Pham",
+                    "teamB": "Caden Nemoff / Maverick Messinger",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Pablo Tellez / Roscoe Bellamy",
+                    "teamB": "Jace Howard / Ethan Bakalinsky",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "AJ Koller / Connor Mogle",
+                    "teamB": "Joel Poland / Eduardo Santini Ayon",
                     "sets": []
                   }
                 ],
