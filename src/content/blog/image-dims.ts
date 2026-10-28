@@ -68,6 +68,8 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/huy-chuong-rong-ppa-tour-asia-hero.webp": [1920, 1280],
   "/images/blog/jogarbola-team-pickleball-vietnam-hero-768.webp": [768, 523],
   "/images/blog/jogarbola-team-pickleball-vietnam-hero.webp": [780, 531],
+  "/images/blog/juan-benitez-coach-behind-patriquin-bright-staksrud-hero-768.webp": [768, 512],
+  "/images/blog/juan-benitez-coach-behind-patriquin-bright-staksrud-hero.webp": [1536, 1024],
   "/images/blog/khoi-dong-tranh-chan-thuong-giay-san.webp": [1200, 675],
   "/images/blog/khoi-dong-tranh-chan-thuong-pickleball-hero-768.webp": [768, 432],
   "/images/blog/khoi-dong-tranh-chan-thuong-pickleball-hero.webp": [1600, 900],
