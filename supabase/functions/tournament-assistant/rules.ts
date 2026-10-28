@@ -202,6 +202,80 @@ export function resolveTeam(s: TableState, raw: Record<string, unknown>): TableS
   return null;
 }
 
+/** Đội được nhắc tên trong câu người dùng (tên đội, không có thì tên VĐV ≥ 3 ký tự). */
+export function teamsInText(s: TableState, text: string): TableState["players"] {
+  const q = fold(text);
+  const hit = (n: string | null) => !!n && fold(n).length >= 3 && q.includes(fold(n));
+  const byName = s.players.filter((p) => hit(p.name));
+  const pool = byName.length ? byName : s.players.filter((p) => hit(p.p1) || hit(p.p2));
+  // "QR Delta" lẫn "QR Delta 2" cùng khớp → bỏ tên ngắn nằm trong tên dài.
+  return pool.filter((p) => !pool.some((o) => o !== p && fold(o.name).includes(fold(p.name))));
+}
+
+const VI_CHARS = /[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]/i;
+const EN_WORDS = /\b(the|to|from|for|team|group|court|please|remove|rename|draw|assign|change|add|what|how|is|are|can)\b/i;
+
+/**
+ * Ngôn ngữ trả lời = ngôn ngữ người dùng gõ, không theo giao diện. Lượt chỉ có
+ * tên riêng ("QR Replacement") không đoán được → lấy theo lượt trước.
+ */
+export function detectLang(userTexts: string[], fallback: Lang): Lang {
+  for (const t of userTexts.slice(-3).reverse()) {
+    if (VI_CHARS.test(t)) return "vi";
+    if (EN_WORDS.test(t)) return "en";
+  }
+  return fallback;
+}
+
+const RENAME_SPLIT = /^(.*?)\s+(?:thành|to|into)\s+(.+)$/i;
+const DROP_WORDS = /\b(bo|loai|khong co|xoa|without|drop|remove|exclude)\b/;
+
+/**
+ * Model hay trả action chỉ có "type", bỏ trống tham số (log 27/10 23:25–23:28:
+ * rename_team / remove_team rỗng, rebuild_groups drop_team_ids = []). Bù từ
+ * chính câu người dùng: chỉ nhận đội có trong DB, nên không bịa được gì mới.
+ */
+export function fillFromText(s: TableState, raw: unknown, text: string): unknown {
+  if (!raw || typeof raw !== "object") return raw;
+  const a = { ...(raw as Record<string, unknown>) };
+  const one = (t: string) => {
+    const ps = teamsInText(s, t);
+    return ps.length === 1 ? ps[0] : null;
+  };
+  const split = text.trim().match(RENAME_SPLIT);
+  switch (a.type) {
+    case "rename_team":
+      if (!resolveTeam(s, a)) {
+        const p = one(split ? split[1] : text);
+        if (p) a.team_id = p.id;
+      }
+      if (!clean(a.p1, 100) && !clean(a.name, 201) && split) a.name = split[2].replace(/^["'“]+|["'”.!]+$/g, "");
+      break;
+    case "remove_team":
+      if (!resolveTeam(s, a)) {
+        const p = one(text);
+        if (p) a.team_id = p.id;
+      }
+      break;
+    case "rebuild_groups":
+      if ((!Array.isArray(a.drop_team_ids) || !a.drop_team_ids.length) && DROP_WORDS.test(fold(text))) {
+        a.drop_team_ids = teamsInText(s, text).map((p) => p.id);
+      }
+      break;
+    case "set_group_courts": {
+      if (Array.isArray(a.group_courts) && a.group_courts.length) break;
+      if (Array.isArray(a.courts) && a.courts.length) break;
+      const f = fold(text);
+      const court = f.match(/(?:san|court)\s*(\d{1,2})\b/);
+      if (court) a.courts = [Number(court[1])];
+      const g = f.match(/(?:bang|group)\s+([a-z])(?![a-z])/);
+      if (g && typeof a.group !== "string") a.group = g[1];
+      break;
+    }
+  }
+  return a;
+}
+
 /** Chỉ số bảng → số đội đang có. */
 function groupSizes(s: TableState): number[] {
   return s.groups.map((g) => s.players.filter((p) => p.group_id === g.id).length);
@@ -276,9 +350,13 @@ export function buildCard(
     case "rename_team": {
       const p = resolveTeam(s, raw);
       if (!p) return s.players.length ? null : blocked(t.notDrawn, s.requires_registration ? [{ label: t.altRegistration, prompt: "", href: regHref }] : []);
-      const p1 = clean(raw.p1, 100);
-      const p2 = s.is_doubles ? clean(raw.p2, 100) || p.p2 || "" : "";
-      if (!p1 || (s.is_doubles && !p2)) return null;
+      // p1 + p2 = từng VĐV; chỉ có tên mới (name, hoặc p1 một mình) = cả tên
+      // đội: "A & B" / "A / B" tách 2 VĐV, không thì một tên đội như "QR Replacement".
+      let p1 = clean(raw.p1, 100);
+      let p2 = clean(raw.p2, 100);
+      if (!p2) [p1 = "", p2 = ""] = (p1 || clean(raw.name, 201)).split(/\s*[&/]\s*/).map((v) => v.slice(0, 100));
+      if (!s.is_doubles) p2 = "";
+      if (!p1) return null;
       const after = teamLabel(p1, p2 || null);
       if (after === p.name) return null;
       return card({

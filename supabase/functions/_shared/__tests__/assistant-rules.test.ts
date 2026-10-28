@@ -1,6 +1,6 @@
 // Trợ lý AI nổi quanh giải — luật thẻ hành động (brief 27/10/2026, mục 5 + 8).
 import { describe, it, expect } from "vitest";
-import { buildCard, phaseOf, proposeAction, resolveTeam, roleFor, type TableState } from "../../tournament-assistant/rules.ts";
+import { buildCard, detectLang, fillFromText, phaseOf, proposeAction, resolveTeam, roleFor, type TableState } from "../../tournament-assistant/rules.ts";
 
 function table(over: Partial<TableState> = {}): TableState {
   return {
@@ -115,5 +115,51 @@ describe("chịu được cách model điền tham số", () => {
   it("chưa lưu danh sách (không đăng ký) → báo xoá trên trang nhập", () => {
     const setup = table({ status: "setup", groups: [], players: [], matches: [] });
     expect(buildCard(setup, { type: "remove_team", team_name: "QA Hotel" }, "vi")!.blocked?.reason).toContain("chưa được lưu");
+  });
+});
+
+// Test lại 28/10: model trả action chỉ có "type" (log 23:25–23:28) → bù từ câu người dùng.
+describe("bù tham số từ câu người dùng", () => {
+  const qr = () => table({
+    is_doubles: true,
+    players: [
+      { id: "d", name: "QR Delta", p1: "QR Delta", p2: null, group_id: "gA" },
+      { id: "c", name: "QR Charlie", p1: "QR Charlie", p2: null, group_id: "gA" },
+      { id: "e", name: "QR Echo", p1: "QR Echo", p2: null, group_id: "gA" },
+      { id: "f", name: "QR Fox", p1: "QR Fox", p2: null, group_id: "gB" },
+      { id: "g", name: "QR Golf", p1: "QR Golf", p2: null, group_id: "gB" },
+      { id: "h", name: "QR Hotel", p1: "QR Hotel", p2: null, group_id: "gB" },
+    ],
+  });
+  const card = (raw: unknown, text: string, view: string | null = null) =>
+    buildCard(qr(), fillFromText(qr(), raw, text) as Record<string, unknown>, "vi", view);
+
+  it("đổi tên đội X thành Y — tên đội một vế", () => {
+    const c = card({ type: "rename_team" }, "Đổi tên đội QR Delta thành QR Replacement")!;
+    expect(c.args).toEqual({ team_id: "d", p1: "QR Replacement", p2: null });
+    expect(c.lines[0]).toContain("QR Delta → QR Replacement");
+  });
+  it("đổi tên thành 2 VĐV", () => {
+    expect(card({ type: "rename_team" }, "Đổi tên đội QR Echo thành Nam & Hùng")!.args).toEqual({ team_id: "e", p1: "Nam", p2: "Hùng" });
+  });
+  it("xoá đội chỉ có type → vẫn ra cảnh báo + 2 phương án", () => {
+    expect(card({ type: "remove_team" }, "Xoá đội QR Charlie khỏi giải")!.blocked?.alternatives).toHaveLength(2);
+  });
+  it("bốc lại bỏ đội: drop rỗng → lấy đội trong câu, đếm 5", () => {
+    const c = card({ type: "rebuild_groups", reshuffle: true, group_count: 2, drop_team_ids: [] }, "Bốc thăm lại các bảng, bỏ đội QR Charlie")!;
+    expect(c.args.drop_team_ids).toEqual(["c"]);
+    expect(c.lines[0]).toContain("5 đội");
+  });
+  it("bốc lại không nhắc bỏ đội → không loại ai", () => {
+    expect(card({ type: "rebuild_groups" }, "Bốc thăm lại các bảng")!.args.drop_team_ids).toEqual([]);
+  });
+  it("gán sân chỉ có type: 'sân 2 cho bảng này' + đang xem B", () => {
+    expect(card({ type: "set_group_courts" }, "Gán sân 2 cho bảng này", "gB")!.args.group_courts).toEqual([null, 2]);
+    expect(card({ type: "set_group_courts" }, "Gán sân 3 cho bảng A")!.args.group_courts).toEqual([3, null]);
+  });
+  it("ngôn ngữ theo lượt gõ, lượt chỉ có tên riêng lấy lượt trước", () => {
+    expect(detectLang(["Đổi tên đội QR Delta thành", "QR Replacement"], "en")).toBe("vi");
+    expect(detectLang(["Xoá đội A", "Remove team QA Golf from the tournament"], "vi")).toBe("en");
+    expect(detectLang(["QR"], "en")).toBe("en");
   });
 });

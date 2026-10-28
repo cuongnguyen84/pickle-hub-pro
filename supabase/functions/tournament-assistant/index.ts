@@ -19,7 +19,7 @@ import { getAuthUser } from "../_shared/auth.ts";
 import { supabaseClientPostCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 import { callGemini, geminiConfigured } from "../_shared/gemini.ts";
 import {
-  ACTION_TYPES, describeState, phaseLabel, phaseOf, proposeAction, refusalText, roleFor,
+  ACTION_TYPES, describeState, detectLang, fillFromText, phaseLabel, phaseOf, proposeAction, refusalText, roleFor,
   type ActionCard, type ActorRole, type Lang, type TableState,
 } from "./rules.ts";
 
@@ -82,7 +82,7 @@ Các hành động (action.type) và trường:
 - set_description: text (mô tả / lời nhắn đăng ký của giải).
 - update_schedule: courts (danh sách số sân, "4 sân" → [1,2,3,4]) và/hoặc start_time "HH:MM" 24 giờ.
 - set_sets: default_sets 1, 3 hoặc 5.
-- rename_team: team_id (chép NGUYÊN VĂN chuỗi sau "team_id=" trong NGỮ CẢNH, không kèm "team_id="), team_name (tên đội như trong NGỮ CẢNH), p1, p2 (đánh đôi). Cũng dùng để "thay đội".
+- rename_team: team_id (chép NGUYÊN VĂN chuỗi sau "team_id=" trong NGỮ CẢNH, không kèm "team_id="), team_name (tên đội như trong NGỮ CẢNH), name = tên đội MỚI nguyên văn ("Đổi tên đội X thành Y" → name "Y"); p1, p2 khi người dùng nêu từng VĐV. Cũng dùng để "thay đội".
 - add_team: p1, p2 (đánh đôi), group (chữ cái bảng, bỏ trống = bảng ít đội nhất).
 - remove_team: team_id + team_name (như rename_team). Chưa thấy đội trong NGỮ CẢNH thì vẫn điền team_name theo lời người dùng.
 - draw_groups: chia bảng cho giải chưa chia (từ danh sách đã duyệt); group_count nếu người dùng nói.
@@ -162,10 +162,10 @@ async function handleAssistant(
   const b = (raw ?? {}) as Record<string, unknown>;
   const messages = (Array.isArray(b.messages) ? b.messages : []).slice(-MAX_MESSAGES) as Msg[];
   // Trả lời theo ngôn ngữ người dùng gõ (test 27/10: gõ tiếng Việt trên giao diện EN → trả tiếng Anh).
-  const lastText = typeof messages[messages.length - 1]?.text === "string" ? messages[messages.length - 1].text : "";
-  const lang: Lang = /[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]/i.test(lastText)
-    ? "vi"
-    : b.lang === "en" ? "en" : "vi";
+  const lang: Lang = detectLang(
+    messages.filter((m) => m?.role === "user" && typeof m.text === "string").map((m) => m.text),
+    b.lang === "en" ? "en" : "vi",
+  );
   if (
     !messages.length || messages[messages.length - 1]?.role !== "user" ||
     messages.some((m) => typeof m?.text !== "string" || m.text.length > MAX_TEXT || (m.role !== "user" && m.role !== "bot"))
@@ -219,7 +219,8 @@ async function handleAssistant(
   if (intent === "action") {
     const role = loaded?.role ?? "viewer";
     const viewingGroup = ctx.entity?.kind === "group" ? ctx.entity.id ?? null : null;
-    const res = proposeAction(loaded?.state ?? null, role, parsed.action, lang, viewingGroup);
+    const action = loaded ? fillFromText(loaded.state, parsed.action, userText) : parsed.action;
+    const res = proposeAction(loaded?.state ?? null, role, action, lang, viewingGroup);
     if (res.refused) {
       intent = "refused";
       reply = refusalText(role, lang);
@@ -252,6 +253,7 @@ async function handleAssistant(
     body: {
       reply,
       intent,
+      lang,
       card,
       role: loaded?.role ?? null,
       phase: loaded ? phaseLabel(phaseOf(loaded.state), lang) : null,

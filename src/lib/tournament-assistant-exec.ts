@@ -101,7 +101,7 @@ export async function executeCard(shareId: string, card: CardAction, deps: ExecD
         break;
       }
       case "rename_team":
-        await step(s.team, () => deps.updatePlayerName(String(a.team_id), String(a.p1), table.is_doubles ? String(a.p2 ?? "") : null));
+        await step(s.team, () => deps.updatePlayerName(String(a.team_id), String(a.p1), a.p2 ? String(a.p2) : null));
         break;
       case "add_team": {
         const p1 = String(a.p1);

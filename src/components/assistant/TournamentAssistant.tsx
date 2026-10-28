@@ -46,6 +46,8 @@ interface Msg {
   cardState?: CardState;
   shareId?: string;
   result?: string;
+  /** ngôn ngữ server trả lời lượt này — câu chốt sau áp dụng theo nó, không theo giao diện */
+  lang?: Lang;
 }
 
 const STORAGE_PREFIX = "tl-assistant:v1:";
@@ -163,7 +165,7 @@ const TournamentAssistant = ({ routeScreen }: { routeScreen: AssistantScreen }) 
       data = res.error ? null : res.data;
     } catch { /* hiện lỗi bên dưới */ }
     setBusy(false);
-    const res = data as { reply?: string; card?: Card | null } | null;
+    const res = data as { reply?: string; card?: Card | null; lang?: Lang } | null;
     if (!res?.reply) {
       setMessages((ms) => [...ms, { id: uid(), role: "bot", text: c.error, ctx: label }]);
       return;
@@ -171,7 +173,7 @@ const TournamentAssistant = ({ routeScreen }: { routeScreen: AssistantScreen }) 
     const card = res.card ?? undefined;
     const shareId = ctx?.tournament?.kind === "quick_table" ? ctx.tournament.share_id : undefined;
     setMessages((ms) => [...ms, {
-      id: uid(), role: "bot", text: res.reply!, ctx: label, card, shareId,
+      id: uid(), role: "bot", text: res.reply!, ctx: label, card, shareId, lang: res.lang === "en" || res.lang === "vi" ? res.lang : lang,
       cardState: card && !card.blocked ? "pending" : undefined,
     }]);
   };
@@ -182,14 +184,15 @@ const TournamentAssistant = ({ routeScreen }: { routeScreen: AssistantScreen }) 
     }).catch(() => undefined);
   };
 
-  const report = (r: ExecResult): string =>
-    r.outcome === "applied" ? c.applied : r.outcome === "partial" ? c.partial(r.done, r.failed ?? "") : c.failed(r.failed ?? "");
+  const report = (r: ExecResult, k = c): string =>
+    r.outcome === "applied" ? k.applied : r.outcome === "partial" ? k.partial(r.done, r.failed ?? "") : k.failed(r.failed ?? "");
 
   const confirmCard = async (m: Msg) => {
     if (!m.card || !m.shareId || m.cardState !== "pending") return;
     patch(m.id, { cardState: "running" });
-    const r = await executeCard(m.shareId, m.card, deps, lang);
-    patch(m.id, { cardState: r.outcome, result: report(r) });
+    const ml = m.lang ?? lang;
+    const r = await executeCard(m.shareId, m.card, deps, ml);
+    patch(m.id, { cardState: r.outcome, result: report(r, COPY[ml]) });
     if (r.outcome === "applied" && m.card.undo) undoable.current.add(m.id);
     if (r.done.length) window.dispatchEvent(new CustomEvent(ASSISTANT_APPLIED_EVENT, { detail: { shareId: m.shareId } }));
     log(m, m.card, r.outcome, r.failed ?? "");
@@ -199,15 +202,16 @@ const TournamentAssistant = ({ routeScreen }: { routeScreen: AssistantScreen }) 
     if (!m.card?.undo || !m.shareId || !undoable.current.has(m.id)) return;
     undoable.current.delete(m.id);
     patch(m.id, { cardState: "running" });
-    const r = await executeCard(m.shareId, { ...m.card.undo, danger: false }, deps, lang);
-    patch(m.id, { cardState: r.outcome === "applied" ? "undone" : "applied", result: r.outcome === "applied" ? c.undone : report(r) });
+    const ml = m.lang ?? lang;
+    const r = await executeCard(m.shareId, { ...m.card.undo, danger: false }, deps, ml);
+    patch(m.id, { cardState: r.outcome === "applied" ? "undone" : "applied", result: r.outcome === "applied" ? COPY[ml].undone : report(r, COPY[ml]) });
     if (r.done.length) window.dispatchEvent(new CustomEvent(ASSISTANT_APPLIED_EVENT, { detail: { shareId: m.shareId } }));
     log(m, m.card.undo, r.outcome === "applied" ? "undone" : r.outcome, r.failed ?? "");
   };
 
   const cancelCard = (m: Msg) => {
     if (!m.card || m.cardState !== "pending") return;
-    patch(m.id, { cardState: "cancelled", result: c.cancelled });
+    patch(m.id, { cardState: "cancelled", result: COPY[m.lang ?? lang].cancelled });
     log(m, m.card, "cancelled");
   };
 
