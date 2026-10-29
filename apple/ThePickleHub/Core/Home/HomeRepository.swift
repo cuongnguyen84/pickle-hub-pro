@@ -19,6 +19,25 @@ struct HomeRepository {
         return rows.first
     }
 
+    /// Resolves a `/blog/:slug` or `/vi/blog/:slug` deep link to the published
+    /// VI slug: exact VI slug first, then the post whose `alternate_en_slug`
+    /// matches (same lookup order as web `useViBlogPostBySlug`).
+    func viBlogSlug(matching slug: String) async throws -> String? {
+        struct Row: Decodable { let slug: String }
+        for column in ["slug", "alternate_en_slug"] {
+            let rows: [Row] = try await client
+                .from("vi_blog_posts")
+                .select("slug")
+                .eq(column, value: slug)
+                .eq("status", value: "published")
+                .limit(1)
+                .execute()
+                .value
+            if let row = rows.first { return row.slug }
+        }
+        return nil
+    }
+
     /// "Tuần này" feature stories — newest published VI blog posts.
     func featuredPosts(limit: Int = 6) async throws -> [BlogPostSummary] {
         try await client
