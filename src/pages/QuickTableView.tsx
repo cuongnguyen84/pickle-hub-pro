@@ -304,11 +304,15 @@ const QuickTableView = () => {
   );
   const allGroupMatchesPending = groupStageMatches.length > 0
     && groupStageMatches.every(match => match.status === 'pending');
+  // Giải có gán sân theo bảng (group_courts): bảng không gán mà hết sân tự do
+  // thì court_id = NULL là cố ý — "sửa" ở đây từng dồn cả bảng đó vào sân đã
+  // gán cho bảng khác (test trợ lý 28/10: bảng A thành sân 2).
+  const hasGroupPins = !!table?.group_courts?.some(court => court != null);
   const legacyScheduleNeedsRepair = allGroupMatchesPending
     && groupStageMatches.some(match =>
       match.rr_round_number === null
       || match.rr_match_index === null
-      || match.court_id === null,
+      || (match.court_id === null && !hasGroupPins),
     );
 
   // Old tournaments can contain nested-loop match rows with no round metadata.

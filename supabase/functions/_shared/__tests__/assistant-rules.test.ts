@@ -134,6 +134,9 @@ describe("bù tham số từ câu người dùng", () => {
   const card = (raw: unknown, text: string, view: string | null = null) =>
     buildCard(qr(), fillFromText(qr(), raw, text) as Record<string, unknown>, "vi", view);
 
+  it("đổi tên giải chỉ có type (log 81)", () => {
+    expect(card({ type: "rename_tournament" }, "Đổi tên giải thành QA R3 2810 X")!.args).toEqual({ name: "QA R3 2810 X" });
+  });
   it("đổi tên đội X thành Y — tên đội một vế", () => {
     const c = card({ type: "rename_team" }, "Đổi tên đội QR Delta thành QR Replacement")!;
     expect(c.args).toEqual({ team_id: "d", p1: "QR Replacement", p2: null });

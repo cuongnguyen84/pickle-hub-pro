@@ -203,7 +203,11 @@ async function handleAssistant(
     generationConfig: { temperature: 0.1, maxOutputTokens: 4096, responseMimeType: "application/json", responseSchema: RESPONSE_SCHEMA },
   });
   const { text, error } = await callGemini(MODEL, payload, { budgetMs: 22_000, perModelMs: 12_000, tag: "assistant" });
-  if (text == null) return { status: 502, body: { error: "ai_unavailable", detail: error.slice(0, 200) } };
+  if (text == null) {
+    // Test 28/10: lượt "lỗi mạng" không để lại dòng log nào → ghi lại để soi.
+    await logAssistant(userId, lang, threadId, ctx.label, userText, error.slice(0, 900), "error", null, null);
+    return { status: 502, body: { error: "ai_unavailable", detail: error.slice(0, 200) } };
+  }
   let parsed: Record<string, unknown> = {};
   try { parsed = JSON.parse(text); } catch { /* xử lý bên dưới */ }
   if (typeof parsed.intent !== "string") {

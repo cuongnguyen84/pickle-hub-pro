@@ -244,6 +244,10 @@ export function fillFromText(s: TableState, raw: unknown, text: string): unknown
   };
   const split = text.trim().match(RENAME_SPLIT);
   switch (a.type) {
+    case "rename_tournament":
+      // log 81 (28/10): rename_tournament args rỗng.
+      if (!clean(a.name, 100) && split) a.name = split[2].replace(/^["'“]+|["'”.!]+$/g, "");
+      break;
     case "rename_team":
       if (!resolveTeam(s, a)) {
         const p = one(split ? split[1] : text);

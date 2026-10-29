@@ -167,7 +167,7 @@ const TournamentAssistant = ({ routeScreen }: { routeScreen: AssistantScreen }) 
     setBusy(false);
     const res = data as { reply?: string; card?: Card | null; lang?: Lang } | null;
     if (!res?.reply) {
-      setMessages((ms) => [...ms, { id: uid(), role: "bot", text: c.error, ctx: label }]);
+      setMessages((ms) => [...ms, { id: uid(), role: "bot", text: (/[à-ỹđ]/i.test(t) ? COPY.vi : c).error, ctx: label }]);
       return;
     }
     const card = res.card ?? undefined;
@@ -266,16 +266,16 @@ const TournamentAssistant = ({ routeScreen }: { routeScreen: AssistantScreen }) 
                     {m.cardState === "pending" && (
                       <div className="tl-asst-actions">
                         <Button type="button" size="sm" variant={m.card.danger ? "destructive" : "default"} onClick={() => confirmCard(m)}>
-                          {m.card.danger ? c.confirmDanger : c.confirm}
+                          {m.card.danger ? COPY[m.lang ?? lang].confirmDanger : COPY[m.lang ?? lang].confirm}
                         </Button>
-                        <Button type="button" size="sm" variant="outline" onClick={() => cancelCard(m)}>{c.cancel}</Button>
+                        <Button type="button" size="sm" variant="outline" onClick={() => cancelCard(m)}>{COPY[m.lang ?? lang].cancel}</Button>
                       </div>
                     )}
-                    {m.cardState === "running" && <div className="tl-asst-result"><Loader2 className="h-3.5 w-3.5 animate-spin" />{c.running}</div>}
+                    {m.cardState === "running" && <div className="tl-asst-result"><Loader2 className="h-3.5 w-3.5 animate-spin" />{COPY[m.lang ?? lang].running}</div>}
                     {m.result && m.cardState !== "running" && <div className={`tl-asst-result ${m.cardState}`}>{m.result}</div>}
                     {m.cardState === "applied" && undoable.current.has(m.id) && (
                       <button type="button" className="tl-asst-link" onClick={() => undoCard(m)}>
-                        <Undo2 className="h-3.5 w-3.5" aria-hidden /> {c.undo}
+                        <Undo2 className="h-3.5 w-3.5" aria-hidden /> {COPY[m.lang ?? lang].undo}
                       </button>
                     )}
                   </div>
