@@ -10,6 +10,36 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "juan-benitez-coach-behind-patriquin-bright-staksrud",
+    "publishedDate": "2026-10-28",
+    "updatedDate": "2026-10-28",
+    "author": "The PickleHub Team",
+    "tags": [
+      "juan benitez",
+      "hayden patriquin",
+      "anna bright",
+      "federico staksrud",
+      "mlp nations cup",
+      "coaching",
+      "pickleball viet nam"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Watch live tournaments on ThePickleHub",
+      "vi": "Xem giải trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/juan-benitez-coach-behind-patriquin-bright-staksrud-hero.webp",
+      "alt": "A pickleball coach kneeling courtside during a timeout, instructing two seated players holding paddles in an indoor arena (illustration)"
+    },
+    "titleEn": "The Coach in the Corner: How Juan Benítez Built the Teams Beating Waters and Johns",
+    "titleVi": "Người thầy ở góc sân: Juan Benítez đã xây những đội đánh bại Waters và Johns thế nào",
+    "metaTitleEn": "Juan Benítez, Coach to Patriquin, Bright and Staksrud",
+    "metaTitleVi": "Juan Benítez: HLV của Patriquin, Bright, Staksrud",
+    "metaDescriptionEn": "Juan Benítez coaches Patriquin, Bright and Staksrud — the teams now beating Waters and Johns. This week he captains Latin America at the Nations Cup.",
+    "metaDescriptionVi": "HLV đứng sau Patriquin, Bright và Staksrud — các đội thắng Waters, Johns. Tuần này Benítez là đội trưởng Latin America ở Nations Cup."
+  },
+  {
     "slug": "why-your-backhand-flick-has-no-power",
     "publishedDate": "2026-10-27",
     "updatedDate": "2026-10-27",
@@ -173,6 +203,35 @@ export const blogMetadata: BlogPostMetadata[] = [
     "metaDescriptionVi": "Phân tích hậu Hong Kong Slam 2026: hai hạt giống số 1 đơn gục ở tứ kết, và cái giá của 2 chung kết liền với tay vợt 15 tuổi."
   },
   {
+    "slug": "how-new-jersey-won-mlp-2026-analysis",
+    "publishedDate": "2026-10-26",
+    "updatedDate": "2026-10-26",
+    "author": "The PickleHub Team",
+    "tags": [
+      "major league pickleball",
+      "mlp 2026",
+      "new jersey 5s",
+      "dreambreaker",
+      "anna leigh waters",
+      "federico staksrud"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Watch live tournaments on ThePickleHub",
+      "vi": "Xem giải trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/new-jersey-mlp-2026-analysis-hero.webp",
+      "alt": "A four-player pickleball team lifting a championship trophy under arena lights (illustration)"
+    },
+    "titleEn": "How New Jersey finally won MLP: DreamBreakers, one trade, and the math of team pickleball",
+    "titleVi": "New Jersey vô địch MLP bằng cách nào: DreamBreaker, một thương vụ và bài toán đồng đội",
+    "metaTitleEn": "How New Jersey Finally Won MLP 2026",
+    "metaTitleVi": "New Jersey vô địch MLP 2026 bằng cách nào",
+    "metaDescriptionEn": "Two DreamBreakers, one mid-season trade and Anna Leigh Waters' absurd season line: the three lessons behind New Jersey's first MLP title.",
+    "metaDescriptionVi": "Ba bài học từ chức vô địch MLP 2026 của New Jersey: DreamBreaker, thương vụ Staksrud và sức nặng của siêu sao Waters."
+  },
+  {
     "slug": "dragon-medals-ppa-tour-asia",
     "publishedDate": "2026-10-26",
     "updatedDate": "2026-10-26",
@@ -203,7 +262,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     "slug": "pickleball-world-championships-2026-results",
     "publishedDate": "2026-11-02",
-    "updatedDate": "2026-10-27",
+    "updatedDate": "2026-10-29",
     "author": "The PickleHub Team",
     "tags": [
       "pickleball",

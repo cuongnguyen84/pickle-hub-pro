@@ -6,7 +6,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   "slug": "pickleball-world-championships-2026-results",
   "publishedDate": "2026-11-02",
-  "updatedDate": "2026-10-27",
+  "updatedDate": "2026-10-29",
   "author": "The PickleHub Team",
   "tags": [
     "pickleball",
@@ -27,7 +27,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: October 27, 2026, 18:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 110 matches, including 0 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: October 29, 2026, 14:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 110 matches, including 0 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -72,12 +72,7 @@ const post: BlogPost = {
                 "label": "Round 32",
                 "matches": [
                   {
-                    "teamA": "Yi-Lin Shi / Shi Y",
-                    "teamB": "Madyson Peav / Stuti Sinha",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Kylie Imperial / Nikita Pradeep",
+                    "teamA": "Madyson Peav / Stuti Sinha",
                     "teamB": "Jessica Pehush / Sarah Smith",
                     "sets": []
                   }
@@ -88,8 +83,18 @@ const post: BlogPost = {
                 "label": "Round 16",
                 "matches": [
                   {
+                    "teamA": "Masa Grgan / Maddy Rasmusen",
+                    "teamB": "Katie O'Riley / Katarzyna Carr",
+                    "sets": []
+                  },
+                  {
                     "teamA": "Anna Lenhart / Caroline Maguire",
                     "teamB": "Haley Ferguson / Frances Altick",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Allie Reichert / Madalina Grigoriu",
+                    "teamB": "Kylie Imperial / Nikita Pradeep",
                     "sets": []
                   },
                   {
@@ -98,23 +103,18 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Olivia Phillips / Polina Libo",
-                    "teamB": "Elaine Li / Rachel Janssen",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Allie Reichert / Madalina Grigoriu",
-                    "teamB": "Patricia Martins / Abla Mannarino",
+                    "teamA": "Chloe Diskin / Anne-Sophie Courteau",
+                    "teamB": "Yi-Lin Shi / Shi Y",
                     "sets": []
                   },
                   {
                     "teamA": "Adelie Osher / Janet Liu",
-                    "teamB": "Lauren Delong / Lani Silversides",
+                    "teamB": "Patricia Martins / Abla Mannarino",
                     "sets": []
                   },
                   {
-                    "teamA": "Masa Grgan / Maddy Rasmusen",
-                    "teamB": "Katie O'Riley / Katarzyna Carr",
+                    "teamA": "Olivia Phillips / Polina Libo",
+                    "teamB": "Elaine Li / Rachel Janssen",
                     "sets": []
                   }
                 ]
@@ -132,23 +132,8 @@ const post: BlogPost = {
                 "label": "Round 64",
                 "matches": [
                   {
-                    "teamA": "Julian Arnold / Yates Johnson",
-                    "teamB": "Ross Whittaker / Mohaned Alhouni",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Casey Diamond / Tyson McGuffin",
-                    "teamB": "Freddie Powell / Austin Bricker",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Tyler Loong / Darrian Young",
-                    "teamB": "Aryaan Bhatia / Wil Shaffer",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jonathan Truong / Max Freeman",
-                    "teamB": "Alexander Crum / Matthew Finnerty",
+                    "teamA": "Kenta Miyoshi / James Delgado",
+                    "teamB": "Daniel Phillips / Patrick Smith",
                     "sets": []
                   },
                   {
@@ -157,13 +142,8 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Yuta Funemizu / Armaan Bhatia",
-                    "teamB": "Miles Hoover / Jaxon Madsen",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Will Mackinnon / Hunter Johnson",
-                    "teamB": "Wesley Burrows / Eric Roddy",
+                    "teamA": "Rafael Lenhard / Elliott Schupp",
+                    "teamB": "Kyle Koszuta / Jace Morris",
                     "sets": []
                   },
                   {
@@ -172,8 +152,8 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Harrison Brown / Lucas Pascoe",
-                    "teamB": "Braden Jacobson / Travis Rettenmaier",
+                    "teamA": "Yuta Funemizu / Armaan Bhatia",
+                    "teamB": "Miles Hoover / Jaxon Madsen",
                     "sets": []
                   },
                   {
@@ -182,23 +162,23 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Kenta Miyoshi / James Delgado",
-                    "teamB": "Daniel Phillips / Patrick Smith",
-                    "sets": []
-                  },
-                  {
                     "teamA": "Christopher Crouch / Anouar Braham",
                     "teamB": "Mota Alhouni / George Rangelov",
                     "sets": []
                   },
                   {
-                    "teamA": "Collin Johns / Len Yang",
-                    "teamB": "Theo Platel / Arwid Dahlin",
+                    "teamA": "Will Mackinnon / Hunter Johnson",
+                    "teamB": "Wesley Burrows / Eric Roddy",
                     "sets": []
                   },
                   {
-                    "teamA": "Matt Wright / John Lucian Goins",
-                    "teamB": "Luke Wasson / Chuck Taylor",
+                    "teamA": "Harrison Brown / Lucas Pascoe",
+                    "teamB": "Braden Jacobson / Travis Rettenmaier",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Tyler Loong / Darrian Young",
+                    "teamB": "Aryaan Bhatia / Wil Shaffer",
                     "sets": []
                   },
                   {
@@ -207,18 +187,38 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
+                    "teamA": "Donald Young / Tom Protzek",
+                    "teamB": "Cason Campbell / Adam Harvey",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Casey Diamond / Tyson McGuffin",
+                    "teamB": "Freddie Powell / Austin Bricker",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Matt Wright / John Lucian Goins",
+                    "teamB": "Luke Wasson / Chuck Taylor",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Collin Johns / Len Yang",
+                    "teamB": "Theo Platel / Arwid Dahlin",
+                    "sets": []
+                  },
+                  {
                     "teamA": "Michael Loyd / Luca Mack",
                     "teamB": "Mitchell Hargreaves / Nasa Hatakeyama",
                     "sets": []
                   },
                   {
-                    "teamA": "Pablo Tellez / Roscoe Bellamy",
-                    "teamB": "Jace Howard / Ethan Bakalinsky",
+                    "teamA": "Julian Arnold / Yates Johnson",
+                    "teamB": "Ross Whittaker / Mohaned Alhouni",
                     "sets": []
                   },
                   {
-                    "teamA": "Donald Young / Tom Protzek",
-                    "teamB": "Cason Campbell / Adam Harvey",
+                    "teamA": "Jonathan Truong / Max Freeman",
+                    "teamB": "Alexander Crum / Matthew Finnerty",
                     "sets": []
                   },
                   {
@@ -227,18 +227,18 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "AJ Koller / Connor Mogle",
-                    "teamB": "Joel Poland / Eduardo Santini Ayon",
-                    "sets": []
-                  },
-                  {
                     "teamA": "Rafa Hewett / Luc Pham",
                     "teamB": "Caden Nemoff / Maverick Messinger",
                     "sets": []
                   },
                   {
-                    "teamA": "Rafael Lenhard / Elliott Schupp",
-                    "teamB": "Kyle Koszuta / Jace Morris",
+                    "teamA": "Pablo Tellez / Roscoe Bellamy",
+                    "teamB": "Jace Howard / Ethan Bakalinsky",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "AJ Koller / Connor Mogle",
+                    "teamB": "Joel Poland / Eduardo Santini Ayon",
                     "sets": []
                   }
                 ],
@@ -257,98 +257,13 @@ const post: BlogPost = {
                 "label": "Round 64",
                 "matches": [
                   {
-                    "teamA": "Dekel Bar / Jessie Irvine",
-                    "teamB": "Aiko Yoshitomi / Luca Mack",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Chao Yi Wang / Roscoe Bellamy",
-                    "teamB": "Mitchell Hargreaves / Jamie Haas",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Sahra Dennehy / Tama Shimabukuro",
-                    "teamB": "Yuta Funemizu / Estee Widdershoven",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Etta Tuionetoa / Jaume Martinez Vich",
-                    "teamB": "Elliott Schupp / Kiora Kunimoto",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Dylan Frazier / Kaitlyn Christian",
-                    "teamB": "Kaitlynn Hart / Harrison Brown",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Luc Pham / Christa Gecheva",
-                    "teamB": "Anderson Scarpa / Alex Walker",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jonathan Truong / Meghan Dizon",
-                    "teamB": "Michael Loyd / Kelly Goodnow",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Isabella Dunlap / James Delgado",
-                    "teamB": "Mohaned Alhouni / Lina Padegimaite",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Riley Newman / Layne Sleeth",
-                    "teamB": "Kenta Miyoshi / Ella Yeh",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "John Lucian Goins / Alix Truong",
-                    "teamB": "Christopher Crouch / Jalina Ingram",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mari Humberg / Pablo Tellez",
-                    "teamB": "Zoey Weil / Christopher Haworth",
-                    "sets": []
-                  },
-                  {
                     "teamA": "CJ Klinger / Danni-Elle Townsend",
                     "teamB": "Angie Walker / Wyatt Stone",
                     "sets": []
                   },
                   {
-                    "teamA": "Tina Pisnik / Noe Khlif",
-                    "teamB": "Hannah Blatt / Grayson Goldin",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Judit Castillo / Tyson McGuffin",
-                    "teamB": "Anouar Braham / Mya Bui",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Xiao Yi Wang-Beckvall / Eunggwon Kim",
-                    "teamB": "Sofia Sewing / Nicolas Acevedo",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Lucas Pascoe / Paula Rives",
-                    "teamB": "Brooke Buckner / Camden Chaffin",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Armaan Bhatia / Milan Rane",
-                    "teamB": "Genie Erokhina / Clayton Powell",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Lingwei Kong / Adam Harvey",
-                    "teamB": "Ivan Jakovljevic / Lauren Stratman",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Liz Truluck / Hunter Johnson",
-                    "teamB": "Max Freeman / Giovanna Morelli",
+                    "teamA": "Dekel Bar / Jessie Irvine",
+                    "teamB": "Aiko Yoshitomi / Luca Mack",
                     "sets": []
                   },
                   {
@@ -362,8 +277,63 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Tyler Loong / Lindsey Newman",
-                    "teamB": "Hong Kit Wong / Kei Sawaki",
+                    "teamA": "Lingwei Kong / Adam Harvey",
+                    "teamB": "Ivan Jakovljevic / Lauren Stratman",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Xiao Yi Wang-Beckvall / Eunggwon Kim",
+                    "teamB": "Sofia Sewing / Nicolas Acevedo",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Judit Castillo / Tyson McGuffin",
+                    "teamB": "Anouar Braham / Mya Bui",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Luc Pham / Christa Gecheva",
+                    "teamB": "Anderson Scarpa / Alex Walker",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Mari Humberg / Pablo Tellez",
+                    "teamB": "Zoey Weil / Christopher Haworth",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Sahra Dennehy / Tama Shimabukuro",
+                    "teamB": "Yuta Funemizu / Estee Widdershoven",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Jonathan Truong / Meghan Dizon",
+                    "teamB": "Michael Loyd / Kelly Goodnow",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Collin Johns / Callie Smith",
+                    "teamB": "Daria Walczak / Augustus Ge",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Chao Yi Wang / Roscoe Bellamy",
+                    "teamB": "Mitchell Hargreaves / Jamie Haas",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "John Lucian Goins / Alix Truong",
+                    "teamB": "Christopher Crouch / Jalina Ingram",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Dylan Frazier / Kaitlyn Christian",
+                    "teamB": "Kaitlynn Hart / Harrison Brown",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Tina Pisnik / Noe Khlif",
+                    "teamB": "Hannah Blatt / Grayson Goldin",
                     "sets": []
                   },
                   {
@@ -372,8 +342,38 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Collin Johns / Callie Smith",
-                    "teamB": "Daria Walczak / Augustus Ge",
+                    "teamA": "Tyler Loong / Lindsey Newman",
+                    "teamB": "Hong Kit Wong / Kei Sawaki",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Etta Tuionetoa / Jaume Martinez Vich",
+                    "teamB": "Elliott Schupp / Kiora Kunimoto",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Lucas Pascoe / Paula Rives",
+                    "teamB": "Brooke Buckner / Camden Chaffin",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Liz Truluck / Hunter Johnson",
+                    "teamB": "Max Freeman / Giovanna Morelli",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Riley Newman / Layne Sleeth",
+                    "teamB": "Kenta Miyoshi / Ella Yeh",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Armaan Bhatia / Milan Rane",
+                    "teamB": "Genie Erokhina / Clayton Powell",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Isabella Dunlap / James Delgado",
+                    "teamB": "Mohaned Alhouni / Lina Padegimaite",
                     "sets": []
                   }
                 ],
@@ -392,38 +392,8 @@ const post: BlogPost = {
                 "label": "Round 64",
                 "matches": [
                   {
-                    "teamA": "Helena Jansen",
-                    "teamB": "Luana Stanciu",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Keilly Ulery",
-                    "teamB": "Audrey Adele Brown",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Liz Truluck",
-                    "teamB": "Alex Walker",
-                    "sets": []
-                  },
-                  {
                     "teamA": "Aiko Yoshitomi",
                     "teamB": "Allison Phillips",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jorja Johnson",
-                    "teamB": "Chloe Igleski",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mari Humberg",
-                    "teamB": "Paula Rives",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mya Bui",
-                    "teamB": "Estee Widdershoven",
                     "sets": []
                   },
                   {
@@ -432,8 +402,8 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Lacy Schneemann",
-                    "teamB": "Angie Walker",
+                    "teamA": "Genie Bouchard",
+                    "teamB": "Natalia Simson",
                     "sets": []
                   },
                   {
@@ -442,13 +412,8 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Nicole Conard",
-                    "teamB": "Kelly Goodnow",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Victoria Dimuzio",
-                    "teamB": "Samantha Parker",
+                    "teamA": "Liz Truluck",
+                    "teamB": "Alex Walker",
                     "sets": []
                   },
                   {
@@ -457,8 +422,43 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Hannah Blatt",
-                    "teamB": "Polina Libo",
+                    "teamA": "Victoria Dimuzio",
+                    "teamB": "Samantha Parker",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Jorja Johnson",
+                    "teamB": "Chloe Igleski",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Ting Chieh Wei",
+                    "teamB": "Kei Sawaki",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Keilly Ulery",
+                    "teamB": "Audrey Adele Brown",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Mari Humberg",
+                    "teamB": "Paula Rives",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Isabella Dunlap",
+                    "teamB": "Cc Eleven Sacca",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Zoey Weil",
+                    "teamB": "Kaitlynn Hart",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Mya Bui",
+                    "teamB": "Estee Widdershoven",
                     "sets": []
                   },
                   {
@@ -467,13 +467,33 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
+                    "teamA": "Nicole Conard",
+                    "teamB": "Kelly Goodnow",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Hannah Blatt",
+                    "teamB": "Polina Libo",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Jessie Irvine",
+                    "teamB": "Danni-Elle Townsend",
+                    "sets": []
+                  },
+                  {
                     "teamA": "Sahra Dennehy",
                     "teamB": "Xiao Yi Wang-Beckvall",
                     "sets": []
                   },
                   {
-                    "teamA": "Genie Bouchard",
-                    "teamB": "Natalia Simson",
+                    "teamA": "Lacy Schneemann",
+                    "teamB": "Angie Walker",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Helena Jansen",
+                    "teamB": "Luana Stanciu",
                     "sets": []
                   },
                   {
@@ -489,26 +509,6 @@ const post: BlogPost = {
                   {
                     "teamA": "Rika Fujiwara",
                     "teamB": "Ava Cavataio",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Isabella Dunlap",
-                    "teamB": "Cc Eleven Sacca",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jessie Irvine",
-                    "teamB": "Danni-Elle Townsend",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Ting Chieh Wei",
-                    "teamB": "Kei Sawaki",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Zoey Weil",
-                    "teamB": "Kaitlynn Hart",
                     "sets": []
                   }
                 ],
@@ -527,17 +527,17 @@ const post: BlogPost = {
                 "label": "Round 128",
                 "matches": [
                   {
-                    "teamA": "Tristan Cooley",
-                    "teamB": "Brandon Nsekpong",
-                    "sets": []
-                  },
-                  {
                     "teamA": "Travis Rettenmaier",
-                    "teamB": "Chrisna Try",
+                    "teamB": "Nicholas Bond",
                     "sets": []
                   },
                   {
-                    "teamA": "Jose Martinez",
+                    "teamA": "Jace Howard",
+                    "teamB": "Mateo Vargas",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Caleb Herrick",
                     "teamB": "Jesse G",
                     "sets": []
                   },
@@ -547,33 +547,48 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Ben Herrick",
-                    "teamB": "Sam Libo",
+                    "teamA": "James Wolf",
+                    "teamB": "Kyle Koszuta",
                     "sets": []
                   },
                   {
                     "teamA": "Ryan Torresin",
-                    "teamB": "Mateo Vargas",
+                    "teamB": "Eduardo Panozzo",
                     "sets": []
                   },
                   {
-                    "teamA": "Asís Garrido Guerrero",
-                    "teamB": "John Cincola",
+                    "teamA": "Hunter Merritt",
+                    "teamB": "Chrisna Try",
                     "sets": []
                   },
                   {
-                    "teamA": "Usama Khalid",
+                    "teamA": "Dave Conley",
+                    "teamB": "Martin Stanchev",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Freddie Powell",
+                    "teamB": "Alfonso Plata",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Maverick Messinger",
                     "teamB": "Jagger Baird",
                     "sets": []
                   },
                   {
-                    "teamA": "Jace Howard",
+                    "teamA": "Usama Khalid",
                     "teamB": "Benny Ramirez",
                     "sets": []
                   },
                   {
-                    "teamA": "George Wolf",
-                    "teamB": "Kyle Koszuta",
+                    "teamA": "Tristan Cooley",
+                    "teamB": "Takumi Matsuda",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Magnus Violet",
+                    "teamB": "Brandon Nsekpong",
                     "sets": []
                   },
                   {
@@ -582,53 +597,43 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Dave Conley",
-                    "teamB": "Aleck Blair",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Andrew Angulo",
-                    "teamB": "Josiah Joplin",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "James Wolf",
-                    "teamB": "Casey Diamond",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "MJ Marrero",
-                    "teamB": "Divin Sarthak",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Alvaro Regalado",
-                    "teamB": "Nicholas Bond",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Caleb Herrick",
-                    "teamB": "Alfonso Plata",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Magnus Violet",
-                    "teamB": "Jamison Pfingston",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Maverick Messinger",
+                    "teamA": "Jose Martinez",
                     "teamB": "David S",
                     "sets": []
                   },
                   {
-                    "teamA": "Hunter Merritt",
-                    "teamB": "Eduardo Panozzo",
+                    "teamA": "Asís Garrido Guerrero",
+                    "teamB": "Casey Diamond",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "George Wolf",
+                    "teamB": "Divin Sarthak",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Ben Herrick",
+                    "teamB": "Sam Libo",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Alvaro Regalado",
+                    "teamB": "Josiah Joplin",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Andrew Angulo",
+                    "teamB": "Jamison Pfingston",
                     "sets": []
                   },
                   {
                     "teamA": "Ryder Brown",
-                    "teamB": "Takumi Matsuda",
+                    "teamB": "John Cincola",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "MJ Marrero",
+                    "teamB": "Aleck Blair",
                     "sets": []
                   }
                 ],
@@ -638,18 +643,8 @@ const post: BlogPost = {
                 "label": "Round 64",
                 "matches": [
                   {
-                    "teamA": "Rio Newcombe",
-                    "teamB": "Caden Nemoff",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Braylon Ohrel",
-                    "teamB": "Jackson Ayotte",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Easton Horricks",
-                    "teamB": "Liam Duffin",
+                    "teamA": "Francis Chi",
+                    "teamB": "Hector Sanchez Vidal",
                     "sets": []
                   },
                   {
@@ -658,18 +653,13 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Zach Gonnering",
-                    "teamB": "Garrison Eaby",
-                    "sets": []
-                  },
-                  {
                     "teamA": "Daniel Miron",
                     "teamB": "Patrik Kevin Tsati-Onla",
                     "sets": []
                   },
                   {
-                    "teamA": "Aanik Lohani",
-                    "teamB": "Jase Edwards",
+                    "teamA": "Braylon Ohrel",
+                    "teamB": "Jackson Ayotte",
                     "sets": []
                   },
                   {
@@ -678,18 +668,28 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
+                    "teamA": "Easton Horricks",
+                    "teamB": "Liam Duffin",
+                    "sets": []
+                  },
+                  {
                     "teamA": "Oliver Frank",
                     "teamB": "Julian Chow",
                     "sets": []
                   },
                   {
-                    "teamA": "Ryan Sherry",
-                    "teamB": "Freddie Powell",
+                    "teamA": "Aanik Lohani",
+                    "teamB": "Jase Edwards",
                     "sets": []
                   },
                   {
-                    "teamA": "Francis Chi",
-                    "teamB": "Hector Sanchez Vidal",
+                    "teamA": "Rio Newcombe",
+                    "teamB": "Caden Nemoff",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Zach Gonnering",
+                    "teamB": "Garrison Eaby",
                     "sets": []
                   }
                 ],
@@ -725,7 +725,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 18:00 ngày 27/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 110 trận, gồm 0 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 14:00 ngày 29/10/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 110 trận, gồm 0 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -770,12 +770,7 @@ const post: BlogPost = {
                 "label": "Vòng 32",
                 "matches": [
                   {
-                    "teamA": "Yi-Lin Shi / Shi Y",
-                    "teamB": "Madyson Peav / Stuti Sinha",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Kylie Imperial / Nikita Pradeep",
+                    "teamA": "Madyson Peav / Stuti Sinha",
                     "teamB": "Jessica Pehush / Sarah Smith",
                     "sets": []
                   }
@@ -786,8 +781,18 @@ const post: BlogPost = {
                 "label": "Vòng 16",
                 "matches": [
                   {
+                    "teamA": "Masa Grgan / Maddy Rasmusen",
+                    "teamB": "Katie O'Riley / Katarzyna Carr",
+                    "sets": []
+                  },
+                  {
                     "teamA": "Anna Lenhart / Caroline Maguire",
                     "teamB": "Haley Ferguson / Frances Altick",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Allie Reichert / Madalina Grigoriu",
+                    "teamB": "Kylie Imperial / Nikita Pradeep",
                     "sets": []
                   },
                   {
@@ -796,23 +801,18 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Olivia Phillips / Polina Libo",
-                    "teamB": "Elaine Li / Rachel Janssen",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Allie Reichert / Madalina Grigoriu",
-                    "teamB": "Patricia Martins / Abla Mannarino",
+                    "teamA": "Chloe Diskin / Anne-Sophie Courteau",
+                    "teamB": "Yi-Lin Shi / Shi Y",
                     "sets": []
                   },
                   {
                     "teamA": "Adelie Osher / Janet Liu",
-                    "teamB": "Lauren Delong / Lani Silversides",
+                    "teamB": "Patricia Martins / Abla Mannarino",
                     "sets": []
                   },
                   {
-                    "teamA": "Masa Grgan / Maddy Rasmusen",
-                    "teamB": "Katie O'Riley / Katarzyna Carr",
+                    "teamA": "Olivia Phillips / Polina Libo",
+                    "teamB": "Elaine Li / Rachel Janssen",
                     "sets": []
                   }
                 ]
@@ -830,23 +830,8 @@ const post: BlogPost = {
                 "label": "Vòng 64",
                 "matches": [
                   {
-                    "teamA": "Julian Arnold / Yates Johnson",
-                    "teamB": "Ross Whittaker / Mohaned Alhouni",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Casey Diamond / Tyson McGuffin",
-                    "teamB": "Freddie Powell / Austin Bricker",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Tyler Loong / Darrian Young",
-                    "teamB": "Aryaan Bhatia / Wil Shaffer",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jonathan Truong / Max Freeman",
-                    "teamB": "Alexander Crum / Matthew Finnerty",
+                    "teamA": "Kenta Miyoshi / James Delgado",
+                    "teamB": "Daniel Phillips / Patrick Smith",
                     "sets": []
                   },
                   {
@@ -855,13 +840,8 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Yuta Funemizu / Armaan Bhatia",
-                    "teamB": "Miles Hoover / Jaxon Madsen",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Will Mackinnon / Hunter Johnson",
-                    "teamB": "Wesley Burrows / Eric Roddy",
+                    "teamA": "Rafael Lenhard / Elliott Schupp",
+                    "teamB": "Kyle Koszuta / Jace Morris",
                     "sets": []
                   },
                   {
@@ -870,8 +850,8 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Harrison Brown / Lucas Pascoe",
-                    "teamB": "Braden Jacobson / Travis Rettenmaier",
+                    "teamA": "Yuta Funemizu / Armaan Bhatia",
+                    "teamB": "Miles Hoover / Jaxon Madsen",
                     "sets": []
                   },
                   {
@@ -880,23 +860,23 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Kenta Miyoshi / James Delgado",
-                    "teamB": "Daniel Phillips / Patrick Smith",
-                    "sets": []
-                  },
-                  {
                     "teamA": "Christopher Crouch / Anouar Braham",
                     "teamB": "Mota Alhouni / George Rangelov",
                     "sets": []
                   },
                   {
-                    "teamA": "Collin Johns / Len Yang",
-                    "teamB": "Theo Platel / Arwid Dahlin",
+                    "teamA": "Will Mackinnon / Hunter Johnson",
+                    "teamB": "Wesley Burrows / Eric Roddy",
                     "sets": []
                   },
                   {
-                    "teamA": "Matt Wright / John Lucian Goins",
-                    "teamB": "Luke Wasson / Chuck Taylor",
+                    "teamA": "Harrison Brown / Lucas Pascoe",
+                    "teamB": "Braden Jacobson / Travis Rettenmaier",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Tyler Loong / Darrian Young",
+                    "teamB": "Aryaan Bhatia / Wil Shaffer",
                     "sets": []
                   },
                   {
@@ -905,18 +885,38 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
+                    "teamA": "Donald Young / Tom Protzek",
+                    "teamB": "Cason Campbell / Adam Harvey",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Casey Diamond / Tyson McGuffin",
+                    "teamB": "Freddie Powell / Austin Bricker",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Matt Wright / John Lucian Goins",
+                    "teamB": "Luke Wasson / Chuck Taylor",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Collin Johns / Len Yang",
+                    "teamB": "Theo Platel / Arwid Dahlin",
+                    "sets": []
+                  },
+                  {
                     "teamA": "Michael Loyd / Luca Mack",
                     "teamB": "Mitchell Hargreaves / Nasa Hatakeyama",
                     "sets": []
                   },
                   {
-                    "teamA": "Pablo Tellez / Roscoe Bellamy",
-                    "teamB": "Jace Howard / Ethan Bakalinsky",
+                    "teamA": "Julian Arnold / Yates Johnson",
+                    "teamB": "Ross Whittaker / Mohaned Alhouni",
                     "sets": []
                   },
                   {
-                    "teamA": "Donald Young / Tom Protzek",
-                    "teamB": "Cason Campbell / Adam Harvey",
+                    "teamA": "Jonathan Truong / Max Freeman",
+                    "teamB": "Alexander Crum / Matthew Finnerty",
                     "sets": []
                   },
                   {
@@ -925,18 +925,18 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "AJ Koller / Connor Mogle",
-                    "teamB": "Joel Poland / Eduardo Santini Ayon",
-                    "sets": []
-                  },
-                  {
                     "teamA": "Rafa Hewett / Luc Pham",
                     "teamB": "Caden Nemoff / Maverick Messinger",
                     "sets": []
                   },
                   {
-                    "teamA": "Rafael Lenhard / Elliott Schupp",
-                    "teamB": "Kyle Koszuta / Jace Morris",
+                    "teamA": "Pablo Tellez / Roscoe Bellamy",
+                    "teamB": "Jace Howard / Ethan Bakalinsky",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "AJ Koller / Connor Mogle",
+                    "teamB": "Joel Poland / Eduardo Santini Ayon",
                     "sets": []
                   }
                 ],
@@ -955,98 +955,13 @@ const post: BlogPost = {
                 "label": "Vòng 64",
                 "matches": [
                   {
-                    "teamA": "Dekel Bar / Jessie Irvine",
-                    "teamB": "Aiko Yoshitomi / Luca Mack",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Chao Yi Wang / Roscoe Bellamy",
-                    "teamB": "Mitchell Hargreaves / Jamie Haas",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Sahra Dennehy / Tama Shimabukuro",
-                    "teamB": "Yuta Funemizu / Estee Widdershoven",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Etta Tuionetoa / Jaume Martinez Vich",
-                    "teamB": "Elliott Schupp / Kiora Kunimoto",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Dylan Frazier / Kaitlyn Christian",
-                    "teamB": "Kaitlynn Hart / Harrison Brown",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Luc Pham / Christa Gecheva",
-                    "teamB": "Anderson Scarpa / Alex Walker",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jonathan Truong / Meghan Dizon",
-                    "teamB": "Michael Loyd / Kelly Goodnow",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Isabella Dunlap / James Delgado",
-                    "teamB": "Mohaned Alhouni / Lina Padegimaite",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Riley Newman / Layne Sleeth",
-                    "teamB": "Kenta Miyoshi / Ella Yeh",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "John Lucian Goins / Alix Truong",
-                    "teamB": "Christopher Crouch / Jalina Ingram",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mari Humberg / Pablo Tellez",
-                    "teamB": "Zoey Weil / Christopher Haworth",
-                    "sets": []
-                  },
-                  {
                     "teamA": "CJ Klinger / Danni-Elle Townsend",
                     "teamB": "Angie Walker / Wyatt Stone",
                     "sets": []
                   },
                   {
-                    "teamA": "Tina Pisnik / Noe Khlif",
-                    "teamB": "Hannah Blatt / Grayson Goldin",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Judit Castillo / Tyson McGuffin",
-                    "teamB": "Anouar Braham / Mya Bui",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Xiao Yi Wang-Beckvall / Eunggwon Kim",
-                    "teamB": "Sofia Sewing / Nicolas Acevedo",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Lucas Pascoe / Paula Rives",
-                    "teamB": "Brooke Buckner / Camden Chaffin",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Armaan Bhatia / Milan Rane",
-                    "teamB": "Genie Erokhina / Clayton Powell",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Lingwei Kong / Adam Harvey",
-                    "teamB": "Ivan Jakovljevic / Lauren Stratman",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Liz Truluck / Hunter Johnson",
-                    "teamB": "Max Freeman / Giovanna Morelli",
+                    "teamA": "Dekel Bar / Jessie Irvine",
+                    "teamB": "Aiko Yoshitomi / Luca Mack",
                     "sets": []
                   },
                   {
@@ -1060,8 +975,63 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Tyler Loong / Lindsey Newman",
-                    "teamB": "Hong Kit Wong / Kei Sawaki",
+                    "teamA": "Lingwei Kong / Adam Harvey",
+                    "teamB": "Ivan Jakovljevic / Lauren Stratman",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Xiao Yi Wang-Beckvall / Eunggwon Kim",
+                    "teamB": "Sofia Sewing / Nicolas Acevedo",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Judit Castillo / Tyson McGuffin",
+                    "teamB": "Anouar Braham / Mya Bui",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Luc Pham / Christa Gecheva",
+                    "teamB": "Anderson Scarpa / Alex Walker",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Mari Humberg / Pablo Tellez",
+                    "teamB": "Zoey Weil / Christopher Haworth",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Sahra Dennehy / Tama Shimabukuro",
+                    "teamB": "Yuta Funemizu / Estee Widdershoven",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Jonathan Truong / Meghan Dizon",
+                    "teamB": "Michael Loyd / Kelly Goodnow",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Collin Johns / Callie Smith",
+                    "teamB": "Daria Walczak / Augustus Ge",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Chao Yi Wang / Roscoe Bellamy",
+                    "teamB": "Mitchell Hargreaves / Jamie Haas",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "John Lucian Goins / Alix Truong",
+                    "teamB": "Christopher Crouch / Jalina Ingram",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Dylan Frazier / Kaitlyn Christian",
+                    "teamB": "Kaitlynn Hart / Harrison Brown",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Tina Pisnik / Noe Khlif",
+                    "teamB": "Hannah Blatt / Grayson Goldin",
                     "sets": []
                   },
                   {
@@ -1070,8 +1040,38 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Collin Johns / Callie Smith",
-                    "teamB": "Daria Walczak / Augustus Ge",
+                    "teamA": "Tyler Loong / Lindsey Newman",
+                    "teamB": "Hong Kit Wong / Kei Sawaki",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Etta Tuionetoa / Jaume Martinez Vich",
+                    "teamB": "Elliott Schupp / Kiora Kunimoto",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Lucas Pascoe / Paula Rives",
+                    "teamB": "Brooke Buckner / Camden Chaffin",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Liz Truluck / Hunter Johnson",
+                    "teamB": "Max Freeman / Giovanna Morelli",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Riley Newman / Layne Sleeth",
+                    "teamB": "Kenta Miyoshi / Ella Yeh",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Armaan Bhatia / Milan Rane",
+                    "teamB": "Genie Erokhina / Clayton Powell",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Isabella Dunlap / James Delgado",
+                    "teamB": "Mohaned Alhouni / Lina Padegimaite",
                     "sets": []
                   }
                 ],
@@ -1090,38 +1090,8 @@ const post: BlogPost = {
                 "label": "Vòng 64",
                 "matches": [
                   {
-                    "teamA": "Helena Jansen",
-                    "teamB": "Luana Stanciu",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Keilly Ulery",
-                    "teamB": "Audrey Adele Brown",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Liz Truluck",
-                    "teamB": "Alex Walker",
-                    "sets": []
-                  },
-                  {
                     "teamA": "Aiko Yoshitomi",
                     "teamB": "Allison Phillips",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jorja Johnson",
-                    "teamB": "Chloe Igleski",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mari Humberg",
-                    "teamB": "Paula Rives",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mya Bui",
-                    "teamB": "Estee Widdershoven",
                     "sets": []
                   },
                   {
@@ -1130,8 +1100,8 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Lacy Schneemann",
-                    "teamB": "Angie Walker",
+                    "teamA": "Genie Bouchard",
+                    "teamB": "Natalia Simson",
                     "sets": []
                   },
                   {
@@ -1140,13 +1110,8 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Nicole Conard",
-                    "teamB": "Kelly Goodnow",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Victoria Dimuzio",
-                    "teamB": "Samantha Parker",
+                    "teamA": "Liz Truluck",
+                    "teamB": "Alex Walker",
                     "sets": []
                   },
                   {
@@ -1155,8 +1120,43 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Hannah Blatt",
-                    "teamB": "Polina Libo",
+                    "teamA": "Victoria Dimuzio",
+                    "teamB": "Samantha Parker",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Jorja Johnson",
+                    "teamB": "Chloe Igleski",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Ting Chieh Wei",
+                    "teamB": "Kei Sawaki",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Keilly Ulery",
+                    "teamB": "Audrey Adele Brown",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Mari Humberg",
+                    "teamB": "Paula Rives",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Isabella Dunlap",
+                    "teamB": "Cc Eleven Sacca",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Zoey Weil",
+                    "teamB": "Kaitlynn Hart",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Mya Bui",
+                    "teamB": "Estee Widdershoven",
                     "sets": []
                   },
                   {
@@ -1165,13 +1165,33 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
+                    "teamA": "Nicole Conard",
+                    "teamB": "Kelly Goodnow",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Hannah Blatt",
+                    "teamB": "Polina Libo",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Jessie Irvine",
+                    "teamB": "Danni-Elle Townsend",
+                    "sets": []
+                  },
+                  {
                     "teamA": "Sahra Dennehy",
                     "teamB": "Xiao Yi Wang-Beckvall",
                     "sets": []
                   },
                   {
-                    "teamA": "Genie Bouchard",
-                    "teamB": "Natalia Simson",
+                    "teamA": "Lacy Schneemann",
+                    "teamB": "Angie Walker",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Helena Jansen",
+                    "teamB": "Luana Stanciu",
                     "sets": []
                   },
                   {
@@ -1187,26 +1207,6 @@ const post: BlogPost = {
                   {
                     "teamA": "Rika Fujiwara",
                     "teamB": "Ava Cavataio",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Isabella Dunlap",
-                    "teamB": "Cc Eleven Sacca",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jessie Irvine",
-                    "teamB": "Danni-Elle Townsend",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Ting Chieh Wei",
-                    "teamB": "Kei Sawaki",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Zoey Weil",
-                    "teamB": "Kaitlynn Hart",
                     "sets": []
                   }
                 ],
@@ -1225,17 +1225,17 @@ const post: BlogPost = {
                 "label": "Vòng 128",
                 "matches": [
                   {
-                    "teamA": "Tristan Cooley",
-                    "teamB": "Brandon Nsekpong",
-                    "sets": []
-                  },
-                  {
                     "teamA": "Travis Rettenmaier",
-                    "teamB": "Chrisna Try",
+                    "teamB": "Nicholas Bond",
                     "sets": []
                   },
                   {
-                    "teamA": "Jose Martinez",
+                    "teamA": "Jace Howard",
+                    "teamB": "Mateo Vargas",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Caleb Herrick",
                     "teamB": "Jesse G",
                     "sets": []
                   },
@@ -1245,33 +1245,48 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Ben Herrick",
-                    "teamB": "Sam Libo",
+                    "teamA": "James Wolf",
+                    "teamB": "Kyle Koszuta",
                     "sets": []
                   },
                   {
                     "teamA": "Ryan Torresin",
-                    "teamB": "Mateo Vargas",
+                    "teamB": "Eduardo Panozzo",
                     "sets": []
                   },
                   {
-                    "teamA": "Asís Garrido Guerrero",
-                    "teamB": "John Cincola",
+                    "teamA": "Hunter Merritt",
+                    "teamB": "Chrisna Try",
                     "sets": []
                   },
                   {
-                    "teamA": "Usama Khalid",
+                    "teamA": "Dave Conley",
+                    "teamB": "Martin Stanchev",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Freddie Powell",
+                    "teamB": "Alfonso Plata",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Maverick Messinger",
                     "teamB": "Jagger Baird",
                     "sets": []
                   },
                   {
-                    "teamA": "Jace Howard",
+                    "teamA": "Usama Khalid",
                     "teamB": "Benny Ramirez",
                     "sets": []
                   },
                   {
-                    "teamA": "George Wolf",
-                    "teamB": "Kyle Koszuta",
+                    "teamA": "Tristan Cooley",
+                    "teamB": "Takumi Matsuda",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Magnus Violet",
+                    "teamB": "Brandon Nsekpong",
                     "sets": []
                   },
                   {
@@ -1280,53 +1295,43 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Dave Conley",
-                    "teamB": "Aleck Blair",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Andrew Angulo",
-                    "teamB": "Josiah Joplin",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "James Wolf",
-                    "teamB": "Casey Diamond",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "MJ Marrero",
-                    "teamB": "Divin Sarthak",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Alvaro Regalado",
-                    "teamB": "Nicholas Bond",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Caleb Herrick",
-                    "teamB": "Alfonso Plata",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Magnus Violet",
-                    "teamB": "Jamison Pfingston",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Maverick Messinger",
+                    "teamA": "Jose Martinez",
                     "teamB": "David S",
                     "sets": []
                   },
                   {
-                    "teamA": "Hunter Merritt",
-                    "teamB": "Eduardo Panozzo",
+                    "teamA": "Asís Garrido Guerrero",
+                    "teamB": "Casey Diamond",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "George Wolf",
+                    "teamB": "Divin Sarthak",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Ben Herrick",
+                    "teamB": "Sam Libo",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Alvaro Regalado",
+                    "teamB": "Josiah Joplin",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Andrew Angulo",
+                    "teamB": "Jamison Pfingston",
                     "sets": []
                   },
                   {
                     "teamA": "Ryder Brown",
-                    "teamB": "Takumi Matsuda",
+                    "teamB": "John Cincola",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "MJ Marrero",
+                    "teamB": "Aleck Blair",
                     "sets": []
                   }
                 ],
@@ -1336,18 +1341,8 @@ const post: BlogPost = {
                 "label": "Vòng 64",
                 "matches": [
                   {
-                    "teamA": "Rio Newcombe",
-                    "teamB": "Caden Nemoff",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Braylon Ohrel",
-                    "teamB": "Jackson Ayotte",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Easton Horricks",
-                    "teamB": "Liam Duffin",
+                    "teamA": "Francis Chi",
+                    "teamB": "Hector Sanchez Vidal",
                     "sets": []
                   },
                   {
@@ -1356,18 +1351,13 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Zach Gonnering",
-                    "teamB": "Garrison Eaby",
-                    "sets": []
-                  },
-                  {
                     "teamA": "Daniel Miron",
                     "teamB": "Patrik Kevin Tsati-Onla",
                     "sets": []
                   },
                   {
-                    "teamA": "Aanik Lohani",
-                    "teamB": "Jase Edwards",
+                    "teamA": "Braylon Ohrel",
+                    "teamB": "Jackson Ayotte",
                     "sets": []
                   },
                   {
@@ -1376,18 +1366,28 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
+                    "teamA": "Easton Horricks",
+                    "teamB": "Liam Duffin",
+                    "sets": []
+                  },
+                  {
                     "teamA": "Oliver Frank",
                     "teamB": "Julian Chow",
                     "sets": []
                   },
                   {
-                    "teamA": "Ryan Sherry",
-                    "teamB": "Freddie Powell",
+                    "teamA": "Aanik Lohani",
+                    "teamB": "Jase Edwards",
                     "sets": []
                   },
                   {
-                    "teamA": "Francis Chi",
-                    "teamB": "Hector Sanchez Vidal",
+                    "teamA": "Rio Newcombe",
+                    "teamB": "Caden Nemoff",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Zach Gonnering",
+                    "teamB": "Garrison Eaby",
                     "sets": []
                   }
                 ],

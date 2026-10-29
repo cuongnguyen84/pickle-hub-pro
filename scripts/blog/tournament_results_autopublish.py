@@ -4,7 +4,11 @@
 This is deliberately deterministic: it only accepts the event's official PPA
 scores feed, validates the event id and final-match winners, and regenerates the
 same four blog surfaces used by the normal blog pipeline.  It never guesses a
-score.  The caller may run it repeatedly; an unchanged feed is a no-op.
+score.  The caller may run it repeatedly; an unchanged feed is a no-op, and so
+is a feed whose rendered page differs from main only by the publish timestamp
+(updatedDate and the "Last updated" / "Cập nhật" sentence).  Those fields move
+on every run, so committing them redeploys main without a new score, status,
+or match count.
 """
 from __future__ import annotations
 
@@ -522,8 +526,75 @@ def _pipeline_fingerprint() -> str:
 
 PIPELINE_FINGERPRINT = _pipeline_fingerprint()
 
-def _publish_once(root: Path, event: dict, feed: dict, now: datetime, push: bool) -> tuple[dict, str]:
-    """Generate, write and commit one snapshot inside the publish worktree."""
+
+# Publish timestamps move on every run even when the rendered page did not.
+# World Championships refreshes on 2026-10-28/29 (938ea281, d5cfb5c3,
+# 50d9644b) committed nothing else: the feed hash changed, the match list
+# did not, and each commit redeployed main. Strip only these three shapes
+# — the updatedDate field and the two opening stamp sentences — so a score,
+# status, or match-count edit on the same line still counts as content.
+_UPDATED_DATE_RE = re.compile(r'"updatedDate": "\d{4}-\d{2}-\d{2}"')
+_LAST_UPDATED_EN_RE = re.compile(r"Last updated: [^.\n]*\.")
+_LAST_UPDATED_VI_RE = re.compile(r"Cập nhật: [^.\n]*\.")
+
+
+def _strip_publish_timestamps(text: str) -> str:
+    text = _UPDATED_DATE_RE.sub('"updatedDate": "<date>"', text)
+    text = _LAST_UPDATED_EN_RE.sub("Last updated: <stamp>.", text)
+    return _LAST_UPDATED_VI_RE.sub("Cập nhật: <stamp>.", text)
+
+
+def _diff_is_timestamps_only(diff: str) -> bool:
+    """True when every changed line in a ``git diff -U0`` is a publish
+    timestamp. An empty diff (nothing to commit) is the same no-op.
+    A new file, a reorder, or any other edit is not."""
+    removed: list[str] = []
+    added: list[str] = []
+    for line in diff.splitlines():
+        if (line.startswith("diff --git ") or line.startswith("index ")
+                or line.startswith("@@") or line.startswith("new file ")
+                or line.startswith("deleted file ") or line.startswith("similarity ")
+                or line.startswith("rename ") or line.startswith("old mode")
+                or line.startswith("new mode") or line.startswith("\\")
+                or line.startswith("--- a/") or line.startswith("--- /dev/null")
+                or line.startswith("+++ b/") or line.startswith("+++ /dev/null")):
+            continue
+        if line.startswith("+"):
+            added.append(line[1:])
+        elif line.startswith("-"):
+            removed.append(line[1:])
+    if len(removed) != len(added):
+        return False
+    return all(_strip_publish_timestamps(old) == _strip_publish_timestamps(new)
+               for old, new in zip(removed, added))
+
+
+def _git_utf8(root: Path, *args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True, encoding="utf-8")
+
+
+def _working_tree_is_timestamps_only(root: Path, files: list[str]) -> bool:
+    """Compare the files write_source just wrote with HEAD.
+
+    Untracked paths are a first publish (git diff hides them), so they are
+    never a timestamp no-op."""
+    untracked = _git_utf8(root, "ls-files", "--others", "--exclude-standard", "--", *files)
+    if untracked.returncode:
+        raise PublishWorktreeError(f"publish worktree status failed: {untracked.stderr.strip()[:200]}")
+    if untracked.stdout.strip():
+        return False
+    diff = _git_utf8(root, "diff", "--unified=0", "--no-ext-diff", "HEAD", "--", *files)
+    if diff.returncode:
+        raise PublishWorktreeError(f"publish worktree diff failed: {diff.stderr.strip()[:200]}")
+    return _diff_is_timestamps_only(diff.stdout)
+
+
+def _publish_once(root: Path, event: dict, feed: dict, now: datetime, push: bool) -> tuple[dict, str] | None:
+    """Generate, write and commit one snapshot inside the publish worktree.
+
+    Returns None when the only difference from HEAD is the publish
+    timestamp. The caller records the feed fingerprint and does not push.
+    """
     today = now.astimezone(timezone.utc).date().isoformat()
     pkg = package(event, feed, now)
     # The first publication date is stable; only updatedDate changes thereafter.
@@ -532,8 +603,16 @@ def _publish_once(root: Path, event: dict, feed: dict, now: datetime, push: bool
     write_source(pkg, event, today, root=root)
     post_text = (root / "src/content/blog/posts" / f"{pkg['slug']}.ts").read_text(encoding="utf-8")
     _assert_results_boards(pkg, feed, post_text)
-    _upsert_vi(pkg)
     files = [f"src/content/blog/posts/{pkg['slug']}.ts", "src/content/blog/metadata.ts", "src/content/blog/posts/all.ts"]
+    if _working_tree_is_timestamps_only(root, files):
+        # Drop the timestamp rewrite so the worktree stays on the published
+        # copy. checkout does not delete untracked files; a timestamps-only
+        # result never includes one.
+        restored = _git(root, "checkout", "--quiet", "--", *files)
+        if restored.returncode:
+            raise PublishWorktreeError(f"publish worktree restore failed: {restored.stderr.strip()[:200]}")
+        return None
+    _upsert_vi(pkg)
     added = _git(root, "add", "--", *files)
     if added.returncode:
         raise PublishWorktreeError(f"publish worktree add failed: {added.stderr.strip()[:200]}")
@@ -668,6 +747,9 @@ def publish_event(event: dict, now: datetime | None = None, push: bool = True) -
     _prepare_publish_worktree), never in the editor's working checkout, so
     unrelated local state cannot block it.  ``push=False`` is useful for QA
     and unit tests and leaves a reviewable commit in the worktree only.
+    A snapshot that would change only ``updatedDate`` and the opening
+    "Last updated" / "Cập nhật" sentence returns status ``unchanged``
+    with reason ``timestamps_only`` and does not commit.
     """
     now = now or datetime.now(timezone.utc)
     feed, fingerprint = fetch(event["result_source"], event["event_id"])
@@ -681,7 +763,7 @@ def publish_event(event: dict, now: datetime | None = None, push: bool = True) -
         # worktree's code published instead, in this same tick.
         return delegated
     try:
-        pkg, head = _publish_once(root, event, feed, now, push)
+        published = _publish_once(root, event, feed, now, push)
     except _PushRejected:
         # Someone merged between our fetch and push: reset the worktree to
         # the new origin/main and regenerate once on top of it — re-checking
@@ -690,7 +772,13 @@ def publish_event(event: dict, now: datetime | None = None, push: bool = True) -
         delegated = _maybe_delegate_publish(root, event, now, push)
         if delegated is not None:
             return delegated
-        pkg, head = _publish_once(root, event, feed, now, push)
+        published = _publish_once(root, event, feed, now, push)
+    if published is None:
+        # The feed hash moved but the page did not. Remember the hash so the
+        # next identical snapshot short-circuits, and leave updatedDate alone.
+        remember(event, fingerprint)
+        return {"status": "unchanged", "fingerprint": fingerprint, "reason": "timestamps_only"}
+    pkg, head = published
     remember(event, fingerprint)
     # What production must serve once the deploy lands; checked by team_tournament_coverage.verify_live.
     marker = pkg["en"]["sections"][0]["content"].split(". ", 1)[0]

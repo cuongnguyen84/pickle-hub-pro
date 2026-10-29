@@ -3,7 +3,7 @@
 // import.meta.glob (Cloudflare Pages Functions / the SSR bot path).
 //
 // Loaders, not values, on purpose: _middleware.ts runs for EVERY request, and
-// a static import list would construct all 106 post objects at worker
+// a static import list would construct all 108 post objects at worker
 // startup. esbuild wraps dynamically-imported modules in lazy __esm() inits, so
 // a request only pays for the one post it renders.
 //
@@ -32,12 +32,14 @@ export const blogPostLoaders: Record<string, () => Promise<{ default: BlogPost }
   "hong-kong-slam-2026-preview": () => import("./hong-kong-slam-2026-preview"),
   "hong-kong-slam-2026-results": () => import("./hong-kong-slam-2026-results"),
   "hong-kong-slam-2026-schedule": () => import("./hong-kong-slam-2026-schedule"),
+  "how-new-jersey-won-mlp-2026-analysis": () => import("./how-new-jersey-won-mlp-2026-analysis"),
   "how-to-choose-a-pickleball-paddle": () => import("./how-to-choose-a-pickleball-paddle"),
   "how-to-create-pickleball-bracket": () => import("./how-to-create-pickleball-bracket"),
   "how-to-organize-pickleball-tournament": () => import("./how-to-organize-pickleball-tournament"),
   "how-to-play-pickleball": () => import("./how-to-play-pickleball"),
   "how-to-watch-ppa-tour-live-2026": () => import("./how-to-watch-ppa-tour-live-2026"),
   "jogarbola-team-pickleball-vietnam": () => import("./jogarbola-team-pickleball-vietnam"),
+  "juan-benitez-coach-behind-patriquin-bright-staksrud": () => import("./juan-benitez-coach-behind-patriquin-bright-staksrud"),
   "kuala-lumpur-cup-2026-preview": () => import("./kuala-lumpur-cup-2026-preview"),
   "kuala-lumpur-cup-2026-results": () => import("./kuala-lumpur-cup-2026-results"),
   "ly-hoang-nam-pickleball-national-games-2026": () => import("./ly-hoang-nam-pickleball-national-games-2026"),

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useI18n } from "@/i18n";
 import { normalizeImageUrl } from "@/lib/url-utils";
+import { smartAppBannerContent } from "@/lib/smart-app-banner";
 
 interface DynamicMetaProps {
   title: string;
@@ -103,6 +104,7 @@ export const DynamicMeta = ({
       document.head.appendChild(canonical);
     }
     canonical.href = currentUrl;
+    updateMeta("apple-itunes-app", smartAppBannerContent(currentUrl), true);
 
     // Cleanup: Reset to default on unmount
     return () => {

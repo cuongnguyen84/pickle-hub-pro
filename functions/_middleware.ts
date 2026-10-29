@@ -9,7 +9,7 @@ import { renderAuthor } from "./_lib/render/author";
  */
 
 import { BOT_UA, detectLang, stripLangPrefix } from "./_lib/utils";
-import { isPublicContentPath, servePublicPage, type PublicPagePartsCache } from "./_lib/public-page";
+import { isPublicContentPath, servePublicPage, withSmartAppBanner, type PublicPagePartsCache } from "./_lib/public-page";
 import { isKnownSpaPath } from "./_lib/spa-routes";
 import { createSupabaseClient } from "./_lib/supabase";
 import {
@@ -887,8 +887,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   //      mutate the response headers without re-buffering body.
   const isNoindex = shouldNoindex(pathname, env);
   if (!isBot) {
+    const siteUrl = env.CANONICAL_HOST || "https://www.thepicklehub.net";
     if (!isKnownSpaPath(pathname)) {
-      const siteUrl = env.CANONICAL_HOST || "https://www.thepicklehub.net";
       const response = render404(pathname, siteUrl, request.headers.get("accept") || "");
       const headers = new Headers(response.headers);
       headers.set("X-Robots-Tag", "noindex, nofollow");
@@ -897,7 +897,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       return new Response(response.body, { status: 404, headers });
     }
     if (isNoindex) {
-      const response = await next();
+      const response = withSmartAppBanner(await next(), siteUrl, pathname);
       const headers = new Headers(response.headers);
       headers.set("X-Robots-Tag", X_ROBOTS_NOINDEX);
       return new Response(response.body, {
@@ -919,7 +919,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       // as the bot path.
       let publicCache: PublicPagePartsCache | null = null;
       if (env.PRERENDER_CACHE && url.searchParams.get("nocache") !== "1") {
-        const cacheKey = `pr:v145:human:${url.pathname}`;
+        const cacheKey = `pr:v146:human:${url.pathname}`;
         const ttl = Math.min(pathCacheTtl(pathname), 300);
         publicCache = {
           get: () => env.PRERENDER_CACHE.get(cacheKey),
@@ -945,13 +945,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         };
       }
       const response = await servePublicPage(await next(), () => routeAndRender(
-        pathname, env, env.CANONICAL_HOST || "https://www.thepicklehub.net",
+        pathname, env, siteUrl,
       ), 2500, pathname, publicCache);
       const headers = new Headers(response.headers);
       applySecurityHeaders(headers);
       return new Response(response.body, { status: response.status, headers });
     }
-    return next();
+    return withSmartAppBanner(await next(), siteUrl, pathname);
   }
 
   // ─── 4. Bot path: KV cache + SSR render ───────────────
@@ -1385,7 +1385,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v145 (2026-10-23): blog results posts render the structured results
   // board (summary card, round groups, winner/loser rows) on the bot path
   // instead of prose lists — cached thin renders must not be served.
-  const cacheKey = `pr:v145:${url.pathname}`;
+  // v146 (2026-10-28): PPA WPR snapshot on /rankings/ppa-tour moved to
+  // fetched-at 2026-10-28 (top 25 and VN highlights). Cached v145 HTML
+  // would keep the 2026-10-21 table.
+  const cacheKey = `pr:v146:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
