@@ -24,7 +24,7 @@ struct DeepLinkDestinationView: View {
             case .blogPost(let slug, let isVietnamese):
                 BlogPostLinkView(slug: slug, isVietnamese: isVietnamese)
             case .venue(let slug):
-                VenueDetailView(slug: slug, fallbackName: String(localized: "Sân đấu"))
+                VenueDetailView(slug: slug, fallbackName: "")
             case .newsArticle(let slug, let language):
                 NewsDetailView(
                     news: FeedNews(slug: slug, title: "", summary: "", imageURL: nil, source: nil,
