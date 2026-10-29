@@ -172,6 +172,42 @@ class TournamentAutopublishTests(unittest.TestCase):
         early = autopublish.package(event, feed("scheduled"), now)
         autopublish._assert_results_boards(early, feed("scheduled"), "prose only, no board")
 
+    def test_timestamp_only_diff_ignores_date_and_stamp_lines(self):
+        # Shape of 50d9644b: updatedDate plus the EN/VI opening sentences,
+        # and nothing else. An empty diff is the same no-op.
+        diff = """\
+diff --git a/src/content/blog/metadata.ts b/src/content/blog/metadata.ts
+--- a/src/content/blog/metadata.ts
++++ b/src/content/blog/metadata.ts
+@@ -4 +4 @@
+-    "updatedDate": "2026-10-28",
++    "updatedDate": "2026-10-29",
+diff --git a/src/content/blog/posts/x.ts b/src/content/blog/posts/x.ts
+--- a/src/content/blog/posts/x.ts
++++ b/src/content/blog/posts/x.ts
+@@ -9 +9 @@
+-  "updatedDate": "2026-10-28",
++  "updatedDate": "2026-10-29",
+@@ -30 +30 @@
+-          "content": "Last updated: October 28, 2026, 12:00 Vietnam time. ThePickleHub publishes this page. The feed currently contains 110 matches, including 0 completed or final records and 0 live records.",
++          "content": "Last updated: October 29, 2026, 08:00 Vietnam time. ThePickleHub publishes this page. The feed currently contains 110 matches, including 0 completed or final records and 0 live records.",
+@@ -40 +40 @@
+-          "content": "Cập nhật: 12:00 ngày 28/10/2026 (giờ Việt Nam). ThePickleHub đăng trang. Feed hiện có 110 trận, gồm 0 bản ghi đã kết thúc.",
++          "content": "Cập nhật: 08:00 ngày 29/10/2026 (giờ Việt Nam). ThePickleHub đăng trang. Feed hiện có 110 trận, gồm 0 bản ghi đã kết thúc.",
+"""
+        self.assertTrue(autopublish._diff_is_timestamps_only(diff))
+        self.assertTrue(autopublish._diff_is_timestamps_only(""))
+
+    def test_timestamp_only_diff_keeps_score_status_count_and_reorder(self):
+        old = '          "content": "Last updated: October 28, 2026, 12:00 Vietnam time. The feed currently contains 110 matches, including 0 completed or final records and 0 live records."'
+        new = old.replace("October 28, 2026, 12:00", "October 29, 2026, 08:00").replace("110 matches", "111 matches").replace("0 completed", "1 completed").replace("0 live", "2 live")
+        self.assertFalse(autopublish._diff_is_timestamps_only(f"-{old}\n+{new}\n"))
+        self.assertFalse(autopublish._diff_is_timestamps_only('-"sets": [[11, 7]]\n+"sets": [[11, 3], [11, 5]]\n'))
+        self.assertFalse(autopublish._diff_is_timestamps_only('-    "note": "Scheduled · 8 matches",\n+    "note": "Complete · 8 matches",\n'))
+        self.assertFalse(autopublish._diff_is_timestamps_only('-"teamA": "A",\n-"teamB": "B",\n+"teamA": "C",\n+"teamB": "D",\n'))
+        self.assertFalse(autopublish._diff_is_timestamps_only(
+            "diff --git a/x b/x\nnew file mode 100644\n--- /dev/null\n+++ b/x\n@@ -0,0 +1 @@\n+hello\n"))
+
     def test_pipeline_fingerprint_is_stable_and_shaped(self):
         fp = autopublish.PIPELINE_FINGERPRINT
         self.assertEqual(len(fp), 12)
@@ -251,6 +287,14 @@ class PublishWorktreeTests(unittest.TestCase):
                              capture_output=True, text=True, check=True).stdout
         return "src/content/blog/posts/test-open-results.ts" in out
 
+    def _origin_file(self, path):
+        return subprocess.run(["git", "--git-dir", str(self.origin), "show", f"main:{path}"],
+                              capture_output=True, text=True, encoding="utf-8", check=True).stdout
+
+    def _origin_commit_count(self):
+        return subprocess.run(["git", "--git-dir", str(self.origin), "rev-list", "--count", "main"],
+                              capture_output=True, text=True, check=True).stdout.strip()
+
     def test_dirty_unrelated_file_and_behind_checkout_cannot_block_publish(self):
         # The incident setup: Xcode-style dirt on an unrelated tracked file,
         # an untracked scratch file, and origin moved ahead by another clone.
@@ -283,9 +327,16 @@ class PublishWorktreeTests(unittest.TestCase):
         (wt / "src/content/blog/posts/test-open-results.ts").write_text("half-written garbage")
         (wt / "junk.txt").write_text("leftover\n")
         self.fp = "fingerprint-2"
+        # A new feed hash whose rendered page actually changed (score), so
+        # the timestamp gate must not swallow the republish this test needs.
+        changed = feed("final")
+        changed["matches"][0]["teams"][0]["games"] = [11, 11]
+        changed["matches"][0]["teams"][1]["games"] = [9, 7]
+        autopublish.fetch = lambda url, eid: (changed, self.fp)
         second = autopublish.publish_event(dict(self.EVENT), now=datetime(2026, 10, 4, tzinfo=timezone.utc), push=True)
         self.assertEqual(second["status"], "published")
         self.assertFalse((wt / "junk.txt").exists())
+        self.assertRegex(self._origin_file("src/content/blog/posts/test-open-results.ts"), r"11,\n\s+9\n")
 
     def test_occupied_worktree_path_fails_loudly_with_named_error(self):
         wt = self.team_home / "publish-worktree"
@@ -299,6 +350,59 @@ class PublishWorktreeTests(unittest.TestCase):
         result = autopublish.publish_event(dict(self.EVENT), now=datetime(2026, 10, 3, tzinfo=timezone.utc), push=True)
         self.assertEqual(result["pipeline"], autopublish.PIPELINE_FINGERPRINT)
         self.assertFalse(result["reexec"])
+
+    def test_timestamp_only_feed_churn_does_not_commit_or_bump_dates(self):
+        # 2026-10-28/29: the official feed hash changed while the rendered
+        # match list did not, and each run still committed a new updatedDate
+        # and "Last updated" line. A later real score must still publish.
+        upserts = []
+        autopublish._upsert_vi = lambda pkg: upserts.append(pkg["slug"])
+        t1 = datetime(2026, 10, 28, 5, 0, tzinfo=timezone.utc)  # 12:00 VN, UTC date 10-28
+        first = autopublish.publish_event(dict(self.EVENT), now=t1, push=True)
+        self.assertEqual(first["status"], "published")
+        self.assertEqual(upserts, ["test-open-results"])
+        self.assertEqual(self._origin_commit_count(), "2")  # skeleton + first publish
+        post = self._origin_file("src/content/blog/posts/test-open-results.ts")
+        meta = self._origin_file("src/content/blog/metadata.ts")
+        self.assertIn("Last updated: October 28, 2026, 12:00 Vietnam time.", post)
+        self.assertIn("Cập nhật: 12:00 ngày 28/10/2026 (giờ Việt Nam).", post)
+        self.assertIn('"updatedDate": "2026-10-28"', post)
+        self.assertIn('"updatedDate": "2026-10-28"', meta)
+
+        self.fp = "fingerprint-2"  # hash churned; matches did not
+        t2 = datetime(2026, 10, 29, 23, 0, tzinfo=timezone.utc)  # 06:00 VN on 10-30, UTC date 10-29
+        second = autopublish.publish_event(dict(self.EVENT), now=t2, push=True)
+        self.assertEqual(second["status"], "unchanged")
+        self.assertEqual(second["reason"], "timestamps_only")
+        self.assertEqual(upserts, ["test-open-results"])
+        self.assertEqual(self._origin_commit_count(), "2")
+        post = self._origin_file("src/content/blog/posts/test-open-results.ts")
+        meta = self._origin_file("src/content/blog/metadata.ts")
+        self.assertIn("Last updated: October 28, 2026, 12:00 Vietnam time.", post)
+        self.assertIn('"updatedDate": "2026-10-28"', post)
+        self.assertIn('"updatedDate": "2026-10-28"', meta)
+        self.assertNotIn("October 30, 2026", post)
+        self.assertNotIn("2026-10-29", post)
+        self.assertNotIn("2026-10-29", meta)
+        wt_post = (self.team_home / "publish-worktree" / "src/content/blog/posts/test-open-results.ts").read_text(encoding="utf-8")
+        self.assertIn("Last updated: October 28, 2026, 12:00 Vietnam time.", wt_post)
+
+        changed = feed("final")
+        changed["matches"][0]["teams"][0]["games"] = [11, 11]
+        changed["matches"][0]["teams"][1]["games"] = [3, 5]
+        self.fp = "fingerprint-3"
+        autopublish.fetch = lambda url, eid: (changed, self.fp)
+        third = autopublish.publish_event(dict(self.EVENT), now=t2, push=True)
+        self.assertEqual(third["status"], "published")
+        self.assertEqual(upserts, ["test-open-results", "test-open-results"])
+        self.assertEqual(self._origin_commit_count(), "3")
+        post = self._origin_file("src/content/blog/posts/test-open-results.ts")
+        meta = self._origin_file("src/content/blog/metadata.ts")
+        self.assertRegex(post, r"11,\n\s+3\n")
+        self.assertIn("Last updated: October 30, 2026, 06:00 Vietnam time.", post)
+        self.assertIn("Cập nhật: 06:00 ngày 30/10/2026 (giờ Việt Nam).", post)
+        self.assertIn('"updatedDate": "2026-10-29"', post)
+        self.assertIn('"updatedDate": "2026-10-29"', meta)
 
 
 import json
