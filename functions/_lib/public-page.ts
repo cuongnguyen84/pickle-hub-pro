@@ -1,6 +1,7 @@
 import { blogMetadata } from "../../src/content/blog/metadata";
 import { byEffectiveDateDesc, pinWorldCupResults } from "../../src/lib/blogOrder";
 import { blogHeroSrcSet } from "../../src/lib/image-utils";
+import { smartAppBannerContent } from "../../src/lib/smart-app-banner";
 
 /** Progressive HTML for public editorial/marketing routes. React still owns the app. */
 
@@ -81,6 +82,20 @@ interface PublicPageParts {
   lang: string;
 }
 
+/** HTMLRewriter handler: point the shell's Smart App Banner at this page. */
+export function smartAppBannerHandler(canonicalUrl: string) {
+  return { element(el: Element) { el.setAttribute('content', smartAppBannerContent(canonicalUrl)); } };
+}
+
+/** Human SPA-shell responses: same rewrite, canonical = slashless request path. */
+export function withSmartAppBanner(response: Response, siteUrl: string, pathname: string): Response {
+  if (response.status !== 200 || !response.headers.get('content-type')?.includes('text/html')) return response;
+  // ponytail: Node unit tests drive the middleware without the Workers runtime.
+  if (typeof HTMLRewriter === 'undefined') return response;
+  const canonical = `${siteUrl}${pathname.replace(/\/+$/, '') || '/'}`;
+  return new HTMLRewriter().on('meta[name="apple-itunes-app"]', smartAppBannerHandler(canonical)).transform(response);
+}
+
 function spliceParts(shell: Response, parts: PublicPageParts, pathname: string, renderTag: string): Response {
   const headers = new Headers(shell.headers);
   headers.set('Cache-Control', 'no-store');
@@ -91,6 +106,7 @@ function spliceParts(shell: Response, parts: PublicPageParts, pathname: string, 
   const response = new Response(shell.body, { status: shell.status, headers });
   const remove = { element(el: Element) { el.remove(); } };
   const preload = lcpPreloadTag(pathname);
+  const canonical = parts.head.match(/<link\b[^>]*rel=["']canonical["'][^>]*href=["']([^"']+)["']/i)?.[1];
   return new HTMLRewriter()
     .on('html', { element(el) { el.setAttribute('lang', parts.lang); } })
     .on('title, meta[name="description"], meta[name="robots"], meta[property^="og:"], meta[property^="article:"], meta[name^="twitter:"], link[rel="canonical"], link[hreflang], script[type="application/ld+json"]', remove)
@@ -98,6 +114,7 @@ function spliceParts(shell: Response, parts: PublicPageParts, pathname: string, 
       el.append(parts.head, { html: true });
       if (preload) el.append(`\n${preload}`, { html: true });
     } })
+    .on('meta[name="apple-itunes-app"]', canonical ? smartAppBannerHandler(canonical) : {})
     .on('#root', { element(el) { el.setInnerContent(`<div data-public-content>${parts.body}</div>`, { html: true }); } })
     .transform(response);
 }

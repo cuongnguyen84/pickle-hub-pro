@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { isPublicContentPath, lcpPreloadTag, publicPageParts, servePublicPage } from '../public-page';
+import { isPublicContentPath, lcpPreloadTag, publicPageParts, servePublicPage, withSmartAppBanner } from '../public-page';
 import { renderTools } from '../render/tools';
 import { renderAuthor } from '../render/author';
 import { renderEnBlogBody } from '../render/blog-body';
@@ -131,5 +131,27 @@ describe('public editorial HTML', () => {
     const result = await servePublicPage(shell, async () => new Response('gone', { status: 410 }), 2500, '/tools', cache);
     expect(result.status).toBe(410);
     expect(puts).toBe(0);
+  });
+  it('points the Smart App Banner app-argument at the page canonical', async () => {
+    // Fake that only rewrites the banner meta's content attribute.
+    const BANNER = 'meta[name="apple-itunes-app"]';
+    class BannerRewriter {
+      handler?: { element?(el: unknown): void };
+      on(selector: string, handler: { element?(el: unknown): void }) { if (selector === BANNER) this.handler = handler; return this; }
+      transform(response: Response) {
+        let content = '';
+        this.handler?.element?.({ setAttribute: (_: string, v: string) => { content = v; } });
+        return new Response(content, { status: response.status, headers: response.headers });
+      }
+    }
+    vi.stubGlobal('HTMLRewriter', BannerRewriter);
+    const html = () => new Response('<html></html>', { headers: { 'content-type': 'text/html' } });
+    const spliced = await servePublicPage(html(), async () => renderTools(site, '/vi/tools', 'vi'), 2500, '/vi/tools');
+    expect(await spliced.text()).toBe(`app-id=6759968026, app-argument=${site}/vi/tools`);
+    expect(await withSmartAppBanner(html(), site, '/live/abc/').text()).toBe(`app-id=6759968026, app-argument=${site}/live/abc`);
+    expect(await withSmartAppBanner(html(), site, '/').text()).toBe(`app-id=6759968026, app-argument=${site}/`);
+    const json = new Response('{}', { headers: { 'content-type': 'application/json' } });
+    expect(withSmartAppBanner(json, site, '/x')).toBe(json);
+    vi.unstubAllGlobals();
   });
 });
