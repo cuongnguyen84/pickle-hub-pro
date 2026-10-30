@@ -18,6 +18,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { getAuthUser } from "../_shared/auth.ts";
 import { supabaseClientPostCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 import { callGemini, geminiConfigured } from "../_shared/gemini.ts";
+import { clipReply } from "../_shared/clip.ts";
 import {
   ACTION_TYPES, describeState, detectLang, fillFromText, phaseLabel, phaseOf, proposeAction, refusalText, roleFor,
   type ActionCard, type ActorRole, type Lang, type TableState,
@@ -216,7 +217,7 @@ async function handleAssistant(
   }
 
   let intent = ["answer", "action", "unsupported", "off_topic"].includes(parsed.intent as string) ? (parsed.intent as string) : "answer";
-  let reply = typeof parsed.reply === "string" ? parsed.reply.slice(0, 900) : "";
+  let reply = typeof parsed.reply === "string" ? clipReply(parsed.reply, 1500) : "";
   const unmet = typeof parsed.unmet === "string" && parsed.unmet.trim() ? parsed.unmet.trim().slice(0, 300) : null;
   let card: ActionCard | null = null;
   let rawAction: unknown = null;
@@ -293,7 +294,7 @@ async function logAssistant(
   try {
     const { error } = await admin().from("quick_table_chat_log").insert({
       user_id: userId, lang, pending: "", user_text: userText.slice(0, 1000), has_attachment: false,
-      reply: reply?.slice(0, 700) ?? null, intent, unmet,
+      reply: reply ?? null, intent, unmet,
       surface: "assistant", thread_id: threadId || null, context_label: label || null, action,
     });
     if (error) console.error("[assistant] log insert", error.message);
