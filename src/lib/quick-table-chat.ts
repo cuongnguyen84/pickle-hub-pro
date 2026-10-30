@@ -130,6 +130,71 @@ export function groupChoices(n: number): GroupOption[] {
   return four && n >= 12 && !base.some((o) => o.groupCount === four.groupCount) ? [...base, four] : base;
 }
 
+const sizeRange = (o: GroupOption) =>
+  o.sizes[0] === o.sizes[o.sizes.length - 1] ? `${o.sizes[0]}` : `${o.sizes[o.sizes.length - 1]}–${o.sizes[0]}`;
+/** Vòng tròn bảng S đội → mỗi đội đánh S−1 trận vòng bảng. */
+const groupGames = (o: GroupOption) =>
+  o.sizes[0] === o.sizes[o.sizes.length - 1] ? `${o.sizes[0] - 1}` : `${o.sizes[o.sizes.length - 1] - 1}–${o.sizes[0] - 1}`;
+const splitLabel = (o: GroupOption, lang: "vi" | "en") =>
+  o.groupCount === 1
+    ? (lang === "vi" ? `1 bảng vòng tròn ${o.sizes[0]}` : `1 round-robin group of ${o.sizes[0]}`)
+    : (lang === "vi" ? `${o.groupCount} bảng × ${sizeRange(o)}` : `${o.groupCount} groups × ${sizeRange(o)}`);
+
+/**
+ * Câu gợi ý cách chia cụ thể khi bước tiếp theo là chia bảng — dán xong danh
+ * sách 18 đội mà chỉ nghe "Đã nhận 18 đội" thì người dùng bỏ đi (log 30/10).
+ */
+export function groupSuggestion(d: Draft, lang: "vi" | "en"): string | null {
+  const n = entryCount(d);
+  const options = groupChoices(n);
+  const o = options.find((x) => x.recommended) ?? options[0];
+  if (!o) return null;
+  const vi = lang === "vi";
+  const u = d.is_doubles === false ? (vi ? "người" : "player") : (vi ? "đội" : "team");
+  return vi
+    ? `Mình gợi ý ${splitLabel(o, lang)} ${u} (khuyên dùng) — vòng bảng mỗi ${u} đánh ${groupGames(o)} trận. Chọn bên dưới hoặc nói số bảng.`
+    : `I suggest ${splitLabel(o, lang)} (recommended) — each ${u} plays ${groupGames(o)} group matches. Pick below or say a number of groups.`;
+}
+
+/** "mỗi người được chơi ít nhất 2 trận" / "at least 2 matches per team" → 2. */
+export function minMatchesAsked(text: string): number | null {
+  const t = fold(text);
+  const m = t.match(/(?:it nhat|toi thieu)\s+(\d{1,2})\s*tran\b/) ?? t.match(/\b(?:at least|min(?:imum)?(?: of)?)\s+(\d{1,2})\s*(?:matches|match|games|game)\b/);
+  const k = m ? Number(m[1]) : 0;
+  return k >= 1 ? k : null;
+}
+
+/**
+ * Cách chia để mỗi đội đánh ít nhất `min` trận vòng bảng (bảng S đội → S−1 trận).
+ * Đang chọn mà đã đủ thì giữ; không thì cách khuyên dùng nếu đủ, rồi cách
+ * nhiều bảng nhất (bảng nhỏ nhất, xong nhanh nhất) còn đủ; cuối cùng 1 bảng.
+ */
+export function splitForMinMatches(n: number, min: number, current?: number): GroupOption | null {
+  const meets = (o: GroupOption | null): o is GroupOption => !!o && o.sizes[o.sizes.length - 1] - 1 >= min;
+  const cur = findGroupOption(n, current);
+  if (meets(cur)) return cur;
+  const multi = Array.from({ length: MAX_GROUPS - 1 }, (_, i) => findGroupOption(n, i + 2)).filter(meets);
+  const one = findGroupOption(n, 1);
+  return multi.find((o) => o.recommended) ?? multi[multi.length - 1] ?? (meets(one) ? one : null);
+}
+
+/** Trả lời "ít nhất N trận" bằng con số thật của cách chia đang có. */
+export function minMatchesLine(d: Draft, min: number, lang: "vi" | "en"): string | null {
+  const n = entryCount(d);
+  if (n < 2) return null;
+  const vi = lang === "vi";
+  const u = d.is_doubles === false ? (vi ? "người" : "player") : (vi ? "đội" : "team");
+  const o = findGroupOption(n, d.group_count);
+  if (!o || o.sizes[o.sizes.length - 1] - 1 < min) {
+    return vi
+      ? `Với ${n} ${u} không chia được để mỗi ${u} đánh ít nhất ${min} trận vòng bảng (bảng tối đa ${MAX_GROUP} ${u}, tức ${MAX_GROUP - 1} trận)`
+      : `With ${n} ${u}s there is no split where every ${u} plays at least ${min} group matches (groups hold up to ${MAX_GROUP}, i.e. ${MAX_GROUP - 1} matches)`;
+  }
+  return vi
+    ? `Để mỗi ${u} đánh ít nhất ${min} trận: ${splitLabel(o, lang)} ${u} — vòng bảng mỗi ${u} đánh ${groupGames(o)} trận, chưa tính vòng loại trực tiếp`
+    : `For at least ${min} matches each: ${splitLabel(o, lang)} — each ${u} plays ${groupGames(o)} group matches, before any knockout`;
+}
+
 /** Cỡ các bảng của cách chia đã chọn (để tính nhánh trước khi có danh sách). */
 export function groupSizes(d: Draft): number[] {
   return findGroupOption(entryCount(d), d.group_count)?.sizes ?? [];
@@ -600,15 +665,15 @@ export function chatFacts(d: Draft, lang: "vi" | "en"): string {
   if (n < 2) return "";
   const u = d.is_doubles === false ? (lang === "en" ? "players" : "người") : (lang === "en" ? "teams" : "đội");
   const style = d.series_style ?? "series";
-  const range = (o: GroupOption) => (o.sizes[0] === o.sizes[o.sizes.length - 1] ? `${o.sizes[0]}` : `${o.sizes[o.sizes.length - 1]}–${o.sizes[0]}`);
+  const range = sizeRange;
   const describe = (o: GroupOption) => {
-    if (o.groupCount < 2) return `1 bảng vòng tròn ${n} ${u}, không có vòng loại trực tiếp.`;
+    if (o.groupCount < 2) return `1 bảng vòng tròn ${n} ${u}, mỗi ${u} đánh ${n - 1} trận, không có vòng loại trực tiếp.`;
     const a = seriesPlan(o.sizes, 1)![0];
     const wc = a.size - 2 * o.groupCount;
     const lines = [
       `${o.groupCount} bảng × ${range(o)} ${u}: vòng loại trực tiếp lấy nhất và nhì ${o.groupCount} bảng = ${2 * o.groupCount}` +
         (wc > 0 ? ` + ${wc} ${u} hạng 3 = ${a.size}` : "") +
-        ` → ${a.bracket} suất${a.byes ? ` (${a.byes} ${u} xếp cao được nghỉ vòng đầu)` : ""}; ${n - a.size} ${u} dừng ở vòng bảng.`,
+        ` → ${a.bracket} suất${a.byes ? ` (${a.byes} ${u} xếp cao được nghỉ vòng đầu)` : ""}; ${n - a.size} ${u} dừng ở vòng bảng. Vòng bảng mỗi ${u} đánh ${groupGames(o)} trận.`,
     ];
     for (let k = 2; k <= MAX_SERIES; k++) {
       const plan = seriesPlan(o.sizes, k);
@@ -631,6 +696,7 @@ export function chatFacts(d: Draft, lang: "vi" | "en"): string {
   const plan = draftSeriesPlan(d);
   return [
     `Số ${u}: ${n}.`,
+    `Vòng bảng đánh vòng tròn: bảng S ${u} thì mỗi ${u} đánh đúng S−1 trận vòng bảng.`,
     `Chia bảng: ${MIN_GROUP}–${MAX_GROUP} ${u} thì được đúng 1 bảng vòng tròn. Hoặc 2–${MAX_GROUPS} bảng, mỗi bảng ${MIN_GROUP}–${MAX_GROUP} ${u}. Một số cách:`,
     ...options.map(describe),
     chosen ? `Đang chọn: ${chosen.groupCount} bảng × ${range(chosen)}.` : "Chưa chọn cách chia bảng.",
@@ -717,7 +783,7 @@ export function readUserFacts(text: string): Partial<Draft> {
     .replace(/\bsann\b/g, "san");
   const out: Partial<Draft> = {};
   // "đổi chỗ / đổi tên" cũng gấp thành "doi" — không được hiểu thành đánh đôi.
-  const spoken = folded.replace(/\bdoi (cho|ten)\b/g, " ").replace(/\bten cap\b/g, " ").replace(/\bcap mau\b/g, " ");
+  const spoken = folded.replace(/\bdoi (cho|ten)\b/g, " ").replace(/\bten cap\b/g, " ").replace(/\bcap mau\b/g, " ").replace(/\bmoi (doi|cap)\b/g, " ");
   const singles = /\b(don|singles)\b/.test(spoken);
   const doubles = /\b(doi|doubles|cap)\b/.test(spoken);
   if (singles && !doubles) out.is_doubles = false;
@@ -852,8 +918,10 @@ const structuralEdit = (text: string) =>
 /** Câu hỏi hoặc danh sách dán thì vẫn cần mô hình. Số liệu và lệnh sửa thì không. */
 export function messageNeedsModel(text: string): boolean {
   if (looksLikeNameList(text)) return true;
+  // "ít nhất N trận" do code tính (applySpokenEdit + factualAck), không cần mô hình.
+  if (minMatchesAsked(text) != null) return false;
   const folded = fold(text);
-  return /[?]/.test(text) || /the nao|bao nhieu|tai sao|\bhow\b|\bwhat\b|\bwhy\b/.test(folded);
+  return /[?]/.test(text) || /the nao|bao nhieu|tai sao|lam sao|\bhow\b|\bwhat\b|\bwhy\b/.test(folded);
 }
 
 /**
@@ -878,6 +946,13 @@ export function applySpokenEdit(draft: Draft, text: string): Draft | null {
       next = { ...next, group_courts: cs.slice(0, g) };
       touched = true;
     }
+  }
+  // "mỗi đội ít nhất N trận": chọn cách chia đủ N (số bảng nói thẳng thì giữ).
+  const min = minMatchesAsked(text);
+  if (min != null && facts.group_count == null && entryCount(next) >= 2) {
+    const o = splitForMinMatches(entryCount(next), min, next.group_count);
+    if (o && o.groupCount !== next.group_count) next = applyPatch(next, { group_count: o.groupCount });
+    touched = true;
   }
   const placeholders = placeholderEntries(text, next);
   if (placeholders) {
@@ -1002,7 +1077,11 @@ export function factualAck(before: Draft, after: Draft, lang: "vi" | "en", reque
   const knownField = entryCount(after) >= 2;
   const askedGroupsOk = !!asked.group_count && knownField && !!findGroupOption(entryCount(after), asked.group_count);
   const rrSingle = !!request && wantsSingleGroupRoundRobin(request);
-  if (asked.group_count && knownField && !askedGroupsOk) {
+  const min = request ? minMatchesAsked(request) : null;
+  const minLine = min != null ? minMatchesLine(after, min, lang) : null;
+  if (minLine) {
+    bits.push(minLine);
+  } else if (asked.group_count && knownField && !askedGroupsOk) {
     bits.push(vi
       ? `Không chia được ${asked.group_count} bảng (mỗi bảng 3–8 ${u}).`
       : `Can't make ${asked.group_count} groups (3–8 ${u} each).`);

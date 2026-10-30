@@ -20,6 +20,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { getAuthUser } from "../_shared/auth.ts";
 import { supabaseClientPostCorsHeaders as corsHeaders } from "../_shared/cors.ts";
+import { clipReply } from "../_shared/clip.ts";
 
 // Bản lite hiểu sai câu ghép kiểu "16 đội mạnh nhất vào nhánh Vàng, còn lại chia Bạc và Đồng".
 const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-flash-latest";
@@ -310,7 +311,7 @@ Deno.serve(async (req: Request) => {
   }
   const unmet = typeof parsed.unmet === "string" && parsed.unmet.trim() ? parsed.unmet.trim().slice(0, 300) : null;
   const out = {
-    reply: typeof parsed.reply === "string" ? parsed.reply.slice(0, 700) : "",
+    reply: typeof parsed.reply === "string" ? clipReply(parsed.reply, 1200) : "",
     intent: ["fill", "answer", "off_topic", "unsupported"].includes(parsed.intent as string) ? (parsed.intent as string) : "fill",
     patch: parsed.patch && typeof parsed.patch === "object" ? parsed.patch : {},
     unmet,
@@ -351,7 +352,7 @@ async function logTurn(
     const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", key);
     const { error } = await admin.from("quick_table_chat_log").insert({
       user_id: userId, lang, pending, user_text: userText.slice(0, 1000), has_attachment: hasAttachment,
-      reply: reply?.slice(0, 700) ?? null, intent, unmet,
+      reply: reply ?? null, intent, unmet,
     });
     if (error) console.error("[quick-table-chat] log insert", error.message);
   } catch (err) {
