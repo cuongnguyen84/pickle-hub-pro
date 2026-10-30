@@ -15,3 +15,4 @@
 | 2026-09-20 | 102 | 7558 | 7.7 | +13.3% | Đọc 23/09 (daily-growth), kỳ 14–20/09; tuần trước 90 clicks/7088 impr. Hồi lại sau cú -23% kỳ 04–10/09 → không có dấu hiệu sự cố noindex. Top page: /vi/san/hnmu-pickleball-ha-noi 4 click. |
 | 2026-09-25 | 133 | 7117 | 7.5 | +56.5% | Đọc 28/09 (daily-growth), kỳ 19–25/09; tuần trước 85 clicks/7423 impr. Tăng mạnh, không cảnh báo (ngưỡng -20%). Top page: /vi/san/the-pyar-pickleball-club 5 click. |
 | 2026-10-18 | 138 | 8785 | 7.6 | +24.3% | Đọc 21/10 (SEO-SAN-W39 trễ), kỳ 12–18/10; tuần trước 111 clicks/8370 impr. Không cảnh báo. Top page: /vi/san/san-pickleball-tao-dan-tp-hcm 5 click. Kỳ 28/09–11/10 không đọc bù. |
+| 2026-10-27 | 199 | 9674 | 7.6 | +43.2% | Đọc 30/10 (SEO-SAN-W39), kỳ 21–27/10; không cảnh báo (ngưỡng -20%). |
