@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { withoutLocale } from "@/lib/locale-path";
 import { isIOS } from "@/lib/platform";
+import { assistantScreenFor } from "@/lib/assistant-context";
 
 /**
  * Floating chat-with-admin buttons (Messenger + Zalo) anchored to the
@@ -105,7 +106,8 @@ const ChatFAB = () => {
   }, []);
 
   const barePath = withoutLocale(location.pathname);
-  const shouldHide = HIDDEN_PREFIXES.some((prefix) => barePath.startsWith(prefix));
+  // Các trang quanh giải dùng nút trợ lý AI (AssistantGate) ở cùng góc.
+  const shouldHide = HIDDEN_PREFIXES.some((prefix) => barePath.startsWith(prefix)) || assistantScreenFor(location.pathname) != null;
 
   if (shouldHide) {
     return null;

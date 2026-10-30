@@ -16,6 +16,7 @@ import { usePageTracking } from "@/hooks/usePageTracking";
 import { useLivestreamGateAttribution } from "@/lib/livestreamGateAttribution";
 import BottomNav from "@/components/layout/BottomNav";
 import ChatFAB from "@/components/layout/ChatFAB";
+import AssistantGate from "@/components/assistant/AssistantGate";
 import AppHeader from "@/components/layout/AppHeader";
 
 import { ViLanguageWrapper } from "@/components/layout/ViLanguageWrapper";
@@ -790,6 +791,7 @@ const App = () => (
               <SkipToContent />
               <BottomNav />
               <ChatFAB />
+              <AssistantGate />
               <ChunkErrorBoundary>
                 {/* tabIndex=-1: programmatic focus target for the skip link
                     and route changes; outline suppressed since it is not a

@@ -993,6 +993,19 @@
       ],
       "status": "classified",
       "notes": "Bearer JWT is verified internally; returns a Gemini-parsed draft patch. Service role only inserts the caller's own turn (user_id from the verified JWT) into quick_table_chat_log for the unmet-requests agent."
+    },
+    "tournament-assistant": {
+      "verify_jwt": false,
+      "service_role": {
+        "uses_client": true,
+        "accepts_bearer": false
+      },
+      "flows": [
+        "user.read.user_jwt.derived_identity",
+        "user.write.user_jwt.derived_identity"
+      ],
+      "status": "classified",
+      "notes": "Bearer JWT is verified internally. Service role reads the quick table named by share_id (private tables only for their creator, same as RLS SELECT) to derive the caller's role server-side, and inserts the caller's own turns/action outcomes (user_id from the verified JWT) into quick_table_chat_log. Never writes tournament data: the client applies confirmed actions through RLS-gated paths."
     }
   }
 }
