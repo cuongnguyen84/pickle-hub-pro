@@ -245,14 +245,16 @@
     {
       "key": "app-bangkok-open-2026",
       "title": "APP Asia Bangkok Open 2026",
-      "start_date": "2026-11-02",
-      "end_date": "2026-11-07",
+      "start_date": "2026-11-17",
+      "end_date": "2026-11-22",
       "event_timezone": "Asia/Bangkok",
       "enabled": true,
       "sources": [
-        "https://www.theapp.global/tour-schedule/2026-app-bangkok-open"
+        "https://www.theapp.global/tour-schedule/2026-app-bangkok-open",
+        "https://theapp.asia/news/app-asia-bangkok-open-2026-brings-the-tour-to-thailand-this-november/",
+        "https://pickleballnewsasia.com/app-asia-takes-tour-to-thailand-with-bangkok-open-2026/"
       ],
-      "notes": "P1 châu Á. APP không có feed điểm số công khai như PPA — chỉ nháp, không tự đăng. 13/10 lịch lấy từ theapp.global. 21/10 trang /tour không còn card Bangkok; script trên trang chỉ còn tên BANGKOK trong danh sách ẩn ngày TBD (cùng NEW DELHI). Giữ lịch 2–7/11 như bản 13/10, chưa xác minh lại được ngày. 28/10 theapp.global/tour Last Published 26/10 vẫn không có card Bangkok; script ẩn TBD vẫn chỉ nêu BANGKOK và NEW DELHI. Giữ nháp, không auto_publish."
+      "notes": "P1 châu Á. APP không có feed điểm số công khai như PPA — chỉ nháp, không tự đăng. 13/10 lịch lấy từ theapp.global. 21/10 trang /tour không còn card Bangkok; script trên trang chỉ còn tên BANGKOK trong danh sách ẩn ngày TBD (cùng NEW DELHI). Giữ lịch 2–7/11 như bản 13/10, chưa xác minh lại được ngày. 28/10 theapp.global/tour Last Published 26/10 vẫn không có card Bangkok; script ẩn TBD vẫn chỉ nêu BANGKOK và NEW DELHI. Giữ nháp, không auto_publish. 31/10 sửa ngày 2–7/11 → 17–22/11/2026 (ALM x IMPACT Tennis & Sport Center) theo theapp.asia và pickleballnewsasia. theapp.global vẫn hiện 2–7/11, lịch cũ."
     },
     {
       "key": "daytona-beach-open-2026",
