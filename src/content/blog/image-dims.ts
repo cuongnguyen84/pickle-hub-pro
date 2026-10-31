@@ -87,6 +87,8 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/mlp-2026-semifinals-new-york-preview-hero.webp": [1536, 1024],
   "/images/blog/mlp-asia-draft-2026-viet-panthers-hero-768.webp": [768, 430],
   "/images/blog/mlp-asia-draft-2026-viet-panthers-hero.webp": [1024, 573],
+  "/images/blog/mlp-nations-cup-2026-results-hero-768.webp": [768, 432],
+  "/images/blog/mlp-nations-cup-2026-results-hero.webp": [1672, 941],
   "/images/blog/mlp-orlando-super-sunday-2026-hero-768.webp": [768, 432],
   "/images/blog/mlp-orlando-super-sunday-2026-hero.webp": [1600, 900],
   "/images/blog/mlp-orlando-super-sunday-scoreboard.webp": [462, 769],

@@ -1835,7 +1835,10 @@ export const blogMetadata: BlogPostMetadata[] = [
     tags: ["mlp nations cup", "results", "2026", "worlds", "asia domestic"],
     ctaPath: "/live",
     ctaLabel: { en: "Follow live scores on ThePickleHub", vi: "Theo dõi điểm số trên ThePickleHub" },
-    heroImage: undefined,
+    heroImage: {
+      src: "/images/blog/mlp-nations-cup-2026-results-hero.webp",
+      alt: "MLP Nations Cup 2026 Day 1 — Team USA player mid-swing on championship court at Brookhaven (official Major League Pickleball photo)",
+    },
     titleEn: "MLP Nations Cup 2026 Results: Day-by-Day Scores",
     titleVi: "Kết quả MLP Nations Cup 2026: tỷ số từng ngày",
     metaTitleEn: "MLP Nations Cup 2026 Results | Day-by-Day",
