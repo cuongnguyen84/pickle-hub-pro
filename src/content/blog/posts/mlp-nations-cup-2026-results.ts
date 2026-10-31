@@ -4,10 +4,14 @@ import type { BlogPost } from "@/content/blog/types";
  * MLP Nations Cup 2026 rolling results.
  * Day 1 scores verified against worlds.unitedpickleball.com/nations-cup
  * and @MajorLeaguePB Day 1 Scores Recap graphics (2026-10-31).
- * No hero: no compliant text-free official-logo asset available at publish time.
+ * Hero: official MLP Day-1 Nations Cup play photo (@MajorLeaguePB), cropped text-free.
  */
 const post: BlogPost = {
   "slug": "mlp-nations-cup-2026-results",
+  "heroImage": {
+    "src": "/images/blog/mlp-nations-cup-2026-results-hero.webp",
+    "alt": "MLP Nations Cup 2026 Day 1 — Team USA player mid-swing on championship court at Brookhaven (official Major League Pickleball photo)"
+  },
   "publishedDate": "2026-10-31",
   "updatedDate": "2026-10-31",
   "author": "The PickleHub Team",
@@ -50,91 +54,33 @@ const post: BlogPost = {
         },
         {
           "heading": "Standings after Day 1",
-          "content": "Pool 1 / Group A: 1 Asia Domestic 2–0 (GD +5, PD +22); 2 USA 1–0 (GD +2, PD +22); 3 Europe West 0–1 (GD −2, PD −7); 4 Canada 0–2 (GD −5, PD −37).\n\nPool 2 / Group B: 1 Australia 2–0 (GD +4, PD +26); 2 Europe East 1–1 (GD +1, PD −2); 3 Asia International 0–1 (GD −2, PD −12); 4 Latin America 0–1 (GD −3, PD −12).\n\nTop two from each pool reach Sunday’s single-elimination bracket. MLP’s published crossover: A#2 vs B#1, then A#1 vs B#2, then the final.",
+          "content": "Top two from each pool reach Sunday’s single-elimination bracket. MLP’s published crossover: A#2 vs B#1, then A#1 vs B#2, then the final."
+        },
+        {
+          "heading": "Pool A standings",
+          "content": "Pool 1 / Group A after Friday’s round-robin matches.",
           "table": {
-            "caption": "MLP Nations Cup 2026 — Day 1 standings",
-            "headers": [
-              "Pool",
-              "Rank",
-              "Team",
-              "W",
-              "L",
-              "GD",
-              "PD"
-            ],
+            "caption": "MLP Nations Cup 2026 — Pool A standings after Day 1",
+            "headers": ["#", "Team", "W–L", "GD", "PD"],
             "rows": [
-              [
-                "A",
-                "1",
-                "Asia Domestic",
-                "2",
-                "0",
-                "+5",
-                "+22"
-              ],
-              [
-                "A",
-                "2",
-                "USA",
-                "1",
-                "0",
-                "+2",
-                "+22"
-              ],
-              [
-                "A",
-                "3",
-                "Europe West",
-                "0",
-                "1",
-                "−2",
-                "−7"
-              ],
-              [
-                "A",
-                "4",
-                "Canada",
-                "0",
-                "2",
-                "−5",
-                "−37"
-              ],
-              [
-                "B",
-                "1",
-                "Australia",
-                "2",
-                "0",
-                "+4",
-                "+26"
-              ],
-              [
-                "B",
-                "2",
-                "Europe East",
-                "1",
-                "1",
-                "+1",
-                "−2"
-              ],
-              [
-                "B",
-                "3",
-                "Asia International",
-                "0",
-                "1",
-                "−2",
-                "−12"
-              ],
-              [
-                "B",
-                "4",
-                "Latin America",
-                "0",
-                "1",
-                "−3",
-                "−12"
-              ]
+              ["1", "Asia Domestic", "2–0", "+5", "+22"],
+              ["2", "USA", "1–0", "+2", "+22"],
+              ["3", "Europe West", "0–1", "−2", "−7"],
+              ["4", "Canada", "0–2", "−5", "−37"]
+            ]
+          }
+        },
+        {
+          "heading": "Pool B standings",
+          "content": "Pool 2 / Group B after Friday’s round-robin matches.",
+          "table": {
+            "caption": "MLP Nations Cup 2026 — Pool B standings after Day 1",
+            "headers": ["#", "Team", "W–L", "GD", "PD"],
+            "rows": [
+              ["1", "Australia", "2–0", "+4", "+26"],
+              ["2", "Europe East", "1–1", "+1", "−2"],
+              ["3", "Asia International", "0–1", "−2", "−12"],
+              ["4", "Latin America", "0–1", "−3", "−12"]
             ]
           }
         },
@@ -276,91 +222,33 @@ const post: BlogPost = {
         },
         {
           "heading": "Bảng xếp hạng sau ngày 1",
-          "content": "Nhóm A: Asia Domestic 2–0, USA 1–0, Europe West 0–1, Canada 0–2. Nhóm B: Australia 2–0, Europe East 1–1, Asia International 0–1, Latin America 0–1.",
+          "content": "Hai đội đầu mỗi nhóm vào vòng loại trực tiếp Chủ nhật. Công thức bán kết (theo lịch MLP): A#2 vs B#1, rồi A#1 vs B#2; chung kết hai đội thắng bán kết."
+        },
+        {
+          "heading": "Bảng xếp hạng Nhóm A",
+          "content": "Nhóm A / Pool 1 sau các trận vòng tròn thứ Sáu.",
           "table": {
-            "caption": "Xếp hạng ngày 1",
-            "headers": [
-              "Nhóm",
-              "Hạng",
-              "Đội",
-              "W",
-              "L",
-              "GD",
-              "PD"
-            ],
+            "caption": "MLP Nations Cup 2026 — xếp hạng Nhóm A sau ngày 1",
+            "headers": ["#", "Đội", "W–L", "GD", "PD"],
             "rows": [
-              [
-                "A",
-                "1",
-                "Asia Domestic",
-                "2",
-                "0",
-                "+5",
-                "+22"
-              ],
-              [
-                "A",
-                "2",
-                "USA",
-                "1",
-                "0",
-                "+2",
-                "+22"
-              ],
-              [
-                "A",
-                "3",
-                "Europe West",
-                "0",
-                "1",
-                "−2",
-                "−7"
-              ],
-              [
-                "A",
-                "4",
-                "Canada",
-                "0",
-                "2",
-                "−5",
-                "−37"
-              ],
-              [
-                "B",
-                "1",
-                "Australia",
-                "2",
-                "0",
-                "+4",
-                "+26"
-              ],
-              [
-                "B",
-                "2",
-                "Europe East",
-                "1",
-                "1",
-                "+1",
-                "−2"
-              ],
-              [
-                "B",
-                "3",
-                "Asia International",
-                "0",
-                "1",
-                "−2",
-                "−12"
-              ],
-              [
-                "B",
-                "4",
-                "Latin America",
-                "0",
-                "1",
-                "−3",
-                "−12"
-              ]
+              ["1", "Asia Domestic", "2–0", "+5", "+22"],
+              ["2", "USA", "1–0", "+2", "+22"],
+              ["3", "Europe West", "0–1", "−2", "−7"],
+              ["4", "Canada", "0–2", "−5", "−37"]
+            ]
+          }
+        },
+        {
+          "heading": "Bảng xếp hạng Nhóm B",
+          "content": "Nhóm B / Pool 2 sau các trận vòng tròn thứ Sáu.",
+          "table": {
+            "caption": "MLP Nations Cup 2026 — xếp hạng Nhóm B sau ngày 1",
+            "headers": ["#", "Đội", "W–L", "GD", "PD"],
+            "rows": [
+              ["1", "Australia", "2–0", "+4", "+26"],
+              ["2", "Europe East", "1–1", "+1", "−2"],
+              ["3", "Asia International", "0–1", "−2", "−12"],
+              ["4", "Latin America", "0–1", "−3", "−12"]
             ]
           }
         },
