@@ -27,7 +27,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 1, 2026, 10:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 146 matches, including 0 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 1, 2026, 12:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 170 matches, including 0 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -61,6 +61,11 @@ const post: BlogPost = {
               "anchor": "rb-mixed-doubles"
             },
             {
+              "division": "PPA CHALLENGER SHOWDOWN: Mixed Doubles",
+              "note": "Scheduled · 12 matches",
+              "anchor": "rb-ppa-challenger-showdown-mixed-doubles"
+            },
+            {
               "division": "PPA CHALLENGER SHOWDOWN: Women's Singles",
               "note": "Scheduled · 12 matches",
               "anchor": "rb-ppa-challenger-showdown-womens-singles"
@@ -69,6 +74,11 @@ const post: BlogPost = {
               "division": "Women's Singles",
               "note": "Scheduled · 24 matches",
               "anchor": "rb-womens-singles"
+            },
+            {
+              "division": "PPA CHALLENGER SHOWDOWN: Men's Singles",
+              "note": "Scheduled · 12 matches",
+              "anchor": "rb-ppa-challenger-showdown-mens-singles"
             },
             {
               "division": "Men's Singles",
@@ -566,6 +576,90 @@ const post: BlogPost = {
           }
         },
         {
+          "heading": "PPA CHALLENGER SHOWDOWN: Mixed Doubles schedule",
+          "content": "12 matches scheduled, earliest round first.",
+          "resultsBoard": {
+            "division": "PPA CHALLENGER SHOWDOWN: Mixed Doubles",
+            "rounds": [
+              {
+                "label": "Round 1",
+                "matches": [
+                  {
+                    "teamA": "Madalina Grigoriu / Garrison Eaby",
+                    "teamB": "Monika Wynne / Zach Gonnering",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Lauren Cole / Jarryd Woog",
+                    "teamB": "Marisa Ruiz / Nicholas Wade",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Chloe Diskin / Matt Burkhardt",
+                    "teamB": "Maddy Rasmusen / Usama Khalid",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Anne-Sophie Courteau / Juan Varon",
+                    "teamB": "Allie Reichert / Jake Anderson",
+                    "sets": []
+                  }
+                ]
+              },
+              {
+                "label": "Round 2",
+                "matches": [
+                  {
+                    "teamA": "Chloe Diskin / Matt Burkhardt",
+                    "teamB": "Marisa Ruiz / Nicholas Wade",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Madalina Grigoriu / Garrison Eaby",
+                    "teamB": "Allie Reichert / Jake Anderson",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Lauren Cole / Jarryd Woog",
+                    "teamB": "Maddy Rasmusen / Usama Khalid",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Anne-Sophie Courteau / Juan Varon",
+                    "teamB": "Monika Wynne / Zach Gonnering",
+                    "sets": []
+                  }
+                ]
+              },
+              {
+                "label": "Round 3",
+                "matches": [
+                  {
+                    "teamA": "Lauren Cole / Jarryd Woog",
+                    "teamB": "Chloe Diskin / Matt Burkhardt",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Allie Reichert / Jake Anderson",
+                    "teamB": "Monika Wynne / Zach Gonnering",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Madalina Grigoriu / Garrison Eaby",
+                    "teamB": "Anne-Sophie Courteau / Juan Varon",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Maddy Rasmusen / Usama Khalid",
+                    "teamB": "Marisa Ruiz / Nicholas Wade",
+                    "sets": []
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
           "heading": "PPA CHALLENGER SHOWDOWN: Women's Singles schedule",
           "content": "12 matches scheduled, earliest round first.",
           "resultsBoard": {
@@ -785,6 +879,90 @@ const post: BlogPost = {
           }
         },
         {
+          "heading": "PPA CHALLENGER SHOWDOWN: Men's Singles schedule",
+          "content": "12 matches scheduled, earliest round first.",
+          "resultsBoard": {
+            "division": "PPA CHALLENGER SHOWDOWN: Men's Singles",
+            "rounds": [
+              {
+                "label": "Round 1",
+                "matches": [
+                  {
+                    "teamA": "William Hsieh",
+                    "teamB": "Wade Heerboth",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Eli Steiner",
+                    "teamB": "Martin Stanchev",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Matt Burkhardt",
+                    "teamB": "Troy Akin",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Bret Berryman",
+                    "teamB": "Vincent Rettke",
+                    "sets": []
+                  }
+                ]
+              },
+              {
+                "label": "Round 2",
+                "matches": [
+                  {
+                    "teamA": "Matt Burkhardt",
+                    "teamB": "Vincent Rettke",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Eli Steiner",
+                    "teamB": "Wade Heerboth",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "William Hsieh",
+                    "teamB": "Martin Stanchev",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Bret Berryman",
+                    "teamB": "Troy Akin",
+                    "sets": []
+                  }
+                ]
+              },
+              {
+                "label": "Round 3",
+                "matches": [
+                  {
+                    "teamA": "William Hsieh",
+                    "teamB": "Eli Steiner",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Vincent Rettke",
+                    "teamB": "Troy Akin",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Martin Stanchev",
+                    "teamB": "Wade Heerboth",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Matt Burkhardt",
+                    "teamB": "Bret Berryman",
+                    "sets": []
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
           "heading": "Men's Singles schedule",
           "content": "32 matches scheduled, earliest round first.",
           "resultsBoard": {
@@ -992,7 +1170,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 10:00 ngày 1/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 146 trận, gồm 0 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 12:00 ngày 1/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 170 trận, gồm 0 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -1026,6 +1204,11 @@ const post: BlogPost = {
               "anchor": "rb-doi-nam-nu"
             },
             {
+              "division": "PPA CHALLENGER SHOWDOWN: Mixed Doubles",
+              "note": "Đã lên lịch · 12 trận",
+              "anchor": "rb-ppa-challenger-showdown-mixed-doubles"
+            },
+            {
               "division": "PPA CHALLENGER SHOWDOWN: Women's Singles",
               "note": "Đã lên lịch · 12 trận",
               "anchor": "rb-ppa-challenger-showdown-womens-singles"
@@ -1034,6 +1217,11 @@ const post: BlogPost = {
               "division": "Đơn nữ",
               "note": "Đã lên lịch · 24 trận",
               "anchor": "rb-don-nu"
+            },
+            {
+              "division": "PPA CHALLENGER SHOWDOWN: Men's Singles",
+              "note": "Đã lên lịch · 12 trận",
+              "anchor": "rb-ppa-challenger-showdown-mens-singles"
             },
             {
               "division": "Đơn nam",
@@ -1531,6 +1719,90 @@ const post: BlogPost = {
           }
         },
         {
+          "heading": "Lịch thi đấu PPA CHALLENGER SHOWDOWN: Mixed Doubles",
+          "content": "12 trận đã lên lịch, vòng sớm nhất ở trên.",
+          "resultsBoard": {
+            "division": "PPA CHALLENGER SHOWDOWN: Mixed Doubles",
+            "rounds": [
+              {
+                "label": "Round 1",
+                "matches": [
+                  {
+                    "teamA": "Madalina Grigoriu / Garrison Eaby",
+                    "teamB": "Monika Wynne / Zach Gonnering",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Lauren Cole / Jarryd Woog",
+                    "teamB": "Marisa Ruiz / Nicholas Wade",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Chloe Diskin / Matt Burkhardt",
+                    "teamB": "Maddy Rasmusen / Usama Khalid",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Anne-Sophie Courteau / Juan Varon",
+                    "teamB": "Allie Reichert / Jake Anderson",
+                    "sets": []
+                  }
+                ]
+              },
+              {
+                "label": "Round 2",
+                "matches": [
+                  {
+                    "teamA": "Chloe Diskin / Matt Burkhardt",
+                    "teamB": "Marisa Ruiz / Nicholas Wade",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Madalina Grigoriu / Garrison Eaby",
+                    "teamB": "Allie Reichert / Jake Anderson",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Lauren Cole / Jarryd Woog",
+                    "teamB": "Maddy Rasmusen / Usama Khalid",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Anne-Sophie Courteau / Juan Varon",
+                    "teamB": "Monika Wynne / Zach Gonnering",
+                    "sets": []
+                  }
+                ]
+              },
+              {
+                "label": "Round 3",
+                "matches": [
+                  {
+                    "teamA": "Lauren Cole / Jarryd Woog",
+                    "teamB": "Chloe Diskin / Matt Burkhardt",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Allie Reichert / Jake Anderson",
+                    "teamB": "Monika Wynne / Zach Gonnering",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Madalina Grigoriu / Garrison Eaby",
+                    "teamB": "Anne-Sophie Courteau / Juan Varon",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Maddy Rasmusen / Usama Khalid",
+                    "teamB": "Marisa Ruiz / Nicholas Wade",
+                    "sets": []
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
           "heading": "Lịch thi đấu PPA CHALLENGER SHOWDOWN: Women's Singles",
           "content": "12 trận đã lên lịch, vòng sớm nhất ở trên.",
           "resultsBoard": {
@@ -1745,6 +2017,90 @@ const post: BlogPost = {
                   }
                 ],
                 "collapsed": true
+              }
+            ]
+          }
+        },
+        {
+          "heading": "Lịch thi đấu PPA CHALLENGER SHOWDOWN: Men's Singles",
+          "content": "12 trận đã lên lịch, vòng sớm nhất ở trên.",
+          "resultsBoard": {
+            "division": "PPA CHALLENGER SHOWDOWN: Men's Singles",
+            "rounds": [
+              {
+                "label": "Round 1",
+                "matches": [
+                  {
+                    "teamA": "William Hsieh",
+                    "teamB": "Wade Heerboth",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Eli Steiner",
+                    "teamB": "Martin Stanchev",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Matt Burkhardt",
+                    "teamB": "Troy Akin",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Bret Berryman",
+                    "teamB": "Vincent Rettke",
+                    "sets": []
+                  }
+                ]
+              },
+              {
+                "label": "Round 2",
+                "matches": [
+                  {
+                    "teamA": "Matt Burkhardt",
+                    "teamB": "Vincent Rettke",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Eli Steiner",
+                    "teamB": "Wade Heerboth",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "William Hsieh",
+                    "teamB": "Martin Stanchev",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Bret Berryman",
+                    "teamB": "Troy Akin",
+                    "sets": []
+                  }
+                ]
+              },
+              {
+                "label": "Round 3",
+                "matches": [
+                  {
+                    "teamA": "William Hsieh",
+                    "teamB": "Eli Steiner",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Vincent Rettke",
+                    "teamB": "Troy Akin",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Martin Stanchev",
+                    "teamB": "Wade Heerboth",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Matt Burkhardt",
+                    "teamB": "Bret Berryman",
+                    "sets": []
+                  }
+                ]
               }
             ]
           }
