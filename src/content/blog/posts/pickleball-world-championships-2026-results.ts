@@ -27,7 +27,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 1, 2026, 20:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 170 matches, including 0 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 2, 2026, 04:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 158 matches, including 0 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -49,11 +49,6 @@ const post: BlogPost = {
               "division": "Men's Doubles",
               "note": "Scheduled · 22 matches",
               "anchor": "rb-mens-doubles"
-            },
-            {
-              "division": "PPA CHALLENGER SHOWDOWN: Men's Doubles",
-              "note": "Scheduled · 12 matches",
-              "anchor": "rb-ppa-challenger-showdown-mens-doubles"
             },
             {
               "division": "Mixed Doubles",
@@ -352,90 +347,6 @@ const post: BlogPost = {
                   }
                 ],
                 "collapsed": true
-              }
-            ]
-          }
-        },
-        {
-          "heading": "PPA CHALLENGER SHOWDOWN: Men's Doubles schedule",
-          "content": "12 matches scheduled, earliest round first.",
-          "resultsBoard": {
-            "division": "PPA CHALLENGER SHOWDOWN: Men's Doubles",
-            "rounds": [
-              {
-                "label": "Round 1",
-                "matches": [
-                  {
-                    "teamA": "Eli Steiner / Jackson Ayotte",
-                    "teamB": "Nicholas Wade / Dale Kim",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Riley Inn / Alex Emery",
-                    "teamB": "Usama Khalid / Zach Gonnering",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Juan Varon / Ryan Camras",
-                    "teamB": "Connor McCartney / Wade Heerboth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mike Radermacher / Matt Burkhardt",
-                    "teamB": "Jake Anderson / Vincent Rettke",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 2",
-                "matches": [
-                  {
-                    "teamA": "Eli Steiner / Jackson Ayotte",
-                    "teamB": "Jake Anderson / Vincent Rettke",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Juan Varon / Ryan Camras",
-                    "teamB": "Usama Khalid / Zach Gonnering",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Riley Inn / Alex Emery",
-                    "teamB": "Connor McCartney / Wade Heerboth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mike Radermacher / Matt Burkhardt",
-                    "teamB": "Nicholas Wade / Dale Kim",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 3",
-                "matches": [
-                  {
-                    "teamA": "Eli Steiner / Jackson Ayotte",
-                    "teamB": "Mike Radermacher / Matt Burkhardt",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Connor McCartney / Wade Heerboth",
-                    "teamB": "Usama Khalid / Zach Gonnering",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jake Anderson / Vincent Rettke",
-                    "teamB": "Nicholas Wade / Dale Kim",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Riley Inn / Alex Emery",
-                    "teamB": "Juan Varon / Ryan Camras",
-                    "sets": []
-                  }
-                ]
               }
             ]
           }
@@ -972,118 +883,118 @@ const post: BlogPost = {
                 "label": "Round 128",
                 "matches": [
                   {
-                    "teamA": "Edward Perez",
-                    "teamB": "Alfonso Plata",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Luke Wasson",
-                    "teamB": "Francis Chi",
+                    "teamA": "Dave Conley",
+                    "teamB": "Chris Cooprider",
                     "sets": []
                   },
                   {
                     "teamA": "Hunter Merritt",
-                    "teamB": "Julian Chow",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Tristan Cooley",
-                    "teamB": "Mateo Vargas",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "JP Gorby",
-                    "teamB": "Gregory Dow",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Brenden Everhart",
-                    "teamB": "George Wolf",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Takumi Matsuda",
-                    "teamB": "MJ Marrero",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Ryan Torresin",
-                    "teamB": "Benny Ramirez",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Asís Garrido Guerrero",
-                    "teamB": "Ryder Brown",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Braylon Ohrel",
-                    "teamB": "David S",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Zach Gonnering",
-                    "teamB": "Sam Libo",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Kyle Koszuta",
-                    "teamB": "Jesse G",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Pesa Teoni",
-                    "teamB": "Magnus Violet",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Caden Nemoff",
                     "teamB": "Nicholas Bond",
                     "sets": []
                   },
                   {
-                    "teamA": "Jace Howard",
-                    "teamB": "Chrisna Try",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Aleck Blair",
-                    "teamB": "Jagger Baird",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Eduardo Panozzo",
-                    "teamB": "Dawson Davis",
+                    "teamA": "Magnus Violet",
+                    "teamB": "Takumi Matsuda",
                     "sets": []
                   },
                   {
                     "teamA": "James Wolf",
-                    "teamB": "Dave Conley",
+                    "teamB": "Divin Sarthak",
                     "sets": []
                   },
                   {
-                    "teamA": "Liam Duffin",
-                    "teamB": "Josiah Joplin",
+                    "teamA": "Tristan Cooley",
+                    "teamB": "John Cincola",
                     "sets": []
                   },
                   {
-                    "teamA": "Easton Horricks",
-                    "teamB": "Jamison Pfingston",
+                    "teamA": "Ryder Brown",
+                    "teamB": "Casey Diamond",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Jace Howard",
+                    "teamB": "Eduardo Panozzo",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Jose Martinez",
+                    "teamB": "Jagger Baird",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "JP Gorby",
+                    "teamB": "Sam Libo",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "George Wolf",
+                    "teamB": "Aleck Blair",
                     "sets": []
                   },
                   {
                     "teamA": "Maverick Messinger",
-                    "teamB": "Andrew Angulo",
+                    "teamB": "Benny Ramirez",
                     "sets": []
                   },
                   {
-                    "teamA": "Hector Sanchez Vidal",
+                    "teamA": "Travis Rettenmaier",
+                    "teamB": "Josiah Joplin",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Theo Platel",
+                    "teamB": "Alfonso Plata",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Usama Khalid",
+                    "teamB": "Mateo Vargas",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Andrew Angulo",
+                    "teamB": "Brandon Nsekpong",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "MJ Marrero",
                     "teamB": "Caedmon Rux",
                     "sets": []
                   },
                   {
-                    "teamA": "Jackson Ayotte",
-                    "teamB": "Divin Sarthak",
+                    "teamA": "Asís Garrido Guerrero",
+                    "teamB": "Kyle Koszuta",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Alvaro Regalado",
+                    "teamB": "Jamison Pfingston",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Dawson Davis",
+                    "teamB": "Ben Herrick",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Ryan Torresin",
+                    "teamB": "Chrisna Try",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Jase Edwards",
+                    "teamB": "Brenden Everhart",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Freddie Powell",
+                    "teamB": "Jesse G",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Caleb Herrick",
+                    "teamB": "David S",
                     "sets": []
                   }
                 ],
@@ -1093,48 +1004,48 @@ const post: BlogPost = {
                 "label": "Round 64",
                 "matches": [
                   {
-                    "teamA": "Jose Martinez",
-                    "teamB": "Hayden Rand",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Aryaan Bhatia",
-                    "teamB": "Alvaro Regalado",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Garrison Eaby",
-                    "teamB": "John Cincola",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Daniel Miron",
-                    "teamB": "Ethan Bakalinsky",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Andrew Caldarella",
-                    "teamB": "Caleb Herrick",
+                    "teamA": "Gregory Dow",
+                    "teamB": "Liam Duffin",
                     "sets": []
                   },
                   {
                     "teamA": "Rio Newcombe",
-                    "teamB": "Theo Platel",
+                    "teamB": "Garrison Eaby",
                     "sets": []
                   },
                   {
-                    "teamA": "Daniel Phillips",
-                    "teamB": "Chris Cooprider",
+                    "teamA": "Francis Chi",
+                    "teamB": "Caden Nemoff",
                     "sets": []
                   },
                   {
-                    "teamA": "Ryan Sherry",
+                    "teamA": "Braylon Ohrel",
+                    "teamB": "Julian Chow",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Zach Gonnering",
+                    "teamB": "Ethan Bakalinsky",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Daniel Miron",
+                    "teamB": "Jackson Ayotte",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Oliver Frank",
+                    "teamB": "Hayden Rand",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Easton Horricks",
                     "teamB": "Patrik Kevin Tsati-Onla",
                     "sets": []
                   },
                   {
-                    "teamA": "Eli Steiner",
-                    "teamB": "Usama Khalid",
+                    "teamA": "Aanik Lohani",
+                    "teamB": "Hector Sanchez Vidal",
                     "sets": []
                   }
                 ],
@@ -1170,7 +1081,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 20:00 ngày 1/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 170 trận, gồm 0 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 04:00 ngày 2/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 158 trận, gồm 0 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -1192,11 +1103,6 @@ const post: BlogPost = {
               "division": "Đôi nam",
               "note": "Đã lên lịch · 22 trận",
               "anchor": "rb-doi-nam"
-            },
-            {
-              "division": "PPA CHALLENGER SHOWDOWN: Men's Doubles",
-              "note": "Đã lên lịch · 12 trận",
-              "anchor": "rb-ppa-challenger-showdown-mens-doubles"
             },
             {
               "division": "Đôi nam nữ",
@@ -1495,90 +1401,6 @@ const post: BlogPost = {
                   }
                 ],
                 "collapsed": true
-              }
-            ]
-          }
-        },
-        {
-          "heading": "Lịch thi đấu PPA CHALLENGER SHOWDOWN: Men's Doubles",
-          "content": "12 trận đã lên lịch, vòng sớm nhất ở trên.",
-          "resultsBoard": {
-            "division": "PPA CHALLENGER SHOWDOWN: Men's Doubles",
-            "rounds": [
-              {
-                "label": "Round 1",
-                "matches": [
-                  {
-                    "teamA": "Eli Steiner / Jackson Ayotte",
-                    "teamB": "Nicholas Wade / Dale Kim",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Riley Inn / Alex Emery",
-                    "teamB": "Usama Khalid / Zach Gonnering",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Juan Varon / Ryan Camras",
-                    "teamB": "Connor McCartney / Wade Heerboth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mike Radermacher / Matt Burkhardt",
-                    "teamB": "Jake Anderson / Vincent Rettke",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 2",
-                "matches": [
-                  {
-                    "teamA": "Eli Steiner / Jackson Ayotte",
-                    "teamB": "Jake Anderson / Vincent Rettke",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Juan Varon / Ryan Camras",
-                    "teamB": "Usama Khalid / Zach Gonnering",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Riley Inn / Alex Emery",
-                    "teamB": "Connor McCartney / Wade Heerboth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mike Radermacher / Matt Burkhardt",
-                    "teamB": "Nicholas Wade / Dale Kim",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 3",
-                "matches": [
-                  {
-                    "teamA": "Eli Steiner / Jackson Ayotte",
-                    "teamB": "Mike Radermacher / Matt Burkhardt",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Connor McCartney / Wade Heerboth",
-                    "teamB": "Usama Khalid / Zach Gonnering",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jake Anderson / Vincent Rettke",
-                    "teamB": "Nicholas Wade / Dale Kim",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Riley Inn / Alex Emery",
-                    "teamB": "Juan Varon / Ryan Camras",
-                    "sets": []
-                  }
-                ]
               }
             ]
           }
@@ -2115,118 +1937,118 @@ const post: BlogPost = {
                 "label": "Vòng 128",
                 "matches": [
                   {
-                    "teamA": "Edward Perez",
-                    "teamB": "Alfonso Plata",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Luke Wasson",
-                    "teamB": "Francis Chi",
+                    "teamA": "Dave Conley",
+                    "teamB": "Chris Cooprider",
                     "sets": []
                   },
                   {
                     "teamA": "Hunter Merritt",
-                    "teamB": "Julian Chow",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Tristan Cooley",
-                    "teamB": "Mateo Vargas",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "JP Gorby",
-                    "teamB": "Gregory Dow",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Brenden Everhart",
-                    "teamB": "George Wolf",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Takumi Matsuda",
-                    "teamB": "MJ Marrero",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Ryan Torresin",
-                    "teamB": "Benny Ramirez",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Asís Garrido Guerrero",
-                    "teamB": "Ryder Brown",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Braylon Ohrel",
-                    "teamB": "David S",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Zach Gonnering",
-                    "teamB": "Sam Libo",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Kyle Koszuta",
-                    "teamB": "Jesse G",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Pesa Teoni",
-                    "teamB": "Magnus Violet",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Caden Nemoff",
                     "teamB": "Nicholas Bond",
                     "sets": []
                   },
                   {
-                    "teamA": "Jace Howard",
-                    "teamB": "Chrisna Try",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Aleck Blair",
-                    "teamB": "Jagger Baird",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Eduardo Panozzo",
-                    "teamB": "Dawson Davis",
+                    "teamA": "Magnus Violet",
+                    "teamB": "Takumi Matsuda",
                     "sets": []
                   },
                   {
                     "teamA": "James Wolf",
-                    "teamB": "Dave Conley",
+                    "teamB": "Divin Sarthak",
                     "sets": []
                   },
                   {
-                    "teamA": "Liam Duffin",
-                    "teamB": "Josiah Joplin",
+                    "teamA": "Tristan Cooley",
+                    "teamB": "John Cincola",
                     "sets": []
                   },
                   {
-                    "teamA": "Easton Horricks",
-                    "teamB": "Jamison Pfingston",
+                    "teamA": "Ryder Brown",
+                    "teamB": "Casey Diamond",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Jace Howard",
+                    "teamB": "Eduardo Panozzo",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Jose Martinez",
+                    "teamB": "Jagger Baird",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "JP Gorby",
+                    "teamB": "Sam Libo",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "George Wolf",
+                    "teamB": "Aleck Blair",
                     "sets": []
                   },
                   {
                     "teamA": "Maverick Messinger",
-                    "teamB": "Andrew Angulo",
+                    "teamB": "Benny Ramirez",
                     "sets": []
                   },
                   {
-                    "teamA": "Hector Sanchez Vidal",
+                    "teamA": "Travis Rettenmaier",
+                    "teamB": "Josiah Joplin",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Theo Platel",
+                    "teamB": "Alfonso Plata",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Usama Khalid",
+                    "teamB": "Mateo Vargas",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Andrew Angulo",
+                    "teamB": "Brandon Nsekpong",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "MJ Marrero",
                     "teamB": "Caedmon Rux",
                     "sets": []
                   },
                   {
-                    "teamA": "Jackson Ayotte",
-                    "teamB": "Divin Sarthak",
+                    "teamA": "Asís Garrido Guerrero",
+                    "teamB": "Kyle Koszuta",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Alvaro Regalado",
+                    "teamB": "Jamison Pfingston",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Dawson Davis",
+                    "teamB": "Ben Herrick",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Ryan Torresin",
+                    "teamB": "Chrisna Try",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Jase Edwards",
+                    "teamB": "Brenden Everhart",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Freddie Powell",
+                    "teamB": "Jesse G",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Caleb Herrick",
+                    "teamB": "David S",
                     "sets": []
                   }
                 ],
@@ -2236,48 +2058,48 @@ const post: BlogPost = {
                 "label": "Vòng 64",
                 "matches": [
                   {
-                    "teamA": "Jose Martinez",
-                    "teamB": "Hayden Rand",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Aryaan Bhatia",
-                    "teamB": "Alvaro Regalado",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Garrison Eaby",
-                    "teamB": "John Cincola",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Daniel Miron",
-                    "teamB": "Ethan Bakalinsky",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Andrew Caldarella",
-                    "teamB": "Caleb Herrick",
+                    "teamA": "Gregory Dow",
+                    "teamB": "Liam Duffin",
                     "sets": []
                   },
                   {
                     "teamA": "Rio Newcombe",
-                    "teamB": "Theo Platel",
+                    "teamB": "Garrison Eaby",
                     "sets": []
                   },
                   {
-                    "teamA": "Daniel Phillips",
-                    "teamB": "Chris Cooprider",
+                    "teamA": "Francis Chi",
+                    "teamB": "Caden Nemoff",
                     "sets": []
                   },
                   {
-                    "teamA": "Ryan Sherry",
+                    "teamA": "Braylon Ohrel",
+                    "teamB": "Julian Chow",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Zach Gonnering",
+                    "teamB": "Ethan Bakalinsky",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Daniel Miron",
+                    "teamB": "Jackson Ayotte",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Oliver Frank",
+                    "teamB": "Hayden Rand",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Easton Horricks",
                     "teamB": "Patrik Kevin Tsati-Onla",
                     "sets": []
                   },
                   {
-                    "teamA": "Eli Steiner",
-                    "teamB": "Usama Khalid",
+                    "teamA": "Aanik Lohani",
+                    "teamB": "Hector Sanchez Vidal",
                     "sets": []
                   }
                 ],
