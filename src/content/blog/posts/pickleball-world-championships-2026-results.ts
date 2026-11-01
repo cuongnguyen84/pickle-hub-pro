@@ -27,7 +27,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 1, 2026, 08:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 136 matches, including 0 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 1, 2026, 10:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 146 matches, including 0 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -44,6 +44,11 @@ const post: BlogPost = {
               "division": "Women's Doubles",
               "note": "Scheduled · 8 matches",
               "anchor": "rb-womens-doubles"
+            },
+            {
+              "division": "Men's Doubles",
+              "note": "Scheduled · 22 matches",
+              "anchor": "rb-mens-doubles"
             },
             {
               "division": "PPA CHALLENGER SHOWDOWN: Men's Doubles",
@@ -64,11 +69,6 @@ const post: BlogPost = {
               "division": "Women's Singles",
               "note": "Scheduled · 24 matches",
               "anchor": "rb-womens-singles"
-            },
-            {
-              "division": "PPA CHALLENGER SHOWDOWN: Men's Singles",
-              "note": "Scheduled · 12 matches",
-              "anchor": "rb-ppa-challenger-showdown-mens-singles"
             },
             {
               "division": "Men's Singles",
@@ -217,6 +217,131 @@ const post: BlogPost = {
                     "sets": []
                   }
                 ]
+              }
+            ]
+          }
+        },
+        {
+          "heading": "Men's Doubles schedule",
+          "content": "22 matches scheduled, earliest round first.",
+          "resultsBoard": {
+            "division": "Men's Doubles",
+            "rounds": [
+              {
+                "label": "Round 64",
+                "matches": [
+                  {
+                    "teamA": "Casey Diamond / Tyson McGuffin",
+                    "teamB": "Freddie Powell / Austin Bricker",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Dekel Bar / Wyatt Stone",
+                    "teamB": "Edward Perez / Aanik Lohani",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Will Howells / Clayton Powell",
+                    "teamB": "Gregory Dow / Armaan Jiwa Mawji",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Will Mackinnon / Hunter Johnson",
+                    "teamB": "Wesley Burrows / Eric Roddy",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Jonathan Truong / Max Freeman",
+                    "teamB": "Alexander Crum / Matthew Finnerty",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Christopher Crouch / Anouar Braham",
+                    "teamB": "Mota Alhouni / George Rangelov",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Tyler Loong / Darrian Young",
+                    "teamB": "Aryaan Bhatia / Wil Shaffer",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Zane Navratil / George Wall",
+                    "teamB": "Rio Newcombe / Andrew Caldarella",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Collin Johns / Len Yang",
+                    "teamB": "Theo Platel / Arwid Dahlin",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Pablo Tellez / Roscoe Bellamy",
+                    "teamB": "Jace Howard / Ethan Bakalinsky",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Yuta Funemizu / Armaan Bhatia",
+                    "teamB": "Miles Hoover / Jaxon Madsen",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Kenta Miyoshi / James Delgado",
+                    "teamB": "Daniel Phillips / Patrick Smith",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "AJ Koller / Connor Mogle",
+                    "teamB": "Joel Poland / Eduardo Santini Ayon",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Rafa Hewett / Luc Pham",
+                    "teamB": "Caden Nemoff / Maverick Messinger",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Grayson Goldin / Brandon French",
+                    "teamB": "Anderson Scarpa / Ivan Jakovljevic",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Rafael Lenhard / Elliott Schupp",
+                    "teamB": "Kyle Koszuta / Jace Morris",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Julian Arnold / Yates Johnson",
+                    "teamB": "Ross Whittaker / Mohaned Alhouni",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Camden Chaffin / Christopher Haworth",
+                    "teamB": "Andre Mercado / Indigo Dagnall",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Donald Young / Tom Protzek",
+                    "teamB": "Cason Campbell / Adam Harvey",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Michael Loyd / Luca Mack",
+                    "teamB": "Mitchell Hargreaves / Nasa Hatakeyama",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Matt Wright / John Lucian Goins",
+                    "teamB": "Luke Wasson / Chuck Taylor",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Harrison Brown / Lucas Pascoe",
+                    "teamB": "Braden Jacobson / Travis Rettenmaier",
+                    "sets": []
+                  }
+                ],
+                "collapsed": true
               }
             ]
           }
@@ -660,90 +785,6 @@ const post: BlogPost = {
           }
         },
         {
-          "heading": "PPA CHALLENGER SHOWDOWN: Men's Singles schedule",
-          "content": "12 matches scheduled, earliest round first.",
-          "resultsBoard": {
-            "division": "PPA CHALLENGER SHOWDOWN: Men's Singles",
-            "rounds": [
-              {
-                "label": "Round 1",
-                "matches": [
-                  {
-                    "teamA": "William Hsieh",
-                    "teamB": "Wade Heerboth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Eli Steiner",
-                    "teamB": "Martin Stanchev",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Matt Burkhardt",
-                    "teamB": "Troy Akin",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Bret Berryman",
-                    "teamB": "Vincent Rettke",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 2",
-                "matches": [
-                  {
-                    "teamA": "Matt Burkhardt",
-                    "teamB": "Vincent Rettke",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Eli Steiner",
-                    "teamB": "Wade Heerboth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "William Hsieh",
-                    "teamB": "Martin Stanchev",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Bret Berryman",
-                    "teamB": "Troy Akin",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 3",
-                "matches": [
-                  {
-                    "teamA": "William Hsieh",
-                    "teamB": "Eli Steiner",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Vincent Rettke",
-                    "teamB": "Troy Akin",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Martin Stanchev",
-                    "teamB": "Wade Heerboth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Matt Burkhardt",
-                    "teamB": "Bret Berryman",
-                    "sets": []
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
           "heading": "Men's Singles schedule",
           "content": "32 matches scheduled, earliest round first.",
           "resultsBoard": {
@@ -951,7 +992,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 08:00 ngày 1/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 136 trận, gồm 0 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 10:00 ngày 1/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 146 trận, gồm 0 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -968,6 +1009,11 @@ const post: BlogPost = {
               "division": "Đôi nữ",
               "note": "Đã lên lịch · 8 trận",
               "anchor": "rb-doi-nu"
+            },
+            {
+              "division": "Đôi nam",
+              "note": "Đã lên lịch · 22 trận",
+              "anchor": "rb-doi-nam"
             },
             {
               "division": "PPA CHALLENGER SHOWDOWN: Men's Doubles",
@@ -988,11 +1034,6 @@ const post: BlogPost = {
               "division": "Đơn nữ",
               "note": "Đã lên lịch · 24 trận",
               "anchor": "rb-don-nu"
-            },
-            {
-              "division": "PPA CHALLENGER SHOWDOWN: Men's Singles",
-              "note": "Đã lên lịch · 12 trận",
-              "anchor": "rb-ppa-challenger-showdown-mens-singles"
             },
             {
               "division": "Đơn nam",
@@ -1141,6 +1182,131 @@ const post: BlogPost = {
                     "sets": []
                   }
                 ]
+              }
+            ]
+          }
+        },
+        {
+          "heading": "Lịch thi đấu Đôi nam",
+          "content": "22 trận đã lên lịch, vòng sớm nhất ở trên.",
+          "resultsBoard": {
+            "division": "Đôi nam",
+            "rounds": [
+              {
+                "label": "Vòng 64",
+                "matches": [
+                  {
+                    "teamA": "Casey Diamond / Tyson McGuffin",
+                    "teamB": "Freddie Powell / Austin Bricker",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Dekel Bar / Wyatt Stone",
+                    "teamB": "Edward Perez / Aanik Lohani",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Will Howells / Clayton Powell",
+                    "teamB": "Gregory Dow / Armaan Jiwa Mawji",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Will Mackinnon / Hunter Johnson",
+                    "teamB": "Wesley Burrows / Eric Roddy",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Jonathan Truong / Max Freeman",
+                    "teamB": "Alexander Crum / Matthew Finnerty",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Christopher Crouch / Anouar Braham",
+                    "teamB": "Mota Alhouni / George Rangelov",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Tyler Loong / Darrian Young",
+                    "teamB": "Aryaan Bhatia / Wil Shaffer",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Zane Navratil / George Wall",
+                    "teamB": "Rio Newcombe / Andrew Caldarella",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Collin Johns / Len Yang",
+                    "teamB": "Theo Platel / Arwid Dahlin",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Pablo Tellez / Roscoe Bellamy",
+                    "teamB": "Jace Howard / Ethan Bakalinsky",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Yuta Funemizu / Armaan Bhatia",
+                    "teamB": "Miles Hoover / Jaxon Madsen",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Kenta Miyoshi / James Delgado",
+                    "teamB": "Daniel Phillips / Patrick Smith",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "AJ Koller / Connor Mogle",
+                    "teamB": "Joel Poland / Eduardo Santini Ayon",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Rafa Hewett / Luc Pham",
+                    "teamB": "Caden Nemoff / Maverick Messinger",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Grayson Goldin / Brandon French",
+                    "teamB": "Anderson Scarpa / Ivan Jakovljevic",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Rafael Lenhard / Elliott Schupp",
+                    "teamB": "Kyle Koszuta / Jace Morris",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Julian Arnold / Yates Johnson",
+                    "teamB": "Ross Whittaker / Mohaned Alhouni",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Camden Chaffin / Christopher Haworth",
+                    "teamB": "Andre Mercado / Indigo Dagnall",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Donald Young / Tom Protzek",
+                    "teamB": "Cason Campbell / Adam Harvey",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Michael Loyd / Luca Mack",
+                    "teamB": "Mitchell Hargreaves / Nasa Hatakeyama",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Matt Wright / John Lucian Goins",
+                    "teamB": "Luke Wasson / Chuck Taylor",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Harrison Brown / Lucas Pascoe",
+                    "teamB": "Braden Jacobson / Travis Rettenmaier",
+                    "sets": []
+                  }
+                ],
+                "collapsed": true
               }
             ]
           }
@@ -1579,90 +1745,6 @@ const post: BlogPost = {
                   }
                 ],
                 "collapsed": true
-              }
-            ]
-          }
-        },
-        {
-          "heading": "Lịch thi đấu PPA CHALLENGER SHOWDOWN: Men's Singles",
-          "content": "12 trận đã lên lịch, vòng sớm nhất ở trên.",
-          "resultsBoard": {
-            "division": "PPA CHALLENGER SHOWDOWN: Men's Singles",
-            "rounds": [
-              {
-                "label": "Round 1",
-                "matches": [
-                  {
-                    "teamA": "William Hsieh",
-                    "teamB": "Wade Heerboth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Eli Steiner",
-                    "teamB": "Martin Stanchev",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Matt Burkhardt",
-                    "teamB": "Troy Akin",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Bret Berryman",
-                    "teamB": "Vincent Rettke",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 2",
-                "matches": [
-                  {
-                    "teamA": "Matt Burkhardt",
-                    "teamB": "Vincent Rettke",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Eli Steiner",
-                    "teamB": "Wade Heerboth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "William Hsieh",
-                    "teamB": "Martin Stanchev",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Bret Berryman",
-                    "teamB": "Troy Akin",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 3",
-                "matches": [
-                  {
-                    "teamA": "William Hsieh",
-                    "teamB": "Eli Steiner",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Vincent Rettke",
-                    "teamB": "Troy Akin",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Martin Stanchev",
-                    "teamB": "Wade Heerboth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Matt Burkhardt",
-                    "teamB": "Bret Berryman",
-                    "sets": []
-                  }
-                ]
               }
             ]
           }
