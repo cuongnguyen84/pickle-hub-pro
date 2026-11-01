@@ -6,7 +6,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   "slug": "pickleball-world-championships-2026-results",
   "publishedDate": "2026-11-02",
-  "updatedDate": "2026-10-31",
+  "updatedDate": "2026-11-01",
   "author": "The PickleHub Team",
   "tags": [
     "pickleball",
@@ -27,7 +27,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 1, 2026, 06:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 170 matches, including 0 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 1, 2026, 07:30 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 170 matches, including 0 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -182,7 +182,7 @@ const post: BlogPost = {
                 "matches": [
                   {
                     "teamA": "Madyson Peav / Stuti Sinha",
-                    "teamB": "Jessica Pehush / sarah smith",
+                    "teamB": "Jessica Pehush / Sarah Smith",
                     "sets": []
                   }
                 ],
@@ -1170,7 +1170,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 06:00 ngày 1/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 170 trận, gồm 0 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 07:30 ngày 1/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 170 trận, gồm 0 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -1325,7 +1325,7 @@ const post: BlogPost = {
                 "matches": [
                   {
                     "teamA": "Madyson Peav / Stuti Sinha",
-                    "teamB": "Jessica Pehush / sarah smith",
+                    "teamB": "Jessica Pehush / Sarah Smith",
                     "sets": []
                   }
                 ],
