@@ -1830,7 +1830,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "mlp-nations-cup-2026-results",
     publishedDate: "2026-10-31",
-    updatedDate: "2026-10-31",
+    updatedDate: "2026-11-01",
     author: "The PickleHub Team",
     tags: ["mlp nations cup", "results", "2026", "worlds", "asia domestic"],
     ctaPath: "/live",
@@ -1843,8 +1843,8 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Kết quả MLP Nations Cup 2026: tỷ số từng ngày",
     metaTitleEn: "MLP Nations Cup 2026 Results | Day-by-Day",
     metaTitleVi: "Kết quả MLP Nations Cup 2026 (30/10–1/11)",
-    metaDescriptionEn: "MLP Nations Cup 2026 Day 1 scores confirmed; Saturday pool and Sunday final times in Vietnam time.",
-    metaDescriptionVi: "Kết quả Nations Cup 2026 tại Texas: tỷ số ngày 1 đã xác nhận, lịch ngày 2 và chung kết giờ VN.",
+    metaDescriptionEn: "MLP Nations Cup 2026 pool play final: USA 3–0, Latin America top Pool B. Semifinal and final times in Vietnam time.",
+    metaDescriptionVi: "Kết quả Nations Cup 2026: USA 3–0, Latin America nhất Nhóm B. Lịch bán kết, chung kết giờ VN.",
   },
   {
     slug: "mlp-orlando-super-sunday-2026-best-game",
