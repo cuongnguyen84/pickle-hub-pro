@@ -6,7 +6,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   "slug": "pickleball-world-championships-2026-results",
   "publishedDate": "2026-11-02",
-  "updatedDate": "2026-11-01",
+  "updatedDate": "2026-11-02",
   "author": "The PickleHub Team",
   "tags": [
     "pickleball",
@@ -27,7 +27,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 2, 2026, 06:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 170 matches, including 0 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 2, 2026, 22:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 193 matches, including 34 completed or final records and 16 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -36,1112 +36,512 @@ const post: BlogPost = {
           ],
           "resultsSummary": [
             {
-              "division": "PPA CHALLENGER SHOWDOWN: Women's Doubles",
-              "note": "Scheduled · 12 matches",
-              "anchor": "rb-ppa-challenger-showdown-womens-doubles"
-            },
-            {
-              "division": "Women's Doubles",
-              "note": "Scheduled · 8 matches",
-              "anchor": "rb-womens-doubles"
-            },
-            {
-              "division": "Men's Doubles",
-              "note": "Scheduled · 22 matches",
-              "anchor": "rb-mens-doubles"
-            },
-            {
-              "division": "PPA CHALLENGER SHOWDOWN: Men's Doubles",
-              "note": "Scheduled · 12 matches",
-              "anchor": "rb-ppa-challenger-showdown-mens-doubles"
-            },
-            {
-              "division": "Mixed Doubles",
-              "note": "Scheduled · 24 matches",
-              "anchor": "rb-mixed-doubles"
-            },
-            {
-              "division": "PPA CHALLENGER SHOWDOWN: Mixed Doubles",
-              "note": "Scheduled · 12 matches",
-              "anchor": "rb-ppa-challenger-showdown-mixed-doubles"
-            },
-            {
-              "division": "PPA CHALLENGER SHOWDOWN: Women's Singles",
-              "note": "Scheduled · 12 matches",
-              "anchor": "rb-ppa-challenger-showdown-womens-singles"
-            },
-            {
-              "division": "Women's Singles",
-              "note": "Scheduled · 24 matches",
-              "anchor": "rb-womens-singles"
-            },
-            {
-              "division": "PPA CHALLENGER SHOWDOWN: Men's Singles",
-              "note": "Scheduled · 12 matches",
-              "anchor": "rb-ppa-challenger-showdown-mens-singles"
-            },
-            {
               "division": "Men's Singles",
-              "note": "Scheduled · 32 matches",
+              "note": "Through to the Round 64 · 34 matches",
               "anchor": "rb-mens-singles"
             }
           ]
         },
         {
-          "heading": "PPA CHALLENGER SHOWDOWN: Women's Doubles schedule",
-          "content": "12 matches scheduled, earliest round first.",
-          "resultsBoard": {
-            "division": "PPA CHALLENGER SHOWDOWN: Women's Doubles",
-            "rounds": [
-              {
-                "label": "Round 1",
-                "matches": [
-                  {
-                    "teamA": "Maddy Rasmusen / Masa Grgan",
-                    "teamB": "Adelie Osher / Janet Liu",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Monika Wynne / Ella Boydston",
-                    "teamB": "Averee Beck / Bella Nelson",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Allie Reichert / Madalina Grigoriu",
-                    "teamB": "Yolena Carlon / Haley Ferguson",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Marisa Ruiz / Kelsey Laurente",
-                    "teamB": "Anne-Sophie Courteau / Chloe Diskin",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 2",
-                "matches": [
-                  {
-                    "teamA": "Monika Wynne / Ella Boydston",
-                    "teamB": "Yolena Carlon / Haley Ferguson",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Allie Reichert / Madalina Grigoriu",
-                    "teamB": "Averee Beck / Bella Nelson",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Marisa Ruiz / Kelsey Laurente",
-                    "teamB": "Adelie Osher / Janet Liu",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Maddy Rasmusen / Masa Grgan",
-                    "teamB": "Anne-Sophie Courteau / Chloe Diskin",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 3",
-                "matches": [
-                  {
-                    "teamA": "Anne-Sophie Courteau / Chloe Diskin",
-                    "teamB": "Adelie Osher / Janet Liu",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Allie Reichert / Madalina Grigoriu",
-                    "teamB": "Monika Wynne / Ella Boydston",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Averee Beck / Bella Nelson",
-                    "teamB": "Yolena Carlon / Haley Ferguson",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Maddy Rasmusen / Masa Grgan",
-                    "teamB": "Marisa Ruiz / Kelsey Laurente",
-                    "sets": []
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "heading": "Women's Doubles schedule",
-          "content": "8 matches scheduled, earliest round first.",
-          "resultsBoard": {
-            "division": "Women's Doubles",
-            "rounds": [
-              {
-                "label": "Round 32",
-                "matches": [
-                  {
-                    "teamA": "Madyson Peav / Stuti Sinha",
-                    "teamB": "Jessica Pehush / Sarah Smith",
-                    "sets": []
-                  }
-                ],
-                "collapsed": true
-              },
-              {
-                "label": "Round 16",
-                "matches": [
-                  {
-                    "teamA": "Masa Grgan / Maddy Rasmusen",
-                    "teamB": "Katie O'Riley / Katarzyna Carr",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Ariana Ajani / Natalia Simson",
-                    "teamB": "Brie Aldridge / Maria Ford",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Allie Reichert / Madalina Grigoriu",
-                    "teamB": "Kylie Imperial / Nikita Pradeep",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Anna Lenhart / Caroline Maguire",
-                    "teamB": "Haley Ferguson / Frances Altick",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Olivia Phillips / Polina Libo",
-                    "teamB": "Elaine Li / Rachel Janssen",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Chloe Diskin / Anne-Sophie Courteau",
-                    "teamB": "Yi-Lin Shi / Shi Y",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Adelie Osher / Janet Liu",
-                    "teamB": "Patricia Martins / Abla Mannarino",
-                    "sets": []
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "heading": "Men's Doubles schedule",
-          "content": "22 matches scheduled, earliest round first.",
-          "resultsBoard": {
-            "division": "Men's Doubles",
-            "rounds": [
-              {
-                "label": "Round 64",
-                "matches": [
-                  {
-                    "teamA": "Casey Diamond / Tyson McGuffin",
-                    "teamB": "Freddie Powell / Austin Bricker",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Dekel Bar / Wyatt Stone",
-                    "teamB": "Edward Perez / Aanik Lohani",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Will Howells / Clayton Powell",
-                    "teamB": "Gregory Dow / Armaan Jiwa Mawji",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Will Mackinnon / Hunter Johnson",
-                    "teamB": "Wesley Burrows / Eric Roddy",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jonathan Truong / Max Freeman",
-                    "teamB": "Alexander Crum / Matthew Finnerty",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Christopher Crouch / Anouar Braham",
-                    "teamB": "Mota Alhouni / George Rangelov",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Tyler Loong / Darrian Young",
-                    "teamB": "Aryaan Bhatia / Wil Shaffer",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Zane Navratil / George Wall",
-                    "teamB": "Rio Newcombe / Andrew Caldarella",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Collin Johns / Len Yang",
-                    "teamB": "Theo Platel / Arwid Dahlin",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Pablo Tellez / Roscoe Bellamy",
-                    "teamB": "Jace Howard / Ethan Bakalinsky",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Yuta Funemizu / Armaan Bhatia",
-                    "teamB": "Miles Hoover / Jaxon Madsen",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Kenta Miyoshi / James Delgado",
-                    "teamB": "Daniel Phillips / Patrick Smith",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "AJ Koller / Connor Mogle",
-                    "teamB": "Joel Poland / Eduardo Santini Ayon",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Rafa Hewett / Luc Pham",
-                    "teamB": "Caden Nemoff / Maverick Messinger",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Grayson Goldin / Brandon French",
-                    "teamB": "Anderson Scarpa / Ivan Jakovljevic",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Rafael Lenhard / Elliott Schupp",
-                    "teamB": "Kyle Koszuta / Jace Morris",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Julian Arnold / Yates Johnson",
-                    "teamB": "Ross Whittaker / Mohaned Alhouni",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Camden Chaffin / Christopher Haworth",
-                    "teamB": "Andre Mercado / Indigo Dagnall",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Donald Young / Tom Protzek",
-                    "teamB": "Cason Campbell / Adam Harvey",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Michael Loyd / Luca Mack",
-                    "teamB": "Mitchell Hargreaves / Nasa Hatakeyama",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Matt Wright / John Lucian Goins",
-                    "teamB": "Luke Wasson / Chuck Taylor",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Harrison Brown / Lucas Pascoe",
-                    "teamB": "Braden Jacobson / Travis Rettenmaier",
-                    "sets": []
-                  }
-                ],
-                "collapsed": true
-              }
-            ]
-          }
-        },
-        {
-          "heading": "PPA CHALLENGER SHOWDOWN: Men's Doubles schedule",
-          "content": "12 matches scheduled, earliest round first.",
-          "resultsBoard": {
-            "division": "PPA CHALLENGER SHOWDOWN: Men's Doubles",
-            "rounds": [
-              {
-                "label": "Round 1",
-                "matches": [
-                  {
-                    "teamA": "Eli Steiner / Jackson Ayotte",
-                    "teamB": "Nicholas Wade / Dale Kim",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Riley Inn / Alex Emery",
-                    "teamB": "Usama Khalid / Zach Gonnering",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Juan Varon / Ryan Camras",
-                    "teamB": "Connor McCartney / Wade Heerboth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mike Radermacher / Matt Burkhardt",
-                    "teamB": "Jake Anderson / Vincent Rettke",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 2",
-                "matches": [
-                  {
-                    "teamA": "Eli Steiner / Jackson Ayotte",
-                    "teamB": "Jake Anderson / Vincent Rettke",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Juan Varon / Ryan Camras",
-                    "teamB": "Usama Khalid / Zach Gonnering",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Riley Inn / Alex Emery",
-                    "teamB": "Connor McCartney / Wade Heerboth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mike Radermacher / Matt Burkhardt",
-                    "teamB": "Nicholas Wade / Dale Kim",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 3",
-                "matches": [
-                  {
-                    "teamA": "Eli Steiner / Jackson Ayotte",
-                    "teamB": "Mike Radermacher / Matt Burkhardt",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Connor McCartney / Wade Heerboth",
-                    "teamB": "Usama Khalid / Zach Gonnering",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jake Anderson / Vincent Rettke",
-                    "teamB": "Nicholas Wade / Dale Kim",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Riley Inn / Alex Emery",
-                    "teamB": "Juan Varon / Ryan Camras",
-                    "sets": []
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "heading": "Mixed Doubles schedule",
-          "content": "24 matches scheduled, earliest round first.",
-          "resultsBoard": {
-            "division": "Mixed Doubles",
-            "rounds": [
-              {
-                "label": "Round 64",
-                "matches": [
-                  {
-                    "teamA": "Tyler Loong / Lindsey Newman",
-                    "teamB": "Hong Kit Wong / Kei Sawaki",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Dylan Frazier / Kaitlyn Christian",
-                    "teamB": "Kaitlynn Hart / Harrison Brown",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Ting Chieh Wei / Len Yang",
-                    "teamB": "Genie Bouchard / Eric Roddy",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mari Humberg / Pablo Tellez",
-                    "teamB": "Zoey Weil / Christopher Haworth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Lingwei Kong / Adam Harvey",
-                    "teamB": "Ivan Jakovljevic / Lauren Stratman",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Allyce Jones / Connor Garnett",
-                    "teamB": "Cason Campbell / Cailyn Campbell",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Tina Pisnik / Noe Khlif",
-                    "teamB": "Hannah Blatt / Grayson Goldin",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Etta Tuionetoa / Jaume Martinez Vich",
-                    "teamB": "Elliott Schupp / Kiora Kunimoto",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Xiao Yi Wang-Beckvall / Eunggwon Kim",
-                    "teamB": "Sofia Sewing / Nicolas Acevedo",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "John Lucian Goins / Alix Truong",
-                    "teamB": "Christopher Crouch / Jalina Ingram",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Dekel Bar / Jessie Irvine",
-                    "teamB": "Aiko Yoshitomi / Luca Mack",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Lacy Schneemann / Jack Sock",
-                    "teamB": "Carlota Trevino / Rafael Lenhard",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Sahra Dennehy / Tama Shimabukuro",
-                    "teamB": "Yuta Funemizu / Estee Widdershoven",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Isabella Dunlap / James Delgado",
-                    "teamB": "Mohaned Alhouni / Lina Padegimaite",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Chao Yi Wang / Roscoe Bellamy",
-                    "teamB": "Mitchell Hargreaves / Jamie Haas",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Armaan Bhatia / Milan Rane",
-                    "teamB": "Genie Erokhina / Clayton Powell",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jonathan Truong / Meghan Dizon",
-                    "teamB": "Michael Loyd / Kelly Goodnow",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Riley Newman / Layne Sleeth",
-                    "teamB": "Kenta Miyoshi / Ella Yeh",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Collin Johns / Callie Smith",
-                    "teamB": "Daria Walczak / Augustus Ge",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Liz Truluck / Hunter Johnson",
-                    "teamB": "Max Freeman / Giovanna Morelli",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "CJ Klinger / Danni-Elle Townsend",
-                    "teamB": "Angie Walker / Wyatt Stone",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Luc Pham / Christa Gecheva",
-                    "teamB": "Anderson Scarpa / Alex Walker",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Judit Castillo / Tyson McGuffin",
-                    "teamB": "Anouar Braham / Mya Bui",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Lucas Pascoe / Paula Rives",
-                    "teamB": "Brooke Buckner / Camden Chaffin",
-                    "sets": []
-                  }
-                ],
-                "collapsed": true
-              }
-            ]
-          }
-        },
-        {
-          "heading": "PPA CHALLENGER SHOWDOWN: Mixed Doubles schedule",
-          "content": "12 matches scheduled, earliest round first.",
-          "resultsBoard": {
-            "division": "PPA CHALLENGER SHOWDOWN: Mixed Doubles",
-            "rounds": [
-              {
-                "label": "Round 1",
-                "matches": [
-                  {
-                    "teamA": "Madalina Grigoriu / Garrison Eaby",
-                    "teamB": "Monika Wynne / Zach Gonnering",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Lauren Cole / Jarryd Woog",
-                    "teamB": "Marisa Ruiz / Nicholas Wade",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Chloe Diskin / Matt Burkhardt",
-                    "teamB": "Maddy Rasmusen / Usama Khalid",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Anne-Sophie Courteau / Juan Varon",
-                    "teamB": "Allie Reichert / Jake Anderson",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 2",
-                "matches": [
-                  {
-                    "teamA": "Chloe Diskin / Matt Burkhardt",
-                    "teamB": "Marisa Ruiz / Nicholas Wade",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Madalina Grigoriu / Garrison Eaby",
-                    "teamB": "Allie Reichert / Jake Anderson",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Lauren Cole / Jarryd Woog",
-                    "teamB": "Maddy Rasmusen / Usama Khalid",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Anne-Sophie Courteau / Juan Varon",
-                    "teamB": "Monika Wynne / Zach Gonnering",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 3",
-                "matches": [
-                  {
-                    "teamA": "Lauren Cole / Jarryd Woog",
-                    "teamB": "Chloe Diskin / Matt Burkhardt",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Allie Reichert / Jake Anderson",
-                    "teamB": "Monika Wynne / Zach Gonnering",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Madalina Grigoriu / Garrison Eaby",
-                    "teamB": "Anne-Sophie Courteau / Juan Varon",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Maddy Rasmusen / Usama Khalid",
-                    "teamB": "Marisa Ruiz / Nicholas Wade",
-                    "sets": []
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "heading": "PPA CHALLENGER SHOWDOWN: Women's Singles schedule",
-          "content": "12 matches scheduled, earliest round first.",
-          "resultsBoard": {
-            "division": "PPA CHALLENGER SHOWDOWN: Women's Singles",
-            "rounds": [
-              {
-                "label": "Round 1",
-                "matches": [
-                  {
-                    "teamA": "Jessica Ho",
-                    "teamB": "Naomi De Hart",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Shannon Pretorius",
-                    "teamB": "Eileen Wang",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Masa Grgan",
-                    "teamB": "Janet Liu",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Kelsey Laurente",
-                    "teamB": "Anne-Sophie Courteau",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 2",
-                "matches": [
-                  {
-                    "teamA": "Masa Grgan",
-                    "teamB": "Eileen Wang",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Kelsey Laurente",
-                    "teamB": "Naomi De Hart",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Shannon Pretorius",
-                    "teamB": "Janet Liu",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jessica Ho",
-                    "teamB": "Anne-Sophie Courteau",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 3",
-                "matches": [
-                  {
-                    "teamA": "Masa Grgan",
-                    "teamB": "Shannon Pretorius",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jessica Ho",
-                    "teamB": "Kelsey Laurente",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Anne-Sophie Courteau",
-                    "teamB": "Naomi De Hart",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Eileen Wang",
-                    "teamB": "Janet Liu",
-                    "sets": []
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "heading": "Women's Singles schedule",
-          "content": "24 matches scheduled, earliest round first.",
-          "resultsBoard": {
-            "division": "Women's Singles",
-            "rounds": [
-              {
-                "label": "Round 64",
-                "matches": [
-                  {
-                    "teamA": "Aiko Yoshitomi",
-                    "teamB": "Allison Phillips",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Isabella Dunlap",
-                    "teamB": "Cc Eleven Sacca",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Genie Bouchard",
-                    "teamB": "Natalia Simson",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Cailyn Campbell",
-                    "teamB": "Allyce Jones",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Liz Truluck",
-                    "teamB": "Alex Walker",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Sofia Sewing",
-                    "teamB": "Ava Ignatowich",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Victoria Dimuzio",
-                    "teamB": "Samantha Parker",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jorja Johnson",
-                    "teamB": "Chloe Igleski",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Ting Chieh Wei",
-                    "teamB": "Kei Sawaki",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Keilly Ulery",
-                    "teamB": "Audrey Adele Brown",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mari Humberg",
-                    "teamB": "Paula Rives",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Marcela Aguila Ampon",
-                    "teamB": "Elsie Hendershot",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Zoey Weil",
-                    "teamB": "Kaitlynn Hart",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mya Bui",
-                    "teamB": "Estee Widdershoven",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Milan Rane",
-                    "teamB": "Naomi Nguyen",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Carlota Trevino",
-                    "teamB": "Lina Padegimaite",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Nicole Conard",
-                    "teamB": "Kelly Goodnow",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Hannah Blatt",
-                    "teamB": "Polina Libo",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jessie Irvine",
-                    "teamB": "Danni-Elle Townsend",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Sahra Dennehy",
-                    "teamB": "Xiao Yi Wang-Beckvall",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jalina Ingram",
-                    "teamB": "Ashley Griffith",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Rika Fujiwara",
-                    "teamB": "Ava Cavataio",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Lacy Schneemann",
-                    "teamB": "Angie Walker",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Helena Jansen",
-                    "teamB": "Luana Stanciu",
-                    "sets": []
-                  }
-                ],
-                "collapsed": true
-              }
-            ]
-          }
-        },
-        {
-          "heading": "PPA CHALLENGER SHOWDOWN: Men's Singles schedule",
-          "content": "12 matches scheduled, earliest round first.",
-          "resultsBoard": {
-            "division": "PPA CHALLENGER SHOWDOWN: Men's Singles",
-            "rounds": [
-              {
-                "label": "Round 1",
-                "matches": [
-                  {
-                    "teamA": "William Hsieh",
-                    "teamB": "Wade Heerboth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Eli Steiner",
-                    "teamB": "Martin Stanchev",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Matt Burkhardt",
-                    "teamB": "Troy Akin",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Bret Berryman",
-                    "teamB": "Vincent Rettke",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 2",
-                "matches": [
-                  {
-                    "teamA": "Matt Burkhardt",
-                    "teamB": "Vincent Rettke",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Eli Steiner",
-                    "teamB": "Wade Heerboth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "William Hsieh",
-                    "teamB": "Martin Stanchev",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Bret Berryman",
-                    "teamB": "Troy Akin",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 3",
-                "matches": [
-                  {
-                    "teamA": "William Hsieh",
-                    "teamB": "Eli Steiner",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Vincent Rettke",
-                    "teamB": "Troy Akin",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Martin Stanchev",
-                    "teamB": "Wade Heerboth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Matt Burkhardt",
-                    "teamB": "Bret Berryman",
-                    "sets": []
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "heading": "Men's Singles schedule",
-          "content": "32 matches scheduled, earliest round first.",
+          "heading": "Men's Singles results",
+          "content": "No champion yet. 34 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Men's Singles",
             "rounds": [
               {
-                "label": "Round 128",
+                "label": "Round 64",
                 "matches": [
                   {
-                    "teamA": "Dave Conley",
-                    "teamB": "Chris Cooprider",
+                    "winner": "George Wolf",
+                    "loser": "Mota Alhouni",
                     "sets": []
                   },
                   {
-                    "teamA": "Hunter Merritt",
-                    "teamB": "Nicholas Bond",
+                    "winner": "Daniel Miron",
+                    "loser": "Jackson Ayotte",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Garrison Eaby",
+                    "loser": "Rio Newcombe",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Liam Duffin",
+                    "loser": "Gregory Dow",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Oliver Frank",
+                    "loser": "Hayden Rand",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Braylon Ohrel",
+                    "loser": "Julian Chow",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Francis Chi",
+                    "loser": "Caden Nemoff",
                     "sets": []
                   },
                   {
-                    "teamA": "Magnus Violet",
-                    "teamB": "Takumi Matsuda",
+                    "winner": "Hector Sanchez Vidal",
+                    "loser": "Aanik Lohani",
                     "sets": []
                   },
                   {
-                    "teamA": "James Wolf",
-                    "teamB": "Divin Sarthak",
-                    "sets": []
+                    "winner": "Ethan Bakalinsky",
+                    "loser": "Zach Gonnering",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
                   },
                   {
-                    "teamA": "Tristan Cooley",
-                    "teamB": "John Cincola",
-                    "sets": []
+                    "winner": "Eli Steiner",
+                    "loser": "Ryan Torresin",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
                   },
                   {
-                    "teamA": "Ryder Brown",
-                    "teamB": "Casey Diamond",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jace Howard",
-                    "teamB": "Eduardo Panozzo",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jose Martinez",
-                    "teamB": "Jagger Baird",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "JP Gorby",
-                    "teamB": "Sam Libo",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "George Wolf",
-                    "teamB": "Aleck Blair",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Maverick Messinger",
-                    "teamB": "Benny Ramirez",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Travis Rettenmaier",
-                    "teamB": "Josiah Joplin",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Theo Platel",
-                    "teamB": "Alfonso Plata",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Usama Khalid",
-                    "teamB": "Mateo Vargas",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Andrew Angulo",
-                    "teamB": "Brandon Nsekpong",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "MJ Marrero",
-                    "teamB": "Caedmon Rux",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Asís Garrido Guerrero",
-                    "teamB": "Kyle Koszuta",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Alvaro Regalado",
-                    "teamB": "Jamison Pfingston",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Dawson Davis",
-                    "teamB": "Ben Herrick",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Ryan Torresin",
-                    "teamB": "Chrisna Try",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jase Edwards",
-                    "teamB": "Brenden Everhart",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Freddie Powell",
-                    "teamB": "Jesse G",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Caleb Herrick",
-                    "teamB": "David S",
-                    "sets": []
+                    "winner": "Patrik Kevin Tsati-Onla",
+                    "loser": "Easton Horricks",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        6,
+                        11
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
                   }
                 ],
                 "collapsed": true
               },
               {
-                "label": "Round 64",
+                "label": "Round 128",
                 "matches": [
                   {
-                    "teamA": "Gregory Dow",
-                    "teamB": "Liam Duffin",
+                    "winner": "Theo Platel",
+                    "loser": "Alfonso Plata",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "George Wolf",
+                    "loser": "Aleck Blair",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        13,
+                        11
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "MJ Marrero",
+                    "loser": "Caedmon Rux",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        6,
+                        11
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jase Edwards",
+                    "loser": "Brenden Everhart",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Asís Garrido Guerrero",
+                    "loser": "Kyle Koszuta",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Brandon Nsekpong",
+                    "loser": "Andrew Angulo",
+                    "sets": [
+                      [
+                        5,
+                        11
+                      ],
+                      [
+                        14,
+                        12
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Usama Khalid",
+                    "loser": "Mateo Vargas",
+                    "sets": [
+                      [
+                        10,
+                        12
+                      ],
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Divin Sarthak",
+                    "loser": "James Wolf",
+                    "sets": [
+                      [
+                        13,
+                        11
+                      ],
+                      [
+                        10,
+                        12
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Maverick Messinger",
+                    "loser": "Benny Ramirez",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Josiah Joplin",
+                    "loser": "Travis Rettenmaier",
                     "sets": []
                   },
                   {
-                    "teamA": "Rio Newcombe",
-                    "teamB": "Garrison Eaby",
-                    "sets": []
+                    "winner": "Ryan Torresin",
+                    "loser": "Chrisna Try",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
                   },
                   {
-                    "teamA": "Francis Chi",
-                    "teamB": "Caden Nemoff",
-                    "sets": []
+                    "winner": "Jace Howard",
+                    "loser": "Eduardo Panozzo",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
                   },
                   {
-                    "teamA": "Braylon Ohrel",
-                    "teamB": "Julian Chow",
-                    "sets": []
+                    "winner": "Hunter Merritt",
+                    "loser": "Nicholas Bond",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
                   },
                   {
-                    "teamA": "Zach Gonnering",
-                    "teamB": "Ethan Bakalinsky",
-                    "sets": []
+                    "winner": "Jose Martinez",
+                    "loser": "Jagger Baird",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
                   },
                   {
-                    "teamA": "Daniel Miron",
-                    "teamB": "Jackson Ayotte",
-                    "sets": []
+                    "winner": "Sam Libo",
+                    "loser": "JP Gorby",
+                    "sets": [
+                      [
+                        14,
+                        12
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
                   },
                   {
-                    "teamA": "Oliver Frank",
-                    "teamB": "Hayden Rand",
-                    "sets": []
+                    "winner": "Alvaro Regalado",
+                    "loser": "Jamison Pfingston",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
                   },
                   {
-                    "teamA": "Easton Horricks",
-                    "teamB": "Patrik Kevin Tsati-Onla",
-                    "sets": []
+                    "winner": "Chris Cooprider",
+                    "loser": "Dave Conley",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
                   },
                   {
-                    "teamA": "Aanik Lohani",
-                    "teamB": "Hector Sanchez Vidal",
-                    "sets": []
+                    "winner": "Caleb Herrick",
+                    "loser": "David S",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "John Cincola",
+                    "loser": "Tristan Cooley",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        1,
+                        11
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Takumi Matsuda",
+                    "loser": "Magnus Violet",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Freddie Powell",
+                    "loser": "Jesse G",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Ben Herrick",
+                    "loser": "Dawson Davis",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Casey Diamond",
+                    "loser": "Ryder Brown",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
                   }
                 ],
                 "collapsed": true
               }
             ]
           }
+        },
+        {
+          "heading": "Live and upcoming status",
+          "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
+          "listItems": [
+            "Men's Singles, Round 64: Armaan Jiwa Mawji vs John Cincola — status live.",
+            "Men's Singles, Round 64: Ryan Sherry vs Jase Edwards — status live.",
+            "Men's Singles, Round 64: Matt Burkhardt vs Asís Garrido Guerrero — status live.",
+            "Men's Singles, Round 64: Daniel Phillips vs Maverick Messinger — status live.",
+            "Men's Singles, Round 64: George Rangelov vs Sam Libo — status live.",
+            "Men's Singles, Round 64: Emilien Burnel vs Casey Diamond — status live.",
+            "Men's Singles, Round 64: Matthew Finnerty vs Ben Herrick — status live.",
+            "Men's Singles, Round 64: Andrew Caldarella vs Theo Platel — status live.",
+            "Men's Singles, Round 64: Luke Wasson vs Freddie Powell — status live.",
+            "Men's Singles, Round 64: Jimmy Liong Kai Long vs Takumi Matsuda — status live."
+          ]
         },
         {
           "heading": "How to read this update",
@@ -1170,7 +570,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 06:00 ngày 2/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 170 trận, gồm 0 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 22:00 ngày 2/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 193 trận, gồm 34 bản ghi đã kết thúc/chung cuộc và 16 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -1179,1112 +579,512 @@ const post: BlogPost = {
           ],
           "resultsSummary": [
             {
-              "division": "PPA CHALLENGER SHOWDOWN: Women's Doubles",
-              "note": "Đã lên lịch · 12 trận",
-              "anchor": "rb-ppa-challenger-showdown-womens-doubles"
-            },
-            {
-              "division": "Đôi nữ",
-              "note": "Đã lên lịch · 8 trận",
-              "anchor": "rb-doi-nu"
-            },
-            {
-              "division": "Đôi nam",
-              "note": "Đã lên lịch · 22 trận",
-              "anchor": "rb-doi-nam"
-            },
-            {
-              "division": "PPA CHALLENGER SHOWDOWN: Men's Doubles",
-              "note": "Đã lên lịch · 12 trận",
-              "anchor": "rb-ppa-challenger-showdown-mens-doubles"
-            },
-            {
-              "division": "Đôi nam nữ",
-              "note": "Đã lên lịch · 24 trận",
-              "anchor": "rb-doi-nam-nu"
-            },
-            {
-              "division": "PPA CHALLENGER SHOWDOWN: Mixed Doubles",
-              "note": "Đã lên lịch · 12 trận",
-              "anchor": "rb-ppa-challenger-showdown-mixed-doubles"
-            },
-            {
-              "division": "PPA CHALLENGER SHOWDOWN: Women's Singles",
-              "note": "Đã lên lịch · 12 trận",
-              "anchor": "rb-ppa-challenger-showdown-womens-singles"
-            },
-            {
-              "division": "Đơn nữ",
-              "note": "Đã lên lịch · 24 trận",
-              "anchor": "rb-don-nu"
-            },
-            {
-              "division": "PPA CHALLENGER SHOWDOWN: Men's Singles",
-              "note": "Đã lên lịch · 12 trận",
-              "anchor": "rb-ppa-challenger-showdown-mens-singles"
-            },
-            {
               "division": "Đơn nam",
-              "note": "Đã lên lịch · 32 trận",
+              "note": "Đã tới Vòng 64 · 34 trận",
               "anchor": "rb-don-nam"
             }
           ]
         },
         {
-          "heading": "Lịch thi đấu PPA CHALLENGER SHOWDOWN: Women's Doubles",
-          "content": "12 trận đã lên lịch, vòng sớm nhất ở trên.",
-          "resultsBoard": {
-            "division": "PPA CHALLENGER SHOWDOWN: Women's Doubles",
-            "rounds": [
-              {
-                "label": "Round 1",
-                "matches": [
-                  {
-                    "teamA": "Maddy Rasmusen / Masa Grgan",
-                    "teamB": "Adelie Osher / Janet Liu",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Monika Wynne / Ella Boydston",
-                    "teamB": "Averee Beck / Bella Nelson",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Allie Reichert / Madalina Grigoriu",
-                    "teamB": "Yolena Carlon / Haley Ferguson",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Marisa Ruiz / Kelsey Laurente",
-                    "teamB": "Anne-Sophie Courteau / Chloe Diskin",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 2",
-                "matches": [
-                  {
-                    "teamA": "Monika Wynne / Ella Boydston",
-                    "teamB": "Yolena Carlon / Haley Ferguson",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Allie Reichert / Madalina Grigoriu",
-                    "teamB": "Averee Beck / Bella Nelson",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Marisa Ruiz / Kelsey Laurente",
-                    "teamB": "Adelie Osher / Janet Liu",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Maddy Rasmusen / Masa Grgan",
-                    "teamB": "Anne-Sophie Courteau / Chloe Diskin",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 3",
-                "matches": [
-                  {
-                    "teamA": "Anne-Sophie Courteau / Chloe Diskin",
-                    "teamB": "Adelie Osher / Janet Liu",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Allie Reichert / Madalina Grigoriu",
-                    "teamB": "Monika Wynne / Ella Boydston",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Averee Beck / Bella Nelson",
-                    "teamB": "Yolena Carlon / Haley Ferguson",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Maddy Rasmusen / Masa Grgan",
-                    "teamB": "Marisa Ruiz / Kelsey Laurente",
-                    "sets": []
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "heading": "Lịch thi đấu Đôi nữ",
-          "content": "8 trận đã lên lịch, vòng sớm nhất ở trên.",
-          "resultsBoard": {
-            "division": "Đôi nữ",
-            "rounds": [
-              {
-                "label": "Vòng 32",
-                "matches": [
-                  {
-                    "teamA": "Madyson Peav / Stuti Sinha",
-                    "teamB": "Jessica Pehush / Sarah Smith",
-                    "sets": []
-                  }
-                ],
-                "collapsed": true
-              },
-              {
-                "label": "Vòng 16",
-                "matches": [
-                  {
-                    "teamA": "Masa Grgan / Maddy Rasmusen",
-                    "teamB": "Katie O'Riley / Katarzyna Carr",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Ariana Ajani / Natalia Simson",
-                    "teamB": "Brie Aldridge / Maria Ford",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Allie Reichert / Madalina Grigoriu",
-                    "teamB": "Kylie Imperial / Nikita Pradeep",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Anna Lenhart / Caroline Maguire",
-                    "teamB": "Haley Ferguson / Frances Altick",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Olivia Phillips / Polina Libo",
-                    "teamB": "Elaine Li / Rachel Janssen",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Chloe Diskin / Anne-Sophie Courteau",
-                    "teamB": "Yi-Lin Shi / Shi Y",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Adelie Osher / Janet Liu",
-                    "teamB": "Patricia Martins / Abla Mannarino",
-                    "sets": []
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "heading": "Lịch thi đấu Đôi nam",
-          "content": "22 trận đã lên lịch, vòng sớm nhất ở trên.",
-          "resultsBoard": {
-            "division": "Đôi nam",
-            "rounds": [
-              {
-                "label": "Vòng 64",
-                "matches": [
-                  {
-                    "teamA": "Casey Diamond / Tyson McGuffin",
-                    "teamB": "Freddie Powell / Austin Bricker",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Dekel Bar / Wyatt Stone",
-                    "teamB": "Edward Perez / Aanik Lohani",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Will Howells / Clayton Powell",
-                    "teamB": "Gregory Dow / Armaan Jiwa Mawji",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Will Mackinnon / Hunter Johnson",
-                    "teamB": "Wesley Burrows / Eric Roddy",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jonathan Truong / Max Freeman",
-                    "teamB": "Alexander Crum / Matthew Finnerty",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Christopher Crouch / Anouar Braham",
-                    "teamB": "Mota Alhouni / George Rangelov",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Tyler Loong / Darrian Young",
-                    "teamB": "Aryaan Bhatia / Wil Shaffer",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Zane Navratil / George Wall",
-                    "teamB": "Rio Newcombe / Andrew Caldarella",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Collin Johns / Len Yang",
-                    "teamB": "Theo Platel / Arwid Dahlin",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Pablo Tellez / Roscoe Bellamy",
-                    "teamB": "Jace Howard / Ethan Bakalinsky",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Yuta Funemizu / Armaan Bhatia",
-                    "teamB": "Miles Hoover / Jaxon Madsen",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Kenta Miyoshi / James Delgado",
-                    "teamB": "Daniel Phillips / Patrick Smith",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "AJ Koller / Connor Mogle",
-                    "teamB": "Joel Poland / Eduardo Santini Ayon",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Rafa Hewett / Luc Pham",
-                    "teamB": "Caden Nemoff / Maverick Messinger",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Grayson Goldin / Brandon French",
-                    "teamB": "Anderson Scarpa / Ivan Jakovljevic",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Rafael Lenhard / Elliott Schupp",
-                    "teamB": "Kyle Koszuta / Jace Morris",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Julian Arnold / Yates Johnson",
-                    "teamB": "Ross Whittaker / Mohaned Alhouni",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Camden Chaffin / Christopher Haworth",
-                    "teamB": "Andre Mercado / Indigo Dagnall",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Donald Young / Tom Protzek",
-                    "teamB": "Cason Campbell / Adam Harvey",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Michael Loyd / Luca Mack",
-                    "teamB": "Mitchell Hargreaves / Nasa Hatakeyama",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Matt Wright / John Lucian Goins",
-                    "teamB": "Luke Wasson / Chuck Taylor",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Harrison Brown / Lucas Pascoe",
-                    "teamB": "Braden Jacobson / Travis Rettenmaier",
-                    "sets": []
-                  }
-                ],
-                "collapsed": true
-              }
-            ]
-          }
-        },
-        {
-          "heading": "Lịch thi đấu PPA CHALLENGER SHOWDOWN: Men's Doubles",
-          "content": "12 trận đã lên lịch, vòng sớm nhất ở trên.",
-          "resultsBoard": {
-            "division": "PPA CHALLENGER SHOWDOWN: Men's Doubles",
-            "rounds": [
-              {
-                "label": "Round 1",
-                "matches": [
-                  {
-                    "teamA": "Eli Steiner / Jackson Ayotte",
-                    "teamB": "Nicholas Wade / Dale Kim",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Riley Inn / Alex Emery",
-                    "teamB": "Usama Khalid / Zach Gonnering",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Juan Varon / Ryan Camras",
-                    "teamB": "Connor McCartney / Wade Heerboth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mike Radermacher / Matt Burkhardt",
-                    "teamB": "Jake Anderson / Vincent Rettke",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 2",
-                "matches": [
-                  {
-                    "teamA": "Eli Steiner / Jackson Ayotte",
-                    "teamB": "Jake Anderson / Vincent Rettke",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Juan Varon / Ryan Camras",
-                    "teamB": "Usama Khalid / Zach Gonnering",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Riley Inn / Alex Emery",
-                    "teamB": "Connor McCartney / Wade Heerboth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mike Radermacher / Matt Burkhardt",
-                    "teamB": "Nicholas Wade / Dale Kim",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 3",
-                "matches": [
-                  {
-                    "teamA": "Eli Steiner / Jackson Ayotte",
-                    "teamB": "Mike Radermacher / Matt Burkhardt",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Connor McCartney / Wade Heerboth",
-                    "teamB": "Usama Khalid / Zach Gonnering",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jake Anderson / Vincent Rettke",
-                    "teamB": "Nicholas Wade / Dale Kim",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Riley Inn / Alex Emery",
-                    "teamB": "Juan Varon / Ryan Camras",
-                    "sets": []
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "heading": "Lịch thi đấu Đôi nam nữ",
-          "content": "24 trận đã lên lịch, vòng sớm nhất ở trên.",
-          "resultsBoard": {
-            "division": "Đôi nam nữ",
-            "rounds": [
-              {
-                "label": "Vòng 64",
-                "matches": [
-                  {
-                    "teamA": "Tyler Loong / Lindsey Newman",
-                    "teamB": "Hong Kit Wong / Kei Sawaki",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Dylan Frazier / Kaitlyn Christian",
-                    "teamB": "Kaitlynn Hart / Harrison Brown",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Ting Chieh Wei / Len Yang",
-                    "teamB": "Genie Bouchard / Eric Roddy",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mari Humberg / Pablo Tellez",
-                    "teamB": "Zoey Weil / Christopher Haworth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Lingwei Kong / Adam Harvey",
-                    "teamB": "Ivan Jakovljevic / Lauren Stratman",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Allyce Jones / Connor Garnett",
-                    "teamB": "Cason Campbell / Cailyn Campbell",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Tina Pisnik / Noe Khlif",
-                    "teamB": "Hannah Blatt / Grayson Goldin",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Etta Tuionetoa / Jaume Martinez Vich",
-                    "teamB": "Elliott Schupp / Kiora Kunimoto",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Xiao Yi Wang-Beckvall / Eunggwon Kim",
-                    "teamB": "Sofia Sewing / Nicolas Acevedo",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "John Lucian Goins / Alix Truong",
-                    "teamB": "Christopher Crouch / Jalina Ingram",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Dekel Bar / Jessie Irvine",
-                    "teamB": "Aiko Yoshitomi / Luca Mack",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Lacy Schneemann / Jack Sock",
-                    "teamB": "Carlota Trevino / Rafael Lenhard",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Sahra Dennehy / Tama Shimabukuro",
-                    "teamB": "Yuta Funemizu / Estee Widdershoven",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Isabella Dunlap / James Delgado",
-                    "teamB": "Mohaned Alhouni / Lina Padegimaite",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Chao Yi Wang / Roscoe Bellamy",
-                    "teamB": "Mitchell Hargreaves / Jamie Haas",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Armaan Bhatia / Milan Rane",
-                    "teamB": "Genie Erokhina / Clayton Powell",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jonathan Truong / Meghan Dizon",
-                    "teamB": "Michael Loyd / Kelly Goodnow",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Riley Newman / Layne Sleeth",
-                    "teamB": "Kenta Miyoshi / Ella Yeh",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Collin Johns / Callie Smith",
-                    "teamB": "Daria Walczak / Augustus Ge",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Liz Truluck / Hunter Johnson",
-                    "teamB": "Max Freeman / Giovanna Morelli",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "CJ Klinger / Danni-Elle Townsend",
-                    "teamB": "Angie Walker / Wyatt Stone",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Luc Pham / Christa Gecheva",
-                    "teamB": "Anderson Scarpa / Alex Walker",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Judit Castillo / Tyson McGuffin",
-                    "teamB": "Anouar Braham / Mya Bui",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Lucas Pascoe / Paula Rives",
-                    "teamB": "Brooke Buckner / Camden Chaffin",
-                    "sets": []
-                  }
-                ],
-                "collapsed": true
-              }
-            ]
-          }
-        },
-        {
-          "heading": "Lịch thi đấu PPA CHALLENGER SHOWDOWN: Mixed Doubles",
-          "content": "12 trận đã lên lịch, vòng sớm nhất ở trên.",
-          "resultsBoard": {
-            "division": "PPA CHALLENGER SHOWDOWN: Mixed Doubles",
-            "rounds": [
-              {
-                "label": "Round 1",
-                "matches": [
-                  {
-                    "teamA": "Madalina Grigoriu / Garrison Eaby",
-                    "teamB": "Monika Wynne / Zach Gonnering",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Lauren Cole / Jarryd Woog",
-                    "teamB": "Marisa Ruiz / Nicholas Wade",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Chloe Diskin / Matt Burkhardt",
-                    "teamB": "Maddy Rasmusen / Usama Khalid",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Anne-Sophie Courteau / Juan Varon",
-                    "teamB": "Allie Reichert / Jake Anderson",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 2",
-                "matches": [
-                  {
-                    "teamA": "Chloe Diskin / Matt Burkhardt",
-                    "teamB": "Marisa Ruiz / Nicholas Wade",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Madalina Grigoriu / Garrison Eaby",
-                    "teamB": "Allie Reichert / Jake Anderson",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Lauren Cole / Jarryd Woog",
-                    "teamB": "Maddy Rasmusen / Usama Khalid",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Anne-Sophie Courteau / Juan Varon",
-                    "teamB": "Monika Wynne / Zach Gonnering",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 3",
-                "matches": [
-                  {
-                    "teamA": "Lauren Cole / Jarryd Woog",
-                    "teamB": "Chloe Diskin / Matt Burkhardt",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Allie Reichert / Jake Anderson",
-                    "teamB": "Monika Wynne / Zach Gonnering",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Madalina Grigoriu / Garrison Eaby",
-                    "teamB": "Anne-Sophie Courteau / Juan Varon",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Maddy Rasmusen / Usama Khalid",
-                    "teamB": "Marisa Ruiz / Nicholas Wade",
-                    "sets": []
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "heading": "Lịch thi đấu PPA CHALLENGER SHOWDOWN: Women's Singles",
-          "content": "12 trận đã lên lịch, vòng sớm nhất ở trên.",
-          "resultsBoard": {
-            "division": "PPA CHALLENGER SHOWDOWN: Women's Singles",
-            "rounds": [
-              {
-                "label": "Round 1",
-                "matches": [
-                  {
-                    "teamA": "Jessica Ho",
-                    "teamB": "Naomi De Hart",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Shannon Pretorius",
-                    "teamB": "Eileen Wang",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Masa Grgan",
-                    "teamB": "Janet Liu",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Kelsey Laurente",
-                    "teamB": "Anne-Sophie Courteau",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 2",
-                "matches": [
-                  {
-                    "teamA": "Masa Grgan",
-                    "teamB": "Eileen Wang",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Kelsey Laurente",
-                    "teamB": "Naomi De Hart",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Shannon Pretorius",
-                    "teamB": "Janet Liu",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jessica Ho",
-                    "teamB": "Anne-Sophie Courteau",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 3",
-                "matches": [
-                  {
-                    "teamA": "Masa Grgan",
-                    "teamB": "Shannon Pretorius",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jessica Ho",
-                    "teamB": "Kelsey Laurente",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Anne-Sophie Courteau",
-                    "teamB": "Naomi De Hart",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Eileen Wang",
-                    "teamB": "Janet Liu",
-                    "sets": []
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "heading": "Lịch thi đấu Đơn nữ",
-          "content": "24 trận đã lên lịch, vòng sớm nhất ở trên.",
-          "resultsBoard": {
-            "division": "Đơn nữ",
-            "rounds": [
-              {
-                "label": "Vòng 64",
-                "matches": [
-                  {
-                    "teamA": "Aiko Yoshitomi",
-                    "teamB": "Allison Phillips",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Isabella Dunlap",
-                    "teamB": "Cc Eleven Sacca",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Genie Bouchard",
-                    "teamB": "Natalia Simson",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Cailyn Campbell",
-                    "teamB": "Allyce Jones",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Liz Truluck",
-                    "teamB": "Alex Walker",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Sofia Sewing",
-                    "teamB": "Ava Ignatowich",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Victoria Dimuzio",
-                    "teamB": "Samantha Parker",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jorja Johnson",
-                    "teamB": "Chloe Igleski",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Ting Chieh Wei",
-                    "teamB": "Kei Sawaki",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Keilly Ulery",
-                    "teamB": "Audrey Adele Brown",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mari Humberg",
-                    "teamB": "Paula Rives",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Marcela Aguila Ampon",
-                    "teamB": "Elsie Hendershot",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Zoey Weil",
-                    "teamB": "Kaitlynn Hart",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mya Bui",
-                    "teamB": "Estee Widdershoven",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Milan Rane",
-                    "teamB": "Naomi Nguyen",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Carlota Trevino",
-                    "teamB": "Lina Padegimaite",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Nicole Conard",
-                    "teamB": "Kelly Goodnow",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Hannah Blatt",
-                    "teamB": "Polina Libo",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jessie Irvine",
-                    "teamB": "Danni-Elle Townsend",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Sahra Dennehy",
-                    "teamB": "Xiao Yi Wang-Beckvall",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jalina Ingram",
-                    "teamB": "Ashley Griffith",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Rika Fujiwara",
-                    "teamB": "Ava Cavataio",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Lacy Schneemann",
-                    "teamB": "Angie Walker",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Helena Jansen",
-                    "teamB": "Luana Stanciu",
-                    "sets": []
-                  }
-                ],
-                "collapsed": true
-              }
-            ]
-          }
-        },
-        {
-          "heading": "Lịch thi đấu PPA CHALLENGER SHOWDOWN: Men's Singles",
-          "content": "12 trận đã lên lịch, vòng sớm nhất ở trên.",
-          "resultsBoard": {
-            "division": "PPA CHALLENGER SHOWDOWN: Men's Singles",
-            "rounds": [
-              {
-                "label": "Round 1",
-                "matches": [
-                  {
-                    "teamA": "William Hsieh",
-                    "teamB": "Wade Heerboth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Eli Steiner",
-                    "teamB": "Martin Stanchev",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Matt Burkhardt",
-                    "teamB": "Troy Akin",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Bret Berryman",
-                    "teamB": "Vincent Rettke",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 2",
-                "matches": [
-                  {
-                    "teamA": "Matt Burkhardt",
-                    "teamB": "Vincent Rettke",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Eli Steiner",
-                    "teamB": "Wade Heerboth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "William Hsieh",
-                    "teamB": "Martin Stanchev",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Bret Berryman",
-                    "teamB": "Troy Akin",
-                    "sets": []
-                  }
-                ]
-              },
-              {
-                "label": "Round 3",
-                "matches": [
-                  {
-                    "teamA": "William Hsieh",
-                    "teamB": "Eli Steiner",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Vincent Rettke",
-                    "teamB": "Troy Akin",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Martin Stanchev",
-                    "teamB": "Wade Heerboth",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Matt Burkhardt",
-                    "teamB": "Bret Berryman",
-                    "sets": []
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "heading": "Lịch thi đấu Đơn nam",
-          "content": "32 trận đã lên lịch, vòng sớm nhất ở trên.",
+          "heading": "Kết quả Đơn nam",
+          "content": "Chưa có nhà vô địch. 34 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đơn nam",
             "rounds": [
               {
-                "label": "Vòng 128",
+                "label": "Vòng 64",
                 "matches": [
                   {
-                    "teamA": "Dave Conley",
-                    "teamB": "Chris Cooprider",
+                    "winner": "George Wolf",
+                    "loser": "Mota Alhouni",
                     "sets": []
                   },
                   {
-                    "teamA": "Hunter Merritt",
-                    "teamB": "Nicholas Bond",
+                    "winner": "Daniel Miron",
+                    "loser": "Jackson Ayotte",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Garrison Eaby",
+                    "loser": "Rio Newcombe",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Liam Duffin",
+                    "loser": "Gregory Dow",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Oliver Frank",
+                    "loser": "Hayden Rand",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Braylon Ohrel",
+                    "loser": "Julian Chow",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Francis Chi",
+                    "loser": "Caden Nemoff",
                     "sets": []
                   },
                   {
-                    "teamA": "Magnus Violet",
-                    "teamB": "Takumi Matsuda",
+                    "winner": "Hector Sanchez Vidal",
+                    "loser": "Aanik Lohani",
                     "sets": []
                   },
                   {
-                    "teamA": "James Wolf",
-                    "teamB": "Divin Sarthak",
-                    "sets": []
+                    "winner": "Ethan Bakalinsky",
+                    "loser": "Zach Gonnering",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
                   },
                   {
-                    "teamA": "Tristan Cooley",
-                    "teamB": "John Cincola",
-                    "sets": []
+                    "winner": "Eli Steiner",
+                    "loser": "Ryan Torresin",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
                   },
                   {
-                    "teamA": "Ryder Brown",
-                    "teamB": "Casey Diamond",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jace Howard",
-                    "teamB": "Eduardo Panozzo",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jose Martinez",
-                    "teamB": "Jagger Baird",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "JP Gorby",
-                    "teamB": "Sam Libo",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "George Wolf",
-                    "teamB": "Aleck Blair",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Maverick Messinger",
-                    "teamB": "Benny Ramirez",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Travis Rettenmaier",
-                    "teamB": "Josiah Joplin",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Theo Platel",
-                    "teamB": "Alfonso Plata",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Usama Khalid",
-                    "teamB": "Mateo Vargas",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Andrew Angulo",
-                    "teamB": "Brandon Nsekpong",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "MJ Marrero",
-                    "teamB": "Caedmon Rux",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Asís Garrido Guerrero",
-                    "teamB": "Kyle Koszuta",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Alvaro Regalado",
-                    "teamB": "Jamison Pfingston",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Dawson Davis",
-                    "teamB": "Ben Herrick",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Ryan Torresin",
-                    "teamB": "Chrisna Try",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Jase Edwards",
-                    "teamB": "Brenden Everhart",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Freddie Powell",
-                    "teamB": "Jesse G",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Caleb Herrick",
-                    "teamB": "David S",
-                    "sets": []
+                    "winner": "Patrik Kevin Tsati-Onla",
+                    "loser": "Easton Horricks",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        6,
+                        11
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
                   }
                 ],
                 "collapsed": true
               },
               {
-                "label": "Vòng 64",
+                "label": "Vòng 128",
                 "matches": [
                   {
-                    "teamA": "Gregory Dow",
-                    "teamB": "Liam Duffin",
+                    "winner": "Theo Platel",
+                    "loser": "Alfonso Plata",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "George Wolf",
+                    "loser": "Aleck Blair",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        13,
+                        11
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "MJ Marrero",
+                    "loser": "Caedmon Rux",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        6,
+                        11
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jase Edwards",
+                    "loser": "Brenden Everhart",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Asís Garrido Guerrero",
+                    "loser": "Kyle Koszuta",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Brandon Nsekpong",
+                    "loser": "Andrew Angulo",
+                    "sets": [
+                      [
+                        5,
+                        11
+                      ],
+                      [
+                        14,
+                        12
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Usama Khalid",
+                    "loser": "Mateo Vargas",
+                    "sets": [
+                      [
+                        10,
+                        12
+                      ],
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Divin Sarthak",
+                    "loser": "James Wolf",
+                    "sets": [
+                      [
+                        13,
+                        11
+                      ],
+                      [
+                        10,
+                        12
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Maverick Messinger",
+                    "loser": "Benny Ramirez",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Josiah Joplin",
+                    "loser": "Travis Rettenmaier",
                     "sets": []
                   },
                   {
-                    "teamA": "Rio Newcombe",
-                    "teamB": "Garrison Eaby",
-                    "sets": []
+                    "winner": "Ryan Torresin",
+                    "loser": "Chrisna Try",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
                   },
                   {
-                    "teamA": "Francis Chi",
-                    "teamB": "Caden Nemoff",
-                    "sets": []
+                    "winner": "Jace Howard",
+                    "loser": "Eduardo Panozzo",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
                   },
                   {
-                    "teamA": "Braylon Ohrel",
-                    "teamB": "Julian Chow",
-                    "sets": []
+                    "winner": "Hunter Merritt",
+                    "loser": "Nicholas Bond",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
                   },
                   {
-                    "teamA": "Zach Gonnering",
-                    "teamB": "Ethan Bakalinsky",
-                    "sets": []
+                    "winner": "Jose Martinez",
+                    "loser": "Jagger Baird",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
                   },
                   {
-                    "teamA": "Daniel Miron",
-                    "teamB": "Jackson Ayotte",
-                    "sets": []
+                    "winner": "Sam Libo",
+                    "loser": "JP Gorby",
+                    "sets": [
+                      [
+                        14,
+                        12
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
                   },
                   {
-                    "teamA": "Oliver Frank",
-                    "teamB": "Hayden Rand",
-                    "sets": []
+                    "winner": "Alvaro Regalado",
+                    "loser": "Jamison Pfingston",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
                   },
                   {
-                    "teamA": "Easton Horricks",
-                    "teamB": "Patrik Kevin Tsati-Onla",
-                    "sets": []
+                    "winner": "Chris Cooprider",
+                    "loser": "Dave Conley",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
                   },
                   {
-                    "teamA": "Aanik Lohani",
-                    "teamB": "Hector Sanchez Vidal",
-                    "sets": []
+                    "winner": "Caleb Herrick",
+                    "loser": "David S",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "John Cincola",
+                    "loser": "Tristan Cooley",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        1,
+                        11
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Takumi Matsuda",
+                    "loser": "Magnus Violet",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Freddie Powell",
+                    "loser": "Jesse G",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Ben Herrick",
+                    "loser": "Dawson Davis",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Casey Diamond",
+                    "loser": "Ryder Brown",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
                   }
                 ],
                 "collapsed": true
               }
             ]
           }
+        },
+        {
+          "heading": "Trận đang đấu và sắp đấu",
+          "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
+          "listItems": [
+            "Đơn nam, Round 64: Armaan Jiwa Mawji gặp John Cincola — trạng thái live.",
+            "Đơn nam, Round 64: Ryan Sherry gặp Jase Edwards — trạng thái live.",
+            "Đơn nam, Round 64: Matt Burkhardt gặp Asís Garrido Guerrero — trạng thái live.",
+            "Đơn nam, Round 64: Daniel Phillips gặp Maverick Messinger — trạng thái live.",
+            "Đơn nam, Round 64: George Rangelov gặp Sam Libo — trạng thái live.",
+            "Đơn nam, Round 64: Emilien Burnel gặp Casey Diamond — trạng thái live.",
+            "Đơn nam, Round 64: Matthew Finnerty gặp Ben Herrick — trạng thái live.",
+            "Đơn nam, Round 64: Andrew Caldarella gặp Theo Platel — trạng thái live.",
+            "Đơn nam, Round 64: Luke Wasson gặp Freddie Powell — trạng thái live.",
+            "Đơn nam, Round 64: Jimmy Liong Kai Long gặp Takumi Matsuda — trạng thái live."
+          ]
         },
         {
           "heading": "Cách kiểm chứng cập nhật",
