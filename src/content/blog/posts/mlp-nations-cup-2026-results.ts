@@ -6,6 +6,8 @@ import type { BlogPost } from "@/content/blog/types";
  * and @MajorLeaguePB Day 1 Scores Recap graphics (2026-10-31).
  * Day 2 scores verified against the Worlds board and MLP official results
  * on majorleaguepickleball.co (2026-11-01).
+ * Knockout scores verified against MLP official results, the Worlds board,
+ * @MajorLeaguePB on X and pickleball.com (2026-11-02).
  * Hero: official MLP Day-1 Nations Cup play photo (@MajorLeaguePB), cropped text-free.
  */
 const post: BlogPost = {
@@ -15,7 +17,7 @@ const post: BlogPost = {
     "alt": "MLP Nations Cup 2026 Day 1 — Team USA player mid-swing on championship court at Brookhaven (official Major League Pickleball photo)"
   },
   "publishedDate": "2026-10-31",
-  "updatedDate": "2026-11-01",
+  "updatedDate": "2026-11-02",
   "author": "The PickleHub Team",
   "tags": [
     "mlp nations cup 2026 results",
@@ -23,7 +25,8 @@ const post: BlogPost = {
     "mlp",
     "nations cup",
     "worlds 2026",
-    "asia domestic"
+    "asia domestic",
+    "usa nations cup champion"
   ],
   "ctaPath": "/live",
   "ctaLabel": {
@@ -32,13 +35,13 @@ const post: BlogPost = {
   },
   "content": {
     "en": {
-      "title": "MLP Nations Cup 2026 Results: Day-by-Day Scores",
-      "metaTitle": "MLP Nations Cup 2026 Results | Day-by-Day",
-      "metaDescription": "MLP Nations Cup 2026 pool play final: USA 3–0, Latin America top Pool B. Semifinal and final times in Vietnam time.",
+      "title": "MLP Nations Cup 2026 Results: USA Win the Title",
+      "metaTitle": "MLP Nations Cup 2026 Results: USA Champions",
+      "metaDescription": "USA won the MLP Nations Cup 2026, sweeping Latin America 3–0 in the final. Full semifinal and final scores plus pool standings.",
       "sections": [
         {
-          "heading": "MLP Nations Cup 2026 results — pool play complete",
-          "content": "Last updated: 08:10 ICT (2026-11-01). Pool play is over after Saturday October 31. USA (3–0) won Pool A and Asia Domestic (2–1) finished second. Latin America won Pool B ahead of Europe East on a three-way 2–1 tie; Australia went out on game difference. Championship Sunday: Semifinal 1 Asia Domestic vs Latin America at 23:00 ICT November 1, Semifinal 2 USA vs Europe East at 00:30 ICT November 2, and the final at 03:00 ICT Monday November 2. ThePickleHub will add Sunday’s scores once two independent sources confirm them. No unfinished match is scored here.\n\nThe inaugural MLP Nations Cup runs October 30–November 1, 2026 at Brookhaven Country Club, Farmers Branch, Texas — the official kickoff to the 2026 Opendoor Pickleball World Championships. Eight regional teams, two pools of four, top two from each pool advance to Championship Sunday.\n\nDay 2 scores were cross-checked game by game between the Worlds live board (worlds.unitedpickleball.com/nations-cup) and Major League Pickleball’s official match results on majorleaguepickleball.co; @MajorLeaguePB posts on X also confirm USA’s 13–11 women’s doubles win and the DreamBreaker against Asia Domestic. Day 1 scores were cross-checked against MLP’s Day 1 Scores Recap graphics.",
+          "heading": "USA win the MLP Nations Cup 2026",
+          "content": "Last updated: 08:30 ICT (2026-11-02) — the event is complete. USA are the first-ever MLP Nations Cup champions after a 3–0 sweep of Latin America in the final (W 11–9, M 11–1, MX1 11–6), which started at 03:00 ICT Monday November 2. USA (Anna Bright, Tyra Hurricane Black, Kate Fahey, Ben Johns, CJ Klinger, Will Howells; captain Johnny Goldberg) went unbeaten all weekend: 3–0 in Pool A, 3–1 over Europe East in the semifinals and 3–0 in the final.\n\nSemifinals: Latin America beat Asia Domestic 3–1 (23:00 ICT November 1) and USA beat Europe East 3–1 (00:30 ICT November 2). There was no third-place match.\n\nThe inaugural MLP Nations Cup ran October 30–November 1, 2026 at Brookhaven Country Club, Farmers Branch, Texas — the official kickoff to the 2026 Opendoor Pickleball World Championships. Eight regional teams, two pools of four, top two from each pool advanced to Championship Sunday.\n\nKnockout scores were cross-checked game by game between MLP’s official match results on majorleaguepickleball.co and the Worlds live board; @MajorLeaguePB posts on X confirm both 3–1 semifinal results and USA’s title, and pickleball.com’s final report confirms the 11–9, 11–1, 11–6 final. Pool-play sources are listed under Sources below.",
           "internalLinks": [
             {
               "text": "Official Nations Cup live board",
@@ -55,8 +58,79 @@ const post: BlogPost = {
           ]
         },
         {
+          "heading": "Final placings",
+          "content": "There was no third-place match, so the two beaten semifinalists share third.",
+          "table": {
+            "caption": "MLP Nations Cup 2026 — final placings",
+            "headers": [
+              "Place",
+              "Team",
+              "Record"
+            ],
+            "rows": [
+              [
+                "🏆 1",
+                "USA",
+                "5–0 (champion)"
+              ],
+              [
+                "2",
+                "Latin America",
+                "3–2 (runner-up)"
+              ],
+              [
+                "3",
+                "Asia Domestic",
+                "2–2 (lost SF)"
+              ],
+              [
+                "3",
+                "Europe East",
+                "2–2 (lost SF)"
+              ]
+            ]
+          }
+        },
+        {
+          "heading": "Championship Sunday — semifinal and final results",
+          "content": "Match scores are winner first; game scores are from the match winner’s side (W women’s doubles, M men’s doubles, MX1/MX2 mixed). Vietnam times are the scheduled Texas slots (CST, 13 hours behind ICT). No knockout match needed a DreamBreaker.\n\nFinal: Bright/Fahey beat Humberg/Schull 11–9, Johns/Klinger beat Oncins/Acevedo 11–1, and Bright/Johns closed it 11–6 over Schull/Oncins. Semifinal 2: Europe East played without Tina Pisnik (illness, per MLP); Daescu/Walczak took mixed 1 14–12 over Black/Howells, but Bright/Johns won mixed 2 11–7 over Padegimaite/Jakovljevic. Semifinal 1: Asia Domestic levelled at 1–1 when Ge/Yang won men’s doubles 11–9, then Latin America won both mixed games 11–3.",
+          "table": {
+            "caption": "MLP Nations Cup 2026 — knockout results",
+            "headers": [
+              "Round",
+              "Result",
+              "Match",
+              "Games",
+              "Start (ICT)"
+            ],
+            "rows": [
+              [
+                "Final",
+                "USA def. Latin America",
+                "3–0",
+                "11–9, 11–1, 11–6",
+                "03:00 2/11"
+              ],
+              [
+                "SF 2",
+                "USA def. Europe East",
+                "3–1",
+                "11–3, 11–6, 12–14, 11–7",
+                "00:30 2/11"
+              ],
+              [
+                "SF 1",
+                "Latin America def. Asia Domestic",
+                "3–1",
+                "11–3, 9–11, 11–3, 11–3",
+                "23:00 1/11"
+              ]
+            ]
+          }
+        },
+        {
           "heading": "Final pool standings",
-          "content": "Top two from each pool reach Sunday’s single-elimination bracket. MLP’s published crossover: A#2 vs B#1, then A#1 vs B#2, then the final. GD = game difference, PD = point difference."
+          "content": "Top two from each pool reached Sunday’s single-elimination bracket via MLP’s crossover: A#2 vs B#1, A#1 vs B#2. GD = game difference, PD = point difference."
         },
         {
           "heading": "Pool A standings (final)",
@@ -142,35 +216,6 @@ const post: BlogPost = {
                 "0–3",
                 "−7",
                 "−44"
-              ]
-            ]
-          }
-        },
-        {
-          "heading": "Championship Sunday — schedule in Vietnam time",
-          "content": "Texas fell back to CST (UTC−6) at 02:00 Sunday November 1, so Sunday’s sessions are 13 hours behind Vietnam. Pairings follow MLP’s published crossover from the final standings; the official board had not yet posted Sunday’s matchups at the time of this update. Championship Court streams on PickleballTV.",
-          "table": {
-            "caption": "Semifinals and final in Vietnam time (ICT)",
-            "headers": [
-              "Match",
-              "Texas time",
-              "Vietnam time (ICT)"
-            ],
-            "rows": [
-              [
-                "Semifinal 1 — Asia Domestic (A#2) vs Latin America (B#1)",
-                "10:00 CST Sun Nov 1",
-                "23:00 Nov 1"
-              ],
-              [
-                "Semifinal 2 — USA (A#1) vs Europe East (B#2)",
-                "11:30 CST Sun Nov 1",
-                "00:30 Nov 2"
-              ],
-              [
-                "Final — SF1 winner vs SF2 winner",
-                "14:00 CST Sun Nov 1",
-                "03:00 Nov 2 (morning)"
               ]
             ]
           }
@@ -286,7 +331,7 @@ const post: BlogPost = {
         },
         {
           "heading": "Asia Domestic note (Vietnam interest)",
-          "content": "Asia Domestic (co-captains Geoffrey Nguyen and Jeff Tsao) finished Pool A at 2–1, losing only the DreamBreaker to USA, and plays Latin America in Semifinal 1 at 23:00 ICT November 1. The published roster includes Augustus Ge, Milan Rane, Jonathan Truong (Vietnam), Chao Yi Wang, Ting Chieh Wei and Len Yang. Asia International — Tama Shimabukuro replaced Hien Truong on later MLP roster updates — finished Pool B at 0–3.",
+          "content": "Asia Domestic (co-captains Geoffrey Nguyen and Jeff Tsao) finished Pool A at 2–1, losing only the DreamBreaker to USA, then fell 3–1 to Latin America in Semifinal 1 to share third place. The published roster includes Augustus Ge, Milan Rane, Jonathan Truong (Vietnam), Chao Yi Wang, Ting Chieh Wei and Len Yang; Truong played mixed 2 with Milan Rane in the semifinal. Asia International — Tama Shimabukuro replaced Hien Truong on later MLP roster updates — finished Pool B at 0–3.",
           "internalLinks": [
             {
               "text": "World Championships results hub",
@@ -296,17 +341,17 @@ const post: BlogPost = {
         },
         {
           "heading": "Sources",
-          "content": "Day 2 scores and final standings: Worlds Nations Cup live board and MLP’s official match results on majorleaguepickleball.co (identical game by game for all six matches), plus @MajorLeaguePB match posts on X. Day 1 scores: Worlds live board and @MajorLeaguePB Day 1 Scores Recap graphics. Schedule/format: majorleaguepickleball.co match-schedule release (29 Sep 2026), Times Now, World Pickleball Magazine. Sunday scores will be added only when two independent sources confirm them."
+          "content": "Semifinals and final: MLP’s official match results on majorleaguepickleball.co and the Worlds Nations Cup live board (identical game by game), @MajorLeaguePB posts on X (both 3–1 semifinal results and USA’s title), and pickleball.com’s “Team USA sweeps Team Latin America for MLP Nations Cup crown” (final 11–9, 11–1, 11–6). Day 2 scores and final standings: Worlds live board and MLP’s official match results (identical game by game for all six matches), plus @MajorLeaguePB match posts on X. Day 1 scores: Worlds live board and @MajorLeaguePB Day 1 Scores Recap graphics. Schedule/format: majorleaguepickleball.co match-schedule release (29 Sep 2026), Times Now, World Pickleball Magazine."
         }
       ],
       "faqItems": [
         {
-          "question": "Who advanced from MLP Nations Cup 2026 pool play?",
-          "answer": "Pool A: USA (3–0) and Asia Domestic (2–1). Pool B: Latin America and Europe East, both 2–1, ahead of Australia (2–1) on game difference. Asia International and Canada went 0–3."
+          "question": "Who won the MLP Nations Cup 2026?",
+          "answer": "USA, who swept Latin America 3–0 in the final (11–9, 11–1, 11–6) at 03:00 ICT on November 2, 2026, finishing the event unbeaten at 5–0."
         },
         {
-          "question": "Who plays in the Nations Cup semifinals?",
-          "answer": "Under MLP’s published crossover: Asia Domestic vs Latin America (23:00 ICT November 1) and USA vs Europe East (00:30 ICT November 2). The final is at 03:00 ICT Monday November 2."
+          "question": "What were the MLP Nations Cup 2026 semifinal results?",
+          "answer": "Latin America beat Asia Domestic 3–1 (11–3, 9–11, 11–3, 11–3) and USA beat Europe East 3–1 (11–3, 11–6, 12–14, 11–7). There was no third-place match."
         },
         {
           "question": "When and where is the MLP Nations Cup 2026?",
@@ -314,21 +359,92 @@ const post: BlogPost = {
         },
         {
           "question": "Which team is Jonathan Truong on?",
-          "answer": "Asia Domestic (Pool A), alongside Ge, Rane, Wang, Wei and Yang. The team finished pool play 2–1 and reached the semifinals."
+          "answer": "Asia Domestic (Pool A), alongside Ge, Rane, Wang, Wei and Yang. The team went 2–1 in pool play, lost 3–1 to Latin America in the semifinals and shared third place."
         }
       ]
     },
     "vi": {
-      "title": "Kết quả MLP Nations Cup 2026: tỷ số từng ngày",
-      "metaTitle": "Kết quả MLP Nations Cup 2026 (30/10–1/11)",
-      "metaDescription": "Kết quả Nations Cup 2026: USA 3–0, Latin America nhất Nhóm B. Lịch bán kết, chung kết giờ VN.",
+      "title": "Kết quả MLP Nations Cup 2026: USA vô địch, tỷ số đầy đủ",
+      "metaTitle": "Kết quả MLP Nations Cup 2026: USA vô địch",
+      "metaDescription": "USA vô địch MLP Nations Cup 2026, thắng Latin America 3–0 ở chung kết. Tỷ số bán kết, chung kết và bảng xếp hạng đầy đủ.",
       "sections": [
         {
-          "heading": "MLP Nations Cup 2026 — xong vòng bảng",
-          "content": "Cập nhật: 08:10 ICT, 1/11/2026. Vòng bảng đã xong sau thứ Bảy 31/10. Nhóm A: USA 3–0, Asia Domestic 2–1. Nhóm B: Latin America và Europe East đi tiếp (ba đội cùng 2–1, Australia bị loại vì hiệu số game). Bán kết 1 Asia Domestic vs Latin America 23:00 ICT 1/11; bán kết 2 USA vs Europe East 00:30 ICT 2/11; chung kết 03:00 ICT sáng 2/11."
+          "heading": "USA vô địch MLP Nations Cup 2026",
+          "content": "Cập nhật: 08:30 ICT, 2/11/2026 — giải đã kết thúc. USA vô địch MLP Nations Cup lần đầu tiên sau khi thắng Latin America 3–0 ở chung kết (11–9, 11–1, 11–6) lúc 03:00 ICT sáng 2/11, bất bại cả giải (5–0). Bán kết: Latin America thắng Asia Domestic 3–1 (23:00 ICT 1/11), USA thắng Europe East 3–1 (00:30 ICT 2/11). Không có trận tranh hạng ba."
         },
         {
-          "heading": "Bảng xếp hạng chung cuộc vòng bảng",
+          "heading": "Thứ hạng chung cuộc",
+          "content": "Không có trận tranh hạng ba; hai đội thua bán kết đồng hạng 3.",
+          "table": {
+            "caption": "MLP Nations Cup 2026 — thứ hạng chung cuộc",
+            "headers": [
+              "Hạng",
+              "Đội",
+              "Thành tích"
+            ],
+            "rows": [
+              [
+                "🏆 1",
+                "USA",
+                "5–0 (vô địch)"
+              ],
+              [
+                "2",
+                "Latin America",
+                "3–2 (á quân)"
+              ],
+              [
+                "3",
+                "Asia Domestic",
+                "2–2 (thua bán kết)"
+              ],
+              [
+                "3",
+                "Europe East",
+                "2–2 (thua bán kết)"
+              ]
+            ]
+          }
+        },
+        {
+          "heading": "Kết quả Chủ nhật 1/11 — bán kết và chung kết",
+          "content": "Tỷ số ghi đội thắng trước; chi tiết game tính theo đội thắng trận. Đối chiếu kết quả chính thức MLP, Worlds live board, @MajorLeaguePB trên X và pickleball.com.",
+          "table": {
+            "caption": "Vòng loại trực tiếp",
+            "headers": [
+              "Vòng",
+              "Kết quả",
+              "Trận",
+              "Game",
+              "Giờ VN"
+            ],
+            "rows": [
+              [
+                "Chung kết",
+                "USA thắng Latin America",
+                "3–0",
+                "11–9, 11–1, 11–6",
+                "03:00 2/11"
+              ],
+              [
+                "Bán kết 2",
+                "USA thắng Europe East",
+                "3–1",
+                "11–3, 11–6, 12–14, 11–7",
+                "00:30 2/11"
+              ],
+              [
+                "Bán kết 1",
+                "Latin America thắng Asia Domestic",
+                "3–1",
+                "11–3, 9–11, 11–3, 11–3",
+                "23:00 1/11"
+              ]
+            ]
+          }
+        },
+        {
+          "heading": "Bảng xếp hạng vòng bảng",
           "content": "Hai đội đầu mỗi nhóm vào bán kết. Công thức (theo lịch MLP): A#2 vs B#1, A#1 vs B#2. GD = hiệu số game, PD = hiệu số điểm."
         },
         {
@@ -415,35 +531,6 @@ const post: BlogPost = {
                 "0–3",
                 "−7",
                 "−44"
-              ]
-            ]
-          }
-        },
-        {
-          "heading": "Lịch Chủ nhật (giờ Việt Nam)",
-          "content": "Cặp đấu theo công thức MLP từ bảng xếp hạng cuối; trang chính thức chưa đăng cặp Chủ nhật lúc cập nhật.",
-          "table": {
-            "caption": "Bán kết và chung kết — giờ Việt Nam (ICT)",
-            "headers": [
-              "Trận",
-              "Giờ Texas",
-              "Giờ Việt Nam"
-            ],
-            "rows": [
-              [
-                "Bán kết 1 — Asia Domestic (A#2) vs Latin America (B#1)",
-                "10:00 CST CN 1/11",
-                "23:00 1/11"
-              ],
-              [
-                "Bán kết 2 — USA (A#1) vs Europe East (B#2)",
-                "11:30 CST CN 1/11",
-                "00:30 2/11"
-              ],
-              [
-                "Chung kết — thắng BK1 vs thắng BK2",
-                "14:00 CST CN 1/11",
-                "03:00 sáng 2/11"
               ]
             ]
           }
@@ -560,20 +647,20 @@ const post: BlogPost = {
       ],
       "faqItems": [
         {
-          "question": "Đội nào vào bán kết MLP Nations Cup 2026?",
-          "answer": "Nhóm A: USA (3–0) và Asia Domestic (2–1). Nhóm B: Latin America và Europe East (cùng 2–1, hơn Australia về hiệu số game)."
+          "question": "Ai vô địch MLP Nations Cup 2026?",
+          "answer": "USA vô địch, thắng Latin America 3–0 ở chung kết (11–9, 11–1, 11–6) lúc 03:00 ICT sáng 2/11/2026. USA bất bại cả giải (5–0)."
         },
         {
-          "question": "Bán kết và chung kết Nations Cup lúc mấy giờ Việt Nam?",
-          "answer": "Bán kết 1 Asia Domestic vs Latin America 23:00 ICT 1/11; bán kết 2 USA vs Europe East 00:30 ICT 2/11; chung kết 03:00 sáng thứ Hai 2/11."
+          "question": "Kết quả bán kết MLP Nations Cup 2026?",
+          "answer": "Latin America thắng Asia Domestic 3–1 (11–3, 9–11, 11–3, 11–3) và USA thắng Europe East 3–1 (11–3, 11–6, 12–14, 11–7). Không có trận tranh hạng ba."
         },
         {
-          "question": "MLP Nations Cup 2026 diễn ra khi nào và ở đâu?",
-          "answer": "30/10–1/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas — mở màn tuần Opendoor Pickleball World Championships 2026."
+          "answer": "30/10–1/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas — mở màn tuần Opendoor Pickleball World Championships 2026.",
+          "question": "MLP Nations Cup 2026 diễn ra khi nào và ở đâu?"
         },
         {
           "question": "Jonathan Truong đá cho đội nào?",
-          "answer": "Asia Domestic (Nhóm A), cùng Ge, Rane, Wang, Wei, Yang. Đội xếp nhì Nhóm A với 2–1 và vào bán kết."
+          "answer": "Asia Domestic (Nhóm A), cùng Ge, Rane, Wang, Wei, Yang. Đội xếp nhì Nhóm A với 2–1, thua Latin America 1–3 ở bán kết và đồng hạng ba."
         }
       ]
     }
