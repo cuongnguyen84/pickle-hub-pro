@@ -19,7 +19,7 @@ import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Countdown } from "@/components/Countdown";
 import { formatDate, formatRelative, formatTime } from "@/lib/format-datetime";
 import { byEffectiveDateDesc, effectiveDateIso, isRefreshed, pinWorldCupResults } from "@/lib/blogOrder";
-import { shouldReserveLiveSlot, writeLiveLeadHint } from "@/lib/home-live-lead";
+import { shouldReserveLiveSlot, withinReplayWindow, writeLiveLeadHint } from "@/lib/home-live-lead";
 import { HreflangTags } from "@/components/seo";
 import { VideoThumbnail } from "@/components/video/VideoThumbnail";
 import { useQueryClient } from "@tanstack/react-query";
@@ -102,10 +102,16 @@ const Index = () => {
   const { language } = useI18n();
   const liveQuery = useLivestreams("live");
   const scheduledQuery = useLivestreams("scheduled");
+  // Luồng vừa kết thúc — giữ trên home 7 ngày, tối đa 4 dòng replay.
+  const endedQuery = useLivestreams("ended", 8);
   const liveStreams = useMemo(() => liveQuery.data ?? [], [liveQuery.data]);
   const scheduledStreams = useMemo(
     () => scheduledQuery.data ?? [],
     [scheduledQuery.data],
+  );
+  const recentEnded = useMemo(
+    () => withinReplayWindow(endedQuery.data ?? []).slice(0, 4),
+    [endedQuery.data],
   );
   // CLS INC3: remember whether live led the page last time so the hero slot is
   // reserved from first paint (skeleton) instead of inserting itself above the
@@ -126,14 +132,14 @@ const Index = () => {
   // insertion shift that was hitting every new reader and every lab run.
   // See src/lib/home-live-lead.ts for the TTL and the failure modes.
   const liveQueriesLoading =
-    liveQuery.isLoading || scheduledQuery.isLoading;
+    liveQuery.isLoading || scheduledQuery.isLoading || endedQuery.isLoading;
   const [expectLiveLead] = useState<boolean>(() => shouldReserveLiveSlot());
   useEffect(() => {
     if (liveQueriesLoading) return;
     const leads =
-      liveStreams.length > 0 || scheduledStreams.length > 0;
+      liveStreams.length > 0 || scheduledStreams.length > 0 || recentEnded.length > 0;
     writeLiveLeadHint(leads);
-  }, [liveQueriesLoading, liveStreams.length, scheduledStreams.length]);
+  }, [liveQueriesLoading, liveStreams.length, scheduledStreams.length, recentEnded.length]);
   const { data: allTournaments = [] } = useTournaments();
   const { data: videos = [] } = useVideos({ limit: 6 });
   const { data: homeStats } = useHomepageStats();
@@ -531,10 +537,9 @@ const Index = () => {
           when there is nothing live and no result today, and after Sep 7. */}
       <WorldCupLiveCard language={language} />
 
-      {/* ── Feed — Editorial → Live → Pro tour → News ──
-          Editorial stays above the live slot so a skeleton that collapses
-          cannot push the LCP story. Reserved news skeletons still stabilize
-          the async rows inside that slot. */}
+      {/* ── Feed — Live → Editorial → Pro tour → News ──
+          Live (on air / upcoming / ≤7-day replay) tops the page. Reserved
+          skeletons still stabilize the async rows inside each slot. */}
       {(() => {
         const editorialNode = stories.length > 0 ? (
           <section className="tl-section">
@@ -622,11 +627,10 @@ const Index = () => {
           </section>
         ) : null;
 
-        // Live leads whenever a stream is on air or scheduled. The seven-day
-        // replay window that used to hold this slot went with the replay rows
-        // (16/09) — a quiet week now collapses the section instead.
+        // Live leads whenever a stream is on air, scheduled, OR ended within
+        // 7 days (owner call, restored 02/11 after 16/09 + #905 dropped it).
         const liveLeads =
-          hasLiveData || scheduledStreams.length > 0;
+          hasLiveData || scheduledStreams.length > 0 || recentEnded.length > 0;
         const liveNode = liveQueriesLoading
           ? expectLiveLead
             ? { key: "live", node: <LiveSectionSkeleton /> }
@@ -638,20 +642,21 @@ const Index = () => {
                   <LiveSection
                     liveStreams={liveStreams}
                     scheduledStreams={scheduledStreams}
+                    endedStreams={recentEnded}
                     language={language}
+                    priority
                   />
                 ),
               }
             : null;
 
-        // Editorial first. The live slot reserves a skeleton whenever there is
-        // no localStorage hint (every lab run, every new device) and then
-        // collapses on a quiet week. That push was the 0.361 CLS on
-        // SECTION.tl-section — the section that holds the LCP story image.
-        // Content below can still move; the LCP section does not.
+        // Live first — owner rule: an on-air / upcoming / ≤7-day replay stream
+        // tops the homepage. #905 moved editorial above it for CLS; the
+        // localStorage hint (shouldReserveLiveSlot) still reserves the slot,
+        // so the residual cost is one collapse shift on a genuinely quiet week.
         const cluster: Array<{ key: string; node: ReactNode }> = [
-          editorialNode ? { key: "editorial", node: editorialNode } : null,
           liveNode,
+          editorialNode ? { key: "editorial", node: editorialNode } : null,
           {
             // Pro-tour tournaments in season — same registry-driven strip as
             // /live (zero requests, self-hides out of season).
