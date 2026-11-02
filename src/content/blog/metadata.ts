@@ -10,6 +10,36 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "vietnam-junior-world-championships-2026",
+    "publishedDate": "2026-11-02",
+    "updatedDate": "2026-11-02",
+    "author": "The PickleHub Team",
+    "tags": [
+      "junior world championships 2026",
+      "vietnam juniors",
+      "nguyen gia hung",
+      "dan linh huong",
+      "opendoor worlds",
+      "dallas",
+      "afp"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-world-championships-2026-results-hero.webp",
+      "alt": "Opendoor Pickleball World Championships 2026 at Brookhaven Country Club, Farmers Branch, Texas"
+    },
+    "titleEn": "Vietnam Juniors Head to Junior Worlds in Dallas",
+    "titleVi": "Đoàn trẻ Việt Nam dự giải trẻ Worlds tại Dallas",
+    "metaTitleEn": "VN Juniors at Worlds Dallas 2026",
+    "metaTitleVi": "Đoàn trẻ VN dự Worlds Dallas 2026",
+    "metaDescriptionEn": "Gia Hưng and Linh Hương play Junior Worlds in Dallas (5–8/11). Coaches Huỳnh Phú Quí and Trần Đình Đạt lead the VN group.",
+    "metaDescriptionVi": "Gia Hưng, Linh Hương dự giải trẻ Worlds Dallas 5–8/11. Đoàn có HLV Huỳnh Phú Quí và Trần Đình Đạt."
+  },
+  {
     "slug": "juan-benitez-coach-behind-patriquin-bright-staksrud",
     "publishedDate": "2026-10-28",
     "updatedDate": "2026-10-28",
