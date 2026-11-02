@@ -27,7 +27,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 2, 2026, 22:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 193 matches, including 34 completed or final records and 16 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 3, 2026, 00:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 216 matches, including 71 completed or final records and 3 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -37,46 +37,64 @@ const post: BlogPost = {
           "resultsSummary": [
             {
               "division": "Men's Singles",
-              "note": "Through to the Round 64 · 34 matches",
+              "note": "Through to the Round 16 · 71 matches",
               "anchor": "rb-mens-singles"
             }
           ]
         },
         {
           "heading": "Men's Singles results",
-          "content": "No champion yet. 34 completed matches, latest round first.",
+          "content": "No champion yet. 71 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Men's Singles",
             "rounds": [
               {
-                "label": "Round 64",
+                "label": "Round 16",
                 "matches": [
                   {
-                    "winner": "George Wolf",
-                    "loser": "Mota Alhouni",
-                    "sets": []
-                  },
-                  {
-                    "winner": "Daniel Miron",
-                    "loser": "Jackson Ayotte",
+                    "winner": "Casey Diamond",
+                    "loser": "Liam Duffin",
                     "sets": [
                       [
                         11,
-                        6
+                        4
                       ],
                       [
                         11,
-                        1
+                        2
+                      ]
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "Round 32",
+                "matches": [
+                  {
+                    "winner": "Andrew Caldarella",
+                    "loser": "Eddy Kim",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        6,
+                        11
+                      ],
+                      [
+                        11,
+                        0
                       ]
                     ]
                   },
                   {
-                    "winner": "Garrison Eaby",
-                    "loser": "Rio Newcombe",
+                    "winner": "Casey Diamond",
+                    "loser": "Hector Sanchez Vidal",
                     "sets": [
                       [
                         11,
-                        5
+                        2
                       ],
                       [
                         11,
@@ -85,22 +103,8 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Liam Duffin",
-                    "loser": "Gregory Dow",
-                    "sets": [
-                      [
-                        11,
-                        0
-                      ],
-                      [
-                        11,
-                        0
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Oliver Frank",
-                    "loser": "Hayden Rand",
+                    "winner": "Matt Burkhardt",
+                    "loser": "Patrik Kevin Tsati-Onla",
                     "sets": [
                       [
                         11,
@@ -108,21 +112,190 @@ const post: BlogPost = {
                       ],
                       [
                         11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Aryaan Bhatia",
+                    "loser": "Jose Martinez",
+                    "sets": [
+                      [
+                        14,
+                        12
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Martin Stanchev",
+                    "loser": "Pesa Teoni",
+                    "sets": []
+                  },
+                  {
+                    "winner": "Liam Duffin",
+                    "loser": "Armaan Jiwa Mawji",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Daniel Miron",
+                    "loser": "George Wolf",
+                    "sets": [
+                      [
+                        11,
                         5
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Daniel Phillips",
+                    "loser": "Eli Steiner",
+                    "sets": [
+                      [
+                        12,
+                        10
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "George Rangelov",
+                    "loser": "Ethan Bakalinsky",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Alvaro Regalado",
+                    "loser": "Freddie Powell",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Garrison Eaby",
+                    "loser": "Miles Hoover",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jaxon Madsen",
+                    "loser": "Edward Perez",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "William Hsieh",
+                    "loser": "Francis Chi",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        4
                       ]
                     ]
                   },
                   {
                     "winner": "Braylon Ohrel",
-                    "loser": "Julian Chow",
+                    "loser": "Alexander Crum",
                     "sets": [
                       [
-                        11,
-                        7
+                        13,
+                        11
                       ],
                       [
                         11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jase Edwards",
+                    "loser": "Jimmy Liong Kai Long",
+                    "sets": [
+                      [
+                        12,
+                        10
+                      ],
+                      [
+                        7,
+                        11
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  }
+                ],
+                "collapsed": true
+              },
+              {
+                "label": "Round 64",
+                "matches": [
+                  {
+                    "winner": "Freddie Powell",
+                    "loser": "Luke Wasson",
+                    "sets": [
+                      [
+                        11,
                         0
+                      ],
+                      [
+                        11,
+                        2
                       ]
                     ]
                   },
@@ -132,21 +305,150 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "winner": "Hector Sanchez Vidal",
-                    "loser": "Aanik Lohani",
-                    "sets": []
-                  },
-                  {
-                    "winner": "Ethan Bakalinsky",
-                    "loser": "Zach Gonnering",
+                    "winner": "Edward Perez",
+                    "loser": "Jace Howard",
                     "sets": [
                       [
                         11,
-                        9
+                        3
+                      ],
+                      [
+                        9,
+                        11
                       ],
                       [
                         11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Matt Burkhardt",
+                    "loser": "Asís Garrido Guerrero",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Daniel Phillips",
+                    "loser": "Maverick Messinger",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jimmy Liong Kai Long",
+                    "loser": "Takumi Matsuda",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Pesa Teoni",
+                    "loser": "Josiah Joplin",
+                    "sets": [
+                      [
+                        11,
                         1
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Andrew Caldarella",
+                    "loser": "Theo Platel",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Armaan Jiwa Mawji",
+                    "loser": "John Cincola",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Aryaan Bhatia",
+                    "loser": "Hunter Merritt",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Martin Stanchev",
+                    "loser": "Caleb Herrick",
+                    "sets": [
+                      [
+                        1,
+                        11
+                      ],
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jose Martinez",
+                    "loser": "Indigo Dagnall",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        5
                       ]
                     ]
                   },
@@ -181,62 +483,135 @@ const post: BlogPost = {
                         7
                       ]
                     ]
-                  }
-                ],
-                "collapsed": true
-              },
-              {
-                "label": "Round 128",
-                "matches": [
+                  },
                   {
-                    "winner": "Theo Platel",
-                    "loser": "Alfonso Plata",
+                    "winner": "George Wolf",
+                    "loser": "Mota Alhouni",
+                    "sets": []
+                  },
+                  {
+                    "winner": "Matthew Finnerty",
+                    "loser": "Ben Herrick",
                     "sets": [
                       [
-                        11,
-                        2
+                        9,
+                        11
                       ],
                       [
                         11,
-                        2
+                        9
+                      ],
+                      [
+                        11,
+                        4
                       ]
                     ]
                   },
                   {
-                    "winner": "George Wolf",
-                    "loser": "Aleck Blair",
+                    "winner": "Jaxon Madsen",
+                    "loser": "Usama Khalid",
                     "sets": [
                       [
                         11,
                         4
                       ],
                       [
-                        13,
-                        11
+                        11,
+                        3
                       ]
                     ]
                   },
                   {
-                    "winner": "MJ Marrero",
-                    "loser": "Caedmon Rux",
+                    "winner": "Eddy Kim",
+                    "loser": "Brandon Nsekpong",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Alexander Crum",
+                    "loser": "Chris Cooprider",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        9,
+                        11
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "William Hsieh",
+                    "loser": "Divin Sarthak",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jase Edwards",
+                    "loser": "Ryan Sherry",
                     "sets": [
                       [
                         11,
                         5
                       ],
                       [
-                        6,
-                        11
-                      ],
-                      [
                         11,
-                        0
+                        4
                       ]
                     ]
                   },
                   {
-                    "winner": "Jase Edwards",
-                    "loser": "Brenden Everhart",
+                    "winner": "George Rangelov",
+                    "loser": "Sam Libo",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Miles Hoover",
+                    "loser": "MJ Marrero",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Ethan Bakalinsky",
+                    "loser": "Zach Gonnering",
                     "sets": [
                       [
                         11,
@@ -244,53 +619,92 @@ const post: BlogPost = {
                       ],
                       [
                         11,
-                        7
+                        1
                       ]
                     ]
                   },
                   {
-                    "winner": "Asís Garrido Guerrero",
-                    "loser": "Kyle Koszuta",
+                    "winner": "Casey Diamond",
+                    "loser": "Emilien Burnel",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        12,
+                        10
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Hector Sanchez Vidal",
+                    "loser": "Aanik Lohani",
+                    "sets": []
+                  },
+                  {
+                    "winner": "Alvaro Regalado",
+                    "loser": "Bret Berryman",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        13,
+                        11
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Daniel Miron",
+                    "loser": "Jackson Ayotte",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Braylon Ohrel",
+                    "loser": "Julian Chow",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Garrison Eaby",
+                    "loser": "Rio Newcombe",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Oliver Frank",
+                    "loser": "Hayden Rand",
                     "sets": [
                       [
                         11,
                         3
-                      ],
-                      [
-                        11,
-                        6
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Brandon Nsekpong",
-                    "loser": "Andrew Angulo",
-                    "sets": [
-                      [
-                        5,
-                        11
-                      ],
-                      [
-                        14,
-                        12
-                      ],
-                      [
-                        11,
-                        2
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Usama Khalid",
-                    "loser": "Mateo Vargas",
-                    "sets": [
-                      [
-                        10,
-                        12
-                      ],
-                      [
-                        11,
-                        2
                       ],
                       [
                         11,
@@ -299,56 +713,25 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Divin Sarthak",
-                    "loser": "James Wolf",
-                    "sets": [
-                      [
-                        13,
-                        11
-                      ],
-                      [
-                        10,
-                        12
-                      ],
-                      [
-                        11,
-                        7
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Maverick Messinger",
-                    "loser": "Benny Ramirez",
+                    "winner": "Liam Duffin",
+                    "loser": "Gregory Dow",
                     "sets": [
                       [
                         11,
-                        6
-                      ],
-                      [
-                        11,
-                        2
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Josiah Joplin",
-                    "loser": "Travis Rettenmaier",
-                    "sets": []
-                  },
-                  {
-                    "winner": "Ryan Torresin",
-                    "loser": "Chrisna Try",
-                    "sets": [
-                      [
-                        11,
-                        1
+                        0
                       ],
                       [
                         11,
                         0
                       ]
                     ]
-                  },
+                  }
+                ],
+                "collapsed": true
+              },
+              {
+                "label": "Round 128",
+                "matches": [
                   {
                     "winner": "Jace Howard",
                     "loser": "Eduardo Panozzo",
@@ -378,6 +761,66 @@ const post: BlogPost = {
                     ]
                   },
                   {
+                    "winner": "John Cincola",
+                    "loser": "Tristan Cooley",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        1,
+                        11
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Alvaro Regalado",
+                    "loser": "Jamison Pfingston",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Takumi Matsuda",
+                    "loser": "Magnus Violet",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Theo Platel",
+                    "loser": "Alfonso Plata",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
                     "winner": "Jose Martinez",
                     "loser": "Jagger Baird",
                     "sets": [
@@ -392,22 +835,27 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Sam Libo",
-                    "loser": "JP Gorby",
+                    "winner": "Josiah Joplin",
+                    "loser": "Travis Rettenmaier",
+                    "sets": []
+                  },
+                  {
+                    "winner": "Ryan Torresin",
+                    "loser": "Chrisna Try",
                     "sets": [
                       [
-                        14,
-                        12
+                        11,
+                        1
                       ],
                       [
                         11,
-                        6
+                        0
                       ]
                     ]
                   },
                   {
-                    "winner": "Alvaro Regalado",
-                    "loser": "Jamison Pfingston",
+                    "winner": "Ben Herrick",
+                    "loser": "Dawson Davis",
                     "sets": [
                       [
                         11,
@@ -448,38 +896,6 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "John Cincola",
-                    "loser": "Tristan Cooley",
-                    "sets": [
-                      [
-                        11,
-                        9
-                      ],
-                      [
-                        1,
-                        11
-                      ],
-                      [
-                        11,
-                        6
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Takumi Matsuda",
-                    "loser": "Magnus Violet",
-                    "sets": [
-                      [
-                        11,
-                        0
-                      ],
-                      [
-                        11,
-                        7
-                      ]
-                    ]
-                  },
-                  {
                     "winner": "Freddie Powell",
                     "loser": "Jesse G",
                     "sets": [
@@ -490,20 +906,6 @@ const post: BlogPost = {
                       [
                         11,
                         0
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Ben Herrick",
-                    "loser": "Dawson Davis",
-                    "sets": [
-                      [
-                        11,
-                        7
-                      ],
-                      [
-                        11,
-                        2
                       ]
                     ]
                   },
@@ -520,6 +922,148 @@ const post: BlogPost = {
                         4
                       ]
                     ]
+                  },
+                  {
+                    "winner": "Sam Libo",
+                    "loser": "JP Gorby",
+                    "sets": [
+                      [
+                        14,
+                        12
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Maverick Messinger",
+                    "loser": "Benny Ramirez",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Asís Garrido Guerrero",
+                    "loser": "Kyle Koszuta",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jase Edwards",
+                    "loser": "Brenden Everhart",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "MJ Marrero",
+                    "loser": "Caedmon Rux",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        6,
+                        11
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "George Wolf",
+                    "loser": "Aleck Blair",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        13,
+                        11
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Brandon Nsekpong",
+                    "loser": "Andrew Angulo",
+                    "sets": [
+                      [
+                        5,
+                        11
+                      ],
+                      [
+                        14,
+                        12
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Divin Sarthak",
+                    "loser": "James Wolf",
+                    "sets": [
+                      [
+                        13,
+                        11
+                      ],
+                      [
+                        10,
+                        12
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Usama Khalid",
+                    "loser": "Mateo Vargas",
+                    "sets": [
+                      [
+                        10,
+                        12
+                      ],
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
                   }
                 ],
                 "collapsed": true
@@ -531,16 +1075,16 @@ const post: BlogPost = {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Men's Singles, Round 64: Armaan Jiwa Mawji vs John Cincola — status live.",
-            "Men's Singles, Round 64: Ryan Sherry vs Jase Edwards — status live.",
-            "Men's Singles, Round 64: Matt Burkhardt vs Asís Garrido Guerrero — status live.",
-            "Men's Singles, Round 64: Daniel Phillips vs Maverick Messinger — status live.",
-            "Men's Singles, Round 64: George Rangelov vs Sam Libo — status live.",
-            "Men's Singles, Round 64: Emilien Burnel vs Casey Diamond — status live.",
-            "Men's Singles, Round 64: Matthew Finnerty vs Ben Herrick — status live.",
-            "Men's Singles, Round 64: Andrew Caldarella vs Theo Platel — status live.",
-            "Men's Singles, Round 64: Luke Wasson vs Freddie Powell — status live.",
-            "Men's Singles, Round 64: Jimmy Liong Kai Long vs Takumi Matsuda — status live."
+            "Men's Singles, Round 16: Garrison Eaby vs Martin Stanchev — status live.",
+            "Men's Singles, Round 16: Daniel Miron vs Alvaro Regalado — status live.",
+            "Men's Singles, Round 32: Matthew Finnerty vs Oliver Frank — status live.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Anne-Sophie Courteau / Chloe Diskin vs Adelie Osher / Janet Liu — status scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Allie Reichert / Madalina Grigoriu vs Monika Wynne / Ella Boydston — status scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Averee Beck / Bella Nelson vs Yolena Carlon / Haley Ferguson — status scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Maddy Rasmusen / Masa Grgan vs Marisa Ruiz / Kelsey Laurente — status scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Monika Wynne / Ella Boydston vs Yolena Carlon / Haley Ferguson — status scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Allie Reichert / Madalina Grigoriu vs Averee Beck / Bella Nelson — status scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Marisa Ruiz / Kelsey Laurente vs Adelie Osher / Janet Liu — status scheduled."
           ]
         },
         {
@@ -570,7 +1114,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 22:00 ngày 2/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 193 trận, gồm 34 bản ghi đã kết thúc/chung cuộc và 16 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 00:00 ngày 3/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 216 trận, gồm 71 bản ghi đã kết thúc/chung cuộc và 3 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -580,46 +1124,64 @@ const post: BlogPost = {
           "resultsSummary": [
             {
               "division": "Đơn nam",
-              "note": "Đã tới Vòng 64 · 34 trận",
+              "note": "Đã tới Vòng 16 · 71 trận",
               "anchor": "rb-don-nam"
             }
           ]
         },
         {
           "heading": "Kết quả Đơn nam",
-          "content": "Chưa có nhà vô địch. 34 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Chưa có nhà vô địch. 71 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đơn nam",
             "rounds": [
               {
-                "label": "Vòng 64",
+                "label": "Vòng 16",
                 "matches": [
                   {
-                    "winner": "George Wolf",
-                    "loser": "Mota Alhouni",
-                    "sets": []
-                  },
-                  {
-                    "winner": "Daniel Miron",
-                    "loser": "Jackson Ayotte",
+                    "winner": "Casey Diamond",
+                    "loser": "Liam Duffin",
                     "sets": [
                       [
                         11,
-                        6
+                        4
                       ],
                       [
                         11,
-                        1
+                        2
+                      ]
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "Vòng 32",
+                "matches": [
+                  {
+                    "winner": "Andrew Caldarella",
+                    "loser": "Eddy Kim",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        6,
+                        11
+                      ],
+                      [
+                        11,
+                        0
                       ]
                     ]
                   },
                   {
-                    "winner": "Garrison Eaby",
-                    "loser": "Rio Newcombe",
+                    "winner": "Casey Diamond",
+                    "loser": "Hector Sanchez Vidal",
                     "sets": [
                       [
                         11,
-                        5
+                        2
                       ],
                       [
                         11,
@@ -628,22 +1190,8 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Liam Duffin",
-                    "loser": "Gregory Dow",
-                    "sets": [
-                      [
-                        11,
-                        0
-                      ],
-                      [
-                        11,
-                        0
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Oliver Frank",
-                    "loser": "Hayden Rand",
+                    "winner": "Matt Burkhardt",
+                    "loser": "Patrik Kevin Tsati-Onla",
                     "sets": [
                       [
                         11,
@@ -651,21 +1199,190 @@ const post: BlogPost = {
                       ],
                       [
                         11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Aryaan Bhatia",
+                    "loser": "Jose Martinez",
+                    "sets": [
+                      [
+                        14,
+                        12
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Martin Stanchev",
+                    "loser": "Pesa Teoni",
+                    "sets": []
+                  },
+                  {
+                    "winner": "Liam Duffin",
+                    "loser": "Armaan Jiwa Mawji",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Daniel Miron",
+                    "loser": "George Wolf",
+                    "sets": [
+                      [
+                        11,
                         5
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Daniel Phillips",
+                    "loser": "Eli Steiner",
+                    "sets": [
+                      [
+                        12,
+                        10
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "George Rangelov",
+                    "loser": "Ethan Bakalinsky",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Alvaro Regalado",
+                    "loser": "Freddie Powell",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Garrison Eaby",
+                    "loser": "Miles Hoover",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jaxon Madsen",
+                    "loser": "Edward Perez",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "William Hsieh",
+                    "loser": "Francis Chi",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        4
                       ]
                     ]
                   },
                   {
                     "winner": "Braylon Ohrel",
-                    "loser": "Julian Chow",
+                    "loser": "Alexander Crum",
                     "sets": [
                       [
-                        11,
-                        7
+                        13,
+                        11
                       ],
                       [
                         11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jase Edwards",
+                    "loser": "Jimmy Liong Kai Long",
+                    "sets": [
+                      [
+                        12,
+                        10
+                      ],
+                      [
+                        7,
+                        11
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  }
+                ],
+                "collapsed": true
+              },
+              {
+                "label": "Vòng 64",
+                "matches": [
+                  {
+                    "winner": "Freddie Powell",
+                    "loser": "Luke Wasson",
+                    "sets": [
+                      [
+                        11,
                         0
+                      ],
+                      [
+                        11,
+                        2
                       ]
                     ]
                   },
@@ -675,21 +1392,150 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "winner": "Hector Sanchez Vidal",
-                    "loser": "Aanik Lohani",
-                    "sets": []
-                  },
-                  {
-                    "winner": "Ethan Bakalinsky",
-                    "loser": "Zach Gonnering",
+                    "winner": "Edward Perez",
+                    "loser": "Jace Howard",
                     "sets": [
                       [
                         11,
-                        9
+                        3
+                      ],
+                      [
+                        9,
+                        11
                       ],
                       [
                         11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Matt Burkhardt",
+                    "loser": "Asís Garrido Guerrero",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Daniel Phillips",
+                    "loser": "Maverick Messinger",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jimmy Liong Kai Long",
+                    "loser": "Takumi Matsuda",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Pesa Teoni",
+                    "loser": "Josiah Joplin",
+                    "sets": [
+                      [
+                        11,
                         1
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Andrew Caldarella",
+                    "loser": "Theo Platel",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Armaan Jiwa Mawji",
+                    "loser": "John Cincola",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Aryaan Bhatia",
+                    "loser": "Hunter Merritt",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Martin Stanchev",
+                    "loser": "Caleb Herrick",
+                    "sets": [
+                      [
+                        1,
+                        11
+                      ],
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jose Martinez",
+                    "loser": "Indigo Dagnall",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        5
                       ]
                     ]
                   },
@@ -724,62 +1570,135 @@ const post: BlogPost = {
                         7
                       ]
                     ]
-                  }
-                ],
-                "collapsed": true
-              },
-              {
-                "label": "Vòng 128",
-                "matches": [
+                  },
                   {
-                    "winner": "Theo Platel",
-                    "loser": "Alfonso Plata",
+                    "winner": "George Wolf",
+                    "loser": "Mota Alhouni",
+                    "sets": []
+                  },
+                  {
+                    "winner": "Matthew Finnerty",
+                    "loser": "Ben Herrick",
                     "sets": [
                       [
-                        11,
-                        2
+                        9,
+                        11
                       ],
                       [
                         11,
-                        2
+                        9
+                      ],
+                      [
+                        11,
+                        4
                       ]
                     ]
                   },
                   {
-                    "winner": "George Wolf",
-                    "loser": "Aleck Blair",
+                    "winner": "Jaxon Madsen",
+                    "loser": "Usama Khalid",
                     "sets": [
                       [
                         11,
                         4
                       ],
                       [
-                        13,
-                        11
+                        11,
+                        3
                       ]
                     ]
                   },
                   {
-                    "winner": "MJ Marrero",
-                    "loser": "Caedmon Rux",
+                    "winner": "Eddy Kim",
+                    "loser": "Brandon Nsekpong",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Alexander Crum",
+                    "loser": "Chris Cooprider",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        9,
+                        11
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "William Hsieh",
+                    "loser": "Divin Sarthak",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jase Edwards",
+                    "loser": "Ryan Sherry",
                     "sets": [
                       [
                         11,
                         5
                       ],
                       [
-                        6,
-                        11
-                      ],
-                      [
                         11,
-                        0
+                        4
                       ]
                     ]
                   },
                   {
-                    "winner": "Jase Edwards",
-                    "loser": "Brenden Everhart",
+                    "winner": "George Rangelov",
+                    "loser": "Sam Libo",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Miles Hoover",
+                    "loser": "MJ Marrero",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Ethan Bakalinsky",
+                    "loser": "Zach Gonnering",
                     "sets": [
                       [
                         11,
@@ -787,53 +1706,92 @@ const post: BlogPost = {
                       ],
                       [
                         11,
-                        7
+                        1
                       ]
                     ]
                   },
                   {
-                    "winner": "Asís Garrido Guerrero",
-                    "loser": "Kyle Koszuta",
+                    "winner": "Casey Diamond",
+                    "loser": "Emilien Burnel",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        12,
+                        10
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Hector Sanchez Vidal",
+                    "loser": "Aanik Lohani",
+                    "sets": []
+                  },
+                  {
+                    "winner": "Alvaro Regalado",
+                    "loser": "Bret Berryman",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        13,
+                        11
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Daniel Miron",
+                    "loser": "Jackson Ayotte",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Braylon Ohrel",
+                    "loser": "Julian Chow",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Garrison Eaby",
+                    "loser": "Rio Newcombe",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Oliver Frank",
+                    "loser": "Hayden Rand",
                     "sets": [
                       [
                         11,
                         3
-                      ],
-                      [
-                        11,
-                        6
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Brandon Nsekpong",
-                    "loser": "Andrew Angulo",
-                    "sets": [
-                      [
-                        5,
-                        11
-                      ],
-                      [
-                        14,
-                        12
-                      ],
-                      [
-                        11,
-                        2
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Usama Khalid",
-                    "loser": "Mateo Vargas",
-                    "sets": [
-                      [
-                        10,
-                        12
-                      ],
-                      [
-                        11,
-                        2
                       ],
                       [
                         11,
@@ -842,56 +1800,25 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Divin Sarthak",
-                    "loser": "James Wolf",
-                    "sets": [
-                      [
-                        13,
-                        11
-                      ],
-                      [
-                        10,
-                        12
-                      ],
-                      [
-                        11,
-                        7
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Maverick Messinger",
-                    "loser": "Benny Ramirez",
+                    "winner": "Liam Duffin",
+                    "loser": "Gregory Dow",
                     "sets": [
                       [
                         11,
-                        6
-                      ],
-                      [
-                        11,
-                        2
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Josiah Joplin",
-                    "loser": "Travis Rettenmaier",
-                    "sets": []
-                  },
-                  {
-                    "winner": "Ryan Torresin",
-                    "loser": "Chrisna Try",
-                    "sets": [
-                      [
-                        11,
-                        1
+                        0
                       ],
                       [
                         11,
                         0
                       ]
                     ]
-                  },
+                  }
+                ],
+                "collapsed": true
+              },
+              {
+                "label": "Vòng 128",
+                "matches": [
                   {
                     "winner": "Jace Howard",
                     "loser": "Eduardo Panozzo",
@@ -921,6 +1848,66 @@ const post: BlogPost = {
                     ]
                   },
                   {
+                    "winner": "John Cincola",
+                    "loser": "Tristan Cooley",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        1,
+                        11
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Alvaro Regalado",
+                    "loser": "Jamison Pfingston",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Takumi Matsuda",
+                    "loser": "Magnus Violet",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Theo Platel",
+                    "loser": "Alfonso Plata",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
                     "winner": "Jose Martinez",
                     "loser": "Jagger Baird",
                     "sets": [
@@ -935,22 +1922,27 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Sam Libo",
-                    "loser": "JP Gorby",
+                    "winner": "Josiah Joplin",
+                    "loser": "Travis Rettenmaier",
+                    "sets": []
+                  },
+                  {
+                    "winner": "Ryan Torresin",
+                    "loser": "Chrisna Try",
                     "sets": [
                       [
-                        14,
-                        12
+                        11,
+                        1
                       ],
                       [
                         11,
-                        6
+                        0
                       ]
                     ]
                   },
                   {
-                    "winner": "Alvaro Regalado",
-                    "loser": "Jamison Pfingston",
+                    "winner": "Ben Herrick",
+                    "loser": "Dawson Davis",
                     "sets": [
                       [
                         11,
@@ -991,38 +1983,6 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "John Cincola",
-                    "loser": "Tristan Cooley",
-                    "sets": [
-                      [
-                        11,
-                        9
-                      ],
-                      [
-                        1,
-                        11
-                      ],
-                      [
-                        11,
-                        6
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Takumi Matsuda",
-                    "loser": "Magnus Violet",
-                    "sets": [
-                      [
-                        11,
-                        0
-                      ],
-                      [
-                        11,
-                        7
-                      ]
-                    ]
-                  },
-                  {
                     "winner": "Freddie Powell",
                     "loser": "Jesse G",
                     "sets": [
@@ -1033,20 +1993,6 @@ const post: BlogPost = {
                       [
                         11,
                         0
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Ben Herrick",
-                    "loser": "Dawson Davis",
-                    "sets": [
-                      [
-                        11,
-                        7
-                      ],
-                      [
-                        11,
-                        2
                       ]
                     ]
                   },
@@ -1063,6 +2009,148 @@ const post: BlogPost = {
                         4
                       ]
                     ]
+                  },
+                  {
+                    "winner": "Sam Libo",
+                    "loser": "JP Gorby",
+                    "sets": [
+                      [
+                        14,
+                        12
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Maverick Messinger",
+                    "loser": "Benny Ramirez",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Asís Garrido Guerrero",
+                    "loser": "Kyle Koszuta",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jase Edwards",
+                    "loser": "Brenden Everhart",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "MJ Marrero",
+                    "loser": "Caedmon Rux",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        6,
+                        11
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "George Wolf",
+                    "loser": "Aleck Blair",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        13,
+                        11
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Brandon Nsekpong",
+                    "loser": "Andrew Angulo",
+                    "sets": [
+                      [
+                        5,
+                        11
+                      ],
+                      [
+                        14,
+                        12
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Divin Sarthak",
+                    "loser": "James Wolf",
+                    "sets": [
+                      [
+                        13,
+                        11
+                      ],
+                      [
+                        10,
+                        12
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Usama Khalid",
+                    "loser": "Mateo Vargas",
+                    "sets": [
+                      [
+                        10,
+                        12
+                      ],
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
                   }
                 ],
                 "collapsed": true
@@ -1074,16 +2162,16 @@ const post: BlogPost = {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đơn nam, Round 64: Armaan Jiwa Mawji gặp John Cincola — trạng thái live.",
-            "Đơn nam, Round 64: Ryan Sherry gặp Jase Edwards — trạng thái live.",
-            "Đơn nam, Round 64: Matt Burkhardt gặp Asís Garrido Guerrero — trạng thái live.",
-            "Đơn nam, Round 64: Daniel Phillips gặp Maverick Messinger — trạng thái live.",
-            "Đơn nam, Round 64: George Rangelov gặp Sam Libo — trạng thái live.",
-            "Đơn nam, Round 64: Emilien Burnel gặp Casey Diamond — trạng thái live.",
-            "Đơn nam, Round 64: Matthew Finnerty gặp Ben Herrick — trạng thái live.",
-            "Đơn nam, Round 64: Andrew Caldarella gặp Theo Platel — trạng thái live.",
-            "Đơn nam, Round 64: Luke Wasson gặp Freddie Powell — trạng thái live.",
-            "Đơn nam, Round 64: Jimmy Liong Kai Long gặp Takumi Matsuda — trạng thái live."
+            "Đơn nam, Round 16: Garrison Eaby gặp Martin Stanchev — trạng thái live.",
+            "Đơn nam, Round 16: Daniel Miron gặp Alvaro Regalado — trạng thái live.",
+            "Đơn nam, Round 32: Matthew Finnerty gặp Oliver Frank — trạng thái live.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Anne-Sophie Courteau / Chloe Diskin gặp Adelie Osher / Janet Liu — trạng thái scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Allie Reichert / Madalina Grigoriu gặp Monika Wynne / Ella Boydston — trạng thái scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Averee Beck / Bella Nelson gặp Yolena Carlon / Haley Ferguson — trạng thái scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Maddy Rasmusen / Masa Grgan gặp Marisa Ruiz / Kelsey Laurente — trạng thái scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Monika Wynne / Ella Boydston gặp Yolena Carlon / Haley Ferguson — trạng thái scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Allie Reichert / Madalina Grigoriu gặp Averee Beck / Bella Nelson — trạng thái scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Marisa Ruiz / Kelsey Laurente gặp Adelie Osher / Janet Liu — trạng thái scheduled."
           ]
         },
         {
