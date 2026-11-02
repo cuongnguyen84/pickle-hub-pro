@@ -27,7 +27,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 3, 2026, 02:01 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 123 matches, including 79 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 3, 2026, 04:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 225 matches, including 79 completed or final records and 2 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -1199,16 +1199,16 @@ const post: BlogPost = {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Women's Singles, Round 64: Aiko Yoshitomi vs Allison Phillips — status scheduled.",
-            "Women's Singles, Round 64: Isabella Dunlap vs Cc Eleven Sacca — status scheduled.",
-            "Women's Singles, Round 64: Genie Bouchard vs Natalia Simson — status scheduled.",
-            "Women's Singles, Round 64: Cailyn Campbell vs Allyce Jones — status scheduled.",
-            "Women's Singles, Round 64: Liz Truluck vs Alex Walker — status scheduled.",
-            "Women's Singles, Round 64: Catherine Parenteau vs Masa Grgan — status scheduled.",
-            "Women's Singles, Round 64: Sofia Sewing vs Huong Dan Linh — status scheduled.",
-            "Women's Singles, Round 64: Victoria Dimuzio vs Samantha Parker — status scheduled.",
-            "Women's Singles, Round 64: Jorja Johnson vs Chloe Igleski — status scheduled.",
-            "Women's Singles, Round 64: Ting Chieh Wei vs Kei Sawaki — status scheduled."
+            "Women's Doubles, Round 16: Olivia Phillips / Polina Libo vs Elaine Li / Rachel Janssen — status live.",
+            "Women's Doubles, Round 32: Madyson Peav / Stuti Sinha vs Jessica Pehush / Sarah Smith — status live.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Anne-Sophie Courteau / Chloe Diskin vs Adelie Osher / Janet Liu — status scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Allie Reichert / Madalina Grigoriu vs Monika Wynne / Ella Boydston — status scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Averee Beck / Bella Nelson vs Yolena Carlon / Haley Ferguson — status scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Maddy Rasmusen / Masa Grgan vs Marisa Ruiz / Kelsey Laurente — status scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Monika Wynne / Ella Boydston vs Yolena Carlon / Haley Ferguson — status scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Allie Reichert / Madalina Grigoriu vs Averee Beck / Bella Nelson — status scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Marisa Ruiz / Kelsey Laurente vs Adelie Osher / Janet Liu — status scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Maddy Rasmusen / Masa Grgan vs Anne-Sophie Courteau / Chloe Diskin — status scheduled."
           ]
         },
         {
@@ -1238,7 +1238,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 02:01 ngày 3/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 123 trận, gồm 79 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 04:00 ngày 3/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 225 trận, gồm 79 bản ghi đã kết thúc/chung cuộc và 2 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -2410,16 +2410,16 @@ const post: BlogPost = {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đơn nữ, Round 64: Aiko Yoshitomi gặp Allison Phillips — trạng thái scheduled.",
-            "Đơn nữ, Round 64: Isabella Dunlap gặp Cc Eleven Sacca — trạng thái scheduled.",
-            "Đơn nữ, Round 64: Genie Bouchard gặp Natalia Simson — trạng thái scheduled.",
-            "Đơn nữ, Round 64: Cailyn Campbell gặp Allyce Jones — trạng thái scheduled.",
-            "Đơn nữ, Round 64: Liz Truluck gặp Alex Walker — trạng thái scheduled.",
-            "Đơn nữ, Round 64: Catherine Parenteau gặp Masa Grgan — trạng thái scheduled.",
-            "Đơn nữ, Round 64: Sofia Sewing gặp Huong Dan Linh — trạng thái scheduled.",
-            "Đơn nữ, Round 64: Victoria Dimuzio gặp Samantha Parker — trạng thái scheduled.",
-            "Đơn nữ, Round 64: Jorja Johnson gặp Chloe Igleski — trạng thái scheduled.",
-            "Đơn nữ, Round 64: Ting Chieh Wei gặp Kei Sawaki — trạng thái scheduled."
+            "Đôi nữ, Round 16: Olivia Phillips / Polina Libo gặp Elaine Li / Rachel Janssen — trạng thái live.",
+            "Đôi nữ, Round 32: Madyson Peav / Stuti Sinha gặp Jessica Pehush / Sarah Smith — trạng thái live.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Anne-Sophie Courteau / Chloe Diskin gặp Adelie Osher / Janet Liu — trạng thái scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Allie Reichert / Madalina Grigoriu gặp Monika Wynne / Ella Boydston — trạng thái scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Averee Beck / Bella Nelson gặp Yolena Carlon / Haley Ferguson — trạng thái scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Maddy Rasmusen / Masa Grgan gặp Marisa Ruiz / Kelsey Laurente — trạng thái scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Monika Wynne / Ella Boydston gặp Yolena Carlon / Haley Ferguson — trạng thái scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Allie Reichert / Madalina Grigoriu gặp Averee Beck / Bella Nelson — trạng thái scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Marisa Ruiz / Kelsey Laurente gặp Adelie Osher / Janet Liu — trạng thái scheduled.",
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Maddy Rasmusen / Masa Grgan gặp Anne-Sophie Courteau / Chloe Diskin — trạng thái scheduled."
           ]
         },
         {
