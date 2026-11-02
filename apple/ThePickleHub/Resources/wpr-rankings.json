@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-10-28",
+  "fetchedAt": "2026-11-02",
   "sourceUrl": "https://www.ppatour.com/rankings/",
   "men": [
     {
@@ -156,7 +156,7 @@
     },
     {
       "rank": 20,
-      "name": "Hong Kit Wong",
+      "name": "Hong kit Wong",
       "points": 3023.75,
       "eventsPlayed": 0,
       "country": "Hong Kong S.A.R.",
@@ -180,7 +180,7 @@
     },
     {
       "rank": 23,
-      "name": "Eunggwon Kim",
+      "name": "Eunggwon KIM",
       "points": 2692.5,
       "eventsPlayed": 0,
       "country": "South Korea",
@@ -527,7 +527,7 @@
     },
     {
       "board": "women",
-      "rank": 270,
+      "rank": 271,
       "name": "Tran Tue Ngoc",
       "countryCode": "vn",
       "points": 50
@@ -562,7 +562,7 @@
     },
     {
       "board": "men",
-      "rank": 326,
+      "rank": 324,
       "name": "Khuong Huynh",
       "countryCode": "vn",
       "points": 50
@@ -576,6 +576,13 @@
     },
     {
       "board": "men",
+      "rank": 375,
+      "name": "Khoa Vo",
+      "countryCode": "vn",
+      "points": 37.5
+    },
+    {
+      "board": "men",
       "rank": 378,
       "name": "Andrew Anh Pham",
       "countryCode": "vn",
@@ -583,17 +590,10 @@
     },
     {
       "board": "women",
-      "rank": 381,
+      "rank": 384,
       "name": "Thuy Pham",
       "countryCode": "vn",
       "points": 25
-    },
-    {
-      "board": "men",
-      "rank": 382,
-      "name": "Khoa Vo",
-      "countryCode": "vn",
-      "points": 37.5
     },
     {
       "board": "men",
@@ -604,14 +604,14 @@
     },
     {
       "board": "men",
-      "rank": 449,
+      "rank": 447,
       "name": "Nguyen Thang",
       "countryCode": "vn",
       "points": 25
     },
     {
       "board": "men",
-      "rank": 528,
+      "rank": 527,
       "name": "Minh Nhật",
       "countryCode": "vn",
       "points": 17.5
@@ -625,50 +625,50 @@
     },
     {
       "board": "men",
-      "rank": 561,
+      "rank": 564,
       "name": "Nguyễn Hoàng",
       "countryCode": "vn",
       "points": 15
     },
     {
       "board": "men",
-      "rank": 604,
-      "name": "Quang Tran",
-      "countryCode": "vn",
-      "points": 12.5
-    },
-    {
-      "board": "men",
-      "rank": 605,
-      "name": "Minh Nguyễn Hoàng",
-      "countryCode": "vn",
-      "points": 12.5
-    },
-    {
-      "board": "men",
-      "rank": 606,
+      "rank": 610,
       "name": "Phong Tran",
       "countryCode": "vn",
       "points": 12.5
     },
     {
       "board": "men",
-      "rank": 608,
-      "name": "Nam Vu",
+      "rank": 611,
+      "name": "quang tran",
       "countryCode": "vn",
       "points": 12.5
     },
     {
       "board": "men",
-      "rank": 625,
+      "rank": 616,
       "name": "Hoang Bao Long",
       "countryCode": "vn",
       "points": 12.5
     },
     {
       "board": "men",
-      "rank": 628,
+      "rank": 625,
+      "name": "Nam Vu",
+      "countryCode": "vn",
+      "points": 12.5
+    },
+    {
+      "board": "men",
+      "rank": 629,
       "name": "Tran Tuan Minh",
+      "countryCode": "vn",
+      "points": 12.5
+    },
+    {
+      "board": "men",
+      "rank": 631,
+      "name": "Minh Nguyễn Hoàng",
       "countryCode": "vn",
       "points": 12.5
     },
