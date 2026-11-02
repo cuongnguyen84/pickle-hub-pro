@@ -19,6 +19,8 @@ export const blogMetadata: BlogPostMetadata[] = [
       "vietnam juniors",
       "nguyen gia hung",
       "dan linh huong",
+      "huynh phu qui",
+      "tran dinh dat",
       "opendoor worlds",
       "dallas",
       "afp"
@@ -36,8 +38,8 @@ export const blogMetadata: BlogPostMetadata[] = [
     "titleVi": "Đoàn trẻ Việt Nam dự giải trẻ Worlds tại Dallas",
     "metaTitleEn": "VN Juniors at Worlds Dallas 2026",
     "metaTitleVi": "Đoàn trẻ VN dự Worlds Dallas 2026",
-    "metaDescriptionEn": "Gia Hưng and Linh Hương play Junior Worlds in Dallas (5–8/11). Coaches Huỳnh Phú Quí and Trần Đình Đạt lead the VN group.",
-    "metaDescriptionVi": "Gia Hưng, Linh Hương dự giải trẻ Worlds Dallas 5–8/11. Đoàn có HLV Huỳnh Phú Quí và Trần Đình Đạt."
+    "metaDescriptionEn": "Nine Vietnam juniors play Junior Worlds in Dallas (5–8/11). Coaches Huỳnh Phú Quí and Trần Đình Đạt lead the group.",
+    "metaDescriptionVi": "9 VĐV trẻ Việt Nam dự Junior Worlds Dallas 5–8/11. Đoàn có HLV Huỳnh Phú Quí và Trần Đình Đạt."
   },
   {
     "slug": "juan-benitez-coach-behind-patriquin-bright-staksrud",
