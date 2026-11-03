@@ -27,7 +27,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 3, 2026, 20:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 246 matches, including 92 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 4, 2026, 00:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 246 matches, including 97 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -39,6 +39,11 @@ const post: BlogPost = {
               "division": "Women's Doubles",
               "note": "Through to the Quarter Finals · 13 matches",
               "anchor": "rb-womens-doubles"
+            },
+            {
+              "division": "Women's Singles",
+              "note": "Through to the Round 64 · 5 matches",
+              "anchor": "rb-womens-singles"
             },
             {
               "division": "Men's Singles",
@@ -257,6 +262,86 @@ const post: BlogPost = {
                       [
                         11,
                         5
+                      ]
+                    ]
+                  }
+                ],
+                "collapsed": true
+              }
+            ]
+          }
+        },
+        {
+          "heading": "Women's Singles results",
+          "content": "No champion yet. 5 completed matches, latest round first.",
+          "resultsBoard": {
+            "division": "Women's Singles",
+            "rounds": [
+              {
+                "label": "Round 64",
+                "matches": [
+                  {
+                    "winner": "Samantha Parker",
+                    "loser": "Victoria Dimuzio",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        2,
+                        11
+                      ],
+                      [
+                        12,
+                        10
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Hannah Blatt",
+                    "loser": "Polina Libo",
+                    "sets": []
+                  },
+                  {
+                    "winner": "Kaitlynn Hart",
+                    "loser": "Valeria Montero",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Helena Jansen",
+                    "loser": "Luana Stanciu",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Rika Fujiwara",
+                    "loser": "Ava Cavataio",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        6
                       ]
                     ]
                   }
@@ -1462,7 +1547,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 20:00 ngày 3/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 246 trận, gồm 92 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 00:00 ngày 4/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 246 trận, gồm 97 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -1474,6 +1559,11 @@ const post: BlogPost = {
               "division": "Đôi nữ",
               "note": "Đã tới Tứ kết · 13 trận",
               "anchor": "rb-doi-nu"
+            },
+            {
+              "division": "Đơn nữ",
+              "note": "Đã tới Vòng 64 · 5 trận",
+              "anchor": "rb-don-nu"
             },
             {
               "division": "Đơn nam",
@@ -1692,6 +1782,86 @@ const post: BlogPost = {
                       [
                         11,
                         5
+                      ]
+                    ]
+                  }
+                ],
+                "collapsed": true
+              }
+            ]
+          }
+        },
+        {
+          "heading": "Kết quả Đơn nữ",
+          "content": "Chưa có nhà vô địch. 5 trận đã kết thúc, vòng mới nhất ở trên.",
+          "resultsBoard": {
+            "division": "Đơn nữ",
+            "rounds": [
+              {
+                "label": "Vòng 64",
+                "matches": [
+                  {
+                    "winner": "Samantha Parker",
+                    "loser": "Victoria Dimuzio",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        2,
+                        11
+                      ],
+                      [
+                        12,
+                        10
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Hannah Blatt",
+                    "loser": "Polina Libo",
+                    "sets": []
+                  },
+                  {
+                    "winner": "Kaitlynn Hart",
+                    "loser": "Valeria Montero",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Helena Jansen",
+                    "loser": "Luana Stanciu",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Rika Fujiwara",
+                    "loser": "Ava Cavataio",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        6
                       ]
                     ]
                   }
