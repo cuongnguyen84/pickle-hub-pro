@@ -27,7 +27,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 4, 2026, 00:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 246 matches, including 97 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 4, 2026, 02:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 251 matches, including 110 completed or final records and 1 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -42,7 +42,7 @@ const post: BlogPost = {
             },
             {
               "division": "Women's Singles",
-              "note": "Through to the Round 64 · 5 matches",
+              "note": "Through to the Round 64 · 18 matches",
               "anchor": "rb-womens-singles"
             },
             {
@@ -273,7 +273,7 @@ const post: BlogPost = {
         },
         {
           "heading": "Women's Singles results",
-          "content": "No champion yet. 5 completed matches, latest round first.",
+          "content": "No champion yet. 18 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Women's Singles",
             "rounds": [
@@ -295,6 +295,20 @@ const post: BlogPost = {
                       [
                         12,
                         10
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Catherine Parenteau",
+                    "loser": "Masa Grgan",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        1
                       ]
                     ]
                   },
@@ -342,6 +356,190 @@ const post: BlogPost = {
                       [
                         11,
                         6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Kaitlyn Christian",
+                    "loser": "Tatiana Diaz",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Kiora Kunimoto",
+                    "loser": "Caroline Maguire",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Kelly Goodnow",
+                    "loser": "Nicole Conard",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jalina Ingram",
+                    "loser": "Ashley Griffith",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Anna Leigh Waters",
+                    "loser": "Frances Altick",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Sahra Dennehy",
+                    "loser": "Xiao Yi Wang-Beckvall",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Kei Sawaki",
+                    "loser": "Ting Chieh Wei",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Isabella Dunlap",
+                    "loser": "Cc Eleven Sacca",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Lacy Schneemann",
+                    "loser": "Angie Walker",
+                    "sets": [
+                      [
+                        9,
+                        11
+                      ],
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Shannon Pretorius",
+                    "loser": "Chao Yi Wang",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        0,
+                        11
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Judit Castillo",
+                    "loser": "Maria Ford",
+                    "sets": [
+                      [
+                        9,
+                        11
+                      ],
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Mya Bui",
+                    "loser": "Estee Widdershoven",
+                    "sets": [
+                      [
+                        4,
+                        11
+                      ],
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        0
                       ]
                     ]
                   }
@@ -1508,6 +1706,7 @@ const post: BlogPost = {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
+            "Women's Singles, Round 64: Sofia Sewing vs Huong Dan Linh — status live.",
             "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Anne-Sophie Courteau / Chloe Diskin vs Adelie Osher / Janet Liu — status scheduled.",
             "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Allie Reichert / Madalina Grigoriu vs Monika Wynne / Ella Boydston — status scheduled.",
             "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Averee Beck / Bella Nelson vs Yolena Carlon / Haley Ferguson — status scheduled.",
@@ -1516,8 +1715,7 @@ const post: BlogPost = {
             "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Allie Reichert / Madalina Grigoriu vs Averee Beck / Bella Nelson — status scheduled.",
             "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Marisa Ruiz / Kelsey Laurente vs Adelie Osher / Janet Liu — status scheduled.",
             "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Maddy Rasmusen / Masa Grgan vs Anne-Sophie Courteau / Chloe Diskin — status scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 1: Maddy Rasmusen / Masa Grgan vs Adelie Osher / Janet Liu — status scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 1: Monika Wynne / Ella Boydston vs Averee Beck / Bella Nelson — status scheduled."
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 1: Maddy Rasmusen / Masa Grgan vs Adelie Osher / Janet Liu — status scheduled."
           ]
         },
         {
@@ -1547,7 +1745,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 00:00 ngày 4/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 246 trận, gồm 97 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 02:00 ngày 4/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 251 trận, gồm 110 bản ghi đã kết thúc/chung cuộc và 1 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -1562,7 +1760,7 @@ const post: BlogPost = {
             },
             {
               "division": "Đơn nữ",
-              "note": "Đã tới Vòng 64 · 5 trận",
+              "note": "Đã tới Vòng 64 · 18 trận",
               "anchor": "rb-don-nu"
             },
             {
@@ -1793,7 +1991,7 @@ const post: BlogPost = {
         },
         {
           "heading": "Kết quả Đơn nữ",
-          "content": "Chưa có nhà vô địch. 5 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Chưa có nhà vô địch. 18 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đơn nữ",
             "rounds": [
@@ -1815,6 +2013,20 @@ const post: BlogPost = {
                       [
                         12,
                         10
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Catherine Parenteau",
+                    "loser": "Masa Grgan",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        1
                       ]
                     ]
                   },
@@ -1862,6 +2074,190 @@ const post: BlogPost = {
                       [
                         11,
                         6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Kaitlyn Christian",
+                    "loser": "Tatiana Diaz",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Kiora Kunimoto",
+                    "loser": "Caroline Maguire",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Kelly Goodnow",
+                    "loser": "Nicole Conard",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jalina Ingram",
+                    "loser": "Ashley Griffith",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Anna Leigh Waters",
+                    "loser": "Frances Altick",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Sahra Dennehy",
+                    "loser": "Xiao Yi Wang-Beckvall",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Kei Sawaki",
+                    "loser": "Ting Chieh Wei",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Isabella Dunlap",
+                    "loser": "Cc Eleven Sacca",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Lacy Schneemann",
+                    "loser": "Angie Walker",
+                    "sets": [
+                      [
+                        9,
+                        11
+                      ],
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Shannon Pretorius",
+                    "loser": "Chao Yi Wang",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        0,
+                        11
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Judit Castillo",
+                    "loser": "Maria Ford",
+                    "sets": [
+                      [
+                        9,
+                        11
+                      ],
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Mya Bui",
+                    "loser": "Estee Widdershoven",
+                    "sets": [
+                      [
+                        4,
+                        11
+                      ],
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        0
                       ]
                     ]
                   }
@@ -3028,6 +3424,7 @@ const post: BlogPost = {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
+            "Đơn nữ, Round 64: Sofia Sewing gặp Huong Dan Linh — trạng thái live.",
             "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Anne-Sophie Courteau / Chloe Diskin gặp Adelie Osher / Janet Liu — trạng thái scheduled.",
             "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Allie Reichert / Madalina Grigoriu gặp Monika Wynne / Ella Boydston — trạng thái scheduled.",
             "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Averee Beck / Bella Nelson gặp Yolena Carlon / Haley Ferguson — trạng thái scheduled.",
@@ -3036,8 +3433,7 @@ const post: BlogPost = {
             "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Allie Reichert / Madalina Grigoriu gặp Averee Beck / Bella Nelson — trạng thái scheduled.",
             "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Marisa Ruiz / Kelsey Laurente gặp Adelie Osher / Janet Liu — trạng thái scheduled.",
             "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Maddy Rasmusen / Masa Grgan gặp Anne-Sophie Courteau / Chloe Diskin — trạng thái scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 1: Maddy Rasmusen / Masa Grgan gặp Adelie Osher / Janet Liu — trạng thái scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 1: Monika Wynne / Ella Boydston gặp Averee Beck / Bella Nelson — trạng thái scheduled."
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 1: Maddy Rasmusen / Masa Grgan gặp Adelie Osher / Janet Liu — trạng thái scheduled."
           ]
         },
         {
