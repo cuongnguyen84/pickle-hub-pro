@@ -27,7 +27,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 4, 2026, 07:30 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 282 matches, including 171 completed or final records and 5 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 4, 2026, 08:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 285 matches, including 174 completed or final records and 6 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -42,7 +42,7 @@ const post: BlogPost = {
             },
             {
               "division": "Men's Doubles",
-              "note": "Through to the Round 64 · 15 matches",
+              "note": "Through to the Round 64 · 18 matches",
               "anchor": "rb-mens-doubles"
             },
             {
@@ -283,7 +283,7 @@ const post: BlogPost = {
         },
         {
           "heading": "Men's Doubles results",
-          "content": "No champion yet. 15 completed matches, latest round first.",
+          "content": "No champion yet. 18 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Men's Doubles",
             "rounds": [
@@ -365,12 +365,30 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "AJ Koller / Connor Mogle",
-                    "loser": "Joel Poland / Eduardo Santini Ayon",
+                    "winner": "Anderson Scarpa / Ivan Jakovljevic",
+                    "loser": "Grayson Goldin / Brandon French",
                     "sets": [
                       [
                         11,
-                        2
+                        9
+                      ],
+                      [
+                        10,
+                        12
+                      ],
+                      [
+                        12,
+                        10
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Augustus Ge / Jack Sock",
+                    "loser": "Mike Radermacher / Matt Burkhardt",
+                    "sets": [
+                      [
+                        11,
+                        9
                       ],
                       [
                         11,
@@ -379,12 +397,40 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Matt Wright / John Lucian Goins",
-                    "loser": "Luke Wasson / Chuck Taylor",
+                    "winner": "Connor Garnett / Dylan Frazier",
+                    "loser": "Usama Khalid / Wade Heerboth",
                     "sets": [
                       [
                         11,
-                        1
+                        7
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Andrei Daescu / Christian Alshon",
+                    "loser": "Stephen Preissler / Ahmad El-Zarif",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "AJ Koller / Connor Mogle",
+                    "loser": "Joel Poland / Eduardo Santini Ayon",
+                    "sets": [
+                      [
+                        11,
+                        2
                       ],
                       [
                         11,
@@ -431,6 +477,20 @@ const post: BlogPost = {
                     ]
                   },
                   {
+                    "winner": "Matt Wright / John Lucian Goins",
+                    "loser": "Luke Wasson / Chuck Taylor",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
                     "winner": "Pablo Tellez / Roscoe Bellamy",
                     "loser": "Jace Howard / Ethan Bakalinsky",
                     "sets": [
@@ -451,20 +511,6 @@ const post: BlogPost = {
                       [
                         11,
                         5
-                      ],
-                      [
-                        11,
-                        9
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Andrei Daescu / Christian Alshon",
-                    "loser": "Stephen Preissler / Ahmad El-Zarif",
-                    "sets": [
-                      [
-                        11,
-                        0
                       ],
                       [
                         11,
@@ -2657,16 +2703,16 @@ const post: BlogPost = {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Men's Doubles, Round 64: CJ Klinger / Eric Oncins vs Jase Edwards / Jake Anderson — status live.",
-            "Men's Doubles, Round 64: Grayson Goldin / Brandon French vs Anderson Scarpa / Ivan Jakovljevic — status live.",
+            "Men's Doubles, Round 64: Tama Shimabukuro / JW Johnson vs Ryan Torresin / Ben Davis — status live.",
             "Men's Doubles, Round 64: Zane Navratil / George Wall vs Rio Newcombe / Andrew Caldarella — status live.",
-            "Men's Doubles, Round 64: Augustus Ge / Jack Sock vs Mike Radermacher / Matt Burkhardt — status live.",
-            "Men's Doubles, Round 64: Connor Garnett / Dylan Frazier vs Usama Khalid / Wade Heerboth — status live.",
+            "Men's Doubles, Round 64: Julian Arnold / Yates Johnson vs Ross Whittaker / Mohaned Alhouni — status live.",
+            "Men's Doubles, Round 64: CJ Klinger / Eric Oncins vs Jase Edwards / Jake Anderson — status live.",
+            "Men's Doubles, Round 64: Tyler Loong / Darrian Young vs Aryaan Bhatia / Wil Shaffer — status live.",
+            "Men's Doubles, Round 64: Casey Diamond / Tyson McGuffin vs Freddie Powell / Austin Bricker — status live.",
             "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Anne-Sophie Courteau / Chloe Diskin vs Adelie Osher / Janet Liu — status scheduled.",
             "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Allie Reichert / Madalina Grigoriu vs Monika Wynne / Ella Boydston — status scheduled.",
             "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Averee Beck / Bella Nelson vs Yolena Carlon / Haley Ferguson — status scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Maddy Rasmusen / Masa Grgan vs Marisa Ruiz / Kelsey Laurente — status scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Monika Wynne / Ella Boydston vs Yolena Carlon / Haley Ferguson — status scheduled."
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Maddy Rasmusen / Masa Grgan vs Marisa Ruiz / Kelsey Laurente — status scheduled."
           ]
         },
         {
@@ -2696,7 +2742,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 07:30 ngày 4/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 282 trận, gồm 171 bản ghi đã kết thúc/chung cuộc và 5 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 08:00 ngày 4/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 285 trận, gồm 174 bản ghi đã kết thúc/chung cuộc và 6 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -2711,7 +2757,7 @@ const post: BlogPost = {
             },
             {
               "division": "Đôi nam",
-              "note": "Đã tới Vòng 64 · 15 trận",
+              "note": "Đã tới Vòng 64 · 18 trận",
               "anchor": "rb-doi-nam"
             },
             {
@@ -2952,7 +2998,7 @@ const post: BlogPost = {
         },
         {
           "heading": "Kết quả Đôi nam",
-          "content": "Chưa có nhà vô địch. 15 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Chưa có nhà vô địch. 18 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đôi nam",
             "rounds": [
@@ -3034,12 +3080,30 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "AJ Koller / Connor Mogle",
-                    "loser": "Joel Poland / Eduardo Santini Ayon",
+                    "winner": "Anderson Scarpa / Ivan Jakovljevic",
+                    "loser": "Grayson Goldin / Brandon French",
                     "sets": [
                       [
                         11,
-                        2
+                        9
+                      ],
+                      [
+                        10,
+                        12
+                      ],
+                      [
+                        12,
+                        10
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Augustus Ge / Jack Sock",
+                    "loser": "Mike Radermacher / Matt Burkhardt",
+                    "sets": [
+                      [
+                        11,
+                        9
                       ],
                       [
                         11,
@@ -3048,12 +3112,40 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Matt Wright / John Lucian Goins",
-                    "loser": "Luke Wasson / Chuck Taylor",
+                    "winner": "Connor Garnett / Dylan Frazier",
+                    "loser": "Usama Khalid / Wade Heerboth",
                     "sets": [
                       [
                         11,
-                        1
+                        7
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Andrei Daescu / Christian Alshon",
+                    "loser": "Stephen Preissler / Ahmad El-Zarif",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "AJ Koller / Connor Mogle",
+                    "loser": "Joel Poland / Eduardo Santini Ayon",
+                    "sets": [
+                      [
+                        11,
+                        2
                       ],
                       [
                         11,
@@ -3100,6 +3192,20 @@ const post: BlogPost = {
                     ]
                   },
                   {
+                    "winner": "Matt Wright / John Lucian Goins",
+                    "loser": "Luke Wasson / Chuck Taylor",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
                     "winner": "Pablo Tellez / Roscoe Bellamy",
                     "loser": "Jace Howard / Ethan Bakalinsky",
                     "sets": [
@@ -3120,20 +3226,6 @@ const post: BlogPost = {
                       [
                         11,
                         5
-                      ],
-                      [
-                        11,
-                        9
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Andrei Daescu / Christian Alshon",
-                    "loser": "Stephen Preissler / Ahmad El-Zarif",
-                    "sets": [
-                      [
-                        11,
-                        0
                       ],
                       [
                         11,
@@ -5326,16 +5418,16 @@ const post: BlogPost = {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đôi nam, Round 64: CJ Klinger / Eric Oncins gặp Jase Edwards / Jake Anderson — trạng thái live.",
-            "Đôi nam, Round 64: Grayson Goldin / Brandon French gặp Anderson Scarpa / Ivan Jakovljevic — trạng thái live.",
+            "Đôi nam, Round 64: Tama Shimabukuro / JW Johnson gặp Ryan Torresin / Ben Davis — trạng thái live.",
             "Đôi nam, Round 64: Zane Navratil / George Wall gặp Rio Newcombe / Andrew Caldarella — trạng thái live.",
-            "Đôi nam, Round 64: Augustus Ge / Jack Sock gặp Mike Radermacher / Matt Burkhardt — trạng thái live.",
-            "Đôi nam, Round 64: Connor Garnett / Dylan Frazier gặp Usama Khalid / Wade Heerboth — trạng thái live.",
+            "Đôi nam, Round 64: Julian Arnold / Yates Johnson gặp Ross Whittaker / Mohaned Alhouni — trạng thái live.",
+            "Đôi nam, Round 64: CJ Klinger / Eric Oncins gặp Jase Edwards / Jake Anderson — trạng thái live.",
+            "Đôi nam, Round 64: Tyler Loong / Darrian Young gặp Aryaan Bhatia / Wil Shaffer — trạng thái live.",
+            "Đôi nam, Round 64: Casey Diamond / Tyson McGuffin gặp Freddie Powell / Austin Bricker — trạng thái live.",
             "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Anne-Sophie Courteau / Chloe Diskin gặp Adelie Osher / Janet Liu — trạng thái scheduled.",
             "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Allie Reichert / Madalina Grigoriu gặp Monika Wynne / Ella Boydston — trạng thái scheduled.",
             "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Averee Beck / Bella Nelson gặp Yolena Carlon / Haley Ferguson — trạng thái scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Maddy Rasmusen / Masa Grgan gặp Marisa Ruiz / Kelsey Laurente — trạng thái scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Monika Wynne / Ella Boydston gặp Yolena Carlon / Haley Ferguson — trạng thái scheduled."
+            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Maddy Rasmusen / Masa Grgan gặp Marisa Ruiz / Kelsey Laurente — trạng thái scheduled."
           ]
         },
         {
