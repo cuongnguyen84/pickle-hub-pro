@@ -27,7 +27,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 4, 2026, 22:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 294 matches, including 186 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 5, 2026, 00:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 294 matches, including 186 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -1234,30 +1234,20 @@ const post: BlogPost = {
                 "label": "Round 64",
                 "matches": [
                   {
-                    "winner": "Rika Fujiwara",
-                    "loser": "Ava Cavataio",
+                    "winner": "Mya Bui",
+                    "loser": "Estee Widdershoven",
                     "sets": [
                       [
-                        11,
-                        4
+                        4,
+                        11
                       ],
                       [
                         11,
                         6
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Isabella Dunlap",
-                    "loser": "Cc Eleven Sacca",
-                    "sets": [
-                      [
-                        11,
-                        3
                       ],
                       [
                         11,
-                        4
+                        0
                       ]
                     ]
                   },
@@ -1295,16 +1285,12 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Lacy Schneemann",
-                    "loser": "Angie Walker",
+                    "winner": "Rika Fujiwara",
+                    "loser": "Ava Cavataio",
                     "sets": [
                       [
-                        9,
-                        11
-                      ],
-                      [
                         11,
-                        1
+                        4
                       ],
                       [
                         11,
@@ -1443,8 +1429,22 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Carlota Trevino",
-                    "loser": "Lina Padegimaite",
+                    "winner": "Isabella Dunlap",
+                    "loser": "Cc Eleven Sacca",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Lacy Schneemann",
+                    "loser": "Angie Walker",
                     "sets": [
                       [
                         9,
@@ -1452,11 +1452,11 @@ const post: BlogPost = {
                       ],
                       [
                         11,
-                        3
+                        1
                       ],
                       [
                         11,
-                        1
+                        6
                       ]
                     ]
                   },
@@ -1493,24 +1493,6 @@ const post: BlogPost = {
                       [
                         11,
                         3
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Mya Bui",
-                    "loser": "Estee Widdershoven",
-                    "sets": [
-                      [
-                        4,
-                        11
-                      ],
-                      [
-                        11,
-                        6
-                      ],
-                      [
-                        11,
-                        0
                       ]
                     ]
                   },
@@ -1713,6 +1695,24 @@ const post: BlogPost = {
                       [
                         11,
                         8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Carlota Trevino",
+                    "loser": "Lina Padegimaite",
+                    "sets": [
+                      [
+                        9,
+                        11
+                      ],
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        1
                       ]
                     ]
                   }
@@ -2918,7 +2918,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 22:00 ngày 4/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 294 trận, gồm 186 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 00:00 ngày 5/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 294 trận, gồm 186 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -4125,30 +4125,20 @@ const post: BlogPost = {
                 "label": "Vòng 64",
                 "matches": [
                   {
-                    "winner": "Rika Fujiwara",
-                    "loser": "Ava Cavataio",
+                    "winner": "Mya Bui",
+                    "loser": "Estee Widdershoven",
                     "sets": [
                       [
-                        11,
-                        4
+                        4,
+                        11
                       ],
                       [
                         11,
                         6
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Isabella Dunlap",
-                    "loser": "Cc Eleven Sacca",
-                    "sets": [
-                      [
-                        11,
-                        3
                       ],
                       [
                         11,
-                        4
+                        0
                       ]
                     ]
                   },
@@ -4186,16 +4176,12 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Lacy Schneemann",
-                    "loser": "Angie Walker",
+                    "winner": "Rika Fujiwara",
+                    "loser": "Ava Cavataio",
                     "sets": [
                       [
-                        9,
-                        11
-                      ],
-                      [
                         11,
-                        1
+                        4
                       ],
                       [
                         11,
@@ -4334,8 +4320,22 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Carlota Trevino",
-                    "loser": "Lina Padegimaite",
+                    "winner": "Isabella Dunlap",
+                    "loser": "Cc Eleven Sacca",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Lacy Schneemann",
+                    "loser": "Angie Walker",
                     "sets": [
                       [
                         9,
@@ -4343,11 +4343,11 @@ const post: BlogPost = {
                       ],
                       [
                         11,
-                        3
+                        1
                       ],
                       [
                         11,
-                        1
+                        6
                       ]
                     ]
                   },
@@ -4384,24 +4384,6 @@ const post: BlogPost = {
                       [
                         11,
                         3
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Mya Bui",
-                    "loser": "Estee Widdershoven",
-                    "sets": [
-                      [
-                        4,
-                        11
-                      ],
-                      [
-                        11,
-                        6
-                      ],
-                      [
-                        11,
-                        0
                       ]
                     ]
                   },
@@ -4604,6 +4586,24 @@ const post: BlogPost = {
                       [
                         11,
                         8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Carlota Trevino",
+                    "loser": "Lina Padegimaite",
+                    "sets": [
+                      [
+                        9,
+                        11
+                      ],
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        1
                       ]
                     ]
                   }
