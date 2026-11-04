@@ -294,7 +294,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     "slug": "pickleball-world-championships-2026-results",
     "publishedDate": "2026-11-02",
-    "updatedDate": "2026-11-03",
+    "updatedDate": "2026-11-04",
     "author": "The PickleHub Team",
     "tags": [
       "pickleball",
