@@ -15,6 +15,7 @@ import {
   wantsSingleGroupRoundRobin,
   replyFromDraft,
   type Draft,
+  unsupportedFormatNote,
   type Entry,
 } from "@/lib/quick-table-chat";
 import { generateCircleMethodMatches, scheduleMatches } from "@/lib/round-robin";
@@ -477,12 +478,30 @@ describe("state checks and duplicate lists (log 50-52)", () => {
     const before: Draft = { entries: nine.slice(0, 4), is_doubles: true };
     const after = applyPatch(before, { entries: nine });
     const ack = factualAck(before, after!, "en", nine.map((e) => e.p1).join("\n"));
-    expect(ack).toContain("Got 5 teams");
+    // Đôi mà chỉ có tên đơn = người chờ ghép cặp, không phải đội (ca 03/11).
+    expect(ack).toContain("Got 5 players");
   });
 
   it("reports honestly when groups are not drawn yet", () => {
     const ack = factualAck({ entries: nine }, { entries: nine }, "vi", "kiểm tra giúp tôi mỗi bảng có mấy đội");
     expect(ack).toContain("chưa chia bảng");
+  });
+});
+
+describe("pasted single names in doubles = players, not teams (ca 13:19 03/11)", () => {
+  it("9 names after '10 người' still go to pairing, not group split", () => {
+    const names = ["An", "Bình", "Cường", "Dũng", "Em", "Phúc", "Giang", "Hải", "Khoa"].map((p1) => ({ p1 }));
+    const d = applyPatch({ is_doubles: true, player_count: 10 }, { entries: names, player_count: 10 });
+    expect(d.entries).toHaveLength(9);
+    expect(nextSlot(d)).toBe("pairing");
+  });
+
+  it("acks them as people, not teams", () => {
+    const names = ["An", "Bình", "Cường", "Dũng"].map((p1) => ({ p1 }));
+    const b: Draft = { is_doubles: true };
+    const a = applyPatch(b, { entries: names });
+    expect(factualAck(b, a, "vi", "An\nBình\nCường\nDũng")).toContain("Đã nhận 4 người");
+    expect(factualAck(b, a, "en", "An\nBình\nCường\nDũng")).toContain("Got 4 players");
   });
 });
 
@@ -502,6 +521,39 @@ describe("unsupported formats are named, never silently mapped (Cường 21:35 2
   it("fallbackReply uses the format-specific note when unmet names it", () => {
     const r = fallbackReply("unsupported", "double elimination bracket", "en");
     expect(r).toContain("Double elimination isn't supported yet");
+  });
+
+  it.each([
+    ["vi", "làm vòng tròn đổi partner cho 10 người"],
+    ["vi", "đánh đôi xoay cặp liên tục"],
+    ["vi", "mỗi trận đổi đồng đội"],
+    ["vi", "đổi cặp sau mỗi trận"],
+    ["en", "round robin rotating partners for 10 people"],
+    ["en", "partner swap format please"],
+    ["en", "americano style"],
+  ] as const)("rotating partners (%s): %s → unsupported + concrete alternatives", (lang, text) => {
+    const note = unsupportedFormatNote(text, lang)!;
+    expect(note).toBeTruthy();
+    if (lang === "vi") {
+      expect(note).toContain("chưa được hỗ trợ");
+      expect(note).toContain("vòng tròn đơn cá nhân");
+      expect(note).toContain("ghép cặp cố định");
+    } else {
+      expect(note).toContain("isn't supported yet");
+      expect(note).toContain("singles round robin");
+      expect(note).toContain("fixed pairs");
+    }
+  });
+
+  it("fallbackReply gives the rotating-partner alternatives (unmet is always Vietnamese)", () => {
+    expect(fallbackReply("unsupported", "Muốn đánh vòng tròn đổi partner", "en")).toContain("fixed pairs");
+    expect(fallbackReply("unsupported", "Muốn đánh vòng tròn đổi partner", "vi")).toContain("vòng tròn đơn cá nhân");
+  });
+
+  it("does not treat roster edits as rotating partners", () => {
+    expect(unsupportedFormatNote("đổi cặp 3 thành Nam - Tuấn", "vi")).toBeNull();
+    expect(unsupportedFormatNote("đổi chỗ Nam với Hùng", "vi")).toBeNull();
+    expect(unsupportedFormatNote("swap Nam with Hung", "en")).toBeNull();
   });
 
   it("does not fire for a plain single-elimination request", () => {

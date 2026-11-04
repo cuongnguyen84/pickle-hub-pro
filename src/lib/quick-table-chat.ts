@@ -307,6 +307,13 @@ export function unsupportedFormatNote(text: string, lang: "vi" | "en"): string |
       ? "Thể thức loại kép (double elimination) chưa được hỗ trợ. Thay thế gần nhất: đấu vòng tròn ở vòng bảng rồi vào playoff loại trực tiếp — mình làm theo cách đó cho bạn nhé"
       : "Double elimination isn't supported yet. The closest alternative is a round-robin group stage feeding a single-elimination playoff — I can set it up that way for you";
   }
+  // Ca 13:16 03/11: "vòng tròn đổi partner" 10 người — bot chỉ nói chung chung.
+  // "đổi cặp" trơn có thể là lệnh sửa danh sách ("đổi cặp 3 thành…") nên chỉ khớp khi kèm ý xoay vòng.
+  if (/(rotat\w* partners?|partners? rotat\w*|partner swap|swap(ping)? partners|switch(ing)? partners|americano|mexicano|doi partner|xoay (vong )?partner|xoay (vong )?cap|doi dong doi|doi cap (lien tuc|moi tran|moi luot|moi van|sau moi|xoay vong)|(vong tron|round robin) doi cap|doi cap$)/.test(t)) {
+    return lang === "vi"
+      ? "Thể thức đổi partner (xoay cặp sau mỗi trận) chưa được hỗ trợ. Thay thế gần nhất: đấu vòng tròn đơn cá nhân, hoặc ghép cặp cố định rồi đánh vòng tròn đôi / giải chia bảng đôi — bạn chọn cách nào để mình làm tiếp"
+      : "Rotating partners (a new partner each match) isn't supported yet. The closest alternatives are an individual singles round robin, or fixed pairs playing a doubles round robin / group stage — tell me which one and I'll continue";
+  }
   return null;
 }
 
@@ -1069,7 +1076,7 @@ const UNCHANGED_EN = "The draft did not change.";
 /** Câu trả lời chỉ nói điều bản nháp thực sự đổi. */
 export function factualAck(before: Draft, after: Draft, lang: "vi" | "en", request = ""): string {
   const vi = lang === "vi";
-  const u = after.is_doubles === false ? (vi ? "người" : "players") : (vi ? "đội" : "teams");
+  const u = after.is_doubles === false || needsPairing(after) ? (vi ? "người" : "players") : (vi ? "đội" : "teams");
   const bits: string[] = [];
   const fmtNote = request ? unsupportedFormatNote(request, lang) : null;
   if (fmtNote) bits.push(fmtNote);
