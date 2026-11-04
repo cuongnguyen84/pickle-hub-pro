@@ -84,6 +84,7 @@ const RESPONSE_SCHEMA = {
   required: ["reply", "intent", "patch"],
 };
 
+// Redeploy trigger: deploy-guard needs CLI --yes (04/11/2026).
 function buildSystemPrompt(lang: "vi" | "en"): string {
   return `Bạn là trợ lý tạo "giải chia bảng" (vòng tròn chia bảng rồi playoff) môn pickleball trên ThePickleHub.
 Nhiệm vụ DUY NHẤT: đọc tin nhắn mới nhất của người dùng và trả về "patch" — chỉ các trường người dùng VỪA nói rõ. Không có thì bỏ trống trường đó. Ứng dụng tự hỏi câu tiếp theo, bạn KHÔNG hỏi.
