@@ -34,16 +34,13 @@ export function buildTournamentClusterLinks(
   const [schedule, results, watch, genericWatch] = clusterCandidates(enSlug);
   if (!schedule) return [];
   const t = LABELS[language];
-  const vi = language === "vi";
-  const out: ClusterLink[] = [];
-  const add = (text: string, path: string | undefined) => {
-    if (path && !out.some((l) => l.path === path)) out.push({ text, path });
-  };
-  if (schedule !== enSlug) add(t.schedule, resolve(schedule));
-  if (results !== enSlug) add(t.results, resolve(results));
+  const p = language === "vi" ? "/vi" : "";
   // Event-specific watch guide first; the PPA guide is the fallback.
-  add(t.watch, resolve(watch) ?? resolve(genericWatch));
-  add(t.rankings, vi ? "/vi/rankings" : "/rankings");
-  add(t.tools, vi ? "/vi/tools" : "/tools");
-  return out;
+  return [
+    { text: t.schedule, path: schedule !== enSlug ? resolve(schedule) : undefined },
+    { text: t.results, path: results !== enSlug ? resolve(results) : undefined },
+    { text: t.watch, path: resolve(watch) ?? resolve(genericWatch) },
+    { text: t.rankings, path: p + "/rankings" },
+    { text: t.tools, path: p + "/tools" },
+  ].filter((l): l is ClusterLink => !!l.path);
 }

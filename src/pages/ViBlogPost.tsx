@@ -2,7 +2,7 @@ import { buildTitle, truncateForSeo } from "@/lib/seo-title";
 import { authorIdentity } from "@/content/authors";
 import { useEffect } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { preloadViBlogPostBySlug, useViBlogPostBySlug } from "@/hooks/useViBlogPosts";
+import { preloadViBlogPostBySlug, useViBlogPostBySlug, useViBlogTwins } from "@/hooks/useViBlogPosts";
 import { ErrorState } from "@/components/states/PageStates";
 import { DynamicMeta, HreflangTags, BreadcrumbSchema, ArticleSchema, FAQSchema } from "@/components/seo";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
@@ -18,7 +18,6 @@ import { cmsHeroImageSources, heroDimsProps } from "@/lib/image-utils";
 import { WorldCupResultsBoard } from "@/components/live/WorldCupResultsBoard";
 import { TournamentClusterLinks } from "@/components/blog/TournamentClusterLinks";
 import { buildTournamentClusterLinks, clusterCandidates } from "@/content/blog/tournament-cluster";
-import { useViBlogTwins } from "@/hooks/useViBlogAlternate";
 
 /** Marker a VI post puts in content_html where a live block belongs. Mirrors
  *  WC_RESULTS_MARKER in functions/_lib/render/blog.ts. */

@@ -410,16 +410,12 @@ const BlogPost = () => {
               );
             }).flatMap((node, idx) =>
               // Storylines sit right after the intro, before the boards.
-              idx === 0 && content.storylines?.trim()
-                ? [node, (
-                    <section key="storylines">
-                      <h2>Storylines</h2>
-                      {content.storylines.split("\n\n").filter((p) => p.trim()).map((p, i) => (
-                        <p key={i}>{p.trim()}</p>
-                      ))}
-                    </section>
-                  )]
-                : [node],
+              idx || !content.storylines?.trim() ? node : [node, (
+                <section key="storylines">
+                  <h2>Storylines</h2>
+                  {content.storylines.split("\n\n").map((p, i) => p.trim() && <p key={i}>{p.trim()}</p>)}
+                </section>
+              )],
             )}
 
             {content.howToSteps && content.howToSteps.length > 0 && (
