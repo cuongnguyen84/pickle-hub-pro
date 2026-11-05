@@ -8,6 +8,9 @@
   Remove:   launchctl unload ~/Library/LaunchAgents/com.picklehub.google-data.plist
             rm ~/Library/LaunchAgents/com.picklehub.google-data.plist
   Adjust the two /Users/cm10/pickle-hub-pro paths if the repo ever moves.
+  WorkingDirectory may be on ANY branch (dirty is fine): the snapshot
+  commit is built on a freshly fetched origin/main and pushed from there,
+  never from HEAD (see README "Push path").
 -->
 <plist version="1.0">
 <dict>

@@ -12,7 +12,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "pickleball-group-draw-schedule-guide",
   publishedDate: "2026-08-26",
-  updatedDate: "2026-08-26",
+  updatedDate: "2026-11-05",
   author: "Cuong Nguyen",
   tags: [
     "chia bảng pickleball",
@@ -24,7 +24,7 @@ const post: BlogPost = {
     "group draw",
     "round robin schedule",
   ],
-  ctaPath: "/tools",
+  ctaPath: "/tools/quick-tables",
   ctaLabel: {
     en: "Generate your bracket free — no signup",
     vi: "Chia bảng & tạo lịch miễn phí — không cần đăng ký",
@@ -45,6 +45,7 @@ const post: BlogPost = {
           heading: "The three decisions every organizer makes",
           content:
             "Every pool-play pickleball event comes down to three decisions: how many groups to split your teams into, how to order the matches so nobody sits cold for an hour, and how the group results feed a knockout stage. Get the first two right and the day runs itself. This guide covers the exact cases that trip up first-time organizers — odd team counts, a single available court, and ties on match points — with worked schedules you can copy.",
+          internalLinks: [{ text: "Make all three decisions in Quick Tables — free, no signup", path: "/tools/quick-tables" }],
         },
         {
           heading: "How many groups for how many teams",
@@ -62,6 +63,7 @@ const post: BlogPost = {
               ["12", "3 groups of 4", "18", "Top 2 + 2 best thirds → quarters"],
             ],
           },
+          internalLinks: [{ text: "Split your teams into groups free in Quick Tables — no signup", path: "/tools/quick-tables" }],
         },
         {
           heading: "Scheduling 5 teams: the circle method, worked out",
@@ -78,13 +80,14 @@ const post: BlogPost = {
               ["5", "A – D", "B – C", "E"],
             ],
           },
+          internalLinks: [{ text: "Generate an odd-team round robin with byes free — no signup", path: "/tools/quick-tables" }],
         },
         {
           heading: "Fitting the schedule to your real courts",
           content:
             "A schedule that assumes infinite courts is fiction. With one court, just play the rounds in order. With two or more, interleave matches so the same team never plays twice in a row and rests spread evenly — this is where hand-written Excel schedules usually break, because a swap to fix one clash creates two more. Our generator schedules round-aware and pair-aware across however many courts you enter, and uses all of them for speed.",
           internalLinks: [
-            { text: "Free Pickleball Bracket & Round Robin Generator", path: "/tools" },
+            { text: "Schedule pool play on your real courts free in Quick Tables — no signup", path: "/tools/quick-tables" },
             {
               text: "How to Run a Pickleball Round Robin — byes and tiebreakers in depth",
               path: "/blog/pickleball-round-robin-generator-guide",
@@ -96,6 +99,7 @@ const post: BlogPost = {
           content:
             "Excel works for a single group of 4 with one court — a 6-row table you can type by hand. Beyond that, the spreadsheet cost compounds: circle-method rotations, court assignment, standings with tiebreakers, and every late withdrawal means redoing all of it. An online generator produces the same schedule in seconds, recalculates when a team drops, and keeps live standings. Ours is free, needs no signup, and works on a phone at courtside.",
           internalLinks: [
+            { text: "Skip the spreadsheet — generate your schedule free in Quick Tables", path: "/tools/quick-tables" },
             {
               text: "Pickleball Tournament Formats Explained — which format fits your player count",
               path: "/blog/pickleball-tournament-formats-explained",
@@ -110,6 +114,7 @@ const post: BlogPost = {
           heading: "Breaking ties in the group",
           content:
             "Decide tiebreakers before the first serve and print them: 1) match wins, 2) head-to-head result, 3) point differential across all group matches, 4) points won. Announcing them after a tie has formed is how organizers lose friends. The generator tracks differential automatically as you enter scores.",
+          internalLinks: [{ text: "Track standings & tiebreakers automatically in Quick Tables — free", path: "/tools/quick-tables" }],
         },
       ],
       faqItems: [
@@ -148,6 +153,7 @@ const post: BlogPost = {
           heading: "Ba việc phải quyết trước khi bốc thăm",
           content:
             "Tổ chức giải phong trào kiểu vòng bảng thực chất chỉ có ba quyết định: chia bao nhiêu bảng, xếp lịch sao cho không đội nào ngồi chờ cả tiếng, và kết quả vòng bảng dẫn vào nhánh knock-out thế nào. Chốt xong hai việc đầu là ngày thi đấu tự chạy. Bài này đi thẳng vào các tình huống hay vấp nhất: số đội lẻ, chỉ có 1-2 sân, và hai đội bằng điểm nhau — kèm lịch mẫu chép dùng được ngay.",
+          internalLinks: [{ text: "Chốt cả ba việc trong Quick Tables — miễn phí, không cần đăng ký", path: "/vi/tools/quick-tables" }],
         },
         {
           heading: "Bao nhiêu đội thì chia mấy bảng?",
@@ -165,6 +171,7 @@ const post: BlogPost = {
               ["12", "3 bảng 4", "18", "Nhất mỗi bảng + 1 nhì tốt nhất, hoặc 2 nhì tốt nhất vào tứ kết"],
             ],
           },
+          internalLinks: [{ text: "Chia bảng miễn phí với Quick Tables — không cần đăng ký", path: "/vi/tools/quick-tables" }],
         },
         {
           heading: "Xếp lịch vòng tròn 5 đội: phương pháp vòng xoay",
@@ -181,13 +188,14 @@ const post: BlogPost = {
               ["5", "A – D", "B – C", "E"],
             ],
           },
+          internalLinks: [{ text: "Tạo lịch vòng tròn số đội lẻ, tự xếp lượt nghỉ — miễn phí", path: "/vi/tools/quick-tables" }],
         },
         {
           heading: "Xếp theo số sân thật, không phải số sân lý thuyết",
           content:
             "Lịch đẹp trên giấy nhưng giả định sân vô hạn thì vô nghĩa. Có 1 sân: cứ đánh lần lượt theo vòng. Có 2 sân trở lên: phải cài xen kẽ sao cho không đội nào đánh 2 trận liên tiếp và thời gian nghỉ chia đều — đây chính là chỗ file Excel tự xếp hay vỡ, vì đổi một trận để gỡ trùng lại sinh ra hai chỗ trùng khác. Công cụ của ThePickleHub xếp lịch nhận biết theo vòng và theo cặp trên đúng số sân bạn nhập, và tận dụng hết sân để giải chạy nhanh nhất.",
           internalLinks: [
-            { text: "Công cụ chia bảng & tạo lịch vòng tròn miễn phí", path: "/tools" },
+            { text: "Xếp lịch theo đúng số sân của bạn với Quick Tables — miễn phí, không cần đăng ký", path: "/vi/tools/quick-tables" },
             {
               text: "Các thể thức giải pickleball: chọn thể thức nào cho số đội của bạn",
               path: "/blog/pickleball-tournament-formats-explained",
@@ -199,6 +207,7 @@ const post: BlogPost = {
           content:
             "Excel đủ dùng cho một bảng 4 đội đánh trên một sân — bảng 6 dòng gõ tay là xong. Quá mức đó, chi phí cộng dồn rất nhanh: xoay vòng theo circle method, gán sân, bảng xếp hạng kèm chỉ số phụ, và cứ mỗi đội rút lui phút chót là làm lại từ đầu. Công cụ online cho ra đúng lịch đó trong vài giây, tự tính lại khi có đội bỏ giải, và cập nhật bảng xếp hạng ngay khi nhập tỷ số. Công cụ của ThePickleHub miễn phí, không cần đăng ký, dùng tốt trên điện thoại ngay tại sân.",
           internalLinks: [
+            { text: "Bỏ Excel — tạo lịch thi đấu miễn phí với Quick Tables", path: "/vi/tools/quick-tables" },
             {
               text: "Trung tâm dành cho người tổ chức giải: đủ mọi hướng dẫn & công cụ",
               path: "/blog/tournament-organizer-hub",
@@ -209,6 +218,7 @@ const post: BlogPost = {
           heading: "Bằng điểm thì tính hạng thế nào?",
           content:
             "Chốt luật tính hạng TRƯỚC khi bóng lăn và in ra dán ở sân: 1) số trận thắng, 2) kết quả đối đầu trực tiếp, 3) hiệu số điểm toàn vòng bảng, 4) tổng điểm ghi được. Công bố luật sau khi đã xảy ra bằng điểm là cách nhanh nhất để mất bạn chơi. Nếu dùng công cụ, hiệu số được tính tự động khi nhập tỷ số từng trận.",
+          internalLinks: [{ text: "Tự tính bảng xếp hạng & hiệu số với Quick Tables — miễn phí", path: "/vi/tools/quick-tables" }],
         },
       ],
       faqItems: [
