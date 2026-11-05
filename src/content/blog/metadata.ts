@@ -10,6 +10,38 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "vietnam-junior-world-championships-2026",
+    "publishedDate": "2026-11-02",
+    "updatedDate": "2026-11-02",
+    "author": "The PickleHub Team",
+    "tags": [
+      "junior world championships 2026",
+      "vietnam juniors",
+      "nguyen gia hung",
+      "dan linh huong",
+      "huynh phu qui",
+      "tran dinh dat",
+      "opendoor worlds",
+      "dallas",
+      "afp"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-world-championships-2026-results-hero.webp",
+      "alt": "Opendoor Pickleball World Championships 2026 at Brookhaven Country Club, Farmers Branch, Texas"
+    },
+    "titleEn": "Vietnam Juniors Head to Junior Worlds in Dallas",
+    "titleVi": "Đoàn trẻ Việt Nam dự giải trẻ Worlds tại Dallas",
+    "metaTitleEn": "VN Juniors at Worlds Dallas 2026",
+    "metaTitleVi": "Đoàn trẻ VN dự Worlds Dallas 2026",
+    "metaDescriptionEn": "Nine Vietnam juniors play Junior Worlds in Dallas (5–8/11). Coaches Huỳnh Phú Quí and Trần Đình Đạt lead the group.",
+    "metaDescriptionVi": "9 VĐV trẻ Việt Nam dự Junior Worlds Dallas 5–8/11. Đoàn có HLV Huỳnh Phú Quí và Trần Đình Đạt."
+  },
+  {
     "slug": "juan-benitez-coach-behind-patriquin-bright-staksrud",
     "publishedDate": "2026-10-28",
     "updatedDate": "2026-10-28",
@@ -262,7 +294,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     "slug": "pickleball-world-championships-2026-results",
     "publishedDate": "2026-11-02",
-    "updatedDate": "2026-10-29",
+    "updatedDate": "2026-11-05",
     "author": "The PickleHub Team",
     "tags": [
       "pickleball",
@@ -1441,7 +1473,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "pickleball-group-draw-schedule-guide",
     publishedDate: "2026-08-26",
-    updatedDate: "2026-08-26",
+    updatedDate: "2026-11-05",
     author: "Cuong Nguyen",
     tags: [
       "chia bảng pickleball",
@@ -1453,7 +1485,7 @@ export const blogMetadata: BlogPostMetadata[] = [
       "group draw",
       "round robin schedule",
     ],
-    ctaPath: "/tools",
+    ctaPath: "/tools/quick-tables",
     ctaLabel: {
       en: "Generate your bracket free — no signup",
       vi: "Chia bảng & tạo lịch miễn phí — không cần đăng ký",
@@ -1826,6 +1858,25 @@ export const blogMetadata: BlogPostMetadata[] = [
       "The Hang Seng Bank Hong Kong Slam, Oct 19–25 2026 at Kai Tak Arena: a US$1.1M PPA Tour Asia 1500 finale — Asia's first Slam. Dates, prize and registration.",
     metaDescriptionVi:
       "Hang Seng Bank Hong Kong Slam 19–25/10/2026 tại Kai Tak Arena: chung kết PPA Tour Asia 1500, thưởng 1,1 triệu USD, Slam đầu tiên châu Á.",
+  },
+  {
+    slug: "mlp-nations-cup-2026-results",
+    publishedDate: "2026-10-31",
+    updatedDate: "2026-11-02",
+    author: "The PickleHub Team",
+    tags: ["mlp nations cup", "results", "2026", "worlds", "asia domestic"],
+    ctaPath: "/live",
+    ctaLabel: { en: "Follow live scores on ThePickleHub", vi: "Theo dõi điểm số trên ThePickleHub" },
+    heroImage: {
+      src: "/images/blog/mlp-nations-cup-2026-results-hero.webp",
+      alt: "MLP Nations Cup 2026 Day 1 — Team USA player mid-swing on championship court at Brookhaven (official Major League Pickleball photo)",
+    },
+    titleEn: "MLP Nations Cup 2026 Results: USA Win the Title",
+    titleVi: "Kết quả MLP Nations Cup 2026: USA vô địch, tỷ số đầy đủ",
+    metaTitleEn: "MLP Nations Cup 2026 Results: USA Champions",
+    metaTitleVi: "Kết quả MLP Nations Cup 2026: USA vô địch",
+    metaDescriptionEn: "USA won the MLP Nations Cup 2026, sweeping Latin America 3–0 in the final. Full semifinal and final scores plus pool standings.",
+    metaDescriptionVi: "USA vô địch MLP Nations Cup 2026, thắng Latin America 3–0 ở chung kết. Tỷ số bán kết, chung kết và bảng xếp hạng đầy đủ.",
   },
   {
     slug: "mlp-orlando-super-sunday-2026-best-game",

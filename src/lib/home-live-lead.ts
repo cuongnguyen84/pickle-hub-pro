@@ -24,8 +24,23 @@
 
 const STORAGE_KEY = "tph.home-live-lead";
 
-/** Matches the 7-day replay window in Index.tsx that makes the slot sticky. */
-export const LIVE_LEAD_HINT_TTL_MS = 7 * 86_400_000;
+/** An ended stream stays on the homepage (and /live) for 7 days. */
+export const REPLAY_WINDOW_MS = 7 * 86_400_000;
+
+/** Matches the replay window that makes the slot sticky. */
+export const LIVE_LEAD_HINT_TTL_MS = REPLAY_WINDOW_MS;
+
+/** Ended streams whose `ended_at` falls inside the 7-day replay window. */
+export function withinReplayWindow<T extends { ended_at: string | null }>(
+  streams: T[],
+  now: number = Date.now(),
+): T[] {
+  return streams.filter((s) => {
+    if (!s.ended_at) return false;
+    const age = now - new Date(s.ended_at).getTime();
+    return age >= 0 && age < REPLAY_WINDOW_MS;
+  });
+}
 
 interface LiveLeadHint {
   leads: boolean;

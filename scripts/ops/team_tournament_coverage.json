@@ -6,7 +6,7 @@
   "live_refresh_minutes": 10,
   "live_window_start": "07:00",
   "live_window_end": "19:00",
-  "verified_at": "2026-10-28",
+  "verified_at": "2026-11-02",
   "events": [
     {
       "key": "veolia-chicago-cup-2026",
@@ -175,7 +175,7 @@
         "https://www.ppatour.com/events/2026/college-world-championship/",
         "https://pickleballtournaments.com/tournaments/2026-college-world-championship"
       ],
-      "notes": "P2, thêm 21/10. Brookhaven Country Club, Farmers Branch TX (cùng venue World Championships tuần sau). tourneyId 95602192-b649-420f-a8ff-0887fddfe1e7 và uuid e2dda6f6 đều trả /api/scores/ divisions rỗng. Không bật auto_publish. 28/10 thử lại 16 uuid trên trang pickleballtournaments (gồm tourneyId 95602192-b649-420f-a8ff-0887fddfe1e7 và e2dda6f6-fc6d-4246-ad5d-83530e0c5668): mọi /api/scores/?event= trả 0 divisions. Không bật auto_publish."
+      "notes": "P2, thêm 21/10. Brookhaven Country Club, Farmers Branch TX (cùng venue World Championships tuần sau). tourneyId 95602192-b649-420f-a8ff-0887fddfe1e7 và uuid e2dda6f6 đều trả /api/scores/ divisions rỗng. Không bật auto_publish. 28/10 thử lại 16 uuid trên trang pickleballtournaments (gồm tourneyId 95602192-b649-420f-a8ff-0887fddfe1e7 và e2dda6f6-fc6d-4246-ad5d-83530e0c5668): mọi /api/scores/?event= trả 0 divisions. Không bật auto_publish. 02/11 thử lại tourneyId 95602192-b649-420f-a8ff-0887fddfe1e7 và 31 uuid khác trên trang (gồm e2dda6f6-fc6d-4246-ad5d-83530e0c5668): mọi /api/scores/?event= vẫn 0 divisions. Giải đã kết thúc 1/11. Không bật auto_publish."
     },
     {
       "key": "nanjing-2026",
@@ -215,6 +215,7 @@
       "title": "Opendoor Pickleball World Championships 2026",
       "start_date": "2026-11-02",
       "end_date": "2026-11-08",
+      "qualifying_dates": ["2026-11-02"],
       "event_timezone": "America/Chicago",
       "enabled": true,
       "sources": [
@@ -243,28 +244,64 @@
       ]
     },
     {
+      "key": "app-european-open-2026",
+      "title": "2026 European Pickleball Open Powered by The APP",
+      "start_date": "2026-11-03",
+      "end_date": "2026-11-08",
+      "event_timezone": "Europe/Istanbul",
+      "enabled": true,
+      "sources": [
+        "https://www.theapp.global/tour",
+        "https://www.theapp.global/tour-schedule/2026-european-open",
+        "https://europeanpickleballfederation.org/european-pickleball-federation-european-open-2026/"
+      ],
+      "notes": "Thêm 02/11. APP không có feed điểm số PPA — chỉ nháp, không auto_publish. Ngày 3–8/11/2026 và venue Ali Bey Club Manavgat khớp trên theapp.global/tour-schedule/2026-european-open và tiêu đề europeanpickleballfederation.org (\"3-8 November 2026\"). Cùng trang EPF còn câu \"The proposed event dates are 1-8 November 2026\" — không dùng câu đó. Trong cửa sổ 14 ngày nhưng APP không có /api/scores."
+    },
+    {
       "key": "app-bangkok-open-2026",
       "title": "APP Asia Bangkok Open 2026",
-      "start_date": "2026-11-02",
-      "end_date": "2026-11-07",
+      "start_date": "2026-11-17",
+      "end_date": "2026-11-22",
       "event_timezone": "Asia/Bangkok",
       "enabled": true,
       "sources": [
-        "https://www.theapp.global/tour-schedule/2026-app-bangkok-open"
+        "https://www.theapp.global/tour-schedule/2026-app-bangkok-open",
+        "https://theapp.asia/news/app-asia-bangkok-open-2026-brings-the-tour-to-thailand-this-november/",
+        "https://pickleballnewsasia.com/app-asia-takes-tour-to-thailand-with-bangkok-open-2026/"
       ],
-      "notes": "P1 châu Á. APP không có feed điểm số công khai như PPA — chỉ nháp, không tự đăng. 13/10 lịch lấy từ theapp.global. 21/10 trang /tour không còn card Bangkok; script trên trang chỉ còn tên BANGKOK trong danh sách ẩn ngày TBD (cùng NEW DELHI). Giữ lịch 2–7/11 như bản 13/10, chưa xác minh lại được ngày. 28/10 theapp.global/tour Last Published 26/10 vẫn không có card Bangkok; script ẩn TBD vẫn chỉ nêu BANGKOK và NEW DELHI. Giữ nháp, không auto_publish."
+      "notes": "P1 châu Á. APP không có feed điểm số công khai như PPA — chỉ nháp, không tự đăng. 13/10 lịch lấy từ theapp.global. 21/10 trang /tour không còn card Bangkok; script trên trang chỉ còn tên BANGKOK trong danh sách ẩn ngày TBD (cùng NEW DELHI). Giữ lịch 2–7/11 như bản 13/10, chưa xác minh lại được ngày. 28/10 theapp.global/tour Last Published 26/10 vẫn không có card Bangkok; script ẩn TBD vẫn chỉ nêu BANGKOK và NEW DELHI. Giữ nháp, không auto_publish. 31/10 sửa ngày 2–7/11 → 17–22/11/2026 (ALM x IMPACT Tennis & Sport Center) theo theapp.asia và pickleballnewsasia. theapp.global vẫn hiện 2–7/11, lịch cũ. 02/11 theapp.global/tour Last Published vẫn Mon Oct 26 2026; script ẩn TBD vẫn có BANGKOK. Giữ 17–22/11, không auto_publish."
     },
     {
       "key": "daytona-beach-open-2026",
       "title": "Proton Daytona Beach Open 2026",
+      "name": "Daytona Beach Open 2026",
+      "search_name": "PPA Daytona Beach",
       "start_date": "2026-11-16",
       "end_date": "2026-11-22",
       "event_timezone": "America/New_York",
       "enabled": true,
       "sources": [
-        "https://www.ppatour.com/events/2026/proton-daytona-beach-open/"
+        "https://www.ppatour.com/events/2026/proton-daytona-beach-open/",
+        "https://pickleballtournaments.com/tournaments/ppa-tour-florida-open",
+        "https://www.ppatour.com/api/scores/?event=12a61e43-1dc7-4d48-a926-10d3aa1a66cb"
       ],
-      "notes": "P1. Pictona at Holly Hill Florida. Draw URL và giờ trận chưa xác minh ngày4/10. Local+12h=VN trong tháng11."
+      "notes": "P1. Pictona at Holly Hill, Holly Hill, Florida. Local+12h=VN trong tháng11. 02/11: eventId là tourneyId trên pickleballtournaments.com/tournaments/ppa-tour-florida-open (title PPA Tour: Proton Daytona Beach Open). Feed trả đúng tournamentId, 5 nội dung Pro, 0 trận. uuid 1259f4ea… là Daytona Beach Open Dec 2025 (208 trận) và ff4629c5… là Hertz Gold Cup Nov 2023 (236 trận) — linked tournaments, không dùng. `name` 'Daytona Beach Open 2026' để metaTitle EN/VI nằm trong 60 byte; search_name 'PPA Daytona Beach'. Feed 0 trận: publish_from hôm nay sẽ báo score_matches_missing tới khi có trận, không đăng trang rỗng.",
+      "auto_publish": true,
+      "publish_from": "2026-11-02",
+      "event_id": "12a61e43-1dc7-4d48-a926-10d3aa1a66cb",
+      "result_source": "https://www.ppatour.com/api/scores/?event=12a61e43-1dc7-4d48-a926-10d3aa1a66cb",
+      "source": "https://www.ppatour.com/events/2026/proton-daytona-beach-open/",
+      "slug": "daytona-beach-open-2026-results",
+      "vi_slug": "ket-qua-daytona-beach-open-2026",
+      "dates_en": "November 16–22, 2026",
+      "dates_vi": "16–22/11/2026",
+      "venue": "Pictona at Holly Hill, Holly Hill, Florida",
+      "tags": [
+        "pickleball",
+        "results",
+        "ppa daytona",
+        "2026"
+      ]
     },
     {
       "key": "ppa-europe-lille-125-2026",
@@ -277,7 +314,7 @@
         "https://www.ppatour.com/events/",
         "https://pickleballtournaments.com/tournaments/ppa-tour-europe-p125-lille"
       ],
-      "notes": "P2, thêm 21/10 từ card ppatour.com/events (Nov 12–15, 2026). Ngoài cửa sổ 14 ngày nên chưa tra eventId / chưa bật auto_publish. Venue chưa lấy từ trang event riêng."
+      "notes": "P2, thêm 21/10 từ card ppatour.com/events (Nov 12–15, 2026). 02/11 trong cửa sổ 14 ngày. tourneyId 04a30133-11cc-4280-97f7-3027404c05b3 trên pickleballtournaments.com/tournaments/ppa-tour-europe-p125-lille (title PPA TOUR EUROPE - P125 LILLE, Nov 12 2026 - Nov 15 2026) và mọi uuid khác trên trang đều trả /api/scores/?event= 0 divisions. Không bật auto_publish. Venue trên trang đăng ký: Joco Pickleball, 10 Rue de la Cense, Villeneuve D'Ascq 59650, Nord, France (indoor, 10 courts). Card ppatour.com/events chỉ ghi Lille, France."
     },
     {
       "key": "app-djoy-vietnam-2026",
@@ -378,6 +415,19 @@
         "https://www.ppatour.com/events/"
       ],
       "notes": "P2, thêm 21/10. Card ppatour.com/events ghi Dec 10–13, 2026 (bản mốc 13/10 ghi 10–13/12, khớp). Ngoài 14 ngày, chưa tra eventId, chưa bật auto_publish."
+    },
+    {
+      "key": "ppa-melbourne-125-2027",
+      "title": "PPA 125 Melbourne",
+      "start_date": "2027-02-18",
+      "end_date": "2027-02-21",
+      "event_timezone": "Australia/Melbourne",
+      "enabled": true,
+      "sources": [
+        "https://www.ppatour.com/events/",
+        "https://pickleballtournaments.com/tournaments/ppa125-melbourne"
+      ],
+      "notes": "Thêm 02/11. Card ppatour.com/events: Feb 18–21, 2027, Melbourne, Vic. pickleballtournaments.com/tournaments/ppa125-melbourne: tourneyDates Feb 18 2027 - Feb 21 2027, Venue TBC, website ppatour.com.au. Ngoài 14 ngày, chưa tra eventId, chưa auto_publish. Venue chưa công bố — không ghi địa chỉ."
     },
     {
       "key": "app-ho-chi-minh-city-open-2026",

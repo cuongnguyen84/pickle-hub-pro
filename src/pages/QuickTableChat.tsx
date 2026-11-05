@@ -26,8 +26,8 @@ import { localePath } from "@/lib/locale-path";
 import { cn } from "@/lib/utils";
 import { rankSeriesSizes, seriesLine, seriesName, seriesPlan, slot as seriesSlot, type SeriesStyle } from "@/lib/quick-table-series";
 import {
-  applyPatch, applySpokenEdit, buildRoster, chatFacts, customSeries, defaultName, draftSeriesPlan, dropInventedRoster, duplicateIndexes, entryCount, entryLabel, factualAck, findGroupOption, googleSheetRef, groupChoices,
-  fallbackReply, groupCourtsLine, groupSizes, keepOrAssign, localSlotPatch, lockAdvance, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, messageNeedsModel, nextSlot, pairEntries, parseSheet, playoffSummary, previewAssignments, replyFromDraft, seriesCap, trustPatch,
+  applyPatch, applySpokenEdit, buildRoster, chatFacts, customSeries, defaultName, draftSeriesPlan, dropInventedRoster, duplicateIndexes, entryCount, entryLabel, factualAck, findGroupOption, googleSheetRef, groupChoices, groupSuggestion,
+  fallbackReply, groupCourtsLine, groupSizes, keepOrAssign, localSlotPatch, lockAdvance, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, messageNeedsModel, needsPairing, nextSlot, pairEntries, parseSheet, playoffSummary, previewAssignments, replyFromDraft, seriesCap, trustPatch,
   type Draft, type Entry, type GroupOption, type PairingMode, type Slot,
 } from "@/lib/quick-table-chat";
 
@@ -58,7 +58,7 @@ const COPY = {
     loginDesc: "Kể cho trợ lý nghe về giải hoặc dán danh sách từ Zalo — vài giây là có bảng đấu.",
     toolLabel: "Chia bảng",
     welcome: "Chào bạn 👋 Kể mình nghe về giải nhé, ví dụ: “Giải CLB tối thứ 7, 16 đôi, chia 4 bảng”. Hoặc dán danh sách, gửi link Google Sheet, tải vài ảnh hay một file Excel.",
-    unit: (d: Draft): string => (d.is_doubles === false ? "người" : "đội"),
+    unit: (d: Draft): string => (d.is_doubles === false || needsPairing(d) ? "người" : "đội"),
     format: "Đánh đôi hay đánh đơn? Đôi là 2 người một đội, đơn là từng vận động viên.",
     doubles: "Đôi", singles: "Đơn",
     count: (u: string) => `Có bao nhiêu ${u}? Hoặc dán luôn danh sách vào đây.`,
@@ -88,6 +88,7 @@ const COPY = {
     useList: (m: number, u: string) => `Lấy ${m} ${u}`,
     pasteMore: "Dán thêm",
     groups: (n: number, u: string) => `${n} ${u} chia thế nào?`,
+    suggestGroups: (d: Draft) => groupSuggestion(d, "vi"),
     groupsInvalid: (k: number, u: string) => `Không chia được ${k} bảng (mỗi bảng 3–8 ${u}, tối đa 16 bảng). Chọn một cách dưới đây nhé:`,
     groupsBig: " Giải đông, nhiều bảng sẽ xong nhanh hơn.",
     groupLabel: (o: GroupOption) => (o.groupCount === 1 ? "1 bảng vòng tròn" : `${o.groupCount} bảng × ${o.sizes[0] === o.sizes[o.sizes.length - 1] ? o.sizes[0] : `${o.sizes[o.sizes.length - 1]}–${o.sizes[0]}`}`),
@@ -185,7 +186,7 @@ const COPY = {
     loginDesc: "Describe your event or paste a player list from your group chat — groups are ready in seconds.",
     toolLabel: "Round robin",
     welcome: "Hi 👋 Tell me about your event, e.g. “Club night Saturday, 16 doubles teams, 4 groups”. Or paste a list, send a Google Sheet link, or upload several photos or one Excel file.",
-    unit: (d: Draft): string => (d.is_doubles === false ? "players" : "teams"),
+    unit: (d: Draft): string => (d.is_doubles === false || needsPairing(d) ? "players" : "teams"),
     format: "Doubles or singles?",
     doubles: "Doubles", singles: "Singles",
     count: (u: string) => `How many ${u}? Or paste the list right here.`,
@@ -215,6 +216,7 @@ const COPY = {
     useList: (m: number, u: string) => `Use ${m} ${u}`,
     pasteMore: "Paste more",
     groups: (n: number, u: string) => `How should ${n} ${u} be split?`,
+    suggestGroups: (d: Draft) => groupSuggestion(d, "en"),
     groupsInvalid: (k: number, u: string) => `${k} groups won't work (3–8 ${u} per group, up to 16 groups). Pick one of these:`,
     groupsBig: " Big field — more groups finish faster.",
     groupLabel: (o: GroupOption) => (o.groupCount === 1 ? "1 round-robin group" : `${o.groupCount} groups × ${o.sizes[0] === o.sizes[o.sizes.length - 1] ? o.sizes[0] : `${o.sizes[o.sizes.length - 1]}–${o.sizes[0]}`}`),
@@ -1140,7 +1142,7 @@ function questionFor(c: C, d: Draft, s: Slot): string {
     case "pairing": return (d.entries!.length % 2 ? c.pairingOdd : c.pairing)(d.entries!.length);
     case "mismatch": return c.mismatch(d.entries!.length, d.player_count!, u);
     case "groups":
-      return (d.group_count ? c.groupsInvalid(d.group_count, u) : c.groups(n, u)) + (n > 32 ? c.groupsBig : "");
+      return (d.group_count ? c.groupsInvalid(d.group_count, u) : [c.groups(n, u), c.suggestGroups(d)].filter(Boolean).join(" ")) + (n > 32 ? c.groupsBig : "");
     case "series": return c.series(u);
     case "roster": return c.roster(u);
     case "paste": return c.paste(d);

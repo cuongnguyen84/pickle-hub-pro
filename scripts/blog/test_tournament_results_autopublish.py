@@ -131,6 +131,24 @@ class TournamentAutopublishTests(unittest.TestCase):
         self.assertEqual(board["champion"], "Champ")
         self.assertEqual([r["label"] for r in board["rounds"]], ["Chung kết", "Bán kết"])
 
+    def test_qualifying_day_draw_is_separated_from_main_draw(self):
+        # Worlds 2026: the feed shipped the 2/11 qualifier under "Men's Singles"
+        # with main-draw labels next to nothing else; the page called it main R16.
+        qual = dict(self._final("Round 16", 4), dateKey="2026-11-02", division="Men's Singles")
+        main = dict(self._final("Round 64", 2), dateKey="2026-11-03", division="Men's Singles")
+        rows = autopublish.mark_qualifying([qual, main], {"qualifying_dates": ["2026-11-02"]})
+        self.assertEqual([r["dateKey"] for r in rows], ["2026-11-03", "2026-11-02"])
+        en = autopublish.draw_sections(rows)
+        self.assertEqual([s["heading"] for s in en], ["Men's Singles results", "Men's Singles Qualifying results"])
+        self.assertEqual(en[0]["resultsBoard"]["rounds"][0]["label"], "Round 64")
+        self.assertEqual(en[1]["resultsBoard"]["rounds"][0]["label"], "Qualifying · Round 16")
+        vi = autopublish.draw_sections(rows, vi=True)
+        self.assertEqual(vi[1]["heading"], "Kết quả Đơn nam – vòng loại")
+        self.assertEqual(vi[1]["resultsBoard"]["rounds"][0]["label"], "Vòng loại · Vòng 16")
+        self.assertEqual(autopublish.draw_summaries(rows, vi=True)[1]["anchor"], "rb-don-nam-vong-loai")
+        # No qualifying_dates configured: feed passes through untouched.
+        self.assertEqual(autopublish.mark_qualifying([qual], {}), [qual])
+
     def test_anchor_slug_matches_renderer_rule(self):
         self.assertEqual(autopublish._anchor("Women's Doubles"), "rb-womens-doubles")
         self.assertEqual(autopublish._anchor("Đôi nữ"), "rb-doi-nu")
