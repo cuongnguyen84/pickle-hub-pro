@@ -1,0 +1,1445 @@
+{
+ "source": "ga4",
+ "property": "522556358",
+ "generated_at": "2026-11-02T07:15:12.509691+07:00",
+ "period": {
+  "start": "2026-10-05",
+  "end": "2026-11-01",
+  "days": 28
+ },
+ "totals": {
+  "sessions": 5496,
+  "users": 5070,
+  "views": 13012
+ },
+ "daily": [
+  {
+   "date": "20261005",
+   "sessions": 124,
+   "totalUsers": 114,
+   "screenPageViews": 343
+  },
+  {
+   "date": "20261006",
+   "sessions": 63,
+   "totalUsers": 52,
+   "screenPageViews": 163
+  },
+  {
+   "date": "20261007",
+   "sessions": 65,
+   "totalUsers": 54,
+   "screenPageViews": 136
+  },
+  {
+   "date": "20261008",
+   "sessions": 63,
+   "totalUsers": 60,
+   "screenPageViews": 157
+  },
+  {
+   "date": "20261009",
+   "sessions": 91,
+   "totalUsers": 83,
+   "screenPageViews": 269
+  },
+  {
+   "date": "20261010",
+   "sessions": 82,
+   "totalUsers": 71,
+   "screenPageViews": 192
+  },
+  {
+   "date": "20261011",
+   "sessions": 133,
+   "totalUsers": 127,
+   "screenPageViews": 353
+  },
+  {
+   "date": "20261012",
+   "sessions": 139,
+   "totalUsers": 128,
+   "screenPageViews": 322
+  },
+  {
+   "date": "20261013",
+   "sessions": 100,
+   "totalUsers": 94,
+   "screenPageViews": 262
+  },
+  {
+   "date": "20261014",
+   "sessions": 647,
+   "totalUsers": 618,
+   "screenPageViews": 1057
+  },
+  {
+   "date": "20261015",
+   "sessions": 136,
+   "totalUsers": 123,
+   "screenPageViews": 288
+  },
+  {
+   "date": "20261016",
+   "sessions": 136,
+   "totalUsers": 130,
+   "screenPageViews": 375
+  },
+  {
+   "date": "20261017",
+   "sessions": 149,
+   "totalUsers": 142,
+   "screenPageViews": 345
+  },
+  {
+   "date": "20261018",
+   "sessions": 194,
+   "totalUsers": 184,
+   "screenPageViews": 395
+  },
+  {
+   "date": "20261019",
+   "sessions": 326,
+   "totalUsers": 299,
+   "screenPageViews": 746
+  },
+  {
+   "date": "20261020",
+   "sessions": 245,
+   "totalUsers": 217,
+   "screenPageViews": 809
+  },
+  {
+   "date": "20261021",
+   "sessions": 280,
+   "totalUsers": 263,
+   "screenPageViews": 808
+  },
+  {
+   "date": "20261022",
+   "sessions": 152,
+   "totalUsers": 135,
+   "screenPageViews": 354
+  },
+  {
+   "date": "20261023",
+   "sessions": 264,
+   "totalUsers": 245,
+   "screenPageViews": 803
+  },
+  {
+   "date": "20261024",
+   "sessions": 249,
+   "totalUsers": 211,
+   "screenPageViews": 434
+  },
+  {
+   "date": "20261025",
+   "sessions": 426,
+   "totalUsers": 390,
+   "screenPageViews": 817
+  },
+  {
+   "date": "20261026",
+   "sessions": 145,
+   "totalUsers": 132,
+   "screenPageViews": 451
+  },
+  {
+   "date": "20261027",
+   "sessions": 192,
+   "totalUsers": 172,
+   "screenPageViews": 429
+  },
+  {
+   "date": "20261028",
+   "sessions": 109,
+   "totalUsers": 100,
+   "screenPageViews": 257
+  },
+  {
+   "date": "20261029",
+   "sessions": 109,
+   "totalUsers": 103,
+   "screenPageViews": 250
+  },
+  {
+   "date": "20261030",
+   "sessions": 86,
+   "totalUsers": 78,
+   "screenPageViews": 269
+  },
+  {
+   "date": "20261031",
+   "sessions": 91,
+   "totalUsers": 85,
+   "screenPageViews": 190
+  },
+  {
+   "date": "20261101",
+   "sessions": 700,
+   "totalUsers": 660,
+   "screenPageViews": 1738
+  }
+ ],
+ "top_pages": [
+  {
+   "pagePath": "/",
+   "screenPageViews": 770,
+   "sessions": 378
+  },
+  {
+   "pagePath": "/live/364825ba-a42a-4026-9782-e90e8d25af73",
+   "screenPageViews": 694,
+   "sessions": 443
+  },
+  {
+   "pagePath": "/login",
+   "screenPageViews": 559,
+   "sessions": 307
+  },
+  {
+   "pagePath": "/blog/hong-kong-slam-2026-results",
+   "screenPageViews": 426,
+   "sessions": 331
+  },
+  {
+   "pagePath": "/blog/ppa-brisbane-2026-results",
+   "screenPageViews": 414,
+   "sessions": 330
+  },
+  {
+   "pagePath": "/tools",
+   "screenPageViews": 388,
+   "sessions": 137
+  },
+  {
+   "pagePath": "/vi",
+   "screenPageViews": 386,
+   "sessions": 162
+  },
+  {
+   "pagePath": "/vi/blog/ket-qua-ppa-brisbane-2026",
+   "screenPageViews": 378,
+   "sessions": 324
+  },
+  {
+   "pagePath": "/live",
+   "screenPageViews": 352,
+   "sessions": 150
+  },
+  {
+   "pagePath": "/tools/quick-tables",
+   "screenPageViews": 329,
+   "sessions": 95
+  },
+  {
+   "pagePath": "/vi/blog/ket-qua-hong-kong-slam-2026",
+   "screenPageViews": 324,
+   "sessions": 206
+  },
+  {
+   "pagePath": "/search",
+   "screenPageViews": 282,
+   "sessions": 26
+  },
+  {
+   "pagePath": "/blog/hong-kong-slam-2026-schedule",
+   "screenPageViews": 279,
+   "sessions": 207
+  },
+  {
+   "pagePath": "/blog/veolia-chicago-cup-2026-results",
+   "screenPageViews": 277,
+   "sessions": 235
+  },
+  {
+   "pagePath": "/vi/blog/cach-chon-vot-pickleball",
+   "screenPageViews": 259,
+   "sessions": 248
+  },
+  {
+   "pagePath": "/blog/mlp-nations-cup-2026-results",
+   "screenPageViews": 247,
+   "sessions": 205
+  },
+  {
+   "pagePath": "/vi/live",
+   "screenPageViews": 243,
+   "sessions": 113
+  },
+  {
+   "pagePath": "/blog/virginia-beach-open-2026-results",
+   "screenPageViews": 241,
+   "sessions": 212
+  },
+  {
+   "pagePath": "/tournaments",
+   "screenPageViews": 231,
+   "sessions": 91
+  },
+  {
+   "pagePath": "/vi/tools",
+   "screenPageViews": 194,
+   "sessions": 83
+  },
+  {
+   "pagePath": "/auth/callback",
+   "screenPageViews": 167,
+   "sessions": 147
+  },
+  {
+   "pagePath": "/vi/blog/lich-thi-dau-hong-kong-slam-2026",
+   "screenPageViews": 161,
+   "sessions": 137
+  },
+  {
+   "pagePath": "/vi/rankings",
+   "screenPageViews": 144,
+   "sessions": 32
+  },
+  {
+   "pagePath": "/vi/news/chung-ket-hong-kong-slam-2026-preview-d08145e2",
+   "screenPageViews": 142,
+   "sessions": 122
+  },
+  {
+   "pagePath": "/vi/tournaments",
+   "screenPageViews": 140,
+   "sessions": 61
+  }
+ ],
+ "top_channels": [
+  {
+   "sessionDefaultChannelGroup": "Organic Search",
+   "sessions": 3190,
+   "totalUsers": 2797
+  },
+  {
+   "sessionDefaultChannelGroup": "Organic Social",
+   "sessions": 1679,
+   "totalUsers": 1455
+  },
+  {
+   "sessionDefaultChannelGroup": "Direct",
+   "sessions": 459,
+   "totalUsers": 347
+  },
+  {
+   "sessionDefaultChannelGroup": "Unassigned",
+   "sessions": 148,
+   "totalUsers": 144
+  },
+  {
+   "sessionDefaultChannelGroup": "Referral",
+   "sessions": 111,
+   "totalUsers": 67
+  },
+  {
+   "sessionDefaultChannelGroup": "AI Assistant",
+   "sessions": 22,
+   "totalUsers": 20
+  }
+ ],
+ "daily_by_source": [
+  {
+   "date": "20261005",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 11,
+   "users": 10
+  },
+  {
+   "date": "20261005",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 7,
+   "users": 7
+  },
+  {
+   "date": "20261005",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 78,
+   "users": 75
+  },
+  {
+   "date": "20261005",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 4,
+   "users": 2
+  },
+  {
+   "date": "20261005",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 5,
+   "users": 5
+  },
+  {
+   "date": "20261005",
+   "source": "x.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261006",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 6,
+   "users": 6
+  },
+  {
+   "date": "20261006",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261006",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 38,
+   "users": 32
+  },
+  {
+   "date": "20261006",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 4,
+   "users": 3
+  },
+  {
+   "date": "20261006",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261006",
+   "source": "x.com",
+   "medium": "referral",
+   "sessions": 2,
+   "users": 1
+  },
+  {
+   "date": "20261007",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 7,
+   "users": 6
+  },
+  {
+   "date": "20261007",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261007",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 39,
+   "users": 33
+  },
+  {
+   "date": "20261007",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 7,
+   "users": 3
+  },
+  {
+   "date": "20261007",
+   "source": "x.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261008",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 4,
+   "users": 4
+  },
+  {
+   "date": "20261008",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261008",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 46,
+   "users": 45
+  },
+  {
+   "date": "20261008",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261008",
+   "source": "x.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261009",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 7,
+   "users": 7
+  },
+  {
+   "date": "20261009",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 70,
+   "users": 65
+  },
+  {
+   "date": "20261009",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261009",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261010",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 3,
+   "users": 3
+  },
+  {
+   "date": "20261010",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261010",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 66,
+   "users": 60
+  },
+  {
+   "date": "20261010",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 2,
+   "users": 2
+  },
+  {
+   "date": "20261010",
+   "source": "x.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261011",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 11,
+   "users": 11
+  },
+  {
+   "date": "20261011",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 6,
+   "users": 6
+  },
+  {
+   "date": "20261011",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 108,
+   "users": 102
+  },
+  {
+   "date": "20261011",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261012",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 9,
+   "users": 9
+  },
+  {
+   "date": "20261012",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261012",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 112,
+   "users": 107
+  },
+  {
+   "date": "20261012",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 3,
+   "users": 1
+  },
+  {
+   "date": "20261013",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 11,
+   "users": 10
+  },
+  {
+   "date": "20261013",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 23,
+   "users": 23
+  },
+  {
+   "date": "20261013",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 45,
+   "users": 43
+  },
+  {
+   "date": "20261013",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 2,
+   "users": 1
+  },
+  {
+   "date": "20261013",
+   "source": "lm.facebook.com",
+   "medium": "referral",
+   "sessions": 3,
+   "users": 3
+  },
+  {
+   "date": "20261013",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 5,
+   "users": 5
+  },
+  {
+   "date": "20261013",
+   "source": "x.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261014",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 105,
+   "users": 98
+  },
+  {
+   "date": "20261014",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 177,
+   "users": 177
+  },
+  {
+   "date": "20261014",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 277,
+   "users": 265
+  },
+  {
+   "date": "20261014",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 41,
+   "users": 35
+  },
+  {
+   "date": "20261014",
+   "source": "lm.facebook.com",
+   "medium": "referral",
+   "sessions": 33,
+   "users": 31
+  },
+  {
+   "date": "20261014",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 2,
+   "users": 2
+  },
+  {
+   "date": "20261015",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 7,
+   "users": 7
+  },
+  {
+   "date": "20261015",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 9,
+   "users": 9
+  },
+  {
+   "date": "20261015",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 102,
+   "users": 93
+  },
+  {
+   "date": "20261015",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 4,
+   "users": 4
+  },
+  {
+   "date": "20261015",
+   "source": "lm.facebook.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261015",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 2,
+   "users": 2
+  },
+  {
+   "date": "20261016",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 4,
+   "users": 4
+  },
+  {
+   "date": "20261016",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 2,
+   "users": 2
+  },
+  {
+   "date": "20261016",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 123,
+   "users": 117
+  },
+  {
+   "date": "20261016",
+   "source": "lm.facebook.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261017",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 5,
+   "users": 4
+  },
+  {
+   "date": "20261017",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 2,
+   "users": 2
+  },
+  {
+   "date": "20261017",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 134,
+   "users": 128
+  },
+  {
+   "date": "20261017",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261017",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 2,
+   "users": 2
+  },
+  {
+   "date": "20261018",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 5,
+   "users": 5
+  },
+  {
+   "date": "20261018",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 34,
+   "users": 32
+  },
+  {
+   "date": "20261018",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 137,
+   "users": 131
+  },
+  {
+   "date": "20261018",
+   "source": "lm.facebook.com",
+   "medium": "referral",
+   "sessions": 6,
+   "users": 6
+  },
+  {
+   "date": "20261018",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 5,
+   "users": 5
+  },
+  {
+   "date": "20261018",
+   "source": "x.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261019",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 13,
+   "users": 12
+  },
+  {
+   "date": "20261019",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 97,
+   "users": 90
+  },
+  {
+   "date": "20261019",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 163,
+   "users": 159
+  },
+  {
+   "date": "20261019",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 15,
+   "users": 9
+  },
+  {
+   "date": "20261019",
+   "source": "lm.facebook.com",
+   "medium": "referral",
+   "sessions": 8,
+   "users": 7
+  },
+  {
+   "date": "20261019",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 6,
+   "users": 6
+  },
+  {
+   "date": "20261020",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 19,
+   "users": 17
+  },
+  {
+   "date": "20261020",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 46,
+   "users": 44
+  },
+  {
+   "date": "20261020",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 126,
+   "users": 116
+  },
+  {
+   "date": "20261020",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 11,
+   "users": 8
+  },
+  {
+   "date": "20261020",
+   "source": "lm.facebook.com",
+   "medium": "referral",
+   "sessions": 7,
+   "users": 7
+  },
+  {
+   "date": "20261020",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 9,
+   "users": 9
+  },
+  {
+   "date": "20261021",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 31,
+   "users": 27
+  },
+  {
+   "date": "20261021",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 72,
+   "users": 72
+  },
+  {
+   "date": "20261021",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 132,
+   "users": 126
+  },
+  {
+   "date": "20261021",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 12,
+   "users": 8
+  },
+  {
+   "date": "20261021",
+   "source": "lm.facebook.com",
+   "medium": "referral",
+   "sessions": 13,
+   "users": 12
+  },
+  {
+   "date": "20261021",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 11,
+   "users": 11
+  },
+  {
+   "date": "20261022",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 7,
+   "users": 7
+  },
+  {
+   "date": "20261022",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 22,
+   "users": 22
+  },
+  {
+   "date": "20261022",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 97,
+   "users": 88
+  },
+  {
+   "date": "20261022",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 5,
+   "users": 3
+  },
+  {
+   "date": "20261022",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 4,
+   "users": 4
+  },
+  {
+   "date": "20261023",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 12,
+   "users": 9
+  },
+  {
+   "date": "20261023",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 67,
+   "users": 66
+  },
+  {
+   "date": "20261023",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 129,
+   "users": 118
+  },
+  {
+   "date": "20261023",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 15,
+   "users": 13
+  },
+  {
+   "date": "20261023",
+   "source": "lm.facebook.com",
+   "medium": "referral",
+   "sessions": 15,
+   "users": 15
+  },
+  {
+   "date": "20261023",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 3,
+   "users": 3
+  },
+  {
+   "date": "20261024",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 32,
+   "users": 22
+  },
+  {
+   "date": "20261024",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 21,
+   "users": 21
+  },
+  {
+   "date": "20261024",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 178,
+   "users": 156
+  },
+  {
+   "date": "20261024",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 2,
+   "users": 2
+  },
+  {
+   "date": "20261024",
+   "source": "lm.facebook.com",
+   "medium": "referral",
+   "sessions": 3,
+   "users": 2
+  },
+  {
+   "date": "20261024",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261025",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 23,
+   "users": 21
+  },
+  {
+   "date": "20261025",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 103,
+   "users": 100
+  },
+  {
+   "date": "20261025",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 270,
+   "users": 244
+  },
+  {
+   "date": "20261025",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 5,
+   "users": 4
+  },
+  {
+   "date": "20261025",
+   "source": "lm.facebook.com",
+   "medium": "referral",
+   "sessions": 12,
+   "users": 12
+  },
+  {
+   "date": "20261025",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 3,
+   "users": 3
+  },
+  {
+   "date": "20261026",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 21,
+   "users": 17
+  },
+  {
+   "date": "20261026",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 18,
+   "users": 18
+  },
+  {
+   "date": "20261026",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 79,
+   "users": 75
+  },
+  {
+   "date": "20261026",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 5,
+   "users": 4
+  },
+  {
+   "date": "20261026",
+   "source": "lm.facebook.com",
+   "medium": "referral",
+   "sessions": 2,
+   "users": 2
+  },
+  {
+   "date": "20261026",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 4,
+   "users": 4
+  },
+  {
+   "date": "20261026",
+   "source": "t.co",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261027",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 21,
+   "users": 12
+  },
+  {
+   "date": "20261027",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 64,
+   "users": 63
+  },
+  {
+   "date": "20261027",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 54,
+   "users": 50
+  },
+  {
+   "date": "20261027",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 16,
+   "users": 12
+  },
+  {
+   "date": "20261027",
+   "source": "lm.facebook.com",
+   "medium": "referral",
+   "sessions": 20,
+   "users": 19
+  },
+  {
+   "date": "20261027",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 9,
+   "users": 8
+  },
+  {
+   "date": "20261028",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 10,
+   "users": 6
+  },
+  {
+   "date": "20261028",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 27,
+   "users": 27
+  },
+  {
+   "date": "20261028",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 53,
+   "users": 48
+  },
+  {
+   "date": "20261028",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 3,
+   "users": 3
+  },
+  {
+   "date": "20261028",
+   "source": "lm.facebook.com",
+   "medium": "referral",
+   "sessions": 6,
+   "users": 6
+  },
+  {
+   "date": "20261028",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 2,
+   "users": 2
+  },
+  {
+   "date": "20261029",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 14,
+   "users": 8
+  },
+  {
+   "date": "20261029",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 47,
+   "users": 47
+  },
+  {
+   "date": "20261029",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 28,
+   "users": 28
+  },
+  {
+   "date": "20261029",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 8,
+   "users": 8
+  },
+  {
+   "date": "20261029",
+   "source": "lm.facebook.com",
+   "medium": "referral",
+   "sessions": 2,
+   "users": 2
+  },
+  {
+   "date": "20261029",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 3,
+   "users": 3
+  },
+  {
+   "date": "20261029",
+   "source": "t.co",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261030",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 10,
+   "users": 7
+  },
+  {
+   "date": "20261030",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 16,
+   "users": 16
+  },
+  {
+   "date": "20261030",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 45,
+   "users": 42
+  },
+  {
+   "date": "20261030",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 2,
+   "users": 2
+  },
+  {
+   "date": "20261030",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261031",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 10,
+   "users": 8
+  },
+  {
+   "date": "20261031",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 10,
+   "users": 9
+  },
+  {
+   "date": "20261031",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 58,
+   "users": 56
+  },
+  {
+   "date": "20261031",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 1,
+   "users": 1
+  },
+  {
+   "date": "20261031",
+   "source": "lm.facebook.com",
+   "medium": "referral",
+   "sessions": 2,
+   "users": 2
+  },
+  {
+   "date": "20261031",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 2,
+   "users": 2
+  },
+  {
+   "date": "20261101",
+   "source": "(direct)",
+   "medium": "(none)",
+   "sessions": 41,
+   "users": 36
+  },
+  {
+   "date": "20261101",
+   "source": "facebook.com",
+   "medium": "referral",
+   "sessions": 306,
+   "users": 300
+  },
+  {
+   "date": "20261101",
+   "source": "google",
+   "medium": "organic",
+   "sessions": 228,
+   "users": 211
+  },
+  {
+   "date": "20261101",
+   "source": "l.facebook.com",
+   "medium": "referral",
+   "sessions": 47,
+   "users": 43
+  },
+  {
+   "date": "20261101",
+   "source": "lm.facebook.com",
+   "medium": "referral",
+   "sessions": 55,
+   "users": 55
+  },
+  {
+   "date": "20261101",
+   "source": "m.facebook.com",
+   "medium": "referral",
+   "sessions": 10,
+   "users": 10
+  }
+ ]
+}
