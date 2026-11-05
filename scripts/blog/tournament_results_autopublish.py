@@ -75,6 +75,8 @@ def _match_line(match, vi=False):
     division = re.sub(r"(?i)^pro\s+|\s+-\s+main draw$", "", str(match.get("division") or ""))
     division = string.capwords(division) if division.isupper() else division
     division = DIV_VI.get(division, division or "Nội dung") if vi else division or "Division"
+    if match.get("qualifying"):
+        division += " – vòng loại" if vi else " Qualifying"
     label = match.get("roundLabel") or "Vòng chưa ghi nhãn"
     status = match["status"]
     if status in {"final", "completed", "finished", "walkover", "retired"}:
@@ -103,7 +105,10 @@ def _division(match, vi: bool = False) -> str:
 
 def _round_label(match, vi: bool = False) -> str:
     label = str(match.get("roundLabel") or "Vòng chưa ghi nhãn")
-    return ROUND_VI.get(label, label) if vi else label
+    label = ROUND_VI.get(label, label) if vi else label
+    if match.get("qualifying"):
+        label = f"Vòng loại · {label}" if vi else f"Qualifying · {label}"
+    return label
 
 
 def _anchor(division: str) -> str:
@@ -123,7 +128,7 @@ def _round_collapsed(match) -> bool:
     Judged on the raw feed label so EN and VI boards agree."""
     label = str(match.get("roundLabel") or "")
     m = re.search(r"(?i)round\s+(?:of\s+)?(\d+)", label)
-    return bool((m and int(m.group(1)) >= 32) or re.search(r"(?i)qualif", label))
+    return bool((m and int(m.group(1)) >= 32) or re.search(r"(?i)qualif", label) or match.get("qualifying"))
 
 
 def _match_struct(match) -> dict:
@@ -145,7 +150,7 @@ def _board(rows: list, division: str, vi: bool = False) -> dict:
     into rounds for the structured board. Champion mirrors draw_sections."""
     top = rows[0]
     champion = None
-    if re.fullmatch(r"(?i)finals?", str(top.get("roundLabel") or "").strip()):
+    if not top.get("qualifying") and re.fullmatch(r"(?i)finals?", str(top.get("roundLabel") or "").strip()):
         champion = _names(top["teams"][0] if top["teams"][0].get("winner") else top["teams"][1])
     rounds: list = []
     for m in rows:
@@ -286,8 +291,22 @@ def clamp_seo_bytes(text: str, limit: int) -> str:
     return (head if sep else cut).rstrip(" :|—–-·")
 
 
+def mark_qualifying(matches: list, event: dict) -> list:
+    """Flag matches played on the event's qualifying days and move them last.
+
+    The PPA feed publishes a qualifying draw inside the main division with
+    main-draw labels: World Championships 2026 shipped the 2/11 Women's
+    Doubles qualifier as "Round 16"/"Quarter Finals" and the Men's Singles
+    qualifier as "Round 128"…"Round 16", so the page presented qualifiers
+    as the main draw. Nothing in a match says "qualifier", so the event
+    config names the days (`qualifying_dates`)."""
+    days = set(event.get("qualifying_dates") or [])
+    marked = [{**m, "qualifying": True} if m.get("dateKey") in days else m for m in matches]
+    return sorted(marked, key=lambda m: bool(m.get("qualifying")))  # stable: main draws keep feed order
+
+
 def package(event: dict, feed: dict, now: datetime) -> dict:
-    matches = feed["matches"]
+    matches = mark_qualifying(feed["matches"], event)
     finals = [m for m in matches if m["status"] in {"final", "completed", "finished", "walkover", "retired"}]
     live = [m for m in matches if m["status"] == "live"]
     upcoming = [m for m in matches if m["status"] == "scheduled"]

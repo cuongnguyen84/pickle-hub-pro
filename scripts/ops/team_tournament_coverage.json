@@ -215,6 +215,7 @@
       "title": "Opendoor Pickleball World Championships 2026",
       "start_date": "2026-11-02",
       "end_date": "2026-11-08",
+      "qualifying_dates": ["2026-11-02"],
       "event_timezone": "America/Chicago",
       "enabled": true,
       "sources": [
