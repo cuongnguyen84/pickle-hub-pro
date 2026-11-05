@@ -232,6 +232,10 @@
       "source": "https://www.ppatour.com/events/2026/pickleball-world-championships/",
       "slug": "pickleball-world-championships-2026-results",
       "vi_slug": "ket-qua-pickleball-world-championships-2026",
+      "hero_image": {
+        "src": "/images/blog/pickleball-world-championships-2026-results-hero.webp",
+        "alt": "Opendoor Pickleball World Championships 2026 at Brookhaven Country Club, Farmers Branch, Texas"
+      },
       "dates_en": "November 2–8, 2026",
       "dates_vi": "2–8/11/2026",
       "venue": "Brookhaven Country Club, Farmers Branch, Texas",
@@ -284,7 +288,7 @@
         "https://pickleballtournaments.com/tournaments/ppa-tour-florida-open",
         "https://www.ppatour.com/api/scores/?event=12a61e43-1dc7-4d48-a926-10d3aa1a66cb"
       ],
-      "notes": "P1. Pictona at Holly Hill, Holly Hill, Florida. Local+12h=VN trong tháng11. 02/11: eventId là tourneyId trên pickleballtournaments.com/tournaments/ppa-tour-florida-open (title PPA Tour: Proton Daytona Beach Open). Feed trả đúng tournamentId, 5 nội dung Pro, 0 trận. uuid 1259f4ea… là Daytona Beach Open Dec 2025 (208 trận) và ff4629c5… là Hertz Gold Cup Nov 2023 (236 trận) — linked tournaments, không dùng. `name` 'Daytona Beach Open 2026' để metaTitle EN/VI nằm trong 60 byte; search_name 'PPA Daytona Beach'. Feed 0 trận: publish_from hôm nay sẽ báo score_matches_missing tới khi có trận, không đăng trang rỗng.",
+      "notes": "P1. Pictona at Holly Hill, Holly Hill, Florida. Local+12h=VN trong tháng11. 02/11: eventId là tourneyId trên pickleballtournaments.com/tournaments/ppa-tour-florida-open (title PPA Tour: Proton Daytona Beach Open). Feed trả đúng tournamentId, 5 nội dung Pro, 0 trận. uuid 1259f4ea… là Daytona Beach Open Dec 2025 (208 trận) và ff4629c5… là Hertz Gold Cup Nov 2023 (236 trận) — linked tournaments, không dùng. `name` 'Daytona Beach Open 2026' để metaTitle EN/VI nằm trong 60 byte; search_name 'PPA Daytona Beach'. Feed 0 trận: publish_from hôm nay sẽ báo score_matches_missing tới khi có trận, không đăng trang rỗng. 05/11: chưa có hero webp trong public/images/blog — hero_image hoãn, thêm khi có ảnh thật.",
       "auto_publish": true,
       "publish_from": "2026-11-02",
       "event_id": "12a61e43-1dc7-4d48-a926-10d3aa1a66cb",
