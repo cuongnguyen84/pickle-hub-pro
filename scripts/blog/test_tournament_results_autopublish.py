@@ -174,6 +174,25 @@ class TournamentAutopublishTests(unittest.TestCase):
         # No qualifying_dates configured: feed passes through untouched.
         self.assertEqual(autopublish.mark_qualifying([qual], {}), [qual])
 
+    def test_challenger_divisions_never_reach_the_pro_page(self):
+        # Worlds 2026: "PPA CHALLENGER SHOWDOWN: …" shares the pro feed and
+        # its scheduled matches filled "Live and upcoming".
+        event = {"name": "Test Open", "dates_en": "October 1–3, 2026", "dates_vi": "1–3/10/2026",
+                 "venue": "Test venue", "source": "/official", "slug": "test-open-results",
+                 "vi_slug": "ket-qua-test-open", "tags": ["test", "results", "2026"]}
+        data = feed("final")
+        for status in ("scheduled", "final"):
+            m = copy.deepcopy(feed(status)["matches"][0])
+            m["division"] = "PPA CHALLENGER SHOWDOWN: Women's Doubles"
+            m["teams"][0]["players"] = ["Challenger"]
+            data["matches"].append(m)
+        pkg = autopublish.package(event, data, datetime(2026, 10, 1, tzinfo=timezone.utc))
+        self.assertNotIn("challenger", json.dumps(pkg).lower())
+        self.assertIn("The feed currently contains 1 matches", pkg["en"]["sections"][0]["content"])
+        # Guard counts pro finals only: a Challenger-only final needs no board.
+        only = {"matches": data["matches"][1:]}
+        autopublish._assert_results_boards({"en": {"sections": []}, "vi": {"sections": []}}, only)
+
     def test_anchor_slug_matches_renderer_rule(self):
         self.assertEqual(autopublish._anchor("Women's Doubles"), "rb-womens-doubles")
         self.assertEqual(autopublish._anchor("Đôi nữ"), "rb-doi-nu")
@@ -506,6 +525,32 @@ class ReexecPublishTests(unittest.TestCase):
         self.assertEqual(result["status"], "published")
         self.assertEqual(result["pipeline"], "newfp")
         self.assertTrue(result["reexec"])
+
+    def test_publish_event_uses_coverage_from_the_publish_worktree(self):
+        # 5/11/2026: the supervisor's install-time JSON lacked #997's
+        # qualifying_dates, so the delegated child generated without them.
+        seen = {}
+        def fake_delegate(root, event, now, push):
+            seen["event"] = event
+            return {"status": "published"}
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "scripts/ops").mkdir(parents=True)
+            (root / "scripts/ops/team_tournament_coverage.json").write_text(json.dumps({"events": [
+                {"key": "other", "qualifying_dates": ["x"]},
+                {"key": "test-open-2026", "qualifying_dates": ["2026-11-02"]}]}))
+            self._patch(
+                fetch=lambda url, eid: (feed("final"), "feed-fp"),
+                should_publish=lambda event, fp: True,
+                _prepare_publish_worktree=lambda push: root,
+                _should_delegate_publish=lambda root: True,
+                _delegate_publish=fake_delegate,
+            )
+            autopublish.publish_event(dict(self.EVENT, local_only=1), now=datetime(2026, 11, 5, tzinfo=timezone.utc))
+            self.assertEqual(seen["event"]["qualifying_dates"], ["2026-11-02"])
+            self.assertEqual(seen["event"]["local_only"], 1)
+        # Missing config or unknown key: the caller's event passes through.
+        self.assertEqual(autopublish._refresh_event(Path("/nonexistent"), dict(self.EVENT)), self.EVENT)
 
     def test_reexec_child_roundtrip_and_error_reporting(self):
         self._patch(publish_event=lambda event, now=None, push=True: {"status": "published", "head": "abc123"})

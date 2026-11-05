@@ -305,8 +305,18 @@ def mark_qualifying(matches: list, event: dict) -> list:
     return sorted(marked, key=lambda m: bool(m.get("qualifying")))  # stable: main draws keep feed order
 
 
+# Worlds 2026 shares one feed with the amateur "PPA CHALLENGER SHOWDOWN: …"
+# divisions; their scheduled matches filled the pro page's upcoming list.
+_NON_PRO_DIVISION = re.compile(r"(?i)challenger")
+
+
+def pro_matches(matches: list) -> list:
+    """Drop non-pro divisions that share the event's feed."""
+    return [m for m in matches if not _NON_PRO_DIVISION.search(str(m.get("division") or ""))]
+
+
 def package(event: dict, feed: dict, now: datetime) -> dict:
-    matches = mark_qualifying(feed["matches"], event)
+    matches = mark_qualifying(pro_matches(feed["matches"]), event)
     finals = [m for m in matches if m["status"] in {"final", "completed", "finished", "walkover", "retired"}]
     live = [m for m in matches if m["status"] == "live"]
     upcoming = [m for m in matches if m["status"] == "scheduled"]
@@ -532,7 +542,7 @@ _FINAL_STATUSES = {"final", "completed", "finished", "walkover", "retired"}
 
 
 def _assert_results_boards(pkg: dict, feed: dict, post_text: str | None = None) -> None:
-    finals = [m for m in feed["matches"] if m["status"] in _FINAL_STATUSES]
+    finals = [m for m in pro_matches(feed["matches"]) if m["status"] in _FINAL_STATUSES]
     if not finals:
         return
     for lang in ("en", "vi"):
@@ -779,6 +789,23 @@ def _reexec_main(payload_path: str) -> int:
     return 0
 
 
+def _refresh_event(root: Path, event: dict) -> dict:
+    """Overlay the event's entry from the coverage config in the publish
+    worktree (origin/main) on the event the caller passed.
+
+    The supervisor reads the coverage JSON copied at install time
+    (team_install, 2026-10-20), so `qualifying_dates` merged in #997 never
+    reached the generator: the 5/11 refresh still shipped the Worlds
+    qualifier as main-draw "Men's Singles". Main's entry wins; fields only
+    the installed copy has survive. No config or no entry = unchanged."""
+    try:
+        config = json.loads((root / "scripts/ops/team_tournament_coverage.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return event
+    fresh = next((e for e in config.get("events", []) if e.get("key") == event.get("key")), None)
+    return {**event, **fresh} if fresh else event
+
+
 def publish_event(event: dict, now: datetime | None = None, push: bool = True) -> dict:
     """Fetch, validate and publish one changed official score snapshot.
 
@@ -795,6 +822,7 @@ def publish_event(event: dict, now: datetime | None = None, push: bool = True) -
     if not should_publish(event, fingerprint):
         return {"status": "unchanged", "fingerprint": fingerprint}
     root = _prepare_publish_worktree(push)
+    event = _refresh_event(root, event)
     delegated = _maybe_delegate_publish(root, event, now, push)
     if delegated is not None:
         # The worktree (reset to origin/main above) carries newer pipeline
@@ -808,6 +836,7 @@ def publish_event(event: dict, now: datetime | None = None, push: bool = True) -
         # the new origin/main and regenerate once on top of it — re-checking
         # first whether that merge also moved the pipeline code itself.
         root = _prepare_publish_worktree(True)
+        event = _refresh_event(root, event)
         delegated = _maybe_delegate_publish(root, event, now, push)
         if delegated is not None:
             return delegated
