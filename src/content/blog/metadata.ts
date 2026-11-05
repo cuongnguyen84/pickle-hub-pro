@@ -1473,7 +1473,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "pickleball-group-draw-schedule-guide",
     publishedDate: "2026-08-26",
-    updatedDate: "2026-08-26",
+    updatedDate: "2026-11-05",
     author: "Cuong Nguyen",
     tags: [
       "chia bảng pickleball",
@@ -1485,7 +1485,7 @@ export const blogMetadata: BlogPostMetadata[] = [
       "group draw",
       "round robin schedule",
     ],
-    ctaPath: "/tools",
+    ctaPath: "/tools/quick-tables",
     ctaLabel: {
       en: "Generate your bracket free — no signup",
       vi: "Chia bảng & tạo lịch miễn phí — không cần đăng ký",
