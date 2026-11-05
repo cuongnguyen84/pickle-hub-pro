@@ -53,11 +53,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4.37.3
         with:
           languages: javascript-typescript
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+        uses: github/codeql-action/autobuild@v4.37.3
       # 2026-07-21 (plan A, approved by Cuong): GitHub pulled code-scanning
       # SARIF upload for private repos on the free plan — the upload step
       # started failing with "Code scanning is not enabled for this
@@ -67,7 +67,7 @@ jobs:
       # STRONGER — findings now fail this job directly (upload-only never
       # did), they just no longer appear in the Security tab.
       - name: Perform CodeQL analysis (no upload — GHAS not available)
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4.37.3
         with:
           category: "/language:javascript-typescript"
           upload: never
