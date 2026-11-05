@@ -19,6 +19,10 @@ const post: BlogPost = {
     "en": "Follow live scores on ThePickleHub",
     "vi": "Theo dõi điểm số trên ThePickleHub"
   },
+  "heroImage": {
+    "src": "/images/blog/pickleball-world-championships-2026-results-hero.webp",
+    "alt": "Opendoor Pickleball World Championships 2026 at Brookhaven Country Club, Farmers Branch, Texas"
+  },
   "content": {
     "en": {
       "title": "World Championship 2026 Results: Daily Scores and Confirmed Winners",
@@ -27,7 +31,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 5, 2026, 10:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 318 matches, including 234 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 5, 2026, 18:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 258 matches, including 234 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -35,11 +39,6 @@ const post: BlogPost = {
             }
           ],
           "resultsSummary": [
-            {
-              "division": "Women's Doubles",
-              "note": "Through to the Quarter Finals · 13 matches",
-              "anchor": "rb-womens-doubles"
-            },
             {
               "division": "Men's Doubles",
               "note": "Through to the Round 32 · 46 matches",
@@ -56,230 +55,16 @@ const post: BlogPost = {
               "anchor": "rb-womens-singles"
             },
             {
-              "division": "Men's Singles",
-              "note": "Through to the Round 16 · 79 matches",
-              "anchor": "rb-mens-singles"
+              "division": "Women's Doubles Qualifying",
+              "note": "Through to the Qualifying · Quarter Finals · 13 matches",
+              "anchor": "rb-womens-doubles-qualifying"
+            },
+            {
+              "division": "Men's Singles Qualifying",
+              "note": "Through to the Qualifying · Round 16 · 79 matches",
+              "anchor": "rb-mens-singles-qualifying"
             }
           ]
-        },
-        {
-          "heading": "Women's Doubles results",
-          "content": "No champion yet. 13 completed matches, latest round first.",
-          "resultsBoard": {
-            "division": "Women's Doubles",
-            "rounds": [
-              {
-                "label": "Quarter Finals",
-                "matches": [
-                  {
-                    "winner": "Allie Reichert / Madalina Grigoriu",
-                    "loser": "Brie Aldridge / Maria Ford",
-                    "sets": [
-                      [
-                        11,
-                        8
-                      ],
-                      [
-                        11,
-                        8
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Sarah Burr / Shannon Pretorius",
-                    "loser": "Haley Ferguson / Frances Altick",
-                    "sets": [
-                      [
-                        11,
-                        9
-                      ],
-                      [
-                        11,
-                        7
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Chloe Diskin / Anne-Sophie Courteau",
-                    "loser": "Olivia Phillips / Polina Libo",
-                    "sets": [
-                      [
-                        11,
-                        2
-                      ],
-                      [
-                        11,
-                        4
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Masa Grgan / Maddy Rasmusen",
-                    "loser": "Patricia Martins / Abla Mannarino",
-                    "sets": [
-                      [
-                        9,
-                        11
-                      ],
-                      [
-                        11,
-                        6
-                      ],
-                      [
-                        11,
-                        6
-                      ]
-                    ]
-                  }
-                ]
-              },
-              {
-                "label": "Round 16",
-                "matches": [
-                  {
-                    "winner": "Olivia Phillips / Polina Libo",
-                    "loser": "Elaine Li / Rachel Janssen",
-                    "sets": [
-                      [
-                        11,
-                        6
-                      ],
-                      [
-                        12,
-                        10
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Patricia Martins / Abla Mannarino",
-                    "loser": "Adelie Osher / Janet Liu",
-                    "sets": [
-                      [
-                        11,
-                        5
-                      ],
-                      [
-                        11,
-                        3
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Haley Ferguson / Frances Altick",
-                    "loser": "Anna Lenhart / Caroline Maguire",
-                    "sets": [
-                      [
-                        12,
-                        10
-                      ],
-                      [
-                        11,
-                        5
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Masa Grgan / Maddy Rasmusen",
-                    "loser": "Katie O'Riley / Katarzyna Carr",
-                    "sets": [
-                      [
-                        11,
-                        4
-                      ],
-                      [
-                        11,
-                        4
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Brie Aldridge / Maria Ford",
-                    "loser": "Ariana Ajani / Natalia Simson",
-                    "sets": [
-                      [
-                        2,
-                        11
-                      ],
-                      [
-                        11,
-                        6
-                      ],
-                      [
-                        12,
-                        10
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Allie Reichert / Madalina Grigoriu",
-                    "loser": "Kylie Imperial / Nikita Pradeep",
-                    "sets": [
-                      [
-                        11,
-                        5
-                      ],
-                      [
-                        11,
-                        6
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Sarah Burr / Shannon Pretorius",
-                    "loser": "Madyson Peav / Stuti Sinha",
-                    "sets": [
-                      [
-                        11,
-                        4
-                      ],
-                      [
-                        11,
-                        0
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Chloe Diskin / Anne-Sophie Courteau",
-                    "loser": "Yi-Lin Shi / Shi Y",
-                    "sets": [
-                      [
-                        11,
-                        0
-                      ],
-                      [
-                        11,
-                        1
-                      ]
-                    ]
-                  }
-                ]
-              },
-              {
-                "label": "Round 32",
-                "matches": [
-                  {
-                    "winner": "Madyson Peav / Stuti Sinha",
-                    "loser": "Jessica Pehush / Sarah Smith",
-                    "sets": [
-                      [
-                        10,
-                        12
-                      ],
-                      [
-                        11,
-                        6
-                      ],
-                      [
-                        11,
-                        5
-                      ]
-                    ]
-                  }
-                ],
-                "collapsed": true
-              }
-            ]
-          }
         },
         {
           "heading": "Men's Doubles results",
@@ -2449,13 +2234,234 @@ const post: BlogPost = {
           }
         },
         {
-          "heading": "Men's Singles results",
-          "content": "No champion yet. 79 completed matches, latest round first.",
+          "heading": "Women's Doubles Qualifying results",
+          "content": "No champion yet. 13 completed matches, latest round first.",
           "resultsBoard": {
-            "division": "Men's Singles",
+            "division": "Women's Doubles Qualifying",
             "rounds": [
               {
-                "label": "Round 16",
+                "label": "Qualifying · Quarter Finals",
+                "matches": [
+                  {
+                    "winner": "Allie Reichert / Madalina Grigoriu",
+                    "loser": "Brie Aldridge / Maria Ford",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Sarah Burr / Shannon Pretorius",
+                    "loser": "Haley Ferguson / Frances Altick",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Chloe Diskin / Anne-Sophie Courteau",
+                    "loser": "Olivia Phillips / Polina Libo",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Masa Grgan / Maddy Rasmusen",
+                    "loser": "Patricia Martins / Abla Mannarino",
+                    "sets": [
+                      [
+                        9,
+                        11
+                      ],
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  }
+                ],
+                "collapsed": true
+              },
+              {
+                "label": "Qualifying · Round 16",
+                "matches": [
+                  {
+                    "winner": "Olivia Phillips / Polina Libo",
+                    "loser": "Elaine Li / Rachel Janssen",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        12,
+                        10
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Patricia Martins / Abla Mannarino",
+                    "loser": "Adelie Osher / Janet Liu",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Haley Ferguson / Frances Altick",
+                    "loser": "Anna Lenhart / Caroline Maguire",
+                    "sets": [
+                      [
+                        12,
+                        10
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Masa Grgan / Maddy Rasmusen",
+                    "loser": "Katie O'Riley / Katarzyna Carr",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Brie Aldridge / Maria Ford",
+                    "loser": "Ariana Ajani / Natalia Simson",
+                    "sets": [
+                      [
+                        2,
+                        11
+                      ],
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        12,
+                        10
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Allie Reichert / Madalina Grigoriu",
+                    "loser": "Kylie Imperial / Nikita Pradeep",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Sarah Burr / Shannon Pretorius",
+                    "loser": "Madyson Peav / Stuti Sinha",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Chloe Diskin / Anne-Sophie Courteau",
+                    "loser": "Yi-Lin Shi / Shi Y",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  }
+                ],
+                "collapsed": true
+              },
+              {
+                "label": "Qualifying · Round 32",
+                "matches": [
+                  {
+                    "winner": "Madyson Peav / Stuti Sinha",
+                    "loser": "Jessica Pehush / Sarah Smith",
+                    "sets": [
+                      [
+                        10,
+                        12
+                      ],
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  }
+                ],
+                "collapsed": true
+              }
+            ]
+          }
+        },
+        {
+          "heading": "Men's Singles Qualifying results",
+          "content": "No champion yet. 79 completed matches, latest round first.",
+          "resultsBoard": {
+            "division": "Men's Singles Qualifying",
+            "rounds": [
+              {
+                "label": "Qualifying · Round 16",
                 "matches": [
                   {
                     "winner": "Daniel Miron",
@@ -2577,10 +2583,11 @@ const post: BlogPost = {
                       ]
                     ]
                   }
-                ]
+                ],
+                "collapsed": true
               },
               {
-                "label": "Round 32",
+                "label": "Qualifying · Round 32",
                 "matches": [
                   {
                     "winner": "Matthew Finnerty",
@@ -2813,7 +2820,7 @@ const post: BlogPost = {
                 "collapsed": true
               },
               {
-                "label": "Round 64",
+                "label": "Qualifying · Round 64",
                 "matches": [
                   {
                     "winner": "Aryaan Bhatia",
@@ -3260,7 +3267,7 @@ const post: BlogPost = {
                 "collapsed": true
               },
               {
-                "label": "Round 128",
+                "label": "Qualifying · Round 128",
                 "matches": [
                   {
                     "winner": "Casey Diamond",
@@ -3605,16 +3612,16 @@ const post: BlogPost = {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Averee Beck / Bella Nelson vs Yolena Carlon / Haley Ferguson — status scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Maddy Rasmusen / Masa Grgan vs Marisa Ruiz / Kelsey Laurente — status scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Anne-Sophie Courteau / Chloe Diskin vs Adelie Osher / Janet Liu — status scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Allie Reichert / Madalina Grigoriu vs Monika Wynne / Ella Boydston — status scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Marisa Ruiz / Kelsey Laurente vs Adelie Osher / Janet Liu — status scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Monika Wynne / Ella Boydston vs Yolena Carlon / Haley Ferguson — status scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Maddy Rasmusen / Masa Grgan vs Anne-Sophie Courteau / Chloe Diskin — status scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Allie Reichert / Madalina Grigoriu vs Averee Beck / Bella Nelson — status scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 1: Allie Reichert / Madalina Grigoriu vs Yolena Carlon / Haley Ferguson — status scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 1: Maddy Rasmusen / Masa Grgan vs Adelie Osher / Janet Liu — status scheduled."
+            "Men's Doubles, Round 16: Cason Campbell / Adam Harvey vs Will Mackinnon / Hunter Johnson — status scheduled.",
+            "Men's Doubles, Round 16: CJ Klinger / Eric Oncins vs Augustus Ge / Jack Sock — status scheduled.",
+            "Men's Doubles, Round 16: Connor Garnett / Dylan Frazier vs Eunggwon Kim / Hong Kit Wong — status scheduled.",
+            "Men's Doubles, Round 16: Andrei Daescu / Christian Alshon vs Pablo Tellez / Roscoe Bellamy — status scheduled.",
+            "Men's Doubles, Round 16: Ben Johns / Gabriel Tardio vs Christopher Crouch / Anouar Braham — status scheduled.",
+            "Men's Doubles, Round 16: Tama Shimabukuro / JW Johnson vs Matt Wright / John Lucian Goins — status scheduled.",
+            "Men's Doubles, Round 16: Federico Staksrud / Hayden Patriquin vs Dekel Bar / Wyatt Stone — status scheduled.",
+            "Men's Doubles, Round 16: Riley Newman / Noe Khlif vs Rafa Hewett / Luc Pham — status scheduled.",
+            "Mixed Doubles, Round 16: Tyra Hurricane Black / Gabriel Tardio vs Mari Humberg / Pablo Tellez — status scheduled.",
+            "Mixed Doubles, Round 16: Rachel Rohrabacher / Christian Alshon vs CJ Klinger / Danni-Elle Townsend — status scheduled."
           ]
         },
         {
@@ -3624,15 +3631,19 @@ const post: BlogPost = {
       ],
       "faqItems": [
         {
-          "question": "Where do these results come from?",
+          "question": "Where do the World Championship 2026 results and scores come from?",
           "answer": "The official PPA scores feed: https://www.ppatour.com/events/2026/pickleball-world-championships/."
+        },
+        {
+          "question": "Who won World Championship 2026?",
+          "answer": "No champion is confirmed in the official feed yet. The results boards on this page list every completed match and set score by round."
         },
         {
           "question": "Are scheduled matches final results?",
           "answer": "No. Only an official final or completed status with one winner is presented as a result."
         },
         {
-          "question": "When is this page updated?",
+          "question": "When are the World Championship 2026 scores updated?",
           "answer": "Every few hours while the event is on, whenever the verified official score snapshot changes."
         }
       ]
@@ -3644,7 +3655,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 10:00 ngày 5/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 318 trận, gồm 234 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 18:00 ngày 5/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 258 trận, gồm 234 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -3652,11 +3663,6 @@ const post: BlogPost = {
             }
           ],
           "resultsSummary": [
-            {
-              "division": "Đôi nữ",
-              "note": "Đã tới Tứ kết · 13 trận",
-              "anchor": "rb-doi-nu"
-            },
             {
               "division": "Đôi nam",
               "note": "Đã tới Vòng 32 · 46 trận",
@@ -3673,230 +3679,16 @@ const post: BlogPost = {
               "anchor": "rb-don-nu"
             },
             {
-              "division": "Đơn nam",
-              "note": "Đã tới Vòng 16 · 79 trận",
-              "anchor": "rb-don-nam"
+              "division": "Đôi nữ – vòng loại",
+              "note": "Đã tới Vòng loại · Tứ kết · 13 trận",
+              "anchor": "rb-doi-nu-vong-loai"
+            },
+            {
+              "division": "Đơn nam – vòng loại",
+              "note": "Đã tới Vòng loại · Vòng 16 · 79 trận",
+              "anchor": "rb-don-nam-vong-loai"
             }
           ]
-        },
-        {
-          "heading": "Kết quả Đôi nữ",
-          "content": "Chưa có nhà vô địch. 13 trận đã kết thúc, vòng mới nhất ở trên.",
-          "resultsBoard": {
-            "division": "Đôi nữ",
-            "rounds": [
-              {
-                "label": "Tứ kết",
-                "matches": [
-                  {
-                    "winner": "Allie Reichert / Madalina Grigoriu",
-                    "loser": "Brie Aldridge / Maria Ford",
-                    "sets": [
-                      [
-                        11,
-                        8
-                      ],
-                      [
-                        11,
-                        8
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Sarah Burr / Shannon Pretorius",
-                    "loser": "Haley Ferguson / Frances Altick",
-                    "sets": [
-                      [
-                        11,
-                        9
-                      ],
-                      [
-                        11,
-                        7
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Chloe Diskin / Anne-Sophie Courteau",
-                    "loser": "Olivia Phillips / Polina Libo",
-                    "sets": [
-                      [
-                        11,
-                        2
-                      ],
-                      [
-                        11,
-                        4
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Masa Grgan / Maddy Rasmusen",
-                    "loser": "Patricia Martins / Abla Mannarino",
-                    "sets": [
-                      [
-                        9,
-                        11
-                      ],
-                      [
-                        11,
-                        6
-                      ],
-                      [
-                        11,
-                        6
-                      ]
-                    ]
-                  }
-                ]
-              },
-              {
-                "label": "Vòng 16",
-                "matches": [
-                  {
-                    "winner": "Olivia Phillips / Polina Libo",
-                    "loser": "Elaine Li / Rachel Janssen",
-                    "sets": [
-                      [
-                        11,
-                        6
-                      ],
-                      [
-                        12,
-                        10
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Patricia Martins / Abla Mannarino",
-                    "loser": "Adelie Osher / Janet Liu",
-                    "sets": [
-                      [
-                        11,
-                        5
-                      ],
-                      [
-                        11,
-                        3
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Haley Ferguson / Frances Altick",
-                    "loser": "Anna Lenhart / Caroline Maguire",
-                    "sets": [
-                      [
-                        12,
-                        10
-                      ],
-                      [
-                        11,
-                        5
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Masa Grgan / Maddy Rasmusen",
-                    "loser": "Katie O'Riley / Katarzyna Carr",
-                    "sets": [
-                      [
-                        11,
-                        4
-                      ],
-                      [
-                        11,
-                        4
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Brie Aldridge / Maria Ford",
-                    "loser": "Ariana Ajani / Natalia Simson",
-                    "sets": [
-                      [
-                        2,
-                        11
-                      ],
-                      [
-                        11,
-                        6
-                      ],
-                      [
-                        12,
-                        10
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Allie Reichert / Madalina Grigoriu",
-                    "loser": "Kylie Imperial / Nikita Pradeep",
-                    "sets": [
-                      [
-                        11,
-                        5
-                      ],
-                      [
-                        11,
-                        6
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Sarah Burr / Shannon Pretorius",
-                    "loser": "Madyson Peav / Stuti Sinha",
-                    "sets": [
-                      [
-                        11,
-                        4
-                      ],
-                      [
-                        11,
-                        0
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Chloe Diskin / Anne-Sophie Courteau",
-                    "loser": "Yi-Lin Shi / Shi Y",
-                    "sets": [
-                      [
-                        11,
-                        0
-                      ],
-                      [
-                        11,
-                        1
-                      ]
-                    ]
-                  }
-                ]
-              },
-              {
-                "label": "Vòng 32",
-                "matches": [
-                  {
-                    "winner": "Madyson Peav / Stuti Sinha",
-                    "loser": "Jessica Pehush / Sarah Smith",
-                    "sets": [
-                      [
-                        10,
-                        12
-                      ],
-                      [
-                        11,
-                        6
-                      ],
-                      [
-                        11,
-                        5
-                      ]
-                    ]
-                  }
-                ],
-                "collapsed": true
-              }
-            ]
-          }
         },
         {
           "heading": "Kết quả Đôi nam",
@@ -6066,13 +5858,234 @@ const post: BlogPost = {
           }
         },
         {
-          "heading": "Kết quả Đơn nam",
-          "content": "Chưa có nhà vô địch. 79 trận đã kết thúc, vòng mới nhất ở trên.",
+          "heading": "Kết quả Đôi nữ – vòng loại",
+          "content": "Chưa có nhà vô địch. 13 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
-            "division": "Đơn nam",
+            "division": "Đôi nữ – vòng loại",
             "rounds": [
               {
-                "label": "Vòng 16",
+                "label": "Vòng loại · Tứ kết",
+                "matches": [
+                  {
+                    "winner": "Allie Reichert / Madalina Grigoriu",
+                    "loser": "Brie Aldridge / Maria Ford",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Sarah Burr / Shannon Pretorius",
+                    "loser": "Haley Ferguson / Frances Altick",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Chloe Diskin / Anne-Sophie Courteau",
+                    "loser": "Olivia Phillips / Polina Libo",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Masa Grgan / Maddy Rasmusen",
+                    "loser": "Patricia Martins / Abla Mannarino",
+                    "sets": [
+                      [
+                        9,
+                        11
+                      ],
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  }
+                ],
+                "collapsed": true
+              },
+              {
+                "label": "Vòng loại · Vòng 16",
+                "matches": [
+                  {
+                    "winner": "Olivia Phillips / Polina Libo",
+                    "loser": "Elaine Li / Rachel Janssen",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        12,
+                        10
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Patricia Martins / Abla Mannarino",
+                    "loser": "Adelie Osher / Janet Liu",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Haley Ferguson / Frances Altick",
+                    "loser": "Anna Lenhart / Caroline Maguire",
+                    "sets": [
+                      [
+                        12,
+                        10
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Masa Grgan / Maddy Rasmusen",
+                    "loser": "Katie O'Riley / Katarzyna Carr",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Brie Aldridge / Maria Ford",
+                    "loser": "Ariana Ajani / Natalia Simson",
+                    "sets": [
+                      [
+                        2,
+                        11
+                      ],
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        12,
+                        10
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Allie Reichert / Madalina Grigoriu",
+                    "loser": "Kylie Imperial / Nikita Pradeep",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Sarah Burr / Shannon Pretorius",
+                    "loser": "Madyson Peav / Stuti Sinha",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Chloe Diskin / Anne-Sophie Courteau",
+                    "loser": "Yi-Lin Shi / Shi Y",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  }
+                ],
+                "collapsed": true
+              },
+              {
+                "label": "Vòng loại · Vòng 32",
+                "matches": [
+                  {
+                    "winner": "Madyson Peav / Stuti Sinha",
+                    "loser": "Jessica Pehush / Sarah Smith",
+                    "sets": [
+                      [
+                        10,
+                        12
+                      ],
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  }
+                ],
+                "collapsed": true
+              }
+            ]
+          }
+        },
+        {
+          "heading": "Kết quả Đơn nam – vòng loại",
+          "content": "Chưa có nhà vô địch. 79 trận đã kết thúc, vòng mới nhất ở trên.",
+          "resultsBoard": {
+            "division": "Đơn nam – vòng loại",
+            "rounds": [
+              {
+                "label": "Vòng loại · Vòng 16",
                 "matches": [
                   {
                     "winner": "Daniel Miron",
@@ -6194,10 +6207,11 @@ const post: BlogPost = {
                       ]
                     ]
                   }
-                ]
+                ],
+                "collapsed": true
               },
               {
-                "label": "Vòng 32",
+                "label": "Vòng loại · Vòng 32",
                 "matches": [
                   {
                     "winner": "Matthew Finnerty",
@@ -6430,7 +6444,7 @@ const post: BlogPost = {
                 "collapsed": true
               },
               {
-                "label": "Vòng 64",
+                "label": "Vòng loại · Vòng 64",
                 "matches": [
                   {
                     "winner": "Aryaan Bhatia",
@@ -6877,7 +6891,7 @@ const post: BlogPost = {
                 "collapsed": true
               },
               {
-                "label": "Vòng 128",
+                "label": "Vòng loại · Vòng 128",
                 "matches": [
                   {
                     "winner": "Casey Diamond",
@@ -7222,16 +7236,16 @@ const post: BlogPost = {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Averee Beck / Bella Nelson gặp Yolena Carlon / Haley Ferguson — trạng thái scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Maddy Rasmusen / Masa Grgan gặp Marisa Ruiz / Kelsey Laurente — trạng thái scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Anne-Sophie Courteau / Chloe Diskin gặp Adelie Osher / Janet Liu — trạng thái scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 3: Allie Reichert / Madalina Grigoriu gặp Monika Wynne / Ella Boydston — trạng thái scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Marisa Ruiz / Kelsey Laurente gặp Adelie Osher / Janet Liu — trạng thái scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Monika Wynne / Ella Boydston gặp Yolena Carlon / Haley Ferguson — trạng thái scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Maddy Rasmusen / Masa Grgan gặp Anne-Sophie Courteau / Chloe Diskin — trạng thái scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 2: Allie Reichert / Madalina Grigoriu gặp Averee Beck / Bella Nelson — trạng thái scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 1: Allie Reichert / Madalina Grigoriu gặp Yolena Carlon / Haley Ferguson — trạng thái scheduled.",
-            "PPA CHALLENGER SHOWDOWN: Women's Doubles, Round 1: Maddy Rasmusen / Masa Grgan gặp Adelie Osher / Janet Liu — trạng thái scheduled."
+            "Đôi nam, Round 16: Cason Campbell / Adam Harvey gặp Will Mackinnon / Hunter Johnson — trạng thái scheduled.",
+            "Đôi nam, Round 16: CJ Klinger / Eric Oncins gặp Augustus Ge / Jack Sock — trạng thái scheduled.",
+            "Đôi nam, Round 16: Connor Garnett / Dylan Frazier gặp Eunggwon Kim / Hong Kit Wong — trạng thái scheduled.",
+            "Đôi nam, Round 16: Andrei Daescu / Christian Alshon gặp Pablo Tellez / Roscoe Bellamy — trạng thái scheduled.",
+            "Đôi nam, Round 16: Ben Johns / Gabriel Tardio gặp Christopher Crouch / Anouar Braham — trạng thái scheduled.",
+            "Đôi nam, Round 16: Tama Shimabukuro / JW Johnson gặp Matt Wright / John Lucian Goins — trạng thái scheduled.",
+            "Đôi nam, Round 16: Federico Staksrud / Hayden Patriquin gặp Dekel Bar / Wyatt Stone — trạng thái scheduled.",
+            "Đôi nam, Round 16: Riley Newman / Noe Khlif gặp Rafa Hewett / Luc Pham — trạng thái scheduled.",
+            "Đôi nam nữ, Round 16: Tyra Hurricane Black / Gabriel Tardio gặp Mari Humberg / Pablo Tellez — trạng thái scheduled.",
+            "Đôi nam nữ, Round 16: Rachel Rohrabacher / Christian Alshon gặp CJ Klinger / Danni-Elle Townsend — trạng thái scheduled."
           ]
         },
         {
@@ -7241,15 +7255,19 @@ const post: BlogPost = {
       ],
       "faqItems": [
         {
-          "question": "Kết quả lấy từ đâu?",
+          "question": "Kết quả và tỷ số World Championship 2026 lấy từ đâu?",
           "answer": "Từ feed điểm số PPA chính thức: https://www.ppatour.com/events/2026/pickleball-world-championships/."
+        },
+        {
+          "question": "Ai vô địch World Championship 2026?",
+          "answer": "Feed chính thức chưa xác nhận nhà vô địch nào. Bảng kết quả trên trang ghi đủ từng trận đã xong và tỷ số từng set theo vòng."
         },
         {
           "question": "Trận scheduled có phải kết quả không?",
           "answer": "Không. Chỉ bản ghi final hoặc completed có đúng một người thắng mới được trình bày là kết quả."
         },
         {
-          "question": "Trang cập nhật khi nào?",
+          "question": "Tỷ số World Championship 2026 cập nhật khi nào?",
           "answer": "Vài giờ một lần trong thời gian giải, mỗi khi snapshot điểm số chính thức đã kiểm chứng thay đổi."
         }
       ]
