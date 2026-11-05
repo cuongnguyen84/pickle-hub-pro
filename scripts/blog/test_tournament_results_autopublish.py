@@ -84,6 +84,31 @@ class TournamentAutopublishTests(unittest.TestCase):
         self.assertNotIn("2026 2026", str(pkg))
         self.assertIn("07:00 Vietnam time", pkg["en"]["sections"][0]["content"])  # 00:00 UTC
 
+    def test_storylines_ride_through_only_when_set_and_faq_names_results(self):
+        event = {"name": "Test Open", "dates_en": "October 1–3, 2026", "dates_vi": "1–3/10/2026",
+                 "source": "/official", "slug": "test-open-results", "vi_slug": "ket-qua-test-open"}
+        now = datetime(2026, 10, 1, tzinfo=timezone.utc)
+        final = feed("final"); final["matches"][0]["roundLabel"] = "Final"
+        pkg = autopublish.package({**event, "storylines_en": "  "}, final, now)
+        self.assertNotIn("storylines", pkg["en"])
+        self.assertNotIn("storylines", pkg["vi"])
+        obj = autopublish.w._post_obj(pkg, "2026-10-01")
+        self.assertNotIn("storylines", obj["content"]["en"])
+        self.assertNotIn("Diễn biến", autopublish.w.vi_html(pkg["vi"]))
+        # FAQ: results/scores wording + champion answered from the feed.
+        q_en = [f["question"] for f in pkg["en"]["faqItems"]]
+        self.assertTrue(any("results and scores" in q for q in q_en))
+        self.assertIn("Men's Singles: A", pkg["en"]["faqItems"][1]["answer"])
+        self.assertTrue(any("Kết quả và tỷ số" in f["question"] for f in pkg["vi"]["faqItems"]))
+        pkg = autopublish.package({**event, "storylines_en": "One.\n\nTwo.", "storylines_vi": "Một."}, feed(), now)
+        self.assertEqual(pkg["en"]["storylines"], "One.\n\nTwo.")
+        self.assertIn("champion", pkg["en"]["faqItems"][1]["answer"])  # none confirmed yet
+        obj = autopublish.w._post_obj(pkg, "2026-10-01")
+        self.assertEqual(obj["content"]["vi"]["storylines"], "Một.")
+        html = autopublish.w.vi_html(pkg["vi"])
+        # Right after the intro section, before the first board.
+        self.assertLess(html.index("Diễn biến đáng chú ý"), html.index('id="rb-'))
+
     def test_generated_seo_strings_stay_within_byte_budgets(self):
         # Regression 2026-10-24: the long search name "PPA World Championships"
         # produced a 63-byte metaTitleEn and turned main CI red

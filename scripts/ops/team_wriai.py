@@ -122,7 +122,8 @@ def _post_obj(pkg, today):
         keep = ("heading", "content", "listItems", "orderedList", "internalLinks", "table", "resultsBoard", "resultsSummary")
         return {"title": l["title"], "metaTitle": l["metaTitle"], "metaDescription": l["metaDescription"],
                 "sections": [{k: s[k] for k in keep if s.get(k)} for s in l["sections"]],
-                "faqItems": [{"question": f["question"], "answer": f["answer"]} for f in l["faqItems"]]}
+                "faqItems": [{"question": f["question"], "answer": f["answer"]} for f in l["faqItems"]],
+                **({"storylines": l["storylines"]} if l.get("storylines") else {})}
     return {"slug": pkg["slug"], "publishedDate": today, "updatedDate": today, "author": "The PickleHub Team",
             "tags": pkg["tags"], "ctaPath": pkg.get("ctaPath") or "/tools",
             "ctaLabel": pkg.get("ctaLabel") or {"en": "Explore ThePickleHub tools", "vi": "Khám phá công cụ ThePickleHub"},
@@ -254,6 +255,10 @@ def vi_html(vi):
             parts.append(f"<table>{cap}<thead><tr>{head}</tr></thead><tbody>{rows}</tbody></table>")
         for link in s.get("internalLinks") or []:
             parts.append(f'<p><a href="{e(link["path"])}">{e(link["text"])}</a></p>')
+        # Storylines follow the intro, as on the EN page (blog-body.ts).
+        story = [p.strip() for p in str(vi.get("storylines") or "").split("\n\n") if p.strip()]
+        if s is vi["sections"][0] and story:
+            parts.append("<h2>Diễn biến đáng chú ý</h2>" + "".join(f"<p>{e(p)}</p>" for p in story))
     return "\n".join(parts)
 
 

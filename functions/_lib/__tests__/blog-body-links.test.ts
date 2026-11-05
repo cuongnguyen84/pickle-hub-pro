@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { renderSectionLink } from "../render/blog-body";
+import { renderEnBlogBody, renderSectionLink, storylinesHtml } from "../render/blog-body";
 
 // Guards the SSR half of BlogSection.internalLinks. Before 2026-07-27 the
 // renderer concatenated every path onto siteUrl, so an absolute URL shipped to
@@ -51,5 +51,28 @@ describe("renderSectionLink", () => {
 
     const internal = renderSectionLink(SITE, { text: "a & b", path: "/x?y=1&z=2" });
     expect(internal).toContain("&amp;");
+  });
+});
+
+describe("tournament cluster + storylines (bot path)", () => {
+  it("results post links its schedule sibling, watch guide, rankings and tools", async () => {
+    const html = await renderEnBlogBody("hong-kong-slam-2026-results", SITE);
+    const nav = html.match(/<nav class="tl-rb-chips" aria-label="Tournament coverage">.*?<\/nav>/)?.[0] ?? "";
+    for (const path of ["/blog/hong-kong-slam-2026-schedule", "/blog/how-to-watch-ppa-tour-live-2026", "/rankings", "/tools"]) {
+      expect(nav).toContain(`href="${SITE}${path}"`);
+    }
+  });
+
+  it("Worlds results gets the cluster without a schedule sibling that does not exist", async () => {
+    const html = await renderEnBlogBody("pickleball-world-championships-2026-results", SITE);
+    expect(html).toContain('aria-label="Tournament coverage"');
+    expect(html).not.toContain("pickleball-world-championships-2026-schedule");
+  });
+
+  it("no storylines = no empty section", async () => {
+    expect(storylinesHtml(undefined, "Storylines")).toBe("");
+    expect(storylinesHtml(" \n\n ", "Storylines")).toBe("");
+    expect(storylinesHtml("A.\n\nB & C.", "Storylines")).toBe("<section><h2>Storylines</h2><p>A.</p><p>B &amp; C.</p></section>");
+    expect(await renderEnBlogBody("hong-kong-slam-2026-results", SITE)).not.toContain("<h2>Storylines</h2>");
   });
 });
