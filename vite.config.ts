@@ -93,6 +93,22 @@ return ({
         return id === "\0proto-shop-disabled" ? "export default null;\n" : null;
       },
     },
+    // metaTitleEn/metaTitleVi in blog metadata feed only the SSR <title>
+    // (functions/_lib/render/blog-meta.ts builds BLOG_POST_META from the same
+    // file); no client code reads them. Dropping them from the client chunk
+    // saves ~2 KB gz of CODE without splitting the single SEO source of truth.
+    // Build-only, so vitest and Pages Functions still see the full entries.
+    {
+      name: "strip-ssr-only-blog-meta",
+      apply: "build" as const,
+      transform(code: string, id: string) {
+        if (!id.endsWith("/src/content/blog/metadata.ts")) return null;
+        const out = code.replace(/^\s*"?metaTitle(?:En|Vi)"?: ".*",\n/gm, "");
+        // Fail loud if the generated format drifts and nothing matched.
+        if (out === code) throw new Error("strip-ssr-only-blog-meta: no metaTitleEn/Vi line matched");
+        return { code: out, map: null };
+      },
+    },
     // Point the two <link> hints and the CSP report-uri at THIS build's
     // Supabase. Both live outside the JS graph, so no amount of env plumbing in
     // src/ reaches them — see SUPABASE_ORIGIN above.
