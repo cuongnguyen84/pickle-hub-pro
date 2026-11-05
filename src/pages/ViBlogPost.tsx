@@ -16,6 +16,9 @@ import { useBlogPostViewCount } from "@/hooks/useBlogPostViewCount";
 import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
 import { cmsHeroImageSources, heroDimsProps } from "@/lib/image-utils";
 import { WorldCupResultsBoard } from "@/components/live/WorldCupResultsBoard";
+import { TournamentClusterLinks } from "@/components/blog/TournamentClusterLinks";
+import { buildTournamentClusterLinks, clusterCandidates } from "@/content/blog/tournament-cluster";
+import { useViBlogTwins } from "@/hooks/useViBlogAlternate";
 
 /** Marker a VI post puts in content_html where a live block belongs. Mirrors
  *  WC_RESULTS_MARKER in functions/_lib/render/blog.ts. */
@@ -37,6 +40,8 @@ const ViBlogPost = () => {
   const { data: post, isLoading, error, refetch } = useViBlogPostBySlug(slug);
   useTrackBlogView("vi", slug);
   const { data: viewCount } = useBlogPostViewCount("vi", slug);
+  const enSlug = post?.alternate_en_slug ?? "";
+  const { data: twins } = useViBlogTwins(clusterCandidates(enSlug));
 
   // Deep links carrying a #fragment (glossary anchors, cross-links into a
   // specific section) never scrolled: content_html only enters the DOM after
@@ -217,6 +222,12 @@ const ViBlogPost = () => {
             );
           })()}
 
+          <TournamentClusterLinks
+            label="Theo dõi giải"
+            // Rankings/tools render at once; twin chips join the same single
+            // row when the lookup lands, so the body below never shifts.
+            links={buildTournamentClusterLinks(enSlug, "vi", (s) => (twins?.[s] ? `/vi/blog/${twins[s]}` : undefined))}
+          />
           <AdSlot slot="blogInArticle" minHeight={120} className="my-6" />
           {/* A VI post can mount a live data block by putting [[WC_RESULTS]] in
               its content_html. Splitting on the marker keeps the rest of the

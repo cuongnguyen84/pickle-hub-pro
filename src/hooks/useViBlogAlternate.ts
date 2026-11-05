@@ -42,3 +42,23 @@ export function useViBlogAlternate(enSlug: string | undefined) {
     staleTime: 10 * 60 * 1000,
   });
 }
+
+/** EN slug → VI slug for each of `enSlugs` that has a published VI twin.
+ *  One request; used by the tournament cluster row on ViBlogPost. */
+export function useViBlogTwins(enSlugs: string[]) {
+  return useQuery({
+    queryKey: ["vi-blog-twins", enSlugs],
+    queryFn: async (): Promise<Record<string, string>> => {
+      const list = enSlugs.map(encodeURIComponent).join(",");
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/vi_blog_posts?alternate_en_slug=in.(${list})&status=eq.published&select=slug,alternate_en_slug`,
+        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } },
+      );
+      if (!res.ok) return {};
+      const rows = (await res.json()) as { slug: string; alternate_en_slug: string }[];
+      return Object.fromEntries(rows.map((r) => [r.alternate_en_slug, r.slug]));
+    },
+    enabled: enSlugs.length > 0,
+    staleTime: 10 * 60 * 1000,
+  });
+}

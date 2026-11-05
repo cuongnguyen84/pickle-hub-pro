@@ -27,6 +27,8 @@ import { AdSlot } from "@/components/monetization/AdSlot";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WorldCupResultsBoard } from "@/components/live/WorldCupResultsBoard";
 import { ResultsHub, ResultsSummary } from "@/components/blog/ResultsBoard";
+import { TournamentClusterLinks } from "@/components/blog/TournamentClusterLinks";
+import { buildTournamentClusterLinks } from "@/content/blog/tournament-cluster";
 
 /**
  * /blog/:slug — English long-form article page.
@@ -140,6 +142,9 @@ const BlogPost = () => {
   const metaTitle = truncateForSeo(content.metaTitle, 60);
   const postUrl = `https://www.thepicklehub.net/blog/${post.slug}`;
   const relatedPosts = getRelatedPosts(post.slug, 3);
+  const clusterLinks = buildTournamentClusterLinks(post.slug, "en", (s) =>
+    blogMetadata.some((p) => p.slug === s) ? `/blog/${s}` : undefined,
+  );
 
   const breadcrumbItems = [
     { name: "Blog", url: "https://www.thepicklehub.net/blog" },
@@ -297,6 +302,7 @@ const BlogPost = () => {
           })()}
 
           <AdSlot slot="blogInArticle" minHeight={120} className="my-6" />
+          <TournamentClusterLinks links={clusterLinks} label="Tournament coverage" />
           <div className="tl-longform">
             {content.sections.map((section, idx) => {
               // Results posts: every resultsBoard section is rendered by one
@@ -402,7 +408,19 @@ const BlogPost = () => {
                 )}
               </section>
               );
-            })}
+            }).flatMap((node, idx) =>
+              // Storylines sit right after the intro, before the boards.
+              idx === 0 && content.storylines?.trim()
+                ? [node, (
+                    <section key="storylines">
+                      <h2>Storylines</h2>
+                      {content.storylines.split("\n\n").filter((p) => p.trim()).map((p, i) => (
+                        <p key={i}>{p.trim()}</p>
+                      ))}
+                    </section>
+                  )]
+                : [node],
+            )}
 
             {content.howToSteps && content.howToSteps.length > 0 && (
               <section>

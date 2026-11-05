@@ -343,9 +343,29 @@ def package(event: dict, feed: dict, now: datetime) -> dict:
         *vi_status,
         {"heading": "Cách kiểm chứng cập nhật", "content": f"ThePickleHub kiểm tra event id, trạng thái trận, cấu trúc hai đội và cờ người thắng duy nhất trước khi cập nhật. Trong thời gian giải, trang được kiểm tra vài giờ một lần và cập nhật ngay khi snapshot nguồn thay đổi. Thời gian giải: {event['dates_vi']}. Địa điểm: {venue}. Nguồn chính thức: {source}."},
     ]
-    faq_en = [{"question": "Where do these results come from?", "answer": f"The official PPA scores feed: {source}."}, {"question": "Are scheduled matches final results?", "answer": "No. Only an official final or completed status with one winner is presented as a result."}, {"question": "When is this page updated?", "answer": "Every few hours while the event is on, whenever the verified official score snapshot changes."}]
-    faq_vi = [{"question": "Kết quả lấy từ đâu?", "answer": f"Từ feed điểm số PPA chính thức: {source}."}, {"question": "Trận scheduled có phải kết quả không?", "answer": "Không. Chỉ bản ghi final hoặc completed có đúng một người thắng mới được trình bày là kết quả."}, {"question": "Trang cập nhật khi nào?", "answer": "Vài giờ một lần trong thời gian giải, mỗi khi snapshot điểm số chính thức đã kiểm chứng thay đổi."}]
+    # FAQ names the query people type ("<event> results", "who won") and
+    # answers it from the feed's own champions, never from prose.
+    champs_en = "; ".join(f"{d['division']}: {d['champion']}" for d in en_summary if d.get("champion"))
+    champs_vi = "; ".join(f"{d['division']}: {d['champion']}" for d in vi_summary if d.get("champion"))
+    faq_en = [
+        {"question": f"Where do the {name} results and scores come from?", "answer": f"The official PPA scores feed: {source}."},
+        {"question": f"Who won {name}?", "answer": f"Champions confirmed by the official feed so far — {champs_en}." if champs_en else "No champion is confirmed in the official feed yet. The results boards on this page list every completed match and set score by round."},
+        {"question": "Are scheduled matches final results?", "answer": "No. Only an official final or completed status with one winner is presented as a result."},
+        {"question": f"When are the {name} scores updated?", "answer": "Every few hours while the event is on, whenever the verified official score snapshot changes."},
+    ]
+    faq_vi = [
+        {"question": f"Kết quả và tỷ số {base} {year} lấy từ đâu?", "answer": f"Từ feed điểm số PPA chính thức: {source}."},
+        {"question": f"Ai vô địch {base} {year}?", "answer": f"Nhà vô địch đã được feed chính thức xác nhận — {champs_vi}." if champs_vi else "Feed chính thức chưa xác nhận nhà vô địch nào. Bảng kết quả trên trang ghi đủ từng trận đã xong và tỷ số từng set theo vòng."},
+        {"question": "Trận scheduled có phải kết quả không?", "answer": "Không. Chỉ bản ghi final hoặc completed có đúng một người thắng mới được trình bày là kết quả."},
+        {"question": f"Tỷ số {base} {year} cập nhật khi nào?", "answer": "Vài giờ một lần trong thời gian giải, mỗi khi snapshot điểm số chính thức đã kiểm chứng thay đổi."},
+    ]
     package = {"verdict": "NEW", "unverified": [], "slug": event["slug"], "tags": event.get("tags", ["pickleball", "results", "2026"]), "ctaPath": "/live", "ctaLabel": {"en": "Follow live scores on ThePickleHub", "vi": "Theo dõi điểm số trên ThePickleHub"}, "en": {"title": f"{name} Results: Daily Scores and Confirmed Winners", "metaTitle": en_meta, "metaDescription": en_desc, "sections": en_sections, "faqItems": faq_en}, "vi": {"slug": event["vi_slug"], "title": f"Kết quả {base} {year}: cập nhật hằng ngày", "metaTitle": vi_meta, "metaDescription": vi_desc, "excerpt": f"Kết quả {base} {year} cập nhật từ nguồn điểm số PPA chính thức.", "focusKeyword": f"kết quả {base.lower()} {year}", "sections": vi_sections, "faqItems": faq_vi}}
+    # Storylines are editorial (coverage `storylines_en` / `storylines_vi`,
+    # paragraphs split by a blank line); absent or blank = no block at all.
+    for lang in ("en", "vi"):
+        story = str(event.get(f"storylines_{lang}") or "").strip()
+        if story:
+            package[lang]["storylines"] = story
     # Keep the editorial hero attached to every future source-driven refresh.
     if event.get("hero_image"):
         package["heroImage"] = event["hero_image"]

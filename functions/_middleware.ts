@@ -919,7 +919,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       // as the bot path.
       let publicCache: PublicPagePartsCache | null = null;
       if (env.PRERENDER_CACHE && url.searchParams.get("nocache") !== "1") {
-        const cacheKey = `pr:v147:human:${url.pathname}`;
+        const cacheKey = `pr:v148:human:${url.pathname}`;
         const ttl = Math.min(pathCacheTtl(pathname), 300);
         publicCache = {
           get: () => env.PRERENDER_CACHE.get(cacheKey),
@@ -1391,7 +1391,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v147 (2026-11-02): PPA WPR snapshot fetched-at 2026-11-02. Top 25
   // points are unchanged; source casing and a handful of VN highlight
   // ranks moved. Cached v146 HTML would keep the 2026-10-28 names.
-  const cacheKey = `pr:v147:${url.pathname}`;
+  // v148 (2026-11-05): tournament results/schedule posts (EN + VI) gain the
+  // schedule ↔ results ↔ watch ↔ rankings ↔ tools chip row + storylines.
+  const cacheKey = `pr:v148:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

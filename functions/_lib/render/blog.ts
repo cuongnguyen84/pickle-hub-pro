@@ -9,7 +9,8 @@ import { byEffectiveDateDesc } from "../../../src/lib/blogOrder";
 import type { SupabaseClient } from "../supabase";
 import { buildHtml, htmlResponse } from "../html";
 import { BLOG_POST_META } from "./blog-meta";
-import { renderEnBlogBody, enBlogFaqJsonLd, enBlogHowToJsonLd } from "./blog-body";
+import { renderEnBlogBody, enBlogFaqJsonLd, enBlogHowToJsonLd, tournamentClusterHtml } from "./blog-body";
+import { buildTournamentClusterLinks, clusterCandidates } from "../../../src/content/blog/tournament-cluster";
 import {
   escapeHtml,
   escapeJsonLd,
@@ -399,6 +400,28 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
 
   const bc = breadcrumb(viCrumbs);
 
+  // Tournament cluster row (schedule ↔ results ↔ watch ↔ rankings ↔ tools),
+  // linking only VI twins that exist. Mirrors ViBlogPost.tsx.
+  const candidates = p.alternate_en_slug ? clusterCandidates(p.alternate_en_slug) : [];
+  const { data: twins } = candidates.length
+    ? await supabase
+        .from("vi_blog_posts")
+        .select("slug, alternate_en_slug")
+        .in("alternate_en_slug", candidates)
+        .eq("status", "published")
+    : { data: [] };
+  const twinBySlug = new Map(((twins || []) as { slug: string; alternate_en_slug: string }[]).map((t) => [t.alternate_en_slug, t.slug]));
+  const viCluster = p.alternate_en_slug
+    ? tournamentClusterHtml(
+        buildTournamentClusterLinks(p.alternate_en_slug, "vi", (s) => {
+          const vi = twinBySlug.get(s);
+          return vi ? `/vi/blog/${vi}` : undefined;
+        }),
+        siteUrl,
+        "Theo dõi giải",
+      )
+    : "";
+
   const relatedItems = (relatedRes.data || []) as { slug: string; title: string }[];
   const relatedSection = relatedItems.length > 0
     ? `<section><h2>Bài viết liên quan</h2><ul>${relatedItems.map((r) => `<li><a href="${siteUrl}/vi/blog/${r.slug}">${escapeHtml(r.title)}</a></li>`).join("")}</ul></section>`
@@ -425,7 +448,7 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
     lang: "vi",
     extraMeta,
     jsonLd: articleSchema,
-    bodyContent: `${bc}<article>${viBody}${viFaqSection}</article>${relatedSection}`,
+    bodyContent: `${bc}<article>${viCluster}${viBody}${viFaqSection}</article>${relatedSection}`,
   }));
 }
 
