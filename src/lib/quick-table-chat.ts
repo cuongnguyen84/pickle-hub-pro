@@ -307,7 +307,45 @@ export function unsupportedFormatNote(text: string, lang: "vi" | "en"): string |
       ? "Thể thức loại kép (double elimination) chưa được hỗ trợ. Thay thế gần nhất: đấu vòng tròn ở vòng bảng rồi vào playoff loại trực tiếp — mình làm theo cách đó cho bạn nhé"
       : "Double elimination isn't supported yet. The closest alternative is a round-robin group stage feeding a single-elimination playoff — I can set it up that way for you";
   }
+  // Ca 06/11: dán 5 bảng + lộ trình Phase 1 vòng tròn → Phase 2 crossover → Phase 3 play-in.
+  // "play in" trơn ("play in 4 groups") và "vòng giao lưu" không tính; "đấu chéo" thường là xếp cặp playoff (đã có).
+  if (/(cross ?-?over|play-in|playin|vong play ?in|play in (round|stage|game|match|bracket|phase)|vong giao(?! luu)|(phase|giai doan|stage) ?(3|iii|three|ba)\b)/.test(t)) {
+    return lang === "vi"
+      ? "Lộ trình nhiều giai đoạn có vòng crossover / play-in chưa được hỗ trợ. Thay thế gần nhất: đấu vòng tròn ở vòng bảng rồi vào playoff loại trực tiếp — mình làm theo cách đó cho bạn nhé"
+      : "Multi-phase roadmaps with a crossover / play-in stage aren't supported yet. The closest alternative is a round-robin group stage feeding a single-elimination playoff — I can set it up that way for you";
+  }
   return null;
+}
+
+export interface TeamList { label: string; names: string[] }
+const TEAM_HEAD = /^\s*((?:team|đội|doi|nhóm|nhom|clb|bên|ben)\s+(?:[a-z]|\d{1,2}))\b\s*(?:\([^)]*\))?\s*[:：\-–]?\s*(.*)$/i;
+
+/**
+ * Ca 06/11: dán "Team A" + 22 tên, "Team B" + 22 tên → chat chỉ đáp "Đã nhận 44 người".
+ * Trả ≥2 danh sách có nhãn (mỗi danh sách ≥3 tên), hoặc null. Không ghép cặp gì ở đây.
+ */
+export function teamLists(text: string): TeamList[] | null {
+  const lists: TeamList[] = [];
+  for (const line of text.split(/\n/)) {
+    const head = line.match(TEAM_HEAD);
+    const rest = head ? head[2] : line;
+    if (head) lists.push({ label: head[1].trim(), names: [] });
+    const cur = lists[lists.length - 1];
+    if (!cur) continue;
+    for (const n of rest.split(head ? /[,;]/ : /[;]/)) {
+      const name = n.replace(/^\s*\d+\s*[.)\-:]\s*/, "").trim();
+      if (name) cur.names.push(name);
+    }
+  }
+  // ≥3 tên: "Đội 1: Nam, Hùng" là một cặp đôi, không phải danh sách đội.
+  const ok = lists.filter((l) => l.names.length >= 3);
+  return ok.length >= 2 && ok.length === lists.length ? lists : null;
+}
+
+/** Ghép đôi theo lựa chọn người dùng: trong từng đội (theo thứ tự) hoặc chéo (người thứ i đội A + người thứ i đội B). */
+export function pairTeamLists(lists: TeamList[], mode: "within" | "across"): Entry[] {
+  if (mode === "across") return lists[0].names.map((p1, i) => ({ p1, p2: lists[1].names[i] }));
+  return lists.flatMap((l) => pairEntries(l.names.map((p1) => ({ p1, team: l.label })), "sequential"));
 }
 
 /**
@@ -380,10 +418,11 @@ export function tmPlayoffCount(teams: number): number {
   return p;
 }
 
-export function fallbackReply(intent: string, unmet: string | null, lang: "vi" | "en"): string {
+export function fallbackReply(intent: string, unmet: string | null, lang: "vi" | "en", request = ""): string {
   const vi = lang === "vi";
   if (intent === "unsupported") {
-    const fmt = unsupportedFormatNote(unmet ?? "", lang);
+    // unmet là tóm tắt của mô hình, có thể mất từ khoá — soi cả câu người dùng.
+    const fmt = unsupportedFormatNote(`${unmet ?? ""} ${request}`, lang);
     if (fmt) return `${fmt}.`;
     return vi
       ? `Mình chưa hỗ trợ${unmet ? ` yêu cầu này: ${unmet}` : " yêu cầu này"}. Bạn cứ tạo giải như bình thường trước — các thiết lập nâng cao (gán sân, thể thức riêng…) có thể chỉnh thêm ở trang giải sau khi tạo. Mình tiếp tục nhé.`
@@ -1197,7 +1236,9 @@ export function factualAck(before: Draft, after: Draft, lang: "vi" | "en", reque
   } else if (added.length && listed) {
     const shown = added.slice(0, 6).map(entryLabel).join(", ");
     const more = added.length > 6 ? (vi ? ` và ${added.length - 6} nữa` : ` and ${added.length - 6} more`) : "";
-    bits.push(vi ? `Đã nhận ${added.length} ${u}: ${shown}${more}.` : `Got ${added.length} ${u}: ${shown}${more}.`);
+    // Có thể thức chưa hỗ trợ thì không nói "đã nhận" như thể đã làm theo lộ trình đó.
+    if (fmtNote) bits.push(vi ? `Danh sách ${added.length} ${u} được giữ trong nháp cho cách thay thế này: ${shown}${more}.` : `Your ${added.length} ${u} are kept in the draft for that alternative: ${shown}${more}.`);
+    else bits.push(vi ? `Đã nhận ${added.length} ${u}: ${shown}${more}.` : `Got ${added.length} ${u}: ${shown}${more}.`);
   } else if (!next.length && after.player_count && after.player_count !== before.player_count) {
     bits.push(`${after.player_count} ${u}.`);
   }

@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 import { rankSeriesSizes, seriesLine, seriesName, seriesPlan, slot as seriesSlot, type SeriesStyle } from "@/lib/quick-table-series";
 import {
   applyPatch, applySpokenEdit, buildRoster, chatFacts, customSeries, defaultName, draftSeriesPlan, dropInventedRoster, duplicateIndexes, entryCount, entryLabel, factualAck, findGroupOption, googleSheetRef, groupChoices, groupSuggestion,
-  fallbackReply, groupCourtsLine, mergeTm, nextTmSlot, tmAnswer, tmDefaultName, tmKnockoutOk, tmPlayoffCount, wantsTeamMatch, groupSizes, keepOrAssign, localSlotPatch, lockAdvance, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, messageNeedsModel, needsPairing, nextSlot, pairEntries, parseSheet, playoffSummary, previewAssignments, replyFromDraft, seriesCap, trustPatch,
+  fallbackReply, groupCourtsLine, mergeTm, nextTmSlot, tmAnswer, tmDefaultName, tmKnockoutOk, tmPlayoffCount, wantsTeamMatch, teamLists, pairTeamLists, type TeamList, groupSizes, keepOrAssign, localSlotPatch, lockAdvance, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, messageNeedsModel, needsPairing, nextSlot, pairEntries, parseSheet, playoffSummary, previewAssignments, replyFromDraft, seriesCap, trustPatch,
   type Draft, type Entry, type GroupOption, type PairingMode, type Slot, type TmDraft, type TmFormat,
 } from "@/lib/quick-table-chat";
 import { createTeamMatchTournament } from "@/hooks/useTeamMatch";
@@ -189,6 +189,10 @@ const COPY = {
     tmCreated: (n: string) => `Đã tạo “${n}”`,
     tmLimit: "Mỗi tài khoản tạo tối đa 3 giải đồng đội. Kết thúc hoặc xoá bớt giải cũ nhé.",
     tmFailed: "Chưa tạo được giải. Thử lại nhé?",
+    teamPasteAsk: (l: TeamList[]) => `Mình thấy ${l.length} danh sách: ${l.map((x) => `${x.label} (${x.names.length} người)`).join(", ")}. Bạn muốn làm giải Đồng đội MLP (các đội đấu nhau), hay ghép đôi để chia bảng? Nếu ghép đôi thì ghép trong cùng đội hay chéo giữa các đội? Mình chưa ghép cặp nào. Muốn tự ghép thì gõ từng cặp, kiểu “Nam - Hùng”.`,
+    teamPasteMlp: (n: number) => `Đồng đội MLP: ${n} đội đấu nhau`,
+    teamPasteWithin: "Ghép đôi trong cùng đội (theo thứ tự)",
+    teamPasteAcross: (a: string, b: string) => `Ghép chéo: 1 người ${a} + 1 người ${b}`,
     rosterFailed: "Giải đã tạo nhưng chưa xếp được bảng. Mở trang nhập danh sách để thử lại.",
     zaloLink: "Xem lịch & kết quả",
     courts: (c: number[]) => `Sân ${c.join(", ")}`,
@@ -330,6 +334,10 @@ const COPY = {
     tmCreated: (n: string) => `Created “${n}”`,
     tmLimit: "Each account can create up to 3 team matches. Finish or delete an old one first.",
     tmFailed: "Couldn't create the tournament. Try again?",
+    teamPasteAsk: (l: TeamList[]) => `I see ${l.length} lists: ${l.map((x) => `${x.label} (${x.names.length} players)`).join(", ")}. Do you want an MLP Team Match (the teams play each other), or doubles pairs for a group stage? If pairs, pair within the same team or across teams? I haven't paired anyone yet. To pair them yourself, type each pair like “Nam - Hung”.`,
+    teamPasteMlp: (n: number) => `MLP Team Match: ${n} teams play each other`,
+    teamPasteWithin: "Pair within each team (in order)",
+    teamPasteAcross: (a: string, b: string) => `Pair across: 1 from ${a} + 1 from ${b}`,
     rosterFailed: "The tournament was created but the groups weren't drawn. Open the entry page to try again.",
     zaloLink: "Schedule & results",
     courts: (c: number[]) => `Courts ${c.join(", ")}`,
@@ -435,6 +443,8 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   const [draftOpen, setDraftOpen] = useState(false);
   // Nháp giải đồng đội MLP (Team Match). null = đang tạo giải chia bảng như thường.
   const [tm, setTm] = useState<TmDraft | null>(restored?.lang === lang && restored.tm ? mergeTm({}, restored.tm) : null);
+  // Dán Team A / Team B: chờ người dùng chọn MLP hay cách ghép đôi (không lưu, không tự ghép).
+  const [teamPaste, setTeamPaste] = useState<TeamList[] | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -593,7 +603,11 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       const cmd = msg.text.toLocaleLowerCase("vi").replace(/[.!]+$/, "").trim();
       if (/^(làm lại|lam lai|xoá hết|xóa hết|xoa het|reset|start over|restart)$/.test(cmd)) { setInput(""); void resetAll(); return; }
       if (/^(quay lại|quay lai|undo|back)$/.test(cmd)) { setInput(""); undo(); return; }
-      if (tm || wantsTeamMatch(msg.text)) { setInput(""); pushUser(msg.text); tmStep(tmAnswer(tm ?? {}, msg.text, lang), !tm); return; }
+      const lists = tm ? null : teamLists(msg.text);
+      const tmSeed: TmDraft = lists ? { team_count: lists.length, roster: Math.max(...lists.map((l) => l.names.length)) } : {};
+      setTeamPaste(null);
+      if (tm || wantsTeamMatch(msg.text)) { setInput(""); pushUser(msg.text); tmStep(tmAnswer(tm ?? mergeTm({}, tmSeed), msg.text, lang), !tm); return; }
+      if (lists) { setInput(""); pushUser(msg.text); setTeamPaste(lists); pushBot(c.teamPasteAsk(lists)); return; }
       const sheet = googleSheetRef(msg.text);
       if (sheet) {
         setInput("");
@@ -728,7 +742,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       // 22/10) → dùng câu fallback tử tế thay vì "bản nháp chưa đổi" chung
       // chung: nhắc lại yêu cầu, nói rõ chưa hỗ trợ, flow vẫn đi tiếp.
       const ack = !said.trim() && JSON.stringify(next) === JSON.stringify(draft)
-        ? fallbackReply(res.intent, res.unmet ?? null, lang)
+        ? fallbackReply(res.intent, res.unmet ?? null, lang, msg.text)
         : replyFromDraft(draft, next, said, lang, msg.text);
       advance(next, ack);
       return;
@@ -751,6 +765,23 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   const chips: Chip[] = (() => {
     if (created || quotaFull != null || busy) return [];
     if (failed) return [{ label: c.retry, onClick: () => send(failed, true) }];
+    if (teamPaste) {
+      const [a, b] = teamPaste;
+      const pairBy = (mode: "within" | "across", label: string) => () => {
+        setTeamPaste(null);
+        const entries = pairTeamLists(teamPaste, mode);
+        choose(label, { entries, is_doubles: true, pairing_done: true, player_count: entries.length });
+      };
+      return [
+        { label: c.teamPasteMlp(teamPaste.length), recommended: true, onClick: () => {
+          setTeamPaste(null);
+          pushUser(c.teamPasteMlp(teamPaste.length));
+          tmStep(mergeTm({}, { team_count: teamPaste.length, roster: Math.max(...teamPaste.map((l) => l.names.length)) }), true);
+        } },
+        ...(teamPaste.every((l) => l.names.length % 2 === 0) ? [{ label: c.teamPasteWithin, onClick: pairBy("within", c.teamPasteWithin) }] : []),
+        ...(teamPaste.length === 2 && a.names.length === b.names.length ? [{ label: c.teamPasteAcross(a.label, b.label), onClick: pairBy("across", c.teamPasteAcross(a.label, b.label)) }] : []),
+      ];
+    }
     if (tm) {
       const back = { label: c.tmBack, onClick: () => { pushUser(c.tmBack); setTm(null); pushBot(questionFor(c, draft, slot)); } };
       const auto = { label: c.tmAuto, onClick: tmPick(c.tmAuto, { team_count: 4, roster: 4, format: "round_robin", name: tmDefaultName(lang), ...tm }) };
@@ -1023,6 +1054,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     setCreated(null);
     setDraft({});
     setTm(null);
+    setTeamPaste(null);
     setMessages(freshMessages(c, {}));
     setSubMenu(null);
     setFailed(null);
