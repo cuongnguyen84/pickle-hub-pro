@@ -31,7 +31,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 6, 2026, 10:01 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 280 matches, including 260 completed or final records and 2 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 6, 2026, 12:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 282 matches, including 262 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -46,7 +46,7 @@ const post: BlogPost = {
             },
             {
               "division": "Men's Doubles",
-              "note": "Through to the Round 16 · 52 matches",
+              "note": "Through to the Round 16 · 54 matches",
               "anchor": "rb-mens-doubles"
             },
             {
@@ -701,7 +701,7 @@ const post: BlogPost = {
         },
         {
           "heading": "Men's Doubles results",
-          "content": "No champion yet. 52 completed matches, latest round first.",
+          "content": "No champion yet. 54 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Men's Doubles",
             "rounds": [
@@ -729,6 +729,42 @@ const post: BlogPost = {
                       [
                         11,
                         4
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Riley Newman / Noe Khlif",
+                    "loser": "Rafa Hewett / Luc Pham",
+                    "sets": [
+                      [
+                        11,
+                        13
+                      ],
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Will Mackinnon / Hunter Johnson",
+                    "loser": "Cason Campbell / Adam Harvey",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        7,
+                        11
                       ],
                       [
                         11,
@@ -4070,16 +4106,16 @@ const post: BlogPost = {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Men's Doubles, Round 16: Riley Newman / Noe Khlif vs Rafa Hewett / Luc Pham — status live.",
-            "Men's Doubles, Round 16: Cason Campbell / Adam Harvey vs Will Mackinnon / Hunter Johnson — status live.",
             "Women's Doubles, Quarter Finals: Kate Fahey / Tina Pisnik vs Mari Humberg / Milan Rane — status scheduled.",
-            "Women's Doubles, Quarter Finals: Tyra Hurricane Black / Jorja Johnson vs Sofia Sewing / Catherine Parenteau — status scheduled.",
             "Women's Doubles, Quarter Finals: Anna Bright / Anna Leigh Waters vs Chao Yi Wang / Layne Sleeth — status scheduled.",
             "Women's Doubles, Quarter Finals: Rachel Rohrabacher / Parris Todd vs Brooke Buckner / Kaitlyn Christian — status scheduled.",
+            "Women's Doubles, Quarter Finals: Tyra Hurricane Black / Jorja Johnson vs Sofia Sewing / Catherine Parenteau — status scheduled.",
             "Men's Doubles, Quarter Finals: Federico Staksrud / Hayden Patriquin vs CJ Klinger / Eric Oncins — status scheduled.",
+            "Men's Doubles, Quarter Finals: Andrei Daescu / Christian Alshon vs Will Mackinnon / Hunter Johnson — status scheduled.",
             "Men's Doubles, Quarter Finals: Ben Johns / Gabriel Tardio vs Connor Garnett / Dylan Frazier — status scheduled.",
+            "Men's Doubles, Quarter Finals: Tama Shimabukuro / JW Johnson vs Riley Newman / Noe Khlif — status scheduled.",
             "Mixed Doubles, Quarter Finals: Jorja Johnson / JW Johnson vs Catherine Parenteau / Eric Oncins — status scheduled.",
-            "Mixed Doubles, Quarter Finals: Rachel Rohrabacher / Christian Alshon vs Tyra Hurricane Black / Gabriel Tardio — status scheduled."
+            "Mixed Doubles, Quarter Finals: Anna Bright / Hayden Patriquin vs Parris Todd / Andrei Daescu — status scheduled."
           ]
         },
         {
@@ -4113,7 +4149,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 10:01 ngày 6/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 280 trận, gồm 260 bản ghi đã kết thúc/chung cuộc và 2 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 12:00 ngày 6/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 282 trận, gồm 262 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -4128,7 +4164,7 @@ const post: BlogPost = {
             },
             {
               "division": "Đôi nam",
-              "note": "Đã tới Vòng 16 · 52 trận",
+              "note": "Đã tới Vòng 16 · 54 trận",
               "anchor": "rb-doi-nam"
             },
             {
@@ -4783,7 +4819,7 @@ const post: BlogPost = {
         },
         {
           "heading": "Kết quả Đôi nam",
-          "content": "Chưa có nhà vô địch. 52 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Chưa có nhà vô địch. 54 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đôi nam",
             "rounds": [
@@ -4811,6 +4847,42 @@ const post: BlogPost = {
                       [
                         11,
                         4
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Riley Newman / Noe Khlif",
+                    "loser": "Rafa Hewett / Luc Pham",
+                    "sets": [
+                      [
+                        11,
+                        13
+                      ],
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Will Mackinnon / Hunter Johnson",
+                    "loser": "Cason Campbell / Adam Harvey",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        7,
+                        11
                       ],
                       [
                         11,
@@ -8152,16 +8224,16 @@ const post: BlogPost = {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đôi nam, Round 16: Riley Newman / Noe Khlif gặp Rafa Hewett / Luc Pham — trạng thái live.",
-            "Đôi nam, Round 16: Cason Campbell / Adam Harvey gặp Will Mackinnon / Hunter Johnson — trạng thái live.",
             "Đôi nữ, Quarter Finals: Kate Fahey / Tina Pisnik gặp Mari Humberg / Milan Rane — trạng thái scheduled.",
-            "Đôi nữ, Quarter Finals: Tyra Hurricane Black / Jorja Johnson gặp Sofia Sewing / Catherine Parenteau — trạng thái scheduled.",
             "Đôi nữ, Quarter Finals: Anna Bright / Anna Leigh Waters gặp Chao Yi Wang / Layne Sleeth — trạng thái scheduled.",
             "Đôi nữ, Quarter Finals: Rachel Rohrabacher / Parris Todd gặp Brooke Buckner / Kaitlyn Christian — trạng thái scheduled.",
+            "Đôi nữ, Quarter Finals: Tyra Hurricane Black / Jorja Johnson gặp Sofia Sewing / Catherine Parenteau — trạng thái scheduled.",
             "Đôi nam, Quarter Finals: Federico Staksrud / Hayden Patriquin gặp CJ Klinger / Eric Oncins — trạng thái scheduled.",
+            "Đôi nam, Quarter Finals: Andrei Daescu / Christian Alshon gặp Will Mackinnon / Hunter Johnson — trạng thái scheduled.",
             "Đôi nam, Quarter Finals: Ben Johns / Gabriel Tardio gặp Connor Garnett / Dylan Frazier — trạng thái scheduled.",
+            "Đôi nam, Quarter Finals: Tama Shimabukuro / JW Johnson gặp Riley Newman / Noe Khlif — trạng thái scheduled.",
             "Đôi nam nữ, Quarter Finals: Jorja Johnson / JW Johnson gặp Catherine Parenteau / Eric Oncins — trạng thái scheduled.",
-            "Đôi nam nữ, Quarter Finals: Rachel Rohrabacher / Christian Alshon gặp Tyra Hurricane Black / Gabriel Tardio — trạng thái scheduled."
+            "Đôi nam nữ, Quarter Finals: Anna Bright / Hayden Patriquin gặp Parris Todd / Andrei Daescu — trạng thái scheduled."
           ]
         },
         {
