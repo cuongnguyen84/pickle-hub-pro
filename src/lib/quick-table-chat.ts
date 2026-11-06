@@ -304,15 +304,15 @@ export function unsupportedFormatNote(text: string, lang: "vi" | "en"): string |
   if (!t) return null;
   if (/(double elimination|double-elimination|double elim|loai kep|loai truc tiep kep|nhanh thang nhanh thua|losers? bracket)/.test(t)) {
     return lang === "vi"
-      ? "Thể thức loại kép (double elimination) chưa được hỗ trợ. Thay thế gần nhất: đấu vòng tròn ở vòng bảng rồi vào playoff loại trực tiếp — mình làm theo cách đó cho bạn nhé"
-      : "Double elimination isn't supported yet. The closest alternative is a round-robin group stage feeding a single-elimination playoff — I can set it up that way for you";
+      ? "Loại kép (double elimination) chưa được hỗ trợ. Gần nhất: vòng bảng vòng tròn rồi playoff loại trực tiếp — mình làm vậy nhé"
+      : "Double elimination isn't supported yet. Closest: round-robin groups, then a single-elimination playoff — I'll set that up";
   }
   // Ca 06/11: dán 5 bảng + lộ trình Phase 1 vòng tròn → Phase 2 crossover → Phase 3 play-in.
   // "play in" trơn ("play in 4 groups") và "vòng giao lưu" không tính; "đấu chéo" thường là xếp cặp playoff (đã có).
   if (/(cross ?-?over|play-in|playin|vong play ?in|play in (round|stage|game|match|bracket|phase)|vong giao(?! luu)|(phase|giai doan|stage) ?(3|iii|three|ba)\b)/.test(t)) {
     return lang === "vi"
-      ? "Lộ trình nhiều giai đoạn có vòng crossover / play-in chưa được hỗ trợ. Thay thế gần nhất: đấu vòng tròn ở vòng bảng rồi vào playoff loại trực tiếp — mình làm theo cách đó cho bạn nhé"
-      : "Multi-phase roadmaps with a crossover / play-in stage aren't supported yet. The closest alternative is a round-robin group stage feeding a single-elimination playoff — I can set it up that way for you";
+      ? "Vòng crossover / play-in chưa được hỗ trợ. Gần nhất: vòng bảng vòng tròn rồi playoff loại trực tiếp — mình làm vậy nhé"
+      : "Multi-phase crossover / play-in stages aren't supported yet. Closest: round-robin groups, then a single-elimination playoff — I'll set that up";
   }
   return null;
 }
@@ -425,15 +425,15 @@ export function fallbackReply(intent: string, unmet: string | null, lang: "vi" |
     const fmt = unsupportedFormatNote(`${unmet ?? ""} ${request}`, lang);
     if (fmt) return `${fmt}.`;
     return vi
-      ? `Mình chưa hỗ trợ${unmet ? ` yêu cầu này: ${unmet}` : " yêu cầu này"}. Bạn cứ tạo giải như bình thường trước — các thiết lập nâng cao (gán sân, thể thức riêng…) có thể chỉnh thêm ở trang giải sau khi tạo. Mình tiếp tục nhé.`
-      : `I can't do that yet${unmet ? `: ${unmet}` : ""}. Go ahead and create the tournament as usual — advanced settings can be adjusted on the tournament page afterwards. Let's continue.`;
+      ? `Mình chưa hỗ trợ${unmet ? `: ${unmet}` : " yêu cầu này"}. Cứ tạo giải — thiết lập nâng cao chỉnh ở trang giải sau. Mình tiếp tục nhé.`
+      : `I can't do that yet${unmet ? `: ${unmet}` : ""}. Create the tournament — advanced settings are on its page later. Let's continue.`;
   }
   if (intent === "off_topic") {
     return vi
-      ? "Mình chỉ giúp tạo giải chia bảng ở đây. Mình tiếp tục với giải của bạn nhé."
-      : "I can only help create group-stage tournaments here. Let's continue with yours.";
+      ? "Mình chỉ giúp tạo giải chia bảng. Tiếp tục nhé."
+      : "I only help create group-stage tournaments. Let's continue.";
   }
-  return vi ? "Mình chưa rõ ý bạn — mình tiếp tục với bản nháp hiện tại nhé." : "I didn't quite get that — let's continue with the current draft.";
+  return vi ? "Mình chưa rõ ý — tiếp tục với bản nháp nhé." : "I didn't get that — continuing with the draft.";
 }
 
 /**
@@ -817,7 +817,7 @@ export function chatFacts(d: Draft, lang: "vi" | "en"): string {
       const ranks = rankSeriesSizes(chosen.sizes);
       return ranks ? ranks.map((n, i) => seriesLine(seriesName("series", i, "vi"), slot(n), "vi", u)).join("; ") + "." : "không tách được (một hạng cần ít nhất 2 đội).";
     })()}` : "",
-    `Xếp hạng toàn giải để chia vòng loại: mọi đội nhất bảng (so khác bảng bằng tỉ lệ thắng, rồi hiệu số trung bình mỗi trận, rồi điểm ghi trung bình mỗi trận), rồi mọi đội nhì, rồi hạng 3. Luật mặc định gộp nhất và nhì vào vòng đầu. "Mỗi hạng một vòng loại" thì nhất → Vòng loại 1, nhì → Vòng loại 2, ba → Vòng loại 3. Hạng chỉ còn 1 đội thì đội đó không đi tiếp. Vòng không chẵn 2/4/8/16/32 thì đội xếp cao được nghỉ vòng đầu.`,
+    `Xếp hạng chia vòng loại: mọi đội nhất bảng (khác bảng so tỉ lệ thắng → hiệu số TB/trận → điểm ghi TB/trận), rồi mọi đội nhì, rồi hạng 3. Mặc định nhất + nhì vào vòng đầu. "Mỗi hạng một vòng loại": nhất → Vòng loại 1, nhì → 2, ba → 3. Hạng chỉ 1 đội thì không đi tiếp. Vòng không chẵn 2/4/8/16/32 thì đội xếp cao được nghỉ vòng đầu.`,
   ].filter(Boolean).join("\n");
 }
 
@@ -1226,8 +1226,8 @@ export function factualAck(before: Draft, after: Draft, lang: "vi" | "en", reque
     && looksLikeNameList(request) && prev.every((e) => fold(request).includes(fold(e.p1)));
   if (dupList) {
     bits.push(vi
-      ? `Danh sách này giống hệt danh sách đã nhận — ${prev.length} ${u} đã có sẵn, không cộng trùng`
-      : `This is the same list as before — I already have these ${prev.length} ${u}, nothing was added twice`);
+      ? `Danh sách giống hệt danh sách đã nhận — ${prev.length} ${u} đã có, không cộng trùng`
+      : `That's the same list as before — ${prev.length} ${u} already in, nothing was added twice`);
   }
   if (added.length && samples) {
     const shown = added.slice(0, 6).map(entryLabel).join(", ");
@@ -1237,7 +1237,7 @@ export function factualAck(before: Draft, after: Draft, lang: "vi" | "en", reque
     const shown = added.slice(0, 6).map(entryLabel).join(", ");
     const more = added.length > 6 ? (vi ? ` và ${added.length - 6} nữa` : ` and ${added.length - 6} more`) : "";
     // Có thể thức chưa hỗ trợ thì không nói "đã nhận" như thể đã làm theo lộ trình đó.
-    if (fmtNote) bits.push(vi ? `Danh sách ${added.length} ${u} được giữ trong nháp cho cách thay thế này: ${shown}${more}.` : `Your ${added.length} ${u} are kept in the draft for that alternative: ${shown}${more}.`);
+    if (fmtNote) bits.push(vi ? `Giữ ${added.length} ${u} trong nháp: ${shown}${more}.` : `Kept ${added.length} ${u} in the draft: ${shown}${more}.`);
     else bits.push(vi ? `Đã nhận ${added.length} ${u}: ${shown}${more}.` : `Got ${added.length} ${u}: ${shown}${more}.`);
   } else if (!next.length && after.player_count && after.player_count !== before.player_count) {
     bits.push(`${after.player_count} ${u}.`);

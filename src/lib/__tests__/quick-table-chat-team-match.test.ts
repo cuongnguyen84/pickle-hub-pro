@@ -98,7 +98,7 @@ describe("crossover / play-in roadmap is unsupported, nearest = groups → singl
   it("factualAck leads with unsupported and never says 'Got/Đã nhận N teams' for the roadmap paste", () => {
     const entries = ["Nam", "Hùng", "Tuấn", "Minh", "Long", "Phúc"].map((p1) => ({ p1 }));
     const vi = factualAck({}, { entries }, "vi", `Nam\nHùng\nTuấn\nMinh\nLong\nPhúc\nPhase 2 crossover, Phase 3 play-in`);
-    expect(vi.startsWith("Lộ trình nhiều giai đoạn")).toBe(true);
+    expect(vi.startsWith("Vòng crossover / play-in chưa được hỗ trợ")).toBe(true);
     expect(vi).not.toMatch(/Đã nhận/);
     const en = factualAck({}, { entries }, "en", `Nam\nHùng\nTuấn\nMinh\nLong\nPhúc\nthen crossover and play-in`);
     expect(en).toContain("aren't supported yet");
