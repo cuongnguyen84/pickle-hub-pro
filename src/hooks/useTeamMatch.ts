@@ -130,6 +130,84 @@ const generateShareId = () => {
   return result;
 };
 
+/**
+ * Tạo giải đồng đội MLP (giải + game templates trong một RPC). Dùng chung cho
+ * wizard /tools/team-match/new và chat AI tạo giải.
+ */
+export async function createTeamMatchTournament(input: CreateTournamentInput): Promise<TeamMatchTournament> {
+  const shareId = generateShareId();
+
+  // Tournament metadata and game templates are committed together. The
+  // share ID is the idempotency key for a lost/retried response.
+  const { data: rpcData, error: rpcError } = await supabase.rpc(
+    'create_team_match_atomic',
+    {
+      p_config: {
+        name: input.name,
+        share_id: shareId,
+        team_roster_size: input.team_roster_size,
+        team_count: input.team_count,
+        format: input.format,
+        playoff_team_count: input.playoff_team_count ?? null,
+        require_registration: input.require_registration,
+        has_dreambreaker: input.has_dreambreaker,
+        require_min_games_per_player: input.require_min_games_per_player,
+        has_third_place_match: input.has_third_place_match ?? false,
+        has_repechage: input.has_repechage ?? false,
+        bracket_pairing_type: input.bracket_pairing_type ?? 'random',
+        require_dupr: input.require_dupr ?? false,
+        dupr_max_male: input.dupr_max_male ?? null,
+        dupr_max_female: input.dupr_max_female ?? null,
+        total_score_mode: input.total_score_mode ?? false,
+        points_per_game: input.points_per_game ?? null,
+        rules_summary: input.rules_summary?.trim() || null,
+        entry_fee_vnd: input.entry_fee_vnd ?? 0,
+        entry_fee_team_vnd: input.entry_fee_team_vnd ?? 0,
+        bank_code: input.bank_code ?? null,
+        bank_account_number: input.bank_account_number ?? null,
+        bank_account_name: input.bank_account_name ?? null,
+        event_date: input.event_date ?? null,
+        location: input.location?.trim() || null,
+        discount_tiers: (input.discount_tiers ?? []) as unknown as Json,
+      },
+      p_templates: input.game_templates.map((template, index) => ({
+        order_index: index,
+        game_type: template.game_type,
+        display_name: template.display_name || null,
+        scoring_type: template.scoring_type,
+      })),
+    },
+  );
+
+  if (rpcError) {
+    console.error('[useTeamMatch] create:', rpcError);
+    throw rpcError;
+  }
+
+  const result = rpcData as unknown as {
+    success: boolean;
+    error?: string;
+    tournament?: TeamMatchTournament;
+    count?: number;
+    quota?: number;
+  };
+
+  if (!result.success) {
+    console.error('[useTeamMatch] create:', result);
+    if (result.error === 'LIMIT_REACHED') {
+      const limitErr = new Error('LIMIT_REACHED');
+      (limitErr as Error & { code?: string }).code = 'LIMIT_REACHED';
+      throw limitErr;
+    }
+    if (result.error === 'AUTH_REQUIRED') {
+      throw new Error('Not authenticated');
+    }
+    throw new Error(result.error || 'Unknown error');
+  }
+
+  return result.tournament as TeamMatchTournament;
+}
+
 export function useTeamMatch() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -199,77 +277,7 @@ export function useTeamMatch() {
     mutationFn: async (input: CreateTournamentInput) => {
       if (!user) throw new Error('Not authenticated');
 
-      const shareId = generateShareId();
-
-      // Tournament metadata and game templates are committed together. The
-      // share ID is the idempotency key for a lost/retried response.
-      const { data: rpcData, error: rpcError } = await supabase.rpc(
-        'create_team_match_atomic',
-        {
-          p_config: {
-            name: input.name,
-            share_id: shareId,
-            team_roster_size: input.team_roster_size,
-            team_count: input.team_count,
-            format: input.format,
-            playoff_team_count: input.playoff_team_count ?? null,
-            require_registration: input.require_registration,
-            has_dreambreaker: input.has_dreambreaker,
-            require_min_games_per_player: input.require_min_games_per_player,
-            has_third_place_match: input.has_third_place_match ?? false,
-            has_repechage: input.has_repechage ?? false,
-            bracket_pairing_type: input.bracket_pairing_type ?? 'random',
-            require_dupr: input.require_dupr ?? false,
-            dupr_max_male: input.dupr_max_male ?? null,
-            dupr_max_female: input.dupr_max_female ?? null,
-            total_score_mode: input.total_score_mode ?? false,
-            points_per_game: input.points_per_game ?? null,
-            rules_summary: input.rules_summary?.trim() || null,
-            entry_fee_vnd: input.entry_fee_vnd ?? 0,
-            entry_fee_team_vnd: input.entry_fee_team_vnd ?? 0,
-            bank_code: input.bank_code ?? null,
-            bank_account_number: input.bank_account_number ?? null,
-            bank_account_name: input.bank_account_name ?? null,
-            event_date: input.event_date ?? null,
-            location: input.location?.trim() || null,
-            discount_tiers: (input.discount_tiers ?? []) as unknown as Json,
-          },
-          p_templates: input.game_templates.map((template, index) => ({
-            order_index: index,
-            game_type: template.game_type,
-            display_name: template.display_name || null,
-            scoring_type: template.scoring_type,
-          })),
-        },
-      );
-
-      if (rpcError) {
-        console.error('[useTeamMatch] create:', rpcError);
-        throw rpcError;
-      }
-
-      const result = rpcData as unknown as {
-        success: boolean;
-        error?: string;
-        tournament?: TeamMatchTournament;
-        count?: number;
-        quota?: number;
-      };
-
-      if (!result.success) {
-        console.error('[useTeamMatch] create:', result);
-        if (result.error === 'LIMIT_REACHED') {
-          const limitErr = new Error('LIMIT_REACHED');
-          (limitErr as Error & { code?: string }).code = 'LIMIT_REACHED';
-          throw limitErr;
-        }
-        if (result.error === 'AUTH_REQUIRED') {
-          throw new Error('Not authenticated');
-        }
-        throw new Error(result.error || 'Unknown error');
-      }
-
-      return result.tournament as TeamMatchTournament;
+      return createTeamMatchTournament(input);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['team-match-tournaments'] });

@@ -27,9 +27,12 @@ import { cn } from "@/lib/utils";
 import { rankSeriesSizes, seriesLine, seriesName, seriesPlan, slot as seriesSlot, type SeriesStyle } from "@/lib/quick-table-series";
 import {
   applyPatch, applySpokenEdit, buildRoster, chatFacts, customSeries, defaultName, draftSeriesPlan, dropInventedRoster, duplicateIndexes, entryCount, entryLabel, factualAck, findGroupOption, googleSheetRef, groupChoices, groupSuggestion,
-  fallbackReply, groupCourtsLine, groupSizes, keepOrAssign, localSlotPatch, lockAdvance, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, messageNeedsModel, needsPairing, nextSlot, pairEntries, parseSheet, playoffSummary, previewAssignments, replyFromDraft, seriesCap, trustPatch,
-  type Draft, type Entry, type GroupOption, type PairingMode, type Slot,
+  fallbackReply, groupCourtsLine, mergeTm, nextTmSlot, tmAnswer, tmDefaultName, tmKnockoutOk, tmPlayoffCount, wantsTeamMatch, groupSizes, keepOrAssign, localSlotPatch, lockAdvance, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, messageNeedsModel, needsPairing, nextSlot, pairEntries, parseSheet, playoffSummary, previewAssignments, replyFromDraft, seriesCap, trustPatch,
+  type Draft, type Entry, type GroupOption, type PairingMode, type Slot, type TmDraft, type TmFormat,
 } from "@/lib/quick-table-chat";
+import { createTeamMatchTournament } from "@/hooks/useTeamMatch";
+import { getDefaultTemplates } from "@/lib/team-match-templates";
+import { toast } from "@/hooks/use-toast";
 
 type Lang = "vi" | "en";
 /** label: thứ hiện trên bong bóng khi khác nội dung gửi AI (vd tên file thay cho cả bảng CSV). */
@@ -173,6 +176,19 @@ const COPY = {
     endTable: "Kết thúc giải",
     deleteTable: "Xoá giải",
     another: "Tạo giải khác",
+    tmIntro: "Giải kiểu MLP / đổi partner thì mình tạo giải Đồng đội MLP: các đội gặp nhau, mỗi trận gồm nhiều game đôi.",
+    tmTeams: "Có bao nhiêu đội?",
+    tmRoster: "Mỗi đội mấy người?",
+    tmFormat: "Các đội đấu theo thể thức nào?",
+    tmFmt: { round_robin: "Vòng tròn", rr_playoff: "Vòng tròn + playoff", single_elimination: "Loại trực tiếp" } as Record<TmFormat, string>,
+    tmPeople: (n: number) => `${n} người/đội`,
+    tmConfirm: (d: Required<TmDraft>, fmt: string) => `Giải đồng đội MLP “${d.name}”: ${d.team_count} đội × ${d.roster} người, ${fmt}. Bấm Tạo giải nhé — ngày, địa điểm, lệ phí chỉnh ở trang giải; muốn tự chọn từng game thì dùng form đầy đủ.`,
+    tmAuto: "Bạn chọn giúp",
+    tmForm: "Dùng form đầy đủ",
+    tmBack: "Quay lại giải chia bảng",
+    tmCreated: (n: string) => `Đã tạo “${n}”`,
+    tmLimit: "Mỗi tài khoản tạo tối đa 3 giải đồng đội. Kết thúc hoặc xoá bớt giải cũ nhé.",
+    tmFailed: "Chưa tạo được giải. Thử lại nhé?",
     rosterFailed: "Giải đã tạo nhưng chưa xếp được bảng. Mở trang nhập danh sách để thử lại.",
     zaloLink: "Xem lịch & kết quả",
     courts: (c: number[]) => `Sân ${c.join(", ")}`,
@@ -301,6 +317,19 @@ const COPY = {
     endTable: "End tournament",
     deleteTable: "Delete tournament",
     another: "Create another",
+    tmIntro: "MLP-style / rotating partners — I'll set up an MLP Team Match: teams play each other, each match is several doubles games.",
+    tmTeams: "How many teams?",
+    tmRoster: "How many players per team?",
+    tmFormat: "Which format between teams?",
+    tmFmt: { round_robin: "Round robin", rr_playoff: "Round robin + playoff", single_elimination: "Single elimination" } as Record<TmFormat, string>,
+    tmPeople: (n: number) => `${n} per team`,
+    tmConfirm: (d: Required<TmDraft>, fmt: string) => `MLP team match “${d.name}”: ${d.team_count} teams × ${d.roster} players, ${fmt}. Tap Create — date, venue and fees can be set on the tournament page; use the full form to pick each game yourself.`,
+    tmAuto: "You choose",
+    tmForm: "Use the full form",
+    tmBack: "Back to group-stage tournament",
+    tmCreated: (n: string) => `Created “${n}”`,
+    tmLimit: "Each account can create up to 3 team matches. Finish or delete an old one first.",
+    tmFailed: "Couldn't create the tournament. Try again?",
     rosterFailed: "The tournament was created but the groups weren't drawn. Open the entry page to try again.",
     zaloLink: "Schedule & results",
     courts: (c: number[]) => `Courts ${c.join(", ")}`,
@@ -383,7 +412,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   const restored = useMemo(() => {
     try {
       const raw = localStorage.getItem(storageKey);
-      return raw ? (JSON.parse(raw) as { lang?: Lang; draft: Draft; messages: Msg[] }) : null;
+      return raw ? (JSON.parse(raw) as { lang?: Lang; draft: Draft; messages: Msg[]; tm?: TmDraft | null }) : null;
     } catch {
       return null;
     }
@@ -404,6 +433,8 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   const [quotaFull, setQuotaFull] = useState<number | null>(null);
   const [quotaTables, setQuotaTables] = useState<QuickTable[]>([]);
   const [draftOpen, setDraftOpen] = useState(false);
+  // Nháp giải đồng đội MLP (Team Match). null = đang tạo giải chia bảng như thường.
+  const [tm, setTm] = useState<TmDraft | null>(restored?.lang === lang && restored.tm ? mergeTm({}, restored.tm) : null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -414,9 +445,9 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   useEffect(() => {
     try {
       if (created) localStorage.removeItem(storageKey);
-      else localStorage.setItem(storageKey, JSON.stringify({ lang, draft, messages: messages.slice(-60) }));
+      else localStorage.setItem(storageKey, JSON.stringify({ lang, draft, messages: messages.slice(-60), tm }));
     } catch { /* private mode — chat still works, just not restorable */ }
-  }, [lang, draft, messages, created, storageKey]);
+  }, [lang, draft, messages, created, storageKey, tm]);
 
   useEffect(() => {
     getUserQuotaInfo().then((q) => { if (q && q.current_count >= q.quota) setQuotaFull(q.quota); });
@@ -482,10 +513,10 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   }, [c, lang]);
 
   // Quay lại: ảnh chụp nháp + hội thoại trước mỗi lượt người dùng (chỉ trong phiên).
-  const history = useRef<Array<{ draft: Draft; messages: Msg[] }>>([]);
+  const history = useRef<Array<{ draft: Draft; messages: Msg[]; tm: TmDraft | null }>>([]);
   const [canUndo, setCanUndo] = useState(false);
   const snap = () => {
-    history.current = [...history.current.slice(-29), { draft, messages }];
+    history.current = [...history.current.slice(-29), { draft, messages, tm }];
     setCanUndo(true);
   };
   const undo = () => {
@@ -494,6 +525,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     if (!prev) return;
     setDraft(prev.draft);
     setMessages(prev.messages);
+    setTm(prev.tm);
     setSubMenu(null);
     setFailed(null);
   };
@@ -508,6 +540,50 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     advance({ ...draft, ...patch });
   };
 
+  // ---------- giải đồng đội MLP (Team Match): hỏi tại chỗ, không gọi AI ----------
+  const tmQuestion = (d: TmDraft): string => {
+    switch (nextTmSlot(d)) {
+      case "teams": return c.tmTeams;
+      case "roster": return c.tmRoster;
+      case "format": return c.tmFormat;
+      case "name": return c.name;
+      case "confirm": return c.tmConfirm(d as Required<TmDraft>, c.tmFmt[d.format!]);
+    }
+  };
+  const tmStep = (next: TmDraft, intro = false) => {
+    setTm(next);
+    pushBot([intro && c.tmIntro, tmQuestion(next)].filter(Boolean).join(" "));
+  };
+  const tmPick = (label: string, p: TmDraft) => () => { pushUser(label); tmStep(mergeTm(tm ?? {}, p)); };
+  const createTm = async () => {
+    const d = tm as Required<TmDraft>;
+    setBusy(true);
+    setBusyNote(`${c.create}…`);
+    try {
+      const t = await createTeamMatchTournament({
+        name: d.name,
+        team_roster_size: d.roster,
+        team_count: d.team_count,
+        format: d.format,
+        playoff_team_count: d.format === "rr_playoff" ? tmPlayoffCount(d.team_count) : undefined,
+        require_registration: false,
+        has_dreambreaker: false,
+        require_min_games_per_player: false,
+        // Bộ game mặc định của wizard theo số người/đội.
+        game_templates: getDefaultTemplates(d.roster).map(({ order_index, game_type, display_name, scoring_type }) => ({ order_index, game_type, display_name, scoring_type })),
+      });
+      toast({ title: c.tmCreated(t.name) });
+      // Nháp chia bảng (nếu có) giữ nguyên; hội thoại MLP xong thì dọn.
+      setTm(null);
+      setMessages(freshMessages(c, draft));
+      navigate(to(`/tools/team-match/${t.share_id}`));
+    } catch (e) {
+      pushBot((e as Error).message === "LIMIT_REACHED" ? c.tmLimit : c.tmFailed);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const send = async (out?: Outgoing, isRetry = false) => {
     let msg = out ?? { text: input.trim() };
     // File vừa chọn vẫn phải đi tiếp dù lượt trước đang bận — nếu không, bấm file xong im luôn.
@@ -517,6 +593,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       const cmd = msg.text.toLocaleLowerCase("vi").replace(/[.!]+$/, "").trim();
       if (/^(làm lại|lam lai|xoá hết|xóa hết|xoa het|reset|start over|restart)$/.test(cmd)) { setInput(""); void resetAll(); return; }
       if (/^(quay lại|quay lai|undo|back)$/.test(cmd)) { setInput(""); undo(); return; }
+      if (tm || wantsTeamMatch(msg.text)) { setInput(""); pushUser(msg.text); tmStep(tmAnswer(tm ?? {}, msg.text, lang), !tm); return; }
       const sheet = googleSheetRef(msg.text);
       if (sheet) {
         setInput("");
@@ -642,6 +719,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       return;
     }
     const res = data as { reply?: string; intent: string; patch: unknown; unmet?: string | null };
+    if (res.intent === "team_match") { tmStep(tmAnswer({}, msg.text, lang), true); return; }
     const said = typeof res.reply === "string" ? res.reply : "";
     if (res.intent !== "fill" && res.intent !== "answer") {
       const spoken = applySpokenEdit(draft, msg.text);
@@ -673,6 +751,28 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   const chips: Chip[] = (() => {
     if (created || quotaFull != null || busy) return [];
     if (failed) return [{ label: c.retry, onClick: () => send(failed, true) }];
+    if (tm) {
+      const back = { label: c.tmBack, onClick: () => { pushUser(c.tmBack); setTm(null); pushBot(questionFor(c, draft, slot)); } };
+      const auto = { label: c.tmAuto, onClick: tmPick(c.tmAuto, { team_count: 4, roster: 4, format: "round_robin", name: tmDefaultName(lang), ...tm }) };
+      switch (nextTmSlot(tm)) {
+        case "teams":
+          return [...[4, 6, 8].map((k) => ({ label: lang === "vi" ? `${k} đội` : `${k} teams`, onClick: tmPick(String(k), { team_count: k }) })), auto, back];
+        case "roster":
+          return [...[4, 6, 8].map((k) => ({ label: c.tmPeople(k), onClick: tmPick(c.tmPeople(k), { roster: k }) })), auto, back];
+        case "format":
+          return (["round_robin", "rr_playoff", "single_elimination"] as const)
+            .filter((f) => f !== "single_elimination" || tmKnockoutOk(tm.team_count))
+            .map((f) => ({ label: c.tmFmt[f], onClick: tmPick(c.tmFmt[f], { format: f }) }));
+        case "name":
+          return [{ label: tmDefaultName(lang), onClick: tmPick(tmDefaultName(lang), { name: tmDefaultName(lang) }) }, back];
+        case "confirm":
+          return [
+            { label: c.create, recommended: true, onClick: () => void createTm() },
+            { label: c.tmForm, onClick: () => navigate(to("/tools/team-match/new")) },
+            back,
+          ];
+      }
+    }
     const n = entryCount(draft);
     const switchFormat: Chip[] = draft.is_doubles === undefined ? [] : [
       draft.is_doubles
@@ -922,6 +1022,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   const startOver = () => {
     setCreated(null);
     setDraft({});
+    setTm(null);
     setMessages(freshMessages(c, {}));
     setSubMenu(null);
     setFailed(null);
@@ -988,7 +1089,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
         </header>
 
         {/* bản nháp dính trên cùng */}
-        {!created && (
+        {!created && !tm && (
           <section
             className="qt-chat-draft"
             style={{ background: "var(--tl-bg-elev)", border: "1px solid var(--tl-border)", borderRadius: "var(--tl-radius-lg)" }}
@@ -1030,7 +1131,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
             </div>
           )}
 
-          {slot === "confirm" && !created && !busy && (
+          {slot === "confirm" && !created && !busy && !tm && (
             <ConfirmCard
               draft={draft} c={c} lang={lang} groups={groupsList} creating={creating}
               onCreate={create}
