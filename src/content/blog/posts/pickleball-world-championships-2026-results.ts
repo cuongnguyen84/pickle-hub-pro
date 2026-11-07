@@ -6,7 +6,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   "slug": "pickleball-world-championships-2026-results",
   "publishedDate": "2026-11-02",
-  "updatedDate": "2026-11-06",
+  "updatedDate": "2026-11-07",
   "author": "The PickleHub Team",
   "tags": [
     "pickleball",
@@ -31,7 +31,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 7, 2026, 06:01 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 288 matches, including 276 completed or final records and 1 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 7, 2026, 07:30 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 289 matches, including 279 completed or final records and 2 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -41,12 +41,12 @@ const post: BlogPost = {
           "resultsSummary": [
             {
               "division": "Women's Doubles",
-              "note": "Through to the Quarter Finals · 41 matches",
+              "note": "Through to the Quarter Finals · 42 matches",
               "anchor": "rb-womens-doubles"
             },
             {
               "division": "Men's Doubles",
-              "note": "Through to the Quarter Finals · 55 matches",
+              "note": "Through to the Quarter Finals · 57 matches",
               "anchor": "rb-mens-doubles"
             },
             {
@@ -68,13 +68,27 @@ const post: BlogPost = {
         },
         {
           "heading": "Women's Doubles results",
-          "content": "No champion yet. 41 completed matches, latest round first.",
+          "content": "No champion yet. 42 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Women's Doubles",
             "rounds": [
               {
                 "label": "Quarter Finals",
                 "matches": [
+                  {
+                    "winner": "Anna Bright / Anna Leigh Waters",
+                    "loser": "Chao Yi Wang / Layne Sleeth",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
                   {
                     "winner": "Kate Fahey / Tina Pisnik",
                     "loser": "Mari Humberg / Milan Rane",
@@ -95,20 +109,16 @@ const post: BlogPost = {
                 "label": "Round 16",
                 "matches": [
                   {
-                    "winner": "Sofia Sewing / Catherine Parenteau",
-                    "loser": "Sahra Dennehy / Danni-Elle Townsend",
+                    "winner": "Tyra Hurricane Black / Jorja Johnson",
+                    "loser": "Genie Erokhina / Kiora Kunimoto",
                     "sets": [
                       [
                         11,
-                        7
-                      ],
-                      [
-                        7,
-                        11
+                        8
                       ],
                       [
                         11,
-                        2
+                        7
                       ]
                     ]
                   },
@@ -181,16 +191,20 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Tyra Hurricane Black / Jorja Johnson",
-                    "loser": "Genie Erokhina / Kiora Kunimoto",
+                    "winner": "Sofia Sewing / Catherine Parenteau",
+                    "loser": "Sahra Dennehy / Danni-Elle Townsend",
                     "sets": [
                       [
                         11,
-                        8
+                        7
+                      ],
+                      [
+                        7,
+                        11
                       ],
                       [
                         11,
-                        7
+                        2
                       ]
                     ]
                   },
@@ -232,20 +246,30 @@ const post: BlogPost = {
                 "label": "Round 32",
                 "matches": [
                   {
-                    "winner": "Mari Humberg / Milan Rane",
-                    "loser": "Lucy Kovalova / Cailyn Campbell",
+                    "winner": "Victoria Dimuzio / Zoey Weil",
+                    "loser": "Xiao Yi Wang-Beckvall / Aiko Yoshitomi",
                     "sets": [
                       [
                         11,
-                        7
-                      ],
-                      [
-                        7,
-                        11
+                        1
                       ],
                       [
                         11,
-                        9
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Tyra Hurricane Black / Jorja Johnson",
+                    "loser": "Lauren Stratman / Estee Widdershoven",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        1
                       ]
                     ]
                   },
@@ -264,20 +288,20 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Sahra Dennehy / Danni-Elle Townsend",
-                    "loser": "Ava Cavataio / Helena Jansen",
+                    "winner": "Mari Humberg / Milan Rane",
+                    "loser": "Lucy Kovalova / Cailyn Campbell",
                     "sets": [
                       [
-                        1,
+                        11,
+                        7
+                      ],
+                      [
+                        7,
                         11
                       ],
                       [
                         11,
-                        5
-                      ],
-                      [
-                        11,
-                        2
+                        9
                       ]
                     ]
                   },
@@ -324,46 +348,27 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Victoria Dimuzio / Zoey Weil",
-                    "loser": "Xiao Yi Wang-Beckvall / Aiko Yoshitomi",
+                    "winner": "Sahra Dennehy / Danni-Elle Townsend",
+                    "loser": "Ava Cavataio / Helena Jansen",
                     "sets": [
                       [
-                        11,
-                        1
+                        1,
+                        11
                       ],
                       [
                         11,
                         5
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Tyra Hurricane Black / Jorja Johnson",
-                    "loser": "Lauren Stratman / Estee Widdershoven",
-                    "sets": [
-                      [
-                        11,
-                        3
-                      ],
-                      [
-                        11,
-                        1
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Rachel Rohrabacher / Parris Todd",
-                    "loser": "Pierina Imparato / Jalina Ingram",
-                    "sets": [
-                      [
-                        11,
-                        0
                       ],
                       [
                         11,
                         2
                       ]
                     ]
+                  },
+                  {
+                    "winner": "Carlota Trevino / Isabella Dunlap",
+                    "loser": "Allyce Jones / Callie Smith",
+                    "sets": []
                   },
                   {
                     "winner": "Kate Fahey / Tina Pisnik",
@@ -426,9 +431,18 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Carlota Trevino / Isabella Dunlap",
-                    "loser": "Allyce Jones / Callie Smith",
-                    "sets": []
+                    "winner": "Rachel Rohrabacher / Parris Todd",
+                    "loser": "Pierina Imparato / Jalina Ingram",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
                   },
                   {
                     "winner": "Lacy Schneemann / Ting Chieh Wei",
@@ -465,8 +479,40 @@ const post: BlogPost = {
                 "label": "Round 64",
                 "matches": [
                   {
-                    "winner": "Lucy Kovalova / Cailyn Campbell",
-                    "loser": "Cc Eleven Sacca / Circa Luna S",
+                    "winner": "Paula Rives / Mya Bui",
+                    "loser": "Sarah Burr / Shannon Pretorius",
+                    "sets": [
+                      [
+                        9,
+                        11
+                      ],
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Lauren Stratman / Estee Widdershoven",
+                    "loser": "Haley Ferguson / Frances Altick",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Carlota Trevino / Isabella Dunlap",
+                    "loser": "Allie Reichert / Madalina Grigoriu",
                     "sets": [
                       [
                         11,
@@ -474,21 +520,7 @@ const post: BlogPost = {
                       ],
                       [
                         11,
-                        6
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Ella Yeh / Kei Sawaki",
-                    "loser": "Daria Walczak / Alexa Schull",
-                    "sets": [
-                      [
-                        11,
-                        6
-                      ],
-                      [
-                        11,
-                        4
+                        8
                       ]
                     ]
                   },
@@ -557,22 +589,8 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Lauren Stratman / Estee Widdershoven",
-                    "loser": "Haley Ferguson / Frances Altick",
-                    "sets": [
-                      [
-                        11,
-                        0
-                      ],
-                      [
-                        11,
-                        0
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Carlota Trevino / Isabella Dunlap",
-                    "loser": "Allie Reichert / Madalina Grigoriu",
+                    "winner": "Liz Truluck / Samantha Parker",
+                    "loser": "Brooke Caruso / Ella Cosma",
                     "sets": [
                       [
                         11,
@@ -580,7 +598,21 @@ const post: BlogPost = {
                       ],
                       [
                         11,
-                        8
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Ella Yeh / Kei Sawaki",
+                    "loser": "Daria Walczak / Alexa Schull",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        4
                       ]
                     ]
                   },
@@ -603,8 +635,8 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Liz Truluck / Samantha Parker",
-                    "loser": "Brooke Caruso / Ella Cosma",
+                    "winner": "Lucy Kovalova / Cailyn Campbell",
+                    "loser": "Cc Eleven Sacca / Circa Luna S",
                     "sets": [
                       [
                         11,
@@ -612,25 +644,7 @@ const post: BlogPost = {
                       ],
                       [
                         11,
-                        2
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Paula Rives / Mya Bui",
-                    "loser": "Sarah Burr / Shannon Pretorius",
-                    "sets": [
-                      [
-                        9,
-                        11
-                      ],
-                      [
-                        11,
-                        5
-                      ],
-                      [
-                        11,
-                        4
+                        6
                       ]
                     ]
                   },
@@ -720,13 +734,41 @@ const post: BlogPost = {
         },
         {
           "heading": "Men's Doubles results",
-          "content": "No champion yet. 55 completed matches, latest round first.",
+          "content": "No champion yet. 57 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Men's Doubles",
             "rounds": [
               {
                 "label": "Quarter Finals",
                 "matches": [
+                  {
+                    "winner": "Ben Johns / Gabriel Tardio",
+                    "loser": "Connor Garnett / Dylan Frazier",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        13,
+                        11
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Andrei Daescu / Christian Alshon",
+                    "loser": "Will Mackinnon / Hunter Johnson",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
                   {
                     "winner": "CJ Klinger / Eric Oncins",
                     "loser": "Federico Staksrud / Hayden Patriquin",
@@ -876,6 +918,24 @@ const post: BlogPost = {
                 "label": "Round 32",
                 "matches": [
                   {
+                    "winner": "Pablo Tellez / Roscoe Bellamy",
+                    "loser": "Rio Newcombe / Andrew Caldarella",
+                    "sets": [
+                      [
+                        9,
+                        11
+                      ],
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
+                  {
                     "winner": "Christopher Crouch / Anouar Braham",
                     "loser": "Kenta Miyoshi / James Delgado",
                     "sets": [
@@ -978,38 +1038,6 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Pablo Tellez / Roscoe Bellamy",
-                    "loser": "Rio Newcombe / Andrew Caldarella",
-                    "sets": [
-                      [
-                        9,
-                        11
-                      ],
-                      [
-                        11,
-                        4
-                      ],
-                      [
-                        11,
-                        5
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Cason Campbell / Adam Harvey",
-                    "loser": "Jhonnatan Medina Alvarez / Mark Growcott",
-                    "sets": [
-                      [
-                        11,
-                        2
-                      ],
-                      [
-                        11,
-                        1
-                      ]
-                    ]
-                  },
-                  {
                     "winner": "Riley Newman / Noe Khlif",
                     "loser": "Michael Loyd / Luca Mack",
                     "sets": [
@@ -1102,6 +1130,20 @@ const post: BlogPost = {
                     ]
                   },
                   {
+                    "winner": "Cason Campbell / Adam Harvey",
+                    "loser": "Jhonnatan Medina Alvarez / Mark Growcott",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  },
+                  {
                     "winner": "Tama Shimabukuro / JW Johnson",
                     "loser": "Tyler Loong / Darrian Young",
                     "sets": [
@@ -1122,30 +1164,34 @@ const post: BlogPost = {
                 "label": "Round 64",
                 "matches": [
                   {
-                    "winner": "Casey Diamond / Tyson McGuffin",
-                    "loser": "Freddie Powell / Austin Bricker",
+                    "winner": "Michael Loyd / Luca Mack",
+                    "loser": "Mitchell Hargreaves / Nasa Hatakeyama",
                     "sets": [
                       [
                         11,
-                        2
+                        8
                       ],
                       [
                         11,
-                        6
+                        7
                       ]
                     ]
                   },
                   {
-                    "winner": "Yuta Funemizu / Armaan Bhatia",
-                    "loser": "Miles Hoover / Jaxon Madsen",
+                    "winner": "Collin Johns / Len Yang",
+                    "loser": "Theo Platel / Arwid Dahlin",
                     "sets": [
                       [
-                        11,
-                        6
+                        9,
+                        11
                       ],
                       [
                         11,
-                        1
+                        8
+                      ],
+                      [
+                        11,
+                        2
                       ]
                     ]
                   },
@@ -1220,16 +1266,16 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Michael Loyd / Luca Mack",
-                    "loser": "Mitchell Hargreaves / Nasa Hatakeyama",
+                    "winner": "Casey Diamond / Tyson McGuffin",
+                    "loser": "Freddie Powell / Austin Bricker",
                     "sets": [
                       [
                         11,
-                        8
+                        2
                       ],
                       [
                         11,
-                        7
+                        6
                       ]
                     ]
                   },
@@ -1340,20 +1386,16 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Collin Johns / Len Yang",
-                    "loser": "Theo Platel / Arwid Dahlin",
+                    "winner": "Yuta Funemizu / Armaan Bhatia",
+                    "loser": "Miles Hoover / Jaxon Madsen",
                     "sets": [
                       [
-                        9,
-                        11
+                        11,
+                        6
                       ],
                       [
                         11,
-                        8
-                      ],
-                      [
-                        11,
-                        2
+                        1
                       ]
                     ]
                   },
@@ -4331,16 +4373,16 @@ const post: BlogPost = {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Women's Doubles, Quarter Finals: Anna Bright / Anna Leigh Waters vs Chao Yi Wang / Layne Sleeth — status live.",
-            "Women's Doubles, Quarter Finals: Rachel Rohrabacher / Parris Todd vs Brooke Buckner / Kaitlyn Christian — status scheduled.",
-            "Women's Doubles, Quarter Finals: Tyra Hurricane Black / Jorja Johnson vs Sofia Sewing / Catherine Parenteau — status scheduled.",
-            "Men's Doubles, Quarter Finals: Andrei Daescu / Christian Alshon vs Will Mackinnon / Hunter Johnson — status scheduled.",
-            "Men's Doubles, Quarter Finals: Ben Johns / Gabriel Tardio vs Connor Garnett / Dylan Frazier — status scheduled.",
+            "Women's Doubles, Quarter Finals: Rachel Rohrabacher / Parris Todd vs Brooke Buckner / Kaitlyn Christian — status live.",
+            "Women's Doubles, Quarter Finals: Tyra Hurricane Black / Jorja Johnson vs Sofia Sewing / Catherine Parenteau — status live.",
+            "Men's Doubles, Semi-Finals: Ben Johns / Gabriel Tardio vs Andrei Daescu / Christian Alshon — status scheduled.",
             "Men's Doubles, Quarter Finals: Tama Shimabukuro / JW Johnson vs Riley Newman / Noe Khlif — status scheduled.",
             "Mixed Doubles, Semi-Finals: Ben Johns / Anna Leigh Waters vs Rachel Rohrabacher / Christian Alshon — status scheduled.",
             "Mixed Doubles, Semi-Finals: Anna Bright / Hayden Patriquin vs Jorja Johnson / JW Johnson — status scheduled.",
             "Women's Singles, Semi-Finals: Anna Leigh Waters vs Brooke Buckner — status scheduled.",
-            "Women's Singles, Semi-Finals: Kate Fahey vs Kaitlyn Christian — status scheduled."
+            "Women's Singles, Semi-Finals: Kate Fahey vs Kaitlyn Christian — status scheduled.",
+            "Men's Singles, Semi-Finals: John Lucian Goins vs Christian Alshon — status scheduled.",
+            "Men's Singles, Semi-Finals: Jack Sock vs Hunter Johnson — status scheduled."
           ]
         },
         {
@@ -4374,7 +4416,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 06:01 ngày 7/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 288 trận, gồm 276 bản ghi đã kết thúc/chung cuộc và 1 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 07:30 ngày 7/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 289 trận, gồm 279 bản ghi đã kết thúc/chung cuộc và 2 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -4384,12 +4426,12 @@ const post: BlogPost = {
           "resultsSummary": [
             {
               "division": "Đôi nữ",
-              "note": "Đã tới Tứ kết · 41 trận",
+              "note": "Đã tới Tứ kết · 42 trận",
               "anchor": "rb-doi-nu"
             },
             {
               "division": "Đôi nam",
-              "note": "Đã tới Tứ kết · 55 trận",
+              "note": "Đã tới Tứ kết · 57 trận",
               "anchor": "rb-doi-nam"
             },
             {
@@ -4411,13 +4453,27 @@ const post: BlogPost = {
         },
         {
           "heading": "Kết quả Đôi nữ",
-          "content": "Chưa có nhà vô địch. 41 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Chưa có nhà vô địch. 42 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đôi nữ",
             "rounds": [
               {
                 "label": "Tứ kết",
                 "matches": [
+                  {
+                    "winner": "Anna Bright / Anna Leigh Waters",
+                    "loser": "Chao Yi Wang / Layne Sleeth",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
                   {
                     "winner": "Kate Fahey / Tina Pisnik",
                     "loser": "Mari Humberg / Milan Rane",
@@ -4438,20 +4494,16 @@ const post: BlogPost = {
                 "label": "Vòng 16",
                 "matches": [
                   {
-                    "winner": "Sofia Sewing / Catherine Parenteau",
-                    "loser": "Sahra Dennehy / Danni-Elle Townsend",
+                    "winner": "Tyra Hurricane Black / Jorja Johnson",
+                    "loser": "Genie Erokhina / Kiora Kunimoto",
                     "sets": [
                       [
                         11,
-                        7
-                      ],
-                      [
-                        7,
-                        11
+                        8
                       ],
                       [
                         11,
-                        2
+                        7
                       ]
                     ]
                   },
@@ -4524,16 +4576,20 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Tyra Hurricane Black / Jorja Johnson",
-                    "loser": "Genie Erokhina / Kiora Kunimoto",
+                    "winner": "Sofia Sewing / Catherine Parenteau",
+                    "loser": "Sahra Dennehy / Danni-Elle Townsend",
                     "sets": [
                       [
                         11,
-                        8
+                        7
+                      ],
+                      [
+                        7,
+                        11
                       ],
                       [
                         11,
-                        7
+                        2
                       ]
                     ]
                   },
@@ -4575,20 +4631,30 @@ const post: BlogPost = {
                 "label": "Vòng 32",
                 "matches": [
                   {
-                    "winner": "Mari Humberg / Milan Rane",
-                    "loser": "Lucy Kovalova / Cailyn Campbell",
+                    "winner": "Victoria Dimuzio / Zoey Weil",
+                    "loser": "Xiao Yi Wang-Beckvall / Aiko Yoshitomi",
                     "sets": [
                       [
                         11,
-                        7
-                      ],
-                      [
-                        7,
-                        11
+                        1
                       ],
                       [
                         11,
-                        9
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Tyra Hurricane Black / Jorja Johnson",
+                    "loser": "Lauren Stratman / Estee Widdershoven",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        1
                       ]
                     ]
                   },
@@ -4607,20 +4673,20 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Sahra Dennehy / Danni-Elle Townsend",
-                    "loser": "Ava Cavataio / Helena Jansen",
+                    "winner": "Mari Humberg / Milan Rane",
+                    "loser": "Lucy Kovalova / Cailyn Campbell",
                     "sets": [
                       [
-                        1,
+                        11,
+                        7
+                      ],
+                      [
+                        7,
                         11
                       ],
                       [
                         11,
-                        5
-                      ],
-                      [
-                        11,
-                        2
+                        9
                       ]
                     ]
                   },
@@ -4667,46 +4733,27 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Victoria Dimuzio / Zoey Weil",
-                    "loser": "Xiao Yi Wang-Beckvall / Aiko Yoshitomi",
+                    "winner": "Sahra Dennehy / Danni-Elle Townsend",
+                    "loser": "Ava Cavataio / Helena Jansen",
                     "sets": [
                       [
-                        11,
-                        1
+                        1,
+                        11
                       ],
                       [
                         11,
                         5
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Tyra Hurricane Black / Jorja Johnson",
-                    "loser": "Lauren Stratman / Estee Widdershoven",
-                    "sets": [
-                      [
-                        11,
-                        3
-                      ],
-                      [
-                        11,
-                        1
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Rachel Rohrabacher / Parris Todd",
-                    "loser": "Pierina Imparato / Jalina Ingram",
-                    "sets": [
-                      [
-                        11,
-                        0
                       ],
                       [
                         11,
                         2
                       ]
                     ]
+                  },
+                  {
+                    "winner": "Carlota Trevino / Isabella Dunlap",
+                    "loser": "Allyce Jones / Callie Smith",
+                    "sets": []
                   },
                   {
                     "winner": "Kate Fahey / Tina Pisnik",
@@ -4769,9 +4816,18 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Carlota Trevino / Isabella Dunlap",
-                    "loser": "Allyce Jones / Callie Smith",
-                    "sets": []
+                    "winner": "Rachel Rohrabacher / Parris Todd",
+                    "loser": "Pierina Imparato / Jalina Ingram",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
                   },
                   {
                     "winner": "Lacy Schneemann / Ting Chieh Wei",
@@ -4808,8 +4864,40 @@ const post: BlogPost = {
                 "label": "Vòng 64",
                 "matches": [
                   {
-                    "winner": "Lucy Kovalova / Cailyn Campbell",
-                    "loser": "Cc Eleven Sacca / Circa Luna S",
+                    "winner": "Paula Rives / Mya Bui",
+                    "loser": "Sarah Burr / Shannon Pretorius",
+                    "sets": [
+                      [
+                        9,
+                        11
+                      ],
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Lauren Stratman / Estee Widdershoven",
+                    "loser": "Haley Ferguson / Frances Altick",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Carlota Trevino / Isabella Dunlap",
+                    "loser": "Allie Reichert / Madalina Grigoriu",
                     "sets": [
                       [
                         11,
@@ -4817,21 +4905,7 @@ const post: BlogPost = {
                       ],
                       [
                         11,
-                        6
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Ella Yeh / Kei Sawaki",
-                    "loser": "Daria Walczak / Alexa Schull",
-                    "sets": [
-                      [
-                        11,
-                        6
-                      ],
-                      [
-                        11,
-                        4
+                        8
                       ]
                     ]
                   },
@@ -4900,22 +4974,8 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Lauren Stratman / Estee Widdershoven",
-                    "loser": "Haley Ferguson / Frances Altick",
-                    "sets": [
-                      [
-                        11,
-                        0
-                      ],
-                      [
-                        11,
-                        0
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Carlota Trevino / Isabella Dunlap",
-                    "loser": "Allie Reichert / Madalina Grigoriu",
+                    "winner": "Liz Truluck / Samantha Parker",
+                    "loser": "Brooke Caruso / Ella Cosma",
                     "sets": [
                       [
                         11,
@@ -4923,7 +4983,21 @@ const post: BlogPost = {
                       ],
                       [
                         11,
-                        8
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Ella Yeh / Kei Sawaki",
+                    "loser": "Daria Walczak / Alexa Schull",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        4
                       ]
                     ]
                   },
@@ -4946,8 +5020,8 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Liz Truluck / Samantha Parker",
-                    "loser": "Brooke Caruso / Ella Cosma",
+                    "winner": "Lucy Kovalova / Cailyn Campbell",
+                    "loser": "Cc Eleven Sacca / Circa Luna S",
                     "sets": [
                       [
                         11,
@@ -4955,25 +5029,7 @@ const post: BlogPost = {
                       ],
                       [
                         11,
-                        2
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Paula Rives / Mya Bui",
-                    "loser": "Sarah Burr / Shannon Pretorius",
-                    "sets": [
-                      [
-                        9,
-                        11
-                      ],
-                      [
-                        11,
-                        5
-                      ],
-                      [
-                        11,
-                        4
+                        6
                       ]
                     ]
                   },
@@ -5063,13 +5119,41 @@ const post: BlogPost = {
         },
         {
           "heading": "Kết quả Đôi nam",
-          "content": "Chưa có nhà vô địch. 55 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Chưa có nhà vô địch. 57 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đôi nam",
             "rounds": [
               {
                 "label": "Tứ kết",
                 "matches": [
+                  {
+                    "winner": "Ben Johns / Gabriel Tardio",
+                    "loser": "Connor Garnett / Dylan Frazier",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        13,
+                        11
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Andrei Daescu / Christian Alshon",
+                    "loser": "Will Mackinnon / Hunter Johnson",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
                   {
                     "winner": "CJ Klinger / Eric Oncins",
                     "loser": "Federico Staksrud / Hayden Patriquin",
@@ -5219,6 +5303,24 @@ const post: BlogPost = {
                 "label": "Vòng 32",
                 "matches": [
                   {
+                    "winner": "Pablo Tellez / Roscoe Bellamy",
+                    "loser": "Rio Newcombe / Andrew Caldarella",
+                    "sets": [
+                      [
+                        9,
+                        11
+                      ],
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
+                  {
                     "winner": "Christopher Crouch / Anouar Braham",
                     "loser": "Kenta Miyoshi / James Delgado",
                     "sets": [
@@ -5321,38 +5423,6 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Pablo Tellez / Roscoe Bellamy",
-                    "loser": "Rio Newcombe / Andrew Caldarella",
-                    "sets": [
-                      [
-                        9,
-                        11
-                      ],
-                      [
-                        11,
-                        4
-                      ],
-                      [
-                        11,
-                        5
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Cason Campbell / Adam Harvey",
-                    "loser": "Jhonnatan Medina Alvarez / Mark Growcott",
-                    "sets": [
-                      [
-                        11,
-                        2
-                      ],
-                      [
-                        11,
-                        1
-                      ]
-                    ]
-                  },
-                  {
                     "winner": "Riley Newman / Noe Khlif",
                     "loser": "Michael Loyd / Luca Mack",
                     "sets": [
@@ -5445,6 +5515,20 @@ const post: BlogPost = {
                     ]
                   },
                   {
+                    "winner": "Cason Campbell / Adam Harvey",
+                    "loser": "Jhonnatan Medina Alvarez / Mark Growcott",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  },
+                  {
                     "winner": "Tama Shimabukuro / JW Johnson",
                     "loser": "Tyler Loong / Darrian Young",
                     "sets": [
@@ -5465,30 +5549,34 @@ const post: BlogPost = {
                 "label": "Vòng 64",
                 "matches": [
                   {
-                    "winner": "Casey Diamond / Tyson McGuffin",
-                    "loser": "Freddie Powell / Austin Bricker",
+                    "winner": "Michael Loyd / Luca Mack",
+                    "loser": "Mitchell Hargreaves / Nasa Hatakeyama",
                     "sets": [
                       [
                         11,
-                        2
+                        8
                       ],
                       [
                         11,
-                        6
+                        7
                       ]
                     ]
                   },
                   {
-                    "winner": "Yuta Funemizu / Armaan Bhatia",
-                    "loser": "Miles Hoover / Jaxon Madsen",
+                    "winner": "Collin Johns / Len Yang",
+                    "loser": "Theo Platel / Arwid Dahlin",
                     "sets": [
                       [
-                        11,
-                        6
+                        9,
+                        11
                       ],
                       [
                         11,
-                        1
+                        8
+                      ],
+                      [
+                        11,
+                        2
                       ]
                     ]
                   },
@@ -5563,16 +5651,16 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Michael Loyd / Luca Mack",
-                    "loser": "Mitchell Hargreaves / Nasa Hatakeyama",
+                    "winner": "Casey Diamond / Tyson McGuffin",
+                    "loser": "Freddie Powell / Austin Bricker",
                     "sets": [
                       [
                         11,
-                        8
+                        2
                       ],
                       [
                         11,
-                        7
+                        6
                       ]
                     ]
                   },
@@ -5683,20 +5771,16 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Collin Johns / Len Yang",
-                    "loser": "Theo Platel / Arwid Dahlin",
+                    "winner": "Yuta Funemizu / Armaan Bhatia",
+                    "loser": "Miles Hoover / Jaxon Madsen",
                     "sets": [
                       [
-                        9,
-                        11
+                        11,
+                        6
                       ],
                       [
                         11,
-                        8
-                      ],
-                      [
-                        11,
-                        2
+                        1
                       ]
                     ]
                   },
@@ -8674,16 +8758,16 @@ const post: BlogPost = {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đôi nữ, Quarter Finals: Anna Bright / Anna Leigh Waters gặp Chao Yi Wang / Layne Sleeth — trạng thái live.",
-            "Đôi nữ, Quarter Finals: Rachel Rohrabacher / Parris Todd gặp Brooke Buckner / Kaitlyn Christian — trạng thái scheduled.",
-            "Đôi nữ, Quarter Finals: Tyra Hurricane Black / Jorja Johnson gặp Sofia Sewing / Catherine Parenteau — trạng thái scheduled.",
-            "Đôi nam, Quarter Finals: Andrei Daescu / Christian Alshon gặp Will Mackinnon / Hunter Johnson — trạng thái scheduled.",
-            "Đôi nam, Quarter Finals: Ben Johns / Gabriel Tardio gặp Connor Garnett / Dylan Frazier — trạng thái scheduled.",
+            "Đôi nữ, Quarter Finals: Rachel Rohrabacher / Parris Todd gặp Brooke Buckner / Kaitlyn Christian — trạng thái live.",
+            "Đôi nữ, Quarter Finals: Tyra Hurricane Black / Jorja Johnson gặp Sofia Sewing / Catherine Parenteau — trạng thái live.",
+            "Đôi nam, Semi-Finals: Ben Johns / Gabriel Tardio gặp Andrei Daescu / Christian Alshon — trạng thái scheduled.",
             "Đôi nam, Quarter Finals: Tama Shimabukuro / JW Johnson gặp Riley Newman / Noe Khlif — trạng thái scheduled.",
             "Đôi nam nữ, Semi-Finals: Ben Johns / Anna Leigh Waters gặp Rachel Rohrabacher / Christian Alshon — trạng thái scheduled.",
             "Đôi nam nữ, Semi-Finals: Anna Bright / Hayden Patriquin gặp Jorja Johnson / JW Johnson — trạng thái scheduled.",
             "Đơn nữ, Semi-Finals: Anna Leigh Waters gặp Brooke Buckner — trạng thái scheduled.",
-            "Đơn nữ, Semi-Finals: Kate Fahey gặp Kaitlyn Christian — trạng thái scheduled."
+            "Đơn nữ, Semi-Finals: Kate Fahey gặp Kaitlyn Christian — trạng thái scheduled.",
+            "Đơn nam, Semi-Finals: John Lucian Goins gặp Christian Alshon — trạng thái scheduled.",
+            "Đơn nam, Semi-Finals: Jack Sock gặp Hunter Johnson — trạng thái scheduled."
           ]
         },
         {
