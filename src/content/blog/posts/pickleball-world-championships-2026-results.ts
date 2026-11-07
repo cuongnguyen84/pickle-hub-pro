@@ -31,7 +31,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 7, 2026, 07:30 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 289 matches, including 279 completed or final records and 2 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 7, 2026, 08:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 290 matches, including 280 completed or final records and 2 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -41,7 +41,7 @@ const post: BlogPost = {
           "resultsSummary": [
             {
               "division": "Women's Doubles",
-              "note": "Through to the Quarter Finals · 42 matches",
+              "note": "Through to the Quarter Finals · 43 matches",
               "anchor": "rb-womens-doubles"
             },
             {
@@ -68,13 +68,27 @@ const post: BlogPost = {
         },
         {
           "heading": "Women's Doubles results",
-          "content": "No champion yet. 42 completed matches, latest round first.",
+          "content": "No champion yet. 43 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Women's Doubles",
             "rounds": [
               {
                 "label": "Quarter Finals",
                 "matches": [
+                  {
+                    "winner": "Sofia Sewing / Catherine Parenteau",
+                    "loser": "Tyra Hurricane Black / Jorja Johnson",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
                   {
                     "winner": "Anna Bright / Anna Leigh Waters",
                     "loser": "Chao Yi Wang / Layne Sleeth",
@@ -4374,9 +4388,9 @@ const post: BlogPost = {
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
             "Women's Doubles, Quarter Finals: Rachel Rohrabacher / Parris Todd vs Brooke Buckner / Kaitlyn Christian — status live.",
-            "Women's Doubles, Quarter Finals: Tyra Hurricane Black / Jorja Johnson vs Sofia Sewing / Catherine Parenteau — status live.",
+            "Men's Doubles, Quarter Finals: Tama Shimabukuro / JW Johnson vs Riley Newman / Noe Khlif — status live.",
+            "Women's Doubles, Semi-Finals: Sofia Sewing / Catherine Parenteau vs Kate Fahey / Tina Pisnik — status scheduled.",
             "Men's Doubles, Semi-Finals: Ben Johns / Gabriel Tardio vs Andrei Daescu / Christian Alshon — status scheduled.",
-            "Men's Doubles, Quarter Finals: Tama Shimabukuro / JW Johnson vs Riley Newman / Noe Khlif — status scheduled.",
             "Mixed Doubles, Semi-Finals: Ben Johns / Anna Leigh Waters vs Rachel Rohrabacher / Christian Alshon — status scheduled.",
             "Mixed Doubles, Semi-Finals: Anna Bright / Hayden Patriquin vs Jorja Johnson / JW Johnson — status scheduled.",
             "Women's Singles, Semi-Finals: Anna Leigh Waters vs Brooke Buckner — status scheduled.",
@@ -4416,7 +4430,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 07:30 ngày 7/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 289 trận, gồm 279 bản ghi đã kết thúc/chung cuộc và 2 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 08:00 ngày 7/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 290 trận, gồm 280 bản ghi đã kết thúc/chung cuộc và 2 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -4426,7 +4440,7 @@ const post: BlogPost = {
           "resultsSummary": [
             {
               "division": "Đôi nữ",
-              "note": "Đã tới Tứ kết · 42 trận",
+              "note": "Đã tới Tứ kết · 43 trận",
               "anchor": "rb-doi-nu"
             },
             {
@@ -4453,13 +4467,27 @@ const post: BlogPost = {
         },
         {
           "heading": "Kết quả Đôi nữ",
-          "content": "Chưa có nhà vô địch. 42 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Chưa có nhà vô địch. 43 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đôi nữ",
             "rounds": [
               {
                 "label": "Tứ kết",
                 "matches": [
+                  {
+                    "winner": "Sofia Sewing / Catherine Parenteau",
+                    "loser": "Tyra Hurricane Black / Jorja Johnson",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
                   {
                     "winner": "Anna Bright / Anna Leigh Waters",
                     "loser": "Chao Yi Wang / Layne Sleeth",
@@ -8759,9 +8787,9 @@ const post: BlogPost = {
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
             "Đôi nữ, Quarter Finals: Rachel Rohrabacher / Parris Todd gặp Brooke Buckner / Kaitlyn Christian — trạng thái live.",
-            "Đôi nữ, Quarter Finals: Tyra Hurricane Black / Jorja Johnson gặp Sofia Sewing / Catherine Parenteau — trạng thái live.",
+            "Đôi nam, Quarter Finals: Tama Shimabukuro / JW Johnson gặp Riley Newman / Noe Khlif — trạng thái live.",
+            "Đôi nữ, Semi-Finals: Sofia Sewing / Catherine Parenteau gặp Kate Fahey / Tina Pisnik — trạng thái scheduled.",
             "Đôi nam, Semi-Finals: Ben Johns / Gabriel Tardio gặp Andrei Daescu / Christian Alshon — trạng thái scheduled.",
-            "Đôi nam, Quarter Finals: Tama Shimabukuro / JW Johnson gặp Riley Newman / Noe Khlif — trạng thái scheduled.",
             "Đôi nam nữ, Semi-Finals: Ben Johns / Anna Leigh Waters gặp Rachel Rohrabacher / Christian Alshon — trạng thái scheduled.",
             "Đôi nam nữ, Semi-Finals: Anna Bright / Hayden Patriquin gặp Jorja Johnson / JW Johnson — trạng thái scheduled.",
             "Đơn nữ, Semi-Finals: Anna Leigh Waters gặp Brooke Buckner — trạng thái scheduled.",
