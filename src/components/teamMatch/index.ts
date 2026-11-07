@@ -1,5 +1,5 @@
-export { GameTemplateEditor, getDefaultTemplates } from './GameTemplateEditor';
-export type { GameTemplateItem } from './GameTemplateEditor';
+export { GameTemplateEditor } from './GameTemplateEditor';
+export { getDefaultTemplates, type GameTemplateItem } from '@/lib/team-match-templates';
 export { CreateTeamDialog } from './CreateTeamDialog';
 export { TeamMatchScoringSheet } from './TeamMatchScoringSheet';
 export { InviteTeamDialog } from './InviteTeamDialog';

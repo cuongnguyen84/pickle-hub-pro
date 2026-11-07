@@ -526,28 +526,11 @@ describe("unsupported formats are named, never silently mapped (Cường 21:35 2
   it.each([
     ["vi", "làm vòng tròn đổi partner cho 10 người"],
     ["vi", "đánh đôi xoay cặp liên tục"],
-    ["vi", "mỗi trận đổi đồng đội"],
-    ["vi", "đổi cặp sau mỗi trận"],
     ["en", "round robin rotating partners for 10 people"],
-    ["en", "partner swap format please"],
     ["en", "americano style"],
-  ] as const)("rotating partners (%s): %s → unsupported + concrete alternatives", (lang, text) => {
-    const note = unsupportedFormatNote(text, lang)!;
-    expect(note).toBeTruthy();
-    if (lang === "vi") {
-      expect(note).toContain("chưa được hỗ trợ");
-      expect(note).toContain("vòng tròn đơn cá nhân");
-      expect(note).toContain("ghép cặp cố định");
-    } else {
-      expect(note).toContain("isn't supported yet");
-      expect(note).toContain("singles round robin");
-      expect(note).toContain("fixed pairs");
-    }
-  });
-
-  it("fallbackReply gives the rotating-partner alternatives (unmet is always Vietnamese)", () => {
-    expect(fallbackReply("unsupported", "Muốn đánh vòng tròn đổi partner", "en")).toContain("fixed pairs");
-    expect(fallbackReply("unsupported", "Muốn đánh vòng tròn đổi partner", "vi")).toContain("vòng tròn đơn cá nhân");
+  ] as const)("rotating partners (%s): %s → no longer 'unsupported' (handled as MLP Team Match)", (lang, text) => {
+    expect(unsupportedFormatNote(text, lang)).toBeNull();
+    expect(factualAck({}, {}, lang, text)).not.toMatch(/chưa được hỗ trợ|isn't supported/);
   });
 
   it("does not treat roster edits as rotating partners", () => {

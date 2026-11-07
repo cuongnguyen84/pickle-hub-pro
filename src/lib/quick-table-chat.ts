@@ -304,34 +304,136 @@ export function unsupportedFormatNote(text: string, lang: "vi" | "en"): string |
   if (!t) return null;
   if (/(double elimination|double-elimination|double elim|loai kep|loai truc tiep kep|nhanh thang nhanh thua|losers? bracket)/.test(t)) {
     return lang === "vi"
-      ? "Thể thức loại kép (double elimination) chưa được hỗ trợ. Thay thế gần nhất: đấu vòng tròn ở vòng bảng rồi vào playoff loại trực tiếp — mình làm theo cách đó cho bạn nhé"
-      : "Double elimination isn't supported yet. The closest alternative is a round-robin group stage feeding a single-elimination playoff — I can set it up that way for you";
+      ? "Loại kép (double elimination) chưa được hỗ trợ. Gần nhất: vòng bảng vòng tròn rồi playoff loại trực tiếp — mình làm vậy nhé"
+      : "Double elimination isn't supported yet. Closest: round-robin groups, then a single-elimination playoff — I'll set that up";
   }
-  // Ca 13:16 03/11: "vòng tròn đổi partner" 10 người — bot chỉ nói chung chung.
-  // "đổi cặp" trơn có thể là lệnh sửa danh sách ("đổi cặp 3 thành…") nên chỉ khớp khi kèm ý xoay vòng.
-  if (/(rotat\w* partners?|partners? rotat\w*|partner swap|swap(ping)? partners|switch(ing)? partners|americano|mexicano|doi partner|xoay (vong )?partner|xoay (vong )?cap|doi dong doi|doi cap (lien tuc|moi tran|moi luot|moi van|sau moi|xoay vong)|(vong tron|round robin) doi cap|doi cap$)/.test(t)) {
+  // Ca 06/11: dán 5 bảng + lộ trình Phase 1 vòng tròn → Phase 2 crossover → Phase 3 play-in.
+  // "play in" trơn ("play in 4 groups") và "vòng giao lưu" không tính; "đấu chéo" thường là xếp cặp playoff (đã có).
+  if (/(cross ?-?over|play-in|playin|vong play ?in|play in (round|stage|game|match|bracket|phase)|vong giao(?! luu)|(phase|giai doan|stage) ?(3|iii|three|ba)\b)/.test(t)) {
     return lang === "vi"
-      ? "Thể thức đổi partner (xoay cặp sau mỗi trận) chưa được hỗ trợ. Thay thế gần nhất: đấu vòng tròn đơn cá nhân, hoặc ghép cặp cố định rồi đánh vòng tròn đôi / giải chia bảng đôi — bạn chọn cách nào để mình làm tiếp"
-      : "Rotating partners (a new partner each match) isn't supported yet. The closest alternatives are an individual singles round robin, or fixed pairs playing a doubles round robin / group stage — tell me which one and I'll continue";
+      ? "Vòng crossover / play-in chưa được hỗ trợ. Gần nhất: vòng bảng vòng tròn rồi playoff loại trực tiếp — mình làm vậy nhé"
+      : "Multi-phase crossover / play-in stages aren't supported yet. Closest: round-robin groups, then a single-elimination playoff — I'll set that up";
   }
   return null;
 }
 
-export function fallbackReply(intent: string, unmet: string | null, lang: "vi" | "en"): string {
+export interface TeamList { label: string; names: string[] }
+const TEAM_HEAD = /^\s*((?:team|đội|doi|nhóm|nhom|clb|bên|ben)\s+(?:[a-z]|\d{1,2}))\b\s*(?:\([^)]*\))?\s*[:：\-–]?\s*(.*)$/i;
+
+/**
+ * Ca 06/11: dán "Team A" + 22 tên, "Team B" + 22 tên → chat chỉ đáp "Đã nhận 44 người".
+ * Trả ≥2 danh sách có nhãn (mỗi danh sách ≥3 tên), hoặc null. Không ghép cặp gì ở đây.
+ */
+export function teamLists(text: string): TeamList[] | null {
+  const lists: TeamList[] = [];
+  for (const line of text.split(/\n/)) {
+    const head = line.match(TEAM_HEAD);
+    const rest = head ? head[2] : line;
+    if (head) lists.push({ label: head[1].trim(), names: [] });
+    const cur = lists[lists.length - 1];
+    if (!cur) continue;
+    for (const n of rest.split(head ? /[,;]/ : /[;]/)) {
+      const name = n.replace(/^\s*\d+\s*[.)\-:]\s*/, "").trim();
+      if (name) cur.names.push(name);
+    }
+  }
+  // ≥3 tên: "Đội 1: Nam, Hùng" là một cặp đôi, không phải danh sách đội.
+  const ok = lists.filter((l) => l.names.length >= 3);
+  return ok.length >= 2 && ok.length === lists.length ? lists : null;
+}
+
+/** Ghép đôi theo lựa chọn người dùng: trong từng đội (theo thứ tự) hoặc chéo (người thứ i đội A + người thứ i đội B). */
+export function pairTeamLists(lists: TeamList[], mode: "within" | "across"): Entry[] {
+  if (mode === "across") return lists[0].names.map((p1, i) => ({ p1, p2: lists[1].names[i] }));
+  return lists.flatMap((l) => pairEntries(l.names.map((p1) => ({ p1, team: l.label })), "sequential"));
+}
+
+/**
+ * Ca 13:16 03/11 "vòng tròn đổi partner" 10 người; anh chốt 06/11: đó là giải
+ * định dạng MLP — tạo bằng Team Match (/tools/team-match), không phải chia bảng.
+ * "đổi cặp" trơn có thể là lệnh sửa danh sách ("đổi cặp 3 thành…") nên chỉ khớp khi kèm ý xoay vòng.
+ */
+const TEAM_MATCH_ASK = /(\bmlp\b|major league pickleball|team ?match|dong doi mlp|giai dong doi|doi khang|rotat\w* partners?|partners? rotat\w*|partner swap|swap(ping)? partners|switch(ing)? partners|americano|mexicano|doi partner|xoay (vong )?partner|xoay (vong )?cap|doi dong doi|doi cap (lien tuc|moi tran|moi luot|moi van|sau moi|xoay vong)|(vong tron|round robin) doi cap|doi cap$)/;
+export const wantsTeamMatch = (text: string): boolean => TEAM_MATCH_ASK.test(fold(text));
+
+export type TmFormat = "round_robin" | "single_elimination" | "rr_playoff";
+/** Nháp giải đồng đội MLP trong chat — chỉ các trường tối thiểu, còn lại theo mặc định của TeamMatchSetup. */
+export interface TmDraft { team_count?: number; roster?: number; format?: TmFormat; name?: string }
+export type TmSlot = "teams" | "roster" | "format" | "name" | "confirm";
+
+const pow2 = (n: number) => n > 0 && (n & (n - 1)) === 0;
+/** Loại trực tiếp cần 4, 8, 16… đội (cùng luật TeamMatchSetup). */
+export const tmKnockoutOk = (teams?: number): boolean => !!teams && teams >= 4 && pow2(teams);
+
+export function nextTmSlot(d: TmDraft): TmSlot {
+  if (!d.team_count) return "teams";
+  if (!d.roster) return "roster";
+  if (!d.format) return "format";
+  if (!d.name) return "name";
+  return "confirm";
+}
+
+export const tmDefaultName = (lang: "vi" | "en") => (lang === "vi" ? "Giải đồng đội MLP" : "MLP team match");
+
+/** Gộp + kiểm khoảng (khớp RPC create_team_match_atomic). Loại trực tiếp sai số đội → hỏi lại thể thức. */
+export function mergeTm(d: TmDraft, p: TmDraft): TmDraft {
+  const n = { ...d, ...Object.fromEntries(Object.entries(p).filter(([, v]) => v != null)) } as TmDraft;
+  if (n.team_count != null && !(n.team_count >= 2 && n.team_count <= 128)) delete n.team_count;
+  if (n.roster != null && !(n.roster >= 2 && n.roster <= 20)) delete n.roster;
+  if (n.format && !["round_robin", "rr_playoff", "single_elimination"].includes(n.format)) delete n.format;
+  if (n.format === "single_elimination" && !tmKnockoutOk(n.team_count)) delete n.format;
+  return n;
+}
+
+/** Áp câu gõ tự do vào nháp MLP — tại chỗ, không gọi AI. */
+export function tmAnswer(d: TmDraft, text: string, lang: "vi" | "en"): TmDraft {
+  const t = fold(text);
+  const p: TmDraft = {};
+  const teams = t.match(/(\d+) ?(doi|teams?|clb|franchises?)\b/);
+  if (teams) p.team_count = +teams[1];
+  const roster = t.match(/(?:moi doi|per team|each team|roster|team of|teams of) ?(\d+)|(\d+) ?(?:nguoi|vdv|players?) ?(?:moi doi|\/ ?doi|mot doi|per team|each|a team)/);
+  if (roster) p.roster = +(roster[1] ?? roster[2]);
+  if (/playoff|(vong tron|round robin).*(loai truc tiep|knockout|ban ket|chung ket|semi)/.test(t)) p.format = "rr_playoff";
+  else if (/loai truc tiep|single elim|knockout/.test(t)) p.format = "single_elimination";
+  else if (/vong tron|round robin/.test(t)) p.format = "round_robin";
+  const named = text.match(/(?:tên giải|tên là|đặt tên|name(?:d)?|called)\s*(?:là|:|is)?\s*["“]?([^"”\n,]{3,150})/i);
+  if (named) p.name = named[1].trim().replace(/["”.]+$/, "");
+  const slot = nextTmSlot(d);
+  const bare = t.match(/^(\d+)( nguoi| doi| teams?| players?)?$/);
+  if (bare && slot === "teams") p.team_count = +bare[1];
+  if (bare && slot === "roster") p.roster = +bare[1];
+  let n = mergeTm(d, p);
+  if (/tu quyet|ban chon|chon giup|mac dinh|tuy ban|you (choose|pick|decide)|default|whatever|up to you/.test(t)) {
+    n = mergeTm({ team_count: 4, roster: 4, format: "round_robin", name: tmDefaultName(lang) }, n);
+  } else if (slot === "name" && !Object.keys(p).length && text.trim().length >= 3) {
+    n = { ...n, name: text.trim().slice(0, 150) };
+  }
+  return n;
+}
+
+/** Số đội vào playoff mặc định = luỹ thừa của 2 lớn nhất ≤ số đội (option đầu của TeamMatchSetup). */
+export function tmPlayoffCount(teams: number): number {
+  let p = 2;
+  while (p * 2 <= teams) p *= 2;
+  return p;
+}
+
+export function fallbackReply(intent: string, unmet: string | null, lang: "vi" | "en", request = ""): string {
   const vi = lang === "vi";
   if (intent === "unsupported") {
-    const fmt = unsupportedFormatNote(unmet ?? "", lang);
+    // unmet là tóm tắt của mô hình, có thể mất từ khoá — soi cả câu người dùng.
+    const fmt = unsupportedFormatNote(`${unmet ?? ""} ${request}`, lang);
     if (fmt) return `${fmt}.`;
     return vi
-      ? `Mình chưa hỗ trợ${unmet ? ` yêu cầu này: ${unmet}` : " yêu cầu này"}. Bạn cứ tạo giải như bình thường trước — các thiết lập nâng cao (gán sân, thể thức riêng…) có thể chỉnh thêm ở trang giải sau khi tạo. Mình tiếp tục nhé.`
-      : `I can't do that yet${unmet ? `: ${unmet}` : ""}. Go ahead and create the tournament as usual — advanced settings can be adjusted on the tournament page afterwards. Let's continue.`;
+      ? `Mình chưa hỗ trợ${unmet ? `: ${unmet}` : " yêu cầu này"}. Cứ tạo giải — thiết lập nâng cao chỉnh ở trang giải sau. Mình tiếp tục nhé.`
+      : `I can't do that yet${unmet ? `: ${unmet}` : ""}. Create the tournament — advanced settings are on its page later. Let's continue.`;
   }
   if (intent === "off_topic") {
     return vi
-      ? "Mình chỉ giúp tạo giải chia bảng ở đây. Mình tiếp tục với giải của bạn nhé."
-      : "I can only help create group-stage tournaments here. Let's continue with yours.";
+      ? "Mình chỉ giúp tạo giải chia bảng. Tiếp tục nhé."
+      : "I only help create group-stage tournaments. Let's continue.";
   }
-  return vi ? "Mình chưa rõ ý bạn — mình tiếp tục với bản nháp hiện tại nhé." : "I didn't quite get that — let's continue with the current draft.";
+  return vi ? "Mình chưa rõ ý — tiếp tục với bản nháp nhé." : "I didn't get that — continuing with the draft.";
 }
 
 /**
@@ -715,7 +817,7 @@ export function chatFacts(d: Draft, lang: "vi" | "en"): string {
       const ranks = rankSeriesSizes(chosen.sizes);
       return ranks ? ranks.map((n, i) => seriesLine(seriesName("series", i, "vi"), slot(n), "vi", u)).join("; ") + "." : "không tách được (một hạng cần ít nhất 2 đội).";
     })()}` : "",
-    `Xếp hạng toàn giải để chia vòng loại: mọi đội nhất bảng (so khác bảng bằng tỉ lệ thắng, rồi hiệu số trung bình mỗi trận, rồi điểm ghi trung bình mỗi trận), rồi mọi đội nhì, rồi hạng 3. Luật mặc định gộp nhất và nhì vào vòng đầu. "Mỗi hạng một vòng loại" thì nhất → Vòng loại 1, nhì → Vòng loại 2, ba → Vòng loại 3. Hạng chỉ còn 1 đội thì đội đó không đi tiếp. Vòng không chẵn 2/4/8/16/32 thì đội xếp cao được nghỉ vòng đầu.`,
+    `Xếp hạng chia vòng loại: mọi đội nhất bảng (khác bảng so tỉ lệ thắng → hiệu số TB/trận → điểm ghi TB/trận), rồi mọi đội nhì, rồi hạng 3. Mặc định nhất + nhì vào vòng đầu. "Mỗi hạng một vòng loại": nhất → Vòng loại 1, nhì → 2, ba → 3. Hạng chỉ 1 đội thì không đi tiếp. Vòng không chẵn 2/4/8/16/32 thì đội xếp cao được nghỉ vòng đầu.`,
   ].filter(Boolean).join("\n");
 }
 
@@ -1124,8 +1226,8 @@ export function factualAck(before: Draft, after: Draft, lang: "vi" | "en", reque
     && looksLikeNameList(request) && prev.every((e) => fold(request).includes(fold(e.p1)));
   if (dupList) {
     bits.push(vi
-      ? `Danh sách này giống hệt danh sách đã nhận — ${prev.length} ${u} đã có sẵn, không cộng trùng`
-      : `This is the same list as before — I already have these ${prev.length} ${u}, nothing was added twice`);
+      ? `Danh sách giống hệt danh sách đã nhận — ${prev.length} ${u} đã có, không cộng trùng`
+      : `That's the same list as before — ${prev.length} ${u} already in, nothing was added twice`);
   }
   if (added.length && samples) {
     const shown = added.slice(0, 6).map(entryLabel).join(", ");
@@ -1134,7 +1236,9 @@ export function factualAck(before: Draft, after: Draft, lang: "vi" | "en", reque
   } else if (added.length && listed) {
     const shown = added.slice(0, 6).map(entryLabel).join(", ");
     const more = added.length > 6 ? (vi ? ` và ${added.length - 6} nữa` : ` and ${added.length - 6} more`) : "";
-    bits.push(vi ? `Đã nhận ${added.length} ${u}: ${shown}${more}.` : `Got ${added.length} ${u}: ${shown}${more}.`);
+    // Có thể thức chưa hỗ trợ thì không nói "đã nhận" như thể đã làm theo lộ trình đó.
+    if (fmtNote) bits.push(vi ? `Giữ ${added.length} ${u} trong nháp: ${shown}${more}.` : `Kept ${added.length} ${u} in the draft: ${shown}${more}.`);
+    else bits.push(vi ? `Đã nhận ${added.length} ${u}: ${shown}${more}.` : `Got ${added.length} ${u}: ${shown}${more}.`);
   } else if (!next.length && after.player_count && after.player_count !== before.player_count) {
     bits.push(`${after.player_count} ${u}.`);
   }
