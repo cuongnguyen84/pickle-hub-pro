@@ -31,7 +31,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 8, 2026, 02:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 292 matches, including 284 completed or final records and 1 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 8, 2026, 04:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 296 matches, including 286 completed or final records and 1 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -56,12 +56,12 @@ const post: BlogPost = {
             },
             {
               "division": "Women's Singles",
-              "note": "Through to the Semi-Finals · 61 matches",
+              "note": "Through to the Semi-Finals · 62 matches",
               "anchor": "rb-womens-singles"
             },
             {
               "division": "Men's Singles",
-              "note": "Through to the Semi-Finals · 61 matches",
+              "note": "Through to the Semi-Finals · 62 matches",
               "anchor": "rb-mens-singles"
             }
           ]
@@ -2569,13 +2569,27 @@ const post: BlogPost = {
         },
         {
           "heading": "Women's Singles results",
-          "content": "No champion yet. 61 completed matches, latest round first.",
+          "content": "No champion yet. 62 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Women's Singles",
             "rounds": [
               {
                 "label": "Semi-Finals",
                 "matches": [
+                  {
+                    "winner": "Kate Fahey",
+                    "loser": "Kaitlyn Christian",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
                   {
                     "winner": "Anna Leigh Waters",
                     "loser": "Brooke Buckner",
@@ -3518,13 +3532,31 @@ const post: BlogPost = {
         },
         {
           "heading": "Men's Singles results",
-          "content": "No champion yet. 61 completed matches, latest round first.",
+          "content": "No champion yet. 62 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Men's Singles",
             "rounds": [
               {
                 "label": "Semi-Finals",
                 "matches": [
+                  {
+                    "winner": "Jack Sock",
+                    "loser": "Hunter Johnson",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        8,
+                        11
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  },
                   {
                     "winner": "John Lucian Goins",
                     "loser": "Christian Alshon",
@@ -4453,14 +4485,16 @@ const post: BlogPost = {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Men's Singles, Semi-Finals: Jack Sock vs Hunter Johnson — status live.",
+            "Mixed Doubles, Semi-Finals: Ben Johns / Anna Leigh Waters vs Rachel Rohrabacher / Christian Alshon — status live.",
             "Women's Doubles, Semi-Finals: Anna Bright / Anna Leigh Waters vs Rachel Rohrabacher / Parris Todd — status scheduled.",
             "Women's Doubles, Semi-Finals: Sofia Sewing / Catherine Parenteau vs Kate Fahey / Tina Pisnik — status scheduled.",
             "Men's Doubles, Semi-Finals: Ben Johns / Gabriel Tardio vs Andrei Daescu / Christian Alshon — status scheduled.",
             "Men's Doubles, Semi-Finals: CJ Klinger / Eric Oncins vs Tama Shimabukuro / JW Johnson — status scheduled.",
-            "Mixed Doubles, Semi-Finals: Ben Johns / Anna Leigh Waters vs Rachel Rohrabacher / Christian Alshon — status scheduled.",
             "Mixed Doubles, Semi-Finals: Anna Bright / Hayden Patriquin vs Jorja Johnson / JW Johnson — status scheduled.",
-            "Women's Singles, Semi-Finals: Kate Fahey vs Kaitlyn Christian — status scheduled."
+            "Women's Singles, Bronze: Brooke Buckner vs Kaitlyn Christian — status scheduled.",
+            "Women's Singles, Finals: Anna Leigh Waters vs Kate Fahey — status scheduled.",
+            "Men's Singles, Bronze: Christian Alshon vs Hunter Johnson — status scheduled.",
+            "Men's Singles, Finals: John Lucian Goins vs Jack Sock — status scheduled."
           ]
         },
         {
@@ -4494,7 +4528,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 02:00 ngày 8/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 292 trận, gồm 284 bản ghi đã kết thúc/chung cuộc và 1 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 04:00 ngày 8/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 296 trận, gồm 286 bản ghi đã kết thúc/chung cuộc và 1 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -4519,12 +4553,12 @@ const post: BlogPost = {
             },
             {
               "division": "Đơn nữ",
-              "note": "Đã tới Semi-Finals · 61 trận",
+              "note": "Đã tới Semi-Finals · 62 trận",
               "anchor": "rb-don-nu"
             },
             {
               "division": "Đơn nam",
-              "note": "Đã tới Semi-Finals · 61 trận",
+              "note": "Đã tới Semi-Finals · 62 trận",
               "anchor": "rb-don-nam"
             }
           ]
@@ -7032,13 +7066,27 @@ const post: BlogPost = {
         },
         {
           "heading": "Kết quả Đơn nữ",
-          "content": "Chưa có nhà vô địch. 61 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Chưa có nhà vô địch. 62 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đơn nữ",
             "rounds": [
               {
                 "label": "Semi-Finals",
                 "matches": [
+                  {
+                    "winner": "Kate Fahey",
+                    "loser": "Kaitlyn Christian",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
                   {
                     "winner": "Anna Leigh Waters",
                     "loser": "Brooke Buckner",
@@ -7981,13 +8029,31 @@ const post: BlogPost = {
         },
         {
           "heading": "Kết quả Đơn nam",
-          "content": "Chưa có nhà vô địch. 61 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Chưa có nhà vô địch. 62 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đơn nam",
             "rounds": [
               {
                 "label": "Semi-Finals",
                 "matches": [
+                  {
+                    "winner": "Jack Sock",
+                    "loser": "Hunter Johnson",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        8,
+                        11
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  },
                   {
                     "winner": "John Lucian Goins",
                     "loser": "Christian Alshon",
@@ -8916,14 +8982,16 @@ const post: BlogPost = {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đơn nam, Semi-Finals: Jack Sock gặp Hunter Johnson — trạng thái live.",
+            "Đôi nam nữ, Semi-Finals: Ben Johns / Anna Leigh Waters gặp Rachel Rohrabacher / Christian Alshon — trạng thái live.",
             "Đôi nữ, Semi-Finals: Anna Bright / Anna Leigh Waters gặp Rachel Rohrabacher / Parris Todd — trạng thái scheduled.",
             "Đôi nữ, Semi-Finals: Sofia Sewing / Catherine Parenteau gặp Kate Fahey / Tina Pisnik — trạng thái scheduled.",
             "Đôi nam, Semi-Finals: Ben Johns / Gabriel Tardio gặp Andrei Daescu / Christian Alshon — trạng thái scheduled.",
             "Đôi nam, Semi-Finals: CJ Klinger / Eric Oncins gặp Tama Shimabukuro / JW Johnson — trạng thái scheduled.",
-            "Đôi nam nữ, Semi-Finals: Ben Johns / Anna Leigh Waters gặp Rachel Rohrabacher / Christian Alshon — trạng thái scheduled.",
             "Đôi nam nữ, Semi-Finals: Anna Bright / Hayden Patriquin gặp Jorja Johnson / JW Johnson — trạng thái scheduled.",
-            "Đơn nữ, Semi-Finals: Kate Fahey gặp Kaitlyn Christian — trạng thái scheduled."
+            "Đơn nữ, Bronze: Brooke Buckner gặp Kaitlyn Christian — trạng thái scheduled.",
+            "Đơn nữ, Finals: Anna Leigh Waters gặp Kate Fahey — trạng thái scheduled.",
+            "Đơn nam, Bronze: Christian Alshon gặp Hunter Johnson — trạng thái scheduled.",
+            "Đơn nam, Finals: John Lucian Goins gặp Jack Sock — trạng thái scheduled."
           ]
         },
         {
