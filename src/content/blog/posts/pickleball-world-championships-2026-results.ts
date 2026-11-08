@@ -31,7 +31,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 8, 2026, 08:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 300 matches, including 291 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 8, 2026, 10:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 302 matches, including 292 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -41,7 +41,7 @@ const post: BlogPost = {
           "resultsSummary": [
             {
               "division": "Women's Doubles",
-              "note": "Through to the Semi-Finals · 45 matches",
+              "note": "Through to the Semi-Finals · 46 matches",
               "anchor": "rb-womens-doubles"
             },
             {
@@ -68,13 +68,27 @@ const post: BlogPost = {
         },
         {
           "heading": "Women's Doubles results",
-          "content": "No champion yet. 45 completed matches, latest round first.",
+          "content": "No champion yet. 46 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Women's Doubles",
             "rounds": [
               {
                 "label": "Semi-Finals",
                 "matches": [
+                  {
+                    "winner": "Sofia Sewing / Catherine Parenteau",
+                    "loser": "Kate Fahey / Tina Pisnik",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
                   {
                     "winner": "Anna Bright / Anna Leigh Waters",
                     "loser": "Rachel Rohrabacher / Parris Todd",
@@ -4570,7 +4584,8 @@ const post: BlogPost = {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Women's Doubles, Semi-Finals: Sofia Sewing / Catherine Parenteau vs Kate Fahey / Tina Pisnik — status scheduled.",
+            "Women's Doubles, Bronze: Rachel Rohrabacher / Parris Todd vs Kate Fahey / Tina Pisnik — status scheduled.",
+            "Women's Doubles, Finals: Anna Bright / Anna Leigh Waters vs Sofia Sewing / Catherine Parenteau — status scheduled.",
             "Men's Doubles, Bronze: Ben Johns / Gabriel Tardio vs CJ Klinger / Eric Oncins — status scheduled.",
             "Men's Doubles, Finals: Andrei Daescu / Christian Alshon vs Tama Shimabukuro / JW Johnson — status scheduled.",
             "Mixed Doubles, Bronze: Rachel Rohrabacher / Christian Alshon vs Anna Bright / Hayden Patriquin — status scheduled.",
@@ -4612,7 +4627,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 08:00 ngày 8/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 300 trận, gồm 291 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 10:00 ngày 8/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 302 trận, gồm 292 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -4622,7 +4637,7 @@ const post: BlogPost = {
           "resultsSummary": [
             {
               "division": "Đôi nữ",
-              "note": "Đã tới Semi-Finals · 45 trận",
+              "note": "Đã tới Semi-Finals · 46 trận",
               "anchor": "rb-doi-nu"
             },
             {
@@ -4649,13 +4664,27 @@ const post: BlogPost = {
         },
         {
           "heading": "Kết quả Đôi nữ",
-          "content": "Chưa có nhà vô địch. 45 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Chưa có nhà vô địch. 46 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đôi nữ",
             "rounds": [
               {
                 "label": "Semi-Finals",
                 "matches": [
+                  {
+                    "winner": "Sofia Sewing / Catherine Parenteau",
+                    "loser": "Kate Fahey / Tina Pisnik",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
                   {
                     "winner": "Anna Bright / Anna Leigh Waters",
                     "loser": "Rachel Rohrabacher / Parris Todd",
@@ -9151,7 +9180,8 @@ const post: BlogPost = {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đôi nữ, Semi-Finals: Sofia Sewing / Catherine Parenteau gặp Kate Fahey / Tina Pisnik — trạng thái scheduled.",
+            "Đôi nữ, Bronze: Rachel Rohrabacher / Parris Todd gặp Kate Fahey / Tina Pisnik — trạng thái scheduled.",
+            "Đôi nữ, Finals: Anna Bright / Anna Leigh Waters gặp Sofia Sewing / Catherine Parenteau — trạng thái scheduled.",
             "Đôi nam, Bronze: Ben Johns / Gabriel Tardio gặp CJ Klinger / Eric Oncins — trạng thái scheduled.",
             "Đôi nam, Finals: Andrei Daescu / Christian Alshon gặp Tama Shimabukuro / JW Johnson — trạng thái scheduled.",
             "Đôi nam nữ, Bronze: Rachel Rohrabacher / Christian Alshon gặp Anna Bright / Hayden Patriquin — trạng thái scheduled.",
