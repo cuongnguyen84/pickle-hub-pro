@@ -31,7 +31,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 8, 2026, 22:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 302 matches, including 292 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 9, 2026, 00:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 297 matches, including 292 completed or final records and 1 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -865,7 +865,7 @@ const post: BlogPost = {
                   },
                   {
                     "winner": "Andrei Daescu / Christian Alshon",
-                    "loser": "Will MacKinnon / Hunter Johnson",
+                    "loser": "Will Mackinnon / Hunter Johnson",
                     "sets": [
                       [
                         11,
@@ -897,7 +897,7 @@ const post: BlogPost = {
                 "label": "Round 16",
                 "matches": [
                   {
-                    "winner": "Will MacKinnon / Hunter Johnson",
+                    "winner": "Will Mackinnon / Hunter Johnson",
                     "loser": "Cason Campbell / Adam Harvey",
                     "sets": [
                       [
@@ -1086,7 +1086,7 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Will MacKinnon / Hunter Johnson",
+                    "winner": "Will Mackinnon / Hunter Johnson",
                     "loser": "Yuta Funemizu / Armaan Bhatia",
                     "sets": [
                       [
@@ -1388,7 +1388,7 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Will MacKinnon / Hunter Johnson",
+                    "winner": "Will Mackinnon / Hunter Johnson",
                     "loser": "Wesley Burrows / Eric Roddy",
                     "sets": [
                       [
@@ -4584,15 +4584,10 @@ const post: BlogPost = {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Women's Doubles, Bronze: Rachel Rohrabacher / Parris Todd vs Kate Fahey / Tina Pisnik — status scheduled.",
+            "Mixed Doubles, Finals: Ben Johns / Anna Leigh Waters vs Jorja Johnson / JW Johnson — status live.",
             "Women's Doubles, Finals: Anna Bright / Anna Leigh Waters vs Sofia Sewing / Catherine Parenteau — status scheduled.",
-            "Men's Doubles, Bronze: Ben Johns / Gabriel Tardio vs CJ Klinger / Eric Oncins — status scheduled.",
             "Men's Doubles, Finals: Andrei Daescu / Christian Alshon vs Tama Shimabukuro / JW Johnson — status scheduled.",
-            "Mixed Doubles, Bronze: Rachel Rohrabacher / Christian Alshon vs Anna Bright / Hayden Patriquin — status scheduled.",
-            "Mixed Doubles, Finals: Ben Johns / Anna Leigh Waters vs Jorja Johnson / JW Johnson — status scheduled.",
-            "Women's Singles, Bronze: Brooke Buckner vs Kaitlyn Christian — status scheduled.",
             "Women's Singles, Finals: Anna Leigh Waters vs Kate Fahey — status scheduled.",
-            "Men's Singles, Bronze: Christian Alshon vs Hunter Johnson — status scheduled.",
             "Men's Singles, Finals: John Lucian Goins vs Jack Sock — status scheduled."
           ]
         },
@@ -4627,7 +4622,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 22:00 ngày 8/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 302 trận, gồm 292 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 00:00 ngày 9/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 297 trận, gồm 292 bản ghi đã kết thúc/chung cuộc và 1 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -5461,7 +5456,7 @@ const post: BlogPost = {
                   },
                   {
                     "winner": "Andrei Daescu / Christian Alshon",
-                    "loser": "Will MacKinnon / Hunter Johnson",
+                    "loser": "Will Mackinnon / Hunter Johnson",
                     "sets": [
                       [
                         11,
@@ -5493,7 +5488,7 @@ const post: BlogPost = {
                 "label": "Vòng 16",
                 "matches": [
                   {
-                    "winner": "Will MacKinnon / Hunter Johnson",
+                    "winner": "Will Mackinnon / Hunter Johnson",
                     "loser": "Cason Campbell / Adam Harvey",
                     "sets": [
                       [
@@ -5682,7 +5677,7 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Will MacKinnon / Hunter Johnson",
+                    "winner": "Will Mackinnon / Hunter Johnson",
                     "loser": "Yuta Funemizu / Armaan Bhatia",
                     "sets": [
                       [
@@ -5984,7 +5979,7 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Will MacKinnon / Hunter Johnson",
+                    "winner": "Will Mackinnon / Hunter Johnson",
                     "loser": "Wesley Burrows / Eric Roddy",
                     "sets": [
                       [
@@ -9180,15 +9175,10 @@ const post: BlogPost = {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đôi nữ, Bronze: Rachel Rohrabacher / Parris Todd gặp Kate Fahey / Tina Pisnik — trạng thái scheduled.",
+            "Đôi nam nữ, Finals: Ben Johns / Anna Leigh Waters gặp Jorja Johnson / JW Johnson — trạng thái live.",
             "Đôi nữ, Finals: Anna Bright / Anna Leigh Waters gặp Sofia Sewing / Catherine Parenteau — trạng thái scheduled.",
-            "Đôi nam, Bronze: Ben Johns / Gabriel Tardio gặp CJ Klinger / Eric Oncins — trạng thái scheduled.",
             "Đôi nam, Finals: Andrei Daescu / Christian Alshon gặp Tama Shimabukuro / JW Johnson — trạng thái scheduled.",
-            "Đôi nam nữ, Bronze: Rachel Rohrabacher / Christian Alshon gặp Anna Bright / Hayden Patriquin — trạng thái scheduled.",
-            "Đôi nam nữ, Finals: Ben Johns / Anna Leigh Waters gặp Jorja Johnson / JW Johnson — trạng thái scheduled.",
-            "Đơn nữ, Bronze: Brooke Buckner gặp Kaitlyn Christian — trạng thái scheduled.",
             "Đơn nữ, Finals: Anna Leigh Waters gặp Kate Fahey — trạng thái scheduled.",
-            "Đơn nam, Bronze: Christian Alshon gặp Hunter Johnson — trạng thái scheduled.",
             "Đơn nam, Finals: John Lucian Goins gặp Jack Sock — trạng thái scheduled."
           ]
         },
