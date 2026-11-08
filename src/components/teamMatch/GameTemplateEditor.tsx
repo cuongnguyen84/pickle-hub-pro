@@ -2,6 +2,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { useI18n } from '@/i18n';
+import { getDefaultTemplates, type GameTemplateItem } from '@/lib/team-match-templates';
 
 // ─── W2.4d shared tokens ─────────────────────────────────────────────────
 const surfaceCard: React.CSSProperties = {
@@ -29,14 +30,6 @@ const fieldLabel: React.CSSProperties = {
   color: 'var(--tl-fg-2)',
 };
 
-export interface GameTemplateItem {
-  id: string;
-  order_index: number;
-  game_type: 'WD' | 'MD' | 'MX' | 'WS' | 'MS';
-  display_name: string;
-  scoring_type: 'rally21' | 'sideout11';
-}
-
 interface GameTemplateEditorProps {
   templates: GameTemplateItem[];
   onChange: (templates: GameTemplateItem[]) => void;
@@ -44,35 +37,6 @@ interface GameTemplateEditorProps {
   // Total-score mode overrides each game's target with pointsPerGame (native parity).
   totalScoreMode?: boolean;
   pointsPerGame?: number;
-}
-
-const DEFAULT_TEMPLATES: Record<4 | 6 | 8, GameTemplateItem[]> = {
-  4: [
-    { id: '1', order_index: 0, game_type: 'MX', display_name: 'MX 1', scoring_type: 'rally21' },
-    { id: '2', order_index: 1, game_type: 'MX', display_name: 'MX 2', scoring_type: 'rally21' },
-    { id: '3', order_index: 2, game_type: 'MD', display_name: 'MD', scoring_type: 'rally21' },
-    { id: '4', order_index: 3, game_type: 'WD', display_name: 'WD', scoring_type: 'rally21' },
-  ],
-  6: [
-    { id: '1', order_index: 0, game_type: 'WD', display_name: 'WD', scoring_type: 'rally21' },
-    { id: '2', order_index: 1, game_type: 'MD', display_name: 'MD', scoring_type: 'rally21' },
-    { id: '3', order_index: 2, game_type: 'MX', display_name: 'MX 1', scoring_type: 'rally21' },
-    { id: '4', order_index: 3, game_type: 'MX', display_name: 'MX 2', scoring_type: 'rally21' },
-  ],
-  8: [
-    { id: '1', order_index: 0, game_type: 'WD', display_name: 'WD 1', scoring_type: 'rally21' },
-    { id: '2', order_index: 1, game_type: 'WD', display_name: 'WD 2', scoring_type: 'rally21' },
-    { id: '3', order_index: 2, game_type: 'MD', display_name: 'MD 1', scoring_type: 'rally21' },
-    { id: '4', order_index: 3, game_type: 'MD', display_name: 'MD 2', scoring_type: 'rally21' },
-    { id: '5', order_index: 4, game_type: 'MX', display_name: 'MX 1', scoring_type: 'rally21' },
-    { id: '6', order_index: 5, game_type: 'MX', display_name: 'MX 2', scoring_type: 'rally21' },
-  ],
-};
-
-// Số người tự nhập → lấy bộ game của preset gần nhất (≤4 → 4, ≤6 → 6, còn lại → 8).
-export function getDefaultTemplates(rosterSize: number): GameTemplateItem[] {
-  const preset = rosterSize <= 4 ? 4 : rosterSize <= 6 ? 6 : 8;
-  return DEFAULT_TEMPLATES[preset].map(t => ({ ...t }));
 }
 
 export function GameTemplateEditor({ templates, onChange, rosterSize, totalScoreMode = false, pointsPerGame = 7 }: GameTemplateEditorProps) {
