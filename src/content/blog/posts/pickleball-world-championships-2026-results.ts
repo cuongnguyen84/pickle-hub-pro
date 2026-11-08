@@ -31,7 +31,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 9, 2026, 02:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 297 matches, including 293 completed or final records and 1 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 9, 2026, 04:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 297 matches, including 295 completed or final records and 1 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -41,7 +41,8 @@ const post: BlogPost = {
           "resultsSummary": [
             {
               "division": "Women's Doubles",
-              "note": "Through to the Semi-Finals · 46 matches",
+              "champion": "Anna Bright / Anna Leigh Waters",
+              "note": "Complete · 47 matches",
               "anchor": "rb-womens-doubles"
             },
             {
@@ -62,17 +63,41 @@ const post: BlogPost = {
             },
             {
               "division": "Men's Singles",
-              "note": "Through to the Semi-Finals · 62 matches",
+              "champion": "John Lucian Goins",
+              "note": "Complete · 63 matches",
               "anchor": "rb-mens-singles"
             }
           ]
         },
         {
           "heading": "Women's Doubles results",
-          "content": "No champion yet. 46 completed matches, latest round first.",
+          "content": "Champion: Anna Bright / Anna Leigh Waters. 47 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Women's Doubles",
             "rounds": [
+              {
+                "label": "Finals",
+                "matches": [
+                  {
+                    "winner": "Anna Bright / Anna Leigh Waters",
+                    "loser": "Sofia Sewing / Catherine Parenteau",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  }
+                ]
+              },
               {
                 "label": "Semi-Finals",
                 "matches": [
@@ -791,7 +816,8 @@ const post: BlogPost = {
                 ],
                 "collapsed": true
               }
-            ]
+            ],
+            "champion": "Anna Bright / Anna Leigh Waters"
           }
         },
         {
@@ -3664,10 +3690,29 @@ const post: BlogPost = {
         },
         {
           "heading": "Men's Singles results",
-          "content": "No champion yet. 62 completed matches, latest round first.",
+          "content": "Champion: John Lucian Goins. 63 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Men's Singles",
             "rounds": [
+              {
+                "label": "Finals",
+                "matches": [
+                  {
+                    "winner": "John Lucian Goins",
+                    "loser": "Jack Sock",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        12,
+                        10
+                      ]
+                    ]
+                  }
+                ]
+              },
               {
                 "label": "Semi-Finals",
                 "matches": [
@@ -4610,16 +4655,15 @@ const post: BlogPost = {
                 ],
                 "collapsed": true
               }
-            ]
+            ],
+            "champion": "John Lucian Goins"
           }
         },
         {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Men's Singles, Finals: John Lucian Goins vs Jack Sock — status live.",
-            "Women's Doubles, Finals: Anna Bright / Anna Leigh Waters vs Sofia Sewing / Catherine Parenteau — status scheduled.",
-            "Men's Doubles, Finals: Andrei Daescu / Christian Alshon vs Tama Shimabukuro / JW Johnson — status scheduled.",
+            "Men's Doubles, Finals: Andrei Daescu / Christian Alshon vs Tama Shimabukuro / JW Johnson — status live.",
             "Women's Singles, Finals: Anna Leigh Waters vs Kate Fahey — status scheduled."
           ]
         },
@@ -4635,7 +4679,7 @@ const post: BlogPost = {
         },
         {
           "question": "Who won World Championship 2026?",
-          "answer": "Champions confirmed by the official feed so far — Mixed Doubles: Ben Johns / Anna Leigh Waters."
+          "answer": "Champions confirmed by the official feed so far — Women's Doubles: Anna Bright / Anna Leigh Waters; Mixed Doubles: Ben Johns / Anna Leigh Waters; Men's Singles: John Lucian Goins."
         },
         {
           "question": "Are scheduled matches final results?",
@@ -4654,7 +4698,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 02:00 ngày 9/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 297 trận, gồm 293 bản ghi đã kết thúc/chung cuộc và 1 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 04:00 ngày 9/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 297 trận, gồm 295 bản ghi đã kết thúc/chung cuộc và 1 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -4664,7 +4708,8 @@ const post: BlogPost = {
           "resultsSummary": [
             {
               "division": "Đôi nữ",
-              "note": "Đã tới Semi-Finals · 46 trận",
+              "champion": "Anna Bright / Anna Leigh Waters",
+              "note": "Hoàn tất · 47 trận",
               "anchor": "rb-doi-nu"
             },
             {
@@ -4685,17 +4730,41 @@ const post: BlogPost = {
             },
             {
               "division": "Đơn nam",
-              "note": "Đã tới Semi-Finals · 62 trận",
+              "champion": "John Lucian Goins",
+              "note": "Hoàn tất · 63 trận",
               "anchor": "rb-don-nam"
             }
           ]
         },
         {
           "heading": "Kết quả Đôi nữ",
-          "content": "Chưa có nhà vô địch. 46 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Vô địch: Anna Bright / Anna Leigh Waters. 47 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đôi nữ",
             "rounds": [
+              {
+                "label": "Chung kết",
+                "matches": [
+                  {
+                    "winner": "Anna Bright / Anna Leigh Waters",
+                    "loser": "Sofia Sewing / Catherine Parenteau",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  }
+                ]
+              },
               {
                 "label": "Semi-Finals",
                 "matches": [
@@ -5414,7 +5483,8 @@ const post: BlogPost = {
                 ],
                 "collapsed": true
               }
-            ]
+            ],
+            "champion": "Anna Bright / Anna Leigh Waters"
           }
         },
         {
@@ -8287,10 +8357,29 @@ const post: BlogPost = {
         },
         {
           "heading": "Kết quả Đơn nam",
-          "content": "Chưa có nhà vô địch. 62 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Vô địch: John Lucian Goins. 63 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đơn nam",
             "rounds": [
+              {
+                "label": "Chung kết",
+                "matches": [
+                  {
+                    "winner": "John Lucian Goins",
+                    "loser": "Jack Sock",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        12,
+                        10
+                      ]
+                    ]
+                  }
+                ]
+              },
               {
                 "label": "Semi-Finals",
                 "matches": [
@@ -9233,16 +9322,15 @@ const post: BlogPost = {
                 ],
                 "collapsed": true
               }
-            ]
+            ],
+            "champion": "John Lucian Goins"
           }
         },
         {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đơn nam, Finals: John Lucian Goins gặp Jack Sock — trạng thái live.",
-            "Đôi nữ, Finals: Anna Bright / Anna Leigh Waters gặp Sofia Sewing / Catherine Parenteau — trạng thái scheduled.",
-            "Đôi nam, Finals: Andrei Daescu / Christian Alshon gặp Tama Shimabukuro / JW Johnson — trạng thái scheduled.",
+            "Đôi nam, Finals: Andrei Daescu / Christian Alshon gặp Tama Shimabukuro / JW Johnson — trạng thái live.",
             "Đơn nữ, Finals: Anna Leigh Waters gặp Kate Fahey — trạng thái scheduled."
           ]
         },
@@ -9258,7 +9346,7 @@ const post: BlogPost = {
         },
         {
           "question": "Ai vô địch World Championship 2026?",
-          "answer": "Nhà vô địch đã được feed chính thức xác nhận — Đôi nam nữ: Ben Johns / Anna Leigh Waters."
+          "answer": "Nhà vô địch đã được feed chính thức xác nhận — Đôi nữ: Anna Bright / Anna Leigh Waters; Đôi nam nữ: Ben Johns / Anna Leigh Waters; Đơn nam: John Lucian Goins."
         },
         {
           "question": "Trận scheduled có phải kết quả không?",
