@@ -31,7 +31,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 9, 2026, 04:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 297 matches, including 295 completed or final records and 1 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 9, 2026, 06:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 297 matches, including 296 completed or final records and 1 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -47,7 +47,8 @@ const post: BlogPost = {
             },
             {
               "division": "Men's Doubles",
-              "note": "Through to the Semi-Finals · 60 matches",
+              "champion": "Tama Shimabukuro / JW Johnson",
+              "note": "Complete · 61 matches",
               "anchor": "rb-mens-doubles"
             },
             {
@@ -822,10 +823,41 @@ const post: BlogPost = {
         },
         {
           "heading": "Men's Doubles results",
-          "content": "No champion yet. 60 completed matches, latest round first.",
+          "content": "Champion: Tama Shimabukuro / JW Johnson. 61 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Men's Doubles",
             "rounds": [
+              {
+                "label": "Finals",
+                "matches": [
+                  {
+                    "winner": "Tama Shimabukuro / JW Johnson",
+                    "loser": "Andrei Daescu / Christian Alshon",
+                    "sets": [
+                      [
+                        5,
+                        11
+                      ],
+                      [
+                        5,
+                        11
+                      ],
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  }
+                ]
+              },
               {
                 "label": "Semi-Finals",
                 "matches": [
@@ -1719,7 +1751,8 @@ const post: BlogPost = {
                 ],
                 "collapsed": true
               }
-            ]
+            ],
+            "champion": "Tama Shimabukuro / JW Johnson"
           }
         },
         {
@@ -4663,8 +4696,7 @@ const post: BlogPost = {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Men's Doubles, Finals: Andrei Daescu / Christian Alshon vs Tama Shimabukuro / JW Johnson — status live.",
-            "Women's Singles, Finals: Anna Leigh Waters vs Kate Fahey — status scheduled."
+            "Women's Singles, Finals: Anna Leigh Waters vs Kate Fahey — status live."
           ]
         },
         {
@@ -4679,7 +4711,7 @@ const post: BlogPost = {
         },
         {
           "question": "Who won World Championship 2026?",
-          "answer": "Champions confirmed by the official feed so far — Women's Doubles: Anna Bright / Anna Leigh Waters; Mixed Doubles: Ben Johns / Anna Leigh Waters; Men's Singles: John Lucian Goins."
+          "answer": "Champions confirmed by the official feed so far — Women's Doubles: Anna Bright / Anna Leigh Waters; Men's Doubles: Tama Shimabukuro / JW Johnson; Mixed Doubles: Ben Johns / Anna Leigh Waters; Men's Singles: John Lucian Goins."
         },
         {
           "question": "Are scheduled matches final results?",
@@ -4698,7 +4730,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 04:00 ngày 9/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 297 trận, gồm 295 bản ghi đã kết thúc/chung cuộc và 1 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 06:00 ngày 9/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 297 trận, gồm 296 bản ghi đã kết thúc/chung cuộc và 1 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -4714,7 +4746,8 @@ const post: BlogPost = {
             },
             {
               "division": "Đôi nam",
-              "note": "Đã tới Semi-Finals · 60 trận",
+              "champion": "Tama Shimabukuro / JW Johnson",
+              "note": "Hoàn tất · 61 trận",
               "anchor": "rb-doi-nam"
             },
             {
@@ -5489,10 +5522,41 @@ const post: BlogPost = {
         },
         {
           "heading": "Kết quả Đôi nam",
-          "content": "Chưa có nhà vô địch. 60 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Vô địch: Tama Shimabukuro / JW Johnson. 61 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đôi nam",
             "rounds": [
+              {
+                "label": "Chung kết",
+                "matches": [
+                  {
+                    "winner": "Tama Shimabukuro / JW Johnson",
+                    "loser": "Andrei Daescu / Christian Alshon",
+                    "sets": [
+                      [
+                        5,
+                        11
+                      ],
+                      [
+                        5,
+                        11
+                      ],
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  }
+                ]
+              },
               {
                 "label": "Semi-Finals",
                 "matches": [
@@ -6386,7 +6450,8 @@ const post: BlogPost = {
                 ],
                 "collapsed": true
               }
-            ]
+            ],
+            "champion": "Tama Shimabukuro / JW Johnson"
           }
         },
         {
@@ -9330,8 +9395,7 @@ const post: BlogPost = {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đôi nam, Finals: Andrei Daescu / Christian Alshon gặp Tama Shimabukuro / JW Johnson — trạng thái live.",
-            "Đơn nữ, Finals: Anna Leigh Waters gặp Kate Fahey — trạng thái scheduled."
+            "Đơn nữ, Finals: Anna Leigh Waters gặp Kate Fahey — trạng thái live."
           ]
         },
         {
@@ -9346,7 +9410,7 @@ const post: BlogPost = {
         },
         {
           "question": "Ai vô địch World Championship 2026?",
-          "answer": "Nhà vô địch đã được feed chính thức xác nhận — Đôi nữ: Anna Bright / Anna Leigh Waters; Đôi nam nữ: Ben Johns / Anna Leigh Waters; Đơn nam: John Lucian Goins."
+          "answer": "Nhà vô địch đã được feed chính thức xác nhận — Đôi nữ: Anna Bright / Anna Leigh Waters; Đôi nam: Tama Shimabukuro / JW Johnson; Đôi nam nữ: Ben Johns / Anna Leigh Waters; Đơn nam: John Lucian Goins."
         },
         {
           "question": "Trận scheduled có phải kết quả không?",
