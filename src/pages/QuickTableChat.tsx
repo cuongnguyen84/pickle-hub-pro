@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 import { rankSeriesSizes, seriesLine, seriesName, seriesPlan, slot as seriesSlot, type SeriesStyle } from "@/lib/quick-table-series";
 import {
   applyPatch, applySpokenEdit, buildRoster, chatFacts, customSeries, defaultName, draftSeriesPlan, dropInventedRoster, duplicateIndexes, entryCount, entryLabel, factualAck, findGroupOption, googleSheetRef, groupChoices, groupSuggestion,
-  fallbackReply, groupCourtsLine, mergeTm, nextTmSlot, tmAnswer, tmDefaultName, tmKnockoutOk, tmPlayoffCount, wantsTeamMatch, teamLists, pairTeamLists, type TeamList, groupSizes, keepOrAssign, localSlotPatch, lockAdvance, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, messageNeedsModel, needsPairing, nextSlot, pairEntries, parseSheet, playoffSummary, previewAssignments, replyFromDraft, seriesCap, trustPatch,
+  fallbackReply, groupCourtsLine, mergeTm, nextTmSlot, tmAnswer, tmDefaultName, tmKnockoutOk, tmPlayoffCount, wantsTeamMatch, divisionsAsked, divisionBase, nextDivisionDraft, teamLists, pairTeamLists, type TeamList, groupSizes, keepOrAssign, localSlotPatch, lockAdvance, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, messageNeedsModel, needsPairing, nextSlot, pairEntries, parseSheet, playoffSummary, previewAssignments, replyFromDraft, seriesCap, trustPatch,
   type Draft, type Entry, type GroupOption, type PairingMode, type Slot, type TmDraft, type TmFormat,
 } from "@/lib/quick-table-chat";
 import { createTeamMatchTournament } from "@/hooks/useTeamMatch";
@@ -37,6 +37,7 @@ import { toast } from "@/hooks/use-toast";
 type Lang = "vi" | "en";
 /** label: thứ hiện trên bong bóng khi khác nội dung gửi AI (vd tên file thay cho cả bảng CSV). */
 interface Msg { id: string; role: "user" | "bot"; text: string; label?: string }
+interface Divisions { labels: string[]; done: number }
 /** Ảnh/PDF gửi kèm cho Gemini đọc — chỉ nằm trong request, không lưu localStorage. */
 interface Attachment { mime_type: string; data: string }
 /** entries: bảng tính đọc được tại chỗ → vào nháp luôn, không gọi AI. append: gộp vào danh sách đang có. */
@@ -176,6 +177,10 @@ const COPY = {
     endTable: "Kết thúc giải",
     deleteTable: "Xoá giải",
     another: "Tạo giải khác",
+    divOffer: (label: string, name: string) => `Tạo luôn giải hạng ${label} — “${name}”? Mình giữ thể thức, sân, giờ; danh sách dùng chung hay nhập riêng?`,
+    divSame: (label: string) => `Tạo ${label} — cùng danh sách`,
+    divNew: (label: string) => `Tạo ${label} — danh sách khác`,
+    divStop: "Thôi, đủ rồi",
     tmIntro: "Kiểu MLP / đổi partner → giải Đồng đội MLP: các đội đấu nhau, mỗi trận vài game đôi.",
     tmTeams: "Có bao nhiêu đội?",
     tmRoster: "Mỗi đội mấy người?",
@@ -321,6 +326,10 @@ const COPY = {
     endTable: "End tournament",
     deleteTable: "Delete tournament",
     another: "Create another",
+    divOffer: (label: string, name: string) => `Create the ${label} tournament now — “${name}”? I'll keep the format, courts and time; same player list or a different one?`,
+    divSame: (label: string) => `Create ${label} — same list`,
+    divNew: (label: string) => `Create ${label} — different list`,
+    divStop: "No, that's all",
     tmIntro: "MLP-style / rotating partners → MLP Team Match: teams face off over several doubles games.",
     tmTeams: "How many teams?",
     tmRoster: "How many players per team?",
@@ -420,7 +429,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   const restored = useMemo(() => {
     try {
       const raw = localStorage.getItem(storageKey);
-      return raw ? (JSON.parse(raw) as { lang?: Lang; draft: Draft; messages: Msg[]; tm?: TmDraft | null }) : null;
+      return raw ? (JSON.parse(raw) as { lang?: Lang; draft: Draft; messages: Msg[]; tm?: TmDraft | null; div?: Divisions | null }) : null;
     } catch {
       return null;
     }
@@ -445,6 +454,8 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   const [tm, setTm] = useState<TmDraft | null>(restored?.lang === lang && restored.tm ? mergeTm({}, restored.tm) : null);
   // Dán Team A / Team B: chờ người dùng chọn MLP hay cách ghép đôi (không lưu, không tự ghép).
   const [teamPaste, setTeamPaste] = useState<TeamList[] | null>(null);
+  // Nhiều hạng: mỗi hạng một giải. done = số giải đã tạo; tạo xong thì đề nghị hạng labels[done].
+  const [div, setDiv] = useState<Divisions | null>(restored?.div ?? null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -455,9 +466,9 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   useEffect(() => {
     try {
       if (created) localStorage.removeItem(storageKey);
-      else localStorage.setItem(storageKey, JSON.stringify({ lang, draft, messages: messages.slice(-60), tm }));
+      else localStorage.setItem(storageKey, JSON.stringify({ lang, draft, messages: messages.slice(-60), tm, div }));
     } catch { /* private mode — chat still works, just not restorable */ }
-  }, [lang, draft, messages, created, storageKey, tm]);
+  }, [lang, draft, messages, created, storageKey, tm, div]);
 
   useEffect(() => {
     getUserQuotaInfo().then((q) => { if (q && q.current_count >= q.quota) setQuotaFull(q.quota); });
@@ -608,6 +619,9 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       setTeamPaste(null);
       if (tm || wantsTeamMatch(msg.text)) { setInput(""); pushUser(msg.text); tmStep(tmAnswer(tm ?? mergeTm({}, tmSeed), msg.text, lang), !tm); return; }
       if (lists) { setInput(""); pushUser(msg.text); setTeamPaste(lists); pushBot(c.teamPasteAsk(lists)); return; }
+      // Câu đòi nhiều hạng đi qua AI để giữ các thông tin khác; câu trả lời kèm luật mỗi hạng một giải.
+      const divs = div ? null : divisionsAsked(msg.text, lang);
+      if (divs) setDiv({ labels: divs, done: 0 });
       const sheet = googleSheetRef(msg.text);
       if (sheet) {
         setInput("");
@@ -642,7 +656,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
         }
         msg = { text: `${msg.text}\n${csv.trim().slice(0, 3500)}`, label: c.sheetLabel };
         isRetry = true;
-      } else {
+      } else if (!divs) {
         const local = localSlotPatch(msg.text, slot);
         if (local) { setInput(""); choose(msg.text, local); return; }
         const spoken = applySpokenEdit(draft, msg.text);
@@ -1005,6 +1019,25 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     }
     setCreating(false);
     setCreated({ table, rosterOk });
+    if (div) {
+      const done = div.done + 1;
+      setDiv({ ...div, done });
+      const label = div.labels[done];
+      if (label) pushBot(c.divOffer(label, `${divisionBase(draft.name!, div.labels)} — ${label}`));
+    }
+  };
+
+  const nextDiv = created && div ? div.labels[div.done] : undefined;
+  const divChips: Chip[] = !nextDiv ? [] : [
+    ...(draft.entries?.length ? [{ label: c.divSame(nextDiv), recommended: true, onClick: () => continueDivision(true) }] : []),
+    { label: c.divNew(nextDiv), recommended: !draft.entries?.length, onClick: () => continueDivision(false) },
+    { label: c.divStop, onClick: () => { pushUser(c.divStop); setDiv(null); } },
+  ];
+  const continueDivision = (same: boolean) => {
+    const name = `${divisionBase(draft.name!, div!.labels)} — ${nextDiv}`;
+    setCreated(null);
+    pushUser(same ? c.divSame(nextDiv!) : c.divNew(nextDiv!));
+    advance(nextDivisionDraft(draft, name, same), lang === "vi" ? `Tên giải: ${name}.` : `Name: ${name}.`);
   };
 
   const tableUrl = created ? `${getSiteUrl()}${to(`/tools/quick-tables/${created.table.share_id}`)}` : "";
@@ -1055,6 +1088,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     setDraft({});
     setTm(null);
     setTeamPaste(null);
+    setDiv(null);
     setMessages(freshMessages(c, {}));
     setSubMenu(null);
     setFailed(null);
@@ -1183,6 +1217,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
               onAnother={startOver}
             />
           )}
+          {divChips.length > 0 && <ChipRow chips={divChips} />}
           {quotaMsg && (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <Button variant="default" onClick={() => navigate(to("/tools/quick-tables"))}>{c.myTables}</Button>

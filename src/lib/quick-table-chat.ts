@@ -314,7 +314,67 @@ export function unsupportedFormatNote(text: string, lang: "vi" | "en"): string |
       ? "Vòng crossover / play-in chưa được hỗ trợ. Gần nhất: vòng bảng vòng tròn rồi playoff loại trực tiếp — mình làm vậy nhé"
       : "Multi-phase crossover / play-in stages aren't supported yet. Closest: round-robin groups, then a single-elimination playoff — I'll set that up";
   }
+  const divs = divisionsAsked(text, lang);
+  if (divs) return divisionNote(divs, lang);
   return null;
+}
+
+// Ca Anora Reunion 09/11: "2 hạng beginner + intermediate" trong một giải. Luật giữ nguyên:
+// một giải = một hạng → tạo từng hạng một giải, xong giải đầu thì đề nghị tạo tiếp giải sau.
+const LEVELS: Record<string, string> = {
+  beginner: "Beginner", beginners: "Beginner", intermediate: "Intermediate", advanced: "Advanced",
+  novice: "Novice", amateur: "Amateur", pro: "Pro", open: "Open", elite: "Elite", mixed: "Mixed",
+  "nghiep du": "Nghiệp dư", "chuyen nghiep": "Chuyên nghiệp", "trung binh": "Trung bình", "trung cap": "Trung cấp",
+  "so cap": "Sơ cấp", "nang cao": "Nâng cao", "moi choi": "Mới chơi",
+};
+const LEVEL = `(${Object.keys(LEVELS).join("|")}|[2-5]\\.[05]\\+?)`;
+const LEVEL_JOIN = `(?:\\s*[,&+/]\\s*(?:va |and )?|\\s+(?:va|and|vs)\\s+)`;
+const LEVEL_LIST = new RegExp(`(?<![a-z0-9.])${LEVEL}(?:${LEVEL_JOIN}${LEVEL})+(?![a-z0-9])`);
+const LEVEL_ONE = new RegExp(`(?<![a-z0-9.])${LEVEL}(?![a-z0-9])`, "g");
+const DIV_COUNT = /(?<!lay |top )\b(2|3|4|5|hai|ba|bon|nam|nhieu|two|three|four|multiple|several|many) (hang|hang muc|trinh do|trinh|levels?|divisions?|categories|noi dung)\b(?! (dau|nhat|cuoi|cao))/;
+const DIV_GENDER = /(nam (va |\/ ?|, ?)?nu|doi nam (va |, ?)doi nu) rieng|rieng (doi )?nam (va |\/ ?|, ?)(doi )?nu|men'?s? (and|&) women'?s? (separate|divisions?)|separate men'?s? (and|&) women'?s?/;
+const NUM_WORD: Record<string, number> = { hai: 2, two: 2, ba: 3, three: 3, bon: 4, four: 4, nam: 5 };
+
+/**
+ * Người dùng muốn nhiều hạng/trình/division trong MỘT giải → nhãn các hạng theo thứ tự đã nói,
+ * hoặc null. "Mỗi hạng một vòng loại" (chia vòng loại theo thứ hạng bảng) không tính.
+ */
+export function divisionsAsked(text: string, lang: "vi" | "en"): string[] | null {
+  const t = fold(text);
+  if (!t || wantsRankSeries(text)) return null;
+  if (DIV_GENDER.test(t)) return lang === "vi" ? ["Nam", "Nữ"] : ["Men's", "Women's"];
+  const list = t.match(LEVEL_LIST);
+  if (list) return [...new Set([...list[0].matchAll(LEVEL_ONE)].map((m) => LEVELS[m[1]] ?? m[1]))];
+  const count = t.match(DIV_COUNT);
+  // "2 hạng" kèm vòng loại/nhánh là chuyện playoff, không phải hạng thi đấu.
+  if (!count || /vong loai|nhanh|series|playoff|knockout/.test(t)) return null;
+  const n = Math.max(2, Number(count[1]) || NUM_WORD[count[1]] || 2);
+  return Array.from({ length: n }, (_, i) => (lang === "vi" ? `Hạng ${i + 1}` : `Division ${i + 1}`));
+}
+
+export function divisionNote(labels: string[], lang: "vi" | "en"): string {
+  return lang === "vi"
+    ? `Mỗi giải chỉ có một hạng, nên mình tạo mỗi hạng một giải riêng: ${labels.join(", ")}. Làm ${labels[0]} trước; tạo xong mình đề nghị tạo luôn ${labels[1]} với cùng tên, sân, giờ — danh sách dùng chung hay nhập riêng tuỳ bạn`
+    : `Each tournament holds one division, so I'll create one per division: ${labels.join(", ")}. ${labels[0]} first; once it's created I'll offer ${labels[1]} with the same name, courts and time — same list or a new one, your call`;
+}
+
+/** Tên chung: bỏ hậu tố hạng nếu giải trước đã có ("Anora Reunion — Beginner" → "Anora Reunion"). */
+export function divisionBase(name: string, labels: string[]): string {
+  const esc = labels.map((l) => l.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+  return name.replace(new RegExp(`\\s*[—–:-]?\\s*\\(?(?:${esc})\\)?\\s*$`, "i"), "").trim() || name;
+}
+
+/**
+ * Nháp cho hạng tiếp theo: giữ thể thức, sân, giờ, số set; danh sách giữ nguyên khi dùng chung,
+ * còn không thì xoá danh sách + cách chia bảng để hỏi lại (ghép cặp N đội / 2N tên đi như thường).
+ */
+export function nextDivisionDraft(d: Draft, name: string, sameRoster: boolean): Draft {
+  if (sameRoster) return { ...d, name };
+  return {
+    ...d, name,
+    entries: undefined, player_count: undefined, roster_mode: undefined, group_count: undefined, group_courts: undefined,
+    series: undefined, series_sizes: undefined, advance_per_group: undefined, pairing_done: undefined,
+  };
 }
 
 export interface TeamList { label: string; names: string[] }
