@@ -56,8 +56,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // the single source of truth (fires for every path); doing this only
         // inside signOut() would miss the non-manual cases. Clears the React
         // Query cache (in-memory RLS data) + the auth-sensitive Cache Storage.
+        //
+        // resetQueries, NOT clear(): clear() removes queries from under their
+        // mounted observers, so a fetch in flight lands on an orphan and the
+        // screen stays on its skeleton forever. That is what an expired stored
+        // refresh token did to the /vi homepage on 2026-11-09 — SIGNED_OUT
+        // fires mid-load. reset drops every query's data just the same and
+        // refetches the mounted ones as anon.
         if (event === "SIGNED_OUT") {
-          queryClient.clear();
+          void queryClient.resetQueries();
           void purgeAuthSensitiveCaches();
         }
 
