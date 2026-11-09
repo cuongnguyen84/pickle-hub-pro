@@ -19,7 +19,7 @@ describe("chat → nhiều hạng = chuỗi giải liên tiếp", () => {
   it.each([
     ["one tournament with beginner and intermediate divisions", ["Beginner", "Intermediate"]],
     ["we need 3 divisions", ["Division 1", "Division 2", "Division 3"]],
-    ["separate men's and women's", ["Men's", "Women's"]],
+    ["separate men and women", ["Men's", "Women's"]],
   ])("EN: %s", (text, labels) => {
     expect(divisionsAsked(text, "en")).toEqual(labels);
   });
@@ -45,12 +45,12 @@ describe("chat → nhiều hạng = chuỗi giải liên tiếp", () => {
 
   it("không phải ngõ cụt: nói luật một giải một hạng + hứa tạo tiếp hạng sau (VI + EN)", () => {
     const vi = fallbackReply("unsupported", "Muốn nhiều hạng trong một giải", "vi", "Anora Reunion 2 hạng beginner và intermediate");
-    expect(vi).toMatch(/mỗi hạng một giải riêng/);
+    expect(vi).toMatch(/Mỗi hạng một giải riêng/);
     expect(vi).toMatch(/Beginner trước/);
     expect(vi).toMatch(/tạo luôn Intermediate/);
     expect(vi).not.toMatch(/chỉnh ở trang giải/);
     const en = factualAck({}, { is_doubles: true }, "en", "beginner and intermediate in one event");
-    expect(en).toMatch(/one per division/);
+    expect(en).toMatch(/One tournament per division/);
     expect(en).toMatch(/offer Intermediate/);
   });
 

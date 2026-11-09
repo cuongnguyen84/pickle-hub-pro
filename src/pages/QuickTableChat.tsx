@@ -177,10 +177,10 @@ const COPY = {
     endTable: "Kết thúc giải",
     deleteTable: "Xoá giải",
     another: "Tạo giải khác",
-    divOffer: (label: string, name: string) => `Tạo luôn giải hạng ${label} — “${name}”? Mình giữ thể thức, sân, giờ; danh sách dùng chung hay nhập riêng?`,
-    divSame: (label: string) => `Tạo ${label} — cùng danh sách`,
-    divNew: (label: string) => `Tạo ${label} — danh sách khác`,
-    divStop: "Thôi, đủ rồi",
+    divOffer: (name: string) => `Tạo luôn “${name}”? Cùng danh sách hay danh sách khác?`,
+    divSame: "Cùng danh sách",
+    divNew: "Danh sách khác",
+    divStop: "Thôi",
     tmIntro: "Kiểu MLP / đổi partner → giải Đồng đội MLP: các đội đấu nhau, mỗi trận vài game đôi.",
     tmTeams: "Có bao nhiêu đội?",
     tmRoster: "Mỗi đội mấy người?",
@@ -326,10 +326,10 @@ const COPY = {
     endTable: "End tournament",
     deleteTable: "Delete tournament",
     another: "Create another",
-    divOffer: (label: string, name: string) => `Create the ${label} tournament now — “${name}”? I'll keep the format, courts and time; same player list or a different one?`,
-    divSame: (label: string) => `Create ${label} — same list`,
-    divNew: (label: string) => `Create ${label} — different list`,
-    divStop: "No, that's all",
+    divOffer: (name: string) => `Create “${name}” now? Same list or a different one?`,
+    divSame: "Same list",
+    divNew: "Different list",
+    divStop: "No thanks",
     tmIntro: "MLP-style / rotating partners → MLP Team Match: teams face off over several doubles games.",
     tmTeams: "How many teams?",
     tmRoster: "How many players per team?",
@@ -1022,22 +1022,21 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     if (div) {
       const done = div.done + 1;
       setDiv({ ...div, done });
-      const label = div.labels[done];
-      if (label) pushBot(c.divOffer(label, `${divisionBase(draft.name!, div.labels)} — ${label}`));
+      if (div.labels[done]) pushBot(c.divOffer(`${divisionBase(draft.name!, div.labels)} — ${div.labels[done]}`));
     }
   };
 
   const nextDiv = created && div ? div.labels[div.done] : undefined;
   const divChips: Chip[] = !nextDiv ? [] : [
-    ...(draft.entries?.length ? [{ label: c.divSame(nextDiv), recommended: true, onClick: () => continueDivision(true) }] : []),
-    { label: c.divNew(nextDiv), recommended: !draft.entries?.length, onClick: () => continueDivision(false) },
+    ...(draft.entries?.length ? [{ label: c.divSame, recommended: true, onClick: () => continueDivision(true) }] : []),
+    { label: c.divNew, onClick: () => continueDivision(false) },
     { label: c.divStop, onClick: () => { pushUser(c.divStop); setDiv(null); } },
   ];
   const continueDivision = (same: boolean) => {
-    const name = `${divisionBase(draft.name!, div!.labels)} — ${nextDiv}`;
+    const next = nextDivisionDraft(draft, `${divisionBase(draft.name!, div!.labels)} — ${nextDiv}`, same);
     setCreated(null);
-    pushUser(same ? c.divSame(nextDiv!) : c.divNew(nextDiv!));
-    advance(nextDivisionDraft(draft, name, same), lang === "vi" ? `Tên giải: ${name}.` : `Name: ${name}.`);
+    pushUser(same ? c.divSame : c.divNew);
+    advance(next, factualAck(draft, next, lang));
   };
 
   const tableUrl = created ? `${getSiteUrl()}${to(`/tools/quick-tables/${created.table.share_id}`)}` : "";
