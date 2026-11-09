@@ -6,7 +6,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   "slug": "pickleball-world-championships-2026-results",
   "publishedDate": "2026-11-02",
-  "updatedDate": "2026-11-08",
+  "updatedDate": "2026-11-09",
   "author": "The PickleHub Team",
   "tags": [
     "pickleball",
@@ -31,7 +31,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 9, 2026, 06:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 297 matches, including 296 completed or final records and 1 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 9, 2026, 07:30 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 297 matches, including 297 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -59,7 +59,8 @@ const post: BlogPost = {
             },
             {
               "division": "Women's Singles",
-              "note": "Through to the Semi-Finals · 62 matches",
+              "champion": "Anna Leigh Waters",
+              "note": "Complete · 63 matches",
               "anchor": "rb-womens-singles"
             },
             {
@@ -622,7 +623,7 @@ const post: BlogPost = {
                   },
                   {
                     "winner": "Lucy Kovalova / Cailyn Campbell",
-                    "loser": "Cc Eleven Sacca / Circa Luna S",
+                    "loser": "CC Eleven Sacca / Circa Luna S",
                     "sets": [
                       [
                         11,
@@ -2678,7 +2679,7 @@ const post: BlogPost = {
                   },
                   {
                     "winner": "Rachel Rohrabacher / Christian Alshon",
-                    "loser": "Rafa Hewett / Cc Eleven Sacca",
+                    "loser": "Rafa Hewett / CC Eleven Sacca",
                     "sets": [
                       [
                         11,
@@ -2760,10 +2761,29 @@ const post: BlogPost = {
         },
         {
           "heading": "Women's Singles results",
-          "content": "No champion yet. 62 completed matches, latest round first.",
+          "content": "Champion: Anna Leigh Waters. 63 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Women's Singles",
             "rounds": [
+              {
+                "label": "Finals",
+                "matches": [
+                  {
+                    "winner": "Anna Leigh Waters",
+                    "loser": "Kate Fahey",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  }
+                ]
+              },
               {
                 "label": "Semi-Finals",
                 "matches": [
@@ -3718,7 +3738,8 @@ const post: BlogPost = {
                 ],
                 "collapsed": true
               }
-            ]
+            ],
+            "champion": "Anna Leigh Waters"
           }
         },
         {
@@ -4696,7 +4717,7 @@ const post: BlogPost = {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Women's Singles, Finals: Anna Leigh Waters vs Kate Fahey — status live."
+            "No match is currently marked live or scheduled in the official feed."
           ]
         },
         {
@@ -4711,7 +4732,7 @@ const post: BlogPost = {
         },
         {
           "question": "Who won World Championship 2026?",
-          "answer": "Champions confirmed by the official feed so far — Women's Doubles: Anna Bright / Anna Leigh Waters; Men's Doubles: Tama Shimabukuro / JW Johnson; Mixed Doubles: Ben Johns / Anna Leigh Waters; Men's Singles: John Lucian Goins."
+          "answer": "Champions confirmed by the official feed so far — Women's Doubles: Anna Bright / Anna Leigh Waters; Men's Doubles: Tama Shimabukuro / JW Johnson; Mixed Doubles: Ben Johns / Anna Leigh Waters; Women's Singles: Anna Leigh Waters; Men's Singles: John Lucian Goins."
         },
         {
           "question": "Are scheduled matches final results?",
@@ -4730,7 +4751,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 06:00 ngày 9/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 297 trận, gồm 296 bản ghi đã kết thúc/chung cuộc và 1 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 07:30 ngày 9/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 297 trận, gồm 297 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -4758,7 +4779,8 @@ const post: BlogPost = {
             },
             {
               "division": "Đơn nữ",
-              "note": "Đã tới Semi-Finals · 62 trận",
+              "champion": "Anna Leigh Waters",
+              "note": "Hoàn tất · 63 trận",
               "anchor": "rb-don-nu"
             },
             {
@@ -5321,7 +5343,7 @@ const post: BlogPost = {
                   },
                   {
                     "winner": "Lucy Kovalova / Cailyn Campbell",
-                    "loser": "Cc Eleven Sacca / Circa Luna S",
+                    "loser": "CC Eleven Sacca / Circa Luna S",
                     "sets": [
                       [
                         11,
@@ -7377,7 +7399,7 @@ const post: BlogPost = {
                   },
                   {
                     "winner": "Rachel Rohrabacher / Christian Alshon",
-                    "loser": "Rafa Hewett / Cc Eleven Sacca",
+                    "loser": "Rafa Hewett / CC Eleven Sacca",
                     "sets": [
                       [
                         11,
@@ -7459,10 +7481,29 @@ const post: BlogPost = {
         },
         {
           "heading": "Kết quả Đơn nữ",
-          "content": "Chưa có nhà vô địch. 62 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Vô địch: Anna Leigh Waters. 63 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đơn nữ",
             "rounds": [
+              {
+                "label": "Chung kết",
+                "matches": [
+                  {
+                    "winner": "Anna Leigh Waters",
+                    "loser": "Kate Fahey",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  }
+                ]
+              },
               {
                 "label": "Semi-Finals",
                 "matches": [
@@ -8417,7 +8458,8 @@ const post: BlogPost = {
                 ],
                 "collapsed": true
               }
-            ]
+            ],
+            "champion": "Anna Leigh Waters"
           }
         },
         {
@@ -9395,7 +9437,7 @@ const post: BlogPost = {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đơn nữ, Finals: Anna Leigh Waters gặp Kate Fahey — trạng thái live."
+            "Nguồn chính thức hiện không đánh dấu trận nào đang diễn ra hoặc sắp đấu."
           ]
         },
         {
@@ -9410,7 +9452,7 @@ const post: BlogPost = {
         },
         {
           "question": "Ai vô địch World Championship 2026?",
-          "answer": "Nhà vô địch đã được feed chính thức xác nhận — Đôi nữ: Anna Bright / Anna Leigh Waters; Đôi nam: Tama Shimabukuro / JW Johnson; Đôi nam nữ: Ben Johns / Anna Leigh Waters; Đơn nam: John Lucian Goins."
+          "answer": "Nhà vô địch đã được feed chính thức xác nhận — Đôi nữ: Anna Bright / Anna Leigh Waters; Đôi nam: Tama Shimabukuro / JW Johnson; Đôi nam nữ: Ben Johns / Anna Leigh Waters; Đơn nữ: Anna Leigh Waters; Đơn nam: John Lucian Goins."
         },
         {
           "question": "Trận scheduled có phải kết quả không?",
