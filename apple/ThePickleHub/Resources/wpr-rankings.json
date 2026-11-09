@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-11-02",
+  "fetchedAt": "2026-11-09",
   "sourceUrl": "https://www.ppatour.com/rankings/",
   "men": [
     {
@@ -156,7 +156,7 @@
     },
     {
       "rank": 20,
-      "name": "Hong kit Wong",
+      "name": "Hong Kit Wong",
       "points": 3023.75,
       "eventsPlayed": 0,
       "country": "Hong Kong S.A.R.",
@@ -180,7 +180,7 @@
     },
     {
       "rank": 23,
-      "name": "Eunggwon KIM",
+      "name": "Eunggwon Kim",
       "points": 2692.5,
       "eventsPlayed": 0,
       "country": "South Korea",
@@ -318,6 +318,14 @@
     },
     {
       "rank": 15,
+      "name": "Lea Jansen",
+      "points": 4103.75,
+      "eventsPlayed": 0,
+      "country": "United States",
+      "countryCode": "us"
+    },
+    {
+      "rank": 16,
       "name": "Alix Truong",
       "points": 4022.5,
       "eventsPlayed": 0,
@@ -325,20 +333,12 @@
       "countryCode": "us"
     },
     {
-      "rank": 16,
+      "rank": 17,
       "name": "Sahra Dennehy",
       "points": 3981.25,
       "eventsPlayed": 0,
       "country": "Australia",
       "countryCode": "au"
-    },
-    {
-      "rank": 17,
-      "name": "Lea Jansen",
-      "points": 3865,
-      "eventsPlayed": 0,
-      "country": "United States",
-      "countryCode": "us"
     },
     {
       "rank": 18,
@@ -398,31 +398,31 @@
     },
     {
       "rank": 25,
-      "name": "Kiora Kunimoto",
-      "points": 2756.25,
+      "name": "Layne Sleeth",
+      "points": 2816.25,
       "eventsPlayed": 0,
-      "country": "United States",
-      "countryCode": "us"
+      "country": "Canada",
+      "countryCode": "ca"
     }
   ],
   "vietHighlights": [
     {
       "board": "women",
-      "rank": 15,
+      "rank": 16,
       "name": "Alix Truong",
       "countryCode": "us",
       "points": 4022.5
     },
     {
       "board": "men",
-      "rank": 29,
+      "rank": 30,
       "name": "Hien Truong",
       "countryCode": "vn",
       "points": 2291.25
     },
     {
       "board": "men",
-      "rank": 31,
+      "rank": 32,
       "name": "Jonathan Truong",
       "countryCode": "us",
       "points": 2259.375
@@ -451,7 +451,7 @@
     {
       "board": "women",
       "rank": 62,
-      "name": "HO Tam",
+      "name": "Ho Tam",
       "countryCode": "vn",
       "points": 1049.375
     },
@@ -555,17 +555,24 @@
     },
     {
       "board": "men",
-      "rank": 323,
-      "name": "Carlos Rubio",
+      "rank": 322,
+      "name": "Khuong Huynh",
       "countryCode": "vn",
       "points": 50
     },
     {
       "board": "men",
-      "rank": 324,
-      "name": "Khuong Huynh",
+      "rank": 326,
+      "name": "Carlos Rubio",
       "countryCode": "vn",
       "points": 50
+    },
+    {
+      "board": "women",
+      "rank": 367,
+      "name": "Thuy Pham",
+      "countryCode": "vn",
+      "points": 25
     },
     {
       "board": "men",
@@ -576,49 +583,42 @@
     },
     {
       "board": "men",
-      "rank": 375,
+      "rank": 374,
+      "name": "Andrew Anh Pham",
+      "countryCode": "vn",
+      "points": 37.5
+    },
+    {
+      "board": "men",
+      "rank": 383,
       "name": "Khoa Vo",
       "countryCode": "vn",
       "points": 37.5
     },
     {
       "board": "men",
-      "rank": 378,
-      "name": "Andrew Anh Pham",
-      "countryCode": "vn",
-      "points": 37.5
-    },
-    {
-      "board": "women",
-      "rank": 384,
-      "name": "Thuy Pham",
-      "countryCode": "vn",
-      "points": 25
-    },
-    {
-      "board": "men",
-      "rank": 444,
-      "name": "Ngoc Trieu Tran",
-      "countryCode": "vn",
-      "points": 25
-    },
-    {
-      "board": "men",
-      "rank": 447,
+      "rank": 445,
       "name": "Nguyen Thang",
       "countryCode": "vn",
       "points": 25
     },
     {
       "board": "men",
-      "rank": 527,
+      "rank": 454,
+      "name": "Ngoc Trieu Tran",
+      "countryCode": "vn",
+      "points": 25
+    },
+    {
+      "board": "men",
+      "rank": 528,
       "name": "Minh Nhật",
       "countryCode": "vn",
       "points": 17.5
     },
     {
       "board": "men",
-      "rank": 546,
+      "rank": 545,
       "name": "Nguyen Tien",
       "countryCode": "vn",
       "points": 16.25
@@ -632,29 +632,36 @@
     },
     {
       "board": "men",
+      "rank": 606,
+      "name": "Quang Tran",
+      "countryCode": "vn",
+      "points": 12.5
+    },
+    {
+      "board": "men",
       "rank": 610,
-      "name": "Phong Tran",
+      "name": "Nam Vu",
       "countryCode": "vn",
       "points": 12.5
     },
     {
       "board": "men",
-      "rank": 611,
-      "name": "quang tran",
+      "rank": 612,
+      "name": "Minh Nguyễn Hoàng",
       "countryCode": "vn",
       "points": 12.5
     },
     {
       "board": "men",
-      "rank": 616,
+      "rank": 614,
       "name": "Hoang Bao Long",
       "countryCode": "vn",
       "points": 12.5
     },
     {
       "board": "men",
-      "rank": 625,
-      "name": "Nam Vu",
+      "rank": 620,
+      "name": "Phong Tran",
       "countryCode": "vn",
       "points": 12.5
     },
@@ -667,14 +674,7 @@
     },
     {
       "board": "men",
-      "rank": 631,
-      "name": "Minh Nguyễn Hoàng",
-      "countryCode": "vn",
-      "points": 12.5
-    },
-    {
-      "board": "men",
-      "rank": 651,
+      "rank": 650,
       "name": "Pham XuanVu",
       "countryCode": "vn",
       "points": 11.25
