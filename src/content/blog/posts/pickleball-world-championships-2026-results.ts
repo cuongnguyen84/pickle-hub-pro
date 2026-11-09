@@ -31,7 +31,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 9, 2026, 14:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 234 matches, including 234 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 9, 2026, 16:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 297 matches, including 297 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -62,6 +62,12 @@ const post: BlogPost = {
               "champion": "Anna Leigh Waters",
               "note": "Complete · 63 matches",
               "anchor": "rb-womens-singles"
+            },
+            {
+              "division": "Men's Singles",
+              "champion": "John Lucian Goins",
+              "note": "Complete · 63 matches",
+              "anchor": "rb-mens-singles"
             }
           ]
         },
@@ -3737,6 +3743,977 @@ const post: BlogPost = {
           }
         },
         {
+          "heading": "Men's Singles results",
+          "content": "Champion: John Lucian Goins. 63 completed matches, latest round first.",
+          "resultsBoard": {
+            "division": "Men's Singles",
+            "rounds": [
+              {
+                "label": "Finals",
+                "matches": [
+                  {
+                    "winner": "John Lucian Goins",
+                    "loser": "Jack Sock",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        12,
+                        10
+                      ]
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "Semi-Finals",
+                "matches": [
+                  {
+                    "winner": "Jack Sock",
+                    "loser": "Hunter Johnson",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        8,
+                        11
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "John Lucian Goins",
+                    "loser": "Christian Alshon",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "Quarter Finals",
+                "matches": [
+                  {
+                    "winner": "John Lucian Goins",
+                    "loser": "Christopher Haworth",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jack Sock",
+                    "loser": "Roscoe Bellamy",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Christian Alshon",
+                    "loser": "Jaume Martinez Vich",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Hunter Johnson",
+                    "loser": "Hong Kit Wong",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "Round 16",
+                "matches": [
+                  {
+                    "winner": "Hong Kit Wong",
+                    "loser": "Donald Young",
+                    "sets": [
+                      [
+                        12,
+                        10
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Christopher Haworth",
+                    "loser": "Adam Harvey",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Roscoe Bellamy",
+                    "loser": "Luc Pham",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Hunter Johnson",
+                    "loser": "Rafael Lenhard",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jack Sock",
+                    "loser": "Federico Staksrud",
+                    "sets": [
+                      [
+                        3,
+                        11
+                      ],
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "John Lucian Goins",
+                    "loser": "Noe Khlif",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        3,
+                        11
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Christian Alshon",
+                    "loser": "Harrison Brown",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jaume Martinez Vich",
+                    "loser": "JW Johnson",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        1,
+                        11
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "Round 32",
+                "matches": [
+                  {
+                    "winner": "Harrison Brown",
+                    "loser": "Grayson Goldin",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        8,
+                        11
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Donald Young",
+                    "loser": "Tama Shimabukuro",
+                    "sets": [
+                      [
+                        12,
+                        10
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jaume Martinez Vich",
+                    "loser": "Mohaned Alhouni",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Adam Harvey",
+                    "loser": "Cason Campbell",
+                    "sets": [
+                      [
+                        12,
+                        10
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Hunter Johnson",
+                    "loser": "Anouar Braham",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jack Sock",
+                    "loser": "Yates Johnson",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Federico Staksrud",
+                    "loser": "Nasa Hatakeyama",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Luc Pham",
+                    "loser": "Zane Ford",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Rafael Lenhard",
+                    "loser": "Dylan Frazier",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        8,
+                        11
+                      ],
+                      [
+                        12,
+                        10
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "JW Johnson",
+                    "loser": "Jaxon Madsen",
+                    "sets": [
+                      [
+                        8,
+                        11
+                      ],
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Noe Khlif",
+                    "loser": "Ben Johns",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Christian Alshon",
+                    "loser": "Michael Loyd",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Christopher Haworth",
+                    "loser": "Camden Chaffin",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Roscoe Bellamy",
+                    "loser": "Ivan Jakovljevic",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "John Lucian Goins",
+                    "loser": "Max Freeman",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Hong Kit Wong",
+                    "loser": "Eric Oncins",
+                    "sets": []
+                  }
+                ],
+                "collapsed": true
+              },
+              {
+                "label": "Round 64",
+                "matches": [
+                  {
+                    "winner": "Camden Chaffin",
+                    "loser": "Augustus Ge",
+                    "sets": [
+                      [
+                        4,
+                        11
+                      ],
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Dylan Frazier",
+                    "loser": "AJ Koller",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Nasa Hatakeyama",
+                    "loser": "James Delgado",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        8,
+                        11
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Cason Campbell",
+                    "loser": "Pablo Tellez",
+                    "sets": [
+                      [
+                        13,
+                        15
+                      ],
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jack Sock",
+                    "loser": "Jonathan Truong",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        9,
+                        11
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Grayson Goldin",
+                    "loser": "Nicolas Acevedo",
+                    "sets": [
+                      [
+                        11,
+                        13
+                      ],
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jaume Martinez Vich",
+                    "loser": "Will Howells",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Hong Kit Wong",
+                    "loser": "Joel Poland",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Mohaned Alhouni",
+                    "loser": "Eunggwon Kim",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Donald Young",
+                    "loser": "Connor Mogle",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Zane Ford",
+                    "loser": "CJ Klinger",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Hunter Johnson",
+                    "loser": "Daniel Miron",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "JW Johnson",
+                    "loser": "Wil Shaffer",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Michael Loyd",
+                    "loser": "Tyson McGuffin",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Max Freeman",
+                    "loser": "Kenta Miyoshi",
+                    "sets": [
+                      [
+                        12,
+                        10
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jaxon Madsen",
+                    "loser": "Connor Garnett",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        5,
+                        11
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "John Lucian Goins",
+                    "loser": "George Rangelov",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Christopher Haworth",
+                    "loser": "Casey Diamond",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Ben Johns",
+                    "loser": "Brandon French",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        1,
+                        11
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Christian Alshon",
+                    "loser": "Martin Stanchev",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Noe Khlif",
+                    "loser": "Andre Mercado",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Anouar Braham",
+                    "loser": "Rafa Hewett",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Tama Shimabukuro",
+                    "loser": "Matt Burkhardt",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Rafael Lenhard",
+                    "loser": "Braden Jacobson",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Roscoe Bellamy",
+                    "loser": "William Hsieh",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Federico Staksrud",
+                    "loser": "Braylon Ohrel",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Luc Pham",
+                    "loser": "Jace Morris",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Eric Oncins",
+                    "loser": "Will Mackinnon",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Adam Harvey",
+                    "loser": "Eduardo Santini Ayon",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Harrison Brown",
+                    "loser": "Zane Navratil",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Yates Johnson",
+                    "loser": "Lucas Pascoe",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Ivan Jakovljevic",
+                    "loser": "Mitchell Hargreaves",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  }
+                ],
+                "collapsed": true
+              }
+            ],
+            "champion": "John Lucian Goins"
+          }
+        },
+        {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
@@ -3755,7 +4732,7 @@ const post: BlogPost = {
         },
         {
           "question": "Who won World Championship 2026?",
-          "answer": "Champions confirmed by the official feed so far — Women's Doubles: Anna Bright / Anna Leigh Waters; Men's Doubles: Tama Shimabukuro / JW Johnson; Mixed Doubles: Ben Johns / Anna Leigh Waters; Women's Singles: Anna Leigh Waters."
+          "answer": "Champions confirmed by the official feed so far — Women's Doubles: Anna Bright / Anna Leigh Waters; Men's Doubles: Tama Shimabukuro / JW Johnson; Mixed Doubles: Ben Johns / Anna Leigh Waters; Women's Singles: Anna Leigh Waters; Men's Singles: John Lucian Goins."
         },
         {
           "question": "Are scheduled matches final results?",
@@ -3774,7 +4751,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 14:00 ngày 9/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 234 trận, gồm 234 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 16:00 ngày 9/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 297 trận, gồm 297 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -3805,6 +4782,12 @@ const post: BlogPost = {
               "champion": "Anna Leigh Waters",
               "note": "Hoàn tất · 63 trận",
               "anchor": "rb-don-nu"
+            },
+            {
+              "division": "Đơn nam",
+              "champion": "John Lucian Goins",
+              "note": "Hoàn tất · 63 trận",
+              "anchor": "rb-don-nam"
             }
           ]
         },
@@ -7480,6 +8463,977 @@ const post: BlogPost = {
           }
         },
         {
+          "heading": "Kết quả Đơn nam",
+          "content": "Vô địch: John Lucian Goins. 63 trận đã kết thúc, vòng mới nhất ở trên.",
+          "resultsBoard": {
+            "division": "Đơn nam",
+            "rounds": [
+              {
+                "label": "Chung kết",
+                "matches": [
+                  {
+                    "winner": "John Lucian Goins",
+                    "loser": "Jack Sock",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        12,
+                        10
+                      ]
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "Semi-Finals",
+                "matches": [
+                  {
+                    "winner": "Jack Sock",
+                    "loser": "Hunter Johnson",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        8,
+                        11
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "John Lucian Goins",
+                    "loser": "Christian Alshon",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "Tứ kết",
+                "matches": [
+                  {
+                    "winner": "John Lucian Goins",
+                    "loser": "Christopher Haworth",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jack Sock",
+                    "loser": "Roscoe Bellamy",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Christian Alshon",
+                    "loser": "Jaume Martinez Vich",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Hunter Johnson",
+                    "loser": "Hong Kit Wong",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "Vòng 16",
+                "matches": [
+                  {
+                    "winner": "Hong Kit Wong",
+                    "loser": "Donald Young",
+                    "sets": [
+                      [
+                        12,
+                        10
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Christopher Haworth",
+                    "loser": "Adam Harvey",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Roscoe Bellamy",
+                    "loser": "Luc Pham",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Hunter Johnson",
+                    "loser": "Rafael Lenhard",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jack Sock",
+                    "loser": "Federico Staksrud",
+                    "sets": [
+                      [
+                        3,
+                        11
+                      ],
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "John Lucian Goins",
+                    "loser": "Noe Khlif",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        3,
+                        11
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Christian Alshon",
+                    "loser": "Harrison Brown",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jaume Martinez Vich",
+                    "loser": "JW Johnson",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        1,
+                        11
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "Vòng 32",
+                "matches": [
+                  {
+                    "winner": "Harrison Brown",
+                    "loser": "Grayson Goldin",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        8,
+                        11
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Donald Young",
+                    "loser": "Tama Shimabukuro",
+                    "sets": [
+                      [
+                        12,
+                        10
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jaume Martinez Vich",
+                    "loser": "Mohaned Alhouni",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Adam Harvey",
+                    "loser": "Cason Campbell",
+                    "sets": [
+                      [
+                        12,
+                        10
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Hunter Johnson",
+                    "loser": "Anouar Braham",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jack Sock",
+                    "loser": "Yates Johnson",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Federico Staksrud",
+                    "loser": "Nasa Hatakeyama",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Luc Pham",
+                    "loser": "Zane Ford",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Rafael Lenhard",
+                    "loser": "Dylan Frazier",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        8,
+                        11
+                      ],
+                      [
+                        12,
+                        10
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "JW Johnson",
+                    "loser": "Jaxon Madsen",
+                    "sets": [
+                      [
+                        8,
+                        11
+                      ],
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Noe Khlif",
+                    "loser": "Ben Johns",
+                    "sets": [
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Christian Alshon",
+                    "loser": "Michael Loyd",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Christopher Haworth",
+                    "loser": "Camden Chaffin",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Roscoe Bellamy",
+                    "loser": "Ivan Jakovljevic",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "John Lucian Goins",
+                    "loser": "Max Freeman",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Hong Kit Wong",
+                    "loser": "Eric Oncins",
+                    "sets": []
+                  }
+                ],
+                "collapsed": true
+              },
+              {
+                "label": "Vòng 64",
+                "matches": [
+                  {
+                    "winner": "Camden Chaffin",
+                    "loser": "Augustus Ge",
+                    "sets": [
+                      [
+                        4,
+                        11
+                      ],
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Dylan Frazier",
+                    "loser": "AJ Koller",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Nasa Hatakeyama",
+                    "loser": "James Delgado",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        8,
+                        11
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Cason Campbell",
+                    "loser": "Pablo Tellez",
+                    "sets": [
+                      [
+                        13,
+                        15
+                      ],
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jack Sock",
+                    "loser": "Jonathan Truong",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        9,
+                        11
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Grayson Goldin",
+                    "loser": "Nicolas Acevedo",
+                    "sets": [
+                      [
+                        11,
+                        13
+                      ],
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jaume Martinez Vich",
+                    "loser": "Will Howells",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Hong Kit Wong",
+                    "loser": "Joel Poland",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Mohaned Alhouni",
+                    "loser": "Eunggwon Kim",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Donald Young",
+                    "loser": "Connor Mogle",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Zane Ford",
+                    "loser": "CJ Klinger",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Hunter Johnson",
+                    "loser": "Daniel Miron",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "JW Johnson",
+                    "loser": "Wil Shaffer",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Michael Loyd",
+                    "loser": "Tyson McGuffin",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Max Freeman",
+                    "loser": "Kenta Miyoshi",
+                    "sets": [
+                      [
+                        12,
+                        10
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jaxon Madsen",
+                    "loser": "Connor Garnett",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        5,
+                        11
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "John Lucian Goins",
+                    "loser": "George Rangelov",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Christopher Haworth",
+                    "loser": "Casey Diamond",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Ben Johns",
+                    "loser": "Brandon French",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        1,
+                        11
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Christian Alshon",
+                    "loser": "Martin Stanchev",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Noe Khlif",
+                    "loser": "Andre Mercado",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Anouar Braham",
+                    "loser": "Rafa Hewett",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Tama Shimabukuro",
+                    "loser": "Matt Burkhardt",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Rafael Lenhard",
+                    "loser": "Braden Jacobson",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        5
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Roscoe Bellamy",
+                    "loser": "William Hsieh",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Federico Staksrud",
+                    "loser": "Braylon Ohrel",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Luc Pham",
+                    "loser": "Jace Morris",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Eric Oncins",
+                    "loser": "Will Mackinnon",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Adam Harvey",
+                    "loser": "Eduardo Santini Ayon",
+                    "sets": [
+                      [
+                        11,
+                        2
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Harrison Brown",
+                    "loser": "Zane Navratil",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Yates Johnson",
+                    "loser": "Lucas Pascoe",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Ivan Jakovljevic",
+                    "loser": "Mitchell Hargreaves",
+                    "sets": [
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        7
+                      ]
+                    ]
+                  }
+                ],
+                "collapsed": true
+              }
+            ],
+            "champion": "John Lucian Goins"
+          }
+        },
+        {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
@@ -7498,7 +9452,7 @@ const post: BlogPost = {
         },
         {
           "question": "Ai vô địch World Championship 2026?",
-          "answer": "Nhà vô địch đã được feed chính thức xác nhận — Đôi nữ: Anna Bright / Anna Leigh Waters; Đôi nam: Tama Shimabukuro / JW Johnson; Đôi nam nữ: Ben Johns / Anna Leigh Waters; Đơn nữ: Anna Leigh Waters."
+          "answer": "Nhà vô địch đã được feed chính thức xác nhận — Đôi nữ: Anna Bright / Anna Leigh Waters; Đôi nam: Tama Shimabukuro / JW Johnson; Đôi nam nữ: Ben Johns / Anna Leigh Waters; Đơn nữ: Anna Leigh Waters; Đơn nam: John Lucian Goins."
         },
         {
           "question": "Trận scheduled có phải kết quả không?",
