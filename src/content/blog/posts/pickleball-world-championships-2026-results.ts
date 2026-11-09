@@ -31,7 +31,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA World Championships results: World Championship 2026 daily scores",
-          "content": "Last updated: November 9, 2026, 07:30 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 297 matches, including 297 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 9, 2026, 08:00 Vietnam time. ThePickleHub publishes this World Championship 2026 results page from the official PPA scores feed for November 2–8, 2026 at Brookhaven Country Club, Farmers Branch, Texas. The feed currently contains 297 matches, including 297 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -623,7 +623,7 @@ const post: BlogPost = {
                   },
                   {
                     "winner": "Lucy Kovalova / Cailyn Campbell",
-                    "loser": "CC Eleven Sacca / Circa Luna S",
+                    "loser": "Cc Eleven Sacca / Circa Luna S",
                     "sets": [
                       [
                         11,
@@ -2679,7 +2679,7 @@ const post: BlogPost = {
                   },
                   {
                     "winner": "Rachel Rohrabacher / Christian Alshon",
-                    "loser": "Rafa Hewett / CC Eleven Sacca",
+                    "loser": "Rafa Hewett / Cc Eleven Sacca",
                     "sets": [
                       [
                         11,
@@ -4751,7 +4751,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả World Championship 2026",
-          "content": "Cập nhật: 07:30 ngày 9/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 297 trận, gồm 297 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 08:00 ngày 9/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả World Championship 2026 từ feed điểm số chính thức của PPA cho thời gian 2–8/11/2026 tại Brookhaven Country Club, Farmers Branch, Texas. Feed hiện có 297 trận, gồm 297 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -5343,7 +5343,7 @@ const post: BlogPost = {
                   },
                   {
                     "winner": "Lucy Kovalova / Cailyn Campbell",
-                    "loser": "CC Eleven Sacca / Circa Luna S",
+                    "loser": "Cc Eleven Sacca / Circa Luna S",
                     "sets": [
                       [
                         11,
@@ -7399,7 +7399,7 @@ const post: BlogPost = {
                   },
                   {
                     "winner": "Rachel Rohrabacher / Christian Alshon",
-                    "loser": "Rafa Hewett / CC Eleven Sacca",
+                    "loser": "Rafa Hewett / Cc Eleven Sacca",
                     "sets": [
                       [
                         11,
