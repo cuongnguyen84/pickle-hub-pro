@@ -6,7 +6,7 @@
   "live_refresh_minutes": 10,
   "live_window_start": "07:00",
   "live_window_end": "19:00",
-  "verified_at": "2026-11-02",
+  "verified_at": "2026-11-09",
   "events": [
     {
       "key": "veolia-chicago-cup-2026",
@@ -273,7 +273,7 @@
         "https://theapp.asia/news/app-asia-bangkok-open-2026-brings-the-tour-to-thailand-this-november/",
         "https://pickleballnewsasia.com/app-asia-takes-tour-to-thailand-with-bangkok-open-2026/"
       ],
-      "notes": "P1 châu Á. APP không có feed điểm số công khai như PPA — chỉ nháp, không tự đăng. 13/10 lịch lấy từ theapp.global. 21/10 trang /tour không còn card Bangkok; script trên trang chỉ còn tên BANGKOK trong danh sách ẩn ngày TBD (cùng NEW DELHI). Giữ lịch 2–7/11 như bản 13/10, chưa xác minh lại được ngày. 28/10 theapp.global/tour Last Published 26/10 vẫn không có card Bangkok; script ẩn TBD vẫn chỉ nêu BANGKOK và NEW DELHI. Giữ nháp, không auto_publish. 31/10 sửa ngày 2–7/11 → 17–22/11/2026 (ALM x IMPACT Tennis & Sport Center) theo theapp.asia và pickleballnewsasia. theapp.global vẫn hiện 2–7/11, lịch cũ. 02/11 theapp.global/tour Last Published vẫn Mon Oct 26 2026; script ẩn TBD vẫn có BANGKOK. Giữ 17–22/11, không auto_publish."
+      "notes": "P1 châu Á. APP không có feed điểm số công khai như PPA — chỉ nháp, không tự đăng. 13/10 lịch lấy từ theapp.global. 21/10 trang /tour không còn card Bangkok; script trên trang chỉ còn tên BANGKOK trong danh sách ẩn ngày TBD (cùng NEW DELHI). Giữ lịch 2–7/11 như bản 13/10, chưa xác minh lại được ngày. 28/10 theapp.global/tour Last Published 26/10 vẫn không có card Bangkok; script ẩn TBD vẫn chỉ nêu BANGKOK và NEW DELHI. Giữ nháp, không auto_publish. 31/10 sửa ngày 2–7/11 → 17–22/11/2026 (ALM x IMPACT Tennis & Sport Center) theo theapp.asia và pickleballnewsasia. theapp.global vẫn hiện 2–7/11, lịch cũ. 02/11 theapp.global/tour Last Published vẫn Mon Oct 26 2026; script ẩn TBD vẫn có BANGKOK. Giữ 17–22/11, không auto_publish. 09/11 trong cửa sổ 14 ngày nhưng là APP (không feed) — giữ nháp, không auto_publish. theapp.global/tour Last Published vẫn Mon Oct 26 2026."
     },
     {
       "key": "daytona-beach-open-2026",
@@ -318,7 +318,7 @@
         "https://www.ppatour.com/events/",
         "https://pickleballtournaments.com/tournaments/ppa-tour-europe-p125-lille"
       ],
-      "notes": "P2, thêm 21/10 từ card ppatour.com/events (Nov 12–15, 2026). 02/11 trong cửa sổ 14 ngày. tourneyId 04a30133-11cc-4280-97f7-3027404c05b3 trên pickleballtournaments.com/tournaments/ppa-tour-europe-p125-lille (title PPA TOUR EUROPE - P125 LILLE, Nov 12 2026 - Nov 15 2026) và mọi uuid khác trên trang đều trả /api/scores/?event= 0 divisions. Không bật auto_publish. Venue trên trang đăng ký: Joco Pickleball, 10 Rue de la Cense, Villeneuve D'Ascq 59650, Nord, France (indoor, 10 courts). Card ppatour.com/events chỉ ghi Lille, France."
+      "notes": "P2, thêm 21/10 từ card ppatour.com/events (Nov 12–15, 2026). 02/11 trong cửa sổ 14 ngày. tourneyId 04a30133-11cc-4280-97f7-3027404c05b3 trên pickleballtournaments.com/tournaments/ppa-tour-europe-p125-lille (title PPA TOUR EUROPE - P125 LILLE, Nov 12 2026 - Nov 15 2026) và mọi uuid khác trên trang đều trả /api/scores/?event= 0 divisions. Không bật auto_publish. Venue trên trang đăng ký: Joco Pickleball, 10 Rue de la Cense, Villeneuve D'Ascq 59650, Nord, France (indoor, 10 courts). Card ppatour.com/events chỉ ghi Lille, France. 09/11 thử lại: card ppatour.com/events vẫn Nov 12–15, 2026; 22 uuid trên pickleballtournaments.com/tournaments/ppa-tour-europe-p125-lille (gồm tourneyId 04a30133-11cc-4280-97f7-3027404c05b3) đều trả 0 divisions. Vẫn không bật auto_publish."
     },
     {
       "key": "app-djoy-vietnam-2026",

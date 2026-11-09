@@ -919,7 +919,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       // as the bot path.
       let publicCache: PublicPagePartsCache | null = null;
       if (env.PRERENDER_CACHE && url.searchParams.get("nocache") !== "1") {
-        const cacheKey = `pr:v148:human:${url.pathname}`;
+        const cacheKey = `pr:v149:human:${url.pathname}`;
         const ttl = Math.min(pathCacheTtl(pathname), 300);
         publicCache = {
           get: () => env.PRERENDER_CACHE.get(cacheKey),
@@ -1393,7 +1393,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // ranks moved. Cached v146 HTML would keep the 2026-10-28 names.
   // v148 (2026-11-05): tournament results/schedule posts (EN + VI) gain the
   // schedule ↔ results ↔ watch ↔ rankings ↔ tools chip row + storylines.
-  const cacheKey = `pr:v148:${url.pathname}`;
+  // v149 (2026-11-09): PPA WPR snapshot fetched-at 2026-11-09. Women top 25
+  // moved (Lea Jansen 17→15, Layne Sleeth in at #25); cached v148 HTML would
+  // keep the 2026-11-02 table.
+  const cacheKey = `pr:v149:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
