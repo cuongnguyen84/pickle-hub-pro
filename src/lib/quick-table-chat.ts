@@ -314,7 +314,57 @@ export function unsupportedFormatNote(text: string, lang: "vi" | "en"): string |
       ? "Vòng crossover / play-in chưa được hỗ trợ. Gần nhất: vòng bảng vòng tròn rồi playoff loại trực tiếp — mình làm vậy nhé"
       : "Multi-phase crossover / play-in stages aren't supported yet. Closest: round-robin groups, then a single-elimination playoff — I'll set that up";
   }
+  const divs = divisionsAsked(text, lang);
+  if (divs) return divisionNote(divs, lang);
   return null;
+}
+
+// Ca Anora Reunion 09/11: "2 hạng beginner + intermediate" trong một giải. Luật giữ nguyên:
+// một giải = một hạng → tạo từng hạng một giải, xong giải đầu thì đề nghị tạo tiếp giải sau.
+const LEVEL = "(beginner|intermediate|advanced|pro|open|nghiệp dư|trung bình|nâng cao|[2-5]\\.[05])";
+const LEVEL_ONE = new RegExp(`${LEVEL}(?![a-z0-9])`, "g");
+const LEVEL_LIST = new RegExp(`(?<![a-z0-9.])${LEVEL}s?(?:(?:\\s*[,&+/]\\s*|\\s+)(?:và |and |vs )?${LEVEL})+`);
+const DIV_COUNT = /(?<!lay |top )\b(\d|hai|ba|nhieu|two|three|multiple) (hang|trinh|levels?|divisions?)\b(?! (dau|nhat|cuoi|cao))/;
+
+/**
+ * Người dùng muốn nhiều hạng/trình/division trong MỘT giải → nhãn các hạng theo thứ tự đã nói,
+ * hoặc null. "Mỗi hạng một vòng loại" / "2 hạng vào vòng loại" là chuyện playoff, không tính.
+ */
+export function divisionsAsked(text: string, lang: "vi" | "en"): string[] | null {
+  const t = fold(text);
+  if (wantsRankSeries(text)) return null;
+  if (/nam (va )?nu rieng|rieng nam (va )?nu|separate men/.test(t)) return lang === "vi" ? ["Nam", "Nữ"] : ["Men's", "Women's"];
+  // Khớp trên chữ thường còn dấu để giữ nguyên nhãn người dùng gõ ("Trung bình", không thành "Trung binh").
+  const list = text.toLocaleLowerCase("vi").match(LEVEL_LIST)?.[0].match(LEVEL_ONE);
+  if (list) return list.map((l) => l[0].toLocaleUpperCase("vi") + l.slice(1));
+  const n = !/vong loai|nhanh|series|playoff|knockout/.test(t) && t.match(DIV_COUNT)?.[1];
+  // ponytail: "ba/three hạng" vẫn ra 2 nhãn; số thì đúng số. Hạng sau cùng người dùng tự tạo tiếp.
+  return n ? Array.from({ length: Math.max(2, +n || 2) }, (_, i) => (lang === "vi" ? `Hạng ${i + 1}` : `Division ${i + 1}`)) : null;
+}
+
+export function divisionNote(labels: string[], lang: "vi" | "en"): string {
+  return lang === "vi"
+    ? `Mỗi hạng một giải riêng (${labels.join(", ")}). Làm ${labels[0]} trước, tạo xong mình mời tạo tiếp ${labels[1]} với thông tin chung`
+    : `One tournament per division (${labels.join(", ")}). ${labels[0]} first, then I'll offer ${labels[1]} with the shared details`;
+}
+
+/** Tên chung: bỏ hậu tố hạng nếu giải trước đã có ("Anora Reunion — Beginner" → "Anora Reunion"). */
+export function divisionBase(name: string, labels: string[]): string {
+  // ponytail: nhãn chỉ từ divisionsAsked (chữ, số, ".", "+", "'") nên không cần escape
+  return name.replace(new RegExp(`\\s*[—–:-]?\\s*\\(?(?:${labels.join("|")})\\)?\\s*$`, "i"), "").trim() || name;
+}
+
+/**
+ * Nháp cho hạng tiếp theo: giữ thể thức, sân, giờ, số set; danh sách giữ nguyên khi dùng chung,
+ * còn không thì xoá danh sách + cách chia bảng để hỏi lại (ghép cặp N đội / 2N tên đi như thường).
+ */
+export function nextDivisionDraft(d: Draft, name: string, sameRoster: boolean): Draft {
+  if (sameRoster) return { ...d, name };
+  return {
+    ...d, name,
+    entries: undefined, player_count: undefined, roster_mode: undefined, group_count: undefined, group_courts: undefined,
+    series: undefined, series_sizes: undefined, advance_per_group: undefined, pairing_done: undefined,
+  };
 }
 
 export interface TeamList { label: string; names: string[] }
@@ -1254,9 +1304,7 @@ export function factualAck(before: Draft, after: Draft, lang: "vi" | "en", reque
       bits.push(vi ? `Đã đổi chỗ ${moved.slice(0, 2).join(" và ")}.` : `Swapped ${moved.slice(0, 2).join(" and ")}.`);
     }
     for (const e of renamed) {
-      const was = prev.find((p) => fold(p.p1) === fold(e.p1) || (e.p2 && fold(p.p2 ?? "") === fold(e.p2)));
       bits.push(vi ? `Đã đổi tên thành ${entryLabel(e)}.` : `Renamed to ${entryLabel(e)}.`);
-      void was;
     }
   }
   if (after.courts?.join() !== before.courts?.join() && after.courts?.length) {
