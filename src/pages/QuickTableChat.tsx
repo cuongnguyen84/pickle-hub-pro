@@ -177,10 +177,8 @@ const COPY = {
     endTable: "Kết thúc giải",
     deleteTable: "Xoá giải",
     another: "Tạo giải khác",
-    divOffer: (name: string) => `Tạo luôn “${name}”? Cùng danh sách hay danh sách khác?`,
-    divSame: "Cùng danh sách",
-    divNew: "Danh sách khác",
-    divStop: "Thôi",
+    divSame: (n: string) => `Tạo tiếp “${n}” — cùng danh sách`,
+    divNew: (n: string) => `Tạo tiếp “${n}” — danh sách khác`,
     tmIntro: "Kiểu MLP / đổi partner → giải Đồng đội MLP: các đội đấu nhau, mỗi trận vài game đôi.",
     tmTeams: "Có bao nhiêu đội?",
     tmRoster: "Mỗi đội mấy người?",
@@ -326,10 +324,8 @@ const COPY = {
     endTable: "End tournament",
     deleteTable: "Delete tournament",
     another: "Create another",
-    divOffer: (name: string) => `Create “${name}” now? Same list or a different one?`,
-    divSame: "Same list",
-    divNew: "Different list",
-    divStop: "No thanks",
+    divSame: (n: string) => `Create “${n}” next — same list`,
+    divNew: (n: string) => `Create “${n}” next — different list`,
     tmIntro: "MLP-style / rotating partners → MLP Team Match: teams face off over several doubles games.",
     tmTeams: "How many teams?",
     tmRoster: "How many players per team?",
@@ -429,7 +425,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   const restored = useMemo(() => {
     try {
       const raw = localStorage.getItem(storageKey);
-      return raw ? (JSON.parse(raw) as { lang?: Lang; draft: Draft; messages: Msg[]; tm?: TmDraft | null; div?: Divisions | null }) : null;
+      return raw ? (JSON.parse(raw) as { lang?: Lang; draft: Draft; messages: Msg[]; tm?: TmDraft | null }) : null;
     } catch {
       return null;
     }
@@ -455,7 +451,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   // Dán Team A / Team B: chờ người dùng chọn MLP hay cách ghép đôi (không lưu, không tự ghép).
   const [teamPaste, setTeamPaste] = useState<TeamList[] | null>(null);
   // Nhiều hạng: mỗi hạng một giải. done = số giải đã tạo; tạo xong thì đề nghị hạng labels[done].
-  const [div, setDiv] = useState<Divisions | null>(restored?.div ?? null);
+  const [div, setDiv] = useState<Divisions | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -466,9 +462,9 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   useEffect(() => {
     try {
       if (created) localStorage.removeItem(storageKey);
-      else localStorage.setItem(storageKey, JSON.stringify({ lang, draft, messages: messages.slice(-60), tm, div }));
+      else localStorage.setItem(storageKey, JSON.stringify({ lang, draft, messages: messages.slice(-60), tm }));
     } catch { /* private mode — chat still works, just not restorable */ }
-  }, [lang, draft, messages, created, storageKey, tm, div]);
+  }, [lang, draft, messages, created, storageKey, tm]);
 
   useEffect(() => {
     getUserQuotaInfo().then((q) => { if (q && q.current_count >= q.quota) setQuotaFull(q.quota); });
@@ -1019,25 +1015,22 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     }
     setCreating(false);
     setCreated({ table, rosterOk });
-    if (div) {
-      const done = div.done + 1;
-      setDiv({ ...div, done });
-      if (div.labels[done]) pushBot(c.divOffer(`${divisionBase(draft.name!, div.labels)} — ${div.labels[done]}`));
-    }
+    if (div) setDiv({ ...div, done: div.done + 1 });
   };
 
-  const nextDiv = created && div ? div.labels[div.done] : undefined;
-  const divChips: Chip[] = !nextDiv ? [] : [
-    ...(draft.entries?.length ? [{ label: c.divSame, recommended: true, onClick: () => continueDivision(true) }] : []),
-    { label: c.divNew, onClick: () => continueDivision(false) },
-    { label: c.divStop, onClick: () => { pushUser(c.divStop); setDiv(null); } },
-  ];
+  // Hạng tiếp theo: tên chung + hậu tố hạng; chip hiện ngay dưới thẻ "đã tạo".
+  const nextDiv = created && div?.labels[div.done];
+  const nextName = nextDiv ? `${divisionBase(draft.name!, div!.labels)} — ${nextDiv}` : "";
   const continueDivision = (same: boolean) => {
-    const next = nextDivisionDraft(draft, `${divisionBase(draft.name!, div!.labels)} — ${nextDiv}`, same);
+    const next = nextDivisionDraft(draft, nextName, same);
     setCreated(null);
-    pushUser(same ? c.divSame : c.divNew);
+    pushUser((same ? c.divSame : c.divNew)(nextName));
     advance(next, factualAck(draft, next, lang));
   };
+  const divChips: Chip[] = !nextDiv ? [] : [
+    ...(draft.entries?.length ? [{ label: c.divSame(nextName), recommended: true, onClick: () => continueDivision(true) }] : []),
+    { label: c.divNew(nextName), onClick: () => continueDivision(false) },
+  ];
 
   const tableUrl = created ? `${getSiteUrl()}${to(`/tools/quick-tables/${created.table.share_id}`)}` : "";
   const groupsList = useMemo(() => {

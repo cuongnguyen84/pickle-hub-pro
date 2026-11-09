@@ -12,6 +12,7 @@ describe("chat → nhiều hạng = chuỗi giải liên tiếp", () => {
     ["giải này nhiều hạng", ["Hạng 1", "Hạng 2"]],
     ["nam nữ riêng nhé", ["Nam", "Nữ"]],
     ["trung bình và nâng cao", ["Trung bình", "Nâng cao"]],
+    ["Anora Reunion 2 hạng (beginner + intermediate), mỗi bảng lấy 2 vào vòng loại", ["Beginner", "Intermediate"]],
   ])("VI: %s", (text, labels) => {
     expect(divisionsAsked(text, "vi")).toEqual(labels);
   });
@@ -47,7 +48,7 @@ describe("chat → nhiều hạng = chuỗi giải liên tiếp", () => {
     const vi = fallbackReply("unsupported", "Muốn nhiều hạng trong một giải", "vi", "Anora Reunion 2 hạng beginner và intermediate");
     expect(vi).toMatch(/Mỗi hạng một giải riêng/);
     expect(vi).toMatch(/Beginner trước/);
-    expect(vi).toMatch(/tạo luôn Intermediate/);
+    expect(vi).toMatch(/tạo tiếp Intermediate/);
     expect(vi).not.toMatch(/chỉnh ở trang giải/);
     const en = factualAck({}, { is_doubles: true }, "en", "beginner and intermediate in one event");
     expect(en).toMatch(/One tournament per division/);

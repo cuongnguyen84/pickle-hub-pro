@@ -321,41 +321,37 @@ export function unsupportedFormatNote(text: string, lang: "vi" | "en"): string |
 
 // Ca Anora Reunion 09/11: "2 hạng beginner + intermediate" trong một giải. Luật giữ nguyên:
 // một giải = một hạng → tạo từng hạng một giải, xong giải đầu thì đề nghị tạo tiếp giải sau.
-// Khớp trên chữ thường còn dấu để giữ nguyên nhãn người dùng gõ ("trung bình", không thành "trung binh").
-const LEVEL = "(beginners?|intermediate|advanced|pro|open|nghiệp dư|trung bình|nâng cao|[2-5]\\.[05]\\+?)";
-const LEVEL_JOIN = "(?:\\s*[,&+/]\\s*(?:và |and )?|\\s+(?:và|and|vs)\\s+)";
-const LEVEL_LIST = new RegExp(`(?<![a-z0-9.])${LEVEL}(?:${LEVEL_JOIN}${LEVEL})+(?![a-z0-9])`);
-const LEVEL_ONE = new RegExp(`(?<![a-z0-9.])${LEVEL}(?![a-z0-9])`, "g");
+const LEVEL = "(beginner|intermediate|advanced|pro|open|nghiệp dư|trung bình|nâng cao|[2-5]\\.[05])";
+const LEVEL_ONE = new RegExp(`${LEVEL}(?![a-z0-9])`, "g");
+const LEVEL_LIST = new RegExp(`(?<![a-z0-9.])${LEVEL}s?(?:(?:\\s*[,&+/]\\s*|\\s+)(?:và |and |vs )?${LEVEL})+`);
 const DIV_COUNT = /(?<!lay |top )\b(\d|hai|ba|nhieu|two|three|multiple) (hang|trinh|levels?|divisions?)\b(?! (dau|nhat|cuoi|cao))/;
-const DIV_GENDER = /nam (va )?nu rieng|rieng nam (va )?nu|separate men/;
 
 /**
  * Người dùng muốn nhiều hạng/trình/division trong MỘT giải → nhãn các hạng theo thứ tự đã nói,
- * hoặc null. "Mỗi hạng một vòng loại" (chia vòng loại theo thứ hạng bảng) không tính.
+ * hoặc null. "Mỗi hạng một vòng loại" / "2 hạng vào vòng loại" là chuyện playoff, không tính.
  */
 export function divisionsAsked(text: string, lang: "vi" | "en"): string[] | null {
   const t = fold(text);
-  if (!t || wantsRankSeries(text)) return null;
-  if (DIV_GENDER.test(t)) return lang === "vi" ? ["Nam", "Nữ"] : ["Men's", "Women's"];
-  const list = text.toLocaleLowerCase("vi").replace(/\s+/g, " ").match(LEVEL_LIST);
-  if (list) return [...new Set([...list[0].matchAll(LEVEL_ONE)].map((m) => m[1][0].toLocaleUpperCase("vi") + m[1].slice(1).replace(/s$/, "")))];
-  const count = t.match(DIV_COUNT);
-  // "2 hạng" kèm vòng loại/nhánh là chuyện playoff, không phải hạng thi đấu.
-  if (!count || /vong loai|nhanh|series|playoff|knockout/.test(t)) return null;
-  const n = Math.max(2, Number(count[1]) || (/^(ba|three)$/.test(count[1]) ? 3 : 2));
-  return Array.from({ length: n }, (_, i) => (lang === "vi" ? `Hạng ${i + 1}` : `Division ${i + 1}`));
+  if (wantsRankSeries(text)) return null;
+  if (/nam (va )?nu rieng|rieng nam (va )?nu|separate men/.test(t)) return lang === "vi" ? ["Nam", "Nữ"] : ["Men's", "Women's"];
+  // Khớp trên chữ thường còn dấu để giữ nguyên nhãn người dùng gõ ("Trung bình", không thành "Trung binh").
+  const list = text.toLocaleLowerCase("vi").match(LEVEL_LIST)?.[0].match(LEVEL_ONE);
+  if (list) return list.map((l) => l[0].toLocaleUpperCase("vi") + l.slice(1));
+  const n = !/vong loai|nhanh|series|playoff|knockout/.test(t) && t.match(DIV_COUNT)?.[1];
+  // ponytail: "ba/three hạng" vẫn ra 2 nhãn; số thì đúng số. Hạng sau cùng người dùng tự tạo tiếp.
+  return n ? Array.from({ length: Math.max(2, +n || 2) }, (_, i) => (lang === "vi" ? `Hạng ${i + 1}` : `Division ${i + 1}`)) : null;
 }
 
 export function divisionNote(labels: string[], lang: "vi" | "en"): string {
   return lang === "vi"
-    ? `Mỗi hạng một giải riêng (${labels.join(", ")}). Làm ${labels[0]} trước; tạo xong mình đề nghị tạo luôn ${labels[1]}, dùng lại thông tin chung`
-    : `One tournament per division (${labels.join(", ")}). ${labels[0]} first; once created I'll offer ${labels[1]}, reusing the shared details`;
+    ? `Mỗi hạng một giải riêng (${labels.join(", ")}). Làm ${labels[0]} trước, tạo xong mình mời tạo tiếp ${labels[1]} với thông tin chung`
+    : `One tournament per division (${labels.join(", ")}). ${labels[0]} first, then I'll offer ${labels[1]} with the shared details`;
 }
 
 /** Tên chung: bỏ hậu tố hạng nếu giải trước đã có ("Anora Reunion — Beginner" → "Anora Reunion"). */
 export function divisionBase(name: string, labels: string[]): string {
-  const esc = labels.map((l) => l.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
-  return name.replace(new RegExp(`\\s*[—–:-]?\\s*\\(?(?:${esc})\\)?\\s*$`, "i"), "").trim() || name;
+  // ponytail: nhãn chỉ từ divisionsAsked (chữ, số, ".", "+", "'") nên không cần escape
+  return name.replace(new RegExp(`\\s*[—–:-]?\\s*\\(?(?:${labels.join("|")})\\)?\\s*$`, "i"), "").trim() || name;
 }
 
 /**
@@ -1308,9 +1304,7 @@ export function factualAck(before: Draft, after: Draft, lang: "vi" | "en", reque
       bits.push(vi ? `Đã đổi chỗ ${moved.slice(0, 2).join(" và ")}.` : `Swapped ${moved.slice(0, 2).join(" and ")}.`);
     }
     for (const e of renamed) {
-      const was = prev.find((p) => fold(p.p1) === fold(e.p1) || (e.p2 && fold(p.p2 ?? "") === fold(e.p2)));
       bits.push(vi ? `Đã đổi tên thành ${entryLabel(e)}.` : `Renamed to ${entryLabel(e)}.`);
-      void was;
     }
   }
   if (after.courts?.join() !== before.courts?.join() && after.courts?.length) {
