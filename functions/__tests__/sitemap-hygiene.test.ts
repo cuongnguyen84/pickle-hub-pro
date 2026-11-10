@@ -43,6 +43,15 @@ describe("sitemap hygiene", () => {
     expect(sitemap).not.toContain('loc: "/rss.xml"');
   });
 
+  it("lists the /san court-directory hub in both languages", () => {
+    // Measured 2026-11-10: /san and /vi/san SSR 200 for Googlebot but were in
+    // no sitemap at all.
+    const sitemap = source("functions/sitemap-static.xml.ts");
+    expect(sitemap).toContain('loc: "/san"');
+    expect(sitemap).toContain('loc: "/vi/san"');
+    expect(sitemap).toContain('bilingual("/san", "/vi/san")');
+  });
+
   it("the shop segment is listed only once it can contain URLs", () => {
     const index = source("functions/sitemap.xml.ts");
     // The original constraint still holds: never 404 a referenced segment.

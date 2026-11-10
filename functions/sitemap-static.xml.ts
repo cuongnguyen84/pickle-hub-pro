@@ -92,6 +92,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     { loc: "/vi/rankings", changefreq: "daily", priority: "0.9", lastmod: TODAY, hreflang: bilingual("/rankings", "/vi/rankings") },
     { loc: "/rankings/ppa-tour", changefreq: "weekly", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/rankings/ppa-tour", "/vi/rankings/ppa-tour") },
     { loc: "/vi/rankings/ppa-tour", changefreq: "weekly", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/rankings/ppa-tour", "/vi/rankings/ppa-tour") },
+    // Court directory hubs: SSR'd by renderVenuesList but never listed in any
+    // sitemap (sitemap-venues.xml carries only /san/{slug} + /san/khu-vuc/{city}).
+    { loc: "/san", changefreq: "daily", priority: "0.9", lastmod: TODAY, hreflang: bilingual("/san", "/vi/san") },
+    { loc: "/vi/san", changefreq: "daily", priority: "0.9", lastmod: TODAY, hreflang: bilingual("/san", "/vi/san") },
     // SEO-1.1 — bracket / tournament tool public landing pages. Each has
     // a dedicated SSR handler (renderToolNewPage) but were never added
     // to the sitemap.
