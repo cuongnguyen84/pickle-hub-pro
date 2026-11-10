@@ -449,11 +449,11 @@ const QuickTableView = () => {
     if (!table) return;
     const vi = language !== 'en';
     const ok = await confirm({
-      title: vi ? 'Huỷ playoff, quay về vòng bảng?' : 'Cancel the playoff and go back to the group stage?',
+      title: vi ? 'Hủy playoff, quay về vòng bảng?' : 'Cancel the playoff and go back to the group stage?',
       description: vi
-        ? 'Xoá toàn bộ sơ đồ vòng loại để chọn lại cách chia. Kết quả vòng bảng giữ nguyên.'
+        ? 'Xóa toàn bộ sơ đồ vòng loại để chọn lại cách chia. Kết quả vòng bảng giữ nguyên.'
         : 'Removes the whole playoff draw so you can pick a different split. Group results are kept.',
-      confirmText: vi ? 'Huỷ playoff' : 'Cancel playoff',
+      confirmText: vi ? 'Hủy playoff' : 'Cancel playoff',
       destructive: true,
     });
     if (!ok) return;
@@ -461,11 +461,11 @@ const QuickTableView = () => {
     const res = (data ?? {}) as { success?: boolean; error?: string };
     if (error || !res.success) {
       toast.error(res.error === 'PLAYOFF_STARTED'
-        ? (vi ? 'Playoff đã có trận nhập điểm, không huỷ được.' : 'A playoff match already has a score.')
+        ? (vi ? 'Playoff đã có trận nhập điểm, không hủy được.' : 'A playoff match already has a score.')
         : t.quickTable.view.errorOccurred);
       return;
     }
-    toast.success(vi ? 'Đã huỷ vòng loại. Chọn lại cách chia nhé.' : 'Playoff cancelled. Pick a split again.');
+    toast.success(vi ? 'Đã hủy vòng loại. Chọn lại cách chia nhé.' : 'Playoff cancelled. Pick a split again.');
     setSeriesChoice(null);
     setActiveTab('groups');
     await loadData();
@@ -1661,7 +1661,7 @@ const QuickTableView = () => {
                   )}
                   <Button type="button" variant="outline" size="sm" onClick={() => void cancelPlayoff()}>
                     <RotateCcw className="w-4 h-4" />
-                    {language === 'vi' ? 'Huỷ playoff, chọn lại cách chia' : 'Cancel playoff, re-split'}
+                    {language === 'vi' ? 'Hủy playoff, chọn lại cách chia' : 'Cancel playoff, re-split'}
                   </Button>
                 </div>
               )}

@@ -47,7 +47,7 @@ describe("specsEqual", () => {
     expect(specsEqual({ a: "1", b: "2" }, { b: "2", a: " 1 " })).toBe(true);
   });
 
-  it("một ô bị xoá là KHÁC — nếu không lần lưu đó không bao giờ gửi đi", () => {
+  it("một ô bị xóa là KHÁC — nếu không lần lưu đó không bao giờ gửi đi", () => {
     expect(specsEqual({ a: "1", b: "2" }, { a: "1" })).toBe(false);
   });
 

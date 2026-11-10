@@ -696,7 +696,7 @@ function SlugSection({
                 setError(null);
               }}
             >
-              Huỷ
+              Hủy
             </button>
           </div>
         </>
@@ -814,7 +814,7 @@ function ContactSection({
                         }
                       }}
                     >
-                      <Trash2 size={14} aria-hidden="true" /> Xoá
+                      <Trash2 size={14} aria-hidden="true" /> Xóa
                     </button>
                   </div>
                 )}

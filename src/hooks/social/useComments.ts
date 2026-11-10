@@ -354,7 +354,7 @@ export function useDeleteCommentMutation() {
         variant: "destructive",
         title:
           language === "vi"
-            ? "Không thể xoá bình luận"
+            ? "Không thể xóa bình luận"
             : "Could not delete comment",
         description: err instanceof Error ? err.message : "",
       });

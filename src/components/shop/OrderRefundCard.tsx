@@ -21,7 +21,7 @@ const COPY = {
   h: "Hoàn tiền",
   dueSeller: (amount: string) => `Cần hoàn ${amount}`,
   bodySeller:
-    "Đơn đã huỷ sau khi người mua thanh toán. Chuyển trả về đúng tài khoản họ đã dùng, rồi bấm nút dưới.",
+    "Đơn đã hủy sau khi người mua thanh toán. Chuyển trả về đúng tài khoản họ đã dùng, rồi bấm nút dưới.",
   doneSeller: (amount: string, when: string) => `Đã hoàn ${amount} lúc ${when}.`,
   mark: "Đã hoàn tiền",
   markBusy: "Đang ghi nhận…",

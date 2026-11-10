@@ -73,7 +73,7 @@ const COPY = {
   reject: "Từ chối đơn",
   ship: "Đã gửi hàng",
   shipBusy: "Đang ghi nhận…",
-  cancel: "Huỷ đơn",
+  cancel: "Hủy đơn",
   deliver: "Ghi nhận đã giao",
   deliverBusy: "Đang ghi nhận…",
   // EN: The order also moves to delivered when the buyer presses "I've
@@ -90,7 +90,7 @@ const COPY = {
 
   reasonLabel: "Lý do",
   reasonSend: "Gửi từ chối",
-  reasonSendCancel: "Gửi huỷ đơn",
+  reasonSendCancel: "Gửi hủy đơn",
   reasonBusy: "Đang gửi…",
   reasonBack: "Quay lại",
   reasonBlocked: "Nhập lý do để người mua biết vì sao.",
@@ -116,7 +116,7 @@ const COPY = {
   // EN: This order was just updated somewhere else — the buyer may have
   // cancelled. The page has reloaded.
   stale:
-    "Đơn vừa được cập nhật ở nơi khác — có thể người mua vừa huỷ. Trang đã tải lại.",
+    "Đơn vừa được cập nhật ở nơi khác — có thể người mua vừa hủy. Trang đã tải lại.",
   supportOnly:
     "Vai trò support chỉ xem được đơn. Chủ shop hoặc quản lý mới xử lý đơn.",
 };

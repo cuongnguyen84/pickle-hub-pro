@@ -253,7 +253,7 @@ describe("deleting a photo", () => {
   it("deletes the one whose button was pressed", async () => {
     renderProduct();
 
-    fireEvent.click(screen.getByLabelText("Xoá ảnh 2"));
+    fireEvent.click(screen.getByLabelText("Xóa ảnh 2"));
 
     await waitFor(() => expect(rpcCall("product_media_delete")).toBeTruthy());
     expect(rpcCall("product_media_delete")![1]).toEqual({ _media_id: "m2" });
@@ -261,7 +261,7 @@ describe("deleting a photo", () => {
 
   it("names every photo in its controls, so four buttons are four choices", () => {
     renderProduct();
-    for (const n of [1, 2, 3]) expect(screen.getByLabelText(`Xoá ảnh ${n}`)).toBeTruthy();
+    for (const n of [1, 2, 3]) expect(screen.getByLabelText(`Xóa ảnh ${n}`)).toBeTruthy();
     expect(screen.getAllByLabelText(/^Chuyển ảnh/)).toHaveLength(6);
   });
 
@@ -269,7 +269,7 @@ describe("deleting a photo", () => {
     shopRpc.mockRejectedValue({ code: "42501" });
     renderProduct();
 
-    fireEvent.click(screen.getByLabelText("Xoá ảnh 1"));
+    fireEvent.click(screen.getByLabelText("Xóa ảnh 1"));
 
     await waitFor(() =>
       expect(screen.getByRole("alert").textContent).toContain("không có quyền"),
@@ -366,14 +366,14 @@ describe("files on their way up", () => {
     expect(uploadHandle.retry).toHaveBeenCalledWith("bad");
   });
 
-  it("offers Huỷ while a file is busy and Bỏ once it is not", () => {
+  it("offers Hủy while a file is busy and Bỏ once it is not", () => {
     uploadHandle.items = [
       item({ token: "busy", name: "a.jpg", phase: "processing" }),
       item({ token: "done", name: "b.jpg", phase: "cancelled" }),
     ];
     renderProduct();
 
-    fireEvent.click(screen.getByRole("button", { name: /Huỷ/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Hủy/ }));
     expect(uploadHandle.remove).toHaveBeenCalledWith("busy");
 
     fireEvent.click(screen.getByRole("button", { name: /Bỏ/ }));
@@ -387,7 +387,7 @@ describe("files on their way up", () => {
     expect(screen.getByText(/Đang xác minh/)).toBeTruthy();
     // The product still has no photos: only the server's rows count.
     expect(screen.getByText("Chưa có ảnh nào.")).toBeTruthy();
-    expect(screen.queryByLabelText(/^Xoá ảnh/)).toBeNull();
+    expect(screen.queryByLabelText(/^Xóa ảnh/)).toBeNull();
   });
 
   it("clears finished cards once the server rows arrive, and only then", () => {
@@ -454,7 +454,7 @@ describe("the shop logo and cover are one component with two purposes", () => {
   it("offers no upload, delete or framing while the shop is locked", () => {
     renderProfile(true);
     expect(document.getElementById("pick-logo")).toBeNull();
-    expect(screen.queryByRole("button", { name: /Xoá/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Xóa/ })).toBeNull();
     expect(screen.queryByLabelText(/Vị trí khung ảnh/)).toBeNull();
   });
 });
@@ -711,7 +711,7 @@ describe("removing and reframing the logo and cover", () => {
     profileRows = [verifiedRow("logo")];
     renderProfile();
 
-    fireEvent.click(await screen.findByRole("button", { name: /Xoá/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Xóa/ }));
 
     await waitFor(() => expect(rpcCall("shop_profile_media_delete")).toBeTruthy());
     expect(rpcCall("shop_profile_media_delete")![1]).toEqual({ _media_id: "pm-logo" });
@@ -722,7 +722,7 @@ describe("removing and reframing the logo and cover", () => {
     shopRpc.mockRejectedValue({ code: "42501" });
     renderProfile();
 
-    fireEvent.click(await screen.findByRole("button", { name: /Xoá/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Xóa/ }));
 
     await waitFor(() =>
       expect(
@@ -762,7 +762,7 @@ describe("while the product is waiting for review", () => {
     renderProduct({ disabled: true });
 
     expect(document.getElementById("pick-product-media")).toBeNull();
-    expect(screen.queryByLabelText(/^Xoá ảnh/)).toBeNull();
+    expect(screen.queryByLabelText(/^Xóa ảnh/)).toBeNull();
     expect(screen.queryByLabelText(/^Chuyển ảnh/)).toBeNull();
     expect((screen.getByLabelText("Đen") as HTMLSelectElement).disabled).toBe(true);
     // Read-only, not hidden: the seller can still see what is under review.
@@ -787,7 +787,7 @@ describe("previews of unpublished photos", () => {
     await waitFor(() =>
       expect((screen.getByRole("img") as HTMLImageElement).src).toContain("signed.example"),
     );
-    fireEvent.click(screen.getByLabelText("Xoá ảnh 1"));
+    fireEvent.click(screen.getByLabelText("Xóa ảnh 1"));
     await waitFor(() => expect(rpcCall("product_media_delete")).toBeTruthy());
     // Nothing signed reaches an RPC argument.
     expect(JSON.stringify(shopRpc.mock.calls)).not.toContain("signed.example");

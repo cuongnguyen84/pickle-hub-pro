@@ -3141,7 +3141,7 @@ export const vi: Translations = {
       purpose:
         "Dùng để xét duyệt người bán, hiển thị shop và sản phẩm, thực hiện đơn hàng, đối soát thanh toán, hỗ trợ giao nhận, hoàn tiền, chống gian lận và xử lý khiếu nại.",
       retention:
-        "Hồ sơ đăng ký và bằng chứng chấp thuận bị xoá cùng tài khoản của bạn. Đơn hàng và nhật ký cần cho giao nhận, thanh toán, hoàn tiền hoặc đối chiếu có thể được giữ lại; khi người mua xoá tài khoản, liên kết tới tài khoản được gỡ nhưng thông tin giao nhận đã lưu trong đơn vẫn còn trong thời gian cần thiết. Nếu bạn đang sở hữu một shop, shop phải được xử lý trước thì tài khoản mới xoá được.",
+        "Hồ sơ đăng ký và bằng chứng chấp thuận bị xóa cùng tài khoản của bạn. Đơn hàng và nhật ký cần cho giao nhận, thanh toán, hoàn tiền hoặc đối chiếu có thể được giữ lại; khi người mua xóa tài khoản, liên kết tới tài khoản được gỡ nhưng thông tin giao nhận đã lưu trong đơn vẫn còn trong thời gian cần thiết. Nếu bạn đang sở hữu một shop, shop phải được xử lý trước thì tài khoản mới xóa được.",
     },
     effective: {
       text: "Chính sách này được cập nhật và có hiệu lực từ ngày {date}.",
@@ -3254,7 +3254,7 @@ export const vi: Translations = {
     deleteBlockedShopOwner:
       "Tài khoản này đang sở hữu một shop. Để đóng shop và tài khoản an toàn, vui lòng gửi yêu cầu tới tapickleballvn@gmail.com.",
     deleteBlockedShopOwnerWhy:
-      "Shop còn sản phẩm, đơn hàng, hình ảnh và lịch sử kiểm duyệt. ThePickleHub xử lý việc đóng shop thủ công để bảo toàn dữ liệu cần đối chiếu và không xoá nhầm nội dung cần giữ.",
+      "Shop còn sản phẩm, đơn hàng, hình ảnh và lịch sử kiểm duyệt. ThePickleHub xử lý việc đóng shop thủ công để bảo toàn dữ liệu cần đối chiếu và không xóa nhầm nội dung cần giữ.",
     deleteBlockedShopOwnerNoAutoSend:
       "Nút bên dưới chỉ mở ứng dụng email của anh/chị — nó KHÔNG tự gửi yêu cầu. Hãy gửi từ chính email đã đăng ký; chúng tôi sẽ xác nhận trước khi làm bất cứ điều gì.",
     deleteBlockedShopOwnerCta: "Soạn email yêu cầu",
@@ -4067,7 +4067,7 @@ export const vi: Translations = {
       tieNotAllowed: "Không cho phép tỉ số hòa",
       swap: "Đổi cặp",
       swapHint: "Chọn đội thứ hai ở trận khác để đổi chỗ",
-      swapCancel: "Huỷ đổi",
+      swapCancel: "Hủy đổi",
       swapped: "Đã đổi cặp",
       swapFailed: "Không đổi được: {error}",
     },
@@ -4075,7 +4075,7 @@ export const vi: Translations = {
     quota: {
       usage: "Bạn đã tạo {count}/3 giải",
       limitReached: "Đã đủ 3 giải",
-      limitReachedDesc: "Mỗi tài khoản đang giữ tối đa 3 giải. Kết thúc hoặc xoá một giải cũ để tạo giải mới.",
+      limitReachedDesc: "Mỗi tài khoản đang giữ tối đa 3 giải. Kết thúc hoặc xóa một giải cũ để tạo giải mới.",
       contactUs: "Liên hệ",
     },
     // SEO content
@@ -6073,7 +6073,7 @@ export const vi: Translations = {
       createTable: {
         authRequired: "Vui lòng đăng nhập để tạo bảng đấu",
         nameRequired: "Tên giải không được để trống",
-        limitReached: "Đã đủ 3 giải. Kết thúc hoặc xoá một giải cũ để tạo giải mới.",
+        limitReached: "Đã đủ 3 giải. Kết thúc hoặc xóa một giải cũ để tạo giải mới.",
         error: "Không thể tạo bảng đấu",
       },
       addPlayers: {

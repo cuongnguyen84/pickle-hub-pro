@@ -157,8 +157,8 @@ export const ICON_NAMES: { icon: string; name: string; note: string }[] = [
   { icon: "Tim (lưu)", name: "Lưu {tên sản phẩm} / Bỏ lưu {tên sản phẩm}", note: "Kèm aria-pressed." },
   { icon: "Quay lại", name: "Quay lại", note: "" },
   { icon: "Đóng bảng lọc", name: "Đóng bộ lọc", note: "Không phải chỉ “Đóng”." },
-  { icon: "Xoá chip lọc", name: "Bỏ lọc {tên bộ lọc}", note: "" },
-  { icon: "Xoá từ khoá", name: "Xoá từ khoá", note: "" },
+  { icon: "Xóa chip lọc", name: "Bỏ lọc {tên bộ lọc}", note: "" },
+  { icon: "Xóa từ khoá", name: "Xóa từ khoá", note: "" },
   { icon: "Tăng/giảm số lượng", name: "Tăng số lượng / Giảm số lượng", note: "" },
   { icon: "Hiện giấy tờ", name: "Hiện giấy tờ / Ẩn giấy tờ", note: "Việc mở được ghi nhật ký." },
 ];
@@ -183,7 +183,7 @@ export const LIVE_REGION_RULES = [
 export const FOCUS_RULES = [
   "Mở bảng lọc / bảng chọn phiên bản: đưa tiêu điểm vào phần tử đầu tiên bên trong.",
   "Đóng bằng Esc hoặc nút X: trả tiêu điểm về đúng nút đã mở nó.",
-  "Sau khi xoá một dòng trong giỏ: đưa tiêu điểm về nút Hoàn tác, không để rơi về <body>.",
+  "Sau khi xóa một dòng trong giỏ: đưa tiêu điểm về nút Hoàn tác, không để rơi về <body>.",
   "Chuyển bước trong hồ sơ đăng ký: đưa tiêu điểm về tiêu đề bước mới (tabindex=-1).",
   "Không bẫy tiêu điểm ở bất kỳ đâu ngoài hộp thoại modal.",
 ];

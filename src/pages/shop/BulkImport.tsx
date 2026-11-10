@@ -461,7 +461,7 @@ export default function BulkImport() {
                                           : void handleRemoveBackground(row.rowId, candidate.url, { url: candidate.url, sourceUrl: candidate.source_url })}
                                       >
                                         {processing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1.5 h-3.5 w-3.5" />}
-                                        {processing ? "Đang xoá nền…" : processed ? "Hoàn tác" : "Xoá nền"}
+                                        {processing ? "Đang xóa nền…" : processed ? "Hoàn tác" : "Xóa nền"}
                                       </Button>
                                     </div>
                                   );
@@ -498,7 +498,7 @@ export default function BulkImport() {
                                         : void handleRemoveBackground(row.rowId, image.previewUrl, { file: image.file })}
                                     >
                                       {processing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1.5 h-3.5 w-3.5" />}
-                                      {processing ? "Đang xoá nền…" : processed ? "Hoàn tác" : "Xoá nền"}
+                                      {processing ? "Đang xóa nền…" : processed ? "Hoàn tác" : "Xóa nền"}
                                     </Button>
                                     <Button
                                       type="button"
@@ -599,7 +599,7 @@ export default function BulkImport() {
                                         : void handleRemoveBackground(row.rowId, url, { url, sourceUrl: url })}
                                     >
                                       {processing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1.5 h-3.5 w-3.5" />}
-                                      {processing ? "Đang xoá nền…" : processed ? "Hoàn tác" : "Xoá nền"}
+                                      {processing ? "Đang xóa nền…" : processed ? "Hoàn tác" : "Xóa nền"}
                                     </Button>
                                     <span className="block truncate px-2 py-1.5 text-xs text-muted-foreground">
                                       {processed ? "Nền trong suốt" : new URL(url).hostname.replace(/^www\./, "")}

@@ -50,12 +50,12 @@ export function OrderStatusLine({
   //     admin cancelled this order
   const who =
     cancelledBy === "seller"
-      ? `${shopName ?? "Người bán"} đã huỷ đơn này`
+      ? `${shopName ?? "Người bán"} đã hủy đơn này`
       : cancelledBy === "admin"
-        ? "Quản trị viên ThePickleHub đã huỷ đơn này"
+        ? "Quản trị viên ThePickleHub đã hủy đơn này"
         : side === "seller"
-          ? "Người mua đã huỷ đơn này"
-          : "Anh/chị đã huỷ đơn này";
+          ? "Người mua đã hủy đơn này"
+          : "Anh/chị đã hủy đơn này";
 
   return (
     <div className="tl-shop-notice tl-shop-notice--warn">

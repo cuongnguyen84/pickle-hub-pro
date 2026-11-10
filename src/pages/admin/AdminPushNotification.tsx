@@ -140,7 +140,7 @@ export default function AdminPushNotification() {
       const pruned = data?.pruned || 0;
       const detail = [
         failed > 0 ? `lỗi ${failed}` : null,
-        pruned > 0 ? `${pruned} token chết đã bị xoá` : null,
+        pruned > 0 ? `${pruned} token chết đã bị xóa` : null,
       ]
         .filter(Boolean)
         .join(", ");

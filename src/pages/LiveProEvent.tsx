@@ -170,7 +170,7 @@ export default function LiveProEvent() {
               />
               {playerQuery && (
                 <button type="button" className="lpe-search-clear" onClick={() => setPlayerQuery("")}
-                  aria-label={vi ? "Xoá tìm kiếm" : "Clear search"}>
+                  aria-label={vi ? "Xóa tìm kiếm" : "Clear search"}>
                   ✕
                 </button>
               )}

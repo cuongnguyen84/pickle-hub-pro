@@ -20,7 +20,7 @@ const NEXT_FOR_BUYER: Record<OrderStatus, { label: string; cta?: string }> = {
   "dang-xu-ly": { label: "Người bán đang chuẩn bị hàng — chưa cần làm gì" },
   "dang-giao": { label: "Đang trên đường tới anh/chị", cta: "Xem mã vận đơn" },
   "da-giao": { label: "Đã giao", cta: "Viết đánh giá" },
-  "da-huy": { label: "Đã huỷ" },
+  "da-huy": { label: "Đã hủy" },
   "tra-hang": { label: "Yêu cầu trả hàng đang chờ người bán trả lời" },
   "khieu-nai": { label: "Khiếu nại đang được xử lý", cta: "Xem khiếu nại" },
   "da-hoan-tien": { label: "Đã hoàn tiền" },

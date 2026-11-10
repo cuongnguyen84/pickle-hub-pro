@@ -180,7 +180,7 @@ function DisputeRow({ dispute, vi }: { dispute: ResolvableDispute; vi: boolean }
         {editing ? (
           <>
             <button type="button" className="tl-btn" disabled={busy} onClick={() => setEditing(false)}>
-              <X style={{ width: 14, height: 14 }} /> {vi ? "Huỷ" : "Cancel"}
+              <X style={{ width: 14, height: 14 }} /> {vi ? "Hủy" : "Cancel"}
             </button>
             <button type="button" className="tl-btn primary" disabled={busy} onClick={saveEdit} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check style={{ width: 14, height: 14 }} />}
