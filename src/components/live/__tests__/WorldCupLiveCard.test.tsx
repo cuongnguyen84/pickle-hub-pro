@@ -4,13 +4,16 @@
 // "Kết quả hôm nay" (today's finished Vietnamese matches with full scorelines)
 // when nothing is live. Hidden only when there is neither. Always links to /live.
 
-import { describe, it, expect, afterEach, vi } from "vitest";
+import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import type { WcProFeed, WcProMatchRow, WcProEventGroup } from "@/hooks/useWcProLive";
+import type { WcOpenFeed, WcOpenMatchRow, WcOpenTeamRow } from "@/hooks/useWcOpenLive";
 
 const proMock = vi.fn<() => { data: WcProFeed | undefined; isLoading: boolean; isError: boolean }>();
 vi.mock("@/hooks/useWcProLive", async (orig) => ({ ...(await orig<typeof import("@/hooks/useWcProLive")>()), useWcProLive: () => proMock() }));
+const openMock = vi.fn<() => { data: WcOpenFeed | undefined; isLoading: boolean; isError: boolean }>();
+vi.mock("@/hooks/useWcOpenLive", async (orig) => ({ ...(await orig<typeof import("@/hooks/useWcOpenLive")>()), useWcOpenLive: () => openMock() }));
 
 import { WorldCupLiveCard } from "../WorldCupLiveCard";
 
@@ -27,7 +30,28 @@ const feed = (live: WcProMatchRow[], liveCount = live.length): WcProFeed => ({
 });
 const wrap = (lang: "vi" | "en") => render(<MemoryRouter><WorldCupLiveCard language={lang} /></MemoryRouter>);
 
-afterEach(() => { cleanup(); proMock.mockReset(); });
+const team = (slug: string, name_vi: string, name_en: string, cc: string, group = "A"): WcOpenTeamRow =>
+  ({ slug, group_letter: group, seed: null, name_vi, name_en, country_code: cc });
+const tie = (over: Partial<WcOpenMatchRow>): WcOpenMatchRow => ({
+  match_id: "t1", group_letter: "A", round: "group", home_slug: "viet_nam", away_slug: "colombia",
+  home_score: 2, away_score: 0, status: "live", court: "Sân 1 · CC",
+  start_time: `${new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10)}T12:00:00+00:00`, ...over,
+});
+const openFeed = (matches: WcOpenMatchRow[]): WcOpenFeed => ({
+  groups: [{
+    letter: "A",
+    teams: [team("viet_nam", "Việt Nam", "Viet Nam", "VN"), team("colombia", "Colombia", "Colombia", "CO")],
+    matches,
+  }],
+  hasLive: matches.some((m) => m.status === "live"),
+  drawOnly: matches.length === 0,
+});
+const noOpen = { data: undefined, isLoading: false, isError: false };
+
+afterEach(() => { cleanup(); proMock.mockReset(); openMock.mockReset(); });
+// Every pre-existing test runs with no team data, as before Sep 3.
+openMock.mockReturnValue(noOpen);
+beforeEach(() => { openMock.mockReturnValue(noOpen); });
 
 describe("WorldCupLiveCard", () => {
   it("hides when nothing is live, even if there are scheduled events", () => {
@@ -167,5 +191,56 @@ describe("WorldCupLiveCard", () => {
     wrap("vi");
     expect(screen.getByText("Livescore")).toBeTruthy();
     expect(screen.queryByText(/Kết quả hôm nay/)).toBeNull();
+  });
+
+  // ── National-team ties (Sep 3–6) ─────────────────────────────────────────
+
+  it("shows a live team tie even when no Pro match is live", () => {
+    proMock.mockReturnValue({ data: { events: [], liveCount: 0 }, isLoading: false, isError: false });
+    openMock.mockReturnValue({ data: openFeed([tie({})]), isLoading: false, isError: false });
+    const { container } = wrap("vi");
+    expect(screen.getByText("Livescore")).toBeTruthy();
+    expect(screen.getByText(/1 trận đang đấu/)).toBeTruthy();
+    expect(screen.getByText(/Việt Nam/)).toBeTruthy();
+    expect(screen.getByText(/Đồng đội quốc gia · Bảng A/)).toBeTruthy();
+    expect(container.querySelectorAll(".wclc-m").length).toBe(1);
+  });
+
+  it("counts live ties and live Pro matches together, Vietnam's tie first", () => {
+    proMock.mockReturnValue({
+      data: feed([match({ match_id: "p1", entry_a_name: "Patrick Kawka", entry_b_name: "Yuta Yoshida", is_vietnam: false })], 1),
+      isLoading: false, isError: false,
+    });
+    openMock.mockReturnValue({ data: openFeed([tie({})]), isLoading: false, isError: false });
+    const { container } = wrap("vi");
+    expect(screen.getByText(/2 trận đang đấu/)).toBeTruthy();
+    const rounds = [...container.querySelectorAll(".wclc-m-round")].map((n) => n.textContent);
+    expect(rounds[0]).toMatch(/Đồng đội quốc gia/); // Vietnam's tie leads
+  });
+
+  it("falls back to Vietnam's finished tie today when nothing is live", () => {
+    proMock.mockReturnValue({ data: { events: [], liveCount: 0 }, isLoading: false, isError: false });
+    openMock.mockReturnValue({
+      data: openFeed([tie({ status: "final", home_score: 4, away_score: 1 })]),
+      isLoading: false, isError: false,
+    });
+    const { container } = wrap("vi");
+    expect(screen.getByText(/Kết quả hôm nay/)).toBeTruthy();
+    expect(screen.getByText(/1 trận Việt Nam/)).toBeTruthy();
+    expect(container.querySelectorAll(".wclc-r").length).toBe(1);
+    expect(container.querySelector(".wclc-r-row--win")?.textContent).toContain("Việt Nam");
+  });
+
+  it("ignores another nation's tie and a tie from another day in the results fallback", () => {
+    proMock.mockReturnValue({ data: { events: [], liveCount: 0 }, isLoading: false, isError: false });
+    openMock.mockReturnValue({
+      data: openFeed([
+        tie({ match_id: "other", home_slug: "colombia", away_slug: "chile", status: "final" }),
+        tie({ match_id: "old", status: "final", start_time: "2026-09-02T12:00:00+00:00" }),
+      ]),
+      isLoading: false, isError: false,
+    });
+    const { container } = wrap("vi");
+    expect(container.querySelector(".wclc")).toBeNull();
   });
 });

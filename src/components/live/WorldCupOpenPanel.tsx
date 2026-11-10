@@ -10,7 +10,7 @@
 // Scoped `wcop-` styles on TheLine's --tl-* tokens.
 // ============================================================================
 
-import type { WcOpenFeed, WcOpenGroup, WcOpenTeamRow } from "@/hooks/useWcOpenLive";
+import type { WcOpenFeed, WcOpenGroup, WcOpenMatchRow, WcOpenTeamRow } from "@/hooks/useWcOpenLive";
 
 const VN_SLUG = "viet_nam";
 type Lang = "en" | "vi";
@@ -25,9 +25,44 @@ function flag(cc: string | null): string {
 
 const teamName = (t: WcOpenTeamRow, lang: Lang) => (lang === "vi" ? t.name_vi : t.name_en);
 
+// One tie of the group as a compact score line: nations, tie score
+// (sub-matches won), a pulsing mark while in play. Scheduled ties are not
+// listed — the team list above already says who is in the group, and six
+// unplayed "0–0" rows per card would drown the sixteen-card grid.
+function TieRow({ m, teams, lang }: { m: WcOpenMatchRow; teams: Map<string, WcOpenTeamRow>; lang: Lang }) {
+  const name = (slug: string) => {
+    const t = teams.get(slug);
+    return t ? teamName(t, lang) : slug;
+  };
+  const aWon = m.status === "final" && (m.home_score ?? 0) > (m.away_score ?? 0);
+  const bWon = m.status === "final" && (m.away_score ?? 0) > (m.home_score ?? 0);
+  const side = (slug: string, won: boolean) => (
+    <span className={`wcop-tie-side${won ? " wcop-tie-side--win" : ""}${slug === VN_SLUG ? " wcop-tie-side--vn" : ""}`}>
+      <span aria-hidden="true">{flag(teams.get(slug)?.country_code ?? null)} </span>
+      {name(slug)}
+    </span>
+  );
+  return (
+    <li className={`wcop-tie${m.status === "live" ? " wcop-tie--live" : ""}`}>
+      {m.status === "live" && <span className="wcop-dot" aria-hidden="true" />}
+      {side(m.home_slug, aWon)}
+      <span className="wcop-tie-score">{m.home_score ?? 0}–{m.away_score ?? 0}</span>
+      {side(m.away_slug, bWon)}
+    </li>
+  );
+}
+
 function GroupCard({ group, lang }: { group: WcOpenGroup; lang: Lang }) {
   const hasVN = group.teams.some((t) => t.slug === VN_SLUG);
   const played = group.matches.filter((m) => m.status !== "scheduled").length;
+  const teamsBySlug = new Map(group.teams.map((t) => [t.slug, t]));
+  // Live ties first, then finals in schedule order.
+  const ties = group.matches
+    .filter((m) => m.status !== "scheduled")
+    .sort((a, b) =>
+      (a.status === "live" ? 0 : 1) - (b.status === "live" ? 0 : 1) ||
+      (a.start_time ?? "").localeCompare(b.start_time ?? ""),
+    );
   return (
     <div className={`wcop-group${hasVN ? " wcop-group--vn" : ""}`}>
       <div className="wcop-group-head">
@@ -46,6 +81,13 @@ function GroupCard({ group, lang }: { group: WcOpenGroup; lang: Lang }) {
           </li>
         ))}
       </ul>
+      {ties.length > 0 && (
+        <ul className="wcop-tie-list">
+          {ties.map((m) => (
+            <TieRow key={m.match_id} m={m} teams={teamsBySlug} lang={lang} />
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -112,5 +154,13 @@ const WCOP_CSS = `
 .wcop-flag { font-size: 15px; line-height: 1; flex: none; }
 .wcop-team-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wcop-seed { margin-left: auto; font-size: 11px; color: var(--tl-dim); font-variant-numeric: tabular-nums; }
+.wcop-tie-list { list-style: none; margin: 9px 0 0; padding: 8px 0 0; border-top: 1px dashed var(--tl-border); display: flex; flex-direction: column; gap: 4px; }
+.wcop-tie { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--tl-dim); min-width: 0; }
+.wcop-tie--live { color: var(--tl-fg); }
+.wcop-tie-side { flex: 1 1 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.wcop-tie-side:last-child { text-align: right; }
+.wcop-tie-side--win { color: var(--tl-fg); font-weight: 700; }
+.wcop-tie-side--vn { color: var(--tl-live); font-weight: 700; }
+.wcop-tie-score { flex: none; font-variant-numeric: tabular-nums; font-weight: 800; color: var(--tl-fg); }
 .wcop-source { margin: 14px 0 0; font-size: 11.5px; color: var(--tl-dim); }
 `;

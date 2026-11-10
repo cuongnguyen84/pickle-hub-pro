@@ -3,9 +3,11 @@
 // tournament. Two modes over the same shell (logo + header + up to a few match
 // cards + a link to /live), repainting over Supabase Realtime:
 //   * live now → "Livescore": one or two matches in progress, score by score,
-//     a Vietnamese player's first.
+//     a Vietnamese player's first. Since the national-team competition started
+//     (Sep 3) the live list carries both individual Pro matches and OPEN team
+//     ties — a tie shows the nations with the running sub-matches-won score.
 //   * nothing live → "Kết quả hôm nay": today's finished Vietnamese matches
-//     with their full scorelines (winner in bold).
+//     (individual and team) with their scorelines (winner in bold).
 //
 // Shows nothing when there is neither a live match nor a result today, and
 // self-retires after Sep 7.
@@ -13,6 +15,7 @@
 
 import { Link } from "react-router-dom";
 import { useWcProLive, type WcProMatchRow } from "@/hooks/useWcProLive";
+import { useWcOpenLive, type WcOpenMatchRow, type WcOpenTeamRow } from "@/hooks/useWcOpenLive";
 import { isVietnameseName } from "@/lib/wc-open/parse-pro";
 import { scoreGames } from "./wc-score";
 
@@ -49,6 +52,82 @@ function isToday(m: WcProMatchRow): boolean {
   const sched = m.scheduled_at;
   if (!sched || Number.isNaN(Date.parse(sched))) return false;
   return sched.slice(0, 10) === vnDay(Date.now());
+}
+/** Same rule for a team tie — start_time is the organizers' Vietnam wall-clock
+ *  stored verbatim, so its date is read as-is too. */
+function tieIsToday(t: WcOpenMatchRow): boolean {
+  const start = t.start_time;
+  if (!start || Number.isNaN(Date.parse(start))) return false;
+  return start.slice(0, 10) === vnDay(Date.now());
+}
+
+const VN_SLUG = "viet_nam";
+const tieHasVN = (t: WcOpenMatchRow) => t.home_slug === VN_SLUG || t.away_slug === VN_SLUG;
+
+/** A country flag from its ISO code, via regional-indicator letters. */
+function flag(cc: string | null): string {
+  if (!cc || cc.length < 2) return "🏳️";
+  const base = 0x1f1e6;
+  const up = cc.slice(0, 2).toUpperCase();
+  return String.fromCodePoint(base + (up.charCodeAt(0) - 65), base + (up.charCodeAt(1) - 65));
+}
+
+type TeamLookup = Map<string, WcOpenTeamRow>;
+const nationName = (teams: TeamLookup, slug: string, lang: Lang): string => {
+  const t = teams.get(slug);
+  return t ? (lang === "vi" ? t.name_vi : t.name_en) : slug;
+};
+
+// A team tie, live: the two nations with the running tie score (sub-matches
+// won). Reuses the live-match card styles so ties and Pro matches read as one
+// list; the group line labels the competition it belongs to.
+function TieMatch({ t, teams, lang }: { t: WcOpenMatchRow; teams: TeamLookup; lang: Lang }) {
+  const a = t.home_score ?? 0;
+  const b = t.away_score ?? 0;
+  const row = (slug: string, score: number, leads: boolean) => (
+    <div className={`wclc-m-row${leads ? " wclc-m-row--win" : ""}`}>
+      <span className={`wclc-m-name${slug === VN_SLUG ? " wclc-m-name--vn" : ""}`}>
+        <span aria-hidden="true">{flag(teams.get(slug)?.country_code ?? null)} </span>
+        {nationName(teams, slug, lang)}
+      </span>
+      <span className="wclc-m-score">{score}</span>
+    </div>
+  );
+  return (
+    <div className="wclc-m">
+      <div className="wclc-m-round">
+        {lang === "vi" ? "Đồng đội quốc gia · Bảng" : "Nations · Group"} {t.group_letter}
+      </div>
+      {row(t.home_slug, a, a > b)}
+      {row(t.away_slug, b, b > a)}
+    </div>
+  );
+}
+
+// A finished tie in the results list: winner bold with a check, one score
+// column (sub-matches won) — the tie-scale twin of ResultMatch.
+function TieResult({ t, teams, lang }: { t: WcOpenMatchRow; teams: TeamLookup; lang: Lang }) {
+  const a = t.home_score ?? 0;
+  const b = t.away_score ?? 0;
+  const row = (slug: string, score: number, won: boolean) => (
+    <div className={`wclc-r-row${won ? " wclc-r-row--win" : ""}`}>
+      <span className="wclc-r-tick" aria-hidden="true">{won ? "✓" : ""}</span>
+      <span className="wclc-r-name">
+        <span aria-hidden="true">{flag(teams.get(slug)?.country_code ?? null)} </span>
+        {nationName(teams, slug, lang)}
+      </span>
+      <span className="wclc-r-games"><span className="wclc-r-g">{score}</span></span>
+    </div>
+  );
+  return (
+    <div className="wclc-r">
+      <div className="wclc-r-round">
+        {lang === "vi" ? "Đồng đội quốc gia · Bảng" : "Nations · Group"} {t.group_letter}
+      </div>
+      {row(t.home_slug, a, a > b)}
+      {row(t.away_slug, b, b > a)}
+    </div>
+  );
 }
 
 // The score to show against each side of a LIVE match: the current game if in
@@ -108,26 +187,51 @@ function ResultMatch({ m }: { m: WcProMatchRow }) {
 
 export function WorldCupLiveCard({ language }: { language: Lang }) {
   const { data } = useWcProLive();
+  const { data: openData } = useWcOpenLive();
 
   if (Date.now() > HIDE_AFTER) return null;
-  if (!data || data.events.length === 0) return null;
+  if ((!data || data.events.length === 0) && (!openData || openData.groups.length === 0)) return null;
 
   const isVn = (m: WcProMatchRow) => sideIsVietnam(m.entry_a_name) || sideIsVietnam(m.entry_b_name);
 
-  const allLive = data.events.flatMap((e) => e.live);
+  const allLive = data?.events.flatMap((e) => e.live) ?? [];
+  // The national-team competition (Sep 3–6): ties in play, and Vietnam's
+  // finished ties today for the results fallback.
+  const teams: TeamLookup = new Map(
+    (openData?.groups ?? []).flatMap((g) => g.teams).map((t) => [t.slug, t]),
+  );
+  const allTies = (openData?.groups ?? []).flatMap((g) => g.matches);
+  const liveTies = allTies
+    .filter((t) => t.status === "live")
+    .sort((x, y) => (tieHasVN(x) ? 0 : 1) - (tieHasVN(y) ? 0 : 1));
+  const todayTieResults = allTies.filter((t) => t.status === "final" && tieHasVN(t) && tieIsToday(t));
+
   // Today's finished Vietnamese matches, latest first — the fallback when
   // nothing is live so the card stays useful between sessions.
-  const todayResults = data.events
+  const todayResults = (data?.events ?? [])
     .flatMap((e) => e.vietnam)
     .filter((m) => m.status === "completed" && isToday(m))
     .sort((x, y) => (y.scheduled_at ?? "").localeCompare(x.scheduled_at ?? ""));
 
-  const live = allLive.length > 0;
-  if (!live && todayResults.length === 0) return null; // nothing live, no result today
+  const live = allLive.length > 0 || liveTies.length > 0;
+  if (!live && todayResults.length === 0 && todayTieResults.length === 0) return null;
 
-  const featured = live
-    ? [...allLive].sort((x, y) => (isVn(x) ? 0 : 1) - (isVn(y) ? 0 : 1)).slice(0, 2)
-    : rotatePair(todayResults, Date.now());
+  // Two featured slots. Live: Vietnam first (tie or match), then ties (the
+  // headline competition once it starts), then the other Pro matches. Results:
+  // Vietnam's tie of the day holds a slot, Pro results rotate through the rest.
+  const liveCards = [
+    ...liveTies.filter(tieHasVN).map((t) => ({ key: t.match_id, node: <TieMatch key={t.match_id} t={t} teams={teams} lang={language} /> })),
+    ...allLive.filter(isVn).map((m) => ({ key: m.match_id, node: <LiveMatch key={m.match_id} m={m} /> })),
+    ...liveTies.filter((t) => !tieHasVN(t)).map((t) => ({ key: t.match_id, node: <TieMatch key={t.match_id} t={t} teams={teams} lang={language} /> })),
+    ...allLive.filter((m) => !isVn(m)).map((m) => ({ key: m.match_id, node: <LiveMatch key={m.match_id} m={m} /> })),
+  ].slice(0, 2);
+  const resultCards = [
+    ...todayTieResults.slice(0, 1).map((t) => ({ key: t.match_id, node: <TieResult key={t.match_id} t={t} teams={teams} lang={language} /> })),
+    ...rotatePair(todayResults, Date.now()).map((m) => ({ key: m.match_id, node: <ResultMatch key={m.match_id} m={m} /> })),
+  ].slice(0, 2);
+
+  const liveCount = (data?.liveCount ?? 0) + liveTies.length;
+  const resultCount = todayResults.length + todayTieResults.length;
 
   const href = language === "vi" ? "/vi/live" : "/live";
 
@@ -145,20 +249,18 @@ export function WorldCupLiveCard({ language }: { language: Lang }) {
               {live ? (
                 <>
                   <span className="wclc-title">Livescore</span>
-                  <span className="wclc-live"><span className="wclc-dot" aria-hidden="true" />{data.liveCount} {language === "vi" ? "trận đang đấu" : "live"}</span>
+                  <span className="wclc-live"><span className="wclc-dot" aria-hidden="true" />{liveCount} {language === "vi" ? "trận đang đấu" : "live"}</span>
                 </>
               ) : (
                 <>
                   <span className="wclc-title">{language === "vi" ? "Pickleball World Cup 2026 · Kết quả hôm nay" : "Pickleball World Cup 2026 · Today's results"}</span>
-                  <span className="wclc-sub">{language === "vi" ? `${todayResults.length} trận Việt Nam` : `${todayResults.length} Vietnam ${todayResults.length === 1 ? "match" : "matches"}`}</span>
+                  <span className="wclc-sub">{language === "vi" ? `${resultCount} trận Việt Nam` : `${resultCount} Vietnam ${resultCount === 1 ? "match" : "matches"}`}</span>
                 </>
               )}
             </div>
           </div>
           <div className="wclc-matches">
-            {featured.map((m) =>
-              live ? <LiveMatch key={m.match_id} m={m} /> : <ResultMatch key={m.match_id} m={m} />,
-            )}
+            {(live ? liveCards : resultCards).map((c) => c.node)}
           </div>
           <Link to={href} className="wclc-cta">
             {live
