@@ -183,7 +183,7 @@
       "start_date": "2026-10-28",
       "end_date": "2026-10-31",
       "event_timezone": "Asia/Shanghai",
-      "enabled": true,
+      "enabled": false,
       "sources": [
         "https://www.ppatour-asia.com/tournament/2026/ppa-asia-125-chn-nanjing-2026/",
         "https://pickleballtournaments.com/tournaments/ppa-asia-125-skechers-nanjing-challenger-2026",
@@ -192,7 +192,7 @@
       "notes": "P2. 21/10: eventId xác nhận trên pickleballtournaments.com/tournaments/ppa-asia-125-skechers-nanjing-challenger-2026 (tourneyId, không phải clubId). Feed trả 5 nội dung Pro, 0 trận — draw chưa ra, autopublish sẽ báo score_matches_missing chứ không đăng trang rỗng. Venue cụ thể vẫn chưa công bố (trang Asia chỉ ghi Nanjing, China). Asia125 vẫn diễn ra sau Hong Kong main tour finale.",
       "name": "Skechers Nanjing 2026",
       "search_name": "PPA Nanjing",
-      "auto_publish": true,
+      "auto_publish": false,
       "publish_from": "2026-10-21",
       "event_id": "49004a6d-fb3b-4a64-81a5-6468df8ec39d",
       "result_source": "https://www.ppatour.com/api/scores/?event=49004a6d-fb3b-4a64-81a5-6468df8ec39d",
