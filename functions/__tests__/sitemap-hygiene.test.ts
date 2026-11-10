@@ -69,10 +69,11 @@ describe("/about carries its own entity in meta", () => {
   const ssr = source("functions/_lib/render/static-pages.ts");
   const spa = source("src/pages/About.tsx");
 
-  // buildHtml truncates on UTF-8 BYTES (SEO_TITLE_MAX_BYTES 60,
-  // SEO_DESCRIPTION_MAX_BYTES 160) and a Vietnamese diacritic costs 2-3 bytes,
-  // so these are measured rather than eyeballed.
+  // buildHtml truncates titles at 60 CHARACTERS (SEO_TITLE_MAX_CHARS, since
+  // AUDIT-01) and descriptions at 160 UTF-8 BYTES (SEO_DESCRIPTION_MAX_BYTES);
+  // a Vietnamese diacritic costs 2-3 bytes, so these are measured.
   const bytes = (s: string) => new TextEncoder().encode(s).length;
+  const chars = (s: string) => Array.from(s).length;
   const EN_T = "About ThePickleHub — Bilingual Pickleball Platform";
   const VI_T = "Về ThePickleHub — Nền tảng pickleball song ngữ";
   const EN_D =
@@ -80,9 +81,9 @@ describe("/about carries its own entity in meta", () => {
   const VI_D =
     "ThePickleHub — nền tảng pickleball song ngữ Việt–Anh: phần mềm giải đấu miễn phí, livestream, xếp hạng DUPR, danh bạ sân.";
 
-  it("fits the byte budgets buildHtml enforces", () => {
-    expect(bytes(EN_T)).toBeLessThanOrEqual(60);
-    expect(bytes(VI_T)).toBeLessThanOrEqual(60);
+  it("fits the title/description budgets buildHtml enforces", () => {
+    expect(chars(EN_T)).toBeLessThanOrEqual(60);
+    expect(chars(VI_T)).toBeLessThanOrEqual(60);
     expect(bytes(EN_D)).toBeLessThanOrEqual(160);
     expect(bytes(VI_D)).toBeLessThanOrEqual(160);
   });

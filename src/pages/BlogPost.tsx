@@ -1,4 +1,4 @@
-import { truncateForSeo } from "@/lib/seo-title";
+import { truncateTitleForSeo } from "@/lib/seo-title";
 import { authorIdentity } from "@/content/authors";
 import { useEffect, useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
@@ -139,7 +139,7 @@ const BlogPost = () => {
 
   // EN route always serves English content regardless of i18n context.
   const content = post.content.en;
-  const metaTitle = truncateForSeo(content.metaTitle, 60);
+  const metaTitle = truncateTitleForSeo(content.metaTitle);
   const postUrl = `https://www.thepicklehub.net/blog/${post.slug}`;
   const relatedPosts = getRelatedPosts(post.slug, 3);
   const clusterLinks = buildTournamentClusterLinks(post.slug, "en", (s) =>
