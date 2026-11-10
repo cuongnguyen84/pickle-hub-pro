@@ -448,6 +448,12 @@ function applySecurityHeaders(headers: Headers): void {
   }
 }
 
+// AUDIT-02 — exact paths only, locale-correct; no /courts/:slug aliases.
+const COURTS_REDIRECTS: Record<string, string> = {
+  "/courts": "/san",
+  "/vi/courts": "/vi/san",
+};
+
 // SEO audit 2026-05-28 (batch 6) — Response.redirect() ships a fresh
 // Response with only a `location` header. Crawlers that crawl the
 // redirect itself (SEOnaut does — it reports "Missing HSTS",
@@ -575,6 +581,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       `https://${url.hostname}/live/10779a7c-46f4-4501-a65e-e852eb2fb565${url.search}`,
       301,
     );
+  }
+
+  // AUDIT-02 (2026-11-10) — /courts and /vi/courts 404'd for Googlebot; the
+  // court hub is /san. Mirrored in public/_redirects (bots never reach it);
+  // locked by src/__tests__/redirect-parity.test.ts.
+  const courtsDest = COURTS_REDIRECTS[url.pathname];
+  if (courtsDest) {
+    return secureRedirect(`https://${url.hostname}${courtsDest}${url.search}`, 301);
   }
 
   // ─── 1c-bis. 2026-08-25 site audit — retired duplicate /san slugs.
@@ -919,7 +933,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       // as the bot path.
       let publicCache: PublicPagePartsCache | null = null;
       if (env.PRERENDER_CACHE && url.searchParams.get("nocache") !== "1") {
-        const cacheKey = `pr:v149:human:${url.pathname}`;
+        const cacheKey = `pr:v150:human:${url.pathname}`;
         const ttl = Math.min(pathCacheTtl(pathname), 300);
         publicCache = {
           get: () => env.PRERENDER_CACHE.get(cacheKey),
@@ -1396,7 +1410,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v149 (2026-11-09): PPA WPR snapshot fetched-at 2026-11-09. Women top 25
   // moved (Lea Jansen 17→15, Layne Sleeth in at #25); cached v148 HTML would
   // keep the 2026-11-02 table.
-  const cacheKey = `pr:v149:${url.pathname}`;
+  // v150 (2026-11-10): AUDIT-01 — <title> budget is 60 characters, not 60
+  // bytes; cached v149 HTML keeps VI titles cut at ~45 chars ("Ho Chi…").
+  const cacheKey = `pr:v150:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

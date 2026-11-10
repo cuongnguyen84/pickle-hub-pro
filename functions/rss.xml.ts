@@ -1,9 +1,11 @@
 /**
  * RSS 2.0 feed for ThePickleHub blog posts.
- * Serves both Vietnamese (from Supabase vi_blog_posts) and English (static) posts.
+ * Serves both Vietnamese (from Supabase vi_blog_posts) and English (blogMetadata) posts.
  * Used by Mailchimp RSS-to-Email automation.
  */
 
+import { blogMetadata } from "../src/content/blog/metadata";
+import type { BlogPostMetadata } from "../src/content/blog/types";
 import { createSupabaseClient } from "./_lib/supabase";
 
 interface Env {
@@ -20,72 +22,19 @@ interface RssItem {
   lang: "en" | "vi";
 }
 
-// EN blog posts — static (no DB table). Keep in sync with src/lib/blog-data.ts.
-const EN_POSTS: RssItem[] = [
-  {
-    title: "Best Pickleball Tournament Software in 2026 — Free Tools Compared",
-    link: "/blog/best-pickleball-tournament-software-2026",
-    description: "Compare the best pickleball tournament software in 2026. Free bracket generators, round robin tools, and MLP team match platforms for organizers. No signup required.",
-    pubDate: "2025-12-15",
-    lang: "en",
-  },
-  {
-    title: "How to Create a Pickleball Bracket — Step-by-Step Guide",
-    link: "/blog/how-to-create-pickleball-bracket",
-    description: "Learn how to create a pickleball bracket for round robin, single elimination, and double elimination tournaments. Free bracket generator with real-time scoring.",
-    pubDate: "2025-11-20",
-    lang: "en",
-  },
-  {
-    title: "Pickleball Round Robin Generator — How to Run the Perfect Round Robin Tournament",
-    link: "/blog/pickleball-round-robin-generator-guide",
-    description: "Free pickleball round robin generator with automatic scheduling, court rotation, and live scoring. Learn how to organize the perfect round robin tournament.",
-    pubDate: "2025-10-10",
-    lang: "en",
-  },
-  {
-    title: "Pickleball Scoring Rules Explained — Complete Guide for Beginners & Tournament Play",
-    link: "/blog/pickleball-scoring-rules-guide",
-    description: "Learn pickleball scoring rules for singles, doubles, and tournament play. Rally scoring vs side-out explained. Free digital scoring tool included.",
-    pubDate: "2026-03-15",
-    lang: "en",
-  },
-  {
-    title: "How to Organize a Pickleball Tournament — The Complete Organizer's Checklist",
-    link: "/blog/how-to-organize-pickleball-tournament",
-    description: "Step-by-step guide to organizing a pickleball tournament. Venue, format selection, registration, scheduling, scoring, and free tools. Everything you need to run a successful event.",
-    pubDate: "2026-03-20",
-    lang: "en",
-  },
-  {
-    title: "Pickleball Doubles Strategy — Winning Tips for Tournament Players",
-    link: "/blog/pickleball-doubles-strategy-guide",
-    description: "Master pickleball doubles strategy for tournaments. Partner communication, court positioning, stacking, and when to attack the kitchen. Improve your doubles game today.",
-    pubDate: "2026-03-22",
-    lang: "en",
-  },
-  {
-    title: "Pickleball Tournament Formats Explained — Which One Should You Use?",
-    link: "/blog/pickleball-tournament-formats-explained",
-    description: "Complete guide to pickleball tournament formats: round robin, single elimination, double elimination, MLP team match, and flex tournaments. Choose the right format for your event.",
-    pubDate: "2026-03-25",
-    lang: "en",
-  },
-  {
-    title: "Pickleball Live Streaming — How to Watch & Stream Pickleball Online",
-    link: "/blog/pickleball-live-streaming-guide",
-    description: "Watch pickleball live streams for free. Learn how to stream your own pickleball tournament online with ThePickleHub's free livestreaming platform.",
-    pubDate: "2026-03-29",
-    lang: "en",
-  },
-  {
-    title: "MLP Format Explained — Major League Pickleball Team Match Rules & How to Play",
-    link: "/blog/mlp-format-explained",
-    description: "Learn how the MLP format works in pickleball. Complete guide to Major League Pickleball team match rules, dreambreaker, lineup strategy, and how to organize your own MLP-style event.",
-    pubDate: "2026-03-29",
-    lang: "en",
-  },
-];
+// AUDIT-03 (2026-11-10): EN items come from blogMetadata — the single blog
+// source of truth (same as sitemap + SSR). A hand-kept list of 9 EN posts
+// (2025-12…2026-03) was never updated, so after the merge+slice every EN
+// item fell out and the "bilingual" feed shipped 20 VI items.
+export function buildEnRssItems(meta: readonly BlogPostMetadata[]): RssItem[] {
+  return meta.map((m) => ({
+    title: m.titleEn,
+    link: `/blog/${m.slug}`,
+    description: m.metaDescriptionEn,
+    pubDate: m.publishedDate,
+    lang: "en" as const,
+  }));
+}
 
 function escapeXml(text: string): string {
   if (!text) return "";
@@ -135,8 +84,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     console.error("Supabase error in RSS feed:", err);
   }
 
-  // Merge EN static + VI dynamic, sort by pubDate DESC, take top 20
-  const allItems: RssItem[] = [...EN_POSTS, ...viItems].sort(
+  // Merge EN (metadata) + VI (DB), sort by pubDate DESC, take top 20
+  const allItems: RssItem[] = [...buildEnRssItems(blogMetadata), ...viItems].sort(
     (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime(),
   ).slice(0, 20);
 
@@ -155,6 +104,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   const lastBuildDate = toRfc2822(new Date().toISOString());
 
+  // Channel <language> stays vi-VN (majority audience); each item's
+  // dc:language marks it en or vi-VN.
   const rss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0"
   xmlns:atom="http://www.w3.org/2005/Atom"

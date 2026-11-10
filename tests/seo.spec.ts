@@ -368,10 +368,10 @@ test("first URL of every sitemap segment renders for Googlebot", async () => {
   };
 
   // A title that ends in a separator + ellipsis ("… – Hà Nội |…") is the
-  // byte-truncation bug shape: a pre-check counted CHARS, truncateForSeo cut
-  // BYTES. Vietnamese diacritics are 2-3 bytes, so titles that "fit" get
-  // chopped mid-brand. Legit truncation ends mid-word ("word…"), never in a
-  // dangling separator.
+  // unit-mismatch bug shape: a pre-check counted one unit (chars vs bytes),
+  // the final cut another, so titles that "fit" get chopped mid-brand. The
+  // title cut is 60 chars since AUDIT-01 (was 60 bytes). Legit truncation
+  // ends at a word ("word…"), never in a dangling separator.
   const CUT_TITLE_TAIL = /[|–-]\s*…$/;
   // No exemptions: the venues char-vs-byte pre-check that shipped cut titles
   // was removed (same PR as this line). Prerender cache holds old titles for

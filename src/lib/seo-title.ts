@@ -1,6 +1,9 @@
 /** Shared formatting keeps editorial titles stable before and after JavaScript. */
+/** SERP title budget in Unicode code points (not bytes). */
+export const SEO_TITLE_MAX_CHARS = 60;
+
 /**
- * Build a page title, truncated to 60 chars with optional suffix.
+ * Build a page title, truncated to 60 characters with optional suffix.
  *
  * PR73 Phase 2C (audit I-4) — when the raw title is too long we now
  * break at the last whitespace before the budget instead of a hard
@@ -11,20 +14,17 @@
  * too early in the title).
  */
 export function buildTitle(rawTitle: string, suffix = " | ThePickleHub"): string {
-  const maxTotal = 60;
-  // Budget in BYTES, not characters: buildHtml's truncateForSeo cuts the final
-  // <title> at 60 UTF-8 bytes, and a Vietnamese character costs 2-3 of them.
-  // Counting characters here made this function append " | ThePickleHub" to a
-  // VI title that already had no room for it — e.g. "Thể thức MLP Pickleball |
-  // Luật đồng đội" is 39 chars (fits) but 51 bytes, so the branded version was
-  // 66 bytes and prod served "…Luật đồng đội |…". Measured 2026-07-26.
-  const byteLength = (s: string) => new TextEncoder().encode(s).length;
-  if (byteLength(rawTitle + suffix) <= maxTotal) return rawTitle + suffix;
-  // Raw title alone fits the byte budget: hand it back untouched and let
-  // truncateForSeo be the single place that ever ellipsises.
-  if (byteLength(rawTitle) <= maxTotal) return rawTitle;
+  const maxTotal = SEO_TITLE_MAX_CHARS;
+  // Budget in CHARACTERS (code points), matching truncateTitleForSeo — the
+  // single place that cuts the final <title>. AUDIT-01 (2026-11-10): the old
+  // 60-BYTE budget cut Vietnamese titles at ~40-50 chars ("…Ho Chi…").
+  const charLength = (s: string) => Array.from(s).length;
+  if (charLength(rawTitle + suffix) <= maxTotal) return rawTitle + suffix;
+  // Raw title alone fits: hand it back untouched and let truncateTitleForSeo
+  // be the single place that ever ellipsises.
+  if (charLength(rawTitle) <= maxTotal) return rawTitle;
   const budget = maxTotal - 1;
-  const head = rawTitle.slice(0, budget);
+  const head = Array.from(rawTitle).slice(0, budget).join("");
   const lastSpace = head.lastIndexOf(" ");
   // Require >=50% of the budget to remain after the break — a tiny
   // break early in the title would orphan most of the headline.
@@ -32,6 +32,31 @@ export function buildTitle(rawTitle: string, suffix = " | ThePickleHub"): string
     return head.slice(0, lastSpace).trimEnd() + "\u2026";
   }
   return head.trim() + "\u2026";
+}
+
+/**
+ * Clamp a <title> to `charLimit` code points including the "\u2026".
+ * Same word-boundary rule as truncateForSeo, but counts characters so
+ * Vietnamese diacritics don't eat the budget. Descriptions stay on the
+ * byte-budgeted truncateForSeo.
+ */
+export function truncateTitleForSeo(text: string, charLimit = SEO_TITLE_MAX_CHARS): string {
+  if (!text) return text;
+  const chars = Array.from(text);
+  if (chars.length <= charLimit) return text;
+  return cutAtWord(chars.slice(0, charLimit - 1).join(""));
+}
+
+function cutAtWord(sliced: string): string {
+  // Prefer breaking at the last whitespace within the budget so SERP
+  // previews don't slice mid-word. minKept guards against the case
+  // where a single early word would leave a useless stub like "PPA…"
+  // — for empirical Vietnamese news titles 0.6 of the prefix is the
+  // sweet spot.
+  const lastSpace = sliced.lastIndexOf(" ");
+  const minKept = Math.floor(sliced.length * 0.6);
+  const base = lastSpace >= minKept ? sliced.slice(0, lastSpace) : sliced;
+  return base.replace(/[\s.,;:\-—–]+$/, "") + "\u2026";
 }
 
 const ELLIPSIS_BYTES = 3; // "\u2026" in UTF-8
@@ -59,16 +84,5 @@ export function truncateForSeo(text: string, byteLimit: number): string {
     bytes += cost;
     charIndex = i + 1;
   }
-  const sliced = chars.slice(0, charIndex).join("");
-
-  // Prefer breaking at the last whitespace within the budget so SERP
-  // previews don't slice mid-word. minKept guards against the case
-  // where a single early word would leave a useless stub like "PPA…"
-  // — for empirical Vietnamese news titles 0.6 of the prefix is the
-  // sweet spot.
-  const lastSpace = sliced.lastIndexOf(" ");
-  const minKept = Math.floor(sliced.length * 0.6);
-  const base = lastSpace >= minKept ? sliced.slice(0, lastSpace) : sliced;
-  return base.replace(/[\s.,;:\-—–]+$/, "") + "\u2026";
+  return cutAtWord(chars.slice(0, charIndex).join(""));
 }
-

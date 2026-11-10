@@ -267,3 +267,20 @@ describe("retired /san slugs: _redirects ↔ RETIRED_VENUE_SLUGS", () => {
     for (const [from, to] of Object.entries(mw)) expect(from).not.toBe(to);
   });
 });
+
+// AUDIT-02 (2026-11-10) — /courts and /vi/courts 404'd for Googlebot. Both
+// files must carry the locale-correct pair, or users 301 and bots 404.
+describe("redirect parity: /courts → /san", () => {
+  const mw = parseDict("COURTS_REDIRECTS");
+  const file: Record<string, string> = {};
+  for (const line of redirectsFile.split("\n")) {
+    const m = line.trim().match(/^(\/(?:vi\/)?courts\S*)\s+(\S+)\s+301\b/);
+    if (m) file[m[1]] = m[2];
+  }
+
+  it("middleware and _redirects carry the same locale-correct pair", () => {
+    const expected = { "/courts": "/san", "/vi/courts": "/vi/san" };
+    expect(mw).toEqual(expected);
+    expect(file).toEqual(expected);
+  });
+});
