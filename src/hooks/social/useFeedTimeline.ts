@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { FeedMatch } from "./useFollowingFeed";
 import type { FeedParticipant } from "@/lib/social/feed-formatters";
-import { blogMetadata } from "@/content/blog/metadata";
+import { blogTeasers } from "@/content/blog/teasers";
 
 /**
  * Sprint 7 — single mixed timeline for /feed Trending tab.
@@ -272,7 +272,7 @@ function normalizeRow(row: RpcRow): FeedTimelineItem | null {
 function buildEnBlogItems(): FeedTimelineItem[] {
   const now = Date.now();
   const windowStartMs = now - WINDOW_DAYS * 24 * 60 * 60 * 1000;
-  return blogMetadata
+  return blogTeasers
     .map((post) => {
       const ts = Date.parse(`${post.publishedDate}T00:00:00Z`);
       if (Number.isNaN(ts)) return null;

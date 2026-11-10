@@ -1,5 +1,5 @@
 /// <reference types="vitest" />
-import { defineConfig, loadEnv } from "vite";
+import { createServer, defineConfig, loadEnv } from "vite";
 import { coverageConfigDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react-swc";
 import fs from "fs";
@@ -93,20 +93,34 @@ return ({
         return id === "\0proto-shop-disabled" ? "export default null;\n" : null;
       },
     },
-    // metaTitleEn/metaTitleVi in blog metadata feed only the SSR <title>
-    // (functions/_lib/render/blog-meta.ts builds BLOG_POST_META from the same
-    // file); no client code reads them. Dropping them from the client chunk
-    // saves ~2 KB gz of CODE without splitting the single SEO source of truth.
-    // Build-only, so vitest and Pages Functions still see the full entries.
+    // DEBT-09: the client reads blog metadata only through
+    // src/content/blog/teasers.ts. Evaluate that module at build time and emit
+    // its result as a literal, so metadata.ts (SEO titles, CTA labels, full VI
+    // descriptions — SSR-only, and growing with every post) never reaches a
+    // client chunk. Build-only, so vitest and Pages Functions still see the
+    // real modules.
     {
-      name: "strip-ssr-only-blog-meta",
+      name: "precompute-blog-teasers",
       apply: "build" as const,
-      transform(code: string, id: string) {
-        if (!id.endsWith("/src/content/blog/metadata.ts")) return null;
-        const out = code.replace(/^\s*"?metaTitle(?:En|Vi)"?: ".*",\n/gm, "");
-        // Fail loud if the generated format drifts and nothing matched.
-        if (out === code) throw new Error("strip-ssr-only-blog-meta: no metaTitleEn/Vi line matched");
-        return { code: out, map: null };
+      async load(id: string) {
+        // Fail loud if a client import of the full metadata sneaks back in.
+        if (id.endsWith("/src/content/blog/metadata.ts")) {
+          throw new Error("precompute-blog-teasers: client code imports blog metadata.ts — use @/content/blog/teasers");
+        }
+        if (!id.endsWith("/src/content/blog/teasers.ts")) return null;
+        const server = await createServer({
+          configFile: false,
+          logLevel: "silent",
+          appType: "custom",
+          server: { middlewareMode: true, hmr: false },
+          optimizeDeps: { noDiscovery: true },
+        });
+        try {
+          const { blogTeasers } = await server.ssrLoadModule(id);
+          return `export const blogTeasers = ${JSON.stringify(blogTeasers)};\n`;
+        } finally {
+          await server.close();
+        }
       },
     },
     // Point the two <link> hints and the CSP report-uri at THIS build's
