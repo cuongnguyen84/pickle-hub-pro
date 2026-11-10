@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import {
-  blogMetadata,
+  blogTeasers,
   getBlogPost,
   getRelatedPosts,
   type BlogPost as BlogPostType,
@@ -80,7 +80,7 @@ const BlogPost = () => {
     // the post chunk instead of waiting for that chunk to resolve and React
     // to commit the final <img>. Responsive preload attributes keep mobile
     // from downloading the 1600px original.
-    const hero = blogMetadata.find((item) => item.slug === slug)?.heroImage;
+    const hero = blogTeasers.find((item) => item.slug === slug)?.heroImage;
     const responsiveHero = blogHeroSrcSet(hero?.src);
     let heroPreload: HTMLLinkElement | undefined;
     if (hero) {
@@ -143,7 +143,7 @@ const BlogPost = () => {
   const postUrl = `https://www.thepicklehub.net/blog/${post.slug}`;
   const relatedPosts = getRelatedPosts(post.slug, 3);
   const clusterLinks = buildTournamentClusterLinks(post.slug, "en", (s) =>
-    blogMetadata.some((p) => p.slug === s) ? `/blog/${s}` : undefined,
+    blogTeasers.some((p) => p.slug === s) ? `/blog/${s}` : undefined,
   );
 
   const breadcrumbItems = [

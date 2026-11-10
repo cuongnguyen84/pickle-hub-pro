@@ -4,14 +4,14 @@ import { TheLineLayout } from '@/components/layout';
 import { HreflangTags } from '@/components/seo';
 import { useI18n } from '@/i18n';
 import { AUTHOR_PATH, authorProfile, authorIdentity } from '@/content/authors';
-import { blogMetadata } from '@/content/blog/metadata';
+import { blogTeasers } from '@/content/blog/teasers';
 
 export default function Author() {
   const { setLanguageFromUrl } = useI18n();
   const { pathname } = useLocation();
   const lang = pathname.startsWith('/vi/') ? 'vi' : 'en';
   useEffect(() => { setLanguageFromUrl(lang); }, [lang, setLanguageFromUrl]);
-  const posts = blogMetadata.filter((p) => p.author === authorProfile.name);
+  const posts = blogTeasers.filter((p) => p.author === authorProfile.name);
   return (
     <TheLineLayout title={`${authorProfile.name} | ThePickleHub`} description={authorProfile.role[lang]} active="stories">
       <script type="application/ld+json">{JSON.stringify({ '@context': 'https://schema.org', '@type': 'ProfilePage', mainEntity: authorIdentity(authorProfile.name) })}</script>

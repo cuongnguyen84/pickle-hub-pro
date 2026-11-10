@@ -40,5 +40,6 @@ export async function getBlogPost(slug: string): Promise<BlogPost | undefined> {
 
 export { getRelatedPosts } from "./related";
 
-export { blogMetadata } from "./metadata";
+export { blogTeasers } from "./teasers";
+export type { BlogTeaser } from "./teasers";
 export type { BlogPost, BlogPostMetadata, BlogSection, BlogPostContent } from "./types";

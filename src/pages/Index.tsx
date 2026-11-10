@@ -9,7 +9,7 @@ import { ProTourEventsStrip } from "@/components/live/ProTourEventsStrip";
 import { HomeNewsFeed } from "@/components/home/HomeNewsFeed";
 import { useHomepageStats } from "@/hooks/useHomepageStats";
 import { useNewsletterSubscribe } from "@/hooks/useNewsletterSubscribe";
-import { blogMetadata } from "@/content/blog";
+import { blogTeasers } from "@/content/blog";
 import { usePublishedViBlogPosts } from "@/hooks/useViBlogPosts";
 import { normalizeImageUrl } from "@/lib/url-utils";
 import { blogHeroSrcSet } from "@/lib/image-utils";
@@ -208,7 +208,7 @@ const Index = () => {
       }));
     }
     return pinWorldCupResults(
-      [...blogMetadata].sort(byEffectiveDateDesc((p) => p.publishedDate, (p) => p.updatedDate)),
+      [...blogTeasers].sort(byEffectiveDateDesc((p) => p.publishedDate, (p) => p.updatedDate)),
       (p) => p.slug,
     )
       .slice(0, 6)
