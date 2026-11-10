@@ -67,7 +67,7 @@ export function OrganizationDuprClubCard({ organizationId }: OrganizationDuprClu
         ? "Liên kết CLB DUPR để trận đấu được ghi nhận thuộc CLB của bạn."
         : "Link a DUPR club so matches are recognized under your club.",
     link_btn: language === "vi" ? "Liên kết DUPR Club" : "Link DUPR Club",
-    unlink_btn: language === "vi" ? "Huỷ liên kết" : "Unlink",
+    unlink_btn: language === "vi" ? "Hủy liên kết" : "Unlink",
     no_clubs:
       language === "vi"
         ? "Bạn chưa làm DIRECTOR/ORGANIZER của club DUPR nào. Yêu cầu role trên DUPR trước, sau đó refresh."
@@ -75,7 +75,7 @@ export function OrganizationDuprClubCard({ organizationId }: OrganizationDuprClu
     refresh: language === "vi" ? "Làm mới danh sách" : "Refresh list",
     pick_label: language === "vi" ? "Chọn club" : "Pick a club",
     confirm: language === "vi" ? "Liên kết" : "Link",
-    cancel: language === "vi" ? "Huỷ" : "Cancel",
+    cancel: language === "vi" ? "Hủy" : "Cancel",
     dialog_title: language === "vi" ? "Chọn DUPR Club" : "Pick a DUPR club",
     dialog_desc:
       language === "vi"

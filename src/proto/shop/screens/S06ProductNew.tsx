@@ -140,7 +140,7 @@ export default function S06ProductNew() {
             <div className="tl-shop-notice tl-shop-notice--warn">
               <AlertTriangle size={16} aria-hidden="true" />
               <div>
-                <strong>Đổi danh mục sẽ xoá 7 thông số đã điền</strong> (trọng lượng, độ dày,
+                <strong>Đổi danh mục sẽ xóa 7 thông số đã điền</strong> (trọng lượng, độ dày,
                 chất liệu…) vì danh mục mới dùng bộ thông số khác. Ảnh, tên và giá vẫn giữ
                 nguyên.
                 <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
@@ -317,7 +317,7 @@ export default function S06ProductNew() {
                         Áp cho tất cả
                       </button>
                       <button type="button" className="tl-shop-btn tl-shop-btn--sm">
-                        Huỷ
+                        Hủy
                       </button>
                     </div>
                   </div>

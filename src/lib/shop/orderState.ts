@@ -124,15 +124,15 @@ export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   confirmed: "Shop đang chuẩn bị hàng",
   shipped: "Đang giao",
   delivered: "Đã nhận hàng",
-  cancelled: "Đã huỷ",
+  cancelled: "Đã hủy",
 };
 
 export const ORDER_STATUS_LINE_BUYER: Record<OrderStatus, string> = {
-  pending: "Shop chưa xác nhận — chưa cần làm gì. Huỷ được bất cứ lúc nào.",
+  pending: "Shop chưa xác nhận — chưa cần làm gì. Hủy được bất cứ lúc nào.",
   confirmed: "Người bán đang chuẩn bị hàng — chưa cần làm gì.",
   shipped: "Hàng đang trên đường. Nhận được rồi thì bấm “Tôi đã nhận hàng”.",
   delivered: "Đơn đã xong.",
-  cancelled: "Đơn này đã huỷ.",
+  cancelled: "Đơn này đã hủy.",
 };
 
 export const ORDER_STATUS_TONE: Record<OrderStatus, "ok" | "warn" | "danger" | "muted"> = {
@@ -164,7 +164,7 @@ export const ORDER_H1_BUYER: Record<OrderStatus, string> = {
   confirmed: "Người bán đang chuẩn bị hàng",
   shipped: "Hàng đang trên đường tới anh/chị",
   delivered: "Đơn đã xong",
-  cancelled: "Đơn đã huỷ",
+  cancelled: "Đơn đã hủy",
 };
 
 /**
@@ -179,7 +179,7 @@ export const ORDER_H1_BUYER: Record<OrderStatus, string> = {
  */
 export const ORDER_NOTE_BUYER: Record<Exclude<OrderStatus, "cancelled">, string> = {
   pending:
-    "Shop thường trả lời trong 1–2 ngày. Chưa cần làm gì. Đổi ý thì huỷ được ngay bây giờ.",
+    "Shop thường trả lời trong 1–2 ngày. Chưa cần làm gì. Đổi ý thì hủy được ngay bây giờ.",
   confirmed:
     "Chưa cần làm gì. Khi gửi xong, người bán sẽ đưa mã vận đơn ở đây.",
   shipped:

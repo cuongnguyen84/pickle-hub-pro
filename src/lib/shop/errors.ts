@@ -39,7 +39,7 @@ export function shopErrorMessage(error: unknown): string {
     case "42501":
       return "Bạn không có quyền thực hiện thay đổi này.";
     case "PGRST116":
-      return "Không tìm thấy bản ghi. Có thể nó vừa bị xoá hoặc ngừng bán.";
+      return "Không tìm thấy bản ghi. Có thể nó vừa bị xóa hoặc ngừng bán.";
     default:
       return "Không lưu được. Thử lại giúp em.";
   }
@@ -138,7 +138,7 @@ const ORDER_REASON_MESSAGE: Record<ShopOrderReason, string> = {
   shop_inactive:
     "Shop này đang không mở bán nên chưa nhận đơn. Sản phẩm vẫn nằm trong giỏ.",
   too_many_pending:
-    "Anh/chị đang có 5 đơn chờ shop xác nhận. Chờ shop xử lý xong một đơn, hoặc huỷ bớt, rồi đặt tiếp.",
+    "Anh/chị đang có 5 đơn chờ shop xác nhận. Chờ shop xử lý xong một đơn, hoặc hủy bớt, rồi đặt tiếp.",
   forbidden:
     "Đơn này không thuộc tài khoản đang đăng nhập. Đăng nhập đúng tài khoản rồi mở lại.",
   invalid_payload:

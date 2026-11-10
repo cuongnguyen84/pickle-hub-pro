@@ -233,8 +233,8 @@ export default function S10Settings() {
                 <ul style={{ margin: "8px 0", paddingLeft: 18, lineHeight: 1.6 }}>
                   <li>Ẩn toàn bộ sản phẩm khỏi trang mua hàng ngay lập tức.</li>
                   <li>
-                    <strong>Không huỷ</strong> đơn đang xử lý — anh/chị vẫn phải gửi hàng hoặc
-                    huỷ đúng quy trình cho từng đơn.
+                    <strong>Không hủy</strong> đơn đang xử lý — anh/chị vẫn phải gửi hàng hoặc
+                    hủy đúng quy trình cho từng đơn.
                   </li>
                   <li>Giữ dữ liệu 90 ngày, mở lại được trong thời gian đó.</li>
                 </ul>
@@ -243,7 +243,7 @@ export default function S10Settings() {
                     Vẫn đóng shop
                   </button>
                   <button type="button" className="tl-shop-btn" onClick={() => setCloseOpen(false)}>
-                    Huỷ
+                    Hủy
                   </button>
                 </div>
               </div>

@@ -183,7 +183,7 @@ export default function B09Checkout() {
                 <strong>Chuyển khoản được đối soát bằng tay, không tự động.</strong> Một quản
                 trị viên kiểm tra sao kê rồi mới xác nhận, nên đơn sẽ ở trạng thái &ldquo;Chờ
                 chuyển khoản&rdquo; một lúc kể cả khi ngân hàng báo đã chuyển thành công.
-                Đơn tự huỷ nếu sau 48 giờ chưa thấy tiền về.
+                Đơn tự hủy nếu sau 48 giờ chưa thấy tiền về.
               </div>
             </div>
           )}

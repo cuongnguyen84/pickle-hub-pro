@@ -1180,7 +1180,7 @@ function SpecInput({
             </option>
           ))}
           {/* Giá trị cũ không còn trong danh sách vẫn phải chọn được, nếu không
-              mở trang lên là ô tự nhảy về rỗng và lần lưu sau xoá mất nó. */}
+              mở trang lên là ô tự nhảy về rỗng và lần lưu sau xóa mất nó. */}
           {value && !field.options.includes(value) && <option value={value}>{value}</option>}
         </select>
       ) : (
@@ -1280,7 +1280,7 @@ function RecoveryNotice({
         <strong>Có một bản đang sửa dở trên máy này.</strong>
         <p style={{ margin: "6px 0 10px", lineHeight: 1.55 }}>
           Lưu lúc {new Date(stored.savedAt).toLocaleString("vi-VN")}, và khác với bản trên máy chủ.
-          Anh/chị chọn dùng bản nào — không bản nào bị xoá cho tới khi chọn.
+          Anh/chị chọn dùng bản nào — không bản nào bị xóa cho tới khi chọn.
         </p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button type="button" className="tl-shop-btn tl-shop-btn--sm tl-shop-btn--primary" onClick={onUseLocal}>
@@ -1466,7 +1466,7 @@ function SlugSection({
                 setError(null);
               }}
             >
-              Huỷ
+              Hủy
             </button>
           </div>
         </>
@@ -1545,7 +1545,7 @@ function ArchiveSection({
             <ul style={{ margin: "8px 0", paddingLeft: 18, lineHeight: 1.6 }}>
               <li>Gỡ sản phẩm khỏi trang mua hàng và khỏi tìm kiếm ngay lập tức.</li>
               <li>Thu lại ảnh công khai — người ngoài không mở được ảnh nữa.</li>
-              <li>Không xoá dữ liệu: bật bán lại được bất cứ lúc nào, và về trạng thái nháp.</li>
+              <li>Không xóa dữ liệu: bật bán lại được bất cứ lúc nào, và về trạng thái nháp.</li>
             </ul>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button
@@ -1557,7 +1557,7 @@ function ArchiveSection({
                 {busy ? "Đang ngừng…" : "Vẫn ngừng bán"}
               </button>
               <button type="button" className="tl-shop-btn" onClick={() => setConfirming(false)}>
-                Huỷ
+                Hủy
               </button>
             </div>
             {error && (

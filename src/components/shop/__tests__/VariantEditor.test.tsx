@@ -278,7 +278,7 @@ describe("nothing disappears without being named first", () => {
   it("warns the same way when a whole group is deleted", () => {
     mount();
 
-    fireEvent.click(screen.getAllByRole("button", { name: /Xoá nhóm/ })[1]);
+    fireEvent.click(screen.getAllByRole("button", { name: /Xóa nhóm/ })[1]);
 
     expect(screen.getByRole("alert").textContent).toContain("Thay đổi này bỏ 4 phiên bản");
     expect(matrix()).toHaveLength(4);
@@ -599,7 +599,7 @@ describe("while the product is waiting for review", () => {
     expect(screen.queryByLabelText("Giá trị mới")).toBeNull();
     expect(cell("Giá", "Trắng · 39").disabled).toBe(true);
     expect((screen.getByLabelText("Tên nhóm 1") as HTMLInputElement).disabled).toBe(true);
-    expect(screen.queryByRole("button", { name: /Xoá nhóm/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Xóa nhóm/ })).toBeNull();
     // Read-only, not hidden: the seller can still check what is under review.
     expect(cell("Mã hàng", "Đen · 40").value).toBe("B40");
   });

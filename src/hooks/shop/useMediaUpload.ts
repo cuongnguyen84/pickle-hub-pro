@@ -46,7 +46,7 @@ export const PHASE_LABEL: Record<UploadPhase, string> = {
   finalizing: "Đang xác minh",
   complete: "Xong",
   failed: "Chưa xong",
-  cancelled: "Đã huỷ",
+  cancelled: "Đã hủy",
 };
 
 export const isBusy = (phase: UploadPhase) =>

@@ -92,7 +92,7 @@ export const SELLER_TODO: Record<OrderStatus, string> = {
   confirmed: "Cần đóng gói và gửi hàng",
   shipped: "Đang giao — chờ người mua xác nhận",
   delivered: "Xong",
-  cancelled: "Đã huỷ",
+  cancelled: "Đã hủy",
 };
 
 export type SellerTab = "todo" | "shipping" | "done" | "all";

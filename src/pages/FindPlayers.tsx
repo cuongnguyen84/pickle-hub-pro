@@ -161,7 +161,7 @@ export default function FindPlayers() {
               <button type="button" className="tl-btn green" disabled={posting || fNote.trim().length < 5} onClick={submitRequest} style={{ opacity: posting || fNote.trim().length < 5 ? 0.5 : 1 }}>
                 {posting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} {vi ? "Đăng" : "Post"}
               </button>
-              <button type="button" className="tl-btn" onClick={() => setShowForm(false)}>{vi ? "Huỷ" : "Cancel"}</button>
+              <button type="button" className="tl-btn" onClick={() => setShowForm(false)}>{vi ? "Hủy" : "Cancel"}</button>
             </div>
           </div>
         ) : (

@@ -95,7 +95,7 @@ describe("sellerDue", () => {
       sellerDueLabel(sellerDue(order("X", "pending", -5, -1), NOW)),
       ...Object.values(SELLER_TODO),
     ].join(" ");
-    expect(words).not.toMatch(/tự huỷ|tự động huỷ|quản trị viên/i);
+    expect(words).not.toMatch(/tự hủy|tự động hủy|quản trị viên/i);
   });
 });
 

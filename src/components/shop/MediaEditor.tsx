@@ -111,7 +111,7 @@ const UploadCard = memo(function UploadCard({
             className="tl-shop-btn tl-shop-btn--sm tl-shop-btn--ghost"
             onClick={() => onRemove(item.token)}
           >
-            <X size={14} aria-hidden="true" /> {busy ? "Huỷ" : "Bỏ"}
+            <X size={14} aria-hidden="true" /> {busy ? "Hủy" : "Bỏ"}
           </button>
         </div>
       </div>
@@ -255,7 +255,7 @@ export function ProductMediaSection({
           />
           {full && (
             <span className="tl-shop-hint" style={{ marginTop: 0 }}>
-              Đã đủ {IMAGE_LIMITS.maxPerProduct} ảnh. Xoá bớt để thêm ảnh khác.
+              Đã đủ {IMAGE_LIMITS.maxPerProduct} ảnh. Xóa bớt để thêm ảnh khác.
             </span>
           )}
         </div>
@@ -350,7 +350,7 @@ export function ProductMediaSection({
                     className="tl-shop-btn tl-shop-btn--sm tl-shop-btn--danger"
                     style={ICON_BUTTON}
                     disabled={remove.isPending}
-                    aria-label={`Xoá ảnh ${index + 1}`}
+                    aria-label={`Xóa ảnh ${index + 1}`}
                     onClick={async () => {
                       setError(null);
                       try {
@@ -587,7 +587,7 @@ function ProfileSlot({
                 }
               }}
             >
-              <Trash2 size={14} aria-hidden="true" /> Xoá
+              <Trash2 size={14} aria-hidden="true" /> Xóa
             </button>
           )}
         </div>

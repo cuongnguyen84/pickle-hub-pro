@@ -59,12 +59,12 @@ export default function S09OrderDetail() {
               <div>
                 <strong>Chưa nhận được tiền.</strong> Người mua chọn VietQR. Quản trị viên đối
                 soát sao kê rồi mới xác nhận — anh/chị{" "}
-                <strong>đừng gửi hàng trước khi trạng thái đổi</strong>. Đơn tự huỷ nếu quá 48
+                <strong>đừng gửi hàng trước khi trạng thái đổi</strong>. Đơn tự hủy nếu quá 48
                 giờ không có tiền về.
               </div>
             </div>
             <button type="button" className="tl-shop-btn tl-shop-btn--danger">
-              Đề nghị huỷ đơn
+              Đề nghị hủy đơn
             </button>
           </>
         );
@@ -92,7 +92,7 @@ export default function S09OrderDetail() {
               Ghi nhận đã gửi
             </button>
             <button type="button" className="tl-shop-btn tl-shop-btn--danger">
-              Đề nghị huỷ đơn (hết hàng)
+              Đề nghị hủy đơn (hết hàng)
             </button>
           </div>
         );
