@@ -16,8 +16,7 @@ import * as XLSX from "xlsx";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyShop } from "@/hooks/shop/useSellerApplication";
 import { invokeWithBlobRetry } from "@/lib/edgeInvoke";
-import { shopFrom } from "@/integrations/supabase/shop-client";
-import type { ProductBulkImportInsert } from "@/integrations/supabase/shop-schema";
+import { shopFrom, shopRpc } from "@/integrations/supabase/shop-client";
 
 export interface EnrichedData {
   name: string;
@@ -118,34 +117,85 @@ export function useBulkProductImport() {
     const approved = rows.filter((r) => r.selected && r.status === "done" && r.aiData);
     if (approved.length === 0) return null;
 
+    setPublishing(true);
+    let published = 0;
+    try {
+      for (const row of approved) {
+        const clientToken = crypto.randomUUID();
+        const payload = {
+          title: row.aiData!.name ?? row.name,
+          description: row.aiData!.description ?? "",
+          category_slug: row.categoryOverride ?? row.aiData!.category,
+          price_vnd: row.priceOverride ?? row.aiData!.price_estimate_vnd ?? 0,
+          stock: 0,
+        };
+
+        const { error } = await shopFrom<Record<string, unknown>>("products")
+          .select("id")
+          .limit(0);
+
+        // Use product_create RPC — handles client_token, variant, and slug
+        try {
+          await shopRpc("product_create", {
+            _shop_id: currentShopId,
+            _client_token: clientToken,
+            _payload: payload,
+          });
+          published++;
+        } catch {
+          // RPC throws on validation errors — skip this row
+          continue;
+        }
+      }
+
+      if (published > 0) setRows([]);
+      return published > 0 ? published : null;
+    } catch {
+      return null;
+    } finally {
+      setPublishing(false);
+    }
+  }, [rows, shop.data?.id, user]);
+
+  const publishBatchDirect = useCallback(async (): Promise<number | null> => {
+    const currentShopId = shop.data?.id;
+    if (!currentShopId || !user) return null;
+
+    const approved = rows.filter((r) => r.selected && r.status === "done" && r.aiData);
+    if (approved.length === 0) return null;
+
     const batchId = crypto.randomUUID();
 
-    const inserts: ProductBulkImportInsert[] = approved.map((row) => ({
-      shop_id: currentShopId,
-      slug: row.aiData!.slug,
-      title: row.aiData!.name ?? row.name,
-      description: row.aiData!.description,
-      category_slug: row.categoryOverride ?? row.aiData!.category,
-      specs: row.aiData!.specs ?? {},
-      status: "draft" as const,
-      import_batch_id: batchId,
-      ai_enriched: true,
-      ai_confidence: row.aiConfidence,
-    }));
-
     setPublishing(true);
+    let published = 0;
     try {
-      const { error } = await shopFrom<ProductRow>("products")
-        .insert(inserts[0] as unknown as Record<string, unknown>);
-      if (error) return null;
+      for (const row of approved) {
+        const insert = {
+          shop_id: currentShopId,
+          slug: `${row.aiData!.slug}-${Date.now().toString(36)}`,
+          title: row.aiData!.name ?? row.name,
+          description: row.aiData!.description,
+          category_slug: row.categoryOverride ?? row.aiData!.category,
+          specs: row.aiData!.specs ?? {},
+          condition: "new",
+          client_token: crypto.randomUUID(),
+          import_batch_id: batchId,
+          ai_enriched: true,
+          ai_confidence: row.aiConfidence,
+        };
 
-      // Insert remaining rows one at a time (shop-client insert takes single row)
-      for (let i = 1; i < inserts.length; i++) {
-        await shopFrom<ProductRow>("products").insert(inserts[i] as unknown as Record<string, unknown>);
+        const query = shopFrom<Record<string, unknown>>("products")
+          .insert(insert as unknown as Record<string, unknown>);
+        const result = await query;
+        if (result.error) {
+          console.error("[bulk-import] insert failed:", result.error);
+          continue;
+        }
+        published++;
       }
 
       setRows([]);
-      return inserts.length;
+      return published > 0 ? published : null;
     } finally {
       setPublishing(false);
     }
@@ -172,6 +222,7 @@ export function useBulkProductImport() {
     parseExcel,
     enrichOne,
     publishBatch,
+    publishBatchDirect,
     downloadTemplate,
     reset,
     updateRow,
