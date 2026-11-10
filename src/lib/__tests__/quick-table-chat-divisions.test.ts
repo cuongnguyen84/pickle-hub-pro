@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyPatch, divisionBase, divisionsAsked, factualAck, fallbackReply, nextDivisionDraft, nextSlot, unsupportedFormatNote, wantsRankSeries, type Draft } from "@/lib/quick-table-chat";
+import { applyPatch, divisionBase, divisionsAsked, factualAck, fallbackReply, nextDivisionDraft, nextSlot, replyFromDraft, unsupportedFormatNote, wantsRankSeries, type Draft } from "@/lib/quick-table-chat";
 
 // Ca Anora Reunion 09/11: 2 hạng beginner + intermediate trong một giải → mỗi hạng một giải, tạo tiếp hạng sau.
 describe("chat → nhiều hạng = chuỗi giải liên tiếp", () => {
@@ -87,5 +87,49 @@ describe("chat → nhiều hạng = chuỗi giải liên tiếp", () => {
     const names = Array.from({ length: 20 }, (_, i) => ({ p1: `Người ${i + 1}` }));
     const pasted = applyPatch(d, { entries: names });
     expect(nextSlot(pasted)).toBe("pairing");
+  });
+});
+
+// Ca log 116 (10/11/2026): người dùng liệt kê 6 hạng từng dòng kèm số đội, kèm
+// DreamBreaker + tranh hạng 3. Intent bị xếp "fill", reply rỗng — không ai trả
+// lời. Fixture dùng nguyên văn user_text của log (không có dữ kiện cá nhân).
+const LOG116 = "Create a round robin format only 1 bracket, for pickleball tournament for our tournament, we are the host and organizer, fixed partners. Create as well a dreambreaker, just incase there's a tie, and this will be point system. Create this per categorty, premiliminary, seeding, semi-finals, battle for 3rd, championship match.\n\n6 Novice Mens\n6 Novice Women\n6 Low Intemediate Womens\n6 Low Intermediate Mens\n6 High Intermediate Mens\n6 Mixed Doubles Open Category";
+
+describe("ca log 116: hạng liệt kê từng dòng kèm số đội", () => {
+  it("divisionsAsked bắt đủ 6 nhãn hạng như người dùng viết", () => {
+    expect(divisionsAsked(LOG116, "en")).toEqual([
+      "Novice Mens", "Novice Women", "Low Intemediate Womens",
+      "Low Intermediate Mens", "High Intermediate Mens", "Mixed Doubles Open Category",
+    ]);
+  });
+
+  it("nhánh fill vẫn gọi tên luật mỗi hạng một giải dù reply của AI rỗng", () => {
+    const ack = replyFromDraft({}, {}, "", "en", LOG116);
+    expect(ack).toMatch(/One tournament per division/);
+    expect(ack).toMatch(/Novice Mens first/);
+  });
+
+  it("fallback theo unmet vẫn gọi tên luật mỗi hạng một giải", () => {
+    const note = fallbackReply("unsupported", "Muốn nhiều hạng trong một giải", "en", LOG116);
+    expect(note).toMatch(/One tournament per division/);
+  });
+
+  it("không nhầm danh sách người chơi có số đầu dòng là hạng", () => {
+    expect(divisionsAsked("6 Nam\n6 Hung\n6 Tuan\n6 Linh", "vi")).toBeNull();
+    expect(divisionsAsked("8 teams round robin, 2 groups", "en")).toBeNull();
+  });
+
+  it("DreamBreaker trong giải thường: gọi đích danh chưa hỗ trợ + thay thế gần nhất", () => {
+    const note = unsupportedFormatNote("add a dreambreaker just in case there's a tie", "en");
+    expect(note).toMatch(/DreamBreaker/);
+    expect(note).toMatch(/MLP/);
+    const vi = fallbackReply("unsupported", "Muốn DreamBreaker khi hòa", "vi", "thêm dreambreaker khi hòa nhé");
+    expect(vi).toMatch(/DreamBreaker/);
+    expect(vi).toMatch(/chưa có/);
+  });
+
+  it("tranh hạng 3 trong giải thường: gọi đích danh chưa hỗ trợ", () => {
+    expect(unsupportedFormatNote("semi-finals, battle for 3rd, championship match", "en")).toMatch(/3rd-place match isn't available/);
+    expect(unsupportedFormatNote("có trận tranh hạng 3 không", "vi")).toMatch(/Trận tranh hạng 3 chưa có/);
   });
 });
