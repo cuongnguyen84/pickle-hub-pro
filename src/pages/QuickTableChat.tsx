@@ -763,6 +763,16 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     const spoken = applySpokenEdit(patched, msg.text);
     const next = spoken ?? patched;
     let ack = replyFromDraft(draft, next, said, lang, msg.text);
+    // Ca log 116 (10/11/2026): intent "fill" + reply rỗng + unmet — nhánh fill
+    // trước đây không có chốt chặn: factualAck hụt nhận diện là lượt đó im lặng.
+    // Có unmet mà AI không nói gì thì gắn câu fallback gọi đích danh phần chưa hỗ trợ.
+    if (!said.trim() && res.unmet) {
+      const note = fallbackReply("unsupported", res.unmet, lang, msg.text);
+      if (!ack.includes(note.replace(/\.+$/, ""))) {
+        const unchangedAck = ack === "Bản nháp chưa đổi." || ack === "The draft did not change.";
+        ack = unchangedAck || !ack ? note : `${note} ${ack}`;
+      }
+    }
     const plan = draftSeriesPlan(next);
     if (plan && !next.advance_per_group && next.series_sizes && next.series_sizes.join() !== draft.series_sizes?.join()) {
       const line = plan.map((sl, i) => seriesLine(seriesName(next.series_style ?? "series", i, lang), sl, lang, c.unit(next))).join(" · ");

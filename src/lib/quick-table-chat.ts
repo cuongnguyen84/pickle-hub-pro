@@ -316,6 +316,19 @@ export function unsupportedFormatNote(text: string, lang: "vi" | "en"): string |
   }
   const divs = divisionsAsked(text, lang);
   if (divs) return divisionNote(divs, lang);
+  // DreamBreaker là của giải đồng đội MLP; xin trong giải thường (ca log 116,
+  // 10/11/2026) phải gọi đích danh là chưa hỗ trợ, không lặng lẽ bỏ qua.
+  if (/dream ?breaker/.test(t)) {
+    return lang === "vi"
+      ? "DreamBreaker chỉ có ở giải đồng đội MLP — giải thường chưa có. Hòa điểm trên bảng xếp hạng được phân định bằng hiệu số và đối đầu trực tiếp"
+      : "A DreamBreaker only exists in MLP team matches — regular tournaments don't have one. Tied standings are settled by point differential and head-to-head results";
+  }
+  // Tranh hạng 3: bảng đấu thường chưa có (chỉ đồng đội MLP loại trực tiếp mới có).
+  if (/(battle for (3rd|third)|3rd[ -]?place match|third[ -]?place match|tranh hang (3|ba)\b)/.test(t)) {
+    return lang === "vi"
+      ? "Trận tranh hạng 3 chưa có ở thể thức này. Gần nhất: vòng bảng vòng tròn rồi playoff loại trực tiếp tới chung kết — mình làm vậy nhé"
+      : "A 3rd-place match isn't available in this format yet. Closest: round-robin groups, then a single-elimination playoff to the final — I'll set that up";
+  }
   return null;
 }
 
@@ -337,6 +350,25 @@ export function divisionsAsked(text: string, lang: "vi" | "en"): string[] | null
   // Khớp trên chữ thường còn dấu để giữ nguyên nhãn người dùng gõ ("Trung bình", không thành "Trung binh").
   const list = text.toLocaleLowerCase("vi").match(LEVEL_LIST)?.[0].match(LEVEL_ONE);
   if (list) return list.map((l) => l[0].toLocaleUpperCase("vi") + l.slice(1));
+  // Ca log 116 (10/11/2026): các hạng liệt kê từng dòng kèm số đội ở đầu dòng
+  // ("6 Novice Mens", "6 Low Intermediate Mens", "6 Mixed Doubles Open
+  // Category") — LEVEL_LIST không bắt được vì giữa các mức trình còn số đếm,
+  // tên giới và dấu xuống dòng. Nhãn giữ nguyên chữ người dùng, chỉ làm sạch ký
+  // tự đặc biệt vì divisionBase ghép nhãn vào RegExp.
+  const CAT_SIGNAL = /(men'?s?\b|women'?s?\b|mixed|novice|beginner|intermediate|advanced|\bopen\b|categor\w+|division|\bhang\b|\btrinh\b|doi nam|doi nu)/;
+  const catLabel = (x: string) => x.replace(/[^\p{L}\p{N} .'’-]/gu, " ").replace(/\s+/g, " ").trim();
+  const capFirst = (l: string) => (l ? l[0].toLocaleUpperCase("vi") + l.slice(1) : l);
+  const segments = text.split(/[\n/;]+/).map((x) => x.trim()).filter(Boolean);
+  const counted = segments
+    .map((seg) => seg.match(/^(\d+)\s+(.+)$/))
+    .filter((m): m is RegExpMatchArray => !!m && CAT_SIGNAL.test(fold(m[2])))
+    .map((m) => catLabel(m[2]));
+  if (counted.length >= 2) return counted.map(capFirst);
+  // Không có số đầu dòng nhưng nói rõ "per category/division" + liệt kê từng dòng.
+  if (/\bper (catego\w+|division|hang)\b/.test(t)) {
+    const plain = segments.filter((seg) => seg.length <= 40 && CAT_SIGNAL.test(fold(seg))).map(catLabel);
+    if (plain.length >= 2) return plain.map(capFirst);
+  }
   const n = !/vong loai|nhanh|series|playoff|knockout/.test(t) && t.match(DIV_COUNT)?.[1];
   // ponytail: "ba/three hạng" vẫn ra 2 nhãn; số thì đúng số. Hạng sau cùng người dùng tự tạo tiếp.
   return n ? Array.from({ length: Math.max(2, +n || 2) }, (_, i) => (lang === "vi" ? `Hạng ${i + 1}` : `Division ${i + 1}`)) : null;
