@@ -3,7 +3,7 @@
 // import.meta.glob (Cloudflare Pages Functions / the SSR bot path).
 //
 // Loaders, not values, on purpose: _middleware.ts runs for EVERY request, and
-// a static import list would construct all 110 post objects at worker
+// a static import list would construct all 112 post objects at worker
 // startup. esbuild wraps dynamically-imported modules in lazy __esm() inits, so
 // a request only pays for the one post it renders.
 //
@@ -49,6 +49,7 @@ export const blogPostLoaders: Record<string, () => Promise<{ default: BlogPost }
   "mlp-nations-cup-2026-results": () => import("./mlp-nations-cup-2026-results"),
   "mlp-orlando-super-sunday-2026-best-game": () => import("./mlp-orlando-super-sunday-2026-best-game"),
   "mlp-vs-ppa-2026-which-tour-to-watch": () => import("./mlp-vs-ppa-2026-which-tour-to-watch"),
+  "new-paddles-world-championships-2026": () => import("./new-paddles-world-championships-2026"),
   "pickleball-club-management-software-comparison": () => import("./pickleball-club-management-software-comparison"),
   "pickleball-cost-vietnam-2026": () => import("./pickleball-cost-vietnam-2026"),
   "pickleball-court-dimensions-setup-guide": () => import("./pickleball-court-dimensions-setup-guide"),
@@ -120,6 +121,7 @@ export const blogPostLoaders: Record<string, () => Promise<{ default: BlogPost }
   "virginia-beach-open-2026-results": () => import("./virginia-beach-open-2026-results"),
   "what-is-dupr-pickleball-rating-system": () => import("./what-is-dupr-pickleball-rating-system"),
   "why-your-backhand-flick-has-no-power": () => import("./why-your-backhand-flick-has-no-power"),
+  "world-championships-2026-new-generation-analysis": () => import("./world-championships-2026-new-generation-analysis"),
   "world-pickleball-rankings-wpr-explained": () => import("./world-pickleball-rankings-wpr-explained"),
 };
 

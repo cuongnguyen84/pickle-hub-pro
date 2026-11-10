@@ -96,6 +96,8 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/mlp-vs-ppa-2026-which-tour-to-watch-hero.webp": [1536, 1024],
   "/images/blog/new-jersey-mlp-2026-analysis-hero-768.webp": [768, 512],
   "/images/blog/new-jersey-mlp-2026-analysis-hero.webp": [1920, 1280],
+  "/images/blog/new-paddles-world-championships-2026-hero-768.webp": [768, 512],
+  "/images/blog/new-paddles-world-championships-2026-hero.webp": [1536, 1024],
   "/images/blog/pickleball-club-management-software-comparison-hero-768.webp": [768, 403],
   "/images/blog/pickleball-club-management-software-comparison-hero.webp": [1731, 909],
   "/images/blog/pickleball-cost-vietnam-2026-hero-768.webp": [768, 512],
@@ -255,6 +257,8 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/wc-2026-from-the-stands-team-vn.webp": [1600, 2133],
   "/images/blog/why-your-backhand-flick-has-no-power-hero-768.webp": [768, 512],
   "/images/blog/why-your-backhand-flick-has-no-power-hero.webp": [1536, 1024],
+  "/images/blog/world-championships-2026-new-generation-analysis-hero-768.webp": [768, 512],
+  "/images/blog/world-championships-2026-new-generation-analysis-hero.webp": [1536, 1024],
   "/images/blog/world-pickleball-rankings-wpr-hero-768.webp": [768, 432],
   "/images/blog/world-pickleball-rankings-wpr-hero.webp": [1600, 900],
 };

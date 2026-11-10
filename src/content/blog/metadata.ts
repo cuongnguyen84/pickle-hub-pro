@@ -10,6 +10,64 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "world-championships-2026-new-generation-analysis",
+    "publishedDate": "2026-11-10",
+    "updatedDate": "2026-11-10",
+    "author": "The PickleHub Team",
+    "tags": [
+      "world championships 2026",
+      "tama shimabukuro",
+      "john lucian goins",
+      "anna leigh waters",
+      "ppa tour",
+      "analysis"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/world-championships-2026-new-generation-analysis-hero.webp",
+      "alt": "John Lucian Goins lifts the World Championships trophy after winning the men's singles title at Brookhaven Country Club, with the Opendoor Pickleball World Championships badge"
+    },
+    "titleEn": "A 15-Year-Old and an 18-Year-Old Won at Worlds. Waters Didn't Blink.",
+    "titleVi": "Một cậu bé 15 tuổi và một chàng trai 18 tuổi vô địch Worlds. Waters vẫn không chớp mắt.",
+    "metaTitleEn": "Worlds 2026 Analysis: The New Generation Arrives",
+    "metaTitleVi": "Phân tích Worlds 2026: thế hệ mới lên ngôi",
+    "metaDescriptionEn": "A 15-year-old and an 18-year-old won at Worlds 2026, but Anna Leigh Waters didn't blink. Analysis of pickleball's new generation — and the Daytona test.",
+    "metaDescriptionVi": "Shimabukuro (15 tuổi) và Goins (18 tuổi) vô địch Worlds 2026, Waters vẫn thống trị. Phân tích thế hệ mới và phép thử Daytona."
+  },
+  {
+    "slug": "new-paddles-world-championships-2026",
+    "publishedDate": "2026-11-10",
+    "updatedDate": "2026-11-10",
+    "author": "The PickleHub Team",
+    "tags": [
+      "new pickleball paddles 2026",
+      "foam core",
+      "upa-a",
+      "proton",
+      "paddletek",
+      "pickleball gear"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Watch live tournaments on ThePickleHub",
+      "vi": "Xem giải trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/new-paddles-world-championships-2026-hero.webp",
+      "alt": "Three unbranded carbon-fiber pickleball paddles and a ball resting on a blue court beside the net at sunset"
+    },
+    "titleEn": "The New Paddles Pros Unveiled at Worlds 2026 — and What They Mean for Your Game",
+    "titleVi": "Vợt mới các tay vợt pro trình làng tại Worlds 2026 — và ý nghĩa với người chơi phong trào",
+    "metaTitleEn": "New Paddles at Worlds 2026: What Pros Played",
+    "metaTitleVi": "Vợt mới tại Worlds 2026: pro dùng gì?",
+    "metaDescriptionEn": "Foam cores, NanoTac grip surfaces and a new UPA-A stamp: the four paddle storylines from Worlds 2026 and what trickles down to club players.",
+    "metaDescriptionVi": "Lõi foam, mặt NanoTac và dấu phê duyệt UPA-A: 4 câu chuyện vợt tại Worlds 2026 và công nghệ nào sẽ xuống sân phong trào."
+  },
+  {
     "slug": "vietnam-junior-world-championships-2026",
     "publishedDate": "2026-11-02",
     "updatedDate": "2026-11-02",
