@@ -330,7 +330,7 @@ Số byte do agent đếm tay theo UTF-8 (chữ có dấu tiếng Việt chiếm
 | `/vi/shop/product/<slug>` ×22, `/shop/product/<slug>` ×22 | Route có tồn tại; slug sản phẩm lấy từ yêu cầu. **Chưa xác nhận bản EN dùng cùng slug** |
 | `/vi/blog/vot-pickleball-graphite-hay-carbon` | Theo yêu cầu. Không tìm thấy trong repo (bản VI nằm ở Supabase) → **cần xác minh** |
 | `/blog/graphite-vs-carbon-pickleball-paddle` | Có trong `metadata.ts` |
-| `/vi/blog/vot-pickleball-tot-nhat-cho-nguoi-moi-2026`, `/vi/blog/cach-choi-pickleball-cho-nguoi-moi` | Có trong `thepicklehub.net-audit/all-urls.tsv` |
+| `/vi/blog/vot-pickleball-tot-nhat-cho-nguoi-moi-2026`, `/vi/blog/cach-choi-pickleball-cho-nguoi-moi` | Có trong `thepicklehub.net-audit/all-urls.tsv` (bản audit cũ, đã xoá khỏi repo 10/11/2026) |
 | `/vi/blog/dau-khuyu-tay-khi-choi-pickleball` | Có trong danh sách `vi_posts` (published) của dữ liệu editorial |
 | `/blog/pickleball-elbow-pain-causes-safe-steps`, `/blog/best-pickleball-paddles-beginners-2026`, `/blog/how-to-play-pickleball` | Có trong repo (file post / internalLinks bài cũ) |
 | `/tournaments`, `/vi/tournaments` | Có trong `route-snapshot.json` |

@@ -1,18 +1,23 @@
 /**
- * Master sitemap-index — references the 6 segment sitemaps.
+ * Master sitemap-index. Lists exactly SEGMENT_PATHS below, in this order:
+ *   /sitemap-static.xml        — landing + tools + privacy/terms (static URLs)
+ *   /sitemap-blog.xml          — EN + VI blog posts (with hreflang)
+ *   /sitemap-news.xml          — VI news only, 90-day window
+ *   /sitemap-tournaments.xml   — public tournaments
+ *   /sitemap-events.xml        — social events
+ *   /sitemap-players.xml       — opt-in VN profiles with real content
+ *   /sitemap-videos.xml        — replays
+ *   /sitemap-livestreams.xml   — livestreams
+ *   /sitemap-organizations.xml — organizations
+ *   /sitemap-venues.xml        — venues + city hubs
+ * plus /sitemap-shop.xml only when SHOP_PUBLIC_INDEXING === "1".
  *
- * Phase 3B.3 split the legacy monolithic /sitemap.xml into 6 segments:
- *   /sitemap-static.xml      — landing + tools + privacy/terms (static URLs)
- *   /sitemap-blog.xml        — EN + VI blog posts (with hreflang)
- *   /sitemap-tournaments.xml — public tournaments
- *   /sitemap-matches.xml     — verified + pending matches < 365d
- *   /sitemap-players.xml     — non-ghost VN profiles (PlayerProfile SSR live)
- *   /sitemap-venues.xml      — venues + city hubs (renderVenueDetail SSR live)
+ * /sitemap-matches.xml is DELISTED (2026-09-07) but the endpoint still
+ * answers 200 — see the note inside SEGMENT_PATHS.
  *
- * Both player and venue detail pages now ship bot-prerender SSR
- * (renderPlayerProfile / renderVenueDetail), so every emitted URL resolves
- * to a real 200 with schema — no longer the early "warm the pipeline before
- * the page exists" placeholder this index started as.
+ * tournaments, players, videos, livestreams and organizations list only the
+ * non-/vi URL: /vi/<entity>/<id> 301s to it (_middleware.ts rule 1d), so a
+ * /vi entry here would advertise a redirect.
  */
 
 import {

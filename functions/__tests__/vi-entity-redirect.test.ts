@@ -14,6 +14,8 @@
 // full render off the same URL.
 // ============================================================================
 
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { onRequest } from "../_middleware";
 
@@ -66,4 +68,19 @@ describe("single-canonical /vi entity redirects", () => {
       expect((await invoke(p)).status).not.toBe(301);
     }
   });
+});
+
+describe("single-canonical entity sitemaps", () => {
+  // The /vi twin 301s, so a sitemap listing it would advertise a redirect.
+  it.each(["tournaments", "players", "organizations", "livestreams", "videos"])(
+    "sitemap-%s.xml builds no /vi/ URL",
+    (segment) => {
+      const src = readFileSync(
+        resolve(import.meta.dirname, `../sitemap-${segment}.xml.ts`),
+        "utf8",
+      );
+      expect(src).not.toMatch(/\}\/vi\//);
+      expect(src).not.toMatch(/["'`]\/vi\//);
+    },
+  );
 });
