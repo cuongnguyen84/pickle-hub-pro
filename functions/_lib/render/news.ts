@@ -98,7 +98,7 @@ async function renderNewsArticleByLang(
   // impressions from 12 pages out of 1,551, and every page in that set we
   // could attribute was a /vi/ one. So this costs no measured traffic while
   // removing 746 duplicate URLs — 19% of the index — from the scaled-content
-  // exposure. Full workings in thepicklehub.net-audit/ACTION-PLAN.md (C3).
+  // exposure. (Audit item C3, 2026-08-25.)
   //
   // noindex,follow rather than nofollow: the related-news strip and the /news
   // hub should still pass equity, and Google has to keep crawling these to

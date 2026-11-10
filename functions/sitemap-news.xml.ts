@@ -1,19 +1,14 @@
 /**
  * /sitemap-news.xml
  *
- * Phase 4 of the news aggregator feature.
+ * A regular <urlset> of /vi/news/* URLs — NOT a Google News sitemap (no
+ * news: namespace, no publication_date). Since C3 (2026-08-25) it is VI-only:
+ * EN news pages are noindex (they duplicate the original publisher), so they
+ * must not be listed. Each VI URL self-references with vi + x-default.
  *
- * Lists every published news_items row with bidirectional hreflang. Each
- * EN row may have a VI sibling (produced by news-translate via
- * parent_news_id); we surface both URLs with the appropriate hreflang
- * pair. EN rows without a VI sibling get a single-language entry — the
- * VI URL is intentionally omitted rather than self-aliased so Google
- * doesn't index a non-existent page.
- *
- * Implementation note: we load both EN and VI rows in one query, group
- * by parent_news_id, then emit one urlset entry per pair. This is the
- * same shape as sitemap-blog.xml's pattern; the difference is we group
- * server-side because news rows don't carry the sibling slug directly.
+ * Only articles published in the last NEWS_SITEMAP_WINDOW_DAYS (90) are
+ * listed — a crawl-budget throttle, not an index boundary. Older articles
+ * stay 200 and linked; they are just no longer advertised.
  *
  * Rows are fetched in pages of 1000 (PostgREST's hard cap) via
  * fetchAllRows. A split (sitemap-news-2026.xml etc.) would be needed at

@@ -652,6 +652,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   //       for either, so a human hard-navigating one got the NotFound page
   //       while bots got a full render. Only the id form is matched, so the
   //       real VI listing pages (/vi/live, /vi/tournaments) are untouched.
+  //
+  //       Intentional until these entities get a real VI render. Their
+  //       sitemaps list only the non-/vi URL with no hreflang — listing the
+  //       /vi twin would advertise a 301 (locked in vi-entity-redirect.test).
   const viOrgMatch = url.pathname.match(
     /^\/vi\/(org|tournament|watch|tran-dau|nguoi-choi|live)\/([^/?#]+)$/,
   );
