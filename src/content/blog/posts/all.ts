@@ -3,7 +3,7 @@
 // import.meta.glob (Cloudflare Pages Functions / the SSR bot path).
 //
 // Loaders, not values, on purpose: _middleware.ts runs for EVERY request, and
-// a static import list would construct all 113 post objects at worker
+// a static import list would construct all 115 post objects at worker
 // startup. esbuild wraps dynamically-imported modules in lazy __esm() inits, so
 // a request only pays for the one post it renders.
 //
@@ -68,6 +68,7 @@ export const blogPostLoaders: Record<string, () => Promise<{ default: BlogPost }
   "pickleball-doubles-strategy-guide": () => import("./pickleball-doubles-strategy-guide"),
   "pickleball-elbow-pain-causes-safe-steps": () => import("./pickleball-elbow-pain-causes-safe-steps"),
   "pickleball-erne-shot-tutorial": () => import("./pickleball-erne-shot-tutorial"),
+  "pickleball-first-doping-testing-european-open": () => import("./pickleball-first-doping-testing-european-open"),
   "pickleball-for-kids-drills-gear-session-length": () => import("./pickleball-for-kids-drills-gear-session-length"),
   "pickleball-for-older-adults-safe-start": () => import("./pickleball-for-older-adults-safe-start"),
   "pickleball-for-tennis-players-2026": () => import("./pickleball-for-tennis-players-2026"),
@@ -81,6 +82,7 @@ export const blogPostLoaders: Record<string, () => Promise<{ default: BlogPost }
   "pickleball-rules-complete-guide": () => import("./pickleball-rules-complete-guide"),
   "pickleball-scoring-rules-guide": () => import("./pickleball-scoring-rules-guide"),
   "pickleball-singles-strategy": () => import("./pickleball-singles-strategy"),
+  "pickleball-stacking-guide-own-the-middle": () => import("./pickleball-stacking-guide-own-the-middle"),
   "pickleball-third-shot-drop-vs-drive": () => import("./pickleball-third-shot-drop-vs-drive"),
   "pickleball-tour-wars-2023-explained": () => import("./pickleball-tour-wars-2023-explained"),
   "pickleball-tournament-budget-calculator-guide": () => import("./pickleball-tournament-budget-calculator-guide"),
