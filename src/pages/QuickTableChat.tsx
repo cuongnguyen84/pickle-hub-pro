@@ -24,10 +24,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { getSiteUrl } from "@/lib/auth-config";
 import { localePath } from "@/lib/locale-path";
 import { cn } from "@/lib/utils";
-import { rankSeriesSizes, seriesLine, seriesName, seriesPlan, slot as seriesSlot, type SeriesStyle } from "@/lib/quick-table-series";
+import { seriesLine, seriesName, seriesPlan, slot as seriesSlot, type SeriesStyle } from "@/lib/quick-table-series";
 import {
   applyPatch, applySpokenEdit, buildRoster, chatFacts, customSeries, defaultName, draftSeriesPlan, dropInventedRoster, duplicateIndexes, entryCount, entryLabel, factualAck, findGroupOption, googleSheetRef, groupChoices, groupSuggestion,
-  fallbackReply, groupCourtsLine, mergeTm, nextTmSlot, tmAnswer, tmDefaultName, tmKnockoutOk, tmPlayoffCount, wantsTeamMatch, divisionsAsked, divisionBase, nextDivisionDraft, teamLists, pairTeamLists, type TeamList, groupSizes, keepOrAssign, localSlotPatch, lockAdvance, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, messageNeedsModel, needsPairing, nextSlot, pairEntries, parseSheet, playoffSummary, previewAssignments, replyFromDraft, seriesCap, trustPatch,
+  fallbackReply, groupCourtsLine, mergeTm, nextTmSlot, tmAnswer, tmDefaultName, tmKnockoutOk, tmPlayoffCount, wantsTeamMatch, divisionsAsked, divisionBase, divisionDraft, divisionLists, divisionNote, nextDivisionDraft, rankSeriesOffer, unmetWantsDivisions, teamLists, pairTeamLists, type TeamList, groupSizes, keepOrAssign, localSlotPatch, lockAdvance, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, messageNeedsModel, needsPairing, nextSlot, pairEntries, parseSheet, playoffSummary, previewAssignments, replyFromDraft, seriesCap, trustPatch,
   type Draft, type Entry, type GroupOption, type PairingMode, type Slot, type TmDraft, type TmFormat,
 } from "@/lib/quick-table-chat";
 import { createTeamMatchTournament } from "@/hooks/useTeamMatch";
@@ -37,7 +37,8 @@ import { toast } from "@/hooks/use-toast";
 type Lang = "vi" | "en";
 /** label: thứ hiện trên bong bóng khi khác nội dung gửi AI (vd tên file thay cho cả bảng CSV). */
 interface Msg { id: string; role: "user" | "bot"; text: string; label?: string }
-interface Divisions { labels: string[]; done: number }
+/** lists: tên từng hạng đã dán ("Trình A" + tên…) — hạng sau lấy đúng danh sách của nó. */
+interface Divisions { labels: string[]; done: number; lists?: TeamList[] }
 /** Ảnh/PDF gửi kèm cho Gemini đọc — chỉ nằm trong request, không lưu localStorage. */
 interface Attachment { mime_type: string; data: string }
 /** entries: bảng tính đọc được tại chỗ → vào nháp luôn, không gọi AI. append: gộp vào danh sách đang có. */
@@ -104,7 +105,8 @@ const COPY = {
     series: (u: string) => `Sau vòng bảng? Một vòng: 2 ${u} đầu mỗi bảng. Nhiều vòng: mạnh vào vòng đầu, còn lại vòng sau.`,
     seriesOne: "Một vòng loại", seriesOneSub: (u: string) => `2 ${u} đứng đầu mỗi bảng đi tiếp`,
     seriesMany: (names: string[]) => `${names.length} vòng: ${names.join(" + ")}`,
-    seriesByRank: "Mỗi hạng một vòng",
+    seriesByRank: "Mỗi thứ hạng bảng một vòng",
+    seriesByRankWarn: (k: number, u: string) => `Lưu ý: vòng nào cũng chỉ 2 ${u} — thành ${k} trận tranh thứ hạng, mỗi vòng một trận.`,
     optStyle: (s: SeriesStyle): string => (s === "medal" ? "Đổi tên: Vòng loại 1, 2" : "Đổi tên: Vàng, Bạc"),
     roster: (u: string) => `Đã có danh sách ${u} chưa?`,
     pasteNow: "Dán danh sách tên",
@@ -179,6 +181,7 @@ const COPY = {
     another: "Tạo giải khác",
     divSame: (n: string) => `Tạo tiếp “${n}” — cùng danh sách`,
     divNew: (n: string) => `Tạo tiếp “${n}” — danh sách khác`,
+    divList: (n: string, k: number) => `Tạo tiếp “${n}” — ${k} tên đã dán`,
     tmIntro: "Kiểu MLP / đổi partner → giải Đồng đội MLP: các đội đấu nhau, mỗi trận vài game đôi.",
     tmTeams: "Có bao nhiêu đội?",
     tmRoster: "Mỗi đội mấy người?",
@@ -251,7 +254,8 @@ const COPY = {
     series: (u: string) => `After the groups? One playoff: top 2 ${u} per group. Several: stronger to the first, rest to the next.`,
     seriesOne: "One playoff", seriesOneSub: (u: string) => `Top 2 ${u} from each group go on`,
     seriesMany: (names: string[]) => `${names.length} brackets: ${names.join(" + ")}`,
-    seriesByRank: "One bracket per place",
+    seriesByRank: "One playoff per group place",
+    seriesByRankWarn: (k: number, u: string) => `Heads-up: every playoff has only 2 ${u} — that's ${k} single-match placement games.`,
     optStyle: (s: SeriesStyle): string => (s === "medal" ? "Rename: Series A, B" : "Rename: Gold, Silver"),
     roster: (u: string) => `Got the list of ${u}?`,
     pasteNow: "Paste now",
@@ -326,6 +330,7 @@ const COPY = {
     another: "Create another",
     divSame: (n: string) => `Create “${n}” next — same list`,
     divNew: (n: string) => `Create “${n}” next — different list`,
+    divList: (n: string, k: number) => `Create “${n}” next — the ${k} names you pasted`,
     tmIntro: "MLP-style / rotating partners → MLP Team Match: teams face off over several doubles games.",
     tmTeams: "How many teams?",
     tmRoster: "How many players per team?",
@@ -603,6 +608,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
 
   const send = async (out?: Outgoing, isRetry = false) => {
     let msg = out ?? { text: input.trim() };
+    let divs: string[] | null = null;
     // File vừa chọn vẫn phải đi tiếp dù lượt trước đang bận — nếu không, bấm file xong im luôn.
     if (!msg.text || (busy && !out)) return;
     // Lệnh gõ tay, xử lý tại chỗ không gọi AI.
@@ -615,8 +621,20 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       setTeamPaste(null);
       if (tm || wantsTeamMatch(msg.text)) { setInput(""); pushUser(msg.text); tmStep(tmAnswer(tm ?? mergeTm({}, tmSeed), msg.text, lang), !tm); return; }
       if (lists) { setInput(""); pushUser(msg.text); setTeamPaste(lists); pushBot(c.teamPasteAsk(lists)); return; }
+      // Ca log 117 (11/11/2026): "Trình A" + tên, "TRÌNH B" + tên. Không gộp 16 tên vào một giải:
+      // làm hạng đầu với đúng tên của nó, tạo xong mời hạng sau với danh sách của hạng sau.
+      const byDiv = tm || (div && div.done > 0) ? null : divisionLists(msg.text);
+      if (byDiv) {
+        const labels = byDiv.map((l) => l.label);
+        setInput("");
+        pushUser(msg.text);
+        setDiv({ labels, done: 0, lists: byDiv });
+        const next = divisionDraft(draft, byDiv[0].names);
+        advance(next, `${divisionNote(labels, lang)}. ${rosterAck(c, c.unit(next), 0, next.entries!.length, next.entries!.length, next.entries)}`);
+        return;
+      }
       // Câu đòi nhiều hạng đi qua AI để giữ các thông tin khác; câu trả lời kèm luật mỗi hạng một giải.
-      const divs = div ? null : divisionsAsked(msg.text, lang);
+      divs = div ? null : divisionsAsked(msg.text, lang);
       if (divs) setDiv({ labels: divs, done: 0 });
       const sheet = googleSheetRef(msg.text);
       if (sheet) {
@@ -744,7 +762,12 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     }
     const res = data as { reply?: string; intent: string; patch: unknown; unmet?: string | null };
     if (res.intent === "team_match") { tmStep(tmAnswer({}, msg.text, lang), true); return; }
-    const said = typeof res.reply === "string" ? res.reply : "";
+    // AI báo nhiều hạng mà client chưa bắt được cách diễn đạt → vẫn theo luật mỗi hạng một giải.
+    const manyDivs = unmetWantsDivisions(res.unmet);
+    const divLabels = div?.labels ?? divs ?? (manyDivs ? divisionsAsked(`${res.unmet}\n${msg.text}`, lang) : null);
+    if (manyDivs && !div && !divs && divLabels) setDiv({ labels: divLabels, done: 0 });
+    // Ca log 117: AI đáp "Bạn nói 8 đội nhưng danh sách có 16 người…" — câu ghép cặp chung nuốt mất luật hạng.
+    const said = manyDivs ? "" : typeof res.reply === "string" ? res.reply : "";
     if (res.intent !== "fill" && res.intent !== "answer") {
       const spoken = applySpokenEdit(draft, msg.text);
       const next = spoken ?? draft;
@@ -767,7 +790,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     // trước đây không có chốt chặn: factualAck hụt nhận diện là lượt đó im lặng.
     // Có unmet mà AI không nói gì thì gắn câu fallback gọi đích danh phần chưa hỗ trợ.
     if (!said.trim() && res.unmet) {
-      const note = fallbackReply("unsupported", res.unmet, lang, msg.text);
+      const note = manyDivs && divLabels ? `${divisionNote(divLabels, lang)}.` : fallbackReply("unsupported", res.unmet, lang, msg.text);
       if (!ack.includes(note.replace(/\.+$/, ""))) {
         const unchangedAck = ack === "Bản nháp chưa đổi." || ack === "The draft did not change.";
         ack = unchangedAck || !ack ? note : `${note} ${ack}`;
@@ -777,6 +800,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     if (plan && !next.advance_per_group && next.series_sizes && next.series_sizes.join() !== draft.series_sizes?.join()) {
       const line = plan.map((sl, i) => seriesLine(seriesName(next.series_style ?? "series", i, lang), sl, lang, c.unit(next))).join(" · ");
       if (!ack.includes(line)) ack = `${ack} ${line}.`;
+      if (plan.length > 1 && plan.every((sl) => sl.size === 2)) ack = `${ack} ${c.seriesByRankWarn(plan.length, c.unit(next))}`;
     }
     advance(next, ack);
   };
@@ -893,7 +917,8 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
             onClick: () => choose(label, { series: k, series_sizes: undefined, advance_per_group: undefined }),
           };
         });
-        const ranks = rankSeriesSizes(sizes);
+        const offer = rankSeriesOffer(draft, !!div);
+        const ranks = offer?.sizes ?? null;
         const rankKey = ranks?.join();
         const already = ranks != null && bundled.some((_, i) => seriesPlan(sizes, i + 1)?.map((sl) => sl.size).join() === rankKey);
         if (!ranks || already) return [...bundled, ...switchFormat];
@@ -902,8 +927,17 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           ...switchFormat,
           {
             label: c.seriesByRank,
-            sub: ranks.map((n, d) => seriesLine(seriesName("series", d, lang), seriesSlot(n), lang, unit)).join(" · "),
-            onClick: () => choose(c.seriesByRank, { series: ranks.length, series_sizes: ranks, series_style: "series", advance_per_group: undefined }),
+            sub: [
+              offer!.twoOnly && c.seriesByRankWarn(ranks.length, unit),
+              ranks.map((n, d) => seriesLine(seriesName("series", d, lang), seriesSlot(n), lang, unit)).join(" · "),
+            ].filter(Boolean).join(" "),
+            onClick: () => {
+              pushUser(c.seriesByRank);
+              advance(
+                { ...draft, series: ranks.length, series_sizes: ranks, series_style: "series", advance_per_group: undefined },
+                offer!.twoOnly ? c.seriesByRankWarn(ranks.length, unit) : undefined,
+              );
+            },
           },
         ];
       }
@@ -1031,15 +1065,16 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   // Hạng tiếp theo: tên chung + hậu tố hạng; chip hiện ngay dưới thẻ "đã tạo".
   const nextDiv = created && div?.labels[div.done];
   const nextName = nextDiv ? `${divisionBase(draft.name!, div!.labels)} — ${nextDiv}` : "";
+  const nextList = created && div?.lists?.[div.done];
   const continueDivision = (same: boolean) => {
-    const next = nextDivisionDraft(draft, nextName, same);
+    const next = nextList ? divisionDraft(draft, nextList.names, nextName) : nextDivisionDraft(draft, nextName, same);
     setCreated(null);
-    pushUser((same ? c.divSame : c.divNew)(nextName));
+    pushUser(nextList ? c.divList(nextName, nextList.names.length) : (same ? c.divSame : c.divNew)(nextName));
     advance(next, factualAck(draft, next, lang));
   };
   const divChips: Chip[] = !nextDiv ? [] : [
-    ...(draft.entries?.length ? [{ label: c.divSame(nextName), recommended: true, onClick: () => continueDivision(true) }] : []),
-    { label: c.divNew(nextName), onClick: () => continueDivision(false) },
+    ...(draft.entries?.length && !nextList ? [{ label: c.divSame(nextName), recommended: true, onClick: () => continueDivision(true) }] : []),
+    { label: nextList ? c.divList(nextName, nextList.names.length) : c.divNew(nextName), recommended: !!nextList, onClick: () => continueDivision(false) },
   ];
 
   const tableUrl = created ? `${getSiteUrl()}${to(`/tools/quick-tables/${created.table.share_id}`)}` : "";

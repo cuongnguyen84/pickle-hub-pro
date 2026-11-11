@@ -345,6 +345,9 @@ const DIV_COUNT = /(?<!lay |top )\b(\d|hai|ba|nhieu|two|three|multiple) (hang|tr
  */
 export function divisionsAsked(text: string, lang: "vi" | "en"): string[] | null {
   const t = fold(text);
+  // Ca log 117 (11/11/2026): "Trình A" + 8 tên, "TRÌNH B" + 8 tên — tiêu đề trơn, không số đếm.
+  const heads = divisionLists(text);
+  if (heads) return heads.map((l) => l.label);
   if (wantsRankSeries(text)) return null;
   if (/nam (va )?nu rieng|rieng nam (va )?nu|separate men/.test(t)) return lang === "vi" ? ["Nam", "Nữ"] : ["Men's", "Women's"];
   // Khớp trên chữ thường còn dấu để giữ nguyên nhãn người dùng gõ ("Trung bình", không thành "Trung binh").
@@ -372,6 +375,19 @@ export function divisionsAsked(text: string, lang: "vi" | "en"): string[] | null
   const n = !/vong loai|nhanh|series|playoff|knockout/.test(t) && t.match(DIV_COUNT)?.[1];
   // ponytail: "ba/three hạng" vẫn ra 2 nhãn; số thì đúng số. Hạng sau cùng người dùng tự tạo tiếp.
   return n ? Array.from({ length: Math.max(2, +n || 2) }, (_, i) => (lang === "vi" ? `Hạng ${i + 1}` : `Division ${i + 1}`)) : null;
+}
+
+/** unmet của AI nói người dùng muốn nhiều hạng trong một giải (prompt dùng đúng câu "Muốn nhiều hạng trong một giải"). */
+export const unmetWantsDivisions = (unmet: string | null | undefined): boolean =>
+  !!unmet && /nhieu (hang|trinh)|(multiple|several) (divisions|levels)/.test(fold(unmet));
+
+/**
+ * Chip "mỗi thứ hạng bảng một vòng". Ẩn khi đang chia nhiều hạng/trình (chữ "hạng" dễ nhầm — ca Yamaha 11/11).
+ * twoOnly: vòng nào cũng chỉ 2 đội (8 đội 2 bảng → bốn trận "chung kết") — phải báo trước khi chọn.
+ */
+export function rankSeriesOffer(d: Draft, divisions: boolean): { sizes: number[]; twoOnly: boolean } | null {
+  const sizes = divisions ? null : rankSeriesSizes(groupSizes(d));
+  return sizes && { sizes, twoOnly: sizes.every((n) => n === 2) };
 }
 
 export function divisionNote(labels: string[], lang: "vi" | "en"): string {
@@ -406,10 +422,10 @@ const TEAM_HEAD = /^\s*((?:team|đội|doi|nhóm|nhom|clb|bên|ben)\s+(?:[a-z]|\
  * Ca 06/11: dán "Team A" + 22 tên, "Team B" + 22 tên → chat chỉ đáp "Đã nhận 44 người".
  * Trả ≥2 danh sách có nhãn (mỗi danh sách ≥3 tên), hoặc null. Không ghép cặp gì ở đây.
  */
-export function teamLists(text: string): TeamList[] | null {
+export function teamLists(text: string, headRe: RegExp = TEAM_HEAD): TeamList[] | null {
   const lists: TeamList[] = [];
-  for (const line of text.split(/\n/)) {
-    const head = line.match(TEAM_HEAD);
+  for (const line of text.normalize("NFC").split(/\n/)) {
+    const head = line.match(headRe);
     const rest = head ? head[2] : line;
     if (head) lists.push({ label: head[1].trim(), names: [] });
     const cur = lists[lists.length - 1];
@@ -422,6 +438,31 @@ export function teamLists(text: string): TeamList[] | null {
   // ≥3 tên: "Đội 1: Nam, Hùng" là một cặp đôi, không phải danh sách đội.
   const ok = lists.filter((l) => l.names.length >= 3);
   return ok.length >= 2 && ok.length === lists.length ? lists : null;
+}
+
+// Tiêu đề hạng/trình đứng đầu một danh sách tên: "Trình A", "TRÌNH B", "Hạng 1", "Division A", "Level 3.5".
+const DIV_HEAD = /^\s*((?:trình|trinh|hạng|hang|division|div|level)\s+(?:[a-z]|\d(?:\.\d)?))(?![\p{L}\p{N}])\s*(?:\([^)]*\))?\s*[:：\-–]?\s*(.*)$/iu;
+
+/**
+ * Danh sách tên chia theo hạng/trình ("Trình A" + tên…, "Trình B" + tên…), hoặc null.
+ * Nhãn chuẩn hoá "Trình A" dù người dùng gõ "TRÌNH B". Mỗi hạng một giải riêng — không gộp tên.
+ */
+export function divisionLists(text: string): TeamList[] | null {
+  const lists = teamLists(text, DIV_HEAD);
+  return lists && lists.map((l) => {
+    const [word, code] = l.label.split(/\s+/);
+    return { ...l, label: `${word[0].toLocaleUpperCase("vi")}${word.slice(1).toLocaleLowerCase("vi")} ${code.toLocaleUpperCase("vi")}` };
+  });
+}
+
+/**
+ * Nháp cho MỘT hạng từ danh sách đã dán: giữ thể thức/sân/giờ, bỏ số đội + cách chia của cả sự kiện,
+ * chỉ lấy tên của hạng này ("Nam - Hùng" thành cặp, còn lại mỗi dòng một người → hỏi ghép cặp).
+ */
+export function divisionDraft(d: Draft, names: string[], name = d.name): Draft {
+  const entries = parseSheet(names.map((n) => [n]));
+  const doubles = d.is_doubles === undefined && entries.every((e) => e.p2);
+  return applyPatch({ ...nextDivisionDraft(d, name ?? "", false), name }, { entries, ...(doubles ? { is_doubles: true } : {}) });
 }
 
 /** Ghép đôi theo lựa chọn người dùng: trong từng đội (theo thứ tự) hoặc chéo (người thứ i đội A + người thứ i đội B). */
@@ -504,7 +545,7 @@ export function fallbackReply(intent: string, unmet: string | null, lang: "vi" |
   const vi = lang === "vi";
   if (intent === "unsupported") {
     // unmet là tóm tắt của mô hình, có thể mất từ khoá — soi cả câu người dùng.
-    const fmt = unsupportedFormatNote(`${unmet ?? ""} ${request}`, lang);
+    const fmt = unsupportedFormatNote(`${unmet ?? ""}\n${request}`, lang);
     if (fmt) return `${fmt}.`;
     return vi
       ? `Mình chưa hỗ trợ${unmet ? `: ${unmet}` : " yêu cầu này"}. Cứ tạo giải — thiết lập nâng cao chỉnh ở trang giải sau. Mình tiếp tục nhé.`

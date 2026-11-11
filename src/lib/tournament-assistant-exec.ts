@@ -113,7 +113,7 @@ export async function executeCard(shareId: string, card: CardAction, deps: ExecD
           newId = p?.id ?? "";
           return !!p;
         });
-        // addPlayerToGroup chỉ ghi name; tên từng VĐV cho màn trọng tài đi qua updatePlayerName như hộp sửa tên.
+        // addPlayerToGroup tự tách "A & B"; vẫn ghi đúng p1/p2 (tên có thể chứa "&") như hộp sửa tên.
         await step(s.team, () => deps.updatePlayerName(newId, p1, p2));
         await step(s.group, async () => {
           const f = await deps.getTableByShareId(shareId);
