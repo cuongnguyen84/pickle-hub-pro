@@ -10,6 +10,29 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "daytona-beach-open-2026-results",
+    "publishedDate": "2026-11-16",
+    "updatedDate": "2026-11-11",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball",
+      "results",
+      "ppa daytona",
+      "2026"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "titleEn": "Daytona Beach Open 2026 Results: Daily Scores and Confirmed Winners",
+    "titleVi": "Kết quả Daytona Beach Open 2026: cập nhật hằng ngày",
+    "metaTitleEn": "PPA Daytona Beach Results 2026: Daytona Beach Open Scores",
+    "metaTitleVi": "Kết quả PPA Daytona Beach 2026: Daytona Beach Open",
+    "metaDescriptionEn": "PPA Daytona Beach results: Daytona Beach Open 2026 results and daily scores from the official PPA feed, checked by ThePickleHub.",
+    "metaDescriptionVi": "Kết quả Daytona Beach Open 2026 từ feed PPA chính thức, được ThePickleHub kiểm chứng."
+  },
+  {
     "slug": "pickleball-stacking-guide-own-the-middle",
     "publishedDate": "2026-11-11",
     "updatedDate": "2026-11-11",
