@@ -469,7 +469,8 @@ return ({
         manualChunks: {
           "locale-en": [path.resolve(__dirname, "src/i18n/en.ts")],
           "locale-vi": [path.resolve(__dirname, "src/i18n/vi.ts")],
-          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          // react-router 7: react-router-dom is a thin re-export; the code lives in react-router.
+          "vendor-react": ["react", "react-dom", "react-router", "react-router-dom"],
           "vendor-supabase": ["@supabase/supabase-js"],
           "vendor-ui": [
             // PERF PR-C (2026-10-24): sonner intentionally NOT here — the
