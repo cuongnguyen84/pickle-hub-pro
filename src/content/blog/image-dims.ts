@@ -243,6 +243,8 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/vietnam-pickleball-tournament-calendar-2026-hero.webp": [1731, 909],
   "/images/blog/virginia-beach-open-2026-results-hero-768.webp": [768, 432],
   "/images/blog/virginia-beach-open-2026-results-hero.webp": [1200, 675],
+  "/images/blog/waters-bright-18-straight-titles-greatest-womens-doubles-hero-768.webp": [768, 512],
+  "/images/blog/waters-bright-18-straight-titles-greatest-womens-doubles-hero.webp": [1536, 1024],
   "/images/blog/wc-2026-from-the-stands-friends-768.webp": [768, 1024],
   "/images/blog/wc-2026-from-the-stands-friends.webp": [1600, 2133],
   "/images/blog/wc-2026-from-the-stands-hero-768.webp": [768, 432],

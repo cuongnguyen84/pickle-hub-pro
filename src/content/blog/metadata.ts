@@ -10,6 +10,35 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "waters-bright-18-straight-titles-greatest-womens-doubles",
+    "publishedDate": "2026-11-11",
+    "updatedDate": "2026-11-11",
+    "author": "The PickleHub Team",
+    "tags": [
+      "anna leigh waters",
+      "anna bright",
+      "world championships 2026",
+      "ppa tour",
+      "women's doubles",
+      "analysis"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/waters-bright-18-straight-titles-greatest-womens-doubles-hero.webp",
+      "alt": "Anna Leigh Waters and Anna Bright holding the World Championships trophy after winning the women's doubles title at Brookhaven Country Club, with the Opendoor Pickleball World Championships badge"
+    },
+    "titleEn": "Anna Bright and Anna Leigh Waters Have Won 18 Straight Titles. Are They the Greatest Women's Doubles Team in PPA History?",
+    "titleVi": "Anna Bright và Anna Leigh Waters đã thắng 18 danh hiệu liên tiếp. Họ có phải cặp đôi nữ vĩ đại nhất lịch sử PPA?",
+    "metaTitleEn": "Waters and Bright: 18 Straight Titles",
+    "metaTitleVi": "Waters - Bright: 18 danh hiệu liên tiếp",
+    "metaDescriptionEn": "Anna Bright and Anna Leigh Waters won their 18th straight title at the 2026 World Championships. Are they the greatest women's doubles team in PPA history?",
+    "metaDescriptionVi": "Anna Bright và Anna Leigh Waters vô địch 18 giải liên tiếp tại World Championships 2026 - cặp đôi nữ vĩ đại nhất lịch sử PPA?"
+  },
+  {
     "slug": "world-championships-2026-new-generation-analysis",
     "publishedDate": "2026-11-10",
     "updatedDate": "2026-11-10",
