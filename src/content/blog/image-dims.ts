@@ -32,6 +32,8 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/create-tournament-by-chat-step-4.webp": [1200, 750],
   "/images/blog/crosscourt-drop-against-hard-hitters-hero-768.webp": [768, 512],
   "/images/blog/crosscourt-drop-against-hard-hitters-hero.webp": [1536, 1024],
+  "/images/blog/daytona-beach-open-2026-results-hero-768.webp": [768, 432],
+  "/images/blog/daytona-beach-open-2026-results-hero.webp": [1200, 675],
   "/images/blog/dupr-algorithm-performance-vs-expectation-hero-768.webp": [768, 455],
   "/images/blog/dupr-algorithm-performance-vs-expectation-hero.webp": [1600, 948],
   "/images/blog/dupr-pickleball-rating-hero-768.webp": [768, 1152],

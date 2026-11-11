@@ -25,6 +25,10 @@ export const blogMetadata: BlogPostMetadata[] = [
       "en": "Follow live scores on ThePickleHub",
       "vi": "Theo dõi điểm số trên ThePickleHub"
     },
+    "heroImage": {
+      "src": "/images/blog/daytona-beach-open-2026-results-hero.webp",
+      "alt": "Official Proton Daytona Beach Open 2026 logo over the championship court at Pictona at Holly Hill"
+    },
     "titleEn": "Daytona Beach Open 2026 Results: Daily Scores and Confirmed Winners",
     "titleVi": "Kết quả Daytona Beach Open 2026: cập nhật hằng ngày",
     "metaTitleEn": "PPA Daytona Beach Results 2026: Daytona Beach Open Scores",
