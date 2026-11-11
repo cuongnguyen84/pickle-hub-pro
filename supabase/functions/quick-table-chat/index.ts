@@ -21,6 +21,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { getAuthUser } from "../_shared/auth.ts";
 import { supabaseClientPostCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 import { clipReply } from "../_shared/clip.ts";
+import { divisionReply } from "./division-reply.ts";
 
 // Bản lite hiểu sai câu ghép kiểu "16 đội mạnh nhất vào nhánh Vàng, còn lại chia Bạc và Đồng".
 const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-flash-latest";
@@ -127,7 +128,7 @@ Câu trả lời "reply":
 - intent "off_topic": người dùng hỏi chuyện khác → trả lời 1 câu thật ngắn rồi thôi, patch rỗng.
 - intent "unsupported": người dùng muốn điều chat này chưa làm được (loại kép, lộ trình nhiều giai đoạn có crossover / play-in / "vòng giao" (vd Phase 1 vòng tròn → Phase 2 crossover → Phase 3 play-in), flex, đăng ký có DUPR, hoặc tính năng chưa có) → reply BẮT BUỘC 1–2 câu: nhắc lại ngắn gọn yêu cầu của người dùng, nói rõ chưa hỗ trợ, và gợi ý cách làm thay thế gần nhất (tạo giải như bình thường rồi chỉnh ở trang giải sau khi tạo). TUYỆT ĐỐI không để reply rỗng với intent này. Với crossover / play-in: thay thế gần nhất là vòng bảng đấu vòng tròn rồi playoff loại trực tiếp — KHÔNG gợi ý loại kép, KHÔNG nói "đã thêm/đã nhận N đội" như thể đã làm theo lộ trình đó.
 - intent "team_match": người dùng muốn TẠO giải định dạng MLP / Team Match / đồng đội MLP / giải đồng đội / đối kháng đội, hoặc đổi partner / xoay cặp / đổi cặp sau mỗi trận / rotating partners / partner swap / Americano / "vòng tròn đổi partner" → intent "team_match", patch rỗng, reply rỗng. Ứng dụng tự chuyển sang tạo giải Đồng đội MLP (đã hỗ trợ). KHÔNG trả "unsupported" cho các yêu cầu này. Lệnh sửa danh sách ("đổi cặp 3 thành…", "đổi chỗ Nam với Hùng") KHÔNG phải team_match.
-- Nhiều hạng / trình độ / division trong MỘT giải ("2 hạng beginner và intermediate", "open và advanced", "nam nữ riêng") → intent "fill", reply rỗng, điền các trường khác như thường; name chỉ là tên chung, KHÔNG ghép tên hạng; unmet = "Muốn nhiều hạng trong một giải" (kèm mọi phần chưa hỗ trợ khác trong cùng tin nhắn — xem quy tắc "unmet" dưới đây). Ứng dụng tự giải thích mỗi hạng một giải và đề nghị tạo tiếp hạng sau. KHÔNG trả "unsupported". "Mỗi hạng một vòng loại" là chia vòng loại theo thứ hạng bảng, không phải trường hợp này.
+- Nhiều hạng / trình độ / division trong MỘT giải ("2 hạng beginner và intermediate", "open và advanced", "nam nữ riêng", hoặc danh sách tên chia theo tiêu đề "Trình A" … "Trình B" …) → intent "fill", reply rỗng, điền các trường khác như thường; name chỉ là tên chung, KHÔNG ghép tên hạng; unmet = "Muốn nhiều hạng trong một giải" (kèm mọi phần chưa hỗ trợ khác trong cùng tin nhắn — xem quy tắc "unmet" dưới đây). Ứng dụng tự giải thích mỗi hạng một giải và đề nghị tạo tiếp hạng sau. KHÔNG trả "unsupported". KHÔNG gộp tên các hạng vào một danh sách, KHÔNG nói "Đã nhận N người, mình sẽ hỏi cách ghép cặp" cho cả sự kiện. "Mỗi hạng một vòng loại" là chia vòng loại theo thứ hạng bảng, không phải trường hợp này.
 - DreamBreaker: CHỈ có ở giải đồng đội MLP. Người dùng xin DreamBreaker trong giải thường (đơn/đôi chia bảng, vd kèm các hạng đôi) → phần đó CHƯA hỗ trợ: ghi vào unmet ("Muốn DreamBreaker khi hòa"), KHÔNG vì chữ DreamBreaker mà trả "team_match" — chỉ trả "team_match" khi họ muốn giải đồng đội MLP. Thay thế gần nhất trong giải thường: thứ hạng phân định bằng điểm và đối đầu trực tiếp.
 - Trận tranh hạng 3 ("battle for 3rd", "3rd place match"): chat tạo giải thường CHƯA có (chỉ giải đồng đội MLP loại trực tiếp mới có) → xin trong giải thường thì ghi vào unmet.
 - Ngược lại, các phần sau ĐÃ hỗ trợ — điền patch như thường, KHÔNG ghi unmet: vòng bảng đấu vòng tròn (preliminary), xếp hạt giống theo điểm/bảng vào bán kết và chung kết (playoff loại trực tiếp), xếp hạng bằng điểm (point system).
@@ -342,6 +343,8 @@ Deno.serve(async (req: Request) => {
           ? "Mình chưa tính được ý này từ số liệu hiện có. Bạn thử hỏi cách khác, hoặc cứ tiếp tục tạo giải nhé."
           : "I can't work that out from the current numbers. Try asking another way, or just keep creating the tournament.");
   }
+  // Ca log 117: nhiều hạng thì luật mỗi hạng một giải luôn thắng câu ghép cặp chung của model.
+  out.reply = divisionReply(out.intent, unmet, lang) ?? out.reply;
   // Ca log 116 (10/11/2026): intent "fill" + unmet + reply "" — prompt ra lệnh
   // để reply rỗng cho ca nhiều hạng và trông cậy client tự giải thích; client
   // hụt nhận diện cách diễn đạt thì cả log lẫn người dùng đều im lặng. fill có

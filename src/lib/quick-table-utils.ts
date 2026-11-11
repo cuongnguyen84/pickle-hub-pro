@@ -220,3 +220,36 @@ export function getWildcardCount(groupCount: number): number {
     default: return 0;
   }
 }
+
+export interface ExistingSlot { group_id: string | null; team: string | null; display_order: number }
+
+/**
+ * Chỗ cho một đội thêm tay vào bảng (ca "Giải đôi 11/11": xoá A2 rồi thêm lại
+ * thì thành display_order 999, team null). Bảng đang dùng mã A1, A3… thì lấy
+ * mã trống đầu tiên (A2) và ô thứ tự ngay sau đội đứng trước nếu còn trống;
+ * còn lại xếp cuối giải. "Nam & Hùng" / "Nam / Hùng" tách thành 2 VĐV.
+ */
+export function addedPlayerSlot(
+  players: ExistingSlot[],
+  groupId: string,
+  groupName: string,
+  name: string,
+  team?: string,
+): { team: string | null; display_order: number; player1_name: string; player2_name: string | null } {
+  const [p1, p2] = name.split(/\s+[&/]\s+/).map((s) => s.trim());
+  const last = Math.max(-1, ...players.map((p) => p.display_order).filter((o) => o < 999));
+  const out = { team: team?.trim() || null, display_order: last + 1, player1_name: p2 ? p1 : name.trim(), player2_name: p2 || null };
+  if (out.team) return out;
+  const mine = players.filter((p) => p.group_id === groupId);
+  const code = new RegExp(`^${groupName.replace(/[^\p{L}\p{N}]/gu, "")}(\\d+)$`, "iu");
+  const nums = mine.map((p) => p.team?.match(code)?.[1]);
+  if (!mine.length || nums.some((n) => !n)) return out; // bảng không dùng mã → giữ trống
+  const used = new Set(nums.map(Number));
+  let k = 1;
+  while (used.has(k)) k++;
+  out.team = `${groupName}${k}`;
+  const before = mine.find((p) => p.team?.match(code)?.[1] === String(k - 1));
+  const taken = new Set(players.map((p) => p.display_order));
+  if (before && !taken.has(before.display_order + 1)) out.display_order = before.display_order + 1;
+  return out;
+}
