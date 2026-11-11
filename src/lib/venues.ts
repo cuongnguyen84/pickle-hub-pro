@@ -33,6 +33,8 @@ export interface Venue {
   amenities: string[] | null;
   cover_image_url: string | null;
   is_verified: boolean | null;
+  status: string | null;
+  opening_expected: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -65,6 +67,38 @@ export function isVerifiedVenueSource(source: VenueSourceTag): boolean {
   return source === "partner" || source === "manual";
 }
 
+/**
+ * Opening-soon venues (migration 20261111090000): announced but not yet
+ * open. They stay listed with an explicit label and are excluded from
+ * nearby search; `status` is null on payloads fetched before the
+ * migration, which must read as a normal active venue.
+ */
+export function isOpeningSoon(venue: { status?: string | null }): boolean {
+  return venue.status === "opening_soon";
+}
+
+const MONTHS_EN = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+/** '2027-03' -> "Sắp mở - dự kiến tháng 3/2027" / "Opening soon - expected March 2027". */
+export function openingSoonLabel(
+  language: Language,
+  openingExpected: string | null,
+): string {
+  const m = openingExpected ? /^(\d{4})-(\d{2})$/.exec(openingExpected) : null;
+  if (!m) return language === "vi" ? "Sắp mở" : "Opening soon";
+  const year = m[1];
+  const month = parseInt(m[2], 10);
+  if (month < 1 || month > 12) {
+    return language === "vi" ? "Sắp mở" : "Opening soon";
+  }
+  return language === "vi"
+    ? `Sắp mở - dự kiến tháng ${month}/${year}`
+    : `Opening soon - expected ${MONTHS_EN[month - 1]} ${year}`;
+}
+
 /** Lightweight row for the /san grid. */
 export interface VenueListItem {
   id: string;
@@ -80,13 +114,15 @@ export interface VenueListItem {
   is_indoor: boolean | null;
   cover_image_url: string | null;
   is_verified: boolean | null;
+  status: string | null;
+  opening_expected: string | null;
 }
 
 export const VENUE_LIST_COLUMNS =
-  "id, slug, name, name_vi, address, district, city, country, num_courts, surface_type, is_indoor, cover_image_url, is_verified";
+  "id, slug, name, name_vi, address, district, city, country, num_courts, surface_type, is_indoor, cover_image_url, is_verified, status, opening_expected";
 
 export const VENUE_DETAIL_COLUMNS =
-  "id, slug, name, name_vi, address, district, city, country, latitude, longitude, num_courts, surface_type, is_indoor, phone, website, hours_json, amenities, cover_image_url, is_verified, created_by, created_at, updated_at, price_min_vnd, price_max_vnd, price_source, hours_source";
+  "id, slug, name, name_vi, address, district, city, country, latitude, longitude, num_courts, surface_type, is_indoor, phone, website, hours_json, amenities, cover_image_url, is_verified, status, opening_expected, created_by, created_at, updated_at, price_min_vnd, price_max_vnd, price_source, hours_source";
 
 /** 100000 → "100.000đ". Matches longPrice() in the bot renderer. */
 export function formatVnd(vnd: number): string {
