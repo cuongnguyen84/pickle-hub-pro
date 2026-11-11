@@ -17,6 +17,8 @@ import {
   venueLocationLine,
   courtsLabel,
   indoorLabel,
+  isOpeningSoon,
+  openingSoonLabel,
 } from "@/lib/venues";
 import { fetchVenueDetail, venueDetailQueryKey } from "@/lib/venue-detail-query";
 
@@ -86,6 +88,13 @@ export function VenueCard({ venue, language }: Props) {
             <p className="mt-0.5 flex items-center gap-1 truncate text-sm text-muted-foreground">
               <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
               <span className="truncate">{location}</span>
+            </p>
+          )}
+          {isOpeningSoon(venue) && (
+            <p className="mt-1.5">
+              <span className="inline-flex items-center rounded-full border border-amber-500/50 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                {openingSoonLabel(language, venue.opening_expected)}
+              </span>
             </p>
           )}
         </div>

@@ -20,6 +20,7 @@ import {
   Share2,
   BadgeCheck,
   Plus,
+  Clock,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
@@ -41,6 +42,8 @@ import {
   citySlugFromName,
   VENUE_LIST_COLUMNS,
   isVerifiedVenueSource,
+  isOpeningSoon,
+  openingSoonLabel,
   venuePriceRange,
   uniformWeekHours,
   formatHoursRange,
@@ -259,6 +262,12 @@ export default function VenueDetail() {
               <span className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-xs not-italic text-primary">
                 <BadgeCheck className="h-3.5 w-3.5" />
                 {language === "vi" ? "Đã xác minh" : "Verified"}
+              </span>
+            )}
+            {isOpeningSoon(venue) && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/50 bg-amber-500/10 px-2 py-0.5 text-xs not-italic text-amber-700 dark:text-amber-400">
+                <Clock className="h-3.5 w-3.5" />
+                {openingSoonLabel(language, venue.opening_expected)}
               </span>
             )}
           </h1>
