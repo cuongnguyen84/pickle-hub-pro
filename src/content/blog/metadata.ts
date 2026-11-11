@@ -10,6 +10,61 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-stacking-guide-own-the-middle",
+    "publishedDate": "2026-11-11",
+    "updatedDate": "2026-11-11",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball stacking",
+      "doubles strategy",
+      "pickleball guide",
+      "technique"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-stacking-guide-own-the-middle-hero.webp",
+      "alt": "Illustration of a pickleball doubles pair stacking on the same side of the court, one partner sliding across toward the middle"
+    },
+    "titleEn": "Pickleball Stacking Explained: How to Own the Middle in Doubles",
+    "titleVi": "Stacking trong pickleball là gì? Cách xếp chồng vị trí để làm chủ khu vực giữa sân khi đánh đôi",
+    "metaTitleEn": "Pickleball Stacking Guide: Own the Middle",
+    "metaTitleVi": "Stacking Pickleball: Làm Chủ Giữa Sân",
+    "metaDescriptionEn": "Pickleball stacking explained: how to set up on the serve and the return, hand signals for the switch, 4 beginner mistakes, and a practice plan.",
+    "metaDescriptionVi": "Stacking trong pickleball là gì: cách xếp vị trí khi giao và trả giao, tín hiệu tay, 4 lỗi thường gặp và cách tập hiệu quả."
+  },
+  {
+    "slug": "pickleball-first-doping-testing-european-open",
+    "publishedDate": "2026-11-11",
+    "updatedDate": "2026-11-11",
+    "author": "The PickleHub Team",
+    "tags": [
+      "anti-doping",
+      "european open 2026",
+      "wpf",
+      "epf",
+      "analysis"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-first-doping-testing-european-open-hero.webp",
+      "alt": "Illustration of an empty pickleball court with two paddles and a ball on the surface and two sealed sample vials on a courtside table"
+    },
+    "titleEn": "Pickleball Doping Testing Arrives: WPF and EPF Run the Sport's First Official In-Competition Tests at the 2026 European Open",
+    "titleVi": "Pickleball lần đầu kiểm tra doping trong thi đấu: WPF và EPF thực hiện đợt kiểm tra chính thức đầu tiên tại European Open 2026",
+    "metaTitleEn": "Pickleball's First Doping Tests at the European Open",
+    "metaTitleVi": "Kiểm Tra Doping Đầu Tiên Của Pickleball",
+    "metaDescriptionEn": "WPF and EPF ran pickleball's first official in-competition doping tests at the 2026 European Open in Türkiye. What happened and what changes in 2027.",
+    "metaDescriptionVi": "WPF và EPF thực hiện đợt kiểm tra doping đầu tiên của pickleball tại European Open 2026. Bộ quy tắc có hiệu lực từ 01/01/2027."
+  },
+  {
     "slug": "waters-bright-18-straight-titles-greatest-womens-doubles",
     "publishedDate": "2026-11-11",
     "updatedDate": "2026-11-11",
