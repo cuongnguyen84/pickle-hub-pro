@@ -1,6 +1,76 @@
 {
   "sourceLanguage" : "vi",
   "strings" : {
+    "Mở trợ lý AI" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open AI assistant"
+          }
+        }
+      }
+    },
+    "Đóng trợ lý AI" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close AI assistant"
+          }
+        }
+      }
+    },
+    "Trợ lý AI ThePickleHub" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ThePickleHub AI assistant"
+          }
+        }
+      }
+    },
+    "Nhập câu hỏi cho trợ lý…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ask the assistant…"
+          }
+        }
+      }
+    },
+    "Gửi câu hỏi cho trợ lý" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send question to the assistant"
+          }
+        }
+      }
+    },
+    "Mạng chậm hoặc trợ lý đang bận. Bạn thử lại sau nhé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The network is slow or the assistant is busy. Please try again later."
+          }
+        }
+      }
+    },
+    "Chào bạn 👋 Mình là trợ lý ThePickleHub. Hỏi mình về màn hình bạn đang xem hoặc cách dùng một tính năng — mình sẽ chỉ đường cho bạn." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hi 👋 I'm the ThePickleHub assistant. Ask about the screen you're on or how to use a feature, and I'll point you there."
+          }
+        }
+      }
+    },
     "" : {
       "localizations" : {
         "en" : {

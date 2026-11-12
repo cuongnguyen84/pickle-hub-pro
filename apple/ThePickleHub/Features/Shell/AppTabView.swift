@@ -47,7 +47,37 @@ struct AppTabView: View {
             }
         }
         .tint(TLColor.accent)
+        // Trợ lý AI chung (site-assistant): nút nổi trên mọi tab, ngay trên thanh tab.
+        // Màn toàn hình (trọng tài, TV, video) là fullScreenCover nên che luôn nút này.
+        .overlay(alignment: .bottomTrailing) {
+            Button { assistantOpen = true } label: {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(TLColor.accentText)
+                    .frame(width: 48, height: 48)
+                    .background(TLColor.bg, in: Circle())
+                    .overlay(Circle().stroke(TLColor.border))
+                    .shadow(color: .black.opacity(0.35), radius: 6, y: 3)
+            }
+            .accessibilityLabel(String(localized: "Mở trợ lý AI"))
+            .padding(.trailing, 16)
+            .padding(.bottom, 61)
+        }
+        .sheet(isPresented: $assistantOpen) {
+            AssistantSheet(page: SiteAssistant.page(for: selection), tab: selection.rawValue) { dest in
+                switch dest {
+                case .tab(let t): selection = t
+                case .home(let r):
+                    selection = .home
+                    homePath.append(r)
+                case .web(let url): openURL(url)
+                }
+            }
+        }
     }
+
+    @State private var assistantOpen = false
+    @Environment(\.openURL) private var openURL
 
     /// Initial tab, overridable via the `-startTab <tab>` launch argument
     /// (lands in the UserDefaults argument domain). Foundation for deep links.
