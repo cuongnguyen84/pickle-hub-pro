@@ -10,6 +10,34 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "mlp-asia-business-model-home-nights",
+    "publishedDate": "2026-11-12",
+    "updatedDate": "2026-11-12",
+    "author": "The PickleHub Team",
+    "tags": [
+      "mlp asia",
+      "viet panthers",
+      "sports business",
+      "franchise",
+      "pickleball asia"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/mlp-asia-business-model-home-nights-hero.webp",
+      "alt": "Indoor pickleball arena during an evening team event with a packed crowd, with the official MLP Asia logo"
+    },
+    "titleEn": "MLP Asia's Business Model: Why Team Owners Are Buying One Home Night, Not a Season",
+    "titleVi": "Mô hình kinh doanh MLP Asia: vì sao chủ đội mua một đêm sân nhà, không mua cả mùa giải",
+    "metaTitleEn": "MLP Asia's Business Model: One Home Night Per Team",
+    "metaTitleVi": "Mô Hình Kinh Doanh MLP Asia: Một Đêm Sân Nhà",
+    "metaDescriptionEn": "MLP Asia sells six franchises as one-night events, not seasons. How the model works, what owners are buying, and the open questions for season one.",
+    "metaDescriptionVi": "MLP Asia bán 6 franchise dạng sự kiện một đêm thay vì cả mùa giải: cách mô hình vận hành, chủ đội mua gì và câu hỏi còn mở."
+  },
+  {
     "slug": "daytona-beach-open-2026-results",
     "publishedDate": "2026-11-16",
     "updatedDate": "2026-11-11",

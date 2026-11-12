@@ -87,6 +87,8 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/ly-hoang-nam-pickleball-national-games-2026-hero.webp": [680, 408],
   "/images/blog/mlp-2026-semifinals-new-york-preview-hero-768.webp": [768, 512],
   "/images/blog/mlp-2026-semifinals-new-york-preview-hero.webp": [1536, 1024],
+  "/images/blog/mlp-asia-business-model-home-nights-hero-768.webp": [768, 512],
+  "/images/blog/mlp-asia-business-model-home-nights-hero.webp": [1536, 1024],
   "/images/blog/mlp-asia-draft-2026-viet-panthers-hero-768.webp": [768, 430],
   "/images/blog/mlp-asia-draft-2026-viet-panthers-hero.webp": [1024, 573],
   "/images/blog/mlp-nations-cup-2026-results-hero-768.webp": [768, 432],
