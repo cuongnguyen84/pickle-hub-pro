@@ -56,6 +56,13 @@ const HIDDEN_PREFIXES = [
 
 const DESKTOP_BREAKPOINT = "(min-width: 768px)";
 
+/** ChatFAB có hiện ở route này không — AssistantGate dùng để xếp nút trợ lý lên trên. */
+export function chatFabVisible(pathname: string): boolean {
+  const barePath = withoutLocale(pathname);
+  // Các trang quanh giải dùng nút trợ lý giải (AssistantGate) ở cùng góc.
+  return !HIDDEN_PREFIXES.some((prefix) => barePath.startsWith(prefix)) && assistantScreenFor(pathname) == null;
+}
+
 const ChatFAB = () => {
   const location = useLocation();
   const { language } = useI18n();
@@ -105,11 +112,7 @@ const ChatFAB = () => {
     return () => document.removeEventListener("scroll", onScroll, { capture: true });
   }, []);
 
-  const barePath = withoutLocale(location.pathname);
-  // Các trang quanh giải dùng nút trợ lý AI (AssistantGate) ở cùng góc.
-  const shouldHide = HIDDEN_PREFIXES.some((prefix) => barePath.startsWith(prefix)) || assistantScreenFor(location.pathname) != null;
-
-  if (shouldHide) {
+  if (!chatFabVisible(location.pathname)) {
     return null;
   }
 

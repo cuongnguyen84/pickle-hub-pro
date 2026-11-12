@@ -1006,6 +1006,19 @@
       ],
       "status": "classified",
       "notes": "Bearer JWT is verified internally. Service role reads the quick table named by share_id (private tables only for their creator, same as RLS SELECT) to derive the caller's role server-side, and inserts the caller's own turns/action outcomes (user_id from the verified JWT) into quick_table_chat_log. Never writes tournament data: the client applies confirmed actions through RLS-gated paths."
+    },
+    "site-assistant": {
+      "verify_jwt": false,
+      "service_role": {
+        "uses_client": true,
+        "accepts_bearer": false
+      },
+      "flows": [
+        "public.write.none.none",
+        "user.write.user_jwt.derived_identity"
+      ],
+      "status": "classified",
+      "notes": "Anonymous Q&A + internal navigation links for the floating site assistant. Optional bearer JWT is verified internally (getAuthUser) only to pick the per-user instead of per-IP quota. Service role calls consume_site_assistant_quota (hashed identity, database-backed per-user/per-IP/global daily limits) and inserts the turn into site_assistant_log. Never reads or writes user data; client page context is treated as untrusted text."
     }
   }
 }

@@ -29,6 +29,7 @@ import { WorldCupResultsBoard } from "@/components/live/WorldCupResultsBoard";
 import { ResultsHub, ResultsSummary } from "@/components/blog/ResultsBoard";
 import { TournamentClusterLinks } from "@/components/blog/TournamentClusterLinks";
 import { buildTournamentClusterLinks } from "@/content/blog/tournament-cluster";
+import { useAssistantContext } from "@/lib/assistant-context";
 
 /**
  * /blog/:slug — English long-form article page.
@@ -109,6 +110,10 @@ const BlogPost = () => {
   const { data: viSlug } = useViBlogAlternate(post?.slug);
   useTrackBlogView("en", post?.slug);
   const { data: viewCount } = useBlogPostViewCount("en", post?.slug);
+  useAssistantContext(post ? {
+    label: post.content.en.title,
+    summary: post.content.en.metaDescription.slice(0, 600),
+  } : null);
 
   if (post === null) {
     return (

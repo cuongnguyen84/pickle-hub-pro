@@ -462,3 +462,6 @@ verify_jwt = false
 
 [functions.tournament-assistant]
 verify_jwt = false
+
+[functions.site-assistant]
+verify_jwt = false

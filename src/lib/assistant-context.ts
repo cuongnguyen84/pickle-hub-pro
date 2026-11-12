@@ -8,6 +8,9 @@
  */
 import { useEffect, useSyncExternalStore } from "react";
 import { withoutLocale } from "@/lib/locale-path";
+import type { PageType as SitePage } from "../../supabase/functions/site-assistant/shared";
+
+export type { SitePage };
 
 export type AssistantScreen =
   | "tournament_hub"
@@ -47,6 +50,36 @@ export function assistantScreenFor(pathname: string): AssistantScreen | null {
   if (/^\/tools\/quick-tables\/[^/]+\/setup$/.test(p)) return "quick_table_setup";
   if (/^\/tools\/quick-tables\/[^/]+$/.test(p)) return "quick_table_detail";
   return null;
+}
+
+// Trang không đặt nút trợ lý chung: tự là khung chat / toàn màn hình / có
+// thanh hành động dính đáy / embed / admin / luồng đăng nhập.
+const SITE_HIDDEN = [
+  /^\/tools\/quick-tables\/(chat|referee)(\/|$)/, /\/score$/, /^\/live\/./, /^\/(su-kien|social)\/[^/]+\/live$/,
+  /^\/(embed|share|admin|creator|seller|proto|auth|onboarding|login|dang-ky|khoi-phuc-dang-ky|tin-nhan)(\/|$)/,
+  /^\/shop\/(product|cart|checkout|order|orders|sell)(\/|$)/,
+];
+
+const SITE_PAGES: [RegExp, SitePage][] = [
+  [/^\/(feed)?$/, "home"],
+  [/^\/(tools|quick-tables|tournaments?)(\/|$)/, "tools"],
+  [/^\/(live|videos|watch|livestream)(\/|$)/, "live_video"],
+  [/^\/(blog|news|authors)(\/|$)/, "blog_news"],
+  [/^\/san(\/|$)/, "venues"],
+  [/^\/(rankings|dupr|nguoi-choi|u|tim-ban-choi)(\/|$)/, "players"],
+  [/^\/shop(\/|$)/, "shop"],
+  [/^\/(clubs|clb|org|forum|social|su-kien|match|matches|tran-dau|join)(\/|$)/, "community"],
+  [/^\/(account|notifications|thong-bao)(\/|$)/, "account"],
+];
+
+/**
+ * Trợ lý chung (edge fn site-assistant) theo route. null = không đặt nút.
+ * Route quanh giải vẫn đi assistantScreenFor() → trợ lý giải như cũ.
+ */
+export function sitePageFor(pathname: string): SitePage | null {
+  const p = withoutLocale(pathname).replace(/\/+$/, "") || "/";
+  if (SITE_HIDDEN.some((r) => r.test(p))) return null;
+  return SITE_PAGES.find(([r]) => r.test(p))?.[1] ?? "general";
 }
 
 let current: AssistantContext | null = null;

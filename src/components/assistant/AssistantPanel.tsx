@@ -1,5 +1,11 @@
 /**
- * Trợ lý AI nổi quanh giải (brief docs/floating-ai-chat-brief-2026-10-27.md).
+ * Khung chat trợ lý AI nổi — nút mở nằm ở AssistantGate (tải sau idle), file
+ * này chỉ tải khi người dùng bấm. Hai chế độ:
+ *
+ * - "tournament" (brief docs/floating-ai-chat-brief-2026-10-27.md): trang giải,
+ *   edge fn tournament-assistant, cần đăng nhập, có thẻ hành động như dưới.
+ * - "site" (12/11/2026): mọi trang khác, edge fn site-assistant, khách dùng
+ *   được; chỉ hỏi–đáp + tối đa 3 link nội bộ (lọc lại bằng safeLink).
  *
  * - Một thread duy nhất, liền mạch khi chuyển trang; thread id + tin nhắn lưu
  *   localStorage theo user nên đóng/mở hay reload vẫn còn.
@@ -20,8 +26,9 @@ import { localePath } from "@/lib/locale-path";
 import { isIOS } from "@/lib/platform";
 import {
   ASSISTANT_APPLIED_EVENT, suggestionsFor, useCurrentAssistantContext,
-  type AssistantContext, type AssistantScreen,
+  type AssistantContext, type AssistantScreen, type SitePage, type Suggestion,
 } from "@/lib/assistant-context";
+import { safeLink } from "../../../supabase/functions/site-assistant/shared";
 import { executeCard, type ExecResult } from "@/lib/tournament-assistant-exec";
 
 type Lang = "vi" | "en";
@@ -48,14 +55,16 @@ interface Msg {
   result?: string;
   /** ngôn ngữ server trả lời lượt này — câu chốt sau áp dụng theo nó, không theo giao diện */
   lang?: Lang;
+  /** chế độ site: link nội bộ server gợi ý */
+  links?: { href: string; label: string }[];
 }
 
-const STORAGE_PREFIX = "tl-assistant:v1:";
+const STORAGE_PREFIX = { tournament: "tl-assistant:v1:", site: "tl-site-assistant:v1:" };
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 const COPY = {
   vi: {
-    open: "Mở trợ lý giải đấu", close: "Đóng trợ lý", title: "Trợ lý giải đấu",
+    close: "Đóng trợ lý", title: "Trợ lý giải đấu",
     hello: "Chào bạn 👋 Mình hiểu trang giải bạn đang xem. Hỏi về bảng, lịch, kết quả — hoặc bảo mình sửa giải (chủ giải mới sửa được, luôn hỏi lại trước khi ghi).",
     login: "Đăng nhập để dùng trợ lý giải đấu.", loginBtn: "Đăng nhập",
     placeholder: "Hỏi hoặc bảo mình sửa giải…", send: "Gửi",
@@ -67,6 +76,13 @@ const COPY = {
     failed: (failed: string) => `Chưa thay đổi gì — lỗi ở bước: ${failed}.`,
     error: "Mạng hoặc trợ lý đang chậm. Thử lại nhé.",
     clear: "Cuộc trò chuyện mới",
+    siteTitle: "Trợ lý ThePickleHub",
+    siteHello: "Chào bạn 👋 Mình là trợ lý của ThePickleHub. Hỏi mình về trang bạn đang xem, cách dùng tính năng (tạo giải, tìm sân, xem live, xếp hạng…) — mình sẽ chỉ đường cho bạn.",
+    sitePlaceholder: "Hỏi mình bất cứ điều gì về ThePickleHub…",
+    pages: {
+      home: "Trang chủ", tournament: "Giải đấu", tools: "Công cụ giải", live_video: "Live & video", blog_news: "Bài viết",
+      venues: "Sân pickleball", players: "Người chơi & xếp hạng", shop: "Chợ", community: "Cộng đồng", account: "Tài khoản", general: "ThePickleHub",
+    } as Record<SitePage, string>,
     screens: {
       tournament_hub: "Danh sách giải", tournament_detail: "Trang giải", quick_table_hub: "Giải chia bảng của tôi",
       quick_table_detail: "Trang giải", quick_table_groups: "Bảng đấu", quick_table_results: "Kết quả",
@@ -74,7 +90,7 @@ const COPY = {
     } as Record<AssistantScreen, string>,
   },
   en: {
-    open: "Open tournament assistant", close: "Close assistant", title: "Tournament assistant",
+    close: "Close assistant", title: "Tournament assistant",
     hello: "Hi 👋 I know which tournament page you're on. Ask about groups, schedule, results — or ask me to change the tournament (organizers only; I always confirm before saving).",
     login: "Sign in to use the tournament assistant.", loginBtn: "Sign in",
     placeholder: "Ask, or tell me what to change…", send: "Send",
@@ -86,6 +102,13 @@ const COPY = {
     failed: (failed: string) => `Nothing changed — failed at: ${failed}.`,
     error: "The network or assistant is slow. Please try again.",
     clear: "New conversation",
+    siteTitle: "ThePickleHub assistant",
+    siteHello: "Hi 👋 I'm the ThePickleHub assistant. Ask about the page you're on or how to use a feature (create a tournament, find courts, watch live, rankings…) and I'll point you there.",
+    sitePlaceholder: "Ask me anything about ThePickleHub…",
+    pages: {
+      home: "Home", tournament: "Tournaments", tools: "Tournament tools", live_video: "Live & video", blog_news: "Articles",
+      venues: "Courts", players: "Players & rankings", shop: "Shop", community: "Community", account: "Account", general: "ThePickleHub",
+    } as Record<SitePage, string>,
     screens: {
       tournament_hub: "Tournaments", tournament_detail: "Tournament page", quick_table_hub: "My round robins",
       quick_table_detail: "Tournament page", quick_table_groups: "Groups", quick_table_results: "Results",
@@ -94,11 +117,36 @@ const COPY = {
   },
 };
 
-function contextLabel(ctx: AssistantContext | null, screen: AssistantScreen, lang: Lang): string {
-  return ctx?.label || COPY[lang].screens[ctx?.screen ?? screen];
+function contextLabel(ctx: AssistantContext | null, screen: AssistantScreen | null, page: SitePage, lang: Lang): string {
+  const s = ctx?.screen ?? screen;
+  return ctx?.label || (s ? COPY[lang].screens[s] : COPY[lang].pages[page]);
 }
 
-const TournamentAssistant = ({ routeScreen }: { routeScreen: AssistantScreen }) => {
+/** Chip gợi ý của chế độ site theo loại trang. */
+function siteSuggestions(page: SitePage): Suggestion[] {
+  const explain = { vi: "Trang này có gì?", en: "What's on this page?" };
+  const create = { vi: "Tạo giải bằng chat", en: "Create a tournament by chat", href: "/tools/quick-tables/chat" };
+  switch (page) {
+    case "venues": return [explain, { vi: "Tìm sân gần mình thế nào?", en: "How do I find courts near me?" }];
+    case "players": return [explain, { vi: "Kết nối DUPR thế nào?", en: "How do I link DUPR?" }];
+    case "live_video": return [{ vi: "Xem lại trận đấu ở đâu?", en: "Where can I watch replays?" }];
+    case "blog_news": return [{ vi: "Tóm tắt bài này", en: "Summarize this article" }];
+    case "shop": return [{ vi: "Mở gian hàng thế nào?", en: "How do I start selling?" }];
+    case "tools": return [create, { vi: "Nên chọn thể thức nào?", en: "Which format should I use?" }];
+    default: return [{ vi: "ThePickleHub có những gì?", en: "What can I do on ThePickleHub?" }, create];
+  }
+}
+
+interface Props {
+  mode: "tournament" | "site";
+  routeScreen: AssistantScreen | null;
+  page: SitePage;
+  open: boolean;
+  onClose: () => void;
+}
+
+const AssistantPanel = ({ mode, routeScreen, page, open, onClose }: Props) => {
+  const site = mode === "site";
   const { user } = useAuth();
   const { language } = useI18n();
   const lang: Lang = language === "en" ? "en" : "vi";
@@ -107,9 +155,8 @@ const TournamentAssistant = ({ routeScreen }: { routeScreen: AssistantScreen }) 
   const ctx = useCurrentAssistantContext();
   const screen = ctx?.screen ?? routeScreen;
   const deps = useQuickTable();
-  const storageKey = STORAGE_PREFIX + (user?.id ?? "anon");
+  const storageKey = STORAGE_PREFIX[mode] + (user?.id ?? "anon");
 
-  const [open, setOpen] = useState(false);
   const [threadId, setThreadId] = useState("");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -137,13 +184,14 @@ const TournamentAssistant = ({ routeScreen }: { routeScreen: AssistantScreen }) 
   }, [threadId, messages, storageKey]);
 
   useEffect(() => { if (open) endRef.current?.scrollIntoView({ block: "end" }); }, [open, messages, busy]);
+  useEffect(() => { if (open) inputRef.current?.focus(); }, [open]);
 
   const patch = (id: string, p: Partial<Msg>) => setMessages((ms) => ms.map((m) => (m.id === id ? { ...m, ...p } : m)));
-  const label = contextLabel(ctx, routeScreen, lang);
+  const label = contextLabel(ctx, routeScreen, page, lang);
 
   const send = async (text: string) => {
     const t = text.trim();
-    if (!t || busy || !user) return;
+    if (!t || busy || (!user && !site)) return;
     setInput("");
     const userMsg: Msg = { id: uid(), role: "user", text: t, ctx: label };
     const history = [...messages, userMsg].filter((m) => m.text).slice(-10).map((m) => ({ role: m.role, text: m.text.slice(0, 2000) }));
@@ -151,30 +199,42 @@ const TournamentAssistant = ({ routeScreen }: { routeScreen: AssistantScreen }) 
     setBusy(true);
     let data: unknown = null;
     try {
-      const res = await supabase.functions.invoke("tournament-assistant", {
+      const res = await supabase.functions.invoke(site ? "site-assistant" : "tournament-assistant", {
         body: {
-          assistant: {
-            thread_id: threadId,
-            lang,
-            messages: history,
-            context: { ...ctx, screen, route: window.location.pathname, label },
-          },
+          assistant: site
+            ? {
+              thread_id: threadId, lang, page, route: window.location.pathname, label,
+              summary: ctx?.summary?.slice(0, 600), messages: history.slice(-6).map((m) => ({ ...m, text: m.text.slice(0, 500) })),
+            }
+            : {
+              thread_id: threadId,
+              lang,
+              messages: history,
+              context: { ...ctx, screen, route: window.location.pathname, label },
+            },
         },
         timeout: 30_000,
       });
       data = res.error ? null : res.data;
     } catch { /* hiện lỗi bên dưới */ }
     setBusy(false);
-    const res = data as { reply?: string; card?: Card | null; lang?: Lang } | null;
+    const res = data as { reply?: string; card?: Card | null; lang?: Lang; links?: { href?: unknown; label?: unknown }[] } | null;
     if (!res?.reply) {
       setMessages((ms) => [...ms, { id: uid(), role: "bot", text: (/[à-ỹđ]/i.test(t) ? COPY.vi : c).error, ctx: label }]);
       return;
     }
-    const card = res.card ?? undefined;
+    const card = site ? undefined : res.card ?? undefined;
+    // Lọc lại phía client: chỉ link nội bộ trong allowlist, nhãn là chữ thuần.
+    const links = site && Array.isArray(res.links)
+      ? res.links.flatMap((l) => {
+        const href = safeLink(l?.href);
+        return href && typeof l.label === "string" && l.label.trim() ? [{ href, label: l.label.trim().slice(0, 40) }] : [];
+      }).slice(0, 3)
+      : undefined;
     const shareId = ctx?.tournament?.kind === "quick_table" ? ctx.tournament.share_id : undefined;
     setMessages((ms) => [...ms, {
       id: uid(), role: "bot", text: res.reply!, ctx: label, card, shareId, lang: res.lang === "en" || res.lang === "vi" ? res.lang : lang,
-      cardState: card && !card.blocked ? "pending" : undefined,
+      cardState: card && !card.blocked ? "pending" : undefined, links,
     }]);
   };
 
@@ -215,30 +275,25 @@ const TournamentAssistant = ({ routeScreen }: { routeScreen: AssistantScreen }) 
     log(m, m.card, "cancelled");
   };
 
-  const chips = useMemo(() => suggestionsFor(screen, ctx?.stage ?? null), [screen, ctx?.stage]);
+  const chips = useMemo(() => (site ? siteSuggestions(page) : suggestionsFor(screen, ctx?.stage ?? null)), [site, page, screen, ctx?.stage]);
+  const title = site ? c.siteTitle : c.title;
   const bottom = isIOS() ? "calc(68px + env(safe-area-inset-bottom, 0px) + 12px)" : "calc(56px + 12px)";
 
   return (
     <>
       <style>{CSS}</style>
-      {!open && (
-        <button
-          type="button"
-          className="tl-asst-fab"
-          style={{ ["--asst-bottom" as string]: bottom }}
-          aria-label={c.open}
-          title={c.open}
-          onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 50); }}
-        >
-          <Sparkles className="h-5 w-5" aria-hidden />
-        </button>
-      )}
       {open && (
-        <section className="tl-asst-panel" style={{ ["--asst-bottom" as string]: bottom }} role="dialog" aria-label={c.title}>
+        <section
+          className="tl-asst-panel"
+          style={{ ["--asst-panel-bottom" as string]: bottom }}
+          role="dialog"
+          aria-label={title}
+          onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); onClose(); } }}
+        >
           <header className="tl-asst-head">
             <Sparkles className="h-4 w-4" aria-hidden style={{ color: "var(--tl-green)" }} />
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div className="tl-asst-title">{c.title}</div>
+              <div className="tl-asst-title">{title}</div>
               <div className="tl-asst-ctx">{c.viewing(label)}</div>
             </div>
             {messages.length > 0 && (
@@ -246,17 +301,26 @@ const TournamentAssistant = ({ routeScreen }: { routeScreen: AssistantScreen }) 
                 {c.clear}
               </button>
             )}
-            <button type="button" className="tl-asst-icon" aria-label={c.close} onClick={() => setOpen(false)}>
+            <button type="button" className="tl-asst-icon" aria-label={c.close} onClick={onClose}>
               <X className="h-4 w-4" />
             </button>
           </header>
 
           <div className="tl-asst-log" aria-live="polite">
-            <div className="tl-asst-msg bot">{c.hello}</div>
+            <div className="tl-asst-msg bot">{site ? c.siteHello : c.hello}</div>
             {messages.map((m) => (
               <div key={m.id} className={`tl-asst-row ${m.role}`}>
                 {m.ctx && <div className="tl-asst-tag">{c.viewing(m.ctx)}</div>}
                 <div className={`tl-asst-msg ${m.role}`}>{m.text}</div>
+                {m.links && m.links.length > 0 && (
+                  <div className="tl-asst-chips">
+                    {m.links.map((l) => (
+                      <button key={l.href} type="button" className="tl-asst-chip" onClick={() => { const h = safeLink(l.href); if (h) navigate(localePath(h, lang)); }}>
+                        {l.label} →
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {m.card && !m.card.blocked && (
                   <div className={`tl-asst-card${m.card.danger ? " danger" : ""}`}>
                     {m.card.lines.map((l) => <div key={l} className="tl-asst-line">{l}</div>)}
@@ -304,7 +368,7 @@ const TournamentAssistant = ({ routeScreen }: { routeScreen: AssistantScreen }) 
             <div ref={endRef} />
           </div>
 
-          {!user ? (
+          {!user && !site ? (
             <div className="tl-asst-compose">
               <span style={{ flex: 1, fontSize: 13, color: "var(--tl-fg-3)" }}>{c.login}</span>
               <Button type="button" size="sm" onClick={() => navigate(`${localePath("/login", lang)}?redirect=${encodeURIComponent(window.location.pathname)}`)}>
@@ -332,9 +396,9 @@ const TournamentAssistant = ({ routeScreen }: { routeScreen: AssistantScreen }) 
                   ref={inputRef}
                   value={input}
                   rows={1}
-                  maxLength={2000}
-                  placeholder={c.placeholder}
-                  aria-label={c.placeholder}
+                  maxLength={site ? 500 : 2000}
+                  placeholder={site ? c.sitePlaceholder : c.placeholder}
+                  aria-label={site ? c.sitePlaceholder : c.placeholder}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void send(input); } }}
                 />
@@ -350,17 +414,12 @@ const TournamentAssistant = ({ routeScreen }: { routeScreen: AssistantScreen }) 
   );
 };
 
-// z-index dưới BottomNav (9999), cùng tầng ChatFAB (9990) — ChatFAB ẩn trên các route này.
+// z-index dưới BottomNav (9999), cùng tầng ChatFAB (9990); panel render sau ChatFAB nên nằm trên.
 const CSS = `
-.tl-asst-fab { position: fixed; right: 16px; bottom: var(--asst-bottom); z-index: 9990; width: 48px; height: 48px; border-radius: 999px;
-  display: inline-flex; align-items: center; justify-content: center; background: var(--tl-bg, #08090a); color: var(--tl-green, #00b96b);
-  border: 1px solid var(--tl-border, #22252a); box-shadow: var(--tl-shadow, none); transition: transform .18s ease, border-color .18s ease; }
-.tl-asst-fab:hover, .tl-asst-fab:focus-visible { transform: scale(1.06); border-color: var(--tl-green, #00b96b); outline: none; }
-.tl-asst-panel { position: fixed; z-index: 9990; left: 8px; right: 8px; bottom: var(--asst-bottom); height: min(72dvh, 620px);
+.tl-asst-panel { position: fixed; z-index: 9990; left: 8px; right: 8px; bottom: var(--asst-panel-bottom); height: min(72dvh, 620px);
   display: flex; flex-direction: column; background: var(--tl-bg, #08090a); color: var(--tl-fg, #f5f3ee);
   border: 1px solid var(--tl-border-strong); border-radius: 14px; overflow: hidden; }
 @media (min-width: 768px) {
-  .tl-asst-fab { right: 24px; bottom: 24px; }
   .tl-asst-panel { left: auto; right: 24px; bottom: 24px; width: 400px; height: min(78dvh, 640px); }
 }
 .tl-asst-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--tl-border, #22252a); }
@@ -394,4 +453,4 @@ const CSS = `
 .tl-asst-link:hover { color: var(--tl-fg, #f5f3ee); }
 `;
 
-export default TournamentAssistant;
+export default AssistantPanel;
