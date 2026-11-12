@@ -387,7 +387,6 @@ const AssistantPanel = ({ mode, routeScreen, page, open, onClose }: Props) => {
                 turns={messages.map((m) => ({ role: m.role, text: m.text }))}
                 initialMessage={prefillMessage(messages)}
                 initialEmail={user?.email ?? ""}
-                loggedIn={!!user}
                 onCancel={() => setContactOpen(false)}
                 onSent={(reply) => {
                   setContactOpen(false);

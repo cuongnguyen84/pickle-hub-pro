@@ -2,7 +2,7 @@
 // Ngữ cảnh màn hình gửi trợ lý (facts) + form "Liên hệ admin" phía client.
 import { afterEach, describe, expect, it } from "vitest";
 import { assistantFacts, genericFacts, serializeFacts } from "@/lib/assistant-context";
-import { prefillMessage, supportClientError, supportPayload } from "@/lib/assistant-support";
+import { prefillMessage, supportPayload } from "@/lib/assistant-support";
 import { MAX_CTX_CHARS } from "../../../supabase/functions/site-assistant/shared";
 
 afterEach(() => { document.body.innerHTML = ""; document.title = ""; });
@@ -43,14 +43,6 @@ describe("generic + merged facts", () => {
 
 describe("support form (client)", () => {
   const f = { message: "Cần giúp", name: "", phone: "", email: "", zalo: "", website: "" };
-  it("validates lightly; guests need a contact", () => {
-    expect(supportClientError({ ...f, message: " " }, true)).toBe("message_required");
-    expect(supportClientError(f, false)).toBe("contact_required");
-    expect(supportClientError(f, true)).toBeNull();
-    expect(supportClientError({ ...f, email: "x@" }, true)).toBe("invalid_email");
-    expect(supportClientError({ ...f, phone: "09 12" }, true)).toBe("invalid_phone");
-    expect(supportClientError({ ...f, phone: "0912 345 678" }, false)).toBeNull();
-  });
   it("prefills from the user's recent turns only", () => {
     expect(prefillMessage([{ role: "user", text: "a" }, { role: "bot", text: "b" }, { role: "user", text: " c " }])).toBe("a\nc");
   });

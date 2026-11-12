@@ -8,15 +8,8 @@ import { useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LifeBuoy, Phone, Mail, MessageCircle } from "lucide-react";
-import { format } from "date-fns";
 
 export interface SupportRequest {
   id: string;
@@ -71,48 +64,44 @@ const RequestCard = ({ r }: { r: SupportRequest }) => {
   const zalo = zaloHref(r.phone);
 
   return (
-    <Card className="bg-card border-border">
-      <CardContent className="p-4 space-y-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          <LifeBuoy className="w-4 h-4" aria-hidden />
-          <span className="font-medium">{r.name || "(không tên)"}</span>
-          {r.status === "new" ? <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">Mới</Badge> : <Badge variant="secondary">Đã xử lý</Badge>}
-          <span className="text-xs text-foreground-muted">
-            {format(new Date(r.created_at), "dd/MM/yyyy HH:mm")} · {r.user_id ? `user ${r.user_id.slice(0, 8)}` : "khách"} · {(r.lang ?? "vi").toUpperCase()}
-          </span>
-        </div>
-        <p className="text-sm whitespace-pre-wrap break-words">{r.message}</p>
-        <div className="flex flex-wrap gap-2 text-sm">
-          {r.phone && <a className="inline-flex items-center gap-1 underline" href={`tel:${r.phone}`}><Phone className="w-3.5 h-3.5" aria-hidden />{r.phone}</a>}
-          {zalo && <a className="inline-flex items-center gap-1 underline" href={zalo} target="_blank" rel="noopener noreferrer"><MessageCircle className="w-3.5 h-3.5" aria-hidden />Zalo (SĐT)</a>}
-          {r.zalo && <span className="inline-flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5" aria-hidden />Zalo: {r.zalo}</span>}
-          {r.email && <a className="inline-flex items-center gap-1 underline" href={`mailto:${r.email}`}><Mail className="w-3.5 h-3.5" aria-hidden />{r.email}</a>}
-          {!r.phone && !r.email && !r.zalo && <span className="text-foreground-muted">Không để lại liên hệ — tra theo tài khoản</span>}
-        </div>
-        <p className="text-xs text-foreground-muted break-words">
-          Trang: {r.page_type ?? "?"} {r.route ?? ""}{r.page_label ? ` — ${r.page_label}` : ""}
-        </p>
-        {r.transcript && r.transcript.length > 0 && (
-          <details className="text-xs">
-            <summary className="cursor-pointer text-foreground-muted">Hội thoại với trợ lý ({r.transcript.length} lượt)</summary>
-            <div className="mt-2 space-y-1">
-              {r.transcript.map((t, i) => (
-                <p key={i} className="whitespace-pre-wrap break-words"><b>{t.role === "user" ? "Người dùng" : "AI"}:</b> {t.text}</p>
-              ))}
-            </div>
-          </details>
-        )}
-        <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ghi chú admin (người gửi đã đăng nhập có thể đọc)" maxLength={2000} rows={2} />
-        <div className="flex gap-2 flex-wrap">
-          <Button size="sm" variant="outline" disabled={update.isPending || note === (r.admin_note ?? "")} onClick={() => update.mutate({ admin_note: note })}>
-            Lưu ghi chú
-          </Button>
-          {r.status === "new"
-            ? <Button size="sm" disabled={update.isPending} onClick={() => update.mutate({ status: "handled", admin_note: note })}>Đánh dấu đã xử lý</Button>
-            : <Button size="sm" variant="outline" disabled={update.isPending} onClick={() => update.mutate({ status: "new" })}>Mở lại</Button>}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="font-medium">{r.name || "(không tên)"}</span>
+        <span className="text-xs rounded border border-border px-1.5 py-0.5">{r.status === "new" ? "Mới" : "Đã xử lý"}</span>
+        <span className="text-xs text-foreground-muted">
+          {new Date(r.created_at).toLocaleString("vi-VN")} · {r.user_id ? `user ${r.user_id.slice(0, 8)}` : "khách"} · {(r.lang ?? "vi").toUpperCase()}
+        </span>
+      </div>
+      <p className="text-sm whitespace-pre-wrap break-words">{r.message}</p>
+      <div className="flex flex-wrap gap-3 text-sm">
+        {r.phone && <a className="underline" href={`tel:${r.phone}`}>{r.phone}</a>}
+        {zalo && <a className="underline" href={zalo} target="_blank" rel="noopener noreferrer">Zalo (SĐT)</a>}
+        {r.zalo && <span>Zalo: {r.zalo}</span>}
+        {r.email && <a className="underline" href={`mailto:${r.email}`}>{r.email}</a>}
+        {!r.phone && !r.email && !r.zalo && <span className="text-foreground-muted">Không để lại liên hệ — tra theo tài khoản</span>}
+      </div>
+      <p className="text-xs text-foreground-muted break-words">
+        Trang: {r.page_type ?? "?"} {r.route ?? ""}{r.page_label ? ` — ${r.page_label}` : ""}
+      </p>
+      {r.transcript && r.transcript.length > 0 && (
+        <details className="text-xs">
+          <summary className="cursor-pointer text-foreground-muted">Hội thoại với trợ lý ({r.transcript.length} lượt)</summary>
+          {r.transcript.map((t, i) => (
+            <p key={i} className="mt-1 whitespace-pre-wrap break-words"><b>{t.role === "user" ? "Người dùng" : "AI"}:</b> {t.text}</p>
+          ))}
+        </details>
+      )}
+      <textarea className="w-full rounded border border-border bg-transparent p-2 text-sm" value={note} onChange={(e) => setNote(e.target.value)}
+        placeholder="Ghi chú admin (người gửi đã đăng nhập có thể đọc)" maxLength={2000} rows={2} />
+      <div className="flex gap-2 flex-wrap">
+        <Button size="sm" variant="outline" disabled={update.isPending || note === (r.admin_note ?? "")} onClick={() => update.mutate({ admin_note: note })}>
+          Lưu ghi chú
+        </Button>
+        {r.status === "new"
+          ? <Button size="sm" disabled={update.isPending} onClick={() => update.mutate({ status: "handled", admin_note: note })}>Đánh dấu đã xử lý</Button>
+          : <Button size="sm" variant="outline" disabled={update.isPending} onClick={() => update.mutate({ status: "new" })}>Mở lại</Button>}
+      </div>
+    </div>
   );
 };
 
@@ -127,16 +116,13 @@ export default function AdminSupport() {
           <h1 className="text-2xl font-semibold">Yêu cầu hỗ trợ</h1>
           <p className="text-foreground-muted mt-1">Người dùng gửi qua trợ lý AI — mới nhất trước</p>
         </div>
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-48" aria-label="Lọc trạng thái"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="new">Mới</SelectItem>
-            <SelectItem value="handled">Đã xử lý</SelectItem>
-            <SelectItem value="all">Tất cả</SelectItem>
-          </SelectContent>
-        </Select>
+        <select className="rounded border border-border bg-transparent px-3 py-2 text-sm" value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Lọc trạng thái">
+          <option value="new">Mới</option>
+          <option value="handled">Đã xử lý</option>
+          <option value="all">Tất cả</option>
+        </select>
         {isLoading ? (
-          <div className="space-y-4">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full" />)}</div>
+          <p className="text-foreground-muted">Đang tải…</p>
         ) : error ? (
           <p className="text-destructive text-sm">{(error as Error).message}</p>
         ) : data && data.length > 0 ? (

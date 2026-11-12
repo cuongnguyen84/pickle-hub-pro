@@ -17,7 +17,6 @@ export interface Translations {
     copyLink: string;
     copied: string;
     noResults: string;
-    comingSoon: string;
     close: string;
     loadMore: string;
   };
@@ -189,7 +188,6 @@ export interface Translations {
   account: {
     changePassword: string;
     changePasswordDescription: string;
-    currentPassword: string;
     newPassword: string;
     confirmNewPassword: string;
     passwordChanged: string;
@@ -251,15 +249,10 @@ export interface Translations {
       title: string;
       description: string;
     };
-    singleElimination: {
-      title: string;
-      description: string;
-    };
     doublesElimination: {
       title: string;
       description: string;
     };
-    comingSoon: string;
     flexTournament: {
       title: string;
       description: string;
@@ -293,11 +286,8 @@ export interface Translations {
         name: string;
         pair: string;
       };
-      generateRR: string;
       unlisted: string;
       public: string;
-      slotA: string;
-      slotB: string;
       noPlayers: string;
       noTeams: string;
       noGroups: string;
@@ -319,7 +309,6 @@ export interface Translations {
       createError: string;
       createSuccess: string;
       updateSuccess: string;
-      generating: string;
       rrGenerated: string;
       duplicatePlayer: string;
       duplicateInTeam: string;
@@ -330,8 +319,6 @@ export interface Translations {
       noDoublesStats: string;
       countsForStandings: string;
       noGroupHint: string;
-      playerPanel: string;
-      openPlayerPanel: string;
       teams: string;
       wins: string;
       tabTeams: string;
@@ -346,7 +333,6 @@ export interface Translations {
       addChildMatch: string;
       childMatches: string;
       selectPlayer: string;
-      assignToGroup: string;
       noGroup: string;
       selectGroup: string;
     };
@@ -356,17 +342,14 @@ export interface Translations {
     signup: string;
     email: string;
     password: string;
-    confirmPassword: string;
     forgotPassword: string;
     forgotPasswordDesc: string;
     resetPassword: string;
     resetPasswordSent: string;
     resetPasswordSentDesc: string;
-    orContinueWith: string;
     noAccount: string;
     hasAccount: string;
     loginSuccess: string;
-    logoutSuccess: string;
     signupSuccess: string;
     invalidCredentials: string;
     accessDenied: string;
@@ -403,35 +386,17 @@ export interface Translations {
       description: string;
       cta: string;
       badge: string;
-      mainTitle: string;
-      mainDescription: string;
     };
     sections: {
       liveNow: string;
-      latestVideos: string;
-      trendingVideos: string;
-      popularThisWeek: string;
       tournaments: string;
       organizations: string;
-      upcomingTournaments: string;
-      upcomingSubtitle: string;
     };
     noLive: string;
-    noVideos: string;
-    features: {
-      livestreamTitle: string;
-      livestreamDesc: string;
-      tournamentsTitle: string;
-      tournamentsDesc: string;
-      communityTitle: string;
-      communityDesc: string;
-    };
     about: {
       title: string;
       description: string;
-      watchLive: string;
       tournaments: string;
-      freeTools: string;
     };
   };
   video: {
@@ -442,8 +407,6 @@ export interface Translations {
     comments: string;
     publishedAt: string;
     relatedVideos: string;
-    shorts: string;
-    longform: string;
     noDescription: string;
   };
   live: {
@@ -453,16 +416,10 @@ export interface Translations {
     endedAt: string;
     scheduled: string;
     ended: string;
-    startingSoon: string;
-    watchLive: string;
-    noLivestreams: string;
     scheduledFor: string;
     replay: string;
-    watchingTooltip: string;
     watchingAria: string;
     totalViewsTooltip: string;
-    hubTitle: string;
-    hubDescription: string;
     previewRemaining: string;
     previewEndingSoon: string;
     previewEnded: string;
@@ -472,14 +429,6 @@ export interface Translations {
     embedGateTitle: string;
     embedGateBody: string;
     streamNotAvailable: string;
-    seo: {
-      tournamentsTitle: string;
-      tournamentsDesc: string;
-      creatorsTitle: string;
-      creatorsDesc: string;
-      upcomingTitle: string;
-      upcomingDesc: string;
-    };
   };
   tournament: {
     title: string;
@@ -489,9 +438,7 @@ export interface Translations {
     startDate: string;
     endDate: string;
     viewTournament: string;
-    relatedContent: string;
     follow: string;
-    remindMe: string;
     liveNow: string;
     scheduled: string;
     replays: string;
@@ -502,18 +449,7 @@ export interface Translations {
     noLive: string;
     noScheduled: string;
     noReplays: string;
-    noVideos: string;
     checkBackLater: string;
-    hubTitle: string;
-    hubDescription: string;
-    seo: {
-      createTitle: string;
-      createDesc: string;
-      formatsTitle: string;
-      formatsDesc: string;
-      builtTitle: string;
-      builtDesc: string;
-    };
     openRegistration: string;
     featured: string;
     multiEvent: string;
@@ -546,10 +482,8 @@ export interface Translations {
     settings: string;
     upload: string;
     createLive: string;
-    noOrganization: string;
     stats: {
       totalViews: string;
-      totalLikes: string;
       totalVideos: string;
       totalLivestreams: string;
     };
@@ -566,29 +500,12 @@ export interface Translations {
       tags: string;
       tournament: string;
       thumbnail: string;
-      uploadVideo: string;
       uploading: string;
-      uploadSuccess: string;
-      uploadError: string;
-      selectFile: string;
-      dragDrop: string;
-      generatingThumbnail: string;
-      thumbnailGenerated: string;
-      regenerateThumbnail: string;
-      thumbnailPreview: string;
     };
     livestream: {
       title: string;
       description: string;
-      scheduledStart: string;
-      streamKey: string;
-      rtmpUrl: string;
-      playbackUrl: string;
-      copyStreamKey: string;
-      goLive: string;
-      endStream: string;
       createSuccess: string;
-      streamInfo: string;
     };
   };
   geoBlock: {
@@ -602,7 +519,6 @@ export interface Translations {
     users: string;
     tournaments: string;
     stats: {
-      totalUsers: string;
       totalOrganizations: string;
       totalVideos: string;
       totalLivestreams: string;
@@ -614,17 +530,12 @@ export interface Translations {
       slug: string;
       logo: string;
       description: string;
-      creators: string;
-      addCreator: string;
-      removeCreator: string;
     };
     user: {
       email: string;
       displayName: string;
       role: string;
       organization: string;
-      changeRole: string;
-      assignOrg: string;
       viewer: string;
       creator: string;
       admin: string;
@@ -641,13 +552,11 @@ export interface Translations {
     };
     moderation: {
       title: string;
-      pendingReview: string;
       approved: string;
       rejected: string;
       approve: string;
       reject: string;
       hide: string;
-      reportedContent: string;
     };
     settings: {
       title: string;
@@ -701,15 +610,12 @@ export interface Translations {
     playbackError: string;
     playbackErrorDesc: string;
     reconnecting: string;
-    connectionLost: string;
     autoRetry: string;
     retryFailed: string;
   };
   errors: {
     notFound: string;
     notFoundDesc: string;
-    serverError: string;
-    serverErrorDesc: string;
     networkError: string;
     networkErrorDesc: string;
     goHome: string;
@@ -727,7 +633,6 @@ export interface Translations {
     deleteDraft: string;
   };
   ads: {
-    advertisement: string;
     skip: string;
   };
   search: {
@@ -758,9 +663,6 @@ export interface Translations {
     noNotifications: string;
     noNotificationsDesc: string;
     unread: string;
-    markAllRead: string;
-    livestreamScheduled: string;
-    livestreamLive: string;
   };
   chat: {
     title: string;
@@ -796,8 +698,6 @@ export interface Translations {
     nicknameLengthError: string;
     nextEdit: string;
     pin: string;
-    unpin: string;
-    pinnedMessage: string;
     topChatters: string;
     messages: string;
     highlight: string;
@@ -829,15 +729,6 @@ export interface Translations {
     copied: string;
     copiedDesc: string;
     linkDesc: string;
-    embedDesc: string;
-    withTitle: string;
-    withoutTitle: string;
-    qrDesc: string;
-    downloadQR: string;
-    qrDownloaded: string;
-    qrDownloadedDesc: string;
-    socialLink: string;
-    socialLinkDesc: string;
     directLink: string;
   };
   quickTable: {
@@ -851,7 +742,6 @@ export interface Translations {
     tournamentName: string;
     tournamentNamePlaceholder: string;
     playerCount: string;
-    playerCountPlaceholder: string;
     requireRegistration: string;
     requireRegistrationDesc: string;
     requireSkillLevel: string;
@@ -859,8 +749,6 @@ export interface Translations {
     advancedSettings: string;
     autoApprove: string;
     autoApproveDesc: string;
-    doublesMode: string;
-    doublesModeDesc: string;
     registrationMessage: string;
     registrationMessagePlaceholder: string;
     continue: string;
@@ -880,13 +768,6 @@ export interface Translations {
     };
     myTournaments: string;
     refereeTournaments: string;
-    yourRegisteredTournaments: string;
-    yourCompletedTournaments: string;
-    openRegistrationTournaments: string;
-    openRegistrationTitle: string;
-    expectedPlayers: string;
-    expectedPairs: string;
-    registering: string;
     ongoing: string;
     completed: string;
     noOngoing: string;
@@ -899,8 +780,6 @@ export interface Translations {
     rejected: string;
     showMore: string;
     showLess: string;
-    showCompleted: string;
-    hideCompleted: string;
     referee: string;
     noRating: string;
     viewProfile: string;
@@ -971,7 +850,6 @@ export interface Translations {
       outgoingRequests: string;
       availablePlayers: string;
       noPartner: string;
-      hasPartner: string;
       removePartner: string;
       teamLocked: string;
     };
@@ -997,7 +875,6 @@ export interface Translations {
     teamName: string;
     playerName: string;
     club: string;
-    notDeclared: string;
     hasPartnerStatus: string;
     noPartnerStatus: string;
     statusHeader: string;
@@ -1034,12 +911,8 @@ export interface Translations {
     seo: {
       pageTitle: string;
       pageSubtitle: string;
-      createTitle: string;
-      createDesc: string;
       roundRobinTitle: string;
       roundRobinDesc: string;
-      formatsTitle: string;
-      formatsDesc: string;
     };
     // Setup UI
     setup: {
@@ -1092,13 +965,11 @@ export interface Translations {
     };
     view: {
       groupStage: string;
-      shareSuccess: string;
       deleteConfirm: string;
       deleteBtn: string;
       groupCompleteTitle: string;
       groupCompleteDesc: string;
       startPlayoff: string;
-      registrationTab: string;
       playoffTab: string;
       playoffLockedOneGroup: string;
       playoffLockedWaiting: string;
@@ -1134,9 +1005,7 @@ export interface Translations {
       movePlayer: string;
       removePlayer: string;
       removeConfirm: string;
-      movePlayerTitle: string;
       selectGroup: string;
-      moveBtn: string;
       movedSuccess: string;
       addPlayerTitle: string;
       playerName: string;
@@ -1145,8 +1014,6 @@ export interface Translations {
       addedSuccess: string;
       removedSuccess: string;
       scoreUpdated: string;
-      nextRoundCreated: string;
-      tournamentCompleted: string;
       playoffCreated: string;
       onlyCreatorCanScore: string;
       wildcardTitle: string;
@@ -1185,7 +1052,6 @@ export interface Translations {
       pointDiffLabel: string;
       courtName: string;
       courtNamePlaceholder: string;
-      courtNameSaved: string;
     };
     parentTournament: {
       selectType: string;
@@ -1219,7 +1085,6 @@ export interface Translations {
       subEvents: string;
       noSubEvents: string;
       subEventCount: string;
-      viewParent: string;
       deleteParentConfirm: string;
       deleteParentConfirmWithEvents: string;
       moreEvents: string;
@@ -1236,7 +1101,6 @@ export interface Translations {
       autoResolve: string;
       confirmBracket: string;
       noConflicts: string;
-      unresolvedConflicts: string;
     };
     groups: {
       groups: string;
@@ -1275,14 +1139,6 @@ export interface Translations {
     statusRegistration: string;
     statusOngoing: string;
     statusCompleted: string;
-    seo: {
-      mlpTitle: string;
-      mlpDesc: string;
-      lineupTitle: string;
-      lineupDesc: string;
-      manageTitle: string;
-      manageDesc: string;
-    };
     scoring: {
       title: string;
       saveScore: string;
@@ -1290,17 +1146,13 @@ export interface Translations {
       saved: string;
       scoreSaveError: string;
       game: string;
-      selectGame: string;
-      matchComplete: string;
       reset: string;
-      confirmReset: string;
     };
     setup: {
       title: string;
       subtitle: string;
       stepBasicInfo: string;
       stepGameTemplates: string;
-      stepDreambreaker: string;
       stepFormat: string;
       stepFees: string;
       dreambreakerToggle: string;
@@ -1322,7 +1174,6 @@ export interface Translations {
       thirdPlaceMatch: string;
       thirdPlaceMatchDesc: string;
       playoffTeams: string;
-      playoffTeamsDesc: string;
       creating: string;
       createBtn: string;
       invalidTeamCount: string;
@@ -1343,30 +1194,18 @@ export interface Translations {
       rosterFull: string;
       rosterIncomplete: string;
       manageTeam: string;
-      registerPrompt: string;
       createTeam: string;
-      inviteTeam: string;
       generateBracket: string;
       generateMatches: string;
       createGroups: string;
-      startTournament: string;
       createPlayoff: string;
-      approveAllFirst: string;
       needMinTeams: string;
-      matchesCreated: string;
       roundRobinComplete: string;
-      btcActions: string;
-      approveBeforeGroups: string;
       groupStage: string;
       roundRobin: string;
       playoffRound: string;
-      seBracket: string;
       noMatches: string;
-      noMatchesDesc: string;
-      startConfirm: string;
-      startConfirmDesc: string;
       start: string;
-      teamsReady: string;
       createSchedule: string;
       deleteConfirm: string;
       deleteConfirmDesc: string;
@@ -1382,23 +1221,17 @@ export interface Translations {
       generateBracketBtn: string;
       roundStarted: string;
       createPlayoffTitle: string;
-      createPlayoffDesc: string;
       createScheduleBtn: string;
-      createScheduleDesc: string;
       noMatchesEmpty: string;
       noMatchesScheduleDesc: string;
       startTournamentTitle: string;
       startTournamentDesc: string;
       startBtn: string;
-      teamsReadyCount: string;
       generateScheduleBtn: string;
       seBracketTitle: string;
       groupStageTitle: string;
       roundRobinTitle: string;
-      approveBeforeBracket: string;
-      inviteOrCreateSchedule: string;
       inviteOrBracket: string;
-      needMinTeamsForBracket: string;
       cancelBtn: string;
       deleteAction: string;
       errorOccurred: string;
@@ -1415,18 +1248,12 @@ export interface Translations {
     };
     roster: {
       title: string;
-      countLabel: string;
       inviteCode: string;
-      addMember: string;
-      addFromPrevious: string;
-      memberName: string;
       gender: string;
       male: string;
       female: string;
       skillLevel: string;
       optional: string;
-      removeMember: string;
-      removeMemberDesc: string;
       rosterFull: string;
       captain: string;
       noMembers: string;
@@ -1451,13 +1278,6 @@ export interface Translations {
     };
     dialog: {
       generateMatches: string;
-      generateMatchesDesc: string;
-      teamsCount: string;
-      matchesCount: string;
-      roundsCount: string;
-      gamesPerMatch: string;
-      minTeamsRequired: string;
-      incompleteRosters: string;
       confirm: string;
     };
   };
@@ -1470,7 +1290,6 @@ export interface Translations {
     loginRequiredDesc: string;
     noTournaments: string;
     noTournamentsDesc: string;
-    viewBtn: string;
     teams: string;
     earlyRounds: string;
     semifinalPlus: string;
@@ -1513,14 +1332,7 @@ export interface Translations {
       nameRequired: string;
       need32Teams: string;
       createError: string;
-      addTeamsError: string;
-      bracketError: string;
       createSuccess: string;
-      hints: {
-        byeCount: string;
-        r1Matches: string;
-        r2Matches: string;
-      };
     };
     scoring: {
       match: string;
@@ -1583,11 +1395,9 @@ export interface Translations {
       noBracket: string;
       playoffNotReady: string;
       tieNotAllowed: string;
-      loserOf: string;
       clickGameToEdit: string;
       waitingTeams: string;
       finalBadge: string;
-      scoreSaved: string;
       matchSaved: string;
       gameSaved: string;
       scoreSaveError: string;
@@ -1603,35 +1413,22 @@ export interface Translations {
   news: {
     title: string;
     subtitle: string;
-    noNews: string;
-    readMore: string;
   };
   seo: {
     tools: {
       title: string;
       description: string;
-      formatsTitle: string;
-      quickBracket: string;
       teamMatch: string;
-      singleElimination: string;
       doublesElimination: string;
       flexTournament: string;
     };
     doublesElimination: {
       title: string;
       description: string;
-      whenToUseTitle: string;
-      whenToUseDesc: string;
-      sizeTitle: string;
-      sizeDesc: string;
     };
     flexTournament: {
       title: string;
       description: string;
-      differenceTitle: string;
-      differenceList: string[];
-      whoTitle: string;
-      whoDesc: string;
     };
   };
   referee: {
@@ -1686,7 +1483,6 @@ export interface Translations {
     members: string;
     rosterFull: string;
     rosterIncomplete: string;
-    memberList: string;
     male: string;
     female: string;
     manageTeam: string;
@@ -1730,7 +1526,6 @@ export interface Translations {
     inviteEmailError: string;
     // GroupSetupDialog
     groupSetupTitle: string;
-    groupSetupDesc: string;
   };
   dashboard: {
     title: string;
@@ -1776,11 +1571,9 @@ export interface Translations {
   forum: {
     title: string;
     navLabel: string;
-    createPost: string;
     newPost: string;
     allCategories: string;
     trending: string;
-    latest: string;
     pinned: string;
     qa: string;
     markAsQA: string;
@@ -1789,7 +1582,6 @@ export interface Translations {
     unmarkBestAnswer: string;
     likes: string;
     comments: string;
-    noPostsYet: string;
     noCommentsYet: string;
     writeComment: string;
     postTitle: string;
@@ -1806,32 +1598,24 @@ export interface Translations {
     publishSuccess: string;
     deletePost: string;
     deletePostConfirm: string;
-    deleteComment: string;
     loginToPost: string;
     loginToComment: string;
     by: string;
-    ago: string;
-    readMore: string;
     backToForum: string;
     pinPost: string;
     unpinPost: string;
-    editPost: string;
     reply: string;
     replyingTo: string;
-    cancelReply: string;
   };
   // Social Events MVP (Sprint 1). PR2 fills detail/register/club; PR3
   // adds create/manage/matchmaking subnamespaces.
   socialEvents: {
     nav: string;
     breadcrumb: string;
-    comingSoon: string;
     detail: {
       registerCta: string;
-      registerCtaShort: string;
       registerInProgress: string;
       registeredCount: string;
-      spotsLeft: string;
       startsIn: string;
       startedAt: string;
       ended: string;
@@ -1903,7 +1687,6 @@ export interface Translations {
       successTitle: string;
       successBody: string;
       successPaymentBody: string;
-      orderLabel: string;
       paymentInstructions: string;
       openZalo: string;
       backToEvent: string;
@@ -1931,7 +1714,6 @@ export interface Translations {
     proxyRegister: {
       // Entry buttons
       proxyRegisterCta: string;
-      manualAddCta: string;
       // Modal headings
       modalHeading: string;
       modalSubheading: string;
@@ -1940,11 +1722,8 @@ export interface Translations {
       // Section headings
       guestSectionHeading: string;
       playerSectionHeading: string;
-      // Form labels
-      guestPhoneLabel: string;
       guestNameLabel: string;
       guestLevelLabel: string;
-      guestLevelHint: string;
       paymentStatusLabel: string;
       paymentStatusUnpaid: string;
       paymentStatusClaimedPaid: string;
@@ -1957,8 +1736,6 @@ export interface Translations {
       manualConfirmCta: string;
       // Warning
       paymentWarningProxy: string;
-      // Skip warning on prepayment-required events (proxy success)
-      prepaymentSkipWarning: string;
       // Success share
       successHeading: string;          // "Đã thêm {name} vào sự kiện"
       shareWarning: string;            // "Vui lòng gửi link sau cho {name}…"
@@ -1998,27 +1775,15 @@ export interface Translations {
       pageSubtitle: string;
       titleVi: string;
       titleEn: string;
-      titleViPlaceholder: string;
-      titleEnPlaceholder: string;
       slug: string;
       slugHint: string;
       slugAuto: string;
-      descriptionVi: string;
-      descriptionEn: string;
       startAt: string;
-      endAt: string;
       location: string;
       locationPlaceholder: string;
-      latLng: string;
       courtCount: string;
       maxPlayers: string;
-      levelMin: string;
-      levelMax: string;
       priceVnd: string;
-      priceVndHint: string;
-      allowGuests: string;
-      allowGuestsHint: string;
-      cancellationHours: string;
       zaloGroupUrl: string;
       // PR68 — ball type + free perks
       ballType: string;
@@ -2055,9 +1820,6 @@ export interface Translations {
       endTime: string;
       priceAmount: string;
       paymentBannerFree: string;
-      paymentBannerNotConfigured: string;
-      paymentBannerNotConfiguredCta: string;
-      paymentBannerReady: string;
       errorTitleMin: string;
       errorTitleMax: string;
       errorLocationMin: string;
@@ -2146,8 +1908,6 @@ export interface Translations {
     manage: {
       pageTitle: string;
       newEventCta: string;
-      backToClub: string;
-      noEvents: string;
       emptyHeading: string;
       emptyBody: string;
       emptyCta: string;
@@ -2162,12 +1922,8 @@ export interface Translations {
       shufflePairs: string;
       editEvent: string;
       viewPublic: string;
-      cancelEvent: string;
-      cancelEventConfirm: string;
-      cancelEventConfirmBody: string;
       cancelled: string;
       reopen: string;
-      reopenedToast: string;
       noPermissionTitle: string;
       noPermissionBody: string;
     };
@@ -2256,7 +2012,6 @@ export interface Translations {
       errors: {
         generic: string;
         invalid_phone: string;
-        no_registration_found: string;
         rate_limit_exceeded: string;
         captcha_failed: string;
         captcha_required: string;
@@ -2342,18 +2097,10 @@ export interface Translations {
       payNowSuccess: string;
       errors: {
         generic: string;
-        invalid_magic_token: string;
         not_found: string;
-        registration_missing: string;
-        event_missing: string;
-        event_started: string;
         event_cancelled: string;
         event_completed: string;
-        event_not_open: string;
         event_full: string;
-        already_cancelled: string;
-        update_failed: string;
-        lookup_failed: string;
       };
     };
     editEvent: {
@@ -2442,10 +2189,8 @@ export interface Translations {
       searchLabel: string;
       searchPlaceholder: string;
       searchButton: string;
-      searching: string;
       searchEmpty: string;
       searchInvalid: string;
-      addConfirm: string;
       addSuccess: string;
       addError: string;
       removeAria: string;
@@ -2464,9 +2209,7 @@ export interface Translations {
       heading: string;
       subheading: string;
       memberBadge: string;
-      pendingBadge: string;
       pendingHeading: string;
-      pendingEmpty: string;
       activeHeading: string;
       empty: string;
       inviteCta: string;
@@ -2479,14 +2222,12 @@ export interface Translations {
       inviteSuccess: string;
       inviteError: string;
       approveSuccess: string;
-      approveError: string;
       joinCta: string;
       joinPending: string;
       joinedBadge: string;
       leaveCta: string;
       leaveConfirm: string;
       leaveSuccess: string;
-      anonymousHint: string;
       errAlreadyMember: string;
       errAlreadyPending: string;
       errAlreadyCreator: string;
@@ -2574,8 +2315,6 @@ export interface Translations {
       claimedCount: string;
       noRegistrations: string;
       addManual: string;
-      addManualTitle: string;
-      addManualSubmit: string;
       export: string;
       colName: string;
       colPhone: string;
@@ -2589,7 +2328,6 @@ export interface Translations {
       transferClaimed: string;
       transferNotClaimed: string;
       reconcileBanner: string;
-      viewProfileHint: string;
       actionCheckIn: string;
       actionUndoCheckIn: string;
       actionMarkPaid: string;
@@ -2647,7 +2385,6 @@ export interface Translations {
       notRegisteredTitle: string;
       notRegisteredBody: string;
       zoneNow: string;
-      zoneNoNow: string;
       zoneNowOrganizerSubtitle: string;
       zoneNowOrganizerEmpty: string;
       zoneRestingTitle: string;
@@ -2658,8 +2395,6 @@ export interface Translations {
       zoneNextHint: string;
       zoneStandings: string;
       zoneStandingsEmpty: string;
-      zoneScoreInput: string;
-      zoneZalo: string;
       openZalo: string;
       startMatch: string;
       startMatchHint: string;
@@ -2668,7 +2403,6 @@ export interface Translations {
       round: string;
       teamA: string;
       teamB: string;
-      versus: string;
       submitScore: string;
       submitting: string;
       awaitingOpponent: string;
@@ -2728,8 +2462,6 @@ export interface Translations {
         winsLabel: string;
         streakLabel: string;
       };
-      badgesHeading: string;
-      historyHeading: string;
       lockedHint: string;
       earnedOn: string;
       history: {
@@ -2759,18 +2491,8 @@ export interface Translations {
     eventDupr: {
       linkHeading: string;
       linkBody: string;
-      duprIdLabel: string;
-      duprIdPlaceholder: string;
-      linkCta: string;
-      saveEditCta: string;
-      editCta: string;
-      unlinkCta: string;
       linkedAsLabel: string;
-      linkSuccess: string;
-      unlinkSuccess: string;
       linkError: string;
-      formatError: string;
-      notRegistered: string;
       privacyHint: string;
       matches: {
         heading: string;
@@ -2873,13 +2595,7 @@ export interface Translations {
         success: string;
         error: string;
         codes: {
-          INVITATION_NOT_FOUND: string;
-          INVITATION_ALREADY_USED: string;
-          INVITATION_EXPIRED: string;
           TEAM_NOT_FOUND: string;
-          TEAM_ALREADY_COMPLETE: string;
-          TABLE_LOCKED: string;
-          CANNOT_JOIN_OWN_TEAM: string;
         };
       };
       removePartner: {
@@ -2888,7 +2604,6 @@ export interface Translations {
         codes: {
           TEAM_NOT_FOUND: string;
           PERMISSION_DENIED: string;
-          TABLE_LOCKED: string;
         };
       };
       btcManage: {
@@ -2899,7 +2614,6 @@ export interface Translations {
         codes: {
           TEAM_NOT_FOUND: string;
           PERMISSION_DENIED: string;
-          INVALID_ACTION: string;
         };
       };
     };
@@ -2909,17 +2623,6 @@ export interface Translations {
         error: string;
         codes: {
           AUTH_REQUIRED: string;
-          TABLE_NOT_FOUND: string;
-          TABLE_LOCKED: string;
-          NO_TEAM: string;
-          TEAM_REJECTED: string;
-          ALREADY_HAS_PARTNER: string;
-          TARGET_TEAM_NOT_FOUND: string;
-          TARGET_TEAM_REJECTED: string;
-          TARGET_HAS_PARTNER: string;
-          SAME_TEAM: string;
-          REQUEST_ALREADY_SENT: string;
-          REQUEST_PENDING_FROM_TARGET: string;
         };
       };
       respond: {
@@ -2928,12 +2631,6 @@ export interface Translations {
         error: string;
         codes: {
           AUTH_REQUIRED: string;
-          REQUEST_NOT_FOUND: string;
-          NOT_TARGET_USER: string;
-          REQUEST_NOT_PENDING: string;
-          TABLE_LOCKED: string;
-          FROM_TEAM_ALREADY_PAIRED: string;
-          TO_TEAM_ALREADY_PAIRED: string;
         };
       };
       cancel: {
@@ -3053,7 +2750,6 @@ export const vi: Translations = {
     copyLink: "Sao chép liên kết",
     copied: "Đã sao chép!",
     noResults: "Không có kết quả",
-    comingSoon: "Sắp ra mắt",
     close: "Đóng",
     loadMore: "Xem thêm",
   },
@@ -3232,7 +2928,6 @@ export const vi: Translations = {
   account: {
     changePassword: "Đổi mật khẩu",
     changePasswordDescription: "Nhập mật khẩu mới để cập nhật tài khoản.",
-    currentPassword: "Mật khẩu hiện tại",
     newPassword: "Mật khẩu mới",
     confirmNewPassword: "Xác nhận mật khẩu mới",
     passwordChanged: "Đổi mật khẩu thành công",
@@ -3297,15 +2992,10 @@ export const vi: Translations = {
       title: "Đồng đội MLP",
       description: "Thi đấu theo đội kiểu Major League Pickleball",
     },
-    singleElimination: {
-      title: "Single Elimination",
-      description: "Loại trực tiếp đơn giản",
-    },
     doublesElimination: {
       title: "Doubles Elimination",
       description: "Loại kép với nhánh thắng/thua",
     },
-    comingSoon: "Sắp ra mắt",
     flexTournament: {
       title: "Flex Tournament",
       description: "Tạo giải đấu theo cách của bạn. Hoàn toàn linh hoạt. Không giới hạn luật.",
@@ -3339,11 +3029,8 @@ export const vi: Translations = {
         name: "Tên",
         pair: "Cặp",
       },
-      generateRR: "Tạo lịch vòng tròn",
       unlisted: "Không công khai",
       public: "Công khai",
-      slotA: "Bên A",
-      slotB: "Bên B",
       noPlayers: "Chưa có VĐV",
       noTeams: "Chưa có đội",
       noGroups: "Chưa có bảng",
@@ -3365,7 +3052,6 @@ export const vi: Translations = {
       createError: "Không thể tạo giải đấu",
       createSuccess: "Đã tạo giải đấu!",
       updateSuccess: "Đã cập nhật",
-      generating: "Đang tạo...",
       rrGenerated: "Đã tạo lịch vòng tròn",
       duplicatePlayer: "Tên VĐV này đã tồn tại",
       duplicateInTeam: "VĐV này đã có trong đội này",
@@ -3376,8 +3062,6 @@ export const vi: Translations = {
       noDoublesStats: "Chưa có thống kê đôi",
       countsForStandings: "Tính vào bảng xếp hạng",
       noGroupHint: "Tạo bảng đấu để xem thống kê",
-      playerPanel: "Danh sách VĐV",
-      openPlayerPanel: "Mở danh sách VĐV",
       teams: "Đội",
       wins: "thắng",
       tabTeams: "Đội",
@@ -3392,7 +3076,6 @@ export const vi: Translations = {
       addChildMatch: "+ Trận cá nhân",
       selectPlayer: "Chọn VĐV",
       childMatches: "Trận cá nhân",
-      assignToGroup: "Thuộc bảng",
       noGroup: "Không thuộc bảng nào",
       selectGroup: "Chọn bảng",
     },
@@ -3402,17 +3085,14 @@ export const vi: Translations = {
     signup: "Đăng ký tài khoản",
     email: "Email",
     password: "Mật khẩu",
-    confirmPassword: "Xác nhận mật khẩu",
     forgotPassword: "Quên mật khẩu?",
     forgotPasswordDesc: "Nhập email của bạn để nhận liên kết đặt lại mật khẩu.",
     resetPassword: "Đặt lại mật khẩu",
     resetPasswordSent: "Đã gửi email đặt lại mật khẩu",
     resetPasswordSentDesc: "Vui lòng kiểm tra hộp thư đến (và thư rác) để đặt lại mật khẩu.",
-    orContinueWith: "hoặc tiếp tục với",
     noAccount: "Chưa có tài khoản?",
     hasAccount: "Đã có tài khoản?",
     loginSuccess: "Đăng nhập thành công",
-    logoutSuccess: "Đã đăng xuất",
     signupSuccess: "Đăng ký thành công! Vui lòng kiểm tra email để xác thực.",
     invalidCredentials: "Email hoặc mật khẩu không đúng",
     accessDenied: "Bạn không có quyền truy cập trang này",
@@ -3448,37 +3128,18 @@ export const vi: Translations = {
       description: "Livestream trực tiếp và video theo yêu cầu từ các giải đấu hàng đầu",
       cta: "Khám phá giải đấu",
       badge: "PPA TOUR ASIA 2026",
-      mainTitle: "Pickleball Đang Bùng Nổ Tại Châu Á",
-      mainDescription: "Tổ chức giải song ngữ, xem livestream các trận đấu và theo dõi tin tức pickleball — nền tảng duy nhất xây cho châu Á.",
     },
     sections: {
       liveNow: "Đang phát trực tiếp",
-      latestVideos: "Video mới nhất",
-      trendingVideos: "Video Trending",
-      popularThisWeek: "Phổ biến tuần này",
       tournaments: "Giải đấu",
       organizations: "Tổ chức",
-      upcomingTournaments: "Giải Đấu Sắp Diễn Ra",
-      upcomingSubtitle: "Đăng ký ngay trước khi hết chỗ",
     },
     noLive: "Hiện không có livestream nào",
-    noVideos: "Chưa có video nào",
-    // SEO Feature blocks
-    features: {
-      livestreamTitle: "Livestream Pickleball",
-      livestreamDesc: "Xem trực tiếp các giải đấu pickleball chuyên nghiệp và nghiệp dư. Theo dõi các trận đấu hấp dẫn với bình luận trực tiếp từ mọi nơi.",
-      tournamentsTitle: "Giải đấu & Bracket",
-      tournamentsDesc: "Công cụ chia bảng thông minh, tự động tạo lịch thi đấu round-robin hoặc playoff. Quản lý giải đấu dễ dàng với giao diện thân thiện.",
-      communityTitle: "Cộng đồng Pickleball",
-      communityDesc: "Kết nối với hàng nghìn người chơi pickleball trên khắp thế giới. Đăng ký tham gia giải đấu, theo dõi creator yêu thích và chia sẻ đam mê.",
-    },
     // SEO Footer
     about: {
       title: "Về ThePickleHub",
       description: "ThePickleHub là nền tảng pickleball toàn diện dành cho người chơi và ban tổ chức giải đấu toàn cầu. Chúng tôi cung cấp livestream trực tiếp các giải đấu pickleball, công cụ quản lý giải đấu với bracket tự động, và không gian để người chơi kết nối với nhau. Dù bạn là người mới bắt đầu hay đã có kinh nghiệm, ThePickleHub là nơi để bạn theo dõi, học hỏi và phát triển kỹ năng pickleball.",
-      watchLive: "Xem Livestream →",
       tournaments: "Các Giải Đấu →",
-      freeTools: "Công Cụ Miễn Phí →",
     },
   },
   video: {
@@ -3489,8 +3150,6 @@ export const vi: Translations = {
     comments: "bình luận",
     publishedAt: "Đăng ngày",
     relatedVideos: "Video liên quan",
-    shorts: "Video ngắn",
-    longform: "Video dài",
     noDescription: "Không có mô tả",
   },
   live: {
@@ -3500,12 +3159,8 @@ export const vi: Translations = {
     endedAt: "Kết thúc lúc",
     scheduled: "Đã lên lịch",
     ended: "Đã kết thúc",
-    startingSoon: "Sắp bắt đầu",
-    watchLive: "Xem trực tiếp",
-    noLivestreams: "Không có livestream nào",
     scheduledFor: "Bắt đầu lúc",
     replay: "Xem lại",
-    watchingTooltip: "Số người đang xem lúc này",
     watchingAria: "{count} người đang xem trực tiếp",
     totalViewsTooltip: "Tổng số lượt xem từ khi bắt đầu phát",
     previewRemaining: "Xem thử miễn phí · Còn {seconds} giây",
@@ -3517,17 +3172,6 @@ export const vi: Translations = {
     embedGateTitle: "Xem tiếp trên ThePickleHub",
     embedGateBody: "Thời gian xem thử đã kết thúc. Mở ThePickleHub để tạo tài khoản miễn phí và xem tiếp.",
     streamNotAvailable: "Buổi phát không khả dụng",
-    // SEO Hub content
-    hubTitle: "Xem Livestream Pickleball",
-    hubDescription: "Xem trực tiếp các giải pickleball trên ThePickleHub – điểm đến cho những ai yêu thích pickleball.",
-    seo: {
-      tournamentsTitle: "Xem Trực Tiếp Các Giải Pickleball",
-      tournamentsDesc: "ThePickleHub mang đến trải nghiệm xem livestream pickleball tốt nhất. Theo dõi các trận đấu trực tiếp từ giải chuyên nghiệp, giải phong trào đến các sự kiện cộng đồng. Nền tảng có sự góp mặt của các creator hàng đầu với chất lượng phát sóng cao, bao gồm đơn nam, đơn nữ, đôi nam, đôi nữ và đôi nam nữ.",
-      creatorsTitle: "Livestream Từ Các Creator Pickleball",
-      creatorsDesc: "Theo dõi các creator pickleball yêu thích và không bỏ lỡ trận đấu nào. Các creator thường xuyên phát sóng giải đấu, buổi tập luyện và các trận giao hữu. Nhận điểm số real-time, bình luận trực tiếp và cảm nhận sự phấn khích của pickleball ngay trên thiết bị của bạn.",
-      upcomingTitle: "Lịch Phát Sóng & Livestream Sắp Tới",
-      upcomingDesc: "Xem lịch phát sóng và đặt nhắc nhở cho các trận đấu bạn không muốn bỏ lỡ. Dù bạn tìm kiếm giải phong trào hay giải đấu cạnh tranh với bracket pickleball, ThePickleHub đáp ứng mọi nhu cầu xem livestream của bạn.",
-    },
   },
   tournament: {
     title: "Giải đấu",
@@ -3537,9 +3181,7 @@ export const vi: Translations = {
     startDate: "Ngày bắt đầu",
     endDate: "Ngày kết thúc",
     viewTournament: "Xem giải đấu",
-    relatedContent: "Nội dung liên quan",
     follow: "Theo dõi",
-    remindMe: "Nhắc tôi",
     liveNow: "Đang trực tiếp",
     scheduled: "Sắp diễn ra",
     replays: "Xem lại",
@@ -3550,18 +3192,7 @@ export const vi: Translations = {
     noLive: "Không có livestream đang phát",
     noScheduled: "Chưa có lịch phát sóng",
     noReplays: "Chưa có video xem lại",
-    noVideos: "Chưa có video",
     checkBackLater: "Quay lại sau để xem nội dung mới",
-    hubTitle: "Phần Mềm Quản Lý Giải Pickleball",
-    hubDescription: "Nền tảng toàn diện để tổ chức và quản lý giải đấu pickleball mọi quy mô.",
-    seo: {
-      createTitle: "Tạo, Quản Lý và Điều Hành Giải Pickleball",
-      createDesc: "ThePickleHub cung cấp phần mềm quản lý giải đấu pickleball mạnh mẽ dành riêng cho ban tổ chức. Dù bạn tổ chức giải phong trào nhỏ hay sự kiện cạnh tranh lớn, nền tảng của chúng tôi xử lý mọi thứ từ đăng ký VĐV đến tạo bracket và chấm điểm trực tiếp.",
-      formatsTitle: "Hỗ Trợ Bracket, Team Match và Livestream",
-      formatsDesc: "Phần mềm giải đấu pickleball của chúng tôi hỗ trợ nhiều thể thức bao gồm round robin, loại trực tiếp đơn, loại trực tiếp kép và thi đấu đồng đội. Tích hợp livestream pickleball trực tiếp vào giải để tiếp cận nhiều khán giả hơn. VĐV có thể xem bracket, kiểm tra lịch thi đấu và theo dõi kết quả real-time từ mọi thiết bị.",
-      builtTitle: "Xây Dựng Cho Giải Pickleball Thực Tế",
-      builtDesc: "Được sử dụng bởi các giám đốc giải đấu và câu lạc bộ pickleball trên toàn thế giới, phần mềm giải đấu của ThePickleHub được xây dựng từ kinh nghiệm thực tế tổ chức các sự kiện pickleball cạnh tranh. Từ giải phong trào đến giải chuyên nghiệp, nền tảng của chúng tôi mở rộng để đáp ứng nhu cầu với các tính năng như xếp sân, quản lý trọng tài và tính toán bảng xếp hạng tự động.",
-    },
     openRegistration: "Đang mở đăng ký",
     featured: "Nổi bật",
     multiEvent: "Giải tổng (nhiều nội dung)",
@@ -3594,10 +3225,8 @@ export const vi: Translations = {
     settings: "Cài đặt",
     upload: "Tải lên video",
     createLive: "Tạo livestream",
-    noOrganization: "Bạn chưa được gán vào tổ chức nào. Vui lòng liên hệ admin.",
     stats: {
       totalViews: "Tổng lượt xem",
-      totalLikes: "Tổng lượt thích",
       totalVideos: "Số video",
       totalLivestreams: "Số livestream",
     },
@@ -3614,29 +3243,12 @@ export const vi: Translations = {
       tags: "Thẻ tag",
       tournament: "Giải đấu",
       thumbnail: "Ảnh thumbnail",
-      uploadVideo: "Tải lên video",
       uploading: "Đang tải lên...",
-      uploadSuccess: "Tải lên thành công!",
-      uploadError: "Tải lên thất bại",
-      selectFile: "Chọn file video",
-      dragDrop: "hoặc kéo thả file vào đây",
-      generatingThumbnail: "Đang tạo thumbnail...",
-      thumbnailGenerated: "Đã tạo thumbnail",
-      regenerateThumbnail: "Tạo lại thumbnail",
-      thumbnailPreview: "Xem trước thumbnail",
     },
     livestream: {
       title: "Tiêu đề",
       description: "Mô tả",
-      scheduledStart: "Thời gian bắt đầu",
-      streamKey: "Stream Key",
-      rtmpUrl: "RTMP URL",
-      playbackUrl: "Playback URL",
-      copyStreamKey: "Sao chép Stream Key",
-      goLive: "Bắt đầu phát",
-      endStream: "Kết thúc phát",
       createSuccess: "Tạo livestream thành công!",
-      streamInfo: "Thông tin stream",
     },
   },
   admin: {
@@ -3646,7 +3258,6 @@ export const vi: Translations = {
     users: "Người dùng",
     tournaments: "Giải đấu",
     stats: {
-      totalUsers: "Tổng người dùng",
       totalOrganizations: "Tổng tổ chức",
       totalVideos: "Tổng video",
       totalLivestreams: "Tổng livestream",
@@ -3658,17 +3269,12 @@ export const vi: Translations = {
       slug: "Slug",
       logo: "Logo",
       description: "Mô tả",
-      creators: "Creators",
-      addCreator: "Thêm creator",
-      removeCreator: "Xóa creator",
     },
     user: {
       email: "Email",
       displayName: "Tên hiển thị",
       role: "Vai trò",
       organization: "Tổ chức",
-      changeRole: "Đổi vai trò",
-      assignOrg: "Gán tổ chức",
       viewer: "Viewer",
       creator: "Creator",
       admin: "Admin",
@@ -3685,13 +3291,11 @@ export const vi: Translations = {
     },
     moderation: {
       title: "Kiểm duyệt",
-      pendingReview: "Chờ duyệt",
       approved: "Đã duyệt",
       rejected: "Đã từ chối",
       approve: "Duyệt",
       reject: "Từ chối",
       hide: "Ẩn nội dung",
-      reportedContent: "Nội dung bị báo cáo",
     },
     settings: {
       title: "Cài đặt hệ thống",
@@ -3749,15 +3353,12 @@ export const vi: Translations = {
     playbackError: "Không thể phát",
     playbackErrorDesc: "Không thể phát trên trình duyệt này. Hãy thử reload hoặc đổi mạng.",
     reconnecting: "Đang kết nối lại...",
-    connectionLost: "Mất kết nối, đang thử lại...",
     autoRetry: "Tự động thử lại sau {seconds} giây",
     retryFailed: "Không thể kết nối lại. Vui lòng thử lại.",
   },
   errors: {
     notFound: "Không tìm thấy trang",
     notFoundDesc: "Trang bạn đang tìm không tồn tại.",
-    serverError: "Lỗi hệ thống",
-    serverErrorDesc: "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
     networkError: "Lỗi kết nối",
     networkErrorDesc: "Không thể kết nối đến máy chủ.",
     goHome: "Về trang chủ",
@@ -3775,7 +3376,6 @@ export const vi: Translations = {
     deleteDraft: "Xóa bản nháp",
   },
   ads: {
-    advertisement: "Quảng cáo",
     skip: "Bỏ qua",
   },
   search: {
@@ -3806,9 +3406,6 @@ export const vi: Translations = {
     noNotifications: "Không có thông báo",
     noNotificationsDesc: "Theo dõi creator hoặc giải đấu để nhận thông báo khi có livestream mới",
     unread: "chưa đọc",
-    markAllRead: "Đánh dấu tất cả đã đọc",
-    livestreamScheduled: "đã lên lịch livestream mới",
-    livestreamLive: "đang phát trực tiếp!",
   },
   chat: {
     title: "Trò chuyện",
@@ -3844,8 +3441,6 @@ export const vi: Translations = {
     nicknameLengthError: "Biệt danh phải từ 2-30 ký tự",
     nextEdit: "Lần đổi tiếp",
     pin: "Ghim",
-    unpin: "Bỏ ghim",
-    pinnedMessage: "Tin nhắn được ghim",
     topChatters: "Top chat",
     messages: "tin nhắn",
     highlight: "Đánh dấu nổi bật",
@@ -3877,15 +3472,6 @@ export const vi: Translations = {
     copied: "Đã sao chép!",
     copiedDesc: "Link đã được sao chép vào clipboard",
     linkDesc: "Chia sẻ link này để mọi người có thể xem nội dung",
-    embedDesc: "Sao chép mã iframe để nhúng video vào website của bạn",
-    withTitle: "Có hiển thị tiêu đề",
-    withoutTitle: "Không có tiêu đề",
-    qrDesc: "Quét mã QR để mở nội dung trên điện thoại hoặc in ra cho sự kiện offline",
-    downloadQR: "Tải mã QR",
-    qrDownloaded: "Đã tải xuống!",
-    qrDownloadedDesc: "Mã QR đã được lưu vào máy của bạn",
-    socialLink: "Link chia sẻ (Facebook, Zalo...)",
-    socialLinkDesc: "Dùng link này khi share lên mạng xã hội để hiển thị đúng tiêu đề & hình ảnh",
     directLink: "Link trực tiếp",
   },
   quickTable: {
@@ -3899,7 +3485,6 @@ export const vi: Translations = {
     tournamentName: "Tên giải / bảng đấu",
     tournamentNamePlaceholder: "VD: Giải Pickleball Mùa Hè 2024",
     playerCount: "Số người chơi (dự kiến)",
-    playerCountPlaceholder: "VD: 16",
     requireRegistration: "Yêu cầu VĐV đăng ký trước",
     requireRegistrationDesc: "VĐV phải đăng ký và được BTC duyệt trước khi vào danh sách thi đấu",
     requireSkillLevel: "Bắt buộc khai trình độ",
@@ -3907,8 +3492,6 @@ export const vi: Translations = {
     advancedSettings: "Cài đặt nâng cao",
     autoApprove: "Tự động duyệt đăng ký",
     autoApproveDesc: "VĐV được duyệt ngay khi đăng ký (không khuyến nghị)",
-    doublesMode: "Thi đấu đôi",
-    doublesModeDesc: "VĐV đăng ký theo cặp đôi, có thể mời partner qua link",
     registrationMessage: "Thông báo cho VĐV khi đăng ký",
     registrationMessagePlaceholder: "VD: BTC sẽ xác nhận trình độ dựa vào điểm tự khai và đối chiếu với các hệ điểm...",
     continue: "Tiếp tục",
@@ -3928,13 +3511,6 @@ export const vi: Translations = {
     },
     myTournaments: "Giải đấu của tôi",
     refereeTournaments: "Giải đang điều hành",
-    yourRegisteredTournaments: "Giải đấu bạn đang tham gia",
-    yourCompletedTournaments: "Giải đấu đã tham gia",
-    openRegistrationTournaments: "Giải đấu đang đăng ký",
-    openRegistrationTitle: "Giải đang mở đăng ký",
-    expectedPlayers: "Dự kiến {count} người",
-    expectedPairs: "Dự kiến {count} đôi",
-    registering: "Đang đăng ký",
     ongoing: "Đang diễn ra",
     completed: "Hoàn thành",
     noOngoing: "Không có giải đấu đang diễn ra",
@@ -3947,8 +3523,6 @@ export const vi: Translations = {
     rejected: "Từ chối",
     showMore: "Xem thêm",
     showLess: "Thu gọn",
-    showCompleted: "Xem giải đã hoàn thành",
-    hideCompleted: "Ẩn giải đã hoàn thành",
     referee: "Trọng tài",
     noRating: "Chưa có rating",
     viewProfile: "Xem hồ sơ",
@@ -4019,7 +3593,6 @@ export const vi: Translations = {
       outgoingRequests: "Yêu cầu ghép đôi đã gửi",
       availablePlayers: "VĐV chưa có partner",
       noPartner: "Chưa có partner",
-      hasPartner: "Đã có partner",
       removePartner: "Xóa partner",
       teamLocked: "Giải đấu đã diễn ra. Không thể thay đổi đội.",
     },
@@ -4045,7 +3618,6 @@ export const vi: Translations = {
     teamName: "Tên đội",
     playerName: "Tên VĐV",
     club: "Team/CLB",
-    notDeclared: "Chưa khai",
     hasPartnerStatus: "Đã có partner",
     noPartnerStatus: "Chưa có partner",
     statusHeader: "Trạng thái",
@@ -4082,12 +3654,8 @@ export const vi: Translations = {
     seo: {
       pageTitle: "Công cụ Chia Bảng Pickleball",
       pageSubtitle: "Tạo bảng đấu cho giải pickleball của bạn trong vài giây",
-      createTitle: "Tạo Bảng Đấu Pickleball Trong Vài Giây",
-      createDesc: "Công cụ chia bảng pickleball của ThePickleHub giúp tổ chức giải đấu trở nên dễ dàng. Chỉ cần nhập số VĐV, chọn thể thức và nhận bảng đấu hoàn chỉnh ngay lập tức. Công cụ xử lý mọi phức tạp của lịch thi đấu round robin, xếp hạng playoff và thứ tự trận đấu để bạn tập trung vào việc thi đấu.",
       roundRobinTitle: "Công Cụ Round Robin Cho Giải Pickleball",
       roundRobinDesc: "Thể thức round robin đảm bảo mọi VĐV hoặc đội đều thi đấu với nhau. Công cụ tự động tạo bảng cân bằng, tính toán số trận tối ưu và sắp xếp lịch để giảm thiểu thời gian chờ. Hoàn hảo cho giải phong trào nơi mọi người đều muốn tối đa thời gian thi đấu.",
-      formatsTitle: "Hỗ Trợ Playoff, Loại Trực Tiếp & Thể Thức Tùy Chỉnh",
-      formatsDesc: "Ngoài round robin, công cụ chia bảng còn hỗ trợ playoff loại trực tiếp đơn, vòng bảng kết hợp knockout và thể thức giải lớn cho 50+ VĐV. Theo dõi điểm số real-time, chia sẻ bracket trực tiếp với người tham gia và tìm ra nhà vô địch với bảng đấu chuyên nghiệp.",
     },
     // Additional UI text
     setup: {
@@ -4140,13 +3708,11 @@ export const vi: Translations = {
     },
     view: {
       groupStage: "Vòng bảng",
-      shareSuccess: "Đã sao chép link!",
       deleteConfirm: "Bạn có chắc chắn muốn xóa giải \"{name}\"? Tất cả dữ liệu (VĐV, trận đấu, đăng ký...) sẽ bị xóa vĩnh viễn.",
       deleteBtn: "Xóa giải",
       groupCompleteTitle: "Vòng bảng đã hoàn tất!",
       groupCompleteDesc: "Mọi trận vòng bảng đã có kết quả. Có thể mở vòng loại trực tiếp.",
       startPlayoff: "Bắt đầu vòng loại trực tiếp",
-      registrationTab: "Đăng ký",
       playoffTab: "Vòng loại trực tiếp",
       playoffLockedOneGroup: "Một bảng vòng tròn thì không có vòng loại trực tiếp.",
       playoffLockedWaiting: "Vòng loại trực tiếp mở sau khi mọi trận vòng bảng có kết quả.",
@@ -4182,9 +3748,7 @@ export const vi: Translations = {
       movePlayer: "Chuyển bảng",
       removePlayer: "Xóa VĐV",
       removeConfirm: "Xóa {name} khỏi bảng?",
-      movePlayerTitle: "Chuyển VĐV sang bảng khác",
       selectGroup: "Chọn bảng",
-      moveBtn: "Chuyển",
       movedSuccess: "Đã chuyển VĐV",
       addPlayerTitle: "Thêm VĐV mới",
       playerName: "Tên VĐV",
@@ -4193,8 +3757,6 @@ export const vi: Translations = {
       addedSuccess: "Đã thêm VĐV",
       removedSuccess: "Đã xóa VĐV",
       scoreUpdated: "Đã cập nhật kết quả",
-      nextRoundCreated: "Đã tạo vòng tiếp theo!",
-      tournamentCompleted: "Giải đấu đã hoàn tất! 🎉",
       playoffCreated: "Đã tạo vòng Playoff!",
       onlyCreatorCanScore: "Chỉ người tạo bảng hoặc trọng tài mới có thể nhập điểm.",
       wildcardTitle: "Chọn Wildcard",
@@ -4233,7 +3795,6 @@ export const vi: Translations = {
       pointDiffLabel: "Hiệu số",
       courtName: "Tên sân",
       courtNamePlaceholder: "VD: Sân 1, Court A",
-      courtNameSaved: "Đã lưu tên sân",
     },
     parentTournament: {
       selectType: "Chọn loại giải",
@@ -4267,7 +3828,6 @@ export const vi: Translations = {
       subEvents: "Nội dung thi đấu",
       noSubEvents: "Chưa có nội dung nào. Tạo nội dung mới hoặc thêm nội dung đã có để bắt đầu.",
       subEventCount: "{count} nội dung",
-      viewParent: "Xem giải tổng",
       deleteParentConfirm: "Xóa giải tổng này? Thao tác không thể hoàn tác.",
       deleteParentConfirmWithEvents: "Xóa giải tổng này? {count} nội dung con KHÔNG bị xóa — chúng sẽ tách ra thành giải riêng.",
       moreEvents: "+ {count} nội dung khác",
@@ -4284,7 +3844,6 @@ export const vi: Translations = {
       autoResolve: "Tự động giải quyết",
       confirmBracket: "Xác nhận bracket",
       noConflicts: "Không có xung đột — sẵn sàng tạo bracket!",
-      unresolvedConflicts: "Không thể tự động giải quyết {count} cặp xung đột. Vui lòng hoán đổi thủ công.",
     },
     groups: {
       groups: "bảng",
@@ -4323,14 +3882,6 @@ export const vi: Translations = {
     statusRegistration: "Đang đăng ký",
     statusOngoing: "Đang diễn ra",
     statusCompleted: "Đã kết thúc",
-    seo: {
-      mlpTitle: "Giải Đấu Đồng Đội Pickleball Theo Phong Cách MLP",
-      mlpDesc: "Thể thức thi đấu đồng đội pickleball mang đến trải nghiệm thi đấu chuyên nghiệp cho câu lạc bộ hoặc giải của bạn. Lấy cảm hứng từ Major League Pickleball (MLP), thể thức này có các đội thi đấu qua nhiều nội dung bao gồm đôi nam, đôi nữ và đôi nam nữ. Tạo sự cạnh tranh đội hấp dẫn với các công cụ quản lý đội toàn diện.",
-      lineupTitle: "Lineup, Dreambreaker & Rally Scoring",
-      lineupDesc: "Hệ thống thi đấu đồng đội hỗ trợ quản lý lineup đầy đủ, cho phép đội trưởng sắp xếp VĐV chiến lược cho từng trận. Khi trận đấu hòa, thể thức dreambreaker mang đến gameplay đột tử hấp dẫn. Rally scoring giữ mọi điểm đều căng thẳng và đảm bảo trận đấu duy trì nhịp độ cạnh tranh.",
-      manageTitle: "Quản Lý Thi Đấu Đồng Đội Cho Giải Pickleball",
-      manageDesc: "Dù tổ chức trận giao hữu giữa các câu lạc bộ hay một mùa giải đầy đủ, công cụ thi đấu đồng đội của ThePickleHub xử lý mọi phức tạp. Theo dõi bảng xếp hạng đội, quản lý đội hình, lên lịch trận đấu và tính toán kết quả tự động. Kết hợp với công cụ chia bảng để có trải nghiệm quản lý giải đấu và thi đấu đồng đội đáng nhớ.",
-    },
     scoring: {
       title: "Chấm điểm",
       saveScore: "Lưu điểm",
@@ -4338,17 +3889,13 @@ export const vi: Translations = {
       saved: "Đã lưu kết quả",
       scoreSaveError: "Không thể lưu điểm",
       game: "Game",
-      selectGame: "Chọn game để chấm điểm",
-      matchComplete: "Trận đấu đã hoàn thành",
       reset: "Đặt lại",
-      confirmReset: "Xác nhận đặt lại điểm?",
     },
     setup: {
       title: "Tạo giải đấu đồng đội",
       subtitle: "Kiểu MLP - Major League Pickleball",
       stepBasicInfo: "Thông tin cơ bản",
       stepGameTemplates: "Game Templates",
-      stepDreambreaker: "DreamBreaker",
       stepFormat: "Thể thức",
       stepFees: "Lệ phí",
       dreambreakerToggle: "Dùng Dreambreaker khi hòa",
@@ -4370,7 +3917,6 @@ export const vi: Translations = {
       thirdPlaceMatch: "Có trận tranh hạng 3",
       thirdPlaceMatchDesc: "Trận đấu giữa 2 đội thua bán kết",
       playoffTeams: "Số đội vào Playoff",
-      playoffTeamsDesc: "Số đội từ vòng bảng vào playoff",
       creating: "Đang tạo...",
       createBtn: "Tạo giải đấu",
       invalidTeamCount: "Số đội phải là 4, 8, 16 hoặc 32 cho thể thức loại trực tiếp",
@@ -4391,30 +3937,18 @@ export const vi: Translations = {
       rosterFull: "Đủ đội",
       rosterIncomplete: "Chưa đủ",
       manageTeam: "Quản lý đội",
-      registerPrompt: "Đăng ký tham gia giải đấu",
       createTeam: "Tạo đội",
-      inviteTeam: "Mời đội",
       generateBracket: "Sinh Bracket",
       generateMatches: "Tạo lịch thi đấu",
       createGroups: "Chia bảng",
-      startTournament: "Bắt đầu giải đấu",
       createPlayoff: "Tạo vòng Playoff",
-      approveAllFirst: "Cần duyệt tất cả đội trước khi chia bảng",
       needMinTeams: "Cần ít nhất {count} đội",
-      matchesCreated: "{count} trận đã tạo",
       roundRobinComplete: "Vòng tròn đã hoàn thành",
-      btcActions: "Hành động BTC",
-      approveBeforeGroups: "Duyệt {count} đội đang chờ trước khi chia bảng",
       groupStage: "Vòng bảng",
       roundRobin: "Vòng tròn",
       playoffRound: "Vòng Playoff",
-      seBracket: "Bracket Loại Trực Tiếp",
       noMatches: "Chưa có trận đấu nào",
-      noMatchesDesc: "Lịch thi đấu sẽ được BTC tạo",
-      startConfirm: "Bắt đầu giải đấu?",
-      startConfirmDesc: "Sau khi bắt đầu, giải đấu sẽ chuyển sang trạng thái \"Đang diễn ra\" và không thể thêm/xóa đội nữa.",
       start: "Bắt đầu",
-      teamsReady: "{count} đội đã sẵn sàng",
       createSchedule: "Tạo lịch thi đấu",
       deleteConfirm: "Xóa giải đấu?",
       deleteConfirmDesc: "Hành động này không thể hoàn tác. Tất cả dữ liệu sẽ bị xóa vĩnh viễn.",
@@ -4430,23 +3964,17 @@ export const vi: Translations = {
       generateBracketBtn: "Sinh Bracket",
       roundStarted: "Đã bắt đầu vòng",
       createPlayoffTitle: "Tạo vòng Playoff",
-      createPlayoffDesc: "Vòng tròn đã hoàn thành",
       createScheduleBtn: "Tạo lịch thi đấu",
-      createScheduleDesc: "Mời đội hoặc tạo lịch thi đấu",
       noMatchesEmpty: "Chưa có trận đấu nào",
       noMatchesScheduleDesc: "Lịch thi đấu sẽ được BTC tạo",
       startTournamentTitle: "Bắt đầu giải đấu?",
       startTournamentDesc: "Sau khi bắt đầu, giải đấu sẽ chuyển sang trạng thái \"Đang diễn ra\" và không thể thêm/xóa đội nữa.",
       startBtn: "Bắt đầu",
-      teamsReadyCount: "đội đã sẵn sàng",
       generateScheduleBtn: "Tạo lịch",
       seBracketTitle: "Bracket Loại Trực Tiếp",
       groupStageTitle: "Vòng bảng",
       roundRobinTitle: "Vòng tròn",
-      approveBeforeBracket: "Cần duyệt tất cả đội trước khi tạo bracket",
-      inviteOrCreateSchedule: "Mời đội hoặc tạo lịch thi đấu",
       inviteOrBracket: "Mời đội hoặc tạo bracket Single Elimination",
-      needMinTeamsForBracket: "Cần ít nhất 6 đội để chia bảng",
       cancelBtn: "Hủy",
       deleteAction: "Xóa",
       errorOccurred: "Lỗi",
@@ -4463,18 +3991,12 @@ export const vi: Translations = {
     },
     roster: {
       title: "Danh sách thành viên",
-      countLabel: "{count}/{max} VĐV",
       inviteCode: "Mã mời",
-      addMember: "Thêm thành viên",
-      addFromPrevious: "Chọn từ giải trước",
-      memberName: "Tên thành viên",
       gender: "Giới tính",
       male: "Nam",
       female: "Nữ",
       skillLevel: "Trình độ",
       optional: "Tùy chọn",
-      removeMember: "Xóa thành viên?",
-      removeMemberDesc: "Bạn có chắc muốn xóa {name} khỏi đội?",
       rosterFull: "Đội đã đủ số lượng thành viên",
       captain: "Đội trưởng",
       noMembers: "Chưa có thành viên nào",
@@ -4499,13 +4021,6 @@ export const vi: Translations = {
     },
     dialog: {
       generateMatches: "Tạo lịch thi đấu?",
-      generateMatchesDesc: "Hệ thống sẽ tự động tạo lịch thi đấu vòng tròn cho các đội đã được duyệt.",
-      teamsCount: "{count} đội",
-      matchesCount: "{count} trận",
-      roundsCount: "{count} vòng",
-      gamesPerMatch: "{count} ván/trận",
-      minTeamsRequired: "Cần ít nhất 2 đội đã được duyệt để tạo lịch thi đấu",
-      incompleteRosters: "Không thể tạo lịch - Có đội chưa đủ người",
       confirm: "Xác nhận",
     },
   },
@@ -4518,7 +4033,6 @@ export const vi: Translations = {
     loginRequiredDesc: "Bạn cần đăng nhập để tạo và quản lý các giải đấu Doubles Elimination",
     noTournaments: "Chưa có giải đấu nào",
     noTournamentsDesc: "Tạo giải đấu Doubles Elimination đầu tiên của bạn",
-    viewBtn: "Xem",
     teams: "đội",
     earlyRounds: "Vòng ngoài",
     semifinalPlus: "Bán kết+",
@@ -4561,14 +4075,7 @@ export const vi: Translations = {
       nameRequired: "Vui lòng nhập tên giải đấu",
       need32Teams: "Cần ít nhất 40 đội",
       createError: "Lỗi tạo giải đấu",
-      addTeamsError: "Lỗi thêm đội",
-      bracketError: "Lỗi tạo bracket",
       createSuccess: "Tạo giải đấu thành công!",
-      hints: {
-        byeCount: "{count} đội được BYE vào R2",
-        r1Matches: "{count} trận ở R1",
-        r2Matches: "{count} trận ở R2",
-      },
     },
     scoring: {
       match: "Trận",
@@ -4631,11 +4138,9 @@ export const vi: Translations = {
       noBracket: "Chưa có bracket. Hãy hoàn tất cài đặt để tạo bracket.",
       playoffNotReady: "Vòng playoff sẽ bắt đầu sau khi hoàn thành vòng sơ loại.",
       tieNotAllowed: "Điểm không được bằng nhau",
-      loserOf: "Thua trận",
       clickGameToEdit: "Click vào ô game để sửa điểm",
       waitingTeams: "Chờ đủ 2 đội để chấm điểm",
       finalBadge: "CK",
-      scoreSaved: "Đã lưu điểm",
       matchSaved: "Đã lưu kết quả",
       gameSaved: "Đã lưu Game",
       scoreSaveError: "Lỗi lưu điểm",
@@ -4651,40 +4156,22 @@ export const vi: Translations = {
   news: {
     title: "Tin tức Pickleball",
     subtitle: "Tổng hợp nhanh các cập nhật pickleball từ nguồn uy tín.",
-    noNews: "Chưa có cập nhật. Tin tức sẽ hiển thị tại đây khi có nội dung mới.",
-    readMore: "Đọc thêm",
   },
   seo: {
     tools: {
       title: "Công cụ Tổ chức Giải Pickleball",
       description: "Trang Tools cung cấp bộ công cụ tổ chức giải pickleball chuyên nghiệp. Hỗ trợ nhiều hình thức thi đấu khác nhau. Giúp BTC tổ chức giải nhanh, dễ và hạn chế sai sót. Phù hợp cho giải phong trào, CLB và bán chuyên.",
-      formatsTitle: "Các Thể thức Được Hỗ trợ",
-      quickBracket: "Chia bảng nhanh – Vòng tròn tính điểm + Playoff cho giải phong trào",
       teamMatch: "Đồng đội MLP – Thi đấu theo đội kiểu Major League Pickleball",
-      singleElimination: "Single Elimination – Loại trực tiếp, thua 1 trận bị loại",
       doublesElimination: "Loại Kép – Thua 2 trận mới bị loại, công bằng hơn cho VĐV",
       flexTournament: "Flex Tournament – Tự tạo giải đấu theo cách riêng, không giới hạn luật",
     },
     doublesElimination: {
       title: "Doubles Elimination – Thua 2 Trận Mới Bị Loại",
       description: "Thể thức loại kép giúp tăng tính công bằng cho giải đấu. Thua 1 trận → xuống nhánh thua. Thua trận thứ 2 → bị loại. Nhánh thắng và nhánh thua gặp nhau trước chung kết.",
-      whenToUseTitle: "Khi nào nên dùng Loại Kép?",
-      whenToUseDesc: "Phù hợp cho giải đấu quy mô vừa đến lớn, các sự kiện cạnh tranh hoặc bán chuyên, khi các đội xứng đáng có cơ hội thứ hai để chứng minh năng lực.",
-      sizeTitle: "Quy mô Giải đề xuất",
-      sizeDesc: "Số đội tối thiểu: 32. Các quy mô đề xuất: 32, 40, 48, 64, 80, 96, 128 đội để bracket cân đối.",
     },
     flexTournament: {
       title: "Flex Tournament – Tự Tạo Giải Đấu Theo Cách Của Bạn",
       description: "Thể thức giải do người dùng tự tạo. Không giới hạn luật hay cấu trúc. Toàn quyền sắp xếp VĐV, đội, bảng, trận đấu. Phù hợp cho giải sáng tạo hoặc thử nghiệm.",
-      differenceTitle: "Điểm khác biệt của Flex Tournament",
-      differenceList: [
-        "Không ràng buộc logic bracket cố định",
-        "Linh hoạt tối đa về cấu trúc giải",
-        "BTC toàn quyền kiểm soát",
-        "Hỗ trợ thống kê tùy chỉnh",
-      ],
-      whoTitle: "Ai nên dùng Flex Tournament?",
-      whoDesc: "Dành cho BTC CLB, giải đấu tập luyện, thể thức đặc biệt, các giải có luật riêng hoặc sáng tạo.",
     },
   },
   referee: {
@@ -4738,7 +4225,6 @@ export const vi: Translations = {
     members: "Thành viên",
     rosterFull: "Đủ đội",
     rosterIncomplete: "Chưa đủ",
-    memberList: "Danh sách thành viên:",
     male: "Nam",
     female: "Nữ",
     manageTeam: "Quản lý đội",
@@ -4778,7 +4264,6 @@ export const vi: Translations = {
     inviteDesc: "Mời đội",
     inviteEmailError: "Vui lòng nhập email đội trưởng",
     groupSetupTitle: "Chia bảng thi đấu",
-    groupSetupDesc: "Chọn số bảng và xem trước cách chia đội",
   },
   dashboard: {
     title: "Quản lý giải",
@@ -4824,11 +4309,9 @@ export const vi: Translations = {
   forum: {
     title: "Diễn đàn",
     navLabel: "Diễn đàn",
-    createPost: "Tạo bài viết",
     newPost: "Bài viết mới",
     allCategories: "Tất cả",
     trending: "Nổi bật",
-    latest: "Mới nhất",
     pinned: "Ghim",
     qa: "Hỏi đáp",
     markAsQA: "Đánh dấu Hỏi đáp",
@@ -4837,7 +4320,6 @@ export const vi: Translations = {
     unmarkBestAnswer: "Bỏ chọn câu trả lời",
     likes: "thích",
     comments: "bình luận",
-    noPostsYet: "Chưa có bài viết nào. Hãy là người đầu tiên!",
     noCommentsYet: "Chưa có bình luận. Hãy là người đầu tiên trả lời!",
     writeComment: "Viết bình luận...",
     postTitle: "Tiêu đề",
@@ -4854,30 +4336,22 @@ export const vi: Translations = {
     publishSuccess: "Đã đăng bài!",
     deletePost: "Xóa bài viết",
     deletePostConfirm: "Bạn có chắc muốn xóa bài viết này?",
-    deleteComment: "Xóa bình luận",
     loginToPost: "Đăng nhập để tạo bài viết",
     loginToComment: "Đăng nhập để bình luận",
     by: "bởi",
-    ago: "trước",
-    readMore: "Xem thêm",
     backToForum: "Quay lại Diễn đàn",
     pinPost: "Ghim bài",
     unpinPost: "Bỏ ghim",
-    editPost: "Sửa bài viết",
     reply: "Trả lời",
     replyingTo: "Đang trả lời",
-    cancelReply: "Hủy",
   },
   socialEvents: {
     nav: "Sự kiện",
     breadcrumb: "Sự kiện CLB",
-    comingSoon: "Đang xây dựng — sẽ ra mắt cuối tháng 5/2026.",
     detail: {
       registerCta: "Đăng ký ngay",
-      registerCtaShort: "Đăng ký",
       registerInProgress: "Sự kiện đang diễn ra",
       registeredCount: "{registered}/{max} người đã đăng ký",
-      spotsLeft: "Còn {n} chỗ",
       startsIn: "Bắt đầu sau",
       startedAt: "Đã bắt đầu",
       ended: "Đã kết thúc",
@@ -4958,7 +4432,6 @@ export const vi: Translations = {
       successBody: "Hẹn gặp bạn tại sân. Hãy lưu lại liên kết này.",
       successPaymentBody:
         "Vui lòng chuyển khoản {price}₫ cho ban tổ chức. Trạng thái thanh toán sẽ cập nhật sau khi xác nhận.",
-      orderLabel: "Số thứ tự đăng ký",
       paymentInstructions: "Hướng dẫn thanh toán",
       openZalo: "Mở nhóm Zalo",
       backToEvent: "Quay lại sự kiện",
@@ -4985,7 +4458,6 @@ export const vi: Translations = {
     },
     proxyRegister: {
       proxyRegisterCta: "Đăng ký hộ bạn bè",
-      manualAddCta: "Thêm người thủ công",
       modalHeading: "Đăng ký hộ bạn bè",
       modalSubheading: "Đăng ký giúp người chơi khác tham gia event này.",
       manualModalHeading: "Thêm người chơi vào sự kiện",
@@ -4993,10 +4465,8 @@ export const vi: Translations = {
         "Sử dụng khi bạn nhận đăng ký qua Zalo, gọi điện hoặc kênh ngoài web.",
       guestSectionHeading: "Thông tin người được đăng ký",
       playerSectionHeading: "Thông tin người chơi",
-      guestPhoneLabel: "Số điện thoại",
       guestNameLabel: "Tên hiển thị",
       guestLevelLabel: "Trình độ (tuỳ chọn)",
-      guestLevelHint: "Tự đánh giá level pickleball",
       paymentStatusLabel: "Trạng thái thanh toán",
       paymentStatusUnpaid:
         "Chưa thanh toán — hiển thị link để gửi player tự chuyển khoản",
@@ -5009,8 +4479,6 @@ export const vi: Translations = {
       manualConfirmCta: "Thêm vào danh sách",
       paymentWarningProxy:
         "Người được đăng ký hộ tự chuyển khoản hoặc bạn chuyển hộ. Mã thanh toán sẽ hiển thị sau khi đăng ký xong.",
-      prepaymentSkipWarning:
-        "Bạn đã đăng ký giúp {name}. Đây là sự kiện bắt buộc thanh toán trước nên slot sẽ tự động bị hủy sau {hours} giờ nếu không hoàn tất chuyển khoản.",
       successHeading: "Đã thêm {name} vào sự kiện",
       shareWarning:
         "Vui lòng gửi link sau cho {name} để họ tự quản lý đăng ký hoặc thanh toán (nếu event có phí):",
@@ -5049,29 +4517,16 @@ export const vi: Translations = {
       pageSubtitle: "Sự kiện sẽ xuất hiện trên trang CLB sau khi xuất bản.",
       titleVi: "Tên sự kiện (tiếng Việt)",
       titleEn: "Tên sự kiện (English, tuỳ chọn)",
-      titleViPlaceholder: "Open Play Tối Thứ Bảy",
-      titleEnPlaceholder: "Saturday Night Open Play",
       slug: "Đường dẫn (slug)",
       slugHint:
         "Hiển thị trong URL: thepicklehub.net/social/<slug>. Chỉ chữ thường, số và dấu gạch ngang.",
       slugAuto: "Tự sinh từ tên",
-      descriptionVi: "Mô tả (tiếng Việt)",
-      descriptionEn: "Mô tả (English, tuỳ chọn)",
       startAt: "Bắt đầu",
-      endAt: "Kết thúc",
       location: "Địa điểm",
       locationPlaceholder: "Sân pickleball ABC, Quận 3, TP.HCM",
-      latLng: "Toạ độ (lat,lng — tuỳ chọn)",
       courtCount: "Số sân",
       maxPlayers: "Số người tối đa",
-      levelMin: "Trình độ tối thiểu",
-      levelMax: "Trình độ tối đa",
       priceVnd: "Phí mỗi người (VNĐ)",
-      priceVndHint: "Đặt 0 cho sự kiện miễn phí.",
-      allowGuests: "Cho phép đăng ký khách (qua OTP)",
-      allowGuestsHint:
-        "Bỏ chọn nếu chỉ thành viên CLB có tài khoản mới được đăng ký.",
-      cancellationHours: "Số giờ hủy đăng ký được hoàn tiền",
       zaloGroupUrl: "Liên kết nhóm Zalo (tuỳ chọn)",
       // PR68
       ballType: "Loại bóng thi đấu",
@@ -5108,11 +4563,6 @@ export const vi: Translations = {
       priceAmount: "Số tiền (VND)",
       paymentBannerFree:
         "Sự kiện miễn phí. Người chơi sẽ không thấy bước thanh toán.",
-      paymentBannerNotConfigured:
-        "CLB chưa bật thanh toán online. Người chơi sẽ thấy thông báo \"Vui lòng thanh toán tại sân cho BTC\".",
-      paymentBannerNotConfiguredCta: "Cài đặt thanh toán online →",
-      paymentBannerReady:
-        "Người chơi sẽ thấy QR VietQR + thông tin chuyển khoản khi đăng ký. Tiền chuyển trực tiếp vào tài khoản CLB.",
       errorTitleMin: "Tên sự kiện cần ít nhất 3 ký tự",
       errorTitleMax: "Tên sự kiện không quá 200 ký tự",
       errorLocationMin: "Địa điểm cần ít nhất 3 ký tự",
@@ -5205,8 +4655,6 @@ export const vi: Translations = {
     manage: {
       pageTitle: "Quản lý sự kiện",
       newEventCta: "Tạo sự kiện mới",
-      backToClub: "Quay lại trang CLB",
-      noEvents: "CLB chưa có sự kiện nào.",
       emptyHeading: "Tạo sự kiện đầu tiên",
       emptyBody:
         "CLB đã sẵn sàng. Hãy tạo sự kiện đầu tiên để bắt đầu mời người chơi và quản lý lịch thi đấu.",
@@ -5222,13 +4670,8 @@ export const vi: Translations = {
       shufflePairs: "Xếp cặp",
       editEvent: "Sửa event",
       viewPublic: "Xem trang công khai",
-      cancelEvent: "Hủy sự kiện",
-      cancelEventConfirm: "Bạn chắc chắn hủy sự kiện này?",
-      cancelEventConfirmBody:
-        "Tất cả người đã đăng ký sẽ thấy thông báo \"Sự kiện đã hủy\". Bạn có thể mở lại sau.",
       cancelled: "Đã hủy",
       reopen: "Mở lại",
-      reopenedToast: "Đã mở lại sự kiện",
       noPermissionTitle: "Bạn không có quyền truy cập",
       noPermissionBody:
         "Chỉ tổ chức viên (người tạo CLB hoặc admin) mới truy cập được trang này.",
@@ -5369,18 +4812,10 @@ export const vi: Translations = {
       payNowSuccess: "Đã đánh dấu đã thanh toán. BTC sẽ xác nhận.",
       errors: {
         generic: "Có lỗi xảy ra, vui lòng thử lại.",
-        invalid_magic_token: "Link không hợp lệ.",
         not_found: "Không tìm thấy đăng ký.",
-        registration_missing: "Không tìm thấy đăng ký.",
-        event_missing: "Không tìm thấy sự kiện.",
-        event_started: "Sự kiện đã bắt đầu, không thể hủy.",
         event_cancelled: "Sự kiện đã bị BTC hủy.",
         event_completed: "Sự kiện đã kết thúc.",
-        event_not_open: "Sự kiện không mở đăng ký.",
         event_full: "Sự kiện đã đầy, vui lòng đăng ký event khác.",
-        already_cancelled: "Đăng ký đã được hủy trước đó.",
-        update_failed: "Không cập nhật được, vui lòng thử lại.",
-        lookup_failed: "Không tải được dữ liệu, vui lòng thử lại.",
       },
     },
     recovery: {
@@ -5413,8 +4848,6 @@ export const vi: Translations = {
       errors: {
         generic: "Có lỗi xảy ra, vui lòng thử lại.",
         invalid_phone: "Số điện thoại không hợp lệ.",
-        no_registration_found:
-          "Không tìm thấy đăng ký với số điện thoại này. Kiểm tra lại hoặc đăng ký event mới.",
         rate_limit_exceeded:
           "Bạn đã gửi quá nhiều yêu cầu. Thử lại sau 24h.",
         captcha_failed: "CAPTCHA không hợp lệ. Thử lại.",
@@ -5549,10 +4982,8 @@ export const vi: Translations = {
       searchLabel: "Tìm theo email hoặc số điện thoại",
       searchPlaceholder: "vd: ten@email.com hoặc +84901234567",
       searchButton: "Tìm",
-      searching: "Đang tìm…",
       searchEmpty: "Không tìm thấy người dùng có email/SĐT này. Họ cần đăng ký tài khoản ThePickleHub trước.",
       searchInvalid: "Vui lòng nhập email hoặc số điện thoại (≥4 ký tự).",
-      addConfirm: "Thêm {name} làm người quản lý?",
       addSuccess: "Đã thêm {name} làm người quản lý.",
       addError: "Không thể thêm người quản lý — vui lòng thử lại.",
       removeAria: "Xóa người quản lý",
@@ -5572,9 +5003,7 @@ export const vi: Translations = {
       subheading:
         "Thành viên CLB được mời trực tiếp hoặc tự yêu cầu tham gia. Thành viên đã duyệt sẽ KHÔNG cần nhập OTP khi đăng ký sự kiện.",
       memberBadge: "Thành viên",
-      pendingBadge: "Chờ duyệt",
       pendingHeading: "Yêu cầu tham gia ({n})",
-      pendingEmpty: "Không có yêu cầu mới.",
       activeHeading: "Đã tham gia",
       empty: "Chưa có thành viên nào.",
       inviteCta: "Mời tham gia",
@@ -5587,14 +5016,12 @@ export const vi: Translations = {
       inviteSuccess: "Đã mời {name} làm thành viên.",
       inviteError: "Không thể mời thành viên — vui lòng thử lại.",
       approveSuccess: "Đã duyệt {name}.",
-      approveError: "Không thể duyệt — vui lòng thử lại.",
       joinCta: "Yêu cầu tham gia CLB",
       joinPending: "Đang chờ duyệt",
       joinedBadge: "Bạn là thành viên CLB",
       leaveCta: "Rời khỏi CLB",
       leaveConfirm: "Bạn chắc chắn muốn rời CLB này?",
       leaveSuccess: "Bạn đã rời khỏi CLB.",
-      anonymousHint: "Đăng nhập để yêu cầu tham gia CLB.",
       errAlreadyMember: "Bạn đã là thành viên CLB.",
       errAlreadyPending: "Yêu cầu của bạn đang chờ duyệt.",
       errAlreadyCreator: "Bạn là người tạo CLB này.",
@@ -5687,8 +5114,6 @@ export const vi: Translations = {
       claimedCount: "Player đã claim",
       noRegistrations: "Chưa có ai đăng ký.",
       addManual: "Thêm thủ công",
-      addManualTitle: "Thêm người tham gia",
-      addManualSubmit: "Thêm vào danh sách",
       export: "Tải CSV",
       colName: "Tên",
       colPhone: "Số ĐT",
@@ -5718,7 +5143,6 @@ export const vi: Translations = {
       transferClaimed: "Player đã chuyển",
       transferNotClaimed: "Chưa chuyển",
       reconcileBanner: "Player tự đánh dấu đã chuyển. Hãy đối chiếu với app ngân hàng (tìm theo mã PHUB-XXXXXX) trước khi cho phép chơi.",
-      viewProfileHint: "Xem profile",
     },
     matchmaking: {
       pageTitle: "Xếp cặp — Matchmaking",
@@ -5761,7 +5185,6 @@ export const vi: Translations = {
       notRegisteredTitle: "Bạn chưa đăng ký",
       notRegisteredBody: "Đang ở chế độ khán giả. Đăng ký để hiển thị trận của riêng bạn.",
       zoneNow: "Trận hiện tại",
-      zoneNoNow: "Bạn chưa có trận đang diễn ra.",
       zoneNowOrganizerSubtitle: "Các trận đang diễn ra ({n})",
       zoneNowOrganizerEmpty: "Chưa có trận nào đang diễn ra. Nhấn \"Bắt đầu chơi\" ở trận kế tiếp để chấm điểm.",
       zoneRestingTitle: "Đang nghỉ",
@@ -5772,8 +5195,6 @@ export const vi: Translations = {
       zoneNextHint: "Trận sớm nhất chưa bắt đầu trong sự kiện.",
       zoneStandings: "Bảng xếp hạng",
       zoneStandingsEmpty: "Chưa có người chơi nào đăng ký.",
-      zoneScoreInput: "Nhập tỉ số",
-      zoneZalo: "Nhóm Zalo sự kiện",
       openZalo: "Mở nhóm Zalo",
       startMatch: "Bắt đầu chơi",
       startMatchHint: "Đánh dấu trận đang diễn ra để bắt đầu nhập tỉ số.",
@@ -5782,7 +5203,6 @@ export const vi: Translations = {
       round: "Vòng",
       teamA: "Cặp A",
       teamB: "Cặp B",
-      versus: "vs",
       submitScore: "Xác nhận tỉ số",
       submitting: "Đang gửi…",
       awaitingOpponent: "Chờ đối thủ xác nhận",
@@ -5842,8 +5262,6 @@ export const vi: Translations = {
         winsLabel: "Thắng",
         streakLabel: "Streak hiện tại",
       },
-      badgesHeading: "Badges",
-      historyHeading: "Lịch sử trận đấu",
       lockedHint: "Còn {remaining} để mở khoá",
       earnedOn: "Đạt được vào {date}",
       history: {
@@ -5872,18 +5290,8 @@ export const vi: Translations = {
     eventDupr: {
       linkHeading: "Liên kết DUPR",
       linkBody: "Liên kết DUPR ID của bạn vào lần đăng ký này. Khi BTC ghi nhận trận đấu, kết quả sẽ được gửi lên DUPR và tự động cập nhật điểm cho bạn.",
-      duprIdLabel: "DUPR ID",
-      duprIdPlaceholder: "vd: 5271241",
-      linkCta: "Liên kết",
-      saveEditCta: "Lưu thay đổi",
-      editCta: "Sửa",
-      unlinkCta: "Bỏ liên kết",
       linkedAsLabel: "Đã liên kết",
-      linkSuccess: "Đã liên kết DUPR ID.",
-      unlinkSuccess: "Đã bỏ liên kết DUPR ID.",
       linkError: "Không thể liên kết — vui lòng thử lại.",
-      formatError: "DUPR ID không hợp lệ. Chấp nhận chữ + số + dấu - / _ (2-32 ký tự).",
-      notRegistered: "Bạn cần đăng ký event trước khi liên kết DUPR.",
       privacyHint: "DUPR ID chỉ hiển thị cho BTC và bạn. Dùng để gửi kết quả trận đấu lên DUPR.",
       matches: {
         heading: "Lịch sử trận đấu",
@@ -5984,13 +5392,7 @@ export const vi: Translations = {
         success: "Đã tham gia đội thành công!",
         error: "Không thể tham gia đội",
         codes: {
-          INVITATION_NOT_FOUND: "Link mời không tồn tại",
-          INVITATION_ALREADY_USED: "Link mời đã được sử dụng",
-          INVITATION_EXPIRED: "Link mời đã hết hạn",
           TEAM_NOT_FOUND: "Đội không tồn tại",
-          TEAM_ALREADY_COMPLETE: "Đội đã đủ 2 người",
-          TABLE_LOCKED: "Giải đấu đã diễn ra",
-          CANNOT_JOIN_OWN_TEAM: "Bạn không thể tham gia đội của chính mình",
         },
       },
       removePartner: {
@@ -5999,7 +5401,6 @@ export const vi: Translations = {
         codes: {
           TEAM_NOT_FOUND: "Đội không tồn tại",
           PERMISSION_DENIED: "Bạn không có quyền thực hiện thao tác này",
-          TABLE_LOCKED: "Giải đấu đã diễn ra",
         },
       },
       btcManage: {
@@ -6010,7 +5411,6 @@ export const vi: Translations = {
         codes: {
           TEAM_NOT_FOUND: "Đội không tồn tại",
           PERMISSION_DENIED: "Bạn không có quyền thực hiện thao tác này",
-          INVALID_ACTION: "Thao tác không hợp lệ",
         },
       },
     },
@@ -6020,17 +5420,6 @@ export const vi: Translations = {
         error: "Không thể gửi yêu cầu ghép đôi",
         codes: {
           AUTH_REQUIRED: "Vui lòng đăng nhập",
-          TABLE_NOT_FOUND: "Giải không tồn tại",
-          TABLE_LOCKED: "Giải đấu đã diễn ra",
-          NO_TEAM: "Bạn chưa đăng ký tham gia giải",
-          TEAM_REJECTED: "Bạn đã bị từ chối tham gia giải",
-          ALREADY_HAS_PARTNER: "Bạn đã có partner",
-          TARGET_TEAM_NOT_FOUND: "Người chơi không tồn tại",
-          TARGET_TEAM_REJECTED: "Người chơi đã bị từ chối",
-          TARGET_HAS_PARTNER: "Người chơi đã có partner",
-          SAME_TEAM: "Không thể ghép đôi với chính mình",
-          REQUEST_ALREADY_SENT: "Bạn đã gửi yêu cầu ghép đôi này rồi",
-          REQUEST_PENDING_FROM_TARGET: "Người này đang chờ bạn xác nhận ghép đôi",
         },
       },
       respond: {
@@ -6039,12 +5428,6 @@ export const vi: Translations = {
         error: "Không thể xử lý yêu cầu",
         codes: {
           AUTH_REQUIRED: "Vui lòng đăng nhập",
-          REQUEST_NOT_FOUND: "Yêu cầu không tồn tại",
-          NOT_TARGET_USER: "Bạn không có quyền xử lý yêu cầu này",
-          REQUEST_NOT_PENDING: "Yêu cầu đã được xử lý",
-          TABLE_LOCKED: "Giải đấu đã diễn ra",
-          FROM_TEAM_ALREADY_PAIRED: "Người gửi yêu cầu đã có partner",
-          TO_TEAM_ALREADY_PAIRED: "Bạn đã có partner",
         },
       },
       cancel: {

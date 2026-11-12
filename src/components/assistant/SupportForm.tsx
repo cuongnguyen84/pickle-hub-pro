@@ -8,40 +8,24 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { supportClientError, supportPayload, type SupportFields, type SupportTurn } from "@/lib/assistant-support";
+import { supportPayload, type SupportFields, type SupportTurn } from "@/lib/assistant-support";
 
 type Lang = "vi" | "en";
 
+// Lỗi kiểm dữ liệu (thiếu liên hệ, SĐT sai…) do server trả kèm câu đã dịch —
+// client chỉ dùng kiểm tra gốc của trình duyệt (required, type=email).
 const COPY = {
   vi: {
     title: "Gửi cho admin ThePickleHub",
-    hint: "Admin là người thật, sẽ liên hệ lại qua thông tin bạn để lại.",
+    hint: "Admin là người thật, sẽ liên hệ lại qua SĐT / email / Zalo bạn để lại.",
     message: "Bạn cần hỗ trợ gì?", name: "Tên (không bắt buộc)", phone: "Số điện thoại", email: "Email", zalo: "Zalo",
-    contactHint: "Để lại ít nhất một cách liên hệ để admin trả lời bạn.",
-    contactHintUser: "Admin thấy tài khoản của bạn; thêm SĐT/Zalo nếu muốn được gọi lại nhanh hơn.",
-    send: "Gửi cho admin", cancel: "Thôi",
-    errors: {
-      message_required: "Bạn nhập nội dung cần hỗ trợ nhé.",
-      invalid_email: "Email chưa đúng định dạng.",
-      invalid_phone: "Số điện thoại chưa đúng (8–15 chữ số).",
-      contact_required: "Bạn để lại SĐT, email hoặc Zalo để admin liên hệ lại nhé.",
-      network: "Chưa gửi được, bạn thử lại sau nhé.",
-    },
+    send: "Gửi cho admin", cancel: "Thôi", network: "Chưa gửi được, bạn thử lại sau nhé.",
   },
   en: {
     title: "Send to the ThePickleHub admin",
-    hint: "A real person will get back to you using the details you leave.",
+    hint: "A real person will reply via the phone / email / Zalo you leave.",
     message: "What do you need help with?", name: "Name (optional)", phone: "Phone", email: "Email", zalo: "Zalo",
-    contactHint: "Leave at least one way to reach you so the admin can reply.",
-    contactHintUser: "The admin can see your account; add a phone/Zalo for a faster reply.",
-    send: "Send to admin", cancel: "Not now",
-    errors: {
-      message_required: "Please describe what you need help with.",
-      invalid_email: "That email doesn't look right.",
-      invalid_phone: "That phone number doesn't look right (8–15 digits).",
-      contact_required: "Please leave a phone number, email or Zalo so the admin can reach you.",
-      network: "Couldn't send it. Please try again later.",
-    },
+    send: "Send to admin", cancel: "Not now", network: "Couldn't send it. Please try again later.",
   },
 };
 
@@ -52,12 +36,11 @@ interface Props {
   turns: SupportTurn[];
   initialMessage: string;
   initialEmail?: string;
-  loggedIn: boolean;
   onSent: (reply: string) => void;
   onCancel: () => void;
 }
 
-const SupportForm = ({ lang, pageType, pageLabel, turns, initialMessage, initialEmail = "", loggedIn, onSent, onCancel }: Props) => {
+const SupportForm = ({ lang, pageType, pageLabel, turns, initialMessage, initialEmail = "", onSent, onCancel }: Props) => {
   const c = COPY[lang];
   const [f, setF] = useState<SupportFields>({ message: initialMessage, name: "", phone: "", email: initialEmail, zalo: "", website: "" });
   const [busy, setBusy] = useState(false);
@@ -66,8 +49,6 @@ const SupportForm = ({ lang, pageType, pageLabel, turns, initialMessage, initial
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const bad = supportClientError(f, loggedIn);
-    if (bad) { setErr(c.errors[bad]); return; }
     setBusy(true);
     setErr("");
     type Res = { ok?: boolean; reply?: string } | null;
@@ -81,7 +62,7 @@ const SupportForm = ({ lang, pageType, pageLabel, turns, initialMessage, initial
     } catch { /* báo lỗi bên dưới */ }
     setBusy(false);
     if (res?.ok && res.reply) onSent(res.reply);
-    else setErr(res?.reply || c.errors.network);
+    else setErr(res?.reply || c.network);
   };
 
   const field = (k: "name" | "phone" | "email" | "zalo", type: string, autoComplete: string, max: number) => (
@@ -98,12 +79,11 @@ const SupportForm = ({ lang, pageType, pageLabel, turns, initialMessage, initial
   );
 
   return (
-    <form className="tl-asst-card" onSubmit={submit} aria-label={c.title} noValidate>
+    <form className="tl-asst-card" onSubmit={submit} aria-label={c.title}>
       <div className="tl-asst-line">{c.title}</div>
       <div className="tl-asst-result">{c.hint}</div>
       <textarea value={f.message} onChange={set("message")} placeholder={c.message} aria-label={c.message} maxLength={1000} rows={3} required className="tl-asst-input" />
       {field("name", "text", "name", 80)}
-      <div className="tl-asst-result">{loggedIn ? c.contactHintUser : c.contactHint}</div>
       {field("phone", "tel", "tel", 20)}
       {field("email", "email", "email", 120)}
       {field("zalo", "text", "off", 60)}

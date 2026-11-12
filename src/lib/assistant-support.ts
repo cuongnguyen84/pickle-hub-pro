@@ -11,17 +11,6 @@ export function prefillMessage(turns: SupportTurn[]): string {
   return turns.filter((t) => t.role === "user").slice(-3).map((t) => t.text.trim()).filter(Boolean).join("\n").slice(0, 1000);
 }
 
-/** Kiểm nhẹ phía client (server kiểm lại): trả mã lỗi đầu tiên hoặc null. Khách phải để lại ≥1 cách liên hệ. */
-export function supportClientError(
-  f: SupportFields, loggedIn: boolean,
-): "message_required" | "invalid_email" | "invalid_phone" | "contact_required" | null {
-  if (f.message.trim().length < 2) return "message_required";
-  if (!loggedIn && !f.phone.trim() && !f.email.trim() && !f.zalo.trim()) return "contact_required";
-  if (f.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email.trim())) return "invalid_email";
-  if (f.phone.trim() && !/^\+?\d{8,15}$/.test(f.phone.replace(/[\s().-]/g, ""))) return "invalid_phone";
-  return null;
-}
-
 export function supportPayload(
   f: SupportFields,
   page: { page_type: string; route: string; page_label: string; lang: "vi" | "en" },
