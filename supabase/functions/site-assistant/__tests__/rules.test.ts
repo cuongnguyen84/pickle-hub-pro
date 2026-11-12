@@ -110,9 +110,9 @@ describe("page context + prompt", () => {
 });
 
 describe("parseModel", () => {
-  it("keeps only allowlisted, deduped links (max 3) and strips HTML", () => {
+  it("keeps only allowlisted, deduped links (max 3) and strips angle brackets", () => {
     const r = parseModel(JSON.stringify({
-      reply: "Bạn vào <b>Tìm sân</b> nhé.", intent: "answer",
+      reply: "Bạn vào <Tìm sân> nhé.", intent: "answer",
       links: [
         { href: "/san", label: "Tìm sân" }, { href: "/vi/san", label: "dup" }, { href: "https://x.com", label: "x" },
         { href: "/rankings", label: "BXH" }, { href: "/blog", label: "Blog" }, { href: "/shop", label: "Chợ" },
