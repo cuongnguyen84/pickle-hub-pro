@@ -1,4 +1,5 @@
 import { Loader2, CheckCheck, Bell } from "lucide-react";
+import { useAssistantContext } from "@/lib/assistant-context";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { useI18n } from "@/i18n";
@@ -50,6 +51,12 @@ const Notifications = () => {
     language === "vi"
       ? "Theo dõi mới, kudo, bình luận và lời nhắc đến từ cộng đồng pickleball Việt Nam."
       : "New follows, kudos, comments, and mentions from the Vietnamese pickleball community.";
+
+  // Trợ lý AI nổi: chỉ số đếm đang hiện, không nội dung thông báo của người khác.
+  useAssistantContext(loading || listLoading ? null : {
+    label: pageTitle,
+    facts: { logged_in: user ? "yes" : "no", unread: unreadCount, shown: items.length },
+  });
 
   // Auth gate. Loading guard prevents the redirect from firing during
   // the brief auth-loading window after a fresh tab open.

@@ -2,7 +2,8 @@
 import { describe, expect, it } from "vitest";
 import { safeLink, SITE_LINKS } from "../shared.ts";
 import {
-  buildPayload, clipHistory, fallback, identityHash, limitsFrom, MAX_TEXT, MAX_TURNS, parseModel, quotaOutcome, readPageCtx, replyLang,
+  buildPayload, clipHistory, fallback, identityHash, limitsFrom, MAX_CTX_CHARS, MAX_TEXT, MAX_TURNS, parseModel, quotaOutcome, readPageCtx,
+  replyLang, textLang,
 } from "../rules.ts";
 
 describe("safeLink", () => {
@@ -134,9 +135,50 @@ describe("parseModel", () => {
 });
 
 describe("replyLang", () => {
-  it("Vietnamese diacritics win; otherwise UI language", () => {
+  it("Vietnamese diacritics win", () => {
     expect(replyLang("sân ở đâu", "en")).toBe("vi");
-    expect(replyLang("where are courts", "en")).toBe("en");
-    expect(replyLang("where are courts", "vi")).toBe("vi");
+  });
+  it("an English question on a VI UI gets English (bug 12/11)", () => {
+    expect(replyLang("where are courts", "vi")).toBe("en");
+    expect(replyLang("How do I link DUPR?", "vi")).toBe("en");
+    expect(replyLang("hello", "vi")).toBe("en");
+  });
+  it("unaccented Vietnamese stays Vietnamese", () => {
+    expect(replyLang("san o dau vay ban", "en")).toBe("vi");
+    expect(replyLang("lam sao de xem live", "en")).toBe("vi");
+  });
+  it("ambiguous text falls back to the previous turn, then the UI language", () => {
+    expect(replyLang("DUPR", "en")).toBe("en");
+    expect(replyLang("ok", "vi")).toBe("vi");
+    expect(replyLang("123 ???", "en")).toBe("en");
+    expect(replyLang(["where can I watch replays", "PPA"], "vi")).toBe("en");
+    expect(replyLang(["giải này ở đâu", "PPA"], "en")).toBe("vi");
+  });
+  it("textLang is null when undecidable", () => {
+    expect(textLang("")).toBeNull();
+    expect(textLang("PPA Tour 2026")).toBeNull();
+  });
+});
+
+describe("page facts", () => {
+  it("keeps newlines, strips other control chars and angle brackets, caps total with summary", () => {
+    const c = readPageCtx({ page: "venues", summary: "s".repeat(600), facts: "name: <b>Sân A</b>\ncourts: 4\u0007\n" + "x".repeat(5000) });
+    expect(c.facts.startsWith("name: bSân A/b\ncourts: 4 \n")).toBe(true);
+    expect(c.summary.length + c.facts.length).toBeLessThanOrEqual(MAX_CTX_CHARS);
+  });
+  it("fences facts inside the untrusted page section", () => {
+    const p = JSON.parse(buildPayload([{ role: "user", text: "how many courts?" }], readPageCtx({ page: "venues", facts: "courts: 4" }), "en"));
+    const last = p.contents[p.contents.length - 1].parts[0].text as string;
+    expect(last.indexOf("courts: 4")).toBeGreaterThan(last.indexOf("<<<"));
+    expect(last.indexOf("courts: 4")).toBeLessThan(last.indexOf(">>>"));
+  });
+});
+
+describe("contact intent", () => {
+  it("passes through from the model; schema allows it", () => {
+    expect(parseModel(JSON.stringify({ reply: "Mình mở form gửi admin nhé.", intent: "contact" }))!.intent).toBe("contact");
+    const p = JSON.parse(buildPayload([{ role: "user", text: "cho mình gặp admin" }], readPageCtx({}), "vi"));
+    expect(p.generationConfig.responseSchema.properties.intent.enum).toContain("contact");
+    expect(p.systemInstruction.parts[0].text).toContain('intent "contact"');
   });
 });

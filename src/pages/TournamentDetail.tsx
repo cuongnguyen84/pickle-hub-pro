@@ -31,6 +31,14 @@ const TournamentDetail = () => {
     tournament: { kind: "tournament", slug: slug ?? "", name: tournament.name },
     summary: `Giải "${tournament.name}", trạng thái ${tournament.status}, ${tournament.start_date ?? "?"} → ${tournament.end_date ?? "?"}. ` +
       `Livestream: ${(content?.livestreams ?? []).map((l) => `${l.title} (${l.status})`).slice(0, 15).join("; ") || "chưa có"}.`,
+    facts: {
+      tournament: tournament.name, status: tournament.status, start: tournament.start_date, end: tournament.end_date,
+      live_now: (content?.livestreams ?? []).filter((l) => l.status === "live").length,
+      scheduled_streams: (content?.livestreams ?? []).filter((l) => l.status === "scheduled").length,
+      replays: (content?.livestreams ?? []).filter((l) => l.status === "ended").length,
+      videos: content?.videos?.length,
+      video_filter: videoFilter,
+    },
   } : null);
 
   // Process content

@@ -560,6 +560,10 @@
     "element": "<AdminReports />"
   },
   {
+    "path": "/admin/support",
+    "element": "<AdminSupport />"
+  },
+  {
     "path": "/admin/news",
     "element": "<AdminNews />"
   },

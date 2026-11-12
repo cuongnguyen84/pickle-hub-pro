@@ -33,3 +33,13 @@ export function safeLink(href: unknown): string | null {
   if (p.length > 1) p = p.replace(/\/+$/, "");
   return LINK_SET.has(p) ? p : null;
 }
+
+/** Trần ngữ cảnh trang (summary + facts) — client cắt trước, server cắt lại. */
+export const MAX_CTX_CHARS = 3500;
+
+/** Làm sạch chữ không tin cậy: bỏ ký tự điều khiển (giữ xuống dòng nếu cho phép) và dấu < >. */
+export function cleanCtx(v: unknown, max: number, multiline = false): string {
+  if (typeof v !== "string") return "";
+  const s = multiline ? v.replace(/[^\P{Cc}\n]+/gu, " ") : v.replace(/\p{Cc}+/gu, " ");
+  return s.replace(/[<>]/g, "").slice(0, max);
+}

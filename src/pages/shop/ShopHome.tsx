@@ -10,6 +10,7 @@
 // data), no "sắp hết" (no reservation model), and no carousel.
 // ============================================================================
 
+import { useAssistantContext } from "@/lib/assistant-context";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { ArrowRight, Search } from "lucide-react";
@@ -29,6 +30,19 @@ export default function ShopHome() {
   const latest = usePublicSearch({ limit: 12 });
   // Gate `enabled: !!user` trong hook — khách không tạo query.
   const myShop = useMyShop().data;
+
+  // Trợ lý AI nổi: danh mục + sản phẩm mới đang hiện (tên · giá như hiển thị · gian hàng).
+  useAssistantContext(latest.data ? {
+    label: "Chợ đồ pickleball",
+    facts: {
+      categories: (categories.data ?? []).slice(0, 12).map((c) => c.name).join(", "),
+      products_shown: latest.data.rows.slice(0, 8).map((p) => [
+        p.title, p.price_min != null ? `${p.price_min.toLocaleString("vi-VN")}đ${p.price_max != null && p.price_max !== p.price_min ? `–${p.price_max.toLocaleString("vi-VN")}đ` : ""}` : "",
+        p.shop.name, p.availability ?? "",
+      ].filter(Boolean).join(" · ")).join(" | "),
+      has_own_shop: !!myShop,
+    },
+  } : null);
 
   return (
     <TheLineLayout title="Chợ đồ pickleball">

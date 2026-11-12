@@ -50,6 +50,7 @@ const WatchVideo = () => {
   useAssistantContext(video ? {
     label: video.title,
     summary: (video.description ?? "").slice(0, 600),
+    facts: { video: video.title, published: video.published_at ?? video.created_at, views: viewCount || null },
   } : null);
 
   const dateLocale = language === "vi" ? viLocale : enUS;

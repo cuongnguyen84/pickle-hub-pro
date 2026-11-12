@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, Fragment, FormEvent, ReactNode } from "react";
+import { useAssistantContext } from "@/lib/assistant-context";
 import { Link } from "react-router-dom";
 import { Clock, Diamond, CircleDot, Target, Check, Trophy } from "lucide-react";
 import { useI18n } from "@/i18n";
@@ -131,6 +132,16 @@ const Index = () => {
   // collapse shift on a genuinely quiet week; the thing it buys back is the
   // insertion shift that was hitting every new reader and every lab run.
   // See src/lib/home-live-lead.ts for the TTL and the failure modes.
+  // Trợ lý AI nổi: trang chủ — live/sắp phát/replay đang hiện.
+  useAssistantContext({
+    label: language === "vi" ? "Trang chủ" : "Home",
+    facts: {
+      live_now: liveStreams.map((l) => l.title).slice(0, 5).join(" | ") || "none",
+      upcoming: scheduledStreams.map((l) => l.title).slice(0, 5).join(" | "),
+      recent_replays: recentEnded.map((l) => l.title).join(" | "),
+    },
+  });
+
   const liveQueriesLoading =
     liveQuery.isLoading || scheduledQuery.isLoading || endedQuery.isLoading;
   const [expectLiveLead] = useState<boolean>(() => shouldReserveLiveSlot());
