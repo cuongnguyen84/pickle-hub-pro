@@ -8,7 +8,27 @@ import SwiftUI
 struct DeepLinkDestinationView: View {
     let link: DeepLink
 
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
+
     var body: some View {
+        content
+            // Sheet này che nút trợ lý của tab bar → gắn nút riêng. Chip native: đóng
+            // sheet rồi để AppTabView điều hướng; trang web thì mở thẳng.
+            .assistantLauncher(page: SiteAssistant.page(for: link), tab: "deeplink", bottomPadding: assistantBottomPadding) { dest in
+                if case .web(let url) = dest { openURL(url); return }
+                AssistantContextStore.shared.pendingRoute = dest
+                dismiss()
+            }
+    }
+
+    // ponytail: luồng Shop có thanh mua/thanh toán ghim đáy → đẩy nút lên trên nó.
+    // Màn khác cuộn được nên 16pt là đủ; cần chính xác hơn thì đo bằng PreferenceKey.
+    private var assistantBottomPadding: CGFloat {
+        SiteAssistant.page(for: link) == "shop" ? 96 : 16
+    }
+
+    private var content: some View {
         NavigationStack {
             switch link {
             case .registration(let token):

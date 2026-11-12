@@ -253,3 +253,57 @@ struct AssistantSheet: View {
         }
     }
 }
+
+/// Nút nổi "✦ Trợ lý AI" + AssistantSheet — dùng chung cho AppTabView và sheet deep-link
+/// (link từ Facebook/web mở sheet che mất nút của tab). Viên thuốc có chữ, thu thành
+/// icon sau lần mở đầu tiên (nhớ trong UserDefaults, chung một key cho mọi nơi).
+/// Màn toàn hình (trọng tài, TV, video) là fullScreenCover nên tự che nút này.
+private struct AssistantLauncher: ViewModifier {
+    let page: String
+    let tab: String
+    let bottomPadding: CGFloat
+    let onNavigate: (SiteAssistant.Destination) -> Void
+
+    @State private var open = false
+    @AppStorage("assistantLauncherOpened") private var opened = false
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(alignment: .bottomTrailing) {
+                Button {
+                    open = true
+                    opened = true
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(TLColor.accentText)
+                        if !opened {
+                            Text(String(localized: "Trợ lý AI"))
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(TLColor.fg)
+                                .fixedSize()
+                        }
+                    }
+                    .padding(.horizontal, opened ? 0 : 14)
+                    .frame(minWidth: 48, minHeight: 48)
+                    .background(TLColor.bg, in: Capsule())
+                    .overlay(Capsule().stroke(TLColor.border))
+                    .shadow(color: .black.opacity(0.35), radius: 6, y: 3)
+                }
+                .accessibilityLabel(String(localized: "Mở trợ lý AI"))
+                .padding(.trailing, 16)
+                .padding(.bottom, bottomPadding)
+            }
+            .sheet(isPresented: $open) {
+                AssistantSheet(page: page, tab: tab, onNavigate: onNavigate)
+            }
+    }
+}
+
+extension View {
+    func assistantLauncher(page: String, tab: String, bottomPadding: CGFloat,
+                           onNavigate: @escaping (SiteAssistant.Destination) -> Void) -> some View {
+        modifier(AssistantLauncher(page: page, tab: tab, bottomPadding: bottomPadding, onNavigate: onNavigate))
+    }
+}

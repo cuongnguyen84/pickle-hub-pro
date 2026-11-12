@@ -25,7 +25,7 @@ struct AppTabView: View {
             if ShopFeatureGate.isEnabled {
                 NavigationStack { ShopHomeView() }
                     .tag(Tab.shop)
-                    .tabItem { Label("Chợ", systemImage: "storefront.fill") }
+                    .tabItem { Label(String(localized: "tab.shop", defaultValue: "Chợ", comment: "Tab bar: Shop"), systemImage: "storefront.fill") }
             } else {
                 SocialHubView()
                     .tag(Tab.social)
@@ -39,7 +39,7 @@ struct AppTabView: View {
             if ShopFeatureGate.isEnabled {
                 moreTab
                     .tag(Tab.more)
-                    .tabItem { Label("Thêm", systemImage: "ellipsis.circle.fill") }
+                    .tabItem { Label(String(localized: "tab.more", defaultValue: "Thêm", comment: "Tab bar: More (not Add)"), systemImage: "ellipsis.circle.fill") }
             } else {
                 ToolsView()
                     .tag(Tab.tools)
@@ -48,50 +48,25 @@ struct AppTabView: View {
         }
         .tint(TLColor.accent)
         // Trợ lý AI chung (site-assistant): nút nổi trên mọi tab, ngay trên thanh tab.
-        // Màn toàn hình (trọng tài, TV, video) là fullScreenCover nên che luôn nút này.
-        // Viên thuốc "✦ Trợ lý AI" cho người dùng biết đây là AI hỗ trợ; thu thành
-        // icon sau lần mở đầu tiên (nhớ trong UserDefaults).
-        .overlay(alignment: .bottomTrailing) {
-            Button {
-                assistantOpen = true
-                assistantLauncherOpened = true
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(TLColor.accentText)
-                    if !assistantLauncherOpened {
-                        Text(String(localized: "Trợ lý AI"))
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(TLColor.fg)
-                            .fixedSize()
-                    }
-                }
-                .padding(.horizontal, assistantLauncherOpened ? 0 : 14)
-                .frame(minWidth: 48, minHeight: 48)
-                .background(TLColor.bg, in: Capsule())
-                .overlay(Capsule().stroke(TLColor.border))
-                .shadow(color: .black.opacity(0.35), radius: 6, y: 3)
-            }
-            .accessibilityLabel(String(localized: "Mở trợ lý AI"))
-            .padding(.trailing, 16)
-            .padding(.bottom, 61)
-        }
-        .sheet(isPresented: $assistantOpen) {
-            AssistantSheet(page: SiteAssistant.page(for: selection), tab: selection.rawValue) { dest in
-                switch dest {
-                case .tab(let t): selection = t
-                case .home(let r):
-                    selection = .home
-                    homePath.append(r)
-                case .web(let url): openURL(url)
-                }
-            }
+        .assistantLauncher(page: SiteAssistant.page(for: selection), tab: selection.rawValue, bottomPadding: 61) { route($0) }
+        // Chip bấm từ trợ lý trong sheet deep-link: sheet đã đóng, tab bar nhận việc điều hướng.
+        .onChange(of: AssistantContextStore.shared.pendingRoute) { _, dest in
+            guard let dest else { return }
+            AssistantContextStore.shared.pendingRoute = nil
+            route(dest)
         }
     }
 
-    @State private var assistantOpen = false
-    @AppStorage("assistantLauncherOpened") private var assistantLauncherOpened = false
+    private func route(_ dest: SiteAssistant.Destination) {
+        switch dest {
+        case .tab(let t): selection = t
+        case .home(let r):
+            selection = .home
+            homePath.append(r)
+        case .web(let url): openURL(url)
+        }
+    }
+
     @Environment(\.openURL) private var openURL
 
     /// Initial tab, overridable via the `-startTab <tab>` launch argument
@@ -126,7 +101,7 @@ struct AppTabView: View {
             }
             .scrollContentBackground(.hidden)
             .background(TLColor.bg)
-            .navigationTitle("Thêm")
+            .navigationTitle(String(localized: "tab.more", defaultValue: "Thêm", comment: "Tab bar: More (not Add)"))
         }
     }
 

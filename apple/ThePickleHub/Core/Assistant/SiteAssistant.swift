@@ -42,6 +42,22 @@ enum SiteAssistant {
         }
     }
 
+    /// Loại trang theo đích deep-link (link Facebook/web mở sheet trên tab bar).
+    static func page(for link: DeepLink) -> String {
+        switch link {
+        case .venue: return "venues"
+        case .blogPost, .newsArticle: return "blog_news"
+        case .livestream, .proTourEvent: return "live_video"
+        case .socialEvent, .registration: return "community"
+        case .shopHome, .shopSearch, .shopCategory, .shopProduct, .shopStore, .shopOrder: return "shop"
+        case .joinInvite, .quickTable, .quickTableScore, .parentTournament, .doublesElimination,
+             .doublesEliminationScore, .teamMatch, .teamMatchScore, .flexTournament, .toolsHub,
+             .createQuickTable, .createDoublesElimination, .createTeamMatch, .createFlexTournament,
+             .dashboardPicker, .tournamentDashboard:
+            return "tools"
+        }
+    }
+
     enum Destination: Equatable {
         case tab(AppTabView.Tab)
         case home(HomeRoute)
@@ -297,6 +313,8 @@ extension SiteAssistant {
 final class AssistantContextStore {
     static let shared = AssistantContextStore()
     private(set) var current: SiteAssistant.ScreenContext?
+    /// Chip bấm trong sheet deep-link: sheet tự đóng, AppTabView điều hướng rồi xoá.
+    var pendingRoute: SiteAssistant.Destination?
 
     func set(_ context: SiteAssistant.ScreenContext?) { current = context }
     func clear(_ context: SiteAssistant.ScreenContext) { if current == context { current = nil } }

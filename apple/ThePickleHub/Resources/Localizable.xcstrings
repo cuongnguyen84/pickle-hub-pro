@@ -17086,7 +17086,14 @@
       }
     },
     "Tiện ích" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilities"
+          }
+        }
+      }
     },
     "TIỆN ÍCH" : {
       "localizations" : {
@@ -20416,6 +20423,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "These groups can't be split into several brackets."
+          }
+        }
+      }
+    },
+    "tab.shop" : {
+      "comment" : "Tab bar: Shop",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shop"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Chợ"
+          }
+        }
+      }
+    },
+    "tab.more" : {
+      "comment" : "Tab bar: More (not Add)",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Thêm"
           }
         }
       }
