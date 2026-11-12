@@ -13,6 +13,10 @@
  * - Hành động: server (edge fn tournament-assistant) trả thẻ xác nhận đã kiểm
  *   quyền + trạng thái; chỉ khi bấm Xác nhận mới ghi, qua đúng hàm UI cũ
  *   (tournament-assistant-exec). Sửa thông tin có nút Hoàn tác trong phiên.
+ * - Liên hệ admin (12/11/2026, thay nút Messenger/Zalo): chip "Liên hệ admin"
+ *   ở cả hai chế độ, hoặc trợ lý tự mở khi model trả intent "contact" (site) /
+ *   "unsupported" (giải) → SupportForm gửi site-assistant { support }.
+ * - Mỗi lượt gửi kèm dữ kiện màn hình (facts) đã làm sạch, ≤ 3.5 KB.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -25,11 +29,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { localePath } from "@/lib/locale-path";
 import { isIOS } from "@/lib/platform";
 import {
-  ASSISTANT_APPLIED_EVENT, suggestionsFor, useCurrentAssistantContext,
+  ASSISTANT_APPLIED_EVENT, assistantFacts, suggestionsFor, useCurrentAssistantContext,
   type AssistantContext, type AssistantScreen, type SitePage, type Suggestion,
 } from "@/lib/assistant-context";
 import { safeLink } from "../../../supabase/functions/site-assistant/shared";
 import { executeCard, type ExecResult } from "@/lib/tournament-assistant-exec";
+import { prefillMessage } from "@/lib/assistant-support";
+import SupportForm from "./SupportForm";
 
 type Lang = "vi" | "en";
 interface Alternative { label: string; prompt: string; fill?: boolean; href?: string }
@@ -65,7 +71,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 const COPY = {
   vi: {
     close: "Đóng trợ lý", title: "Trợ lý giải đấu",
-    hello: "Chào bạn 👋 Mình hiểu trang giải bạn đang xem. Hỏi về bảng, lịch, kết quả — hoặc bảo mình sửa giải (chủ giải mới sửa được, luôn hỏi lại trước khi ghi).",
+    hello: "Chào bạn 👋 Mình là trợ lý AI (không phải người) và hiểu trang giải bạn đang xem. Hỏi về bảng, lịch, kết quả — hoặc bảo mình sửa giải (chủ giải mới sửa được, luôn hỏi lại trước khi ghi). Cần gặp admin thì bấm «Liên hệ admin».",
     login: "Đăng nhập để dùng trợ lý giải đấu.", loginBtn: "Đăng nhập",
     placeholder: "Hỏi hoặc bảo mình sửa giải…", send: "Gửi",
     viewing: (l: string) => `Đang xem: ${l}`,
@@ -76,8 +82,9 @@ const COPY = {
     failed: (failed: string) => `Chưa thay đổi gì — lỗi ở bước: ${failed}.`,
     error: "Mạng hoặc trợ lý đang chậm. Thử lại nhé.",
     clear: "Cuộc trò chuyện mới",
-    siteTitle: "Trợ lý ThePickleHub",
-    siteHello: "Chào bạn 👋 Mình là trợ lý của ThePickleHub. Hỏi mình về trang bạn đang xem, cách dùng tính năng (tạo giải, tìm sân, xem live, xếp hạng…) — mình sẽ chỉ đường cho bạn.",
+    siteTitle: "Trợ lý AI ThePickleHub",
+    siteHello: "Chào bạn 👋 Mình là trợ lý AI của ThePickleHub (AI, không phải người). Mình biết bạn đang xem trang nào — hỏi về trang này hoặc cách dùng tính năng nhé. Cần gặp admin thì cứ nói, mình chuyển lời ngay.",
+    contact: "Liên hệ admin",
     sitePlaceholder: "Hỏi mình bất cứ điều gì về ThePickleHub…",
     pages: {
       home: "Trang chủ", tournament: "Giải đấu", tools: "Công cụ giải", live_video: "Live & video", blog_news: "Bài viết",
@@ -91,7 +98,7 @@ const COPY = {
   },
   en: {
     close: "Close assistant", title: "Tournament assistant",
-    hello: "Hi 👋 I know which tournament page you're on. Ask about groups, schedule, results — or ask me to change the tournament (organizers only; I always confirm before saving).",
+    hello: "Hi 👋 I'm an AI assistant (not a person) and I know which tournament page you're on. Ask about groups, schedule, results — or ask me to change the tournament (organizers only; I always confirm before saving). Need a human? Tap “Contact admin”.",
     login: "Sign in to use the tournament assistant.", loginBtn: "Sign in",
     placeholder: "Ask, or tell me what to change…", send: "Send",
     viewing: (l: string) => `Viewing: ${l}`,
@@ -102,8 +109,9 @@ const COPY = {
     failed: (failed: string) => `Nothing changed — failed at: ${failed}.`,
     error: "The network or assistant is slow. Please try again.",
     clear: "New conversation",
-    siteTitle: "ThePickleHub assistant",
-    siteHello: "Hi 👋 I'm the ThePickleHub assistant. Ask about the page you're on or how to use a feature (create a tournament, find courts, watch live, rankings…) and I'll point you there.",
+    siteTitle: "ThePickleHub AI assistant",
+    siteHello: "Hi 👋 I'm ThePickleHub's AI assistant (an AI, not a person). I know which page you're on — ask about it or how to use a feature. Need the admin? Just say so and I'll pass it on.",
+    contact: "Contact admin",
     sitePlaceholder: "Ask me anything about ThePickleHub…",
     pages: {
       home: "Home", tournament: "Tournaments", tools: "Tournament tools", live_video: "Live & video", blog_news: "Articles",
@@ -161,6 +169,7 @@ const AssistantPanel = ({ mode, routeScreen, page, open, onClose }: Props) => {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   // Hoàn tác chỉ trong phiên: id thẻ đã áp dụng ở phiên này.
@@ -183,7 +192,7 @@ const AssistantPanel = ({ mode, routeScreen, page, open, onClose }: Props) => {
     try { localStorage.setItem(storageKey, JSON.stringify({ thread_id: threadId, messages: messages.slice(-60) })); } catch { /* private mode */ }
   }, [threadId, messages, storageKey]);
 
-  useEffect(() => { if (open) endRef.current?.scrollIntoView({ block: "end" }); }, [open, messages, busy]);
+  useEffect(() => { if (open) endRef.current?.scrollIntoView({ block: "end" }); }, [open, messages, busy, contactOpen]);
   useEffect(() => { if (open) inputRef.current?.focus(); }, [open]);
 
   const patch = (id: string, p: Partial<Msg>) => setMessages((ms) => ms.map((m) => (m.id === id ? { ...m, ...p } : m)));
@@ -204,13 +213,14 @@ const AssistantPanel = ({ mode, routeScreen, page, open, onClose }: Props) => {
           assistant: site
             ? {
               thread_id: threadId, lang, page, route: window.location.pathname, label,
-              summary: ctx?.summary?.slice(0, 600), messages: history.slice(-6).map((m) => ({ ...m, text: m.text.slice(0, 500) })),
+              summary: ctx?.summary?.slice(0, 600), facts: assistantFacts(ctx, !!user),
+              messages: history.slice(-6).map((m) => ({ ...m, text: m.text.slice(0, 500) })),
             }
             : {
               thread_id: threadId,
               lang,
               messages: history,
-              context: { ...ctx, screen, route: window.location.pathname, label },
+              context: { ...ctx, screen, route: window.location.pathname, label, facts: assistantFacts(ctx, !!user) },
             },
         },
         timeout: 30_000,
@@ -218,7 +228,9 @@ const AssistantPanel = ({ mode, routeScreen, page, open, onClose }: Props) => {
       data = res.error ? null : res.data;
     } catch { /* hiện lỗi bên dưới */ }
     setBusy(false);
-    const res = data as { reply?: string; card?: Card | null; lang?: Lang; links?: { href?: unknown; label?: unknown }[] } | null;
+    const res = data as {
+      reply?: string; card?: Card | null; lang?: Lang; links?: { href?: unknown; label?: unknown }[]; contact?: boolean; intent?: string;
+    } | null;
     if (!res?.reply) {
       setMessages((ms) => [...ms, { id: uid(), role: "bot", text: (/[à-ỹđ]/i.test(t) ? COPY.vi : c).error, ctx: label }]);
       return;
@@ -236,6 +248,8 @@ const AssistantPanel = ({ mode, routeScreen, page, open, onClose }: Props) => {
       id: uid(), role: "bot", text: res.reply!, ctx: label, card, shareId, lang: res.lang === "en" || res.lang === "vi" ? res.lang : lang,
       cardState: card && !card.blocked ? "pending" : undefined, links,
     }]);
+    // Model thấy người dùng cần người thật (site) / yêu cầu chưa hỗ trợ (giải) → mở form gửi admin.
+    if (site ? res.contact === true : res.intent === "unsupported") setContactOpen(true);
   };
 
   const log = (m: Msg, card: { type: string; args: Record<string, unknown>; lines?: string[]; undo?: unknown }, outcome: string, detail = "") => {
@@ -297,7 +311,7 @@ const AssistantPanel = ({ mode, routeScreen, page, open, onClose }: Props) => {
               <div className="tl-asst-ctx">{c.viewing(label)}</div>
             </div>
             {messages.length > 0 && (
-              <button type="button" className="tl-asst-link" onClick={() => { setMessages([]); setThreadId(uid() + uid()); undoable.current.clear(); }}>
+              <button type="button" className="tl-asst-link" onClick={() => { setMessages([]); setThreadId(uid() + uid()); undoable.current.clear(); setContactOpen(false); }}>
                 {c.clear}
               </button>
             )}
@@ -365,19 +379,35 @@ const AssistantPanel = ({ mode, routeScreen, page, open, onClose }: Props) => {
               </div>
             ))}
             {busy && <div className="tl-asst-msg bot"><Loader2 className="h-4 w-4 animate-spin" aria-label="…" /></div>}
+            {contactOpen && (
+              <SupportForm
+                lang={lang}
+                pageType={site ? page : "tournament"}
+                pageLabel={label}
+                turns={messages.map((m) => ({ role: m.role, text: m.text }))}
+                initialMessage={prefillMessage(messages)}
+                initialEmail={user?.email ?? ""}
+                onCancel={() => setContactOpen(false)}
+                onSent={(reply) => {
+                  setContactOpen(false);
+                  setMessages((ms) => [...ms, { id: uid(), role: "bot", text: reply, ctx: label }]);
+                }}
+              />
+            )}
             <div ref={endRef} />
           </div>
 
           {!user && !site ? (
             <div className="tl-asst-compose">
               <span style={{ flex: 1, fontSize: 13, color: "var(--tl-fg-3)" }}>{c.login}</span>
+              {!contactOpen && <button type="button" className="tl-asst-chip" onClick={() => setContactOpen(true)}>{c.contact}</button>}
               <Button type="button" size="sm" onClick={() => navigate(`${localePath("/login", lang)}?redirect=${encodeURIComponent(window.location.pathname)}`)}>
                 {c.loginBtn}
               </Button>
             </div>
           ) : (
             <>
-              {chips.length > 0 && !busy && (
+              {!busy && (
                 <div className="tl-asst-chips" style={{ padding: "0 12px 8px" }}>
                   {chips.map((s) => (
                     <button
@@ -389,6 +419,7 @@ const AssistantPanel = ({ mode, routeScreen, page, open, onClose }: Props) => {
                       {lang === "vi" ? s.vi : s.en}
                     </button>
                   ))}
+                  {!contactOpen && <button type="button" className="tl-asst-chip" onClick={() => setContactOpen(true)}>{c.contact}</button>}
                 </div>
               )}
               <form className="tl-asst-compose" onSubmit={(e) => { e.preventDefault(); void send(input); }}>
@@ -414,7 +445,7 @@ const AssistantPanel = ({ mode, routeScreen, page, open, onClose }: Props) => {
   );
 };
 
-// z-index dưới BottomNav (9999), cùng tầng ChatFAB (9990); panel render sau ChatFAB nên nằm trên.
+// z-index dưới BottomNav (9999), cùng tầng nút trợ lý (9990).
 const CSS = `
 .tl-asst-panel { position: fixed; z-index: 9990; left: 8px; right: 8px; bottom: var(--asst-panel-bottom); height: min(72dvh, 620px);
   display: flex; flex-direction: column; background: var(--tl-bg, #08090a); color: var(--tl-fg, #f5f3ee);
@@ -449,6 +480,9 @@ const CSS = `
 .tl-asst-icon { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 999px; background: transparent; color: inherit; border: 0; }
 .tl-asst-icon.send { background: var(--tl-green, #00b96b); color: var(--tl-bg); width: 40px; height: 40px; }
 .tl-asst-icon:disabled { opacity: .4; }
+.tl-asst-input { width: 100%; padding: 8px 10px; border-radius: 8px; font-size: 16px; background: var(--tl-surface); color: inherit;
+  border: 1px solid var(--tl-border, #22252a); resize: vertical; }
+form.tl-asst-card { position: relative; overflow: hidden; }
 .tl-asst-link { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--tl-fg-3, #8a8f98); background: transparent; border: 0; padding: 4px 6px; }
 .tl-asst-link:hover { color: var(--tl-fg, #f5f3ee); }
 `;

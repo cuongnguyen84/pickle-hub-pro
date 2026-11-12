@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useAssistantContext } from "@/lib/assistant-context";
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useLivestreams } from "@/hooks/useSupabaseData";
@@ -145,6 +146,16 @@ const Live = () => {
       default: return [...live, ...scheduled, ...ended.slice(0, 12)];
     }
   }, [filter, live, scheduled, ended]);
+
+  // Trợ lý AI nổi: danh sách đang hiện (tiêu đề + trạng thái), không gọi mạng thêm.
+  useAssistantContext(isLoading ? null : {
+    label: language === "vi" ? "Sân trực tiếp" : "Live courts",
+    facts: {
+      filter, live_now: counts.live, scheduled: counts.scheduled, replays_7d: counts.ended,
+      live_titles: live.slice(0, 8).map((l) => l.title).join(" | "),
+      upcoming_titles: scheduled.slice(0, 5).map((l) => l.title).join(" | "),
+    },
+  });
 
   // Match head + thumbnail rendering moved into <MatchCard /> at top of file.
 

@@ -113,6 +113,7 @@ const BlogPost = () => {
   useAssistantContext(post ? {
     label: post.content.en.title,
     summary: post.content.en.metaDescription.slice(0, 600),
+    facts: { article: post.content.en.title, published: post.publishedDate, updated: post.updatedDate },
   } : null);
 
   if (post === null) {

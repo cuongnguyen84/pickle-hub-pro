@@ -1,7 +1,6 @@
-// Trợ lý AI chung: route → loại trang, danh sách ẩn, và xếp chồng với ChatFAB.
+// Trợ lý AI chung: route → loại trang, danh sách ẩn.
 import { describe, expect, it } from "vitest";
 import { assistantScreenFor, sitePageFor } from "@/lib/assistant-context";
-import { chatFabVisible } from "@/components/layout/ChatFAB";
 import { isPageType } from "../../../supabase/functions/site-assistant/shared";
 
 describe("sitePageFor", () => {
@@ -36,20 +35,5 @@ describe("sitePageFor", () => {
     for (const p of ["/tournaments", "/tournament/x", "/tools/quick-tables", "/tools/quick-tables/abc", "/vi/tools/quick-tables/abc/setup"]) {
       expect(assistantScreenFor(p)).not.toBeNull();
     }
-  });
-});
-
-describe("chatFabVisible", () => {
-  it("is hidden where the tournament assistant owns the corner", () => {
-    expect(chatFabVisible("/tournament/x")).toBe(false);
-    expect(chatFabVisible("/vi/tools/quick-tables/abc")).toBe(false);
-  });
-  it("is visible on normal pages (assistant stacks above it)", () => {
-    expect(chatFabVisible("/")).toBe(true);
-    expect(chatFabVisible("/vi/san/abc")).toBe(true);
-  });
-  it("stays hidden on its own hidden list", () => {
-    expect(chatFabVisible("/rankings")).toBe(false);
-    expect(chatFabVisible("/vi/shop")).toBe(false);
   });
 });

@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { useAssistantContext } from "@/lib/assistant-context";
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
@@ -81,6 +82,15 @@ const Rankings = () => {
     : [];
 
   const scopeMeta = DUPR_SCOPES.find((s) => s.key === scope)!;
+
+  // Trợ lý AI nổi: phạm vi/thể thức đang chọn + top 10 đang hiện.
+  const topShown = isVietnamScope
+    ? (vietnamQuery.data ?? []).slice(0, 10).map((r, i) => `${i + 1}. ${r.display_name ?? r.username} ${r.dupr_rating.toFixed(3)}`)
+    : staticPlayers.slice(0, 10).map((p, i) => `${i + 1}. ${p.name} ${p.rating !== null ? p.rating.toFixed(3) : "—"}`);
+  useAssistantContext({
+    label: `DUPR ${scopeMeta.key} · ${format}`,
+    facts: { tab: "DUPR", scope, format, last_updated: DUPR_LAST_UPDATED, top_shown: topShown.join(" | ") },
+  });
 
   const lastUpdatedLabel = useMemo(() => {
     const d = new Date(DUPR_LAST_UPDATED);

@@ -1,6 +1,186 @@
 {
   "sourceLanguage" : "vi",
   "strings" : {
+    "Admin là người thật, sẽ liên hệ lại qua thông tin bạn để lại." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A real person will get back to you using the details you leave."
+          }
+        }
+      }
+    },
+    "Admin thấy tài khoản của bạn; thêm SĐT/Zalo nếu muốn được gọi lại nhanh hơn." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The admin can see your account; add a phone/Zalo for a faster reply."
+          }
+        }
+      }
+    },
+    "Bạn cần hỗ trợ gì?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What do you need help with?"
+          }
+        }
+      }
+    },
+    "Bạn nhập nội dung cần hỗ trợ nhé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Please describe what you need help with."
+          }
+        }
+      }
+    },
+    "Bạn để lại SĐT, email hoặc Zalo để admin liên hệ lại nhé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Please leave a phone number, email or Zalo so the admin can reach you."
+          }
+        }
+      }
+    },
+    "Chào bạn 👋 Mình là trợ lý AI của ThePickleHub (AI, không phải người). Mình biết bạn đang xem màn hình nào — hỏi về màn hình này hoặc cách dùng tính năng nhé. Cần gặp admin thì cứ nói, mình chuyển lời ngay." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hi 👋 I'm ThePickleHub's AI assistant (an AI, not a person). I know which screen you're on — ask about it or how to use a feature. Need the admin? Just say so and I'll pass it on."
+          }
+        }
+      }
+    },
+    "Chưa gửi được, bạn thử lại sau nhé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't send it. Please try again later."
+          }
+        }
+      }
+    },
+    "Email chưa đúng định dạng." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That email doesn't look right."
+          }
+        }
+      }
+    },
+    "Gửi cho admin" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send to admin"
+          }
+        }
+      }
+    },
+    "Gửi cho admin ThePickleHub" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send to the ThePickleHub admin"
+          }
+        }
+      }
+    },
+    "Liên hệ admin" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contact admin"
+          }
+        }
+      }
+    },
+    "Số điện thoại" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phone"
+          }
+        }
+      }
+    },
+    "Số điện thoại chưa đúng (8–15 chữ số)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That phone number doesn't look right (8–15 digits)."
+          }
+        }
+      }
+    },
+    "Trợ lý AI" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI assistant"
+          }
+        }
+      }
+    },
+    "Tên (không bắt buộc)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name (optional)"
+          }
+        }
+      }
+    },
+    "Đã gửi cho admin ThePickleHub. Bọn mình sẽ liên hệ lại sớm." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sent to the ThePickleHub admin. We'll get back to you soon."
+          }
+        }
+      }
+    },
+    "Để lại ít nhất một cách liên hệ để admin trả lời bạn." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leave at least one way to reach you so the admin can reply."
+          }
+        }
+      }
+    },
+    "Không gửi nữa" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not now"
+          }
+        }
+      }
+    },
     "Mở trợ lý AI" : {
       "localizations" : {
         "en" : {

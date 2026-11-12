@@ -15,7 +15,6 @@ import { lazy, Suspense, Component, ReactNode, useEffect, useLayoutEffect, useSt
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { useLivestreamGateAttribution } from "@/lib/livestreamGateAttribution";
 import BottomNav from "@/components/layout/BottomNav";
-import ChatFAB from "@/components/layout/ChatFAB";
 import AssistantGate from "@/components/assistant/AssistantGate";
 import AppHeader from "@/components/layout/AppHeader";
 
@@ -263,6 +262,7 @@ const AdminApiKeys = lazyRetry(() => import("./pages/admin/AdminApiKeys"));
 const AdminModeration = lazyRetry(() => import("./pages/admin/AdminModeration"));
 const AdminDisputes = lazyRetry(() => import("./pages/admin/AdminDisputes"));
 const AdminReports = lazyRetry(() => import("./pages/admin/AdminReports"));
+const AdminSupport = lazyRetry(() => import("./pages/admin/AdminSupport"));
 const AdminNews = lazyRetry(() => import("./pages/admin/AdminNews"));
 const AdminReviews = lazyRetry(() => import("./pages/admin/AdminReviews"));
 const AdminEmbeds = lazyRetry(() => import("./pages/admin/AdminEmbeds"));
@@ -790,7 +790,6 @@ const App = () => (
 
               <SkipToContent />
               <BottomNav />
-              <ChatFAB />
               <AssistantGate />
               <ChunkErrorBoundary>
                 {/* tabIndex=-1: programmatic focus target for the skip link
@@ -932,6 +931,7 @@ const App = () => (
                     <Route path="/admin/moderation" element={<AdminModeration />} />
                     <Route path="/admin/disputes" element={<AdminDisputes />} />
                     <Route path="/admin/reports" element={<AdminReports />} />
+                    <Route path="/admin/support" element={<AdminSupport />} />
                     <Route path="/admin/news" element={<AdminNews />} />
                     <Route path="/admin/reviews" element={<AdminReviews />} />
                     <Route path="/admin/embeds" element={<AdminEmbeds />} />

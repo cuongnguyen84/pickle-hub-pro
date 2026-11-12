@@ -264,6 +264,13 @@ const QuickTableView = () => {
     tournament: { kind: 'quick_table', share_id: table.share_id, name: table.name },
     ...(viewingGroup ? { entity: { kind: 'group' as const, id: viewingGroup.id, name: viewingGroup.name } } : {}),
     stage: table.status === 'setup' ? 'setup' : 'drawn',
+    facts: {
+      tournament: table.name, status: table.status, format: table.format, doubles: table.is_doubles,
+      groups: groups.length, teams: players.length, matches: matches.length,
+      matches_done: matches.filter((m) => m.status === 'completed').length,
+      tab: activeTab, viewing_group: viewingGroup?.name,
+      your_role: canManageTable ? 'organizer' : canEditScores ? 'referee' : user ? 'viewer' : 'guest',
+    },
   } : null);
   useEffect(() => {
     const onApplied = () => { void loadData(); };

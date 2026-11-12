@@ -8,7 +8,7 @@
  */
 import { useEffect, useSyncExternalStore } from "react";
 import { withoutLocale } from "@/lib/locale-path";
-import type { PageType as SitePage } from "../../supabase/functions/site-assistant/shared";
+import { cleanCtx, MAX_CTX_CHARS, type PageType as SitePage } from "../../supabase/functions/site-assistant/shared";
 
 export type { SitePage };
 
@@ -33,6 +33,50 @@ export interface AssistantContext {
   summary?: string;
   /** chỉ để chọn chip gợi ý: giải chưa chia bảng / đã chia */
   stage?: "setup" | "drawn";
+  /**
+   * Dữ kiện ĐANG HIỂN THỊ trên màn hình (key → giá trị ngắn), chỉ lấy từ dữ liệu
+   * trang đã tải — không gọi mạng thêm, không email/SĐT người khác, không token.
+   */
+  facts?: Facts;
+}
+
+export type Facts = Record<string, string | number | boolean | null | undefined>;
+
+/**
+ * facts → "key: value" từng dòng: bỏ giá trị rỗng, làm sạch (ký tự điều khiển,
+ * < >, khoảng trắng), mỗi giá trị ≤ 300 ký tự, tổng ≤ max — cắt ở ranh giới
+ * dòng theo đúng thứ tự khai báo nên cùng input luôn ra cùng chuỗi.
+ */
+export function serializeFacts(facts: Facts | undefined, max = MAX_CTX_CHARS): string {
+  const out: string[] = [];
+  let len = 0;
+  for (const [k, v] of Object.entries(facts ?? {})) {
+    if (v == null || v === "") continue;
+    const val = cleanCtx(String(v), 300).replace(/\s+/g, " ").trim();
+    if (!val) continue;
+    const line = `${cleanCtx(k, 40).trim().replace(/\s+/g, "_")}: ${val}`;
+    if (len + line.length + 1 > max) break;
+    out.push(line);
+    len += line.length + 1;
+  }
+  return out.join("\n");
+}
+
+/** Ngữ cảnh chung cho MỌI route (kể cả trang chưa khai báo): đọc từ trang đang hiển thị. */
+export function genericFacts(loggedIn: boolean): Facts {
+  const h1 = typeof document !== "undefined" ? document.querySelector("main h1, h1")?.textContent ?? "" : "";
+  return {
+    route: typeof window !== "undefined" ? window.location.pathname : "",
+    title: typeof document !== "undefined" ? document.title : "",
+    h1: h1.trim().slice(0, 160),
+    logged_in: loggedIn ? "yes" : "no",
+  };
+}
+
+/** Chuỗi facts gửi server: dữ kiện màn hình khai báo trước, dữ kiện chung sau; tổng ≤ trần trừ phần summary. */
+export function assistantFacts(ctx: AssistantContext | null, loggedIn: boolean): string {
+  const budget = MAX_CTX_CHARS - Math.min(ctx?.summary?.length ?? 0, 600);
+  return serializeFacts({ ...ctx?.facts, ...genericFacts(loggedIn) }, budget);
 }
 
 /**

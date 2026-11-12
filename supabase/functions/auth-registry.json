@@ -1018,7 +1018,7 @@
         "user.write.user_jwt.derived_identity"
       ],
       "status": "classified",
-      "notes": "Anonymous Q&A + internal navigation links for the floating site assistant. Optional bearer JWT is verified internally (getAuthUser) only to pick the per-user instead of per-IP quota. Service role calls consume_site_assistant_quota (hashed identity, database-backed per-user/per-IP/global daily limits) and inserts the turn into site_assistant_log. Never reads or writes user data; client page context is treated as untrusted text."
+      "notes": "Anonymous Q&A + internal navigation links for the floating site assistant. Optional bearer JWT is verified internally (getAuthUser) only to pick the per-user instead of per-IP quota. Service role calls consume_site_assistant_quota (hashed identity, database-backed per-user/per-IP/global daily limits) and inserts the turn into site_assistant_log. The { support } action (contact admin) calls consume_support_request_quota (hashed identity, hourly/daily), inserts one support_requests row (user_id only from the verified JWT, never from the body) and sends a plain-text Telegram notice to the ops chat. Never reads other users' data; client page context is treated as untrusted text."
     }
   }
 }

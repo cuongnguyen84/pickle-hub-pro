@@ -61,6 +61,7 @@ const NewsArticle = ({ language }: Props) => {
   useAssistantContext(article ? {
     label: article.title,
     summary: (article.summary ?? "").slice(0, 600),
+    facts: { article: article.title, source: article.source, published: article.published_at },
   } : null);
 
   if (isLoading) {

@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useAssistantContext } from "@/lib/assistant-context";
 import { useLocation } from "react-router-dom";
 import { useRef, useState } from "react";
 import { getLoginUrl } from "@/lib/auth-config";
@@ -63,6 +64,15 @@ const Account = () => {
       setDisplayNameInput(profile.display_name);
     }
   }, [profile?.display_name]);
+
+  // Trợ lý AI nổi: chỉ trạng thái tài khoản của chính người dùng, không email/SĐT.
+  useAssistantContext(isLoading ? null : {
+    label: "Account",
+    facts: {
+      logged_in: user ? "yes" : "no", display_name: profile?.display_name,
+      creator: isCreator, admin: isAdmin,
+    },
+  });
 
   const handleSignOut = async () => {
     await signOut();

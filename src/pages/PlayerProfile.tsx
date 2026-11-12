@@ -39,6 +39,11 @@ const PlayerProfile = () => {
       profileQuery.data.city,
       profileQuery.data.dupr_doubles != null ? `DUPR doubles ${profileQuery.data.dupr_doubles}` : "",
     ].filter(Boolean).join(" · "),
+    facts: {
+      player: profileQuery.data.display_name || profileQuery.data.username, city: profileQuery.data.city,
+      dupr_doubles: profileQuery.data.dupr_doubles, dupr_singles: profileQuery.data.dupr_singles,
+      recent_matches_shown: matchesQuery.data?.pages.reduce((n, p) => n + p.length, 0),
+    },
   } : null);
 
   // ─── JSON-LD Person schema ───────────────────────────────────────────────

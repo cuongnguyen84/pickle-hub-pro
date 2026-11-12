@@ -29,6 +29,7 @@ import {
   Gavel,
   Activity,
   Star,
+  LifeBuoy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -56,6 +57,7 @@ const navItems = [
   { path: "/admin/moderation", icon: Shield, labelKey: "moderation" as const },
   { path: "/admin/disputes", icon: Gavel, labelKey: "disputes" as const },
   { path: "/admin/reports", icon: Flag, labelKey: "reports" as const },
+  { path: "/admin/support", icon: LifeBuoy, labelKey: "support" as const },
   { path: "/admin/news", icon: Newspaper, labelKey: "news" as const },
   { path: "/admin/reviews", icon: Star, labelKey: "reviews" as const },
   { path: "/admin/embeds", icon: Instagram, labelKey: "embeds" as const },
@@ -187,6 +189,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       moderation: t.admin.moderation.title,
       disputes: "Tranh chấp",
       reports: "Báo cáo",
+      support: "Hỗ trợ",
       apiKeys: "API Keys",
       viewers: t.admin.viewers.title,
       push: "Push",

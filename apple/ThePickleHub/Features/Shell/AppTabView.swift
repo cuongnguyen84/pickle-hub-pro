@@ -49,15 +49,29 @@ struct AppTabView: View {
         .tint(TLColor.accent)
         // Trợ lý AI chung (site-assistant): nút nổi trên mọi tab, ngay trên thanh tab.
         // Màn toàn hình (trọng tài, TV, video) là fullScreenCover nên che luôn nút này.
+        // Viên thuốc "✦ Trợ lý AI" cho người dùng biết đây là AI hỗ trợ; thu thành
+        // icon sau lần mở đầu tiên (nhớ trong UserDefaults).
         .overlay(alignment: .bottomTrailing) {
-            Button { assistantOpen = true } label: {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(TLColor.accentText)
-                    .frame(width: 48, height: 48)
-                    .background(TLColor.bg, in: Circle())
-                    .overlay(Circle().stroke(TLColor.border))
-                    .shadow(color: .black.opacity(0.35), radius: 6, y: 3)
+            Button {
+                assistantOpen = true
+                assistantLauncherOpened = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(TLColor.accentText)
+                    if !assistantLauncherOpened {
+                        Text(String(localized: "Trợ lý AI"))
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(TLColor.fg)
+                            .fixedSize()
+                    }
+                }
+                .padding(.horizontal, assistantLauncherOpened ? 0 : 14)
+                .frame(minWidth: 48, minHeight: 48)
+                .background(TLColor.bg, in: Capsule())
+                .overlay(Capsule().stroke(TLColor.border))
+                .shadow(color: .black.opacity(0.35), radius: 6, y: 3)
             }
             .accessibilityLabel(String(localized: "Mở trợ lý AI"))
             .padding(.trailing, 16)
@@ -77,6 +91,7 @@ struct AppTabView: View {
     }
 
     @State private var assistantOpen = false
+    @AppStorage("assistantLauncherOpened") private var assistantLauncherOpened = false
     @Environment(\.openURL) private var openURL
 
     /// Initial tab, overridable via the `-startTab <tab>` launch argument

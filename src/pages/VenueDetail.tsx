@@ -73,11 +73,6 @@ export default function VenueDetail() {
     queryFn: () => fetchVenueDetail(slug),
     staleTime: 60_000,
   });
-  // Trợ lý AI nổi: chỉ tên + khu vực + số sân (giờ/giá mặc định không đưa vào — PRICE-01).
-  useAssistantContext(venue ? {
-    label: venue.name,
-    summary: [venue.address, venue.district, venue.city, venue.num_courts ? `${venue.num_courts} sân` : ""].filter(Boolean).join(" · ").slice(0, 600),
-  } : null);
 
   const { data: nearby, isLoading: nearbyLoading } = useQuery<VenueListItem[]>({
     queryKey: ["venue-nearby", venue?.city ?? null, slug],
@@ -130,6 +125,20 @@ export default function VenueDetail() {
     hoursVerified,
     dayRowCount: hours.length,
   });
+
+  // Trợ lý AI nổi: chỉ dữ kiện trang đang hiện; giờ/giá chưa xác nhận ghi rõ
+  // "chưa xác nhận", không đưa số mặc định (PRICE-01).
+  useAssistantContext(venue ? {
+    label: venue.name,
+    summary: [venue.address, venue.district, venue.city, venue.num_courts ? `${venue.num_courts} sân` : ""].filter(Boolean).join(" · ").slice(0, 600),
+    facts: {
+      venue: venue.name, address: venue.address, district: venue.district, city: venue.city, courts: venue.num_courts,
+      indoor: venue.is_indoor == null ? null : venue.is_indoor ? "indoor" : "outdoor", surface: venue.surface_type,
+      verified_listing: venue.is_verified, amenities: (venue.amenities ?? []).slice(0, 12).join(", "),
+      hours: hoursVerified && weekHours ? weekHours : "not confirmed",
+      price: priceVerified && priceText ? priceText : "not confirmed",
+    },
+  } : null);
 
   if (isLoading) {
     return (

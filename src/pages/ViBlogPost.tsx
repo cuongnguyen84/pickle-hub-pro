@@ -43,6 +43,7 @@ const ViBlogPost = () => {
   useAssistantContext(post ? {
     label: post.title,
     summary: (post.excerpt || post.meta_description || "").slice(0, 600),
+    facts: { article: post.title, published: post.published_at },
   } : null);
   const enSlug = post?.alternate_en_slug ?? "";
   const { data: twins } = useViBlogTwins(clusterCandidates(enSlug));
