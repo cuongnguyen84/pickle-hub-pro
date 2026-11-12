@@ -119,6 +119,7 @@ describe("parseModel", () => {
       ],
     }))!;
     expect(r.reply).toBe("Bạn vào Tìm sân nhé.");
+    expect(parseModel(JSON.stringify({ reply: "a <<script>script> b", intent: "answer" }))!.reply).not.toMatch(/[<>]/);
     expect(r.links.map((l) => l.href)).toEqual(["/san", "/rankings", "/blog"]);
   });
   it("rejects junk", () => {

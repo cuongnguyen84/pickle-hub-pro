@@ -182,7 +182,7 @@ export function parseModel(text: string | null): { reply: string; intent: "answe
   if (!text) return null;
   let p: Record<string, unknown>;
   try { p = JSON.parse(text); } catch { return null; }
-  const reply = typeof p.reply === "string" ? clipReply(p.reply.replace(/<[^>]*>/g, ""), 1200) : "";
+  const reply = typeof p.reply === "string" ? clipReply(p.reply.replace(/<[^>]*>/g, "").replace(/[<>]/g, ""), 1200) : "";
   if (!reply) return null;
   const links: Link[] = [];
   for (const l of Array.isArray(p.links) ? p.links : []) {
