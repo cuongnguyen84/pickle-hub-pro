@@ -18,6 +18,7 @@ import { cmsHeroImageSources, heroDimsProps } from "@/lib/image-utils";
 import { WorldCupResultsBoard } from "@/components/live/WorldCupResultsBoard";
 import { TournamentClusterLinks } from "@/components/blog/TournamentClusterLinks";
 import { buildTournamentClusterLinks, clusterCandidates } from "@/content/blog/tournament-cluster";
+import { useAssistantContext } from "@/lib/assistant-context";
 
 /** Marker a VI post puts in content_html where a live block belongs. Mirrors
  *  WC_RESULTS_MARKER in functions/_lib/render/blog.ts. */
@@ -39,6 +40,10 @@ const ViBlogPost = () => {
   const { data: post, isLoading, error, refetch } = useViBlogPostBySlug(slug);
   useTrackBlogView("vi", slug);
   const { data: viewCount } = useBlogPostViewCount("vi", slug);
+  useAssistantContext(post ? {
+    label: post.title,
+    summary: (post.excerpt || post.meta_description || "").slice(0, 600),
+  } : null);
   const enSlug = post?.alternate_en_slug ?? "";
   const { data: twins } = useViBlogTwins(clusterCandidates(enSlug));
 

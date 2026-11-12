@@ -51,6 +51,7 @@ import {
   type VenueListItem,
 } from "@/lib/venues";
 import { fetchVenueDetail, venueDetailQueryKey } from "@/lib/venue-detail-query";
+import { useAssistantContext } from "@/lib/assistant-context";
 
 const DAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 const DAY_LABELS: Record<string, { vi: string; en: string }> = {
@@ -72,6 +73,11 @@ export default function VenueDetail() {
     queryFn: () => fetchVenueDetail(slug),
     staleTime: 60_000,
   });
+  // Trợ lý AI nổi: chỉ tên + khu vực + số sân (giờ/giá mặc định không đưa vào — PRICE-01).
+  useAssistantContext(venue ? {
+    label: venue.name,
+    summary: [venue.address, venue.district, venue.city, venue.num_courts ? `${venue.num_courts} sân` : ""].filter(Boolean).join(" · ").slice(0, 600),
+  } : null);
 
   const { data: nearby, isLoading: nearbyLoading } = useQuery<VenueListItem[]>({
     queryKey: ["venue-nearby", venue?.city ?? null, slug],

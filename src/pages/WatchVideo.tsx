@@ -18,6 +18,7 @@ import { ShareDialog } from "@/components/share";
 import { DynamicMeta } from "@/components/seo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { VideoThumbnail } from "@/components/video/VideoThumbnail";
+import { useAssistantContext } from "@/lib/assistant-context";
 
 /**
  * /watch/:id — video detail page.
@@ -46,6 +47,10 @@ const WatchVideo = () => {
   const { data: video, isLoading } = useVideo(id!);
   const { data: viewCount = 0 } = useViewCount("video", id!);
   const { data: relatedVideos = [] } = useVideos({ limit: 8 });
+  useAssistantContext(video ? {
+    label: video.title,
+    summary: (video.description ?? "").slice(0, 600),
+  } : null);
 
   const dateLocale = language === "vi" ? viLocale : enUS;
 

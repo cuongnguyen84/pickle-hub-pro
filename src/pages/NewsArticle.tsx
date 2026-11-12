@@ -17,6 +17,7 @@ import {
 import { formatRelative } from "@/lib/format-datetime";
 import { useNoindex } from "@/hooks/useNoindex";
 import DOMPurify from "isomorphic-dompurify";
+import { useAssistantContext } from "@/lib/assistant-context";
 
 /**
  * /news/:slug + /vi/news/:slug — News article detail page.
@@ -57,6 +58,10 @@ const NewsArticle = ({ language }: Props) => {
     language,
     article?.parent_news_id ?? null
   );
+  useAssistantContext(article ? {
+    label: article.title,
+    summary: (article.summary ?? "").slice(0, 600),
+  } : null);
 
   if (isLoading) {
     return (

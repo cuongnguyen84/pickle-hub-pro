@@ -15,6 +15,7 @@ import { PlayerStats } from "@/components/social/player/PlayerStats";
 import { DuprRatingChart } from "@/components/social/player/DuprRatingChart";
 import { MatchHistoryTabs } from "@/components/social/player/MatchHistoryTabs";
 import { PlayersNearRating } from "@/components/social/PlayersNearRating";
+import { useAssistantContext } from "@/lib/assistant-context";
 
 const JSONLD_ID = "player-profile-jsonld";
 
@@ -32,6 +33,13 @@ const PlayerProfile = () => {
   const statsQuery = usePlayerStats(resolvedUsername ?? undefined);
   const matchesQuery = usePlayerMatchHistory(profileQuery.data?.id);
   const historyQuery = useDuprRatingHistory(profileQuery.data?.id);
+  useAssistantContext(profileQuery.data ? {
+    label: profileQuery.data.display_name || profileQuery.data.username || "",
+    summary: [
+      profileQuery.data.city,
+      profileQuery.data.dupr_doubles != null ? `DUPR doubles ${profileQuery.data.dupr_doubles}` : "",
+    ].filter(Boolean).join(" · "),
+  } : null);
 
   // ─── JSON-LD Person schema ───────────────────────────────────────────────
   // Inserted via DOM (matches MatchPage pattern) so bot prerender + view-
