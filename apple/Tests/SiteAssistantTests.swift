@@ -62,4 +62,83 @@ struct SiteAssistantTests {
         #expect(clipped.count == 6)
         #expect(clipped.allSatisfy { $0.text.count == 500 })
     }
+
+    // MARK: - Ngữ cảnh màn hình
+
+    @Test func factsSerializeInOrderSkipEmptyAndSanitize() {
+        let out = SiteAssistant.serialize([
+            .init("name", "Sân <b>A</b>\n\tB"), .init("courts", 4), .init("price", nil as String?), .init("note", ""), .init("indoor", true),
+        ])
+        #expect(out == "name: Sân b A /b B\ncourts: 4\nindoor: true")
+    }
+
+    @Test func factsAreCappedAtALineBoundary() {
+        let facts = (0..<50).map { SiteAssistant.Fact("k\($0)", String(repeating: "v", count: 500)) }
+        let out = SiteAssistant.serialize(facts)
+        #expect(out.count <= SiteAssistant.maxContextChars)
+        #expect(out.split(separator: "\n").allSatisfy { $0.count <= "k49: ".count + 300 })
+        #expect(SiteAssistant.serialize([.init("a", "x"), .init("b", String(repeating: "y", count: 50))], max: 20) == "a: x")
+    }
+
+    @Test func screenContextComesFirstThenGenericFacts() {
+        let ctx = SiteAssistant.ScreenContext(label: "Sân A", facts: [.init("venue", "Sân A")])
+        #expect(SiteAssistant.facts(ctx, tab: "home", loggedIn: false) == "venue: Sân A\napp: ios\ntab: home\nlogged_in: no")
+        #expect(SiteAssistant.facts(nil, tab: "live", loggedIn: true).hasSuffix("logged_in: yes"))
+    }
+
+    @Test func venueContextNeverPrintsUnverifiedHoursOrPrice() {
+        let v = VenueDetail(id: UUID(), slug: "san-a", name: "San A", nameVi: "Sân A", address: "1 Lê Lợi", district: "Q1", city: "HCM",
+                            country: "VN", latitude: nil, longitude: nil, numCourts: 6, surfaceType: "acrylic", isIndoor: true,
+                            phone: "0900000000", website: nil, hoursJSON: ["mon": "05:00-22:00"], amenities: ["parking"],
+                            coverImageURL: nil, isVerified: true)
+        let s = SiteAssistant.serialize(SiteAssistant.context(venue: v).facts)
+        #expect(s.contains("venue: Sân A"))
+        #expect(s.contains("courts: 6"))
+        #expect(s.contains("indoor: indoor"))
+        #expect(s.contains("hours: not confirmed"))
+        #expect(!s.contains("05:00"))
+        #expect(!s.contains("0900000000"))
+    }
+
+    @Test func decodesContactFlag() throws {
+        let r = try JSONDecoder().decode(SiteAssistant.Reply.self, from: Data(#"{"reply":"Mình mở form nhé.","contact":true}"#.utf8))
+        #expect(r.contact)
+        #expect(try JSONDecoder().decode(SiteAssistant.Reply.self, from: Data(#"{"reply":"x"}"#.utf8)).contact == false)
+    }
+
+    // MARK: - Liên hệ admin
+
+    @Test func supportValidation() {
+        var f = SiteAssistant.SupportForm(message: "Cần giúp")
+        #expect(SiteAssistant.validate(f, loggedIn: true) == nil)
+        #expect(SiteAssistant.validate(f, loggedIn: false) == .contactRequired)
+        f.phone = "0912 345 678"
+        #expect(SiteAssistant.validate(f, loggedIn: false) == nil)
+        f.phone = "09 12"
+        #expect(SiteAssistant.validate(f, loggedIn: true) == .invalidPhone)
+        f.phone = ""
+        f.email = "x@"
+        #expect(SiteAssistant.validate(f, loggedIn: true) == .invalidEmail)
+        #expect(SiteAssistant.validate(SiteAssistant.SupportForm(message: " "), loggedIn: true) == .messageRequired)
+    }
+
+    @Test func supportPayloadIsClippedAndHasNoUserId() throws {
+        let turns = (0..<9).map { SiteAssistant.Turn(role: $0 % 2 == 0 ? "user" : "bot", text: String(repeating: "t", count: 500)) }
+        let p = SiteAssistant.supportPayload(
+            SiteAssistant.SupportForm(message: String(repeating: "m", count: 2000), name: " Lan ", phone: "0912345678"),
+            page: "hacker", tab: "shop", label: "Vợt A", turns: turns)
+        #expect(p.message.count == 1000)
+        #expect(p.name == "Lan")
+        #expect(p.page_type == "general")
+        #expect(p.route == "ios:shop")
+        #expect(p.transcript.count == 6)
+        #expect(p.transcript.allSatisfy { $0.text.count == 300 })
+        let json = String(decoding: try JSONEncoder().encode(p), as: UTF8.self)
+        #expect(!json.contains("user_id"))
+    }
+
+    @Test func prefillUsesRecentUserTurnsOnly() {
+        let turns = [SiteAssistant.Turn(role: "user", text: "a"), .init(role: "bot", text: "b"), .init(role: "user", text: "c")]
+        #expect(SiteAssistant.prefill(turns) == "a\nc")
+    }
 }

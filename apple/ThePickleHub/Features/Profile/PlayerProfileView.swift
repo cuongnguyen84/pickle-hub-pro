@@ -75,6 +75,7 @@ struct PlayerProfileView: View {
             .padding(20)
         }
         .background(TLColor.bg)
+        .assistantContext({ if case .loaded(let p, let st) = model.phase { return SiteAssistant.context(profile: p, stats: st) }; return nil }())
         .navigationTitle("@\(username)")
         .navigationBarTitleDisplayMode(.inline)
         .task(id: username) { await model.load(username: username) }
