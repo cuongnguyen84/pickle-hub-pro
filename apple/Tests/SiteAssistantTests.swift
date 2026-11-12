@@ -22,6 +22,32 @@ struct SiteAssistantTests {
         #expect(SiteAssistant.page(for: .shop) == "shop")
     }
 
+    @Test func deepLinkMapsToKnownPageType() {
+        let links: [DeepLink] = [
+            .venue(slug: "s"), .blogPost(slug: "b", isVietnamese: true), .newsArticle(slug: "n", language: "en"),
+            .livestream(id: UUID()), .proTourEvent(slug: "p"), .socialEvent(slug: "e"), .registration(token: "t"),
+            .shopHome, .shopProduct(slug: "x"), .shopOrder(code: "o"), .toolsHub, .quickTable(shareID: "q"),
+            .joinInvite(code: "c"), .tournamentDashboard(type: "quick-table", id: "1"),
+        ]
+        for link in links { #expect(SiteAssistant.pageTypes.contains(SiteAssistant.page(for: link)), "\(link)") }
+        #expect(SiteAssistant.page(for: .venue(slug: "s")) == "venues")
+        #expect(SiteAssistant.page(for: .newsArticle(slug: "n", language: "vi")) == "blog_news")
+        #expect(SiteAssistant.page(for: .blogPost(slug: "b", isVietnamese: false)) == "blog_news")
+        #expect(SiteAssistant.page(for: .shopProduct(slug: "x")) == "shop")
+        #expect(SiteAssistant.page(for: .proTourEvent(slug: "p")) == "live_video")
+        #expect(SiteAssistant.page(for: .socialEvent(slug: "e")) == "community")
+        #expect(SiteAssistant.page(for: .teamMatch(shareID: "t")) == "tools")
+    }
+
+    /// Tab "Thêm" (More) có key riêng — key "Thêm" vẫn là "Add" cho các nút thêm.
+    /// VI lấy từ defaultValue trong code (bundle chỉ có en.lproj).
+    @Test func tabLabelsAreLocalized() throws {
+        let en = try #require(Bundle.main.path(forResource: "en", ofType: "lproj").flatMap(Bundle.init(path:)))
+        let expected = ["Trang chủ": "Home", "Trực tiếp": "Live", "tab.shop": "Shop", "Bảng tin": "Feed",
+                        "Social": "Social", "Công cụ": "Tools", "tab.more": "More", "Thêm": "Add"]
+        for (key, value) in expected { #expect(en.localizedString(forKey: key, value: nil, table: nil) == value, "\(key)") }
+    }
+
     @Test func linksOpenNativeScreensWhenTheyExist() {
         #expect(SiteAssistant.destination(for: "/rankings", shopEnabled: true, lang: "vi") == .home(.rankings))
         #expect(SiteAssistant.destination(for: "/vi/tournaments", shopEnabled: true, lang: "vi") == .home(.tournaments))

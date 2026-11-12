@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { safeLink, SITE_LINKS } from "../shared.ts";
 import {
   buildPayload, clipHistory, fallback, identityHash, limitsFrom, MAX_CTX_CHARS, MAX_TEXT, MAX_TURNS, parseModel, quotaOutcome, readPageCtx,
-  replyLang, textLang,
+  replyLang, systemPrompt, textLang,
 } from "../rules.ts";
 
 describe("safeLink", () => {
@@ -180,5 +180,12 @@ describe("contact intent", () => {
     const p = JSON.parse(buildPayload([{ role: "user", text: "cho mình gặp admin" }], readPageCtx({}), "vi"));
     expect(p.generationConfig.responseSchema.properties.intent.enum).toContain("contact");
     expect(p.systemInstruction.parts[0].text).toContain('intent "contact"');
+  });
+  it("prompt reserves contact for explicit requests, not missing info (bug 12/11)", () => {
+    const sys = systemPrompt("vi");
+    expect(sys).toContain('intent "contact" (app tự mở form gửi admin) CHỈ khi');
+    expect(sys).toMatch(/Chỉ là thiếu thông tin[^\n]*intent "answer"[^\n]*KHÔNG dùng intent "contact"/);
+    expect(sys).not.toContain('đề nghị gửi cho admin (intent "contact")');
+    expect(sys).not.toMatch(/không giải quyết được vấn đề của họ → intent "contact"/);
   });
 });
