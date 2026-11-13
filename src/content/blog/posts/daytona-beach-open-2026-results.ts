@@ -31,7 +31,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA Daytona Beach results: Daytona Beach Open 2026 daily scores",
-          "content": "Last updated: November 13, 2026, 16:00 Vietnam time. ThePickleHub publishes this Daytona Beach Open 2026 results page from the official PPA scores feed for November 16–22, 2026 at Pictona at Holly Hill, Holly Hill, Florida. The feed currently contains 63 matches, including 0 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 13, 2026, 18:00 Vietnam time. ThePickleHub publishes this Daytona Beach Open 2026 results page from the official PPA scores feed for November 16–22, 2026 at Pictona at Holly Hill, Holly Hill, Florida. The feed currently contains 47 matches, including 0 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -48,11 +48,6 @@ const post: BlogPost = {
               "division": "Men's Doubles",
               "note": "Scheduled · 8 matches",
               "anchor": "rb-mens-doubles"
-            },
-            {
-              "division": "Mixed Doubles",
-              "note": "Scheduled · 16 matches",
-              "anchor": "rb-mixed-doubles"
             },
             {
               "division": "Women's Singles",
@@ -184,101 +179,6 @@ const post: BlogPost = {
                   {
                     "teamA": "John Lucian Goins / Brandon French",
                     "teamB": "Freddie Powell / Adam Harvey",
-                    "sets": []
-                  }
-                ],
-                "collapsed": true
-              }
-            ]
-          }
-        },
-        {
-          "heading": "Mixed Doubles schedule",
-          "content": "16 matches scheduled, earliest round first.",
-          "resultsBoard": {
-            "division": "Mixed Doubles",
-            "rounds": [
-              {
-                "label": "Round 64",
-                "matches": [
-                  {
-                    "teamA": "John Lucian Goins / Alix Truong",
-                    "teamB": "Braden Jacobson / Kelly Goodnow",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mohaned Alhouni / Ella Yeh",
-                    "teamB": "Mya Bui / Luca Mack",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Will Howells / Isabella Dunlap",
-                    "teamB": "Jade Rau / Yates Johnson",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Carlota Trevino / Christopher Haworth",
-                    "teamB": "Jace Morris / Lindsey Newman",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Brooke Buckner / Camden Chaffin",
-                    "teamB": "Brooke Caruso / Adam Harvey",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Clayton Powell / Alex Walker",
-                    "teamB": "Jaeda Minniefield / George Wall",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Liz Truluck / Michael Loyd",
-                    "teamB": "Naomi Nguyen / James Delgado",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Roscoe Bellamy / Alexa Schull",
-                    "teamB": "Paula Rives / Darrian Young",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Max Freeman / Giovanna Morelli",
-                    "teamB": "Jalina Ingram / Mota Alhouni",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mari Humberg / Elliott Schupp",
-                    "teamB": "Mehvish Safdar / Nicholas Wade",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Elsie Hendershot / Hunter Johnson",
-                    "teamB": "Kenta Miyoshi / Genie Bouchard",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Zoey Weil / Wyatt Stone",
-                    "teamB": "Ryan Torresin / Angie Walker",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Cason Campbell / Cailyn Campbell",
-                    "teamB": "Lauren Stratman / Julian Arnold",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Pablo Tellez / Estee Widdershoven",
-                    "teamB": "Rafa Hewett / Nicole Conard",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Anouar Braham / Milan Rane",
-                    "teamB": "Ava Cavataio / Collin Johns",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Christa Gecheva / Rafael Lenhard",
-                    "teamB": "Andrea Koop / Brandon French",
                     "sets": []
                   }
                 ],
@@ -493,7 +393,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Daytona Beach Open 2026",
-          "content": "Cập nhật: 16:00 ngày 13/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Daytona Beach Open 2026 từ feed điểm số chính thức của PPA cho thời gian 16–22/11/2026 tại Pictona at Holly Hill, Holly Hill, Florida. Feed hiện có 63 trận, gồm 0 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 18:00 ngày 13/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Daytona Beach Open 2026 từ feed điểm số chính thức của PPA cho thời gian 16–22/11/2026 tại Pictona at Holly Hill, Holly Hill, Florida. Feed hiện có 47 trận, gồm 0 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -510,11 +410,6 @@ const post: BlogPost = {
               "division": "Đôi nam",
               "note": "Đã lên lịch · 8 trận",
               "anchor": "rb-doi-nam"
-            },
-            {
-              "division": "Đôi nam nữ",
-              "note": "Đã lên lịch · 16 trận",
-              "anchor": "rb-doi-nam-nu"
             },
             {
               "division": "Đơn nữ",
@@ -646,101 +541,6 @@ const post: BlogPost = {
                   {
                     "teamA": "John Lucian Goins / Brandon French",
                     "teamB": "Freddie Powell / Adam Harvey",
-                    "sets": []
-                  }
-                ],
-                "collapsed": true
-              }
-            ]
-          }
-        },
-        {
-          "heading": "Lịch thi đấu Đôi nam nữ",
-          "content": "16 trận đã lên lịch, vòng sớm nhất ở trên.",
-          "resultsBoard": {
-            "division": "Đôi nam nữ",
-            "rounds": [
-              {
-                "label": "Vòng 64",
-                "matches": [
-                  {
-                    "teamA": "John Lucian Goins / Alix Truong",
-                    "teamB": "Braden Jacobson / Kelly Goodnow",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mohaned Alhouni / Ella Yeh",
-                    "teamB": "Mya Bui / Luca Mack",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Will Howells / Isabella Dunlap",
-                    "teamB": "Jade Rau / Yates Johnson",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Carlota Trevino / Christopher Haworth",
-                    "teamB": "Jace Morris / Lindsey Newman",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Brooke Buckner / Camden Chaffin",
-                    "teamB": "Brooke Caruso / Adam Harvey",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Clayton Powell / Alex Walker",
-                    "teamB": "Jaeda Minniefield / George Wall",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Liz Truluck / Michael Loyd",
-                    "teamB": "Naomi Nguyen / James Delgado",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Roscoe Bellamy / Alexa Schull",
-                    "teamB": "Paula Rives / Darrian Young",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Max Freeman / Giovanna Morelli",
-                    "teamB": "Jalina Ingram / Mota Alhouni",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Mari Humberg / Elliott Schupp",
-                    "teamB": "Mehvish Safdar / Nicholas Wade",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Elsie Hendershot / Hunter Johnson",
-                    "teamB": "Kenta Miyoshi / Genie Bouchard",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Zoey Weil / Wyatt Stone",
-                    "teamB": "Ryan Torresin / Angie Walker",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Cason Campbell / Cailyn Campbell",
-                    "teamB": "Lauren Stratman / Julian Arnold",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Pablo Tellez / Estee Widdershoven",
-                    "teamB": "Rafa Hewett / Nicole Conard",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Anouar Braham / Milan Rane",
-                    "teamB": "Ava Cavataio / Collin Johns",
-                    "sets": []
-                  },
-                  {
-                    "teamA": "Christa Gecheva / Rafael Lenhard",
-                    "teamB": "Andrea Koop / Brandon French",
                     "sets": []
                   }
                 ],
