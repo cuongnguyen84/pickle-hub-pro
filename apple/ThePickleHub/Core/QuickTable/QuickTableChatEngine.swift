@@ -42,6 +42,14 @@ struct QTChatDraft: Equatable, Sendable {
     var optionsDone: Bool?
     var courtsDone: Bool?
     var timeDone: Bool?
+    /// "players" khi câu đếm người/VĐV; "teams" khi đếm đội/cặp.
+    var countUnit: String? = nil
+    /// Giải đôi: N người/VĐV chưa chốt là người hay đội.
+    var headcountPending: Int? = nil
+    /// Tên đọc từ ảnh hoặc còn chữ dẫn thừa — hỏi lại trước khi lưu.
+    var nameNeedsConfirm: Bool? = nil
+    /// Tên lấy từ ảnh hoặc PDF.
+    var nameFromImage: Bool? = nil
 }
 
 /// Bản vá đã gõ kiểu (từ mô hình hoặc từ readUserFacts). Mọi trường đều tuỳ
@@ -66,6 +74,12 @@ struct QTChatPatch: Sendable {
     var seriesModeByRank = false
     var advancePerGroup: Int?
     var clearAdvancePerGroup = false
+    var countUnit: String?
+    var headcountPending: Int?
+    var nameNeedsConfirm: Bool?
+    /// name_needs_confirm: false khi không kèm tên mới.
+    var clearNameConfirm = false
+    var nameFromImage: Bool?
 }
 
 enum QTChatSlot: String {
@@ -291,8 +305,18 @@ enum QTChatEngine {
         return out
     }
 
+    /// Giải đôi mà người dùng đếm người/VĐV — N chưa phải số đội (ca 14/11/2026).
+    static func pendingDoublesHeadcount(_ d: QTChatDraft) -> Int? {
+        if d.isDoubles != true { return nil }
+        if let entries = d.entries, !entries.isEmpty { return nil }
+        if let h = d.headcountPending, h >= 2 { return h }
+        if d.countUnit == "players", let n = d.playerCount, n >= 2 && n <= 500 { return n }
+        return nil
+    }
+
     static func nextSlot(_ d: QTChatDraft) -> QTChatSlot {
         if d.isDoubles == nil { return .format }
+        if pendingDoublesHeadcount(d) != nil { return .count }
         if (d.entries?.isEmpty ?? true) && d.playerCount == nil { return .count }
         if entryCount(d) > maxChatEntries { return .tooMany }
         if entryCount(d) < 2 { return .count }
@@ -305,7 +329,8 @@ enum QTChatEngine {
             if d.rosterMode == nil { return .roster }
             if d.rosterMode == "now" { return .paste }
         }
-        if (d.name ?? "").trimmingCharacters(in: .whitespaces).isEmpty { return .name }
+        let trimmedName = (d.name ?? "").trimmingCharacters(in: .whitespaces)
+        if trimmedName.isEmpty || d.nameNeedsConfirm == true { return .name }
         if d.courtsDone != true && (d.courts?.isEmpty ?? true) { return .courts }
         if !(d.courts?.isEmpty ?? true) && d.timeDone != true && d.startTime == nil { return .startTime }
         if !(d.entries?.isEmpty ?? true) && d.optionsDone != true { return .options }
@@ -371,12 +396,17 @@ enum QTChatEngine {
         if singles && !doubles { out.isDoubles = false }
         else if doubles { out.isDoubles = true }
 
-        let advancePhrase = "(?:top|lay|chon)\\s*(\\d{1,2})\\s*(?:nguoi|doi|vdv)?\\s*(?:moi|per)\\s*(?:bang|group)\\b"
-        if let count = firstGroups("\\b(\\d{1,3})\\s*(doi|vdv|nguoi|cap|pairs|players|teams)\\b", in: folded),
+        let advancePhrase = "(?:top|lay|chon)\\s*(\\d{1,2})\\s*(?:van dong vien|nguoi choi|nguoi|doi|vdv|players|people|teams)?\\s*(?:moi|per)\\s*(?:bang|group)\\b"
+        if let count = firstGroups("\\b(\\d{1,3})\\s*(van dong vien|nguoi choi|vdv|nguoi|players|people|athletes|doi|cap|pairs|teams)\\b", in: folded),
            let nStr = count[1], let n = Int(nStr) {
+            let unit = count[2] ?? ""
             let advHit = firstGroups(advancePhrase, in: folded)
             let insideAdvance = advHit != nil && (advHit?[0]?.contains(count[0] ?? "") ?? false)
-            if !insideAdvance && n >= 2 && n <= 500 { out.playerCount = n }
+            if !insideAdvance && n >= 2 && n <= 500 {
+                out.playerCount = n
+                let playerUnits = ["van dong vien", "nguoi choi", "vdv", "nguoi", "players", "people", "athletes"]
+                out.countUnit = playerUnits.contains(unit) ? "players" : "teams"
+            }
         }
 
         let grid = firstGroups("\\b(\\d{1,2})\\s*[x×]\\s*(\\d{1,2})\\b", in: folded)
@@ -388,12 +418,14 @@ enum QTChatEngine {
             out.groupCount = g
         }
         // "3 bảng, mỗi bảng 6 người" = 18 người, không phải 6 người chia 3 bảng.
-        if let each = firstGroups("\\b(\\d{1,2})\\s*(?:nguoi|doi|vdv)\\s*(?:moi|per)\\s*bang\\b", in: folded),
+        if let each = firstGroups("\\b(\\d{1,2})\\s*(?:van dong vien|nguoi|doi|vdv)\\s*(?:moi|per)\\s*bang\\b", in: folded),
            let grouped = firstGroups("\\b(\\d{1,2})\\s*bang\\b", in: folded),
            let size = each[1].flatMap(Int.init), let g = grouped[1].flatMap(Int.init),
            size >= minGroup && size <= maxGroup && g >= 1 && g <= maxGroups {
             out.playerCount = size * g
             out.groupCount = g
+            // "3 bảng, mỗi bảng 6 người" là cỡ bảng đã nói rõ, không hỏi người-hay-đội.
+            out.countUnit = nil
         }
 
         // "lấy 4 đội vào trực tiếp", "top 2 vào bán kết", "take 4 into the knockout":
@@ -405,22 +437,26 @@ enum QTChatEngine {
         // Thể thức vòng tròn một bảng nói bằng lời cũng là 1 bảng.
         if wantsSingleGroupRoundRobin(text) { out.groupCount = 1 }
 
-        // Tên giải: "tên giải …" / "giải …" ở đầu câu.
+        // Tên giải: "tên giải …" / "giải …" ở đầu câu. "là" sau nhãn không thuộc tên.
         var rawName = ""
-        if let labeled = firstGroups("(?:tên giải|ten giai|tên là|ten la|gọi là|goi la|name is|named)\\s*[:：]?\\s*([^,\\n]+)", in: text, caseInsensitive: true) {
+        if let labeled = firstGroups("(?:tên giải|ten giai|tên là|ten la|gọi là|goi la|name is|named|called)\\s*(?:là|is)?\\s*[:：]?\\s*([^,\\n]+)", in: text, caseInsensitive: true) {
             rawName = labeled[1] ?? ""
         } else if let lead = firstGroups("^(?:giải|giai)\\s+([^,\\n]+)", in: text, caseInsensitive: true) {
             rawName = lead[1] ?? ""
         }
         if !rawName.isEmpty {
             // Cắt tại mốc số lượng/thể thức như web (split tại \d+ người/đôi…, đánh/chia/vòng).
-            if let cut = firstGroups("^(.+?)\\s+(?=\\d+\\s*(?:người|nguoi|đôi|doi|đơn|don|vđv|vdv|cặp|cap)\\b|đánh\\b|danh\\b|chia\\b|vòng\\b|vong\\b)", in: rawName, caseInsensitive: true) {
+            if let cut = firstGroups("^(.+?)\\s+(?=\\d+\\s*(?:người|nguoi|đôi|doi|đơn|don|vđv|vdv|vận động viên|van dong vien|cặp|cap)\\b|đánh\\b|danh\\b|chia\\b|vòng\\b|vong\\b)", in: rawName, caseInsensitive: true) {
                 rawName = cut[1] ?? rawName
             }
             rawName = rawName.replacingOccurrences(of: "\\s+(đôi|doi|đơn|don|doubles|singles|playoff)\\s*$", with: "", options: .regularExpression, range: nil)
             rawName = rawName.trimmingCharacters(in: CharacterSet(charactersIn: "\"“”"))
             rawName = rawName.replacingOccurrences(of: "[,.:;]+$", with: "", options: .regularExpression)
-            if rawName.count >= 2 && rawName.count <= 80 { out.name = rawName }
+            let cleaned = cleanTournamentName(rawName)
+            if cleaned.name.count >= 2 && cleaned.name.count <= 80 {
+                out.name = cleaned.name
+                if cleaned.lowConfidence { out.nameNeedsConfirm = true }
+            }
         }
 
         // Gán sân theo bảng: "bảng A sân 1" / "sân 1 cho bảng A" (ca thật 01:51
@@ -493,6 +529,137 @@ enum QTChatEngine {
         return out
     }
 
+    /// Bỏ chữ dẫn thừa OCR/vision ở đầu tên giải ("đấu là …", "là …"). Ca 14/11/2026.
+    static func cleanTournamentName(_ raw: String) -> (name: String, lowConfidence: Bool) {
+        var name = raw.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        name = name.replacingOccurrences(of: "^[\"“«]+|[\"”»]+$", with: "", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let patterns = [
+            "^(?:tên\\s+(?:giải\\s+)?)?là\\s+",
+            "^(?:giải\\s+)?đấu\\s+là\\s+",
+            "^(?:ten\\s+(?:giai\\s+)?)?la\\s+",
+            "^(?:giai\\s+)?dau\\s+la\\s+",
+            "^(?:tournament\\s+name\\s+is|name\\s+is|called|named)\\s+",
+        ]
+        var low = false
+        for _ in 0..<4 {
+            var next = name
+            for pattern in patterns {
+                next = next.replacingOccurrences(of: pattern, with: "", options: [.regularExpression, .caseInsensitive])
+            }
+            next = next.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if next.count < 2 || next == name { break }
+            low = true
+            name = next
+        }
+        name = name.replacingOccurrences(of: "[,.:;]+$", with: "", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if name.count < 2 { return ("", false) }
+        if name.count > 80 { name = String(name.prefix(80)) }
+        return (name, low)
+    }
+
+    static func clarifyDoublesCount(_ d: QTChatDraft) -> QTChatDraft {
+        var out = d
+        if d.isDoubles == false, let pending = d.headcountPending, d.playerCount == nil {
+            out.playerCount = pending
+            out.headcountPending = nil
+            return out
+        }
+        if let entries = d.entries, !entries.isEmpty {
+            if d.headcountPending != nil { out.headcountPending = nil }
+            return out
+        }
+        if d.isDoubles == true, d.countUnit == "players", d.headcountPending == nil,
+           let n = d.playerCount, n >= 2 && n <= 500 {
+            out.headcountPending = n
+            out.playerCount = nil
+            return out
+        }
+        if d.isDoubles == true, d.headcountPending != nil, d.playerCount != nil, d.countUnit != "teams" {
+            out.playerCount = nil
+            return out
+        }
+        return out
+    }
+
+    static func headcountAsk(_ n: Int, lang: String) -> String {
+        let teams = n / 2
+        let odd = n % 2 == 1
+        let vi = lang == "vi"
+        if !odd && teams < 2 {
+            return vi
+                ? "\(n) là số vận động viên hay số đội? \(n) người đánh đôi chỉ thành \(teams) đội — cần ít nhất 2 đội. Thêm người, hoặc nếu \(n) là số đội thì chọn “\(n) đội”."
+                : "Is \(n) players or teams? \(n) players in doubles is only \(teams) team — at least 2 teams are needed. Add players, or pick “\(n) teams” if you meant teams."
+        }
+        if odd {
+            let pair = teams >= 2
+                ? (vi
+                    ? "\(teams) đội nếu bỏ 1 người, hoặc thêm 1 người thành \(teams + 1) đội. "
+                    : "\(teams) teams if you drop 1 player, or add 1 player to make \(teams + 1) teams. ")
+                : (vi ? "Thêm người cho đủ ít nhất 2 đội. " : "Add a player so there are at least 2 teams. ")
+            return vi
+                ? "\(n) là số vận động viên hay số đội? \(n) người là số lẻ nên không chia hết thành đội đôi (thừa 1). \(pair)Nếu \(n) là số đội thì chọn “\(n) đội”. Dán danh sách cặp (mỗi dòng “Nam - Hùng”) để khỏi tạo giải trống rồi làm lại."
+                : "Is \(n) players or teams? \(n) players is odd, so it isn't a whole set of doubles teams (1 left over). \(pair)If you meant \(n) teams, pick “\(n) teams”. Paste the pairs (one “Nam - Hung” per line) so we don't create an empty tournament and start over."
+        }
+        return vi
+            ? "\(n) là số vận động viên hay số đội? \(n) người đánh đôi = \(teams) đội. Dán danh sách cặp (mỗi dòng “Nam - Hùng”) để khỏi tạo giải trống rồi làm lại."
+            : "Is \(n) players or teams? \(n) players in doubles is \(teams) teams. Paste the pairs (one “Nam - Hung” per line) so we don't create an empty tournament and start over."
+    }
+
+    static func headcountChoices(_ n: Int, lang: String) -> [(label: String, teams: Int, fromPlayers: Bool)] {
+        let teams = n / 2
+        let odd = n % 2 == 1
+        let vi = lang == "vi"
+        var out: [(label: String, teams: Int, fromPlayers: Bool)] = []
+        if teams >= 2 {
+            let label = vi
+                ? (odd ? "\(teams) đội (bỏ 1 người)" : "\(teams) đội (\(n) người)")
+                : (odd ? "\(teams) teams (drop 1 player)" : "\(teams) teams (\(n) players)")
+            out.append((label, teams, true))
+        }
+        out.append((vi ? "\(n) đội" : "\(n) teams", n, false))
+        return out
+    }
+
+    static func headcountResolvedNote(teams: Int, people: Int, lang: String) -> String {
+        lang == "vi"
+            ? "Tính \(teams) đội từ \(people) người. Có danh sách thì dán từng cặp “Nam - Hùng” — khỏi tạo giải trống rồi làm lại."
+            : "Using \(teams) teams from \(people) players. Paste each pair as “Nam - Hung” if you have the list — so we don't create an empty tournament and start over."
+    }
+
+    static func nameConfirmAsk(_ name: String, fromImage: Bool, lang: String) -> String {
+        if lang == "en" {
+            return fromImage
+                ? "I read “\(name)” as the tournament name from the image. Is that right? If not, type the correct name."
+                : "I'm not sure about the name “\(name)”. Is that the tournament? If not, type the correct name."
+        }
+        return fromImage
+            ? "Mình đọc được tên giải “\(name)” từ ảnh. Đúng không? Sai thì gõ tên đúng."
+            : "Mình chưa chắc tên giải: “\(name)”. Đúng không? Sai thì gõ tên đúng."
+    }
+
+    static func affirmsDraftName(_ text: String) -> Bool {
+        test("^(dung|ok|yes|yeah|yep|uh|chuan|dung roi|right|correct|chinh xac|dung ten do|dung vay)$", in: fold(text))
+    }
+
+    /// Câu ở bước tên. nil khi câu còn số liệu khác — để luồng cũ xử lý.
+    static func nameAnswer(_ text: String) -> (name: String, needsConfirm: Bool)? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.count < 2 || affirmsDraftName(trimmed) { return nil }
+        if messageNeedsModel(trimmed) || looksLikeNameList(trimmed) { return nil }
+        let facts = readUserFacts(trimmed)
+        if facts.playerCount != nil || facts.groupCount != nil || facts.courts != nil || facts.headcountPending != nil || facts.isDoubles != nil {
+            return nil
+        }
+        if let named = facts.name { return (named, facts.nameNeedsConfirm == true) }
+        let cleaned = cleanTournamentName(trimmed)
+        if cleaned.name.count < 2 || cleaned.name.count > 80 { return nil }
+        return (cleaned.name, cleaned.lowConfidence)
+    }
+
     /// Áp bản vá vào nháp. Không tin mô hình: mọi trường đều kiểm kiểu/khoảng.
     static func applyPatch(_ d: QTChatDraft, _ p: QTChatPatch) -> QTChatDraft {
         var next = d
@@ -508,10 +675,33 @@ enum QTChatEngine {
         }
         if let c = p.playerCount, c >= 1 && c <= 500 { next.playerCount = c }
         else if let entries, !entries.isEmpty { next.playerCount = entries.count }
+        if p.countUnit == "players" || p.countUnit == "teams" {
+            next.countUnit = p.countUnit
+            if p.countUnit == "teams" { next.headcountPending = nil }
+        }
+        if let pending = p.headcountPending, pending >= 2 && pending <= 500 { next.headcountPending = pending }
         let askedGroups = p.groupCount.map { $0 >= 1 && $0 <= maxGroups } ?? false
         if let g = p.groupCount, askedGroups { next.groupCount = g }
-        let name = clean(p.name, limit: 100)
-        if !name.isEmpty { next.name = name }
+        if let rawName = p.name {
+            let named = cleanTournamentName(rawName)
+            if !named.name.isEmpty {
+                next.name = named.name
+                let fromImage = p.nameFromImage == true
+                let low = named.lowConfidence || fromImage || p.nameNeedsConfirm == true
+                let accept = p.clearNameConfirm && !fromImage && !named.lowConfidence && p.nameNeedsConfirm != true
+                if accept || !low {
+                    next.nameNeedsConfirm = nil
+                    next.nameFromImage = nil
+                } else {
+                    next.nameNeedsConfirm = true
+                    next.nameFromImage = fromImage ? true : nil
+                }
+            }
+        }
+        if p.name == nil && p.clearNameConfirm {
+            next.nameNeedsConfirm = nil
+            next.nameFromImage = nil
+        }
         if p.rosterMode == "later" || p.rosterMode == "registration" {
             if next.entries?.isEmpty ?? true { next.rosterMode = p.rosterMode }
         }
@@ -561,7 +751,7 @@ enum QTChatEngine {
         }
         if p.clearAdvancePerGroup { next.advancePerGroup = nil }
         else if let adv = p.advancePerGroup, adv >= 1 && adv <= 8 { next.advancePerGroup = adv }
-        return lockAdvance(next)
+        return clarifyDoublesCount(lockAdvance(next))
     }
 
     private static func isNameCell(_ s: String) -> Bool {
@@ -627,6 +817,8 @@ enum QTChatEngine {
             && facts.defaultSets == nil && facts.series == nil && facts.seriesSizes == nil
             && facts.seriesStyle == nil && !facts.seriesModeByRank && facts.advancePerGroup == nil
             && !facts.clearAdvancePerGroup && !facts.clearPlayerCount
+            && facts.countUnit == nil && facts.headcountPending == nil && facts.nameNeedsConfirm == nil
+            && !facts.clearNameConfirm && facts.nameFromImage == nil
         if !factsEmpty {
             next = applyPatch(next, facts)
             touched = true
@@ -680,7 +872,7 @@ enum QTChatEngine {
             }
         }
         guard touched else { return nil }
-        return lockAdvance(next)
+        return clarifyDoublesCount(lockAdvance(next))
     }
 
     /// Danh sách mô hình bịa (không có trong câu, không phải lệnh sửa) thì bỏ.
@@ -834,8 +1026,11 @@ enum QTChatEngine {
             let more = added.count > 6 ? (vi ? " và \(added.count - 6) nữa" : " and \(added.count - 6) more") : ""
             bits.append(vi ? "Đã nhận \(added.count) \(u): \(shown)\(more)."
                            : "Got \(added.count) \(u): \(shown)\(more).")
-        } else if next.isEmpty, let pc = after.playerCount, pc != before.playerCount {
+        } else if next.isEmpty, let pc = after.playerCount, pc != before.playerCount, pendingDoublesHeadcount(after) == nil {
             bits.append("\(pc) \(u).")
+        }
+        if let asked = pendingDoublesHeadcount(after), asked != pendingDoublesHeadcount(before) {
+            bits.append(headcountAsk(asked, lang: lang))
         }
         if !prev.isEmpty && next.count == prev.count {
             var moved: [String] = []
@@ -889,6 +1084,7 @@ enum QTChatEngine {
 
     static func replyFromDraft(before: QTChatDraft, after: QTChatDraft, llmReply: String, lang: String, request: String = "") -> String {
         let fact = factualAck(before: before, after: after, lang: lang, request: request)
+        if pendingDoublesHeadcount(after) != nil { return fact }
         let unchanged = fact == (lang == "vi" ? unchangedVI : unchangedEN)
         let cleaned = replyFromDraftTrim(stripClaims(llmReply))
         if unchanged { return cleaned.isEmpty ? fact : cleaned }
