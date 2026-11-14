@@ -620,7 +620,8 @@ enum QTChatEngine {
                 : (odd ? "\(teams) teams (drop 1 player)" : "\(teams) teams (\(n) players)")
             out.append((label, teams, true))
         }
-        out.append((vi ? "\(n) đội" : "\(n) teams", n, false))
+        // "\(n) đội" đã có ở CreateTeamMatchView — chip này phải nói rõ là số đội.
+        out.append((vi ? "\(n) đội (số đội)" : "\(n) teams", n, false))
         return out
     }
 
