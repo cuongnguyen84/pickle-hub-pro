@@ -24,6 +24,14 @@ export interface Draft {
   player_count?: number;
   group_count?: number;
   name?: string;
+  /** "players" khi câu đếm người/VĐV; "teams" khi đếm đội/cặp. */
+  count_unit?: "players" | "teams";
+  /** Giải đôi: N người/VĐV chưa chốt là người hay đội — chưa ghi thành số đội. */
+  headcount_pending?: number;
+  /** Tên đọc từ ảnh hoặc còn chữ dẫn thừa — hỏi lại trước khi lưu. */
+  name_needs_confirm?: boolean;
+  /** Tên lấy từ ảnh hoặc PDF. */
+  name_from_image?: boolean;
   entries?: Entry[];
   roster_mode?: RosterMode;
   courts?: number[];
@@ -219,8 +227,20 @@ export function draftSeriesPlan(d: Draft): SeriesSlot[] | null {
   return k > 1 ? seriesPlan(groupSizes(d), k) : null;
 }
 
+/**
+ * Giải đôi mà người dùng đếm "N người / N VĐV / N vận động viên" — N chưa phải số đội.
+ * Ca 14/11/2026: "32 vận động viên" bị hiểu thành 32 đội, rồi tạo giải trống.
+ */
+export function pendingDoublesHeadcount(d: Draft): number | null {
+  if (d.is_doubles !== true || d.entries?.length) return null;
+  if (d.headcount_pending && d.headcount_pending >= 2) return d.headcount_pending;
+  if (d.count_unit === "players" && d.player_count && d.player_count >= 2 && d.player_count <= 500) return d.player_count;
+  return null;
+}
+
 export function nextSlot(d: Draft): Slot {
   if (d.is_doubles === undefined) return "format";
+  if (pendingDoublesHeadcount(d)) return "count";
   if (!d.entries?.length && !d.player_count) return "count";
   if (entryCount(d) > MAX_CHAT_ENTRIES) return "too_many";
   if (entryCount(d) < 2) return "count";
@@ -233,7 +253,7 @@ export function nextSlot(d: Draft): Slot {
     if (!d.roster_mode) return "roster";
     if (d.roster_mode === "now") return "paste";
   }
-  if (!d.name?.trim()) return "name";
+  if (!d.name?.trim() || d.name_needs_confirm) return "name";
   if (!d.courts_done && !d.courts?.length) return "courts";
   // giờ chỉ có nghĩa khi có sân (lịch tự xếp theo sân + giờ)
   if (d.courts?.length && !d.time_done && !d.start_time) return "start_time";
@@ -559,6 +579,156 @@ export function fallbackReply(intent: string, unmet: string | null, lang: "vi" |
   return vi ? "Mình chưa rõ ý — tiếp tục với bản nháp nhé." : "I didn't get that — continuing with the draft.";
 }
 
+// Chỉ chữ dẫn có nhãn. "la"/"called"/"named" trơn là từ đầu của tên thật
+// ("La Gi Open", "Called Shot Cup") — không gọt.
+const NAME_FILLER = [
+  /^(?:tên\s+(?:giải\s+)?)?là\s+/iu,
+  /^(?:giải\s+)?đấu\s+là\s+/iu,
+  /^ten\s+giai\s+la\s+/i,
+  /^giai\s+dau\s+la\s+/i,
+  /^(?:tournament\s+name\s+is|name\s+is)\s+/i,
+];
+
+/**
+ * Bỏ chữ dẫn thừa OCR/vision để lại ở đầu tên giải ("đấu là …", "là …",
+ * "Giải đấu là …"). Ca 14/11/2026: ảnh danh sách cặp ra tên
+ * "đấu là Vườn Phe Pickleball Mini game tháng 11".
+ */
+export function cleanTournamentName(raw: string): { name: string; lowConfidence: boolean } {
+  let name = raw.replace(/\s+/g, " ").trim().replace(/^["“«]+|["”»]+$/g, "").trim();
+  let low = false;
+  for (let i = 0; i < 4; i++) {
+    let next = name;
+    for (const re of NAME_FILLER) next = next.replace(re, "");
+    next = next.replace(/\s+/g, " ").trim();
+    if (next.length < 2 || next === name) break;
+    low = true;
+    name = next;
+  }
+  name = name.replace(/[,.:;]+$/g, "").trim();
+  if (name.length < 2) return { name: "", lowConfidence: false };
+  return { name: name.slice(0, 80), lowConfidence: low };
+}
+
+/** Giải đôi + số đếm theo người: chuyển thành câu hỏi, không ghi N đội. */
+export function clarifyDoublesCount(d: Draft): Draft {
+  if (d.is_doubles === false && d.headcount_pending && !d.player_count) {
+    return { ...d, player_count: d.headcount_pending, headcount_pending: undefined };
+  }
+  if (d.entries?.length) {
+    return d.headcount_pending ? { ...d, headcount_pending: undefined } : d;
+  }
+  if (d.is_doubles === true && d.count_unit === "players" && !d.headcount_pending && d.player_count && d.player_count >= 2 && d.player_count <= 500) {
+    return { ...d, headcount_pending: d.player_count, player_count: undefined };
+  }
+  if (d.is_doubles === true && d.headcount_pending && d.player_count && d.count_unit !== "teams") {
+    return { ...d, player_count: undefined };
+  }
+  return d;
+}
+
+/** Hỏi N là người hay đội, và nếu là người thì N/2 đội + mời dán cặp. Số lẻ: thừa 1. */
+export function headcountAsk(n: number, lang: "vi" | "en"): string {
+  const teams = Math.floor(n / 2);
+  const odd = n % 2 === 1;
+  const vi = lang === "vi";
+  if (!odd && teams < 2) {
+    return vi
+      ? `${n} là số vận động viên hay số đội? ${n} người đánh đôi chỉ thành ${teams} đội — cần ít nhất 2 đội. Thêm người, hoặc nếu ${n} là số đội thì chọn “${n} đội”.`
+      : `Is ${n} players or teams? ${n} players in doubles is only ${teams} team — at least 2 teams are needed. Add players, or pick “${n} teams” if you meant teams.`;
+  }
+  if (odd) {
+    const pair = teams >= 2
+      ? (vi
+        ? `${teams} đội nếu bỏ 1 người, hoặc thêm 1 người thành ${teams + 1} đội. `
+        : `${teams} teams if you drop 1 player, or add 1 player to make ${teams + 1} teams. `)
+      : (vi ? "Thêm người cho đủ ít nhất 2 đội. " : "Add a player so there are at least 2 teams. ");
+    return vi
+      ? `${n} là số vận động viên hay số đội? ${n} người là số lẻ nên không chia hết thành đội đôi (thừa 1). ${pair}Nếu ${n} là số đội thì chọn “${n} đội”. Dán danh sách cặp (mỗi dòng “Nam - Hùng”) để khỏi tạo giải trống rồi làm lại.`
+      : `Is ${n} players or teams? ${n} players is odd, so it isn't a whole set of doubles teams (1 left over). ${pair}If you meant ${n} teams, pick “${n} teams”. Paste the pairs (one “Nam - Hung” per line) so we don't create an empty tournament and start over.`;
+  }
+  return vi
+    ? `${n} là số vận động viên hay số đội? ${n} người đánh đôi = ${teams} đội. Dán danh sách cặp (mỗi dòng “Nam - Hùng”) để khỏi tạo giải trống rồi làm lại.`
+    : `Is ${n} players or teams? ${n} players in doubles is ${teams} teams. Paste the pairs (one “Nam - Hung” per line) so we don't create an empty tournament and start over.`;
+}
+
+export function headcountChoices(n: number, lang: "vi" | "en"): { label: string; teams: number; fromPlayers: boolean }[] {
+  const teams = Math.floor(n / 2);
+  const odd = n % 2 === 1;
+  const vi = lang === "vi";
+  const out: { label: string; teams: number; fromPlayers: boolean }[] = [];
+  if (teams >= 2) {
+    out.push({
+      teams,
+      fromPlayers: true,
+      label: vi
+        ? (odd ? `${teams} đội (bỏ 1 người)` : `${teams} đội (${n} người)`)
+        : (odd ? `${teams} teams (drop 1 player)` : `${teams} teams (${n} players)`),
+    });
+  }
+  out.push({ teams: n, fromPlayers: false, label: vi ? `${n} đội` : `${n} teams` });
+  return out;
+}
+
+export function headcountResolvedNote(teams: number, people: number, lang: "vi" | "en"): string {
+  return lang === "vi"
+    ? `Tính ${teams} đội từ ${people} người. Có danh sách thì dán từng cặp “Nam - Hùng” — khỏi tạo giải trống rồi làm lại.`
+    : `Using ${teams} teams from ${people} players. Paste each pair as “Nam - Hung” if you have the list — so we don't create an empty tournament and start over.`;
+}
+
+export function nameConfirmAsk(name: string, fromImage: boolean, lang: "vi" | "en"): string {
+  if (lang === "en") {
+    return fromImage
+      ? `I read “${name}” as the tournament name from the image. Is that right? If not, type the correct name.`
+      : `I'm not sure about the name “${name}”. Is that the tournament? If not, type the correct name.`;
+  }
+  return fromImage
+    ? `Mình đọc được tên giải “${name}” từ ảnh. Đúng không? Sai thì gõ tên đúng.`
+    : `Mình chưa chắc tên giải: “${name}”. Đúng không? Sai thì gõ tên đúng.`;
+}
+
+const AFFIRM_NAME = /^(?:okay|okey|dung roi|dung ten do|dung vay|chinh xac|dong y|yeah|yep|yes|vang|duoc|chuan|right|correct|dung|ok|uh|u)(?:\s*[,，].*)?$/;
+
+/** "đúng" / "ok" khi đang hỏi lại tên — không phải một tên giải mới. */
+export function affirmsDraftName(text: string): boolean {
+  return AFFIRM_NAME.test(fold(text));
+}
+
+/**
+ * Tên gõ lại khi đang hỏi xác nhận: giữ nguyên (chỉ cắt đầu/cuối), không gọt chữ dẫn.
+ * null khi là lời đồng ý, câu hỏi, hoặc danh sách.
+ */
+export function typedTournamentName(text: string): string | null {
+  const trimmed = text.trim();
+  if (trimmed.length < 2 || affirmsDraftName(trimmed)) return null;
+  if (messageNeedsModel(trimmed) || looksLikeNameList(trimmed)) return null;
+  return trimmed.slice(0, 80);
+}
+
+/** "16" khi đang hỏi người-hay-đội: đó là số đội. */
+export function bareTeamCount(text: string): number | null {
+  const m = fold(text).match(/^(\d{1,3})$/);
+  if (!m) return null;
+  const n = Number(m[1]);
+  return n >= 2 && n <= 500 ? n : null;
+}
+
+/**
+ * Câu trả lời ở bước tên: tên đã nói rõ, hoặc cả câu là tên.
+ * null khi câu còn số liệu khác / là câu hỏi / là danh sách — để luồng cũ xử lý.
+ */
+export function nameAnswer(text: string): { name: string; needsConfirm: boolean } | null {
+  const trimmed = text.trim();
+  if (trimmed.length < 2 || affirmsDraftName(trimmed)) return null;
+  if (messageNeedsModel(trimmed) || looksLikeNameList(trimmed)) return null;
+  const facts = readUserFacts(trimmed);
+  if (facts.player_count || facts.group_count || facts.courts || facts.headcount_pending || facts.is_doubles != null) return null;
+  if (facts.name) return { name: facts.name, needsConfirm: !!facts.name_needs_confirm };
+  const cleaned = cleanTournamentName(trimmed);
+  if (cleaned.name.length < 2 || cleaned.name.length > 80) return null;
+  return { name: cleaned.name, needsConfirm: cleaned.lowConfidence };
+}
+
 /**
  * Áp bản vá từ AI vào nháp. Không tin AI: mọi trường đều được kiểm kiểu/khoảng.
  * Khi AI gửi danh sách mà không kèm số lượng → số lượng theo danh sách
@@ -580,11 +750,43 @@ export function applyPatch(d: Draft, patch: unknown): Draft {
   const count = Number(p.player_count);
   if (Number.isInteger(count) && count >= 1 && count <= 500) next.player_count = count;
   else if (entries && entries.length) next.player_count = entries.length;
+  if (p.count_unit === "players" || p.count_unit === "teams") {
+    next.count_unit = p.count_unit;
+    if (p.count_unit === "teams") next.headcount_pending = undefined;
+  }
+  const pendingN = Number(p.headcount_pending);
+  if (Number.isInteger(pendingN) && pendingN >= 2 && pendingN <= 500) next.headcount_pending = pendingN;
   const groups = Number(p.group_count);
   const askedGroups = Number.isInteger(groups) && groups >= 1 && groups <= MAX_GROUPS;
   if (askedGroups) next.group_count = groups;
-  const name = clean(p.name);
-  if (name) next.name = name.slice(0, 100);
+  if (typeof p.name === "string" && p.name_verbatim === true) {
+    const typed = p.name.trim().slice(0, 80);
+    if (typed.length >= 2) {
+      next.name = typed;
+      delete next.name_needs_confirm;
+      delete next.name_from_image;
+    }
+  } else if (typeof p.name === "string") {
+    const named = cleanTournamentName(p.name);
+    if (named.name) {
+      next.name = named.name;
+      const fromImage = p.name_from_image === true;
+      const low = named.lowConfidence || fromImage || p.name_needs_confirm === true;
+      const accept = p.name_needs_confirm === false && !fromImage && !named.lowConfidence;
+      if (accept || !low) {
+        delete next.name_needs_confirm;
+        delete next.name_from_image;
+      } else {
+        next.name_needs_confirm = true;
+        if (fromImage) next.name_from_image = true;
+        else delete next.name_from_image;
+      }
+    }
+  }
+  if (typeof p.name !== "string" && p.name_needs_confirm === false) {
+    delete next.name_needs_confirm;
+    delete next.name_from_image;
+  }
   if (p.roster_mode === "later" || p.roster_mode === "registration") {
     if (!next.entries?.length) next.roster_mode = p.roster_mode;
   }
@@ -637,7 +839,7 @@ export function applyPatch(d: Draft, patch: unknown): Draft {
   const adv = Number(p.advance_per_group);
   if (p.advance_per_group === null) next.advance_per_group = undefined;
   else if (Number.isInteger(adv) && adv >= 1 && adv <= 8) next.advance_per_group = adv;
-  return lockAdvance(next);
+  return clarifyDoublesCount(lockAdvance(next));
 }
 
 export type PairingMode = "sequential" | "random" | "each_line";
@@ -1021,13 +1223,17 @@ export function readUserFacts(text: string): Partial<Draft> {
   if (singles && !doubles) out.is_doubles = false;
   else if (doubles) out.is_doubles = true;
 
-  const advancePhrase = /(?:top|lay|chon)\s*(\d{1,2})\s*(?:nguoi|doi|vdv)?\s*(?:moi|per)\s*(?:bang|group)\b/;
-  const count = folded.match(/\b(\d{1,3})\s*(doi|vdv|nguoi|cap|pairs|players|teams)\b/);
+  const advancePhrase = /(?:top|lay|chon)\s*(\d{1,2})\s*(?:van dong vien|nguoi choi|nguoi|doi|vdv|players|people|teams)?\s*(?:moi|per)\s*(?:bang|group)\b/;
+  const count = folded.match(/\b(\d{1,3})\s*(van dong vien|nguoi choi|vdv|nguoi|players|people|athletes|doi|cap|pairs|teams)\b/);
   if (count) {
     const n = Number(count[1]);
+    const unit = count[2];
     const advHit = folded.match(advancePhrase);
     const insideAdvance = !!advHit && advHit[0].includes(count[0]);
-    if (!insideAdvance && n >= 2 && n <= 500) out.player_count = n;
+    if (!insideAdvance && n >= 2 && n <= 500) {
+      out.player_count = n;
+      out.count_unit = /^(van dong vien|nguoi choi|vdv|nguoi|players|people|athletes)$/.test(unit) ? "players" : "teams";
+    }
   }
 
   const grid = folded.match(/\b(\d{1,2})\s*[x×]\s*(\d{1,2})\b/);
@@ -1039,7 +1245,7 @@ export function readUserFacts(text: string): Partial<Draft> {
     if (g >= 1 && g <= MAX_GROUPS) out.group_count = g;
   }
   // "3 bảng, mỗi bảng 6 người" = 18 người, không phải 6 người chia 3 bảng.
-  const each = folded.match(/\b(\d{1,2})\s*(?:nguoi|doi|vdv)\s*(?:moi|per)\s*bang\b/);
+  const each = folded.match(/\b(\d{1,2})\s*(?:van dong vien|nguoi|doi|vdv)\s*(?:moi|per)\s*bang\b/);
   const grouped = folded.match(/\b(\d{1,2})\s*bang\b/);
   if (each && grouped) {
     const size = Number(each[1]);
@@ -1047,6 +1253,8 @@ export function readUserFacts(text: string): Partial<Draft> {
     if (size >= MIN_GROUP && size <= MAX_GROUP && g >= 1 && g <= MAX_GROUPS) {
       out.player_count = size * g;
       out.group_count = g;
+      // "3 bảng, mỗi bảng 6 người" là cỡ bảng đã nói rõ, không phải câu hỏi người-hay-đội.
+      delete out.count_unit;
     }
   }
 
@@ -1061,15 +1269,20 @@ export function readUserFacts(text: string): Partial<Draft> {
     if (n >= 1 && n <= 8) out.advance_per_group = n;
   }
 
-  const labeled = text.match(/(?:tên giải|ten giai|tên là|ten la|gọi là|goi la|name is|named)\s*[:：]?\s*([^,\n]+)/i);
+  const labeled = text.match(/(?:tên giải|ten giai|tên là|ten la|gọi là|goi la|name is)\s*(?:là|is)?\s*[:：]?\s*([^,\n]+)/i);
   const lead = text.match(/^(?:giải|giai)\s+([^,\n]+)/i);
   const rawName = (labeled?.[1] ?? lead?.[1] ?? "")
-    .split(/\s+(?=\d+\s*(?:người|nguoi|đôi|doi|đơn|don|vđv|vdv|cặp|cap)\b)|\s+(?=đánh\b|danh\b|chia\b|vòng\b|vong\b)/i)[0]
+    .split(/\s+(?=\d+\s*(?:người|nguoi|đôi|doi|đơn|don|vđv|vdv|vận động viên|van dong vien|cặp|cap)\b)|\s+(?=đánh\b|danh\b|chia\b|vòng\b|vong\b)/i)[0]
     .replace(/\s+(đôi|doi|đơn|don|doubles|singles|playoff)\s*$/i, "")
     .replace(/^["“]|["”]$/g, "")
     .replace(/[,.:;]+$/g, "")
     .trim();
-  if (rawName.length >= 2 && rawName.length <= 80) out.name = rawName;
+  const cleanedName = cleanTournamentName(rawName);
+  if (cleanedName.name.length >= 2 && cleanedName.name.length <= 80) {
+    out.name = cleanedName.name;
+    // Chữ dẫn vừa bị gọt ("đấu là", "là", "la") — hỏi lại, kể cả khi câu có "tên giải".
+    if (cleanedName.lowConfidence) out.name_needs_confirm = true;
+  }
 
   // Gán sân theo bảng: "Group A plays in court 1, Group B plays in court 2"
   // / "bảng A sân 1, bảng B sân 2" / "sân 1 cho bảng A". Bắt TỪNG cặp —
@@ -1161,6 +1374,15 @@ export function messageNeedsModel(text: string): boolean {
  * Trả null khi câu không chứa lệnh hay số liệu.
  */
 export function applySpokenEdit(draft: Draft, text: string): Draft | null {
+  const teams = pendingDoublesHeadcount(draft) != null ? bareTeamCount(text) : null;
+  if (teams != null) {
+    return clarifyDoublesCount(lockAdvance({
+      ...draft,
+      player_count: teams,
+      count_unit: "teams",
+      headcount_pending: undefined,
+    }));
+  }
   const facts = readUserFacts(text);
   let next: Draft = { ...draft, ...(draft.entries ? { entries: draft.entries.map((e) => ({ ...e })) } : {}) };
   let touched = false;
@@ -1223,7 +1445,7 @@ export function applySpokenEdit(draft: Draft, text: string): Draft | null {
   }
   touched = touched || rosterTouched;
   if (!touched) return null;
-  return lockAdvance(next);
+  return clarifyDoublesCount(lockAdvance(next));
 }
 
 /** Danh sách mô hình bịa (không có trong câu, không phải lệnh sửa) thì bỏ. */
@@ -1362,9 +1584,11 @@ export function factualAck(before: Draft, after: Draft, lang: "vi" | "en", reque
     // Có thể thức chưa hỗ trợ thì không nói "đã nhận" như thể đã làm theo lộ trình đó.
     if (fmtNote) bits.push(vi ? `Giữ ${added.length} ${u} trong nháp: ${shown}${more}.` : `Kept ${added.length} ${u} in the draft: ${shown}${more}.`);
     else bits.push(vi ? `Đã nhận ${added.length} ${u}: ${shown}${more}.` : `Got ${added.length} ${u}: ${shown}${more}.`);
-  } else if (!next.length && after.player_count && after.player_count !== before.player_count) {
+  } else if (!next.length && after.player_count && after.player_count !== before.player_count && !pendingDoublesHeadcount(after)) {
     bits.push(`${after.player_count} ${u}.`);
   }
+  const askedPeople = pendingDoublesHeadcount(after);
+  if (askedPeople && askedPeople !== pendingDoublesHeadcount(before)) bits.push(headcountAsk(askedPeople, lang));
   if (prev.length && next.length === prev.length) {
     const moved: string[] = [];
     for (let i = 0; i < next.length; i++) {
@@ -1408,6 +1632,8 @@ const stripClaims = (reply: string) =>
 
 export function replyFromDraft(before: Draft, after: Draft, llmReply: string, lang: "vi" | "en", request = ""): string {
   const fact = factualAck(before, after, lang, request);
+  // Câu "đã nhận N người, mình sẽ hỏi cách ghép cặp" của model nuốt mất câu hỏi người-hay-đội.
+  if (pendingDoublesHeadcount(after)) return fact;
   const unchanged = fact === (lang === "vi" ? UNCHANGED_VI : UNCHANGED_EN);
   const cleaned = stripClaims(llmReply).replace(/^[.\s]+|[.\s]+$/g, "").trim();
   if (unchanged) return cleaned || fact;

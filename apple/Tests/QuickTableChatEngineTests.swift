@@ -334,4 +334,100 @@ struct QuickTableChatEngineTests {
                                request: "vào playoff loại trực tiếp")
         #expect(!ack.contains("chưa được hỗ trợ"))
     }
+
+    // MARK: tên từ ảnh + người hay đội (14/11/2026)
+
+    @Test func imageTitleDropsLeadingFillerAndMustBeConfirmed() {
+        let title = "Vườn Phe Pickleball Mini game tháng 11"
+        for raw in ["đấu là \(title)", "là \(title)", "Giải đấu là \(title)"] {
+            let cleaned = E.cleanTournamentName(raw)
+            #expect(cleaned.name == title)
+            #expect(cleaned.lowConfidence)
+        }
+        #expect(E.cleanTournamentName("ten giai la \(title)").name == title)
+        for kept in ["la \(title)", "La Gi Open", "LA Pickleball Open", "Called Shot Cup", "La Khê Cup"] {
+            let cleaned = E.cleanTournamentName(kept)
+            #expect(cleaned.name == kept)
+            #expect(!cleaned.lowConfidence)
+        }
+        #expect(E.typedTournamentName("  La Gi Open  ") == "La Gi Open")
+        #expect(E.typedTournamentName("Called Shot Cup") == "Called Shot Cup")
+        for yes in ["vâng", "được", "okay", "ừ", "đúng rồi", "đúng, dùng tên này"] {
+            #expect(E.affirmsDraftName(yes))
+            #expect(E.typedTournamentName(yes) == nil)
+        }
+        #expect(!E.affirmsDraftName("La Gi Open"))
+        let facts = E.readUserFacts("Giải đấu là \(title), 16 đội")
+        #expect(facts.name == title)
+        #expect(facts.nameNeedsConfirm == true)
+        var ready = QTChatDraft()
+        ready.isDoubles = true
+        ready.playerCount = 16
+        ready.groupCount = 4
+        ready.rosterMode = "later"
+        ready.series = 1
+        ready.courtsDone = true
+        var patch = QTChatPatch()
+        patch.name = "là \(title)"
+        patch.nameFromImage = true
+        let named = E.applyPatch(ready, patch)
+        #expect(named.name == title)
+        #expect(named.nameNeedsConfirm == true)
+        #expect(E.nextSlot(named) == .name)
+        ready = named
+        var accept = QTChatPatch()
+        accept.clearNameConfirm = true
+        let done = E.applyPatch(ready, accept)
+        #expect(done.name == title)
+        #expect(done.nameNeedsConfirm == nil)
+        #expect(E.nextSlot(done) == .confirm)
+    }
+
+    @Test func explicitNameIsNotReasked() {
+        let facts = E.readUserFacts("tên giải là Vườn Phe Pickleball Mini game tháng 11")
+        #expect(facts.name == "Vườn Phe Pickleball Mini game tháng 11")
+        #expect(facts.nameNeedsConfirm == nil)
+    }
+
+    @Test func doublesPlayerCountAsksPlayersOrTeams() {
+        for text in ["32 vận động viên", "32 người", "32 VĐV", "32 players"] {
+            var before = QTChatDraft()
+            before.isDoubles = true
+            let after = E.applySpokenEdit(before, text)
+            #expect(after?.playerCount == nil)
+            #expect(after?.headcountPending == 32)
+            #expect(after.map { E.nextSlot($0) } == .count)
+            let ask = E.headcountAsk(32, lang: "vi")
+            #expect(ask.contains("16 đội"))
+            #expect(ask.contains("Nam - Hùng"))
+            let reply = E.replyFromDraft(before: before, after: after ?? before, llmReply: "Đã nhận 32 người, mình sẽ hỏi cách ghép cặp.", lang: "vi", request: text)
+            #expect(reply.contains("16 đội"))
+            #expect(!reply.contains("ghép cặp"))
+        }
+        var teams = QTChatDraft()
+        teams.isDoubles = true
+        let asTeams = E.applySpokenEdit(teams, "32 đội")
+        #expect(asTeams?.playerCount == 32)
+        #expect(asTeams?.headcountPending == nil)
+        #expect(asTeams.map { E.nextSlot($0) } == .groups)
+        let pending = E.applySpokenEdit(teams, "32 vận động viên")
+        let counted = pending.flatMap { E.applySpokenEdit($0, "16") }
+        #expect(counted?.playerCount == 16)
+        #expect(counted?.headcountPending == nil)
+        #expect(counted?.countUnit == "teams")
+        #expect(counted.map { E.nextSlot($0) } == .groups)
+    }
+
+    @Test func oddPlayerCountLeavesOneOver() {
+        var before = QTChatDraft()
+        before.isDoubles = true
+        let after = E.applySpokenEdit(before, "31 vận động viên")
+        #expect(after?.headcountPending == 31)
+        let ask = E.headcountAsk(31, lang: "vi")
+        #expect(ask.contains("thừa 1"))
+        #expect(ask.contains("15 đội"))
+        #expect(!ask.contains("15.5"))
+        let choices = E.headcountChoices(31, lang: "vi")
+        #expect(choices.map { $0.teams } == [15, 31])
+    }
 }

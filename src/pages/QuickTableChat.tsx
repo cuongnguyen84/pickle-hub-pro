@@ -26,8 +26,8 @@ import { localePath } from "@/lib/locale-path";
 import { cn } from "@/lib/utils";
 import { seriesLine, seriesName, seriesPlan, slot as seriesSlot, type SeriesStyle } from "@/lib/quick-table-series";
 import {
-  applyPatch, applySpokenEdit, buildRoster, chatFacts, customSeries, defaultName, draftSeriesPlan, dropInventedRoster, duplicateIndexes, entryCount, entryLabel, factualAck, findGroupOption, googleSheetRef, groupChoices, groupSuggestion,
-  fallbackReply, groupCourtsLine, mergeTm, nextTmSlot, tmAnswer, tmDefaultName, tmKnockoutOk, tmPlayoffCount, wantsTeamMatch, divisionsAsked, divisionBase, divisionDraft, divisionLists, divisionNote, nextDivisionDraft, rankSeriesOffer, unmetWantsDivisions, teamLists, pairTeamLists, type TeamList, groupSizes, keepOrAssign, localSlotPatch, lockAdvance, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, messageNeedsModel, needsPairing, nextSlot, pairEntries, parseSheet, playoffSummary, previewAssignments, replyFromDraft, seriesCap, trustPatch,
+  affirmsDraftName, applyPatch, applySpokenEdit, buildRoster, chatFacts, clarifyDoublesCount, cleanTournamentName, customSeries, defaultName, draftSeriesPlan, dropInventedRoster, duplicateIndexes, entryCount, entryLabel, factualAck, findGroupOption, googleSheetRef, groupChoices, groupSuggestion, headcountAsk, headcountChoices, headcountResolvedNote,
+  fallbackReply, groupCourtsLine, mergeTm, nameAnswer, nameConfirmAsk, nextTmSlot, tmAnswer, tmDefaultName, tmKnockoutOk, tmPlayoffCount, typedTournamentName, wantsTeamMatch, divisionsAsked, divisionBase, divisionDraft, divisionLists, divisionNote, nextDivisionDraft, pendingDoublesHeadcount, rankSeriesOffer, unmetWantsDivisions, teamLists, pairTeamLists, type TeamList, groupSizes, keepOrAssign, localSlotPatch, lockAdvance, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, messageNeedsModel, needsPairing, nextSlot, pairEntries, parseSheet, playoffSummary, previewAssignments, replyFromDraft, seriesCap, trustPatch,
   type Draft, type Entry, type GroupOption, type PairingMode, type Slot, type TmDraft, type TmFormat,
 } from "@/lib/quick-table-chat";
 import { createTeamMatchTournament } from "@/hooks/useTeamMatch";
@@ -521,14 +521,17 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
 
   /** Áp nháp mới rồi hỏi câu tiếp theo (kèm câu xác nhận ngắn nếu có). */
   const advance = useCallback((next: Draft, ack?: string) => {
-    const locked = lockAdvance(next);
+    const locked = clarifyDoublesCount(lockAdvance(next));
     setDraft(locked);
     setSubMenu(null);
     const q = questionFor(c, locked, nextSlot(locked));
     const unchanged = !ack || ack === (lang === "vi" ? "Bản nháp chưa đổi." : "The draft did not change.");
     setMessages((m) => {
       const last = [...m].reverse().find((x) => x.role === "bot")?.text ?? "";
-      let text = [ack?.trim(), q].filter(Boolean).join(" ").replace(/\.\s+\./g, ".").replace(/[ \t]{2,}/g, " ");
+      const lead = ack?.trim() ?? "";
+      let text = (lead && q && lead.includes(q) ? lead : [lead, q].filter(Boolean).join(" "))
+        .replace(/\.\s+\./g, ".")
+        .replace(/[ \t]{2,}/g, " ");
       if (q && last.includes(q) && unchanged) text = c.rephrase;
       return [...m, { id: uid(), role: "bot", text }];
     });
@@ -681,6 +684,31 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           return;
         }
       }
+      if (slot === "name" && draft.name_needs_confirm) {
+        if (draft.name && affirmsDraftName(msg.text)) {
+          setInput("");
+          choose(msg.text, { name_needs_confirm: false, name_from_image: false });
+          return;
+        }
+        const typed = typedTournamentName(msg.text);
+        if (typed) {
+          setInput("");
+          pushUser(msg.text);
+          const next = applyPatch(draft, { name: typed, name_verbatim: true });
+          advance(next, factualAck(draft, next, lang, msg.text));
+          return;
+        }
+      }
+      if (slot === "name") {
+        const named = nameAnswer(msg.text);
+        if (named) {
+          setInput("");
+          pushUser(msg.text);
+          const next = applyPatch(draft, { name: named.name, name_needs_confirm: named.needsConfirm, name_from_image: false });
+          advance(next, factualAck(draft, next, lang, msg.text));
+          return;
+        }
+      }
     }
     if (msg.entries?.length) {
       if (!msg.echoed) {
@@ -709,12 +737,13 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     // Mỗi ảnh một lượt. Gửi chung hai ảnh, kèm nháp 32 đội và câu "chia thế nào?",
     // mô hình trả entries rỗng dù ảnh có tên — rồi trang vẫn hỏi chia 32 đội.
     if (files.length) {
-      const hint = "Đọc hết tên trong ảnh này. Đánh đôi thì mỗi cặp một đội. Chỉ trả tên nhìn thấy trong ảnh, không chép danh sách khác.";
+      const hint = "Đọc hết tên trong ảnh này. Đánh đôi thì mỗi cặp một đội. Chỉ trả tên nhìn thấy trong ảnh, không chép danh sách khác. Nếu ảnh có tiêu đề giải, điền name và bỏ chữ dẫn thừa ở đầu (là, đấu là).";
       const history = [{ role: "user" as const, text: hint }];
       const draftWithoutList = { ...draft, entries: undefined, player_count: undefined };
       let incoming: Entry[] = [];
       let missed = 0;
       let transportFailed = false;
+      let visionName = "";
       try {
         for (const file of files) {
           const { data, error } = await invokeChat(
@@ -727,6 +756,10 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           if (res.intent !== "fill" && res.intent !== "answer") { missed++; continue; }
           const patch = trustPatch(res.patch, "", "count");
           const got = Array.isArray(patch.entries) ? (patch.entries as Entry[]) : [];
+          if (!visionName && typeof patch.name === "string") {
+            const cleaned = cleanTournamentName(patch.name);
+            if (cleaned.name) visionName = cleaned.name;
+          }
           if (!got.length) { missed++; continue; }
           incoming = mergeRoster(incoming, got);
         }
@@ -740,9 +773,17 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       }
       const before = draft.entries?.length ?? 0;
       const entries = mergeRoster(draft.entries, incoming);
-      const next = applyPatch(draft, { entries, roster_mode: "now" });
+      const namePatch = visionName && !draft.name
+        ? { name: visionName, name_needs_confirm: true, name_from_image: true }
+        : {};
+      const next = applyPatch(draft, { entries, roster_mode: "now", ...namePatch });
       let ack = rosterAck(c, c.unit(next), before, entries.length, incoming.length, next.entries);
       if (missed) ack += c.photoMissed(missed);
+      if (namePatch.name && next.name) {
+        ack += lang === "vi"
+          ? ` Tên đọc từ ảnh: “${next.name}” — mình sẽ hỏi lại trước khi tạo giải.`
+          : ` Name from the photo: “${next.name}” — I'll ask you to confirm it before creating.`;
+      }
       advance(next, ack);
       return;
     }
@@ -860,12 +901,31 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           { label: c.doubles, onClick: () => choose(c.doubles, { is_doubles: true }) },
           { label: c.singles, onClick: () => choose(c.singles, { is_doubles: false }) },
         ];
-      case "count":
+      case "count": {
+        const pending = pendingDoublesHeadcount(draft);
+        if (pending) {
+          return [
+            ...headcountChoices(pending, lang).map((choice) => ({
+              label: choice.label,
+              recommended: choice.fromPlayers,
+              onClick: () => {
+                pushUser(choice.label);
+                advance(
+                  { ...draft, player_count: choice.teams, count_unit: "teams" as const, headcount_pending: undefined },
+                  choice.fromPlayers ? headcountResolvedNote(choice.teams, pending, lang) : undefined,
+                );
+              },
+            })),
+            { label: c.pasteList, onClick: () => inputRef.current?.focus() },
+            { label: c.upload, onClick: () => fileRef.current?.click() },
+          ];
+        }
         return [
-          ...[8, 12, 16, 24, 32].map((k) => ({ label: String(k), onClick: () => choose(`${k} ${unit}`, { player_count: k }) })),
+          ...[8, 12, 16, 24, 32].map((k) => ({ label: String(k), onClick: () => choose(`${k} ${unit}`, { player_count: k, count_unit: draft.is_doubles === false ? "players" as const : "teams" as const, headcount_pending: undefined }) })),
           { label: c.pasteList, onClick: () => inputRef.current?.focus() },
           { label: c.upload, onClick: () => fileRef.current?.click() },
         ];
+      }
       case "too_many":
         return [
           { label: c.classicForm, onClick: () => navigate(to("/tools/quick-tables")) },
@@ -971,8 +1031,15 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
         ];
       }
       case "name": {
+        if (draft.name && draft.name_needs_confirm) {
+          const use = lang === "vi" ? `Đúng, “${draft.name}”` : `Yes, “${draft.name}”`;
+          return [
+            { label: use, recommended: true, onClick: () => choose(use, { name_needs_confirm: false, name_from_image: false }) },
+            { label: c.customName, onClick: () => inputRef.current?.focus() },
+          ];
+        }
         const name = defaultName(draft, lang);
-        return [{ label: name, onClick: () => choose(name, { name }) }];
+        return [{ label: name, onClick: () => choose(name, { name, name_needs_confirm: false, name_from_image: false }) }];
       }
       case "options": {
         if (subMenu === "sets") {
@@ -1011,10 +1078,10 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     snap();
     const d = { ...draft };
     if (field === "format") { d.is_doubles = undefined; d.pairing_done = false; }
-    if (field === "count") { d.player_count = undefined; d.entries = undefined; d.roster_mode = undefined; d.group_count = undefined; d.series = undefined; d.series_sizes = undefined; }
+    if (field === "count") { d.player_count = undefined; d.entries = undefined; d.roster_mode = undefined; d.group_count = undefined; d.series = undefined; d.series_sizes = undefined; d.headcount_pending = undefined; d.count_unit = undefined; }
     if (field === "groups") { d.group_count = undefined; d.series = undefined; d.series_sizes = undefined; }
     if (field === "roster") { d.entries = undefined; d.roster_mode = undefined; d.options_done = false; }
-    if (field === "name") d.name = undefined;
+    if (field === "name") { d.name = undefined; d.name_needs_confirm = undefined; d.name_from_image = undefined; }
     if (field === "extra") d.options_done = false;
     if (field === "courts") { d.courts = undefined; d.group_courts = undefined; d.start_time = undefined; d.courts_done = false; d.time_done = false; }
     advance(d);
@@ -1337,12 +1404,18 @@ function seriesLabel(d: Draft, lang: Lang): string | null {
   return plan.map((sl, i) => `${seriesName(d.series_style ?? "series", i, lang)}${sized ? ` ${sl.size}` : ""}`).join(" + ");
 }
 
+const langOf = (c: C): "vi" | "en" => (c.doubles === "Doubles" ? "en" : "vi");
+
 function questionFor(c: C, d: Draft, s: Slot): string {
   const u = c.unit(d);
   const n = entryCount(d);
+  const lang = langOf(c);
   switch (s) {
     case "format": return c.format;
-    case "count": return c.count(u);
+    case "count": {
+      const pending = pendingDoublesHeadcount(d);
+      return pending ? headcountAsk(pending, lang) : c.count(u);
+    }
     case "too_many": return c.tooMany(n, u);
     case "pairing": return (d.entries!.length % 2 ? c.pairingOdd : c.pairing)(d.entries!.length);
     case "mismatch": return c.mismatch(d.entries!.length, d.player_count!, u);
@@ -1351,7 +1424,8 @@ function questionFor(c: C, d: Draft, s: Slot): string {
     case "series": return c.series(u);
     case "roster": return c.roster(u);
     case "paste": return c.paste(d);
-    case "name": return c.name;
+    case "name":
+      return d.name && d.name_needs_confirm ? nameConfirmAsk(d.name, !!d.name_from_image, lang) : c.name;
     case "courts": return c.courtsQ;
     case "start_time": return c.timeQ;
     case "options": return c.options;
