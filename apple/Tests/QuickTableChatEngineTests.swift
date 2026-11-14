@@ -347,7 +347,13 @@ struct QuickTableChatEngineTests {
         let facts = E.readUserFacts("Giải đấu là \(title), 16 đội")
         #expect(facts.name == title)
         #expect(facts.nameNeedsConfirm == true)
-        var ready = QTChatDraft(isDoubles: true, playerCount: 16, groupCount: 4, series: 1, rosterMode: "later", courtsDone: true)
+        var ready = QTChatDraft()
+        ready.isDoubles = true
+        ready.playerCount = 16
+        ready.groupCount = 4
+        ready.rosterMode = "later"
+        ready.series = 1
+        ready.courtsDone = true
         var patch = QTChatPatch()
         patch.name = "là \(title)"
         patch.nameFromImage = true
