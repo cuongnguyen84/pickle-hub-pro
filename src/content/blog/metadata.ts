@@ -10,6 +10,34 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "5-cach-dut-diem-pickleball-putaway",
+    "publishedDate": "2026-11-14",
+    "updatedDate": "2026-11-14",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball putaway",
+      "pickleball technique",
+      "ava ignatowich",
+      "dupr",
+      "guide"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/5-cach-dut-diem-pickleball-putaway-hero.webp",
+      "alt": "Amateur pickleball player hitting a compact putaway at the kitchen line, driving the ball down across the net"
+    },
+    "titleEn": "5 Pickleball Putaway Tips From Ava Ignatowich: Hit Down, Use Angles, Keep It Compact",
+    "titleVi": "5 cách dứt điểm trong pickleball theo Ava Ignatowich: đánh xuống, đánh góc và đánh gọn",
+    "metaTitleEn": "5 Pickleball Putaway Tips From Ava Ignatowich",
+    "metaTitleVi": "5 Cách Dứt Điểm Pickleball Theo Ava Ignatowich",
+    "metaDescriptionEn": "PPA pro Ava Ignatowich shares 5 putaway fixes: hit down at the feet, angle overheads, attack straight ahead, shrink your backswing and watch the ball.",
+    "metaDescriptionVi": "Ava Ignatowich chia sẻ 5 cách dứt điểm: đánh xuống vào chân, overhead đánh góc, tấn công thẳng, thu gọn vòng vung, nhìn bóng."
+  },
+  {
     "slug": "mlp-asia-business-model-home-nights",
     "publishedDate": "2026-11-12",
     "updatedDate": "2026-11-12",
