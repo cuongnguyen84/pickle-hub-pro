@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 import { seriesLine, seriesName, seriesPlan, slot as seriesSlot, type SeriesStyle } from "@/lib/quick-table-series";
 import {
   affirmsDraftName, applyPatch, applySpokenEdit, buildRoster, chatFacts, clarifyDoublesCount, cleanTournamentName, customSeries, defaultName, draftSeriesPlan, dropInventedRoster, duplicateIndexes, entryCount, entryLabel, factualAck, findGroupOption, googleSheetRef, groupChoices, groupSuggestion, headcountAsk, headcountChoices, headcountResolvedNote,
-  fallbackReply, groupCourtsLine, mergeTm, nameAnswer, nameConfirmAsk, nextTmSlot, tmAnswer, tmDefaultName, tmKnockoutOk, tmPlayoffCount, wantsTeamMatch, divisionsAsked, divisionBase, divisionDraft, divisionLists, divisionNote, nextDivisionDraft, pendingDoublesHeadcount, rankSeriesOffer, unmetWantsDivisions, teamLists, pairTeamLists, type TeamList, groupSizes, keepOrAssign, localSlotPatch, lockAdvance, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, messageNeedsModel, needsPairing, nextSlot, pairEntries, parseSheet, playoffSummary, previewAssignments, replyFromDraft, seriesCap, trustPatch,
+  fallbackReply, groupCourtsLine, mergeTm, nameAnswer, nameConfirmAsk, nextTmSlot, tmAnswer, tmDefaultName, tmKnockoutOk, tmPlayoffCount, typedTournamentName, wantsTeamMatch, divisionsAsked, divisionBase, divisionDraft, divisionLists, divisionNote, nextDivisionDraft, pendingDoublesHeadcount, rankSeriesOffer, unmetWantsDivisions, teamLists, pairTeamLists, type TeamList, groupSizes, keepOrAssign, localSlotPatch, lockAdvance, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, messageNeedsModel, needsPairing, nextSlot, pairEntries, parseSheet, playoffSummary, previewAssignments, replyFromDraft, seriesCap, trustPatch,
   type Draft, type Entry, type GroupOption, type PairingMode, type Slot, type TmDraft, type TmFormat,
 } from "@/lib/quick-table-chat";
 import { createTeamMatchTournament } from "@/hooks/useTeamMatch";
@@ -684,12 +684,22 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           return;
         }
       }
-      if (slot === "name") {
-        if (draft.name && draft.name_needs_confirm && affirmsDraftName(msg.text)) {
+      if (slot === "name" && draft.name_needs_confirm) {
+        if (draft.name && affirmsDraftName(msg.text)) {
           setInput("");
           choose(msg.text, { name_needs_confirm: false, name_from_image: false });
           return;
         }
+        const typed = typedTournamentName(msg.text);
+        if (typed) {
+          setInput("");
+          pushUser(msg.text);
+          const next = applyPatch(draft, { name: typed, name_verbatim: true });
+          advance(next, factualAck(draft, next, lang, msg.text));
+          return;
+        }
+      }
+      if (slot === "name") {
         const named = nameAnswer(msg.text);
         if (named) {
           setInput("");

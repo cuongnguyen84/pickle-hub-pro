@@ -579,12 +579,14 @@ export function fallbackReply(intent: string, unmet: string | null, lang: "vi" |
   return vi ? "Mình chưa rõ ý — tiếp tục với bản nháp nhé." : "I didn't get that — continuing with the draft.";
 }
 
+// Chỉ chữ dẫn có nhãn. "la"/"called"/"named" trơn là từ đầu của tên thật
+// ("La Gi Open", "Called Shot Cup") — không gọt.
 const NAME_FILLER = [
   /^(?:tên\s+(?:giải\s+)?)?là\s+/iu,
   /^(?:giải\s+)?đấu\s+là\s+/iu,
-  /^(?:ten\s+(?:giai\s+)?)?la\s+/i,
-  /^(?:giai\s+)?dau\s+la\s+/i,
-  /^(?:tournament\s+name\s+is|name\s+is|called|named)\s+/i,
+  /^ten\s+giai\s+la\s+/i,
+  /^giai\s+dau\s+la\s+/i,
+  /^(?:tournament\s+name\s+is|name\s+is)\s+/i,
 ];
 
 /**
@@ -685,11 +687,30 @@ export function nameConfirmAsk(name: string, fromImage: boolean, lang: "vi" | "e
     : `Mình chưa chắc tên giải: “${name}”. Đúng không? Sai thì gõ tên đúng.`;
 }
 
-const AFFIRM_NAME = /^(dung|ok|yes|yeah|yep|uh|chuan|dung roi|right|correct|chinh xac|dung ten do|dung vay)$/;
+const AFFIRM_NAME = /^(?:okay|okey|dung roi|dung ten do|dung vay|chinh xac|dong y|yeah|yep|yes|vang|duoc|chuan|right|correct|dung|ok|uh|u)(?:\s*[,，].*)?$/;
 
 /** "đúng" / "ok" khi đang hỏi lại tên — không phải một tên giải mới. */
 export function affirmsDraftName(text: string): boolean {
   return AFFIRM_NAME.test(fold(text));
+}
+
+/**
+ * Tên gõ lại khi đang hỏi xác nhận: giữ nguyên (chỉ cắt đầu/cuối), không gọt chữ dẫn.
+ * null khi là lời đồng ý, câu hỏi, hoặc danh sách.
+ */
+export function typedTournamentName(text: string): string | null {
+  const trimmed = text.trim();
+  if (trimmed.length < 2 || affirmsDraftName(trimmed)) return null;
+  if (messageNeedsModel(trimmed) || looksLikeNameList(trimmed)) return null;
+  return trimmed.slice(0, 80);
+}
+
+/** "16" khi đang hỏi người-hay-đội: đó là số đội. */
+export function bareTeamCount(text: string): number | null {
+  const m = fold(text).match(/^(\d{1,3})$/);
+  if (!m) return null;
+  const n = Number(m[1]);
+  return n >= 2 && n <= 500 ? n : null;
 }
 
 /**
@@ -738,7 +759,14 @@ export function applyPatch(d: Draft, patch: unknown): Draft {
   const groups = Number(p.group_count);
   const askedGroups = Number.isInteger(groups) && groups >= 1 && groups <= MAX_GROUPS;
   if (askedGroups) next.group_count = groups;
-  if (typeof p.name === "string") {
+  if (typeof p.name === "string" && p.name_verbatim === true) {
+    const typed = p.name.trim().slice(0, 80);
+    if (typed.length >= 2) {
+      next.name = typed;
+      delete next.name_needs_confirm;
+      delete next.name_from_image;
+    }
+  } else if (typeof p.name === "string") {
     const named = cleanTournamentName(p.name);
     if (named.name) {
       next.name = named.name;
@@ -1241,7 +1269,7 @@ export function readUserFacts(text: string): Partial<Draft> {
     if (n >= 1 && n <= 8) out.advance_per_group = n;
   }
 
-  const labeled = text.match(/(?:tên giải|ten giai|tên là|ten la|gọi là|goi la|name is|named|called)\s*(?:là|is)?\s*[:：]?\s*([^,\n]+)/i);
+  const labeled = text.match(/(?:tên giải|ten giai|tên là|ten la|gọi là|goi la|name is)\s*(?:là|is)?\s*[:：]?\s*([^,\n]+)/i);
   const lead = text.match(/^(?:giải|giai)\s+([^,\n]+)/i);
   const rawName = (labeled?.[1] ?? lead?.[1] ?? "")
     .split(/\s+(?=\d+\s*(?:người|nguoi|đôi|doi|đơn|don|vđv|vdv|vận động viên|van dong vien|cặp|cap)\b)|\s+(?=đánh\b|danh\b|chia\b|vòng\b|vong\b)/i)[0]
@@ -1346,6 +1374,15 @@ export function messageNeedsModel(text: string): boolean {
  * Trả null khi câu không chứa lệnh hay số liệu.
  */
 export function applySpokenEdit(draft: Draft, text: string): Draft | null {
+  const teams = pendingDoublesHeadcount(draft) != null ? bareTeamCount(text) : null;
+  if (teams != null) {
+    return clarifyDoublesCount(lockAdvance({
+      ...draft,
+      player_count: teams,
+      count_unit: "teams",
+      headcount_pending: undefined,
+    }));
+  }
   const facts = readUserFacts(text);
   let next: Draft = { ...draft, ...(draft.entries ? { entries: draft.entries.map((e) => ({ ...e })) } : {}) };
   let touched = false;

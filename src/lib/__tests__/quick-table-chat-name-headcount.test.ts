@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  affirmsDraftName,
   applyPatch,
   applySpokenEdit,
   cleanTournamentName,
@@ -12,6 +13,7 @@ import {
   pendingDoublesHeadcount,
   readUserFacts,
   replyFromDraft,
+  typedTournamentName,
   type Draft,
 } from "@/lib/quick-table-chat";
 
@@ -24,8 +26,29 @@ describe("tournament name from an image — strip leading OCR filler, then confi
       expect(cleaned.name).toBe(TITLE);
       expect(cleaned.lowConfidence).toBe(true);
     }
-    expect(cleanTournamentName(`la ${TITLE}`).name).toBe(TITLE);
+    expect(cleanTournamentName(`ten giai la ${TITLE}`).name).toBe(TITLE);
+    expect(cleanTournamentName(`giai dau la ${TITLE}`).name).toBe(TITLE);
+    for (const kept of [`la ${TITLE}`, "La Gi Open", "LA Pickleball Open", "Called Shot Cup", "La Khê Cup"]) {
+      expect(cleanTournamentName(kept)).toEqual({ name: kept, lowConfidence: false });
+    }
     expect(cleanTournamentName("Giải CLB Hà Đông")).toEqual({ name: "Giải CLB Hà Đông", lowConfidence: false });
+  });
+
+  it("a name typed at the confirm step is kept as written", () => {
+    const suggested = applyPatch({}, { name: `là ${TITLE}`, name_from_image: true });
+    expect(suggested.name_needs_confirm).toBe(true);
+    const kept = applyPatch(suggested, { name: "  Called Shot Cup  ", name_verbatim: true });
+    expect(kept.name).toBe("Called Shot Cup");
+    expect(kept.name_needs_confirm).toBeUndefined();
+    expect(kept.name_from_image).toBeUndefined();
+    expect(typedTournamentName("  La Gi Open  ")).toBe("La Gi Open");
+    expect(typedTournamentName("LA Pickleball Open")).toBe("LA Pickleball Open");
+    for (const yes of ["vâng", "được", "okay", "ừ", "đúng rồi", "đúng, dùng tên này", "Đúng, La Gi Open"]) {
+      expect(affirmsDraftName(yes)).toBe(true);
+      expect(typedTournamentName(yes)).toBeNull();
+    }
+    expect(affirmsDraftName("La Gi Open")).toBe(false);
+    expect(affirmsDraftName("Called Shot Cup")).toBe(false);
   });
 
   it("reads 'Giải đấu là …' as the title and marks it unconfirmed", () => {
@@ -91,6 +114,17 @@ describe("doubles headcount — N vận động viên / người / VĐV is not N
       expect(reply).not.toContain("ghép cặp");
       expect(headcountChoices(32, "vi").map((c) => c.teams)).toEqual([16, 32]);
     }
+  });
+
+  it("a bare number at the players-or-teams question is a team count", () => {
+    const pending = applySpokenEdit({ is_doubles: true }, "32 vận động viên")!;
+    expect(nextSlot(pending)).toBe("count");
+    const next = applySpokenEdit(pending, "16")!;
+    expect(next.player_count).toBe(16);
+    expect(next.headcount_pending).toBeUndefined();
+    expect(next.count_unit).toBe("teams");
+    expect(nextSlot(next)).toBe("groups");
+    expect(applySpokenEdit({ is_doubles: true, player_count: 32 }, "16")).toBeNull();
   });
 
   it("does not ask when they already said teams", () => {

@@ -80,6 +80,8 @@ struct QTChatPatch: Sendable {
     /// name_needs_confirm: false khi không kèm tên mới.
     var clearNameConfirm = false
     var nameFromImage: Bool?
+    /// Tên người dùng gõ lại khi đang xác nhận — không gọt chữ dẫn.
+    var nameVerbatim = false
 }
 
 enum QTChatSlot: String {
@@ -439,7 +441,7 @@ enum QTChatEngine {
 
         // Tên giải: "tên giải …" / "giải …" ở đầu câu. "là" sau nhãn không thuộc tên.
         var rawName = ""
-        if let labeled = firstGroups("(?:tên giải|ten giai|tên là|ten la|gọi là|goi la|name is|named|called)\\s*(?:là|is)?\\s*[:：]?\\s*([^,\\n]+)", in: text, caseInsensitive: true) {
+        if let labeled = firstGroups("(?:tên giải|ten giai|tên là|ten la|gọi là|goi la|name is)\\s*(?:là|is)?\\s*[:：]?\\s*([^,\\n]+)", in: text, caseInsensitive: true) {
             rawName = labeled[1] ?? ""
         } else if let lead = firstGroups("^(?:giải|giai)\\s+([^,\\n]+)", in: text, caseInsensitive: true) {
             rawName = lead[1] ?? ""
@@ -535,12 +537,13 @@ enum QTChatEngine {
             .trimmingCharacters(in: .whitespacesAndNewlines)
         name = name.replacingOccurrences(of: "^[\"“«]+|[\"”»]+$", with: "", options: .regularExpression)
             .trimmingCharacters(in: .whitespacesAndNewlines)
+        // "la"/"called"/"named" trơn là từ đầu của tên thật — không gọt.
         let patterns = [
             "^(?:tên\\s+(?:giải\\s+)?)?là\\s+",
             "^(?:giải\\s+)?đấu\\s+là\\s+",
-            "^(?:ten\\s+(?:giai\\s+)?)?la\\s+",
-            "^(?:giai\\s+)?dau\\s+la\\s+",
-            "^(?:tournament\\s+name\\s+is|name\\s+is|called|named)\\s+",
+            "^ten\\s+giai\\s+la\\s+",
+            "^giai\\s+dau\\s+la\\s+",
+            "^(?:tournament\\s+name\\s+is|name\\s+is)\\s+",
         ]
         var low = false
         for _ in 0..<4 {
@@ -643,7 +646,21 @@ enum QTChatEngine {
     }
 
     static func affirmsDraftName(_ text: String) -> Bool {
-        test("^(dung|ok|yes|yeah|yep|uh|chuan|dung roi|right|correct|chinh xac|dung ten do|dung vay)$", in: fold(text))
+        test("^(?:okay|okey|dung roi|dung ten do|dung vay|chinh xac|dong y|yeah|yep|yes|vang|duoc|chuan|right|correct|dung|ok|uh|u)(?:\\s*[,，].*)?$", in: fold(text))
+    }
+
+    /// Tên gõ lại khi đang hỏi xác nhận: giữ nguyên (chỉ cắt đầu/cuối).
+    static func typedTournamentName(_ text: String) -> String? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.count < 2 || affirmsDraftName(trimmed) { return nil }
+        if messageNeedsModel(trimmed) || looksLikeNameList(trimmed) { return nil }
+        return String(trimmed.prefix(80))
+    }
+
+    /// "16" khi đang hỏi người-hay-đội: đó là số đội.
+    static func bareTeamCount(_ text: String) -> Int? {
+        guard let m = firstGroups("^(\\d{1,3})$", in: fold(text)), let n = m[1].flatMap(Int.init), n >= 2 && n <= 500 else { return nil }
+        return n
     }
 
     /// Câu ở bước tên. nil khi câu còn số liệu khác — để luồng cũ xử lý.
@@ -683,7 +700,14 @@ enum QTChatEngine {
         if let pending = p.headcountPending, pending >= 2 && pending <= 500 { next.headcountPending = pending }
         let askedGroups = p.groupCount.map { $0 >= 1 && $0 <= maxGroups } ?? false
         if let g = p.groupCount, askedGroups { next.groupCount = g }
-        if let rawName = p.name {
+        if p.nameVerbatim, let rawName = p.name {
+            let typed = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
+            if typed.count >= 2 {
+                next.name = String(typed.prefix(80))
+                next.nameNeedsConfirm = nil
+                next.nameFromImage = nil
+            }
+        } else if let rawName = p.name {
             let named = cleanTournamentName(rawName)
             if !named.name.isEmpty {
                 next.name = named.name
@@ -808,6 +832,13 @@ enum QTChatEngine {
     /// Đổi chỗ / đổi tên / chia bảng trên đúng danh sách đang có.
     /// Trả nil khi câu không chứa lệnh hay số liệu.
     static func applySpokenEdit(_ draft: QTChatDraft, _ text: String) -> QTChatDraft? {
+        if pendingDoublesHeadcount(draft) != nil, let teams = bareTeamCount(text) {
+            var next = draft
+            next.playerCount = teams
+            next.countUnit = "teams"
+            next.headcountPending = nil
+            return clarifyDoublesCount(lockAdvance(next))
+        }
         let facts = readUserFacts(text)
         var next = draft
         var touched = false

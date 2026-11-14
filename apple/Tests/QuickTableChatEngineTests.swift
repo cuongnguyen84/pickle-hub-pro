@@ -344,6 +344,19 @@ struct QuickTableChatEngineTests {
             #expect(cleaned.name == title)
             #expect(cleaned.lowConfidence)
         }
+        #expect(E.cleanTournamentName("ten giai la \(title)").name == title)
+        for kept in ["la \(title)", "La Gi Open", "LA Pickleball Open", "Called Shot Cup", "La Khê Cup"] {
+            let cleaned = E.cleanTournamentName(kept)
+            #expect(cleaned.name == kept)
+            #expect(!cleaned.lowConfidence)
+        }
+        #expect(E.typedTournamentName("  La Gi Open  ") == "La Gi Open")
+        #expect(E.typedTournamentName("Called Shot Cup") == "Called Shot Cup")
+        for yes in ["vâng", "được", "okay", "ừ", "đúng rồi", "đúng, dùng tên này"] {
+            #expect(E.affirmsDraftName(yes))
+            #expect(E.typedTournamentName(yes) == nil)
+        }
+        #expect(!E.affirmsDraftName("La Gi Open"))
         let facts = E.readUserFacts("Giải đấu là \(title), 16 đội")
         #expect(facts.name == title)
         #expect(facts.nameNeedsConfirm == true)
@@ -397,6 +410,12 @@ struct QuickTableChatEngineTests {
         #expect(asTeams?.playerCount == 32)
         #expect(asTeams?.headcountPending == nil)
         #expect(asTeams.map { E.nextSlot($0) } == .groups)
+        let pending = E.applySpokenEdit(teams, "32 vận động viên")
+        let counted = pending.flatMap { E.applySpokenEdit($0, "16") }
+        #expect(counted?.playerCount == 16)
+        #expect(counted?.headcountPending == nil)
+        #expect(counted?.countUnit == "teams")
+        #expect(counted.map { E.nextSlot($0) } == .groups)
     }
 
     @Test func oddPlayerCountLeavesOneOver() {

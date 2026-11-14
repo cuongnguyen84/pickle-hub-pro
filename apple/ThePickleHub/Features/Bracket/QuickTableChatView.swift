@@ -364,6 +364,15 @@ final class QuickTableChatViewModel {
                     advance(next, ack: nil)
                     return
                 }
+                if draft.nameNeedsConfirm == true, let typed = QTChatEngine.typedTournamentName(text) {
+                    var patch = QTChatPatch()
+                    patch.name = typed
+                    patch.nameVerbatim = true
+                    patch.clearNameConfirm = true
+                    let next = QTChatEngine.applyPatch(draft, patch)
+                    advance(next, ack: QTChatEngine.factualAck(before: draft, after: next, lang: lang, request: text))
+                    return
+                }
                 if let named = QTChatEngine.nameAnswer(text) {
                     var patch = QTChatPatch()
                     patch.name = named.name
