@@ -8,6 +8,8 @@
 // Regenerate:  node scripts/gen-blog-image-dims.mjs
 
 export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
+  "/images/blog/5-cach-dut-diem-pickleball-putaway-hero-768.webp": [768, 512],
+  "/images/blog/5-cach-dut-diem-pickleball-putaway-hero.webp": [1536, 1024],
   "/images/blog/app-tour-vs-ppa-tour-contracts-hero-768.webp": [768, 512],
   "/images/blog/app-tour-vs-ppa-tour-contracts-hero.webp": [1536, 1024],
   "/images/blog/app-tour-vs-ppa-tour-infographic-768.webp": [768, 512],
