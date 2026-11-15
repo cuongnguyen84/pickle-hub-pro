@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 import { seriesLine, seriesName, seriesPlan, slot as seriesSlot, type SeriesStyle } from "@/lib/quick-table-series";
 import {
   affirmsDraftName, applyPatch, applySpokenEdit, buildRoster, chatFacts, clarifyDoublesCount, cleanTournamentName, customSeries, defaultName, draftSeriesPlan, dropInventedRoster, duplicateIndexes, entryCount, entryLabel, factualAck, findGroupOption, googleSheetRef, groupChoices, groupSuggestion, headcountAsk, headcountChoices, headcountResolvedNote,
-  fallbackReply, groupCourtsLine, mergeTm, nameAnswer, nameConfirmAsk, nextTmSlot, tmAnswer, tmDefaultName, tmKnockoutOk, tmPlayoffCount, typedTournamentName, wantsTeamMatch, divisionsAsked, divisionBase, divisionDraft, divisionLists, divisionNote, nextDivisionDraft, pendingDoublesHeadcount, rankSeriesOffer, unmetWantsDivisions, teamLists, pairTeamLists, type TeamList, groupSizes, keepOrAssign, localSlotPatch, lockAdvance, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, messageNeedsModel, needsPairing, nextSlot, pairEntries, parseSheet, playoffSummary, previewAssignments, replyFromDraft, seriesCap, trustPatch,
+  fallbackReply, groupCourtsLine, mergeTm, nameAnswer, nameConfirmAsk, nextTmSlot, tmAnswer, tmDefaultName, tmKnockoutOk, tmPlayoffCount, typedTournamentName, wantsTeamMatch, divisionsAsked, divisionBase, divisionDraft, divisionLists, divisionNote, nextDivisionDraft, pendingDoublesHeadcount, rankSeriesOffer, unmetWantsDivisions, teamLists, pairTeamLists, type TeamList, groupSizes, groupLists, groupDraft, groupNote, keepOrAssign, localSlotPatch, lockAdvance, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, messageNeedsModel, needsPairing, nextSlot, pairEntries, parseSheet, playoffSummary, previewAssignments, replyFromDraft, seriesCap, trustPatch,
   type Draft, type Entry, type GroupOption, type PairingMode, type Slot, type TmDraft, type TmFormat,
 } from "@/lib/quick-table-chat";
 import { createTeamMatchTournament } from "@/hooks/useTeamMatch";
@@ -634,6 +634,16 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
         setDiv({ labels, done: 0, lists: byDiv });
         const next = divisionDraft(draft, byDiv[0].names);
         advance(next, `${divisionNote(labels, lang)}. ${rosterAck(c, c.unit(next), 0, next.entries!.length, next.entries!.length, next.entries)}`);
+        return;
+      }
+      // Ca báo cáo 21:30 15/11/2026: dán danh sách chia sẵn theo "Bảng A" / "Bảng B" — giữ đúng
+      // bảng người dùng đã chia, một giải chung (khác hạng/trình: mỗi hạng một giải riêng).
+      const byGroup = tm ? null : groupLists(msg.text);
+      if (byGroup) {
+        setInput("");
+        pushUser(msg.text);
+        const next = groupDraft(draft, byGroup);
+        advance(next, `${groupNote(byGroup, lang)}. ${rosterAck(c, c.unit(next), 0, next.entries!.length, next.entries!.length, next.entries)}`);
         return;
       }
       // Câu đòi nhiều hạng đi qua AI để giữ các thông tin khác; câu trả lời kèm luật mỗi hạng một giải.

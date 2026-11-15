@@ -15,6 +15,9 @@ export interface Entry {
   p2?: string;
   team?: string;
   seed?: number;
+  /** Bảng gán sẵn từ danh sách dán theo tiêu đề "Bảng A/Bảng B" (0 = A). Chỉ là hạt giống
+   * cho previewAssignments; người dùng đổi số bảng khác đi thì hạt giống hết hiệu lực. */
+  group?: number;
 }
 
 export type RosterMode = "now" | "later" | "registration";
@@ -205,6 +208,17 @@ export function minMatchesLine(d: Draft, min: number, lang: "vi" | "en"): string
 
 /** Cỡ các bảng của cách chia đã chọn (để tính nhánh trước khi có danh sách). */
 export function groupSizes(d: Draft): number[] {
+  const es = d.entries ?? [];
+  const g = d.group_count ?? 0;
+  if (g >= 2 && es.length && es.every((e) => e.group != null)) {
+    const counts = Array.from({ length: g }, () => 0);
+    let ok = true;
+    for (const e of es) {
+      if (e.group! < 0 || e.group! >= g) { ok = false; break; }
+      counts[e.group!]++;
+    }
+    if (ok && counts.every((c) => c > 0)) return counts;
+  }
   return findGroupOption(entryCount(d), d.group_count)?.sizes ?? [];
 }
 
@@ -274,11 +288,13 @@ function sanitizeEntries(raw: unknown): Entry[] | undefined {
     const p2 = clean(e.p2);
     const team = clean(e.team);
     const seed = Number(e.seed);
+    const group = Number(e.group);
     out.push({
       p1,
       ...(p2 ? { p2 } : {}),
       ...(team ? { team } : {}),
       ...(Number.isInteger(seed) && seed > 0 ? { seed } : {}),
+      ...(Number.isInteger(group) && group >= 0 && group < MAX_GROUPS ? { group } : {}),
     });
   }
   return out;
@@ -342,6 +358,14 @@ export function unsupportedFormatNote(text: string, lang: "vi" | "en"): string |
     return lang === "vi"
       ? "DreamBreaker chỉ có ở giải đồng đội MLP — giải thường chưa có. Hòa điểm trên bảng xếp hạng được phân định bằng hiệu số và đối đầu trực tiếp"
       : "A DreamBreaker only exists in MLP team matches — regular tournaments don't have one. Tied standings are settled by point differential and head-to-head results";
+  }
+  // Gán sẵn đội vào bảng cụ thể theo câu mô tả ("cho X vào bảng A"): luồng dán theo tiêu đề
+  // "Bảng A/Bảng B" thì làm được tại chỗ, còn gán theo câu chữ thì chưa — nói thẳng + chỉ cách dán,
+  // không lặng lẽ chia ngẫu nhiên (ca báo cáo 21:30 15/11/2026).
+  if (/(gan|cho|xep|dat|dua|them|assign|put|place|move|add)\b[^.\n]{0,80}?\b(vao|to|into)\s+(bang|group|pool)\s*[a-z0-9]/.test(t)) {
+    return lang === "vi"
+      ? "Mình chưa gán sẵn đội vào từng bảng theo câu mô tả được. Cách làm được ngay: dán danh sách theo tiêu đề \"Bảng A\", \"Bảng B\" (mỗi đội một dòng dưới tiêu đề) — mình giữ đúng các bảng đó khi tạo giải"
+      : "I can't pre-assign teams to specific groups from a description yet. What works now: paste the list under \"Group A\", \"Group B\" headings (one team per line) and I'll keep those exact groups when creating the tournament";
   }
   // Tranh hạng 3: bảng đấu thường chưa có (chỉ đồng đội MLP loại trực tiếp mới có).
   if (/(battle for (3rd|third)|3rd[ -]?place match|third[ -]?place match|tranh hang (3|ba)\b)/.test(t)) {
@@ -483,6 +507,50 @@ export function divisionDraft(d: Draft, names: string[], name = d.name): Draft {
   const entries = parseSheet(names.map((n) => [n]));
   const doubles = d.is_doubles === undefined && entries.every((e) => e.p2);
   return applyPatch({ ...nextDivisionDraft(d, name ?? "", false), name }, { entries, ...(doubles ? { is_doubles: true } : {}) });
+}
+
+// Tiêu đề bảng đứng đầu một danh sách đội: "Bảng A", "BẢNG B", "Group A", "bảng 1", "Pool 2".
+const GROUP_HEAD = /^\s*((?:bảng|bang|group|pool)\s+(?:[a-z]|\d{1,2}))\b\s*(?:\([^)]*\))?\s*[:：\-–]?\s*(.*)$/i;
+
+export interface GroupList extends TeamList { group: number }
+
+/**
+ * Danh sách đội chia sẵn theo bảng ("Bảng A" + đội…, "Bảng B" + đội…), hoặc null.
+ * Khác hạng/trình (mỗi hạng một giải riêng): các bảng này thuộc CÙNG một giải.
+ * Chỉ số bảng lấy theo chữ/số của tiêu đề (A = 0, 1 = 0); tiêu đề lộn xộn/trùng thì theo thứ tự dán.
+ */
+export function groupLists(text: string): GroupList[] | null {
+  const lists = teamLists(text, GROUP_HEAD);
+  if (!lists) return null;
+  const codes = lists.map((l) => l.label.split(/\s+/)[1] ?? "");
+  const idx = codes.map((c) => (/^\d+$/.test(c) ? Number(c) - 1 : c.toLocaleUpperCase("vi").charCodeAt(0) - 65));
+  const byCode = idx.every((v) => v >= 0 && v < lists.length) && new Set(idx).size === lists.length;
+  return lists.map((l, i) => ({
+    label: `${/^(bảng|bang)/i.test(l.label) ? "Bảng" : "Group"} ${codes[i].toLocaleUpperCase("vi")}`,
+    names: l.names,
+    group: byCode ? idx[i] : i,
+  }));
+}
+
+/**
+ * Nháp MỘT giải từ danh sách đã chia sẵn theo bảng: đội dưới tiêu đề nào giữ đúng bảng đó
+ * (Entry.group), số bảng = số tiêu đề. Thể thức/sân/giờ của nháp hiện tại giữ nguyên.
+ */
+export function groupDraft(d: Draft, lists: GroupList[]): Draft {
+  const entries: Entry[] = [];
+  for (const l of lists) {
+    for (const e of parseSheet(l.names.map((n) => [n]))) entries.push({ ...e, group: l.group });
+  }
+  const doubles = d.is_doubles === undefined && entries.length > 0 && entries.every((e) => e.p2);
+  return applyPatch(d, { entries, group_count: lists.length, ...(doubles ? { is_doubles: true } : {}) });
+}
+
+/** Câu xác nhận khi nhận danh sách chia sẵn theo bảng: gọi tên từng bảng + số đội, cam kết giữ đúng. */
+export function groupNote(lists: GroupList[], lang: "vi" | "en"): string {
+  const parts = lists.map((l) => `${l.label}: ${l.names.length}`).join(", ");
+  return lang === "vi"
+    ? `Đã nhận danh sách chia sẵn theo ${lists.length} bảng (${parts}) — các đội giữ đúng bảng này khi tạo giải, không chia lại`
+    : `Got your pre-split list in ${lists.length} groups (${parts}) — teams stay in these exact groups when the tournament is created, no re-draw`;
 }
 
 /** Ghép đôi theo lựa chọn người dùng: trong từng đội (theo thứ tự) hoặc chéo (người thứ i đội A + người thứ i đội B). */
@@ -847,6 +915,18 @@ export type PairingMode = "sequential" | "random" | "each_line";
 /** Giải đôi mà danh sách toàn tên lẻ: ghép 1+2, 3+4… / ngẫu nhiên / mỗi dòng là 1 đội. */
 export function pairEntries(entries: Entry[], mode: PairingMode, rand: () => number = Math.random): Entry[] {
   if (mode === "each_line") return entries;
+  // Mọi entry đều có bảng gán sẵn → ghép đôi TRONG từng bảng, cặp giữ đúng bảng đó.
+  if (entries.length && entries.every((e) => e.group != null)) {
+    const byGroup = new Map<number, Entry[]>();
+    for (const e of entries) {
+      const arr = byGroup.get(e.group!) ?? [];
+      arr.push(e);
+      byGroup.set(e.group!, arr);
+    }
+    return [...byGroup.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .flatMap(([g, arr]) => pairEntries(arr.map((e) => ({ ...e, group: undefined })), mode, rand).map((e) => ({ ...e, group: g })));
+  }
   const list = [...entries];
   if (mode === "random") {
     for (let i = list.length - 1; i > 0; i--) {
@@ -896,6 +976,24 @@ export function buildRoster(d: Draft) {
 /** Chia bảng xem trước; mảng trả về đưa thẳng vào setupRosterAtomic để bảng thấy = bảng tạo. */
 export function previewAssignments(d: Draft): number[] {
   const k = d.group_count ?? 1;
+  const entries = d.entries ?? [];
+  // Có đội gán sẵn bảng (dán theo tiêu đề "Bảng A/Bảng B") → giữ đúng các đội đó;
+  // đội chưa gán thì lấp vào bảng đang ít đội nhất cho cân. Không còn gán sẵn nào hợp lệ
+  // (vd người dùng đã đổi số bảng) thì quay lại chia như cũ.
+  const preset = entries.map((e) => (e.group != null && e.group >= 0 && e.group < k ? e.group : null));
+  if (preset.some((g) => g !== null)) {
+    const sizes = Array.from({ length: k }, () => 0);
+    const out = Array.from({ length: entries.length }, () => -1);
+    preset.forEach((g, i) => { if (g !== null) { out[i] = g; sizes[g]++; } });
+    for (let i = 0; i < out.length; i++) {
+      if (out[i] >= 0) continue;
+      let best = 0;
+      for (let g = 1; g < k; g++) if (sizes[g] < sizes[best]) best = g;
+      out[i] = best;
+      sizes[best]++;
+    }
+    return out;
+  }
   const roster = buildRoster(d);
   const buckets = distributePlayersToGroups(
     roster.map((p, i) => ({ id: String(i), name: p.name, team: p.team, seed: p.seed })),
