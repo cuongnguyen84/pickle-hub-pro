@@ -31,7 +31,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA Daytona Beach results: Daytona Beach Open 2026 daily scores",
-          "content": "Last updated: November 17, 2026, 04:00 Vietnam time. ThePickleHub publishes this Daytona Beach Open 2026 results page from the official PPA scores feed for November 16–22, 2026 at Pictona at Holly Hill, Holly Hill, Florida. The feed currently contains 70 matches, including 0 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 17, 2026, 06:00 Vietnam time. ThePickleHub publishes this Daytona Beach Open 2026 results page from the official PPA scores feed for November 16–22, 2026 at Pictona at Holly Hill, Holly Hill, Florida. The feed currently contains 80 matches, including 0 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -41,17 +41,17 @@ const post: BlogPost = {
           "resultsSummary": [
             {
               "division": "Women's Doubles",
-              "note": "Scheduled · 10 matches",
+              "note": "Scheduled · 12 matches",
               "anchor": "rb-womens-doubles"
             },
             {
               "division": "Men's Doubles",
-              "note": "Scheduled · 8 matches",
+              "note": "Scheduled · 12 matches",
               "anchor": "rb-mens-doubles"
             },
             {
               "division": "Mixed Doubles",
-              "note": "Scheduled · 16 matches",
+              "note": "Scheduled · 20 matches",
               "anchor": "rb-mixed-doubles"
             },
             {
@@ -68,10 +68,26 @@ const post: BlogPost = {
         },
         {
           "heading": "Women's Doubles schedule",
-          "content": "10 matches scheduled, earliest round first.",
+          "content": "12 matches scheduled, earliest round first.",
           "resultsBoard": {
             "division": "Women's Doubles",
             "rounds": [
+              {
+                "label": "Round 64",
+                "matches": [
+                  {
+                    "teamA": "Masa Grgan / Maddy Rasmusen",
+                    "teamB": "Jessica Evanier / Alexa Quintanilla",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Ava Ignatowich / Maria Ford",
+                    "teamB": "Circa Luna S / Janet Liu",
+                    "sets": []
+                  }
+                ],
+                "collapsed": true
+              },
               {
                 "label": "Round 32",
                 "matches": [
@@ -102,7 +118,7 @@ const post: BlogPost = {
                   },
                   {
                     "teamA": "Angie Walker / Alex Walker",
-                    "teamB": "Ashley Griffith / Marcela Aguila Ampon",
+                    "teamB": "Caroline Maguire / Andi Godwin",
                     "sets": []
                   },
                   {
@@ -133,7 +149,7 @@ const post: BlogPost = {
         },
         {
           "heading": "Men's Doubles schedule",
-          "content": "8 matches scheduled, earliest round first.",
+          "content": "12 matches scheduled, earliest round first.",
           "resultsBoard": {
             "division": "Men's Doubles",
             "rounds": [
@@ -141,8 +157,18 @@ const post: BlogPost = {
                 "label": "Round 64",
                 "matches": [
                   {
+                    "teamA": "Andre Mercado / Cason Campbell",
+                    "teamB": "Edgaras Zilys / Nicholas Wade",
+                    "sets": []
+                  },
+                  {
                     "teamA": "Julian Arnold / Yates Johnson",
                     "teamB": "Ethan Bakalinsky / Francis Chi",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Gregory Dow / Darrian Young",
+                    "teamB": "Ahmad El-Zarif / Stephen Preissler",
                     "sets": []
                   },
                   {
@@ -158,6 +184,16 @@ const post: BlogPost = {
                   {
                     "teamA": "Christopher Crouch / Connor Mogle",
                     "teamB": "Matteo Cugliari / Matthew Finnerty",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Mohaned Alhouni / Rafael Lenhard",
+                    "teamB": "Zach Gonnering / Miles Hoover",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Joel Poland / Eduardo Santini Ayon",
+                    "teamB": "Matt Burkhardt / Mike Radermacher",
                     "sets": []
                   },
                   {
@@ -194,7 +230,7 @@ const post: BlogPost = {
         },
         {
           "heading": "Mixed Doubles schedule",
-          "content": "16 matches scheduled, earliest round first.",
+          "content": "20 matches scheduled, earliest round first.",
           "resultsBoard": {
             "division": "Mixed Doubles",
             "rounds": [
@@ -217,6 +253,11 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
+                    "teamA": "Jonathan Truong / Jessie Irvine",
+                    "teamB": "Wil Shaffer / Circa Luna S",
+                    "sets": []
+                  },
+                  {
                     "teamA": "Carlota Trevino / Christopher Haworth",
                     "teamB": "Jace Morris / Lindsey Newman",
                     "sets": []
@@ -232,8 +273,18 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
+                    "teamA": "Augustus Ge / Judit Castillo",
+                    "teamB": "Christopher Crouch / Luana Stanciu",
+                    "sets": []
+                  },
+                  {
                     "teamA": "Liz Truluck / Michael Loyd",
                     "teamB": "Naomi Nguyen / James Delgado",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "CJ Klinger / Kiora Kunimoto",
+                    "teamB": "Freddie Powell / Martina Frantova",
                     "sets": []
                   },
                   {
@@ -249,6 +300,11 @@ const post: BlogPost = {
                   {
                     "teamA": "Mari Humberg / Elliott Schupp",
                     "teamB": "Mehvish Safdar / Nicholas Wade",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Riley Newman / Layne Sleeth",
+                    "teamB": "Eduardo Santini Ayon / Alexa Quintanilla",
                     "sets": []
                   },
                   {
@@ -528,7 +584,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Daytona Beach Open 2026",
-          "content": "Cập nhật: 04:00 ngày 17/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Daytona Beach Open 2026 từ feed điểm số chính thức của PPA cho thời gian 16–22/11/2026 tại Pictona at Holly Hill, Holly Hill, Florida. Feed hiện có 70 trận, gồm 0 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 06:00 ngày 17/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Daytona Beach Open 2026 từ feed điểm số chính thức của PPA cho thời gian 16–22/11/2026 tại Pictona at Holly Hill, Holly Hill, Florida. Feed hiện có 80 trận, gồm 0 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -538,17 +594,17 @@ const post: BlogPost = {
           "resultsSummary": [
             {
               "division": "Đôi nữ",
-              "note": "Đã lên lịch · 10 trận",
+              "note": "Đã lên lịch · 12 trận",
               "anchor": "rb-doi-nu"
             },
             {
               "division": "Đôi nam",
-              "note": "Đã lên lịch · 8 trận",
+              "note": "Đã lên lịch · 12 trận",
               "anchor": "rb-doi-nam"
             },
             {
               "division": "Đôi nam nữ",
-              "note": "Đã lên lịch · 16 trận",
+              "note": "Đã lên lịch · 20 trận",
               "anchor": "rb-doi-nam-nu"
             },
             {
@@ -565,10 +621,26 @@ const post: BlogPost = {
         },
         {
           "heading": "Lịch thi đấu Đôi nữ",
-          "content": "10 trận đã lên lịch, vòng sớm nhất ở trên.",
+          "content": "12 trận đã lên lịch, vòng sớm nhất ở trên.",
           "resultsBoard": {
             "division": "Đôi nữ",
             "rounds": [
+              {
+                "label": "Vòng 64",
+                "matches": [
+                  {
+                    "teamA": "Masa Grgan / Maddy Rasmusen",
+                    "teamB": "Jessica Evanier / Alexa Quintanilla",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Ava Ignatowich / Maria Ford",
+                    "teamB": "Circa Luna S / Janet Liu",
+                    "sets": []
+                  }
+                ],
+                "collapsed": true
+              },
               {
                 "label": "Vòng 32",
                 "matches": [
@@ -599,7 +671,7 @@ const post: BlogPost = {
                   },
                   {
                     "teamA": "Angie Walker / Alex Walker",
-                    "teamB": "Ashley Griffith / Marcela Aguila Ampon",
+                    "teamB": "Caroline Maguire / Andi Godwin",
                     "sets": []
                   },
                   {
@@ -630,7 +702,7 @@ const post: BlogPost = {
         },
         {
           "heading": "Lịch thi đấu Đôi nam",
-          "content": "8 trận đã lên lịch, vòng sớm nhất ở trên.",
+          "content": "12 trận đã lên lịch, vòng sớm nhất ở trên.",
           "resultsBoard": {
             "division": "Đôi nam",
             "rounds": [
@@ -638,8 +710,18 @@ const post: BlogPost = {
                 "label": "Vòng 64",
                 "matches": [
                   {
+                    "teamA": "Andre Mercado / Cason Campbell",
+                    "teamB": "Edgaras Zilys / Nicholas Wade",
+                    "sets": []
+                  },
+                  {
                     "teamA": "Julian Arnold / Yates Johnson",
                     "teamB": "Ethan Bakalinsky / Francis Chi",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Gregory Dow / Darrian Young",
+                    "teamB": "Ahmad El-Zarif / Stephen Preissler",
                     "sets": []
                   },
                   {
@@ -655,6 +737,16 @@ const post: BlogPost = {
                   {
                     "teamA": "Christopher Crouch / Connor Mogle",
                     "teamB": "Matteo Cugliari / Matthew Finnerty",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Mohaned Alhouni / Rafael Lenhard",
+                    "teamB": "Zach Gonnering / Miles Hoover",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Joel Poland / Eduardo Santini Ayon",
+                    "teamB": "Matt Burkhardt / Mike Radermacher",
                     "sets": []
                   },
                   {
@@ -691,7 +783,7 @@ const post: BlogPost = {
         },
         {
           "heading": "Lịch thi đấu Đôi nam nữ",
-          "content": "16 trận đã lên lịch, vòng sớm nhất ở trên.",
+          "content": "20 trận đã lên lịch, vòng sớm nhất ở trên.",
           "resultsBoard": {
             "division": "Đôi nam nữ",
             "rounds": [
@@ -714,6 +806,11 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
+                    "teamA": "Jonathan Truong / Jessie Irvine",
+                    "teamB": "Wil Shaffer / Circa Luna S",
+                    "sets": []
+                  },
+                  {
                     "teamA": "Carlota Trevino / Christopher Haworth",
                     "teamB": "Jace Morris / Lindsey Newman",
                     "sets": []
@@ -729,8 +826,18 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
+                    "teamA": "Augustus Ge / Judit Castillo",
+                    "teamB": "Christopher Crouch / Luana Stanciu",
+                    "sets": []
+                  },
+                  {
                     "teamA": "Liz Truluck / Michael Loyd",
                     "teamB": "Naomi Nguyen / James Delgado",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "CJ Klinger / Kiora Kunimoto",
+                    "teamB": "Freddie Powell / Martina Frantova",
                     "sets": []
                   },
                   {
@@ -746,6 +853,11 @@ const post: BlogPost = {
                   {
                     "teamA": "Mari Humberg / Elliott Schupp",
                     "teamB": "Mehvish Safdar / Nicholas Wade",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Riley Newman / Layne Sleeth",
+                    "teamB": "Eduardo Santini Ayon / Alexa Quintanilla",
                     "sets": []
                   },
                   {
