@@ -6,7 +6,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   "slug": "daytona-beach-open-2026-results",
   "publishedDate": "2026-11-16",
-  "updatedDate": "2026-11-15",
+  "updatedDate": "2026-11-16",
   "author": "The PickleHub Team",
   "tags": [
     "pickleball",
@@ -31,7 +31,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA Daytona Beach results: Daytona Beach Open 2026 daily scores",
-          "content": "Last updated: November 16, 2026, 02:00 Vietnam time. ThePickleHub publishes this Daytona Beach Open 2026 results page from the official PPA scores feed for November 16–22, 2026 at Pictona at Holly Hill, Holly Hill, Florida. The feed currently contains 63 matches, including 0 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 17, 2026, 00:00 Vietnam time. ThePickleHub publishes this Daytona Beach Open 2026 results page from the official PPA scores feed for November 16–22, 2026 at Pictona at Holly Hill, Holly Hill, Florida. The feed currently contains 66 matches, including 0 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -56,7 +56,7 @@ const post: BlogPost = {
             },
             {
               "division": "Women's Singles",
-              "note": "Scheduled · 13 matches",
+              "note": "Scheduled · 16 matches",
               "anchor": "rb-womens-singles"
             },
             {
@@ -289,7 +289,7 @@ const post: BlogPost = {
         },
         {
           "heading": "Women's Singles schedule",
-          "content": "13 matches scheduled, earliest round first.",
+          "content": "16 matches scheduled, earliest round first.",
           "resultsBoard": {
             "division": "Women's Singles",
             "rounds": [
@@ -312,6 +312,11 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
+                    "teamA": "Isabella Dunlap",
+                    "teamB": "Jessica Evanier",
+                    "sets": []
+                  },
+                  {
                     "teamA": "Angie Walker",
                     "teamB": "Alexa Schull",
                     "sets": []
@@ -327,12 +332,17 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
+                    "teamA": "Genie Bouchard",
+                    "teamB": "Caroline Maguire",
+                    "sets": []
+                  },
+                  {
                     "teamA": "Audrey Adele Brown",
                     "teamB": "Ava Cavataio",
                     "sets": []
                   },
                   {
-                    "teamA": "Marcela Aguila Ampon",
+                    "teamA": "Frances Altick",
                     "teamB": "Circa Luna S",
                     "sets": []
                   },
@@ -352,8 +362,13 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Ashley Griffith",
+                    "teamA": "Gianna Southwick",
                     "teamB": "Naomi Nguyen",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Keilly Ulery",
+                    "teamB": "Maria Ford",
                     "sets": []
                   },
                   {
@@ -493,7 +508,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Daytona Beach Open 2026",
-          "content": "Cập nhật: 02:00 ngày 16/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Daytona Beach Open 2026 từ feed điểm số chính thức của PPA cho thời gian 16–22/11/2026 tại Pictona at Holly Hill, Holly Hill, Florida. Feed hiện có 63 trận, gồm 0 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 00:00 ngày 17/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Daytona Beach Open 2026 từ feed điểm số chính thức của PPA cho thời gian 16–22/11/2026 tại Pictona at Holly Hill, Holly Hill, Florida. Feed hiện có 66 trận, gồm 0 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -518,7 +533,7 @@ const post: BlogPost = {
             },
             {
               "division": "Đơn nữ",
-              "note": "Đã lên lịch · 13 trận",
+              "note": "Đã lên lịch · 16 trận",
               "anchor": "rb-don-nu"
             },
             {
@@ -751,7 +766,7 @@ const post: BlogPost = {
         },
         {
           "heading": "Lịch thi đấu Đơn nữ",
-          "content": "13 trận đã lên lịch, vòng sớm nhất ở trên.",
+          "content": "16 trận đã lên lịch, vòng sớm nhất ở trên.",
           "resultsBoard": {
             "division": "Đơn nữ",
             "rounds": [
@@ -774,6 +789,11 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
+                    "teamA": "Isabella Dunlap",
+                    "teamB": "Jessica Evanier",
+                    "sets": []
+                  },
+                  {
                     "teamA": "Angie Walker",
                     "teamB": "Alexa Schull",
                     "sets": []
@@ -789,12 +809,17 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
+                    "teamA": "Genie Bouchard",
+                    "teamB": "Caroline Maguire",
+                    "sets": []
+                  },
+                  {
                     "teamA": "Audrey Adele Brown",
                     "teamB": "Ava Cavataio",
                     "sets": []
                   },
                   {
-                    "teamA": "Marcela Aguila Ampon",
+                    "teamA": "Frances Altick",
                     "teamB": "Circa Luna S",
                     "sets": []
                   },
@@ -814,8 +839,13 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "teamA": "Ashley Griffith",
+                    "teamA": "Gianna Southwick",
                     "teamB": "Naomi Nguyen",
+                    "sets": []
+                  },
+                  {
+                    "teamA": "Keilly Ulery",
+                    "teamB": "Maria Ford",
                     "sets": []
                   },
                   {
