@@ -68,7 +68,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     "slug": "daytona-beach-open-2026-results",
     "publishedDate": "2026-11-16",
-    "updatedDate": "2026-11-16",
+    "updatedDate": "2026-11-17",
     "author": "The PickleHub Team",
     "tags": [
       "pickleball",
