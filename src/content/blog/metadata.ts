@@ -10,6 +10,34 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "daytona-beach-open-2026-womens-singles-wide-open",
+    "publishedDate": "2026-11-18",
+    "updatedDate": "2026-11-18",
+    "author": "The PickleHub Team",
+    "tags": [
+      "daytona beach open",
+      "ppa tour",
+      "womens singles",
+      "kiora kunimoto",
+      "analysis"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/daytona-beach-open-2026-womens-singles-wide-open-hero.webp",
+      "alt": "Women's singles player hitting a forehand at Pictona at Holly Hill, with the official Carvana PPA Pickleball Tour badge"
+    },
+    "titleEn": "Why the Women's Singles Draw at the Daytona Beach Open 2026 Is Wide Open",
+    "titleVi": "Đơn nữ tại Daytona Beach Open 2026 mở toang: cơ hội vàng cho Kunimoto và nhóm hạt giống phía sau",
+    "metaTitleEn": "Daytona 2026 Women's Singles: Why the Draw Is Wide Open",
+    "metaTitleVi": "Đơn Nữ Daytona Beach Open 2026 Mở Toang",
+    "metaDescriptionEn": "Waters, Fahey and Christian are absent from the Daytona Beach Open 2026 women's singles draw. Kunimoto, Buckner, Castillo and Parenteau chase an open title.",
+    "metaDescriptionVi": "Waters, Fahey và Christian vắng mặt ở đơn nữ Daytona Beach Open 2026. Kunimoto, Buckner, Castillo và Parenteau tranh danh hiệu PPA 1.000 điểm."
+  },
+  {
     "slug": "5-cach-dut-diem-pickleball-putaway",
     "publishedDate": "2026-11-14",
     "updatedDate": "2026-11-14",
