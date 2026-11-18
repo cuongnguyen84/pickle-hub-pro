@@ -215,6 +215,25 @@ export function useViBlogPostBySlug(slug: string | undefined) {
   });
 }
 
+/** EN slug → VI slug for each of `enSlugs` with a published VI twin, in one
+ *  request. Feeds the tournament cluster row on ViBlogPost. */
+export function useViBlogTwins(enSlugs: string[]) {
+  return useQuery({
+    queryKey: ["vi-blog-twins", enSlugs],
+    queryFn: async () =>
+      Object.fromEntries(
+        (
+          await viBlogFetch<{ slug: string; alternate_en_slug: string }[]>(
+            `?alternate_en_slug=in.(${enSlugs.map(encodeURIComponent)})&status=eq.published&select=slug,alternate_en_slug`,
+            { publicRequest: true },
+          )
+        ).map((r) => [r.alternate_en_slug, r.slug]),
+      ) as Record<string, string>,
+    enabled: enSlugs.length > 0,
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
 export function useAdminViBlogPosts() {
   return useQuery({
     queryKey: ["vi-blog-posts", "admin"],

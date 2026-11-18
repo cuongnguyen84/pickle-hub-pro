@@ -91,7 +91,7 @@ export function CommentInput({
     (language === "vi" ? "Viết bình luận…" : "Write a comment…");
   const submitCopy =
     submitLabel ?? (language === "vi" ? "Đăng" : "Post");
-  const cancelCopy = language === "vi" ? "Huỷ" : "Cancel";
+  const cancelCopy = language === "vi" ? "Hủy" : "Cancel";
 
   const handleSelect = (username: string) => {
     if (!trigger) return;

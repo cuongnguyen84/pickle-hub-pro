@@ -73,6 +73,11 @@ export interface BlogPostContent {
   metaDescription: string;
   sections: BlogSection[];
   faqItems?: { question: string; answer: string }[];
+  /** Results/schedule posts: 5–8 sentence narrative of the event, paragraphs
+   *  split by "\n\n". Shown after the intro, never instead of the boards.
+   *  Filled from coverage `storylines_en` / `storylines_vi` by
+   *  tournament_results_autopublish.py; absent = no block rendered. */
+  storylines?: string;
   howToSteps?: { name: string; text: string }[];
 }
 

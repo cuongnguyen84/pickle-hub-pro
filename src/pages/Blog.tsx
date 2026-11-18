@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
-import { blogMetadata } from "@/content/blog";
+import { blogTeasers } from "@/content/blog";
 import { usePublishedViBlogPosts } from "@/hooks/useViBlogPosts";
 import { useBlogPostViewCountsBatch, pairKey } from "@/hooks/useBlogPostViewCountsBatch";
 import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
@@ -61,7 +61,7 @@ const Blog = () => {
           href: `/vi/blog/${p.slug}`,
         }));
     }
-    return [...blogMetadata]
+    return [...blogTeasers]
       .sort(byEffectiveDateDesc((m) => m.publishedDate, (m) => m.updatedDate))
       .map((m) => ({
         id: `en-${m.slug}`,

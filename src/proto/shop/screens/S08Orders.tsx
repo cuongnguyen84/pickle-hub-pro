@@ -19,7 +19,7 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
   "dang-xu-ly": "Đang xử lý",
   "dang-giao": "Đang giao",
   "da-giao": "Đã giao",
-  "da-huy": "Đã huỷ",
+  "da-huy": "Đã hủy",
   "tra-hang": "Trả hàng",
   "khieu-nai": "Khiếu nại",
   "da-hoan-tien": "Đã hoàn tiền",

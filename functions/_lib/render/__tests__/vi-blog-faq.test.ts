@@ -38,7 +38,7 @@ const POST = {
 function fakeSupabase(post: unknown): SupabaseClient {
   const chain = (result: unknown) => {
     const api: Record<string, unknown> = {};
-    for (const k of ["select", "eq", "neq", "limit", "order"]) {
+    for (const k of ["select", "eq", "neq", "limit", "order", "in"]) {
       api[k] = () => api;
     }
     api.single = async () => ({ data: post, error: null });
@@ -117,5 +117,23 @@ describe("renderViBlogPost FAQ", () => {
     expect(html).toContain("https://www.facebook.com/thepicklehubnet");
     expect(html).toContain("https://x.com/thepicklehub");
     expect(html).toContain("/android-chrome-512x512.png");
+  });
+});
+
+describe("renderViBlogPost tournament cluster", () => {
+  it("links rankings + tools on a results post and nothing on a plain post", async () => {
+    const results = await renderViBlogPost(
+      fakeSupabase({ ...POST, alternate_en_slug: "pickleball-world-championships-2026-results" }),
+      "ket-qua-pickleball-world-championships-2026",
+      SITE,
+    ).then((r) => r.text());
+    expect(results).toContain('<nav class="tl-rb-chips" aria-label="Theo dõi giải">');
+    expect(results).toContain(`href="${SITE}/vi/rankings"`);
+    expect(results).toContain(`href="${SITE}/vi/tools"`);
+    // The fake returns no VI twins, so no sibling is guessed into a 404.
+    expect(results).not.toContain("/vi/blog/pickleball-world-championships-2026-schedule");
+
+    const plain = await renderViBlogPost(fakeSupabase(POST), "bai-kiem-tra", SITE).then((r) => r.text());
+    expect(plain).not.toContain("Theo dõi giải");
   });
 });

@@ -8,7 +8,27 @@ import SwiftUI
 struct DeepLinkDestinationView: View {
     let link: DeepLink
 
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
+
     var body: some View {
+        content
+            // Sheet này che nút trợ lý của tab bar → gắn nút riêng. Chip native: đóng
+            // sheet rồi để AppTabView điều hướng; trang web thì mở thẳng.
+            .assistantLauncher(page: SiteAssistant.page(for: link), tab: "deeplink", bottomPadding: assistantBottomPadding) { dest in
+                if case .web(let url) = dest { openURL(url); return }
+                AssistantContextStore.shared.pendingRoute = dest
+                dismiss()
+            }
+    }
+
+    // ponytail: luồng Shop có thanh mua/thanh toán ghim đáy → đẩy nút lên trên nó.
+    // Màn khác cuộn được nên 16pt là đủ; cần chính xác hơn thì đo bằng PreferenceKey.
+    private var assistantBottomPadding: CGFloat {
+        SiteAssistant.page(for: link) == "shop" ? 96 : 16
+    }
+
+    private var content: some View {
         NavigationStack {
             switch link {
             case .registration(let token):
@@ -21,6 +41,16 @@ struct DeepLinkDestinationView: View {
                 LivestreamLoaderView(id: id)
             case .proTourEvent(let slug):
                 ProTourEventView(slug: slug)
+            case .blogPost(let slug, let isVietnamese):
+                BlogPostLinkView(slug: slug, isVietnamese: isVietnamese)
+            case .venue(let slug):
+                VenueDetailView(slug: slug, fallbackName: "")
+            case .newsArticle(let slug, let language):
+                NewsDetailView(
+                    news: FeedNews(slug: slug, title: "", summary: "", imageURL: nil, source: nil,
+                                   sourceURL: nil, language: language, aiTranslated: false),
+                    publishedAt: nil
+                )
             case .quickTable(let shareID):
                 QuickTableDetailView(shareID: shareID, fallbackName: "Quick Table")
             case .quickTableScore(let matchID):
@@ -234,6 +264,36 @@ private struct TournamentDashboardDeepLinkView: View {
                 guard $0.type == expected else { return false }
                 return $0.shareID == id || $0.id.uuidString.caseInsensitiveCompare(id) == .orderedSame
             }
+            loaded = true
+        }
+    }
+}
+
+/// `/blog/:slug` → bản VI trong `vi_blog_posts` (slug VI, hoặc bài có
+/// `alternate_en_slug` = slug như web ViBlogPost). Bài EN chưa có bản VI chỉ
+/// tồn tại trên web → mở Safari in-app; slug VI không có → empty state.
+private struct BlogPostLinkView: View {
+    let slug: String
+    let isVietnamese: Bool
+    @State private var viSlug: String?
+    @State private var loaded = false
+
+    var body: some View {
+        Group {
+            if let viSlug {
+                BlogReaderView(slug: viSlug, title: "")
+            } else if !loaded {
+                ProgressView().tint(TLColor.accentText)
+            } else if !isVietnamese {
+                SafariView(url: WebRoutes.base.appending(path: "blog/\(slug)")).ignoresSafeArea()
+            } else {
+                TLEmptyState(icon: "doc.text.magnifyingglass", title: "Không tìm thấy bài viết.")
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(TLColor.bg)
+        .task {
+            viSlug = (try? await HomeRepository().viBlogSlug(matching: slug)) ?? nil
             loaded = true
         }
     }

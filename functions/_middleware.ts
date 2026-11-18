@@ -448,6 +448,12 @@ function applySecurityHeaders(headers: Headers): void {
   }
 }
 
+// AUDIT-02 — exact paths only, locale-correct; no /courts/:slug aliases.
+const COURTS_REDIRECTS: Record<string, string> = {
+  "/courts": "/san",
+  "/vi/courts": "/vi/san",
+};
+
 // SEO audit 2026-05-28 (batch 6) — Response.redirect() ships a fresh
 // Response with only a `location` header. Crawlers that crawl the
 // redirect itself (SEOnaut does — it reports "Missing HSTS",
@@ -577,6 +583,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     );
   }
 
+  // AUDIT-02 (2026-11-10) — /courts and /vi/courts 404'd for Googlebot; the
+  // court hub is /san. Mirrored in public/_redirects (bots never reach it);
+  // locked by src/__tests__/redirect-parity.test.ts.
+  const courtsDest = COURTS_REDIRECTS[url.pathname];
+  if (courtsDest) {
+    return secureRedirect(`https://${url.hostname}${courtsDest}${url.search}`, 301);
+  }
+
   // ─── 1c-bis. 2026-08-25 site audit — retired duplicate /san slugs.
   //
   //       Running scripts/data-fixes/import-alobo-venues.mjs three times on
@@ -638,6 +652,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   //       for either, so a human hard-navigating one got the NotFound page
   //       while bots got a full render. Only the id form is matched, so the
   //       real VI listing pages (/vi/live, /vi/tournaments) are untouched.
+  //
+  //       Intentional until these entities get a real VI render. Their
+  //       sitemaps list only the non-/vi URL with no hreflang — listing the
+  //       /vi twin would advertise a 301 (locked in vi-entity-redirect.test).
   const viOrgMatch = url.pathname.match(
     /^\/vi\/(org|tournament|watch|tran-dau|nguoi-choi|live)\/([^/?#]+)$/,
   );
@@ -919,7 +937,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       // as the bot path.
       let publicCache: PublicPagePartsCache | null = null;
       if (env.PRERENDER_CACHE && url.searchParams.get("nocache") !== "1") {
-        const cacheKey = `pr:v146:human:${url.pathname}`;
+        const cacheKey = `pr:v151:human:${url.pathname}`;
         const ttl = Math.min(pathCacheTtl(pathname), 300);
         publicCache = {
           get: () => env.PRERENDER_CACHE.get(cacheKey),
@@ -1388,7 +1406,20 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v146 (2026-10-28): PPA WPR snapshot on /rankings/ppa-tour moved to
   // fetched-at 2026-10-28 (top 25 and VN highlights). Cached v145 HTML
   // would keep the 2026-10-21 table.
-  const cacheKey = `pr:v146:${url.pathname}`;
+  // v147 (2026-11-02): PPA WPR snapshot fetched-at 2026-11-02. Top 25
+  // points are unchanged; source casing and a handful of VN highlight
+  // ranks moved. Cached v146 HTML would keep the 2026-10-28 names.
+  // v148 (2026-11-05): tournament results/schedule posts (EN + VI) gain the
+  // schedule ↔ results ↔ watch ↔ rankings ↔ tools chip row + storylines.
+  // v149 (2026-11-09): PPA WPR snapshot fetched-at 2026-11-09. Women top 25
+  // moved (Lea Jansen 17→15, Layne Sleeth in at #25); cached v148 HTML would
+  // keep the 2026-11-02 table.
+  // v150 (2026-11-10): AUDIT-01 — <title> budget is 60 characters, not 60
+  // bytes; cached v149 HTML keeps VI titles cut at ~45 chars ("Ho Chi…").
+  // v151 (2026-11-17): PPA WPR snapshot fetched-at 2026-11-17. Men #2/#3
+  // swapped (Tardio ahead of Patriquin) and women top 25 moved; cached
+  // v150 HTML would keep the 2026-11-09 table.
+  const cacheKey = `pr:v151:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

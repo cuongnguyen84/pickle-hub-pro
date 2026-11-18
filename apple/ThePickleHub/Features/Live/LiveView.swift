@@ -93,6 +93,7 @@ struct LiveView: View {
                 .padding(.bottom, 32)
             }
             .background(TLColor.bg)
+            .assistantContext(SiteAssistant.context(live: model.liveStreams, upcoming: model.upcoming, replays: model.replays.count))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarButtons }
             .task {

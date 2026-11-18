@@ -1,10 +1,10 @@
-import { truncateForSeo } from "@/lib/seo-title";
+import { truncateTitleForSeo } from "@/lib/seo-title";
 import { authorIdentity } from "@/content/authors";
 import { useEffect, useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import {
-  blogMetadata,
+  blogTeasers,
   getBlogPost,
   getRelatedPosts,
   type BlogPost as BlogPostType,
@@ -27,6 +27,9 @@ import { AdSlot } from "@/components/monetization/AdSlot";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WorldCupResultsBoard } from "@/components/live/WorldCupResultsBoard";
 import { ResultsHub, ResultsSummary } from "@/components/blog/ResultsBoard";
+import { TournamentClusterLinks } from "@/components/blog/TournamentClusterLinks";
+import { buildTournamentClusterLinks } from "@/content/blog/tournament-cluster";
+import { useAssistantContext } from "@/lib/assistant-context";
 
 /**
  * /blog/:slug — English long-form article page.
@@ -78,7 +81,7 @@ const BlogPost = () => {
     // the post chunk instead of waiting for that chunk to resolve and React
     // to commit the final <img>. Responsive preload attributes keep mobile
     // from downloading the 1600px original.
-    const hero = blogMetadata.find((item) => item.slug === slug)?.heroImage;
+    const hero = blogTeasers.find((item) => item.slug === slug)?.heroImage;
     const responsiveHero = blogHeroSrcSet(hero?.src);
     let heroPreload: HTMLLinkElement | undefined;
     if (hero) {
@@ -107,6 +110,11 @@ const BlogPost = () => {
   const { data: viSlug } = useViBlogAlternate(post?.slug);
   useTrackBlogView("en", post?.slug);
   const { data: viewCount } = useBlogPostViewCount("en", post?.slug);
+  useAssistantContext(post ? {
+    label: post.content.en.title,
+    summary: post.content.en.metaDescription.slice(0, 600),
+    facts: { article: post.content.en.title, published: post.publishedDate, updated: post.updatedDate },
+  } : null);
 
   if (post === null) {
     return (
@@ -137,9 +145,12 @@ const BlogPost = () => {
 
   // EN route always serves English content regardless of i18n context.
   const content = post.content.en;
-  const metaTitle = truncateForSeo(content.metaTitle, 60);
+  const metaTitle = truncateTitleForSeo(content.metaTitle);
   const postUrl = `https://www.thepicklehub.net/blog/${post.slug}`;
   const relatedPosts = getRelatedPosts(post.slug, 3);
+  const clusterLinks = buildTournamentClusterLinks(post.slug, "en", (s) =>
+    blogTeasers.some((p) => p.slug === s) ? `/blog/${s}` : undefined,
+  );
 
   const breadcrumbItems = [
     { name: "Blog", url: "https://www.thepicklehub.net/blog" },
@@ -297,6 +308,7 @@ const BlogPost = () => {
           })()}
 
           <AdSlot slot="blogInArticle" minHeight={120} className="my-6" />
+          <TournamentClusterLinks links={clusterLinks} label="Tournament coverage" />
           <div className="tl-longform">
             {content.sections.map((section, idx) => {
               // Results posts: every resultsBoard section is rendered by one
@@ -402,7 +414,15 @@ const BlogPost = () => {
                 )}
               </section>
               );
-            })}
+            }).flatMap((node, idx) =>
+              // Storylines sit right after the intro, before the boards.
+              idx || !content.storylines?.trim() ? node : [node, (
+                <section key="storylines">
+                  <h2>Storylines</h2>
+                  {content.storylines.split("\n\n").map((p, i) => p.trim() && <p key={i}>{p.trim()}</p>)}
+                </section>
+              )],
+            )}
 
             {content.howToSteps && content.howToSteps.length > 0 && (
               <section>

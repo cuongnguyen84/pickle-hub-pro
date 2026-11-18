@@ -148,10 +148,10 @@ export default function AdminEmbeds() {
     },
     onSuccess: () => {
       invalidate();
-      toast.success("Đã xoá");
+      toast.success("Đã xóa");
     },
     onError: (e: Error) => {
-      toast.error("Không xoá được", { description: e.message });
+      toast.error("Không xóa được", { description: e.message });
     },
   });
 
@@ -217,10 +217,10 @@ export default function AdminEmbeds() {
     },
     onSuccess: () => {
       invalidateSources();
-      toast.success("Đã xoá nguồn");
+      toast.success("Đã xóa nguồn");
     },
     onError: (e: Error) => {
-      toast.error("Không xoá được", { description: e.message });
+      toast.error("Không xóa được", { description: e.message });
     },
   });
 
@@ -340,7 +340,7 @@ export default function AdminEmbeds() {
                       <Button
                         size="sm"
                         variant="outline"
-                        aria-label={`Xoá nguồn @${s.username}`}
+                        aria-label={`Xóa nguồn @${s.username}`}
                         disabled={removeSource.isPending}
                         onClick={() => setDeletingSourceId(s.id)}
                       >
@@ -429,7 +429,7 @@ export default function AdminEmbeds() {
                       <Button
                         size="sm"
                         variant="outline"
-                        aria-label="Xoá reel"
+                        aria-label="Xóa reel"
                         disabled={remove.isPending}
                         onClick={() => setDeletingEmbedId(row.id)}
                       >
@@ -451,9 +451,9 @@ export default function AdminEmbeds() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xoá reel này?</AlertDialogTitle>
+            <AlertDialogTitle>Xóa reel này?</AlertDialogTitle>
             <AlertDialogDescription>
-              Reel sẽ bị xoá vĩnh viễn khỏi feed. Không thể hoàn tác.
+              Reel sẽ bị xóa vĩnh viễn khỏi feed. Không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -465,7 +465,7 @@ export default function AdminEmbeds() {
                 setDeletingEmbedId(null);
               }}
             >
-              Xoá
+              Xóa
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -478,10 +478,10 @@ export default function AdminEmbeds() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xoá nguồn tự động này?</AlertDialogTitle>
+            <AlertDialogTitle>Xóa nguồn tự động này?</AlertDialogTitle>
             <AlertDialogDescription>
               Cron sẽ ngừng quét reel mới từ tài khoản này. Reel đã thêm không
-              bị xoá.
+              bị xóa.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -493,7 +493,7 @@ export default function AdminEmbeds() {
                 setDeletingSourceId(null);
               }}
             >
-              Xoá
+              Xóa
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

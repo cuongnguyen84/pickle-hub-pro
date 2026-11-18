@@ -233,7 +233,7 @@ const PpaRankings = () => {
               {hasQuery && (
                 <button
                   type="button"
-                  aria-label={vi ? "Xoá tìm kiếm" : "Clear search"}
+                  aria-label={vi ? "Xóa tìm kiếm" : "Clear search"}
                   onClick={() => {
                     setQuery("");
                     inputRef.current?.focus();

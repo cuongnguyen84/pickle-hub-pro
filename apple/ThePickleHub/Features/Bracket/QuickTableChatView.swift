@@ -129,6 +129,7 @@ final class QuickTableChatViewModel {
         case timeNow, timeLater, timeValue(String)
         case sets(Int)
         case optionsDone
+        case confirmName
         case retry
         case classicForm
     }
@@ -207,6 +208,9 @@ final class QuickTableChatViewModel {
         case .format:
             return String(localized: "Đánh đôi hay đánh đơn? Đôi là 2 người một đội, đơn là từng vận động viên.")
         case .count:
+            if let n = QTChatEngine.pendingDoublesHeadcount(d) {
+                return QTChatEngine.headcountAsk(n, lang: lang)
+            }
             return String(localized: "Có bao nhiêu \(unit)? Hoặc dán luôn danh sách vào đây.")
         case .tooMany:
             return String(localized: "Chat hiện tạo được tối đa \(QTChatEngine.maxChatEntries) \(unit). Giải \(n) \(unit) nên dùng thể thức playoff lớn trong form thường.")
@@ -229,6 +233,9 @@ final class QuickTableChatViewModel {
         case .paste:
             return String(localized: "Dán danh sách vào đây nhé — mỗi dòng 1 \(unit)\(d.isDoubles == false ? "" : ", kiểu “Nam - Hùng”").")
         case .name:
+            if d.nameNeedsConfirm == true, let name = d.name, !name.trimmingCharacters(in: .whitespaces).isEmpty {
+                return QTChatEngine.nameConfirmAsk(name, fromImage: d.nameFromImage == true, lang: lang)
+            }
             return String(localized: "Đặt tên giải là gì?")
         case .courts:
             return String(localized: "Có bao nhiêu sân thi đấu? Mình sẽ tự xếp sân và giờ cho từng trận.")
@@ -248,16 +255,17 @@ final class QuickTableChatViewModel {
     }
 
     private func advance(_ next: QTChatDraft, ack: String?) {
-        let locked = QTChatEngine.lockAdvance(next)
+        let locked = QTChatEngine.clarifyDoublesCount(QTChatEngine.lockAdvance(next))
         draft = locked
         failedText = nil
         failedAttachments = nil
         let q = question(for: QTChatEngine.nextSlot(locked))
         let unchangedText = QTChatEngine.unchangedReply(lang)
         let unchanged = (ack ?? "").isEmpty || ack == unchangedText
-        var text = [ack?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "", q]
-            .filter { !$0.isEmpty }
-            .joined(separator: " ")
+        let lead = ack?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        var text = (!lead.isEmpty && !q.isEmpty && lead.contains(q))
+            ? lead
+            : [lead, q].filter { !$0.isEmpty }.joined(separator: " ")
         while text.contains(". .") { text = text.replacingOccurrences(of: ". .", with: ".") }
         if !q.isEmpty, unchanged,
            let lastBot = messages.last(where: { $0.role == "bot" })?.text, lastBot.contains(q) {
@@ -347,6 +355,35 @@ final class QuickTableChatViewModel {
                 advance(spoken, ack: QTChatEngine.factualAck(before: draft, after: spoken, lang: lang, request: text))
                 return
             }
+            if slot == .name {
+                if draft.nameNeedsConfirm == true, let current = draft.name, !current.isEmpty,
+                   QTChatEngine.affirmsDraftName(text) {
+                    var next = draft
+                    next.nameNeedsConfirm = false
+                    next.nameFromImage = false
+                    advance(next, ack: nil)
+                    return
+                }
+                if draft.nameNeedsConfirm == true, let typed = QTChatEngine.typedTournamentName(text) {
+                    var patch = QTChatPatch()
+                    patch.name = typed
+                    patch.nameVerbatim = true
+                    patch.clearNameConfirm = true
+                    let next = QTChatEngine.applyPatch(draft, patch)
+                    advance(next, ack: QTChatEngine.factualAck(before: draft, after: next, lang: lang, request: text))
+                    return
+                }
+                if let named = QTChatEngine.nameAnswer(text) {
+                    var patch = QTChatPatch()
+                    patch.name = named.name
+                    if named.needsConfirm { patch.nameNeedsConfirm = true }
+                    patch.clearNameConfirm = !named.needsConfirm
+                    patch.nameFromImage = false
+                    let next = QTChatEngine.applyPatch(draft, patch)
+                    advance(next, ack: QTChatEngine.factualAck(before: draft, after: next, lang: lang, request: text))
+                    return
+                }
+            }
         }
         await callModel(text: text)
     }
@@ -378,7 +415,11 @@ final class QuickTableChatViewModel {
                 QTChatPatch.fromModelJSON(trusted), text, draft.entries)
             let patched = QTChatEngine.applyPatch(draft, patch)
             let spoken = QTChatEngine.applySpokenEdit(patched, text)
-            let next = spoken ?? patched
+            var next = spoken ?? patched
+            if attachment != nil || !(attachments ?? []).isEmpty, let name = next.name, name != draft.name {
+                next.nameFromImage = true
+                next.nameNeedsConfirm = true
+            }
             var ack = QTChatEngine.replyFromDraft(before: draft, after: next, llmReply: said, lang: lang, request: text)
             // Vừa đổi cỡ nhánh → nói rõ cỡ mới (như web).
             if next.advancePerGroup == nil,
@@ -411,6 +452,11 @@ final class QuickTableChatViewModel {
                 Chip(label: String(localized: "Đơn"), sub: nil, action: .singles),
             ]
         case .count:
+            if let n = QTChatEngine.pendingDoublesHeadcount(d) {
+                return QTChatEngine.headcountChoices(n, lang: lang).map {
+                    Chip(label: $0.label, sub: nil, action: .count($0.teams))
+                }
+            }
             return [8, 12, 16, 24, 32].map { Chip(label: "\($0)", sub: nil, action: .count($0)) }
         case .tooMany:
             return [
@@ -461,6 +507,10 @@ final class QuickTableChatViewModel {
         case .paste:
             return []
         case .name:
+            if d.nameNeedsConfirm == true, let name = d.name, !name.trimmingCharacters(in: .whitespaces).isEmpty {
+                let label = lang == "en" ? "Yes, “\(name)”" : "Đúng, “\(name)”"
+                return [Chip(label: label, sub: nil, action: .confirmName)]
+            }
             return []
         case .courts:
             return [2, 4, 6, 8].map { Chip(label: String(localized: "\($0) sân"), sub: nil, action: .courts($0)) }
@@ -510,8 +560,22 @@ final class QuickTableChatViewModel {
         case .doubles: d.isDoubles = true
         case .singles: d.isDoubles = false; d.pairingDone = false
         case .count(let k):
-            if k == 0 { d.playerCount = nil; d.entries = nil; d.rosterMode = nil }
-            else { d.playerCount = k }
+            if k == 0 {
+                d.playerCount = nil; d.entries = nil; d.rosterMode = nil
+                d.headcountPending = nil; d.countUnit = nil
+            } else {
+                let pending = QTChatEngine.pendingDoublesHeadcount(draft)
+                d.playerCount = k
+                d.countUnit = draft.isDoubles == false ? "players" : "teams"
+                d.headcountPending = nil
+                if let pending, k != pending {
+                    advance(d, ack: QTChatEngine.headcountResolvedNote(teams: k, people: pending, lang: lang))
+                    return
+                }
+            }
+        case .confirmName:
+            d.nameNeedsConfirm = false
+            d.nameFromImage = false
         case .pairing(let mode):
             if let entries = d.entries {
                 let paired = QTChatEngine.pairEntries(entries, mode: mode)

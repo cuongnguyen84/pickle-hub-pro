@@ -296,11 +296,11 @@ const FlexTournamentView = () => {
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>
-                          {language === 'vi' ? 'Xoá giải đấu?' : 'Delete tournament?'}
+                          {language === 'vi' ? 'Xóa giải đấu?' : 'Delete tournament?'}
                         </AlertDialogTitle>
                         <AlertDialogDescription>
                           {language === 'vi'
-                            ? 'Hành động này không thể hoàn tác. Tất cả dữ liệu sẽ bị xoá vĩnh viễn.'
+                            ? 'Hành động này không thể hoàn tác. Tất cả dữ liệu sẽ bị xóa vĩnh viễn.'
                             : 'This action cannot be undone. All data will be permanently deleted.'}
                         </AlertDialogDescription>
                       </AlertDialogHeader>

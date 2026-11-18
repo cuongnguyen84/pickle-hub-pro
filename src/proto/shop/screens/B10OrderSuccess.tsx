@@ -111,7 +111,7 @@ export default function B10OrderSuccess() {
               <Clock size={16} aria-hidden="true" />
               <div>
                 Ghi <strong>đúng nội dung {order.code}</strong>, nếu không quản trị viên sẽ
-                không ghép được khoản tiền với đơn. Đơn tự huỷ sau 48 giờ nếu chưa thấy tiền
+                không ghép được khoản tiền với đơn. Đơn tự hủy sau 48 giờ nếu chưa thấy tiền
                 về — anh/chị không mất gì, chỉ phải đặt lại.
               </div>
             </div>

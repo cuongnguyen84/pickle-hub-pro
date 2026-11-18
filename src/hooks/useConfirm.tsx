@@ -70,7 +70,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => settle(false)}>
-              {opts.cancelText ?? (language === "vi" ? "Huỷ" : "Cancel")}
+              {opts.cancelText ?? (language === "vi" ? "Hủy" : "Cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => settle(true)}

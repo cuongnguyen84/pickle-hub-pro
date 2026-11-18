@@ -497,7 +497,7 @@ export function ProxyRegistrationModal({
                 <p>
                   {"⚠️ "}
                   {language === "vi"
-                    ? `Slot sẽ tự động bị huỷ nếu không chuyển khoản trong ${prepaymentDeadlineHours ?? 12} giờ.`
+                    ? `Slot sẽ tự động bị hủy nếu không chuyển khoản trong ${prepaymentDeadlineHours ?? 12} giờ.`
                     : `Slots will be auto-cancelled if not paid within ${prepaymentDeadlineHours ?? 12} hours.`}
                 </p>
               </div>
@@ -554,7 +554,7 @@ export function ProxyRegistrationModal({
                         type="button"
                         onClick={() => removeEntry(entry.id)}
                         className="rounded-md p-1 text-muted-foreground hover:text-destructive"
-                        aria-label={language === "vi" ? "Xoá người" : "Remove player"}
+                        aria-label={language === "vi" ? "Xóa người" : "Remove player"}
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>

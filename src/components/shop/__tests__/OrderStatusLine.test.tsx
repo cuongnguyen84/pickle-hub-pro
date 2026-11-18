@@ -20,7 +20,7 @@ import { ORDER_STATUSES } from "@/lib/shop/orderState";
 afterEach(cleanup);
 
 /** What the buyer is told to do, or told they need not do. A chip has none. */
-const ACTIONABLE = /Chưa cần làm gì|bấm “Tôi đã nhận hàng”|liên hệ shop|huỷ được ngay/;
+const ACTIONABLE = /Chưa cần làm gì|bấm “Tôi đã nhận hàng”|liên hệ shop|hủy được ngay/;
 
 describe("the four live states each answer “do I have to do anything”", () => {
   const live = ["pending", "confirmed", "shipped", "delivered"] as const;
@@ -79,14 +79,14 @@ describe("a cancelled order names who cancelled it", () => {
         cancelledAt="2026-08-18T10:30:00"
       />,
     );
-    expect(screen.getByText("Shop A đã huỷ đơn này")).toBeTruthy();
+    expect(screen.getByText("Shop A đã hủy đơn này")).toBeTruthy();
     expect(document.body.textContent).toContain("lúc 18/08 10:30");
     expect(document.body.textContent).toContain("Lý do shop ghi: “Hết hàng, shop xin lỗi”.");
   });
 
   it("the buyer themselves — and does NOT invent a reason they never gave", () => {
     render(<OrderStatusLine status="cancelled" cancelledBy="buyer" cancelledAt={null} />);
-    expect(screen.getByText("Anh/chị đã huỷ đơn này")).toBeTruthy();
+    expect(screen.getByText("Anh/chị đã hủy đơn này")).toBeTruthy();
     expect(document.body.textContent).not.toContain("Lý do");
     // No timestamp means no dangling "lúc" and no "—" standing in for one.
     expect(document.body.textContent).not.toContain("lúc");
@@ -95,19 +95,19 @@ describe("a cancelled order names who cancelled it", () => {
 
   it("an admin, said plainly rather than as “hệ thống”", () => {
     render(<OrderStatusLine status="cancelled" cancelledBy="admin" shopName="Shop A" />);
-    expect(screen.getByText("Quản trị viên ThePickleHub đã huỷ đơn này")).toBeTruthy();
+    expect(screen.getByText("Quản trị viên ThePickleHub đã hủy đơn này")).toBeTruthy();
     expect(document.body.textContent).not.toContain("Shop A");
   });
 
   it("flips the wording on the seller's side: the BUYER cancelled, not “anh/chị”", () => {
     render(<OrderStatusLine status="cancelled" side="seller" cancelledBy={null} />);
-    expect(screen.getByText("Người mua đã huỷ đơn này")).toBeTruthy();
-    expect(document.body.textContent).not.toContain("Anh/chị đã huỷ");
+    expect(screen.getByText("Người mua đã hủy đơn này")).toBeTruthy();
+    expect(document.body.textContent).not.toContain("Anh/chị đã hủy");
   });
 
   it("falls back to “Người bán” when the seller cancelled and the shop name is missing", () => {
     render(<OrderStatusLine status="cancelled" cancelledBy="seller" shopName={null} />);
-    expect(screen.getByText("Người bán đã huỷ đơn này")).toBeTruthy();
+    expect(screen.getByText("Người bán đã hủy đơn này")).toBeTruthy();
   });
 
   it("is a warning block, not the same quiet line as the other four", () => {

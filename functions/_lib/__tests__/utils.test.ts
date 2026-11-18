@@ -137,34 +137,32 @@ describe("normalizeImageUrl", () => {
 });
 
 // ─── buildTitle byte budget ────────────────────────────────
-// buildHtml truncates the final <title> at 60 UTF-8 bytes. buildTitle used to
-// decide whether " | ThePickleHub" fits by counting CHARACTERS, so Vietnamese
-// titles got a suffix they had no room for and prod served an ellipsised
-// title (measured 2026-07-26 on /vi/blog/the-thuc-mlp-la-gi).
-describe("buildTitle byte budget", () => {
-  const bytes = (s: string) => new TextEncoder().encode(s).length;
+// buildHtml truncates the final <title> at 60 CHARACTERS (AUDIT-01,
+// 2026-11-10 — it was 60 UTF-8 bytes, which cut VI titles at ~40-50 chars).
+// buildTitle must use the same unit, or it appends " | ThePickleHub" to a
+// title with no room for it and prod serves a cut brand.
+describe("buildTitle character budget", () => {
+  const chars = (s: string) => Array.from(s).length;
 
-  it("appends the brand suffix when the total still fits 60 bytes", () => {
+  it("appends the brand suffix when the total still fits 60 chars", () => {
     const t = buildTitle("How to Play Pickleball | 7-Day Beginner Plan");
     expect(t.endsWith(" | ThePickleHub")).toBe(true);
-    expect(bytes(t)).toBeLessThanOrEqual(60);
+    expect(chars(t)).toBeLessThanOrEqual(60);
   });
 
-  it("skips the suffix for a Vietnamese title that fits in chars but not bytes", () => {
+  it("appends the suffix to a Vietnamese title that fits in chars", () => {
     const raw = "Thể thức MLP Pickleball | Luật đồng đội"; // 39 chars, 51 bytes
-    expect(raw.length + " | ThePickleHub".length).toBeLessThanOrEqual(60); // would have passed the old check
-    const t = buildTitle(raw);
-    expect(t).toBe(raw);
-    expect(bytes(t)).toBeLessThanOrEqual(60);
+    expect(buildTitle(raw)).toBe(raw + " | ThePickleHub");
   });
 
-  it("never returns more than 60 bytes for a title that already fits", () => {
+  it("never returns more than 60 chars", () => {
     for (const raw of [
       "MLP Format Explained 2026 | Major League Pickleball Rules",
       "Luật Pickleball 2026 | Hướng dẫn đầy đủ",
       "Cách tạo Bracket Pickleball | Kích thước & Mẫu 2026",
+      "APP Asia Tour lần đầu đến Việt Nam: Ho Chi Minh City Open khởi tranh 10–13/12",
     ]) {
-      expect(bytes(buildTitle(raw))).toBeLessThanOrEqual(60);
+      expect(chars(buildTitle(raw))).toBeLessThanOrEqual(60);
     }
   });
 });

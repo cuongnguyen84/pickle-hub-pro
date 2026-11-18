@@ -159,7 +159,7 @@ describe.each(LANGUAGES)("Privacy Shop copy in $name says what the implementatio
   it("describes deletion only as far as the foreign keys go", () => {
     // Application + acceptance CASCADE. Orders keep their recipient snapshot
     // but lose the buyer_user_id link. A shop OWNER cannot delete the account.
-    expect(shop.retention).toMatch(/xoá cùng tài khoản|deleted with your account/i);
+    expect(shop.retention).toMatch(/xóa cùng tài khoản|deleted with your account/i);
     expect(shop.retention).toMatch(/liên kết tới tài khoản được gỡ|account link is removed/i);
     expect(shop.retention).toMatch(/thông tin giao nhận|delivery details/i);
     expect(shop.retention).toMatch(

@@ -25,7 +25,7 @@ struct DeepLinkTests {
         #expect(parse("https://www.thepicklehub.net/dang-ky/khong-phai-uuid") == nil)   // token không phải UUID
         #expect(parse("https://evil.com/dang-ky/0a1b2c3d-0000-1111-2222-333344445555") == nil) // host lạ
         #expect(parse("https://www.thepicklehub.net/social/x/danh-sach") == nil)        // sub-path organizer
-        #expect(parse("https://www.thepicklehub.net/blog/abc") == nil)                  // route không hỗ trợ
+        #expect(parse("https://www.thepicklehub.net/videos/abc") == nil)                // route không hỗ trợ
         // URL Google Sign-In không được nuốt (để GIDSignIn xử lý).
         #expect(parse("com.googleusercontent.apps.574564887581-qhno3m28725a9c0c91tl2qp71fdv0lli://oauth") == nil)
     }
@@ -69,6 +69,33 @@ struct DeepLinkTests {
         // AASA nhận toàn bộ /tools/*: route organizer chưa map cụ thể vẫn phải
         // vào được hub native thay vì hiện sheet trống.
         #expect(parse("https://www.thepicklehub.net/tools/a-future-route") == .toolsHub)
+    }
+
+    @Test func blogLinksKeepLanguage() {
+        #expect(parse("https://www.thepicklehub.net/blog/pickleball-rules") ==
+            .blogPost(slug: "pickleball-rules", isVietnamese: false))
+        #expect(parse("https://thepicklehub.net/vi/blog/luat-pickleball") ==
+            .blogPost(slug: "luat-pickleball", isVietnamese: true))
+        #expect(parse("thepicklehub://blog/pickleball-rules") ==
+            .blogPost(slug: "pickleball-rules", isVietnamese: false))
+        #expect(parse("https://www.thepicklehub.net/blog") == nil)              // trang danh sách
+        #expect(parse("https://www.thepicklehub.net/blog/a/b") == nil)
+    }
+
+    @Test func venueLinksOpenCourtDetail() {
+        #expect(parse("https://www.thepicklehub.net/san/san-pickleball-ha-dong") == .venue(slug: "san-pickleball-ha-dong"))
+        #expect(parse("https://www.thepicklehub.net/vi/san/san-pickleball-ha-dong") == .venue(slug: "san-pickleball-ha-dong"))
+        #expect(parse("https://www.thepicklehub.net/san/them") == nil)          // form thêm sân
+        #expect(parse("https://www.thepicklehub.net/san/khu-vuc/ha-noi") == nil) // hub thành phố
+        #expect(parse("https://www.thepicklehub.net/san") == nil)
+    }
+
+    @Test func newsLinksCarryLanguage() {
+        #expect(parse("https://www.thepicklehub.net/news/ppa-finals-recap") ==
+            .newsArticle(slug: "ppa-finals-recap", language: "en"))
+        #expect(parse("https://www.thepicklehub.net/vi/news/ppa-finals-recap-vi") ==
+            .newsArticle(slug: "ppa-finals-recap-vi", language: "vi"))
+        #expect(parse("https://www.thepicklehub.net/news") == nil)
     }
 
     @Test func remotePushRoutesSupportedPayloads() {

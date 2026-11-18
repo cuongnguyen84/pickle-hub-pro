@@ -26,7 +26,7 @@ const WHAT: Record<OrderAction | "create", string> = {
   confirm: "Người bán đã xác nhận đơn",
   ship: "Người bán đã gửi hàng",
   deliver: "Đã ghi nhận nhận được hàng",
-  cancel: "Đơn đã huỷ",
+  cancel: "Đơn đã hủy",
 };
 
 const actorKind = (e: OrderTimelineEvent): string => {

@@ -18,6 +18,12 @@ enum DeepLink: Identifiable, Equatable {
     case livestream(id: UUID)
     /// `/live/pro/:slug` — kết quả một giải chuyên nghiệp.
     case proTourEvent(slug: String)
+    /// `/blog/:slug` (EN) và `/vi/blog/:slug` — reader native đọc `vi_blog_posts`.
+    case blogPost(slug: String, isVietnamese: Bool)
+    /// `/san/:slug` — chi tiết sân.
+    case venue(slug: String)
+    /// `/news/:slug` (language "en") và `/vi/news/:slug` ("vi").
+    case newsArticle(slug: String, language: String)
     case quickTable(shareID: String)
     case quickTableScore(matchID: UUID)
     case parentTournament(shareID: String)
@@ -47,6 +53,9 @@ enum DeepLink: Identifiable, Equatable {
         case .socialEvent(let s): "social/\(s)"
         case .livestream(let i): "live/\(i.uuidString)"
         case .proTourEvent(let slug): "live/pro/\(slug)"
+        case .blogPost(let slug, let vi): "\(vi ? "vi/" : "")blog/\(slug)"
+        case .venue(let slug): "san/\(slug)"
+        case .newsArticle(let slug, let language): "\(language == "vi" ? "vi/" : "")news/\(slug)"
         case .quickTable(let shareID): "tools/quick-tables/\(shareID)"
         case .quickTableScore(let matchID): "tools/quick-tables/referee/\(matchID.uuidString)"
         case .parentTournament(let shareID): "tools/quick-tables/parent/\(shareID)"
@@ -87,8 +96,9 @@ enum DeepLink: Identifiable, Equatable {
         } else {
             return nil
         }
-        // Bỏ prefix /vi
-        if segments.first == "vi" { segments.removeFirst() }
+        // Bỏ prefix /vi (blog/news cần biết ngôn ngữ nên giữ lại cờ)
+        let isVietnamese = segments.first == "vi"
+        if isVietnamese { segments.removeFirst() }
 
         if segments.first == "shop" { return parseShop(segments, url: url) }
 
@@ -108,6 +118,12 @@ enum DeepLink: Identifiable, Equatable {
         case ("live", 3) where segments[1] == "pro":
             guard !segments[2].isEmpty else { return nil }
             return .proTourEvent(slug: segments[2])
+        case ("blog", 2):
+            return .blogPost(slug: segments[1], isVietnamese: isVietnamese)
+        case ("san", 2) where segments[1] != "them":
+            return .venue(slug: segments[1])
+        case ("news", 2):
+            return .newsArticle(slug: segments[1], language: isVietnamese ? "vi" : "en")
         default:
             return parseTools(segments)
         }

@@ -121,7 +121,7 @@ export default function AdminAuditLog() {
           {(eventCategory || severity || dateFrom || dateTo) && (
             <Button variant="ghost" size="sm" onClick={resetFilters}>
               <Filter className="w-4 h-4 mr-1" />
-              Xoá bộ lọc
+              Xóa bộ lọc
             </Button>
           )}
         </div>

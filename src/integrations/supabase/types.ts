@@ -8973,6 +8973,7 @@ export type Database = {
           name: string
           name_vi: string | null
           num_courts: number | null
+          opening_expected: string | null
           phone: string | null
           price_max_vnd: number | null
           price_min_vnd: number | null
@@ -8981,6 +8982,7 @@ export type Database = {
           review_avg: number | null
           review_count: number
           slug: string
+          status: string
           surface_type: string | null
           updated_at: string | null
           website: string | null
@@ -9008,6 +9010,7 @@ export type Database = {
           name: string
           name_vi?: string | null
           num_courts?: number | null
+          opening_expected?: string | null
           phone?: string | null
           price_max_vnd?: number | null
           price_min_vnd?: number | null
@@ -9016,6 +9019,7 @@ export type Database = {
           review_avg?: number | null
           review_count?: number
           slug: string
+          status?: string
           surface_type?: string | null
           updated_at?: string | null
           website?: string | null
@@ -9043,6 +9047,7 @@ export type Database = {
           name?: string
           name_vi?: string | null
           num_courts?: number | null
+          opening_expected?: string | null
           phone?: string | null
           price_max_vnd?: number | null
           price_min_vnd?: number | null
@@ -9051,6 +9056,7 @@ export type Database = {
           review_avg?: number | null
           review_count?: number
           slug?: string
+          status?: string
           surface_type?: string | null
           updated_at?: string | null
           website?: string | null

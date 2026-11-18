@@ -28,7 +28,7 @@ describe("Button DS-03 variants", () => {
   });
 
   it("outline keeps transparent + border — .tl-btn base maps here", () => {
-    render(<Button variant="outline">Huỷ</Button>);
+    render(<Button variant="outline">Hủy</Button>);
     const cls = screen.getByRole("button").className;
     expect(cls).toContain("border");
     expect(cls).toContain("bg-background");

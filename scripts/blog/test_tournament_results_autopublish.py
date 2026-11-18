@@ -84,6 +84,31 @@ class TournamentAutopublishTests(unittest.TestCase):
         self.assertNotIn("2026 2026", str(pkg))
         self.assertIn("07:00 Vietnam time", pkg["en"]["sections"][0]["content"])  # 00:00 UTC
 
+    def test_storylines_ride_through_only_when_set_and_faq_names_results(self):
+        event = {"name": "Test Open", "dates_en": "October 1–3, 2026", "dates_vi": "1–3/10/2026",
+                 "source": "/official", "slug": "test-open-results", "vi_slug": "ket-qua-test-open"}
+        now = datetime(2026, 10, 1, tzinfo=timezone.utc)
+        final = feed("final"); final["matches"][0]["roundLabel"] = "Final"
+        pkg = autopublish.package({**event, "storylines_en": "  "}, final, now)
+        self.assertNotIn("storylines", pkg["en"])
+        self.assertNotIn("storylines", pkg["vi"])
+        obj = autopublish.w._post_obj(pkg, "2026-10-01")
+        self.assertNotIn("storylines", obj["content"]["en"])
+        self.assertNotIn("Diễn biến", autopublish.w.vi_html(pkg["vi"]))
+        # FAQ: results/scores wording + champion answered from the feed.
+        q_en = [f["question"] for f in pkg["en"]["faqItems"]]
+        self.assertTrue(any("results and scores" in q for q in q_en))
+        self.assertIn("Men's Singles: A", pkg["en"]["faqItems"][1]["answer"])
+        self.assertTrue(any("Kết quả và tỷ số" in f["question"] for f in pkg["vi"]["faqItems"]))
+        pkg = autopublish.package({**event, "storylines_en": "One.\n\nTwo.", "storylines_vi": "Một."}, feed(), now)
+        self.assertEqual(pkg["en"]["storylines"], "One.\n\nTwo.")
+        self.assertIn("champion", pkg["en"]["faqItems"][1]["answer"])  # none confirmed yet
+        obj = autopublish.w._post_obj(pkg, "2026-10-01")
+        self.assertEqual(obj["content"]["vi"]["storylines"], "Một.")
+        html = autopublish.w.vi_html(pkg["vi"])
+        # Right after the intro section, before the first board.
+        self.assertLess(html.index("Diễn biến đáng chú ý"), html.index('id="rb-'))
+
     def test_generated_seo_strings_stay_within_byte_budgets(self):
         # Regression 2026-10-24: the long search name "PPA World Championships"
         # produced a 63-byte metaTitleEn and turned main CI red
@@ -130,6 +155,43 @@ class TournamentAutopublishTests(unittest.TestCase):
         board = autopublish._board(rows, "Đôi nữ", vi=True)
         self.assertEqual(board["champion"], "Champ")
         self.assertEqual([r["label"] for r in board["rounds"]], ["Chung kết", "Bán kết"])
+
+    def test_qualifying_day_draw_is_separated_from_main_draw(self):
+        # Worlds 2026: the feed shipped the 2/11 qualifier under "Men's Singles"
+        # with main-draw labels next to nothing else; the page called it main R16.
+        qual = dict(self._final("Round 16", 4), dateKey="2026-11-02", division="Men's Singles")
+        main = dict(self._final("Round 64", 2), dateKey="2026-11-03", division="Men's Singles")
+        rows = autopublish.mark_qualifying([qual, main], {"qualifying_dates": ["2026-11-02"]})
+        self.assertEqual([r["dateKey"] for r in rows], ["2026-11-03", "2026-11-02"])
+        en = autopublish.draw_sections(rows)
+        self.assertEqual([s["heading"] for s in en], ["Men's Singles results", "Men's Singles Qualifying results"])
+        self.assertEqual(en[0]["resultsBoard"]["rounds"][0]["label"], "Round 64")
+        self.assertEqual(en[1]["resultsBoard"]["rounds"][0]["label"], "Qualifying · Round 16")
+        vi = autopublish.draw_sections(rows, vi=True)
+        self.assertEqual(vi[1]["heading"], "Kết quả Đơn nam – vòng loại")
+        self.assertEqual(vi[1]["resultsBoard"]["rounds"][0]["label"], "Vòng loại · Vòng 16")
+        self.assertEqual(autopublish.draw_summaries(rows, vi=True)[1]["anchor"], "rb-don-nam-vong-loai")
+        # No qualifying_dates configured: feed passes through untouched.
+        self.assertEqual(autopublish.mark_qualifying([qual], {}), [qual])
+
+    def test_challenger_divisions_never_reach_the_pro_page(self):
+        # Worlds 2026: "PPA CHALLENGER SHOWDOWN: …" shares the pro feed and
+        # its scheduled matches filled "Live and upcoming".
+        event = {"name": "Test Open", "dates_en": "October 1–3, 2026", "dates_vi": "1–3/10/2026",
+                 "venue": "Test venue", "source": "/official", "slug": "test-open-results",
+                 "vi_slug": "ket-qua-test-open", "tags": ["test", "results", "2026"]}
+        data = feed("final")
+        for status in ("scheduled", "final"):
+            m = copy.deepcopy(feed(status)["matches"][0])
+            m["division"] = "PPA CHALLENGER SHOWDOWN: Women's Doubles"
+            m["teams"][0]["players"] = ["Challenger"]
+            data["matches"].append(m)
+        pkg = autopublish.package(event, data, datetime(2026, 10, 1, tzinfo=timezone.utc))
+        self.assertNotIn("challenger", json.dumps(pkg).lower())
+        self.assertIn("The feed currently contains 1 matches", pkg["en"]["sections"][0]["content"])
+        # Guard counts pro finals only: a Challenger-only final needs no board.
+        only = {"matches": data["matches"][1:]}
+        autopublish._assert_results_boards({"en": {"sections": []}, "vi": {"sections": []}}, only)
 
     def test_anchor_slug_matches_renderer_rule(self):
         self.assertEqual(autopublish._anchor("Women's Doubles"), "rb-womens-doubles")
@@ -463,6 +525,32 @@ class ReexecPublishTests(unittest.TestCase):
         self.assertEqual(result["status"], "published")
         self.assertEqual(result["pipeline"], "newfp")
         self.assertTrue(result["reexec"])
+
+    def test_publish_event_uses_coverage_from_the_publish_worktree(self):
+        # 5/11/2026: the supervisor's install-time JSON lacked #997's
+        # qualifying_dates, so the delegated child generated without them.
+        seen = {}
+        def fake_delegate(root, event, now, push):
+            seen["event"] = event
+            return {"status": "published"}
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "scripts/ops").mkdir(parents=True)
+            (root / "scripts/ops/team_tournament_coverage.json").write_text(json.dumps({"events": [
+                {"key": "other", "qualifying_dates": ["x"]},
+                {"key": "test-open-2026", "qualifying_dates": ["2026-11-02"]}]}))
+            self._patch(
+                fetch=lambda url, eid: (feed("final"), "feed-fp"),
+                should_publish=lambda event, fp: True,
+                _prepare_publish_worktree=lambda push: root,
+                _should_delegate_publish=lambda root: True,
+                _delegate_publish=fake_delegate,
+            )
+            autopublish.publish_event(dict(self.EVENT, local_only=1), now=datetime(2026, 11, 5, tzinfo=timezone.utc))
+            self.assertEqual(seen["event"]["qualifying_dates"], ["2026-11-02"])
+            self.assertEqual(seen["event"]["local_only"], 1)
+        # Missing config or unknown key: the caller's event passes through.
+        self.assertEqual(autopublish._refresh_event(Path("/nonexistent"), dict(self.EVENT)), self.EVENT)
 
     def test_reexec_child_roundtrip_and_error_reporting(self):
         self._patch(publish_event=lambda event, now=None, push=True: {"status": "published", "head": "abc123"})

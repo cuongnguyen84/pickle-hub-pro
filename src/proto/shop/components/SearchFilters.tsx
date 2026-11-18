@@ -58,7 +58,7 @@ export const ShopSearchField = ({
       autoComplete="off"
     />
     {value && (
-      <button type="button" className="clear" aria-label="Xoá từ khoá" onClick={() => onChange("")}>
+      <button type="button" className="clear" aria-label="Xóa từ khoá" onClick={() => onChange("")}>
         <X size={16} aria-hidden="true" />
       </button>
     )}
@@ -141,7 +141,7 @@ export const AppliedFilterChips = ({
         )),
       )}
       <button type="button" className="tl-shop-btn tl-shop-btn--sm tl-shop-btn--ghost" onClick={onClearAll}>
-        Xoá tất cả bộ lọc
+        Xóa tất cả bộ lọc
       </button>
     </div>
   );
@@ -252,7 +252,7 @@ export const FilterSheet = ({
         <div className="tl-shop-sheet-body">{children}</div>
         <div className="tl-shop-sheet-foot">
           <button type="button" className="tl-shop-btn" onClick={onClear}>
-            Xoá lọc
+            Xóa lọc
           </button>
           <button type="button" className="tl-shop-btn tl-shop-btn--primary" onClick={onClose}>
             Xem {count} sản phẩm

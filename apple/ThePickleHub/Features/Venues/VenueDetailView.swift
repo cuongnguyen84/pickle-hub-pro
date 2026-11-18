@@ -31,6 +31,7 @@ struct VenueDetailView: View {
             content.padding(.bottom, 28)
         }
         .background(TLColor.bg)
+        .assistantContext({ if case .loaded(let v) = model.phase { return SiteAssistant.context(venue: v) }; return nil }())
         .navigationTitle(fallbackName)
         .navigationBarTitleDisplayMode(.inline)
         .task { if case .loading = model.phase { await model.load(slug: slug) } }

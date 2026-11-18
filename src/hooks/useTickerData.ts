@@ -2,7 +2,8 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { LivestreamWithLogo } from "@/hooks/useLivestreamData";
-import { blogMetadata } from "@/content/blog/metadata";
+import { blogTeasers } from "@/content/blog/teasers";
+import { truncateExcerpt } from "@/content/blog/excerpt";
 import {
   composeTickerItems,
   formatProMatchTicker,
@@ -276,23 +277,14 @@ function toProMatchInput(row: RawMatchRow): ProMatchTickerInput {
 /* ─── Blog (Mode 3) ──────────────────────────────────────────────────── */
 
 function buildBlogItems(language: Language): TickerItem[] {
-  return [...blogMetadata]
+  return [...blogTeasers]
     .sort((a, b) => b.publishedDate.localeCompare(a.publishedDate))
     .slice(0, BLOG_LIMIT)
     .map((p) => ({
       id: `blog-${p.slug}`,
       lead: language === "vi" ? "TIN TỨC" : "BLOG",
       body: language === "vi" ? p.titleVi : p.titleEn,
-      trail: truncateExcerpt(
-        language === "vi" ? p.metaDescriptionVi : p.metaDescriptionEn,
-      ),
+      trail: language === "vi" ? p.excerptVi : truncateExcerpt(p.metaDescriptionEn),
       href: language === "vi" ? `/vi/blog/${p.slug}` : `/blog/${p.slug}`,
     }));
-}
-
-function truncateExcerpt(s: string | null | undefined): string | undefined {
-  if (!s) return undefined;
-  const trimmed = s.trim();
-  if (trimmed.length <= 90) return trimmed;
-  return `${trimmed.slice(0, 87).trimEnd()}…`;
 }

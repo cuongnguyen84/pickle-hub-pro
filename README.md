@@ -87,6 +87,15 @@ Push to `main` triggers automatic deployment via **Cloudflare Pages**.
 - Backend: Supabase (Postgres + Auth + Edge Functions)
 - Domain: `thepicklehub.net` → `www.thepicklehub.net`
 
+### CI workflows disabled on purpose
+
+Five workflows have been disabled in the GitHub Actions UI since 2026-07-29 to
+save Actions minutes: **Lighthouse CI**, **Migration drift**, **DUPR canary**,
+**Edge auth production parity** and **TheLine audit (full)**. Their YAML is kept
+so they can be switched back on, but do not assume they currently protect
+`main`. Re-enable one only through a dedicated repair PR. Migration drift is
+already covered on every `main` push by the strict check in **Deploy guard**.
+
 ## Mobile
 
 Native SwiftUI iOS app in [`apple/`](./apple). Build with `xcodegen` → `xcodebuild`.

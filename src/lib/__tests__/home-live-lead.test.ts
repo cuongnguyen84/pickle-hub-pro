@@ -2,8 +2,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   LIVE_LEAD_HINT_TTL_MS,
+  REPLAY_WINDOW_MS,
   readLiveLeadHint,
   shouldReserveLiveSlot,
+  withinReplayWindow,
   writeLiveLeadHint,
 } from "../home-live-lead";
 
@@ -127,5 +129,22 @@ describe("shouldReserveLiveSlot", () => {
       throw new Error("SecurityError: storage disabled");
     });
     expect(shouldReserveLiveSlot(NOW)).toBe(true);
+  });
+});
+
+describe("withinReplayWindow", () => {
+  const at = (msAgo: number) => ({ ended_at: new Date(NOW - msAgo).toISOString() });
+
+  it("keeps an ended stream for exactly 7 days", () => {
+    expect(REPLAY_WINDOW_MS).toBe(7 * 86_400_000);
+    const fresh = at(60_000);
+    const sixDays = at(6 * 86_400_000);
+    const edge = at(REPLAY_WINDOW_MS - 1);
+    const expired = at(REPLAY_WINDOW_MS);
+    expect(withinReplayWindow([fresh, sixDays, edge, expired], NOW)).toEqual([fresh, sixDays, edge]);
+  });
+
+  it("drops rows without ended_at or dated in the future", () => {
+    expect(withinReplayWindow([{ ended_at: null }, at(-60_000)], NOW)).toEqual([]);
   });
 });

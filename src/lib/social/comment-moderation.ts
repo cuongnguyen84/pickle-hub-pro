@@ -53,19 +53,19 @@ export function moderationTooltip(
   language: "vi" | "en",
 ): string {
   if (actor === "owner") {
-    return language === "vi" ? "Xoá bình luận" : "Delete comment";
+    return language === "vi" ? "Xóa bình luận" : "Delete comment";
   }
   if (actor === "admin") {
     return language === "vi"
-      ? "Xoá với quyền quản trị"
+      ? "Xóa với quyền quản trị"
       : "Delete as admin";
   }
   if (actor === "moderator") {
     return language === "vi"
-      ? "Xoá với quyền kiểm duyệt"
+      ? "Xóa với quyền kiểm duyệt"
       : "Delete as moderator";
   }
   return language === "vi"
-    ? "Xoá (người tham gia trận đấu)"
+    ? "Xóa (người tham gia trận đấu)"
     : "Delete as match participant";
 }

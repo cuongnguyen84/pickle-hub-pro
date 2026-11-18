@@ -90,7 +90,7 @@ export function SellerRulesReceiptPanel({ applicationId }: { applicationId: stri
 
       <p className="tl-shop-hint">
         <Lock size={11} aria-hidden="true" style={{ verticalAlign: -1 }} /> Bằng chứng chấp thuận
-        chỉ được ghi thêm — không ai sửa hay xoá được, kể cả từ màn hình này.
+        chỉ được ghi thêm — không ai sửa hay xóa được, kể cả từ màn hình này.
       </p>
     </section>
   );

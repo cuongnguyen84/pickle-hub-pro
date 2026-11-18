@@ -3,7 +3,7 @@
 // import.meta.glob (Cloudflare Pages Functions / the SSR bot path).
 //
 // Loaders, not values, on purpose: _middleware.ts runs for EVERY request, and
-// a static import list would construct all 108 post objects at worker
+// a static import list would construct all 119 post objects at worker
 // startup. esbuild wraps dynamically-imported modules in lazy __esm() inits, so
 // a request only pays for the one post it renders.
 //
@@ -11,12 +11,15 @@
 import type { BlogPost } from "../types";
 
 export const blogPostLoaders: Record<string, () => Promise<{ default: BlogPost }>> = {
+  "5-cach-dut-diem-pickleball-putaway": () => import("./5-cach-dut-diem-pickleball-putaway"),
   "app-tour-vs-ppa-tour-contracts-2026": () => import("./app-tour-vs-ppa-tour-contracts-2026"),
   "best-pickleball-clubs-get-five-things-right": () => import("./best-pickleball-clubs-get-five-things-right"),
   "best-pickleball-paddles-beginners-2026": () => import("./best-pickleball-paddles-beginners-2026"),
   "best-pickleball-tournament-software-2026": () => import("./best-pickleball-tournament-software-2026"),
   "create-tournament-by-chat": () => import("./create-tournament-by-chat"),
   "crosscourt-drop-against-hard-hitters": () => import("./crosscourt-drop-against-hard-hitters"),
+  "daytona-beach-open-2026-results": () => import("./daytona-beach-open-2026-results"),
+  "daytona-beach-open-2026-womens-singles-wide-open": () => import("./daytona-beach-open-2026-womens-singles-wide-open"),
   "dragon-medals-ppa-tour-asia": () => import("./dragon-medals-ppa-tour-asia"),
   "dupr-algorithm-explained-performance-vs-expectation": () => import("./dupr-algorithm-explained-performance-vs-expectation"),
   "dupr-rating-improvement-30-day-plan": () => import("./dupr-rating-improvement-30-day-plan"),
@@ -44,10 +47,13 @@ export const blogPostLoaders: Record<string, () => Promise<{ default: BlogPost }
   "kuala-lumpur-cup-2026-results": () => import("./kuala-lumpur-cup-2026-results"),
   "ly-hoang-nam-pickleball-national-games-2026": () => import("./ly-hoang-nam-pickleball-national-games-2026"),
   "mlp-2026-semifinals-new-york-preview": () => import("./mlp-2026-semifinals-new-york-preview"),
+  "mlp-asia-business-model-home-nights": () => import("./mlp-asia-business-model-home-nights"),
   "mlp-asia-draft-2026-viet-panthers": () => import("./mlp-asia-draft-2026-viet-panthers"),
   "mlp-format-explained": () => import("./mlp-format-explained"),
+  "mlp-nations-cup-2026-results": () => import("./mlp-nations-cup-2026-results"),
   "mlp-orlando-super-sunday-2026-best-game": () => import("./mlp-orlando-super-sunday-2026-best-game"),
   "mlp-vs-ppa-2026-which-tour-to-watch": () => import("./mlp-vs-ppa-2026-which-tour-to-watch"),
+  "new-paddles-world-championships-2026": () => import("./new-paddles-world-championships-2026"),
   "pickleball-club-management-software-comparison": () => import("./pickleball-club-management-software-comparison"),
   "pickleball-cost-vietnam-2026": () => import("./pickleball-cost-vietnam-2026"),
   "pickleball-court-dimensions-setup-guide": () => import("./pickleball-court-dimensions-setup-guide"),
@@ -66,6 +72,7 @@ export const blogPostLoaders: Record<string, () => Promise<{ default: BlogPost }
   "pickleball-doubles-strategy-guide": () => import("./pickleball-doubles-strategy-guide"),
   "pickleball-elbow-pain-causes-safe-steps": () => import("./pickleball-elbow-pain-causes-safe-steps"),
   "pickleball-erne-shot-tutorial": () => import("./pickleball-erne-shot-tutorial"),
+  "pickleball-first-doping-testing-european-open": () => import("./pickleball-first-doping-testing-european-open"),
   "pickleball-for-kids-drills-gear-session-length": () => import("./pickleball-for-kids-drills-gear-session-length"),
   "pickleball-for-older-adults-safe-start": () => import("./pickleball-for-older-adults-safe-start"),
   "pickleball-for-tennis-players-2026": () => import("./pickleball-for-tennis-players-2026"),
@@ -79,6 +86,7 @@ export const blogPostLoaders: Record<string, () => Promise<{ default: BlogPost }
   "pickleball-rules-complete-guide": () => import("./pickleball-rules-complete-guide"),
   "pickleball-scoring-rules-guide": () => import("./pickleball-scoring-rules-guide"),
   "pickleball-singles-strategy": () => import("./pickleball-singles-strategy"),
+  "pickleball-stacking-guide-own-the-middle": () => import("./pickleball-stacking-guide-own-the-middle"),
   "pickleball-third-shot-drop-vs-drive": () => import("./pickleball-third-shot-drop-vs-drive"),
   "pickleball-tour-wars-2023-explained": () => import("./pickleball-tour-wars-2023-explained"),
   "pickleball-tournament-budget-calculator-guide": () => import("./pickleball-tournament-budget-calculator-guide"),
@@ -111,13 +119,16 @@ export const blogPostLoaders: Record<string, () => Promise<{ default: BlogPost }
   "veolia-chicago-cup-2026-results": () => import("./veolia-chicago-cup-2026-results"),
   "vietnam-dupr-leaderboard-launch": () => import("./vietnam-dupr-leaderboard-launch"),
   "vietnam-hosts-ppa-tour-asia-2026": () => import("./vietnam-hosts-ppa-tour-asia-2026"),
+  "vietnam-junior-world-championships-2026": () => import("./vietnam-junior-world-championships-2026"),
   "vietnam-pickleball-community-guide-2026": () => import("./vietnam-pickleball-community-guide-2026"),
   "vietnam-pickleball-federation-2026": () => import("./vietnam-pickleball-federation-2026"),
   "vietnam-pickleball-players-to-watch-2026": () => import("./vietnam-pickleball-players-to-watch-2026"),
   "vietnam-pickleball-tournament-calendar-2026": () => import("./vietnam-pickleball-tournament-calendar-2026"),
   "virginia-beach-open-2026-results": () => import("./virginia-beach-open-2026-results"),
+  "waters-bright-18-straight-titles-greatest-womens-doubles": () => import("./waters-bright-18-straight-titles-greatest-womens-doubles"),
   "what-is-dupr-pickleball-rating-system": () => import("./what-is-dupr-pickleball-rating-system"),
   "why-your-backhand-flick-has-no-power": () => import("./why-your-backhand-flick-has-no-power"),
+  "world-championships-2026-new-generation-analysis": () => import("./world-championships-2026-new-generation-analysis"),
   "world-pickleball-rankings-wpr-explained": () => import("./world-pickleball-rankings-wpr-explained"),
 };
 

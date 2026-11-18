@@ -66,7 +66,7 @@ const COMMERCE_TOKENS = [
   { name: "--shop-stock-out", alias: "--tl-fg-3", note: "Hết hàng (xám, không đỏ)" },
   { name: "--shop-verified", alias: "--tl-blue", note: "Danh tính đã xác minh" },
   { name: "--shop-warning", alias: "--tl-gold", note: "Cần người dùng để ý" },
-  { name: "--shop-danger", alias: "--tl-live", note: "Huỷ / hoàn tiền / mất dữ liệu" },
+  { name: "--shop-danger", alias: "--tl-live", note: "Hủy / hoàn tiền / mất dữ liệu" },
   { name: "--shop-used", alias: "--tl-accent-team", note: "Hàng đã qua sử dụng" },
   { name: "--shop-on-accent", alias: "ink", note: "Chữ trên nền nhấn" },
   { name: "--shop-on-gold", alias: "ink", note: "Chữ trên nền vàng" },

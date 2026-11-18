@@ -227,7 +227,7 @@ describe("the support role", () => {
     render(<SellerOrderDetail />);
 
     expect(screen.getByText(/Vai trò support chỉ xem được đơn/)).toBeTruthy();
-    for (const label of ["Xác nhận đơn", "Từ chối đơn", "Đã gửi hàng", "Huỷ đơn", "Ghi nhận đã giao"]) {
+    for (const label of ["Xác nhận đơn", "Từ chối đơn", "Đã gửi hàng", "Hủy đơn", "Ghi nhận đã giao"]) {
       expect(screen.queryByRole("button", { name: label }), label).toBeNull();
     }
     // Still gets the two things reading an order is for.
@@ -312,7 +312,7 @@ describe("an order somebody else moved first", () => {
     fireEvent.click(screen.getByRole("button", { name: "Xác nhận đơn" }));
 
     const alert = await screen.findByRole("alert");
-    expect(alert.textContent).toContain("có thể người mua vừa huỷ");
+    expect(alert.textContent).toContain("có thể người mua vừa hủy");
     const button = screen.getByRole("button", { name: "Xác nhận đơn" });
     expect(button.hasAttribute("disabled")).toBe(false);
     expect(button.getAttribute("aria-busy")).toBeNull();

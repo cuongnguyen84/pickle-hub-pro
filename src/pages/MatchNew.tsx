@@ -117,7 +117,7 @@ export default function MatchNew() {
         variant: "destructive",
         title: vi ? "Thiếu partner" : "Missing partner",
         description: vi
-          ? "Doubles cần partner ở cả 2 đội. Chọn partner cho đội còn lại, hoặc xoá partner để chuyển về singles."
+          ? "Doubles cần partner ở cả 2 đội. Chọn partner cho đội còn lại, hoặc xóa partner để chuyển về singles."
           : "Doubles needs a partner on both sides. Pick a partner for the other team, or remove the partner to fall back to singles.",
       });
       return;

@@ -1,4 +1,5 @@
 import { TOOLS_HUB_META } from "@/content/tools/hub-copy";
+import { useAssistantContext } from "@/lib/assistant-context";
 import { HreflangTags } from "@/components/seo";
 import { useCallback, useEffect, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -132,6 +133,17 @@ const Tools = () => {
     fmt === "flex" ? "#4f9bff" :
     fmt === "team-match" ? "#ff7a4d" :
     "#00b96b";
+
+  // Trợ lý AI nổi: số giải đang chạy/mở đăng ký + vài giải mới nhất đang hiện.
+  useAssistantContext({
+    label: language === "vi" ? "Công cụ giải đấu" : "Tournament tools",
+    facts: {
+      active_round_robins: activeQuickTables.length, open_registration: openRegTables.length,
+      active_doubles_elimination: activeDoublesElim.length, active_flex: activeFlex.length, open_team_match: openTeamMatches.length,
+      created_this_week: createdThisWeek,
+      recent: recentActivity.slice(0, 8).map((r) => `${r.name} (${r.fmtLabel}, ${r.status})`).join(" | "),
+    },
+  });
 
   const statusClass = (status: string): "active" | "setup" | "completed" | "registration" => {
     if (status === "setup") return "setup";

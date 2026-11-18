@@ -73,7 +73,7 @@ export default function S05Products() {
     if (rows.length === 0)
       return (
         <EmptyState title="Không có sản phẩm nào khớp bộ lọc">
-          Bỏ bộ lọc trạng thái hoặc xoá từ khoá để xem lại tất cả.
+          Bỏ bộ lọc trạng thái hoặc xóa từ khoá để xem lại tất cả.
         </EmptyState>
       );
 

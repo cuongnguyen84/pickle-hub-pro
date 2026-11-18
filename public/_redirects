@@ -3,6 +3,11 @@
 /livestream /live 301
 /live/10779a7c /live/10779a7c-46f4-4501-a65e-e852eb2fb565 301
 
+# AUDIT-02 (2026-11-10) — the court hub is /san; /courts 404'd. Mirrored in
+# functions/_middleware.ts COURTS_REDIRECTS (bots never reach this file).
+/courts /san 301
+/vi/courts /vi/san 301
+
 # PR69 — Social nav restructure. /su-kien legacy paths → /social.
 # Cloudflare _redirects splat preserves anything after the prefix.
 /su-kien/* /social/:splat 301

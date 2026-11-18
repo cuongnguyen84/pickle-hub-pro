@@ -12,6 +12,7 @@
 // the same list to crawlers for SEO.
 // ============================================================================
 
+import { useAssistantContext } from "@/lib/assistant-context";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -135,6 +136,15 @@ export default function VenuesList() {
     if (!cityFilter) return rows ?? [];
     return (rows ?? []).filter((r) => r.city === cityFilter);
   }, [rows, cityFilter]);
+
+  // Trợ lý AI nổi: bộ lọc + vài sân đang hiện (tên · thành phố · số sân).
+  useAssistantContext(rows ? {
+    label: language === "vi" ? "Tìm sân Pickleball" : "Find a pickleball court",
+    facts: {
+      country: countryFilter, city_filter: cityFilter, search, results: visible.length,
+      shown: visible.slice(0, 10).map((v) => [v.name, v.city, v.num_courts ? `${v.num_courts} courts` : ""].filter(Boolean).join(" · ")).join(" | "),
+    },
+  } : null);
 
   const hasResults = visible.length > 0;
 

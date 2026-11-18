@@ -86,10 +86,10 @@ export default function AdminReviews() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Đã xoá đánh giá");
+      toast.success("Đã xóa đánh giá");
       qc.invalidateQueries({ queryKey: ["admin-venue-reviews"] });
     },
-    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Không xoá được"),
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Không xóa được"),
   });
 
   const busy = setStatus.isPending || remove.isPending;
@@ -104,7 +104,7 @@ export default function AdminReviews() {
       <div className="space-y-4">
         <div>
           <h1 className="text-2xl font-bold">Đánh giá sân</h1>
-          <p className="text-muted-foreground">Kiểm duyệt đánh giá sân từ cộng đồng — ẩn hoặc xoá nội dung vi phạm.</p>
+          <p className="text-muted-foreground">Kiểm duyệt đánh giá sân từ cộng đồng — ẩn hoặc xóa nội dung vi phạm.</p>
         </div>
 
         <div className="flex gap-2">
@@ -182,10 +182,10 @@ export default function AdminReviews() {
                         variant="destructive"
                         disabled={busy}
                         onClick={() => {
-                          if (confirm("Xoá vĩnh viễn đánh giá này?")) remove.mutate(r.id);
+                          if (confirm("Xóa vĩnh viễn đánh giá này?")) remove.mutate(r.id);
                         }}
                       >
-                        <Trash2 className="h-4 w-4 mr-1" /> Xoá
+                        <Trash2 className="h-4 w-4 mr-1" /> Xóa
                       </Button>
                     </div>
                   </CardContent>

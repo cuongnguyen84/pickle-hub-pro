@@ -141,7 +141,7 @@ export function WorldCupProContent({ feed, language }: { feed: WcProFeed; langua
           aria-label={language === "vi" ? "Tìm trận theo tên tay vợt" : "Search matches by player name"}
         />
         {query && (
-          <button type="button" className="wcpro-search-x" onClick={() => setQuery("")} aria-label={language === "vi" ? "Xoá tìm kiếm" : "Clear search"}>
+          <button type="button" className="wcpro-search-x" onClick={() => setQuery("")} aria-label={language === "vi" ? "Xóa tìm kiếm" : "Clear search"}>
             ×
           </button>
         )}

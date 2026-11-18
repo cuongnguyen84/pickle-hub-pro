@@ -165,19 +165,19 @@ export default function A04Moderation() {
                     <ul style={{ margin: "8px 0", paddingLeft: 18, lineHeight: 1.6 }}>
                       <li>Ẩn khỏi trang mua hàng và tìm kiếm ngay.</li>
                       <li>
-                        <strong>Không huỷ</strong> {openOrders.length} đơn đang chạy:{" "}
+                        <strong>Không hủy</strong> {openOrders.length} đơn đang chạy:{" "}
                         {openOrders.map((o) => o.code).join(", ")}. Người bán vẫn phải giao hoặc
-                        huỷ từng đơn theo quy trình.
+                        hủy từng đơn theo quy trình.
                       </li>
                       <li>Gửi thông báo cho người bán kèm đúng ghi chú bên dưới.</li>
-                      <li>Không xoá dữ liệu — khôi phục được.</li>
+                      <li>Không xóa dữ liệu — khôi phục được.</li>
                     </ul>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                       <button type="button" className="tl-shop-btn tl-shop-btn--danger">
                         Vẫn gỡ
                       </button>
                       <button type="button" className="tl-shop-btn" onClick={() => setConfirmRemove(false)}>
-                        Huỷ
+                        Hủy
                       </button>
                     </div>
                   </div>

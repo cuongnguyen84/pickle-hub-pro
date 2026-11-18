@@ -836,7 +836,7 @@ export const ORDERS: ProtoOrder[] = [
     address: ADDRESSES[0],
     timeline: [
       { at: "2026-07-20T09:00:00+07:00", label: "Người mua đặt đơn", by: "buyer" },
-      { at: "2026-07-22T09:00:00+07:00", label: "Huỷ do quá hạn chuyển khoản 48 giờ", by: "system" },
+      { at: "2026-07-22T09:00:00+07:00", label: "Hủy do quá hạn chuyển khoản 48 giờ", by: "system" },
     ],
     sellerDeadline: null,
     trackingCode: null,

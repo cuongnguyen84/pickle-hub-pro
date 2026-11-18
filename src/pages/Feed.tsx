@@ -1,4 +1,5 @@
 import { useMemo, useRef } from "react";
+import { useAssistantContext } from "@/lib/assistant-context";
 import { Loader2 } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { useI18n } from "@/i18n";
@@ -111,6 +112,11 @@ const Feed = () => {
   const happeningsFeed = useFeedHappenings();
   const highlightsFeed = useFeedHighlights();
   const activeQuery = tab === "following" ? followingFeed : timelineFeed;
+  // Trợ lý AI nổi: tab đang xem + đăng nhập hay chưa (nội dung bài của người khác không gửi).
+  useAssistantContext({
+    label: language === "vi" ? "Bảng tin" : "Feed",
+    facts: { tab, logged_in: isAuthenticated ? "yes" : "no", following: followingCount },
+  });
   const viewed = useFeedViewedTracking();
 
   const followingMatches: FeedMatch[] = useMemo(

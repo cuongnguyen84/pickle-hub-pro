@@ -20,6 +20,7 @@ import {
   Share2,
   BadgeCheck,
   Plus,
+  Clock,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
@@ -41,6 +42,8 @@ import {
   citySlugFromName,
   VENUE_LIST_COLUMNS,
   isVerifiedVenueSource,
+  isOpeningSoon,
+  openingSoonLabel,
   venuePriceRange,
   uniformWeekHours,
   formatHoursRange,
@@ -48,6 +51,7 @@ import {
   type VenueListItem,
 } from "@/lib/venues";
 import { fetchVenueDetail, venueDetailQueryKey } from "@/lib/venue-detail-query";
+import { useAssistantContext } from "@/lib/assistant-context";
 
 const DAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 const DAY_LABELS: Record<string, { vi: string; en: string }> = {
@@ -122,6 +126,20 @@ export default function VenueDetail() {
     dayRowCount: hours.length,
   });
 
+  // Trợ lý AI nổi: chỉ dữ kiện trang đang hiện; giờ/giá chưa xác nhận ghi rõ
+  // "chưa xác nhận", không đưa số mặc định (PRICE-01).
+  useAssistantContext(venue ? {
+    label: venue.name,
+    summary: [venue.address, venue.district, venue.city, venue.num_courts ? `${venue.num_courts} sân` : ""].filter(Boolean).join(" · ").slice(0, 600),
+    facts: {
+      venue: venue.name, address: venue.address, district: venue.district, city: venue.city, courts: venue.num_courts,
+      indoor: venue.is_indoor == null ? null : venue.is_indoor ? "indoor" : "outdoor", surface: venue.surface_type,
+      verified_listing: venue.is_verified, amenities: (venue.amenities ?? []).slice(0, 12).join(", "),
+      hours: hoursVerified && weekHours ? weekHours : "not confirmed",
+      price: priceVerified && priceText ? priceText : "not confirmed",
+    },
+  } : null);
+
   if (isLoading) {
     return (
       <TheLineLayout title="…" active="venues">
@@ -159,7 +177,7 @@ export default function VenueDetail() {
           </h1>
           <p className="mb-6 text-sm text-muted-foreground">
             {language === "vi"
-              ? "Sân bạn tìm có thể đã bị xoá hoặc đường dẫn không đúng."
+              ? "Sân bạn tìm có thể đã bị xóa hoặc đường dẫn không đúng."
               : "This court may have been removed or the link is incorrect."}
           </p>
           <Link to="/san" className="tl-btn">
@@ -259,6 +277,12 @@ export default function VenueDetail() {
               <span className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-xs not-italic text-primary">
                 <BadgeCheck className="h-3.5 w-3.5" />
                 {language === "vi" ? "Đã xác minh" : "Verified"}
+              </span>
+            )}
+            {isOpeningSoon(venue) && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/50 bg-amber-500/10 px-2 py-0.5 text-xs not-italic text-amber-700 dark:text-amber-400">
+                <Clock className="h-3.5 w-3.5" />
+                {openingSoonLabel(language, venue.opening_expected)}
               </span>
             )}
           </h1>

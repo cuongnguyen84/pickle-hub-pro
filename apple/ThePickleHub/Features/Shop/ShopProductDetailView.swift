@@ -47,6 +47,7 @@ struct ShopProductDetailView: View {
             }
         }
         .background(TLColor.bg)
+        .assistantContext(product.map(SiteAssistant.context(product:)))
         .navigationTitle("Chi tiết")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }

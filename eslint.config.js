@@ -37,7 +37,15 @@ export default tseslint.config(
       "react-refresh": reactRefresh,
     },
     rules: {
-      ...reactHooks.configs.recommended.rules,
+      // react-hooks v7's `recommended` adds the React Compiler rules (180 hits
+      // on 2026-11-03). Keep the v5 set until those are triaged on purpose.
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
+      // New in eslint 10 `recommended`; 19 hits, mostly edge functions + workers
+      // (shop-sepay-ipn, dupr-webhook). Off for parity with eslint 9 — fixing
+      // them redeploys those functions, so do it in its own PR.
+      "no-useless-assignment": "off",
+      "preserve-caught-error": "off",
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       // QA-02 2/3 (2026-07-17): re-enabled — nothing caught dead code before.
       // _-prefix opt-out for intentionally-unused args/vars; catch bindings exempt.

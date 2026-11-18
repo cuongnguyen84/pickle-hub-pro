@@ -42,7 +42,7 @@ const COPY = {
   emptyBody: "Đặt đơn đầu tiên từ chợ nhé.",
   emptyCta: "Xem sản phẩm đang bán",
   noMatch: (q: string) => `Không có đơn nào khớp “${q}”`,
-  clearSearch: "Xoá tìm kiếm",
+  clearSearch: "Xóa tìm kiếm",
   more: (n: number) => `Xem thêm (${n} đơn)`,
   received: "Tôi đã nhận hàng",
   otherItems: (n: number) => `+${n} món khác`,
@@ -53,11 +53,11 @@ const COPY = {
  *  the link goes to the order page, not to an RPC: confirming receipt asks
  *  for confirmation, and a list is the wrong place to ask. */
 const BUYER_TODO: Record<OrderStatus, string> = {
-  pending: "Shop chưa xác nhận — chưa cần làm gì. Huỷ được nếu đổi ý.",
+  pending: "Shop chưa xác nhận — chưa cần làm gì. Hủy được nếu đổi ý.",
   confirmed: "Người bán đang chuẩn bị hàng — chưa cần làm gì.",
   shipped: "Đang trên đường tới anh/chị.",
   delivered: "Đã giao xong.",
-  cancelled: "Đã huỷ",
+  cancelled: "Đã hủy",
 };
 
 const CANCELLED_BY: Record<string, string> = {
@@ -72,7 +72,7 @@ const TABS: { key: Tab; label: string; statuses: OrderStatus[] | null }[] = [
   { key: "all", label: "Tất cả", statuses: null },
   { key: "active", label: "Đang tới", statuses: ["pending", "confirmed", "shipped"] },
   { key: "done", label: "Đã xong", statuses: ["delivered"] },
-  { key: "cancelled", label: "Đã huỷ", statuses: ["cancelled"] },
+  { key: "cancelled", label: "Đã hủy", statuses: ["cancelled"] },
 ];
 
 const inTab = (status: OrderStatus, tab: Tab) => {
@@ -90,7 +90,7 @@ const dm = (iso: string) => {
 const cancelledSentence = (row: OrderListRow) => {
   const kind = [...row.events].reverse().find((e) => e.action === "cancel")?.metadata?.actor_kind;
   const who = typeof kind === "string" ? CANCELLED_BY[kind] : undefined;
-  return who ? `Đã huỷ, ${who}.` : "Đã huỷ.";
+  return who ? `Đã hủy, ${who}.` : "Đã hủy.";
 };
 
 const haystack = (row: OrderListRow) =>

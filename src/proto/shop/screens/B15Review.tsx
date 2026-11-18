@@ -103,7 +103,7 @@ export default function B15Review() {
             <Check size={16} aria-hidden="true" />
             <div>
               <strong>Đã gửi đánh giá.</strong> Đánh giá hiện công khai kèm dòng &ldquo;Mua
-              thật&rdquo; trên trang sản phẩm. Người bán trả lời được nhưng không xoá được.
+              thật&rdquo; trên trang sản phẩm. Người bán trả lời được nhưng không xóa được.
             </div>
           </div>
           <h1 className="tl-shop-h1">Cảm ơn anh/chị</h1>

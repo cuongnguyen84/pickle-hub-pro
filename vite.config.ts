@@ -1,5 +1,5 @@
 /// <reference types="vitest" />
-import { defineConfig, loadEnv } from "vite";
+import { createServer, defineConfig, loadEnv } from "vite";
 import { coverageConfigDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react-swc";
 import fs from "fs";
@@ -91,6 +91,36 @@ return ({
       },
       load(id: string) {
         return id === "\0proto-shop-disabled" ? "export default null;\n" : null;
+      },
+    },
+    // DEBT-09: the client reads blog metadata only through
+    // src/content/blog/teasers.ts. Evaluate that module at build time and emit
+    // its result as a literal, so metadata.ts (SEO titles, CTA labels, full VI
+    // descriptions — SSR-only, and growing with every post) never reaches a
+    // client chunk. Build-only, so vitest and Pages Functions still see the
+    // real modules.
+    {
+      name: "precompute-blog-teasers",
+      apply: "build" as const,
+      async load(id: string) {
+        // Fail loud if a client import of the full metadata sneaks back in.
+        if (id.endsWith("/src/content/blog/metadata.ts")) {
+          throw new Error("precompute-blog-teasers: client code imports blog metadata.ts — use @/content/blog/teasers");
+        }
+        if (!id.endsWith("/src/content/blog/teasers.ts")) return null;
+        const server = await createServer({
+          configFile: false,
+          logLevel: "silent",
+          appType: "custom",
+          server: { middlewareMode: true, hmr: false },
+          optimizeDeps: { noDiscovery: true },
+        });
+        try {
+          const { blogTeasers } = await server.ssrLoadModule(id);
+          return `export const blogTeasers = ${JSON.stringify(blogTeasers)};\n`;
+        } finally {
+          await server.close();
+        }
       },
     },
     // Point the two <link> hints and the CSP report-uri at THIS build's
@@ -439,7 +469,8 @@ return ({
         manualChunks: {
           "locale-en": [path.resolve(__dirname, "src/i18n/en.ts")],
           "locale-vi": [path.resolve(__dirname, "src/i18n/vi.ts")],
-          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          // react-router 7: react-router-dom is a thin re-export; the code lives in react-router.
+          "vendor-react": ["react", "react-dom", "react-router", "react-router-dom"],
           "vendor-supabase": ["@supabase/supabase-js"],
           "vendor-ui": [
             // PERF PR-C (2026-10-24): sonner intentionally NOT here — the

@@ -214,7 +214,7 @@ export default function VariantEditor({
           <div style={{ width: "100%" }}>
             <strong>Tắt nhiều phiên bản sẽ giữ lại đúng một phiên bản.</strong>
             <p style={{ margin: "6px 0 10px", lineHeight: 1.55 }}>
-              {initialRows.length - 1} phiên bản còn lại sẽ ngừng bán — không bị xoá, mã hàng và
+              {initialRows.length - 1} phiên bản còn lại sẽ ngừng bán — không bị xóa, mã hàng và
               lịch sử kho vẫn còn, bật lại được sau. Chọn phiên bản giữ lại:
             </p>
             <div className="tl-shop-field" style={{ marginBottom: 0 }}>
@@ -437,7 +437,7 @@ function GroupEditor({
               style={{ marginTop: 10 }}
               onClick={() => removeGroup(i)}
             >
-              <Trash2 size={14} aria-hidden="true" /> Xoá nhóm
+              <Trash2 size={14} aria-hidden="true" /> Xóa nhóm
             </button>
           )}
         </div>
@@ -496,7 +496,7 @@ function DestructiveNotice({
           {losing.length > 8 && <li>…và {losing.length - 8} phiên bản nữa</li>}
         </ul>
         <p className="tl-shop-hint" style={{ marginTop: 0 }}>
-          Chúng sẽ ngừng bán khi anh/chị lưu bảng — không bị xoá, bật lại được sau.
+          Chúng sẽ ngừng bán khi anh/chị lưu bảng — không bị xóa, bật lại được sau.
         </p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
           <button type="button" className="tl-shop-btn tl-shop-btn--sm tl-shop-btn--danger" onClick={onConfirm}>

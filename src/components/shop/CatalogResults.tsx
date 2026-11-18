@@ -140,7 +140,7 @@ export function FilterSheet({
           <FilterFields value={draft} onChange={setDraft} idPrefix="sheet" />
         </div>
         <div className="tl-sheet-actions">
-          <button type="button" className="tl-shop-btn" onClick={onClose}>Huỷ</button>
+          <button type="button" className="tl-shop-btn" onClick={onClose}>Hủy</button>
           <button
             type="button"
             className="tl-shop-btn tl-shop-btn--primary"

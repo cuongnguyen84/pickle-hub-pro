@@ -112,7 +112,7 @@ describe('RefereeScoringScreen', () => {
     expect(JSON.parse(localStorage.getItem(PERSIST)!).a).toBe(0);
   });
 
-  it('kết thúc trận: xác nhận thì lưu tỉ số, xoá trạng thái tạm và dọn dòng live', async () => {
+  it('kết thúc trận: xác nhận thì lưu tỉ số, xóa trạng thái tạm và dọn dòng live', async () => {
     resume();
     const onFinish = vi.fn(async (_a: number, _b: number, _note: string | null) => {});
     const onLiveState = vi.fn();

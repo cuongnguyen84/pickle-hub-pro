@@ -91,7 +91,7 @@ function ActivationSection({ shopId }: { shopId: string }) {
         `Phương thức xác minh sẽ ghi: ${method ? VERIFIED_METHOD_LABEL[method] : "(không ghi)"}.\n` +
         "Sau khi kích hoạt, anh tự báo seller qua Zalo.",
       confirmText: "Kích hoạt",
-      cancelText: "Huỷ",
+      cancelText: "Hủy",
     });
     if (!ok) return;
     setError(null);

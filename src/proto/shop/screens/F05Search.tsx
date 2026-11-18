@@ -153,7 +153,7 @@ Số kết quả nằm trong vùng thông báo động, nên trình đọc màn 
           <Cell label="Trống">
             <ShopSearchField value="" onChange={() => {}} id="f05-a" />
           </Cell>
-          <Cell label="Có từ khoá (hiện nút xoá)">
+          <Cell label="Có từ khoá (hiện nút xóa)">
             <ShopSearchField value={q} onChange={setQ} id="f05-b" />
           </Cell>
         </Cells>
@@ -162,7 +162,7 @@ Số kết quả nằm trong vùng thông báo động, nên trình đọc màn 
       <MatrixSection
         id="f05-chips"
         title="AppliedFilterChips + Sort + số kết quả"
-        note="Mỗi chip có nút xoá riêng 44×44px và nhãn đọc được (“Bỏ lọc 16 mm”), không phải chỉ một dấu X trần."
+        note="Mỗi chip có nút xóa riêng 44×44px và nhãn đọc được (“Bỏ lọc 16 mm”), không phải chỉ một dấu X trần."
       >
         <div className="tl-shop-toolbar">
           <SortControl value={sort} onChange={setSort} />

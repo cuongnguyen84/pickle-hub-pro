@@ -16,9 +16,10 @@ What it does:
     family, X/Twitter, Google, direct) so questions like "how many
     sessions came from Facebook since date X" read straight off the file.
   * Writes data/google/gsc-<run-date>.json and data/google/ga4-<run-date>.json
-    in the repo and commits + pushes ONLY those two files (pathspec commit,
-    so unrelated dirty files in the working tree never block or leak in).
-    A push failure is loud: stderr message + exit code 3.
+    in the repo, then commits ONLY those two files on top of a freshly
+    fetched origin/main (plumbing, so the checkout's branch, index and dirty
+    files are never touched) and pushes to main. Push failure is loud:
+    stderr message + exit code 3.
 
 The key is read from .claude/secrets.local.gsc-ga4-sa.json in the repo by
 default (override with --key or $GOOGLE_DATA_SA_KEY). The key material is
@@ -35,6 +36,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import urllib.parse
 import urllib.request
 from datetime import date, datetime, timedelta
@@ -255,31 +257,67 @@ class GitPushError(RuntimeError):
     """Committing or pushing the snapshot files failed."""
 
 
-def commit_snapshots(repo: Path, files: list[Path], run_date: date) -> str:
-    """Commit ONLY the snapshot files (pathspec commit) and push.
+PUSH_ATTEMPTS = 3
 
-    Returns 'committed', or 'unchanged' when the snapshots are identical to
-    what is already committed. Raises GitPushError on any git failure so the
-    caller can exit loudly instead of swallowing it.
+
+def _git(repo: Path, *args: str, env: dict | None = None, stdin: str | None = None) -> str:
+    r = subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True, env=env, input=stdin)
+    if r.returncode:
+        raise GitPushError(f"git {args[0]} failed: {(r.stderr or r.stdout).strip()[:300]}")
+    return r.stdout.strip()
+
+
+def commit_snapshots(repo: Path, files: list[Path], run_date: date) -> str:
+    """Commit ONLY the snapshot files on top of origin/main and push it.
+
+    Never touches HEAD, the branch, the index or the working tree of `repo`:
+    the commit is built with plumbing (temp index → write-tree → commit-tree)
+    whose parent is a freshly fetched origin/main, so it works whatever branch
+    the checkout is on. A push rejected because main moved meanwhile is
+    retried on the new tip (the rebase equivalent); never forced.
+
+    Returns 'committed', or 'unchanged' when origin/main already has these
+    exact files. Raises GitPushError on any git failure so the caller can
+    exit loudly instead of swallowing it.
     """
-    rel = [str(f.relative_to(repo)) for f in files]
-    add = subprocess.run(["git", "-C", str(repo), "add", "--", *rel], capture_output=True, text=True)
-    if add.returncode:
-        raise GitPushError(f"git add failed: {add.stderr.strip()[:300]}")
-    staged = subprocess.run(["git", "-C", str(repo), "diff", "--cached", "--quiet", "--", *rel],
-                            capture_output=True, text=True)
-    if staged.returncode == 0:
-        return "unchanged"
-    commit = subprocess.run(["git", "-C", str(repo), "commit", "-m",
-                             f"data(google): GSC/GA4 snapshot {run_date.isoformat()}", "--", *rel],
-                            capture_output=True, text=True)
-    if commit.returncode:
-        raise GitPushError(f"git commit failed: {(commit.stderr or commit.stdout).strip()[:300]}")
-    push = subprocess.run(["git", "-C", str(repo), "push", "origin", "HEAD:main"],
-                          capture_output=True, text=True)
-    if push.returncode:
-        raise GitPushError(f"git push failed (snapshot committed locally, NOT pushed): {push.stderr.strip()[:300]}")
-    return "committed"
+    rel = [f.relative_to(repo).as_posix() for f in files]
+    blobs = [_git(repo, "hash-object", "-w", "--", str(f)) for f in files]
+    for attempt in range(1, PUSH_ATTEMPTS + 1):
+        _git(repo, "fetch", "--quiet", "origin", "main")
+        base = _git(repo, "rev-parse", "FETCH_HEAD^{commit}")
+        with tempfile.TemporaryDirectory() as tmp:
+            env = {**os.environ, "GIT_INDEX_FILE": str(Path(tmp) / "index")}
+            _git(repo, "read-tree", base, env=env)
+            _git(repo, "update-index", "--add", "--index-info", env=env,
+                 stdin="".join(f"100644 {b}\t{r}\n" for b, r in zip(blobs, rel)))
+            tree = _git(repo, "write-tree", env=env)
+        if tree == _git(repo, "rev-parse", f"{base}^{{tree}}"):
+            return "unchanged"
+        commit = _git(repo, "commit-tree", tree, "-p", base,
+                      "-m", f"data(google): GSC/GA4 snapshot {run_date.isoformat()}")
+        push = subprocess.run(["git", "-C", str(repo), "push", "origin", f"{commit}:refs/heads/main"],
+                              capture_output=True, text=True)
+        if push.returncode == 0:
+            return "committed"
+        # ponytail: retry any rejection (non-fast-forward, fetch first, lock
+        # race); a dead remote fails the next fetch anyway.
+        if attempt == PUSH_ATTEMPTS:
+            raise GitPushError(f"git push failed (nothing changed locally, NOT pushed): {push.stderr.strip()[:300]}")
+    raise AssertionError("unreachable")
+
+
+def drop_untracked_copies(repo: Path, files: list[Path]) -> None:
+    """Remove snapshot files the checkout does not track.
+
+    They now live on origin/main; an untracked copy left behind would make
+    the next `git pull`/merge of main abort with "untracked working tree
+    files would be overwritten".
+    """
+    for f in files:
+        tracked = subprocess.run(["git", "-C", str(repo), "ls-files", "--error-unmatch", "--", str(f)],
+                                 capture_output=True, text=True)
+        if tracked.returncode:
+            f.unlink(missing_ok=True)
 
 
 # --------------------------------------------------------------- selftest
@@ -342,7 +380,8 @@ def main(argv: list[str] | None = None) -> int:
     except GitPushError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 3
-    print(f"git: {outcome}")
+    drop_untracked_copies(repo, [gsc_file, ga4_file])
+    print(f"git: {outcome} (origin/main; local checkout picks it up on next pull of main)")
     return 0
 
 

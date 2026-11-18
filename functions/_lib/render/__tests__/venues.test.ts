@@ -63,6 +63,8 @@ const metaDescription = (html: string) =>
 const titleTag = (html: string) => html.match(/<title>([^<]*)<\/title>/)?.[1] ?? "";
 
 const utf8Bytes = (s: string) => new TextEncoder().encode(s).length;
+// Final <title> budget is 60 CHARACTERS since AUDIT-01 (2026-11-10).
+const chars = (s: string) => Array.from(s).length;
 
 /**
  * The description is escaped for HTML in the markup, so `&amp;` costs 5 bytes
@@ -158,7 +160,7 @@ describe("renderVenueDetail — meta description budget (CTR-01)", () => {
       await render({ ...BASE, name: "Sân Pickleball Khu Đô Thị Ciputra" }),
     );
 
-    expect(utf8Bytes(unescape(title))).toBeLessThanOrEqual(60);
+    expect(chars(unescape(title))).toBeLessThanOrEqual(60);
     expect(title).toContain("Đống Đa");
     expect(title).not.toContain("Đống Đa, Hà Nội");
   });
@@ -330,7 +332,7 @@ describe("renderVenueDetail — verified price reaches every surface", () => {
     const title = titleTag(await render(PARTNER));
 
     expect(title).toContain("100K–160K");
-    expect(utf8Bytes(unescape(title))).toBeLessThanOrEqual(60);
+    expect(chars(unescape(title))).toBeLessThanOrEqual(60);
   });
 
   it("front-loads the price in the snippet, ahead of court count and phone", async () => {

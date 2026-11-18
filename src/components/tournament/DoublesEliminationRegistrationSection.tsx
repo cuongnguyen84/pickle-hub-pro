@@ -117,11 +117,11 @@ export function DoublesEliminationRegistrationSection({
     if (!ok) return;
     const res = await organizerRemoveTeam(tournament.id, team.id);
     if (res.success) {
-      toast({ title: vi ? 'Đã xoá đội' : 'Team removed' });
+      toast({ title: vi ? 'Đã xóa đội' : 'Team removed' });
       await onRefresh();
     } else {
       toast({
-        title: vi ? 'Không xoá được' : 'Remove failed',
+        title: vi ? 'Không xóa được' : 'Remove failed',
         description: localizeError(res.error, vi),
         variant: 'destructive',
       });
@@ -217,11 +217,11 @@ export function DoublesEliminationRegistrationSection({
           onCancel={async () => {
             const res = await cancelTeamRegistration(tournament.id);
             if (res.success) {
-              toast({ title: vi ? "Đã huỷ đăng ký" : "Registration cancelled" });
+              toast({ title: vi ? "Đã hủy đăng ký" : "Registration cancelled" });
               await onRefresh();
             } else {
               toast({
-                title: vi ? "Không huỷ được" : "Cancel failed",
+                title: vi ? "Không hủy được" : "Cancel failed",
                 description: localizeError(res.error, vi),
                 variant: "destructive",
               });
@@ -396,7 +396,7 @@ function MyRegistrationCard({
       </div>
       <button type="button" className="tl-btn" disabled={loading} onClick={onCancel}>
         <X className="w-3.5 h-3.5" />
-        {vi ? "Huỷ đăng ký" : "Cancel"}
+        {vi ? "Hủy đăng ký" : "Cancel"}
       </button>
     </div>
   );
@@ -691,8 +691,8 @@ function RegisteredTeamsList({
                   type="button"
                   className="tl-btn"
                   onClick={() => onOrganizerRemove(team)}
-                  aria-label={vi ? "Xoá đội" : "Remove team"}
-                  title={vi ? "Xoá đội (BTC)" : "Remove team (organizer)"}
+                  aria-label={vi ? "Xóa đội" : "Remove team"}
+                  title={vi ? "Xóa đội (BTC)" : "Remove team (organizer)"}
                   style={{ padding: "6px 10px", fontSize: 12, color: "var(--tl-live)", borderColor: "rgba(239,68,68,0.3)" }}
                 >
                   <Trash2 className="w-3.5 h-3.5" />

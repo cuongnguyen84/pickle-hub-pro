@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, ArrowRight, Check, Info, Users, Gamepad2, Zap, Trophy, CreditCard } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTeamMatch, CreateTournamentInput, DiscountTier } from '@/hooks/useTeamMatch';
-import { GameTemplateEditor, GameTemplateItem, getDefaultTemplates } from '@/components/teamMatch/GameTemplateEditor';
+import { GameTemplateEditor } from '@/components/teamMatch/GameTemplateEditor';
+import { getDefaultTemplates, type GameTemplateItem } from '@/lib/team-match-templates';
 import { VN_BANKS } from '@/lib/payment/banks';
 import { generateVietQRUrl } from '@/lib/payment/vietqr';
 import { normalizeAccountName } from '@/components/social/create-event/types';

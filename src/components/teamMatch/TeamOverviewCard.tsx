@@ -91,7 +91,7 @@ export function TeamOverviewCard({ team, maxRosterSize, totalTeamsRegistered }: 
     rejectConfirmTitle: language === 'vi' ? 'Từ chối yêu cầu này?' : 'Reject this request?',
     rejectConfirmDesc: (name: string) =>
       language === 'vi'
-        ? `Yêu cầu tham gia của ${name} sẽ bị xoá khỏi đội. Người chơi phải gửi lại yêu cầu mới nếu muốn vào đội.`
+        ? `Yêu cầu tham gia của ${name} sẽ bị xóa khỏi đội. Người chơi phải gửi lại yêu cầu mới nếu muốn vào đội.`
         : `${name}'s join request will be removed from the team. They must send a new request to join again.`,
   };
 

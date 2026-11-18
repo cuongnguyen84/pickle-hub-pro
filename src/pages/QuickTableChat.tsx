@@ -24,16 +24,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { getSiteUrl } from "@/lib/auth-config";
 import { localePath } from "@/lib/locale-path";
 import { cn } from "@/lib/utils";
-import { rankSeriesSizes, seriesLine, seriesName, seriesPlan, slot as seriesSlot, type SeriesStyle } from "@/lib/quick-table-series";
+import { seriesLine, seriesName, seriesPlan, slot as seriesSlot, type SeriesStyle } from "@/lib/quick-table-series";
 import {
-  applyPatch, applySpokenEdit, buildRoster, chatFacts, customSeries, defaultName, draftSeriesPlan, dropInventedRoster, duplicateIndexes, entryCount, entryLabel, factualAck, findGroupOption, googleSheetRef, groupChoices,
-  fallbackReply, groupCourtsLine, groupSizes, keepOrAssign, localSlotPatch, lockAdvance, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, messageNeedsModel, nextSlot, pairEntries, parseSheet, playoffSummary, previewAssignments, replyFromDraft, seriesCap, trustPatch,
-  type Draft, type Entry, type GroupOption, type PairingMode, type Slot,
+  affirmsDraftName, applyPatch, applySpokenEdit, buildRoster, chatFacts, clarifyDoublesCount, cleanTournamentName, customSeries, defaultName, draftSeriesPlan, dropInventedRoster, duplicateIndexes, entryCount, entryLabel, factualAck, findGroupOption, googleSheetRef, groupChoices, groupSuggestion, headcountAsk, headcountChoices, headcountResolvedNote,
+  fallbackReply, groupCourtsLine, mergeTm, nameAnswer, nameConfirmAsk, nextTmSlot, tmAnswer, tmDefaultName, tmKnockoutOk, tmPlayoffCount, typedTournamentName, wantsTeamMatch, divisionsAsked, divisionBase, divisionDraft, divisionLists, divisionNote, nextDivisionDraft, pendingDoublesHeadcount, rankSeriesOffer, unmetWantsDivisions, teamLists, pairTeamLists, type TeamList, groupSizes, groupLists, groupDraft, groupNote, keepOrAssign, localSlotPatch, lockAdvance, looksLikeNameList, MAX_CHAT_ENTRIES, mergeRoster, messageNeedsModel, needsPairing, nextSlot, pairEntries, parseSheet, playoffSummary, previewAssignments, replyFromDraft, seriesCap, trustPatch,
+  type Draft, type Entry, type GroupOption, type PairingMode, type Slot, type TmDraft, type TmFormat,
 } from "@/lib/quick-table-chat";
+import { createTeamMatchTournament } from "@/hooks/useTeamMatch";
+import { getDefaultTemplates } from "@/lib/team-match-templates";
+import { toast } from "@/hooks/use-toast";
 
 type Lang = "vi" | "en";
 /** label: thứ hiện trên bong bóng khi khác nội dung gửi AI (vd tên file thay cho cả bảng CSV). */
 interface Msg { id: string; role: "user" | "bot"; text: string; label?: string }
+/** lists: tên từng hạng đã dán ("Trình A" + tên…) — hạng sau lấy đúng danh sách của nó. */
+interface Divisions { labels: string[]; done: number; lists?: TeamList[] }
 /** Ảnh/PDF gửi kèm cho Gemini đọc — chỉ nằm trong request, không lưu localStorage. */
 interface Attachment { mime_type: string; data: string }
 /** entries: bảng tính đọc được tại chỗ → vào nháp luôn, không gọi AI. append: gộp vào danh sách đang có. */
@@ -55,92 +60,94 @@ const COPY = {
     title: "Tạo giải bằng chat",
     classicForm: "Dùng form thường",
     loginTitle: "Đăng nhập để tạo giải bằng chat",
-    loginDesc: "Kể cho trợ lý nghe về giải hoặc dán danh sách từ Zalo — vài giây là có bảng đấu.",
+    loginDesc: "Kể về giải hoặc dán danh sách Zalo — vài giây có bảng đấu.",
     toolLabel: "Chia bảng",
-    welcome: "Chào bạn 👋 Kể mình nghe về giải nhé, ví dụ: “Giải CLB tối thứ 7, 16 đôi, chia 4 bảng”. Hoặc dán danh sách, gửi link Google Sheet, tải vài ảnh hay một file Excel.",
-    unit: (d: Draft): string => (d.is_doubles === false ? "người" : "đội"),
-    format: "Đánh đôi hay đánh đơn? Đôi là 2 người một đội, đơn là từng vận động viên.",
+    welcome: "Chào bạn 👋 Kể về giải nhé, ví dụ “CLB tối thứ 7, 16 đôi, 4 bảng”, hoặc dán danh sách, ảnh, Excel, link Sheet.",
+    unit: (d: Draft): string => (d.is_doubles === false || needsPairing(d) ? "người" : "đội"),
+    format: "Đánh đôi hay đơn?",
     doubles: "Đôi", singles: "Đơn",
-    count: (u: string) => `Có bao nhiêu ${u}? Hoặc dán luôn danh sách vào đây.`,
+    count: (u: string) => `Bao nhiêu ${u}? Hoặc dán luôn danh sách.`,
     pasteList: "Dán danh sách",
     upload: "Tải ảnh / file",
-    uploadAria: "Tải ảnh hoặc file danh sách. Có thể chọn nhiều ảnh.",
-    fileUnreadable: "Không đọc được file này. Thử ảnh chụp, Excel, CSV, PDF hoặc link Google Sheet.",
-    fileTooBig: "File lớn quá, tối đa 4 MB.",
-    fileTooMany: "Mỗi lần tối đa 4 ảnh. Mình lấy 4 ảnh đầu; ảnh còn lại gửi tiếp cũng được.",
-    oneFile: "Mỗi lần một file bảng tính. Ảnh thì chọn nhiều một lúc.",
-    fileNotList: "Mình chưa thấy hai tên đứng cạnh nhau. Đánh đôi thì mỗi dòng hai người, kiểu Nam - Hùng hoặc hai cột tên. Không cần cột tên đội.",
-    sheetPrivate: "Mình không mở được Google Sheet này. Hãy để quyền “Bất kỳ ai có đường liên kết”, rồi gửi lại link. Hoặc tải file Excel xuống.",
-    sheetUnreadable: "Link này không mở được, hoặc sheet đang trống.",
+    uploadAria: "Tải ảnh hoặc file danh sách",
+    fileUnreadable: "Không đọc được file. Thử ảnh, Excel, CSV, PDF hoặc link Google Sheet.",
+    fileTooBig: "File quá 4 MB.",
+    fileTooMany: "Tối đa 4 ảnh mỗi lần — mình lấy 4 ảnh đầu.",
+    oneFile: "Mỗi lần một file bảng tính.",
+    fileNotList: "Chưa thấy cặp tên. Đánh đôi: mỗi dòng hai người (Nam - Hùng) hoặc hai cột tên.",
+    sheetPrivate: "Không mở được Sheet. Đặt quyền “Bất kỳ ai có đường liên kết” rồi gửi lại.",
+    sheetUnreadable: "Link không mở được hoặc sheet trống.",
     sheetLabel: "📊 Google Sheet",
-    added: (n: number, total: number, u: string) => `Đã thêm ${n} ${u}, tổng ${total}. Mở Bản nháp để xoá tên sai.`,
-    alreadyThere: "Những tên này đã có trong Bản nháp.",
+    added: (n: number, total: number, u: string) => `Đã thêm ${n} ${u}, tổng ${total}. Sửa tên ở Bản nháp.`,
+    alreadyThere: "Các tên này đã có trong Bản nháp.",
     capped: ` Danh sách dừng ở ${MAX_CHAT_ENTRIES}.`,
-    tooMany: (n: number, u: string) => `Chat hiện tạo được tối đa ${MAX_CHAT_ENTRIES} ${u}. Giải ${n} ${u} nên dùng thể thức playoff lớn trong form thường.`,
+    tooMany: (n: number, u: string) => `Chat tạo tối đa ${MAX_CHAT_ENTRIES} ${u}. Giải ${n} ${u} dùng form thường.`,
     changeCount: "Sửa số lượng",
     pairing: (n: number) => `Mình thấy ${n} tên lẻ. Ghép thành đôi thế nào?`,
-    pairingOdd: (n: number) => `Mình thấy ${n} tên lẻ — ghép đôi cần số chẵn nên đang thừa 1 người. Gõ thêm 1 tên, hoặc:`,
+    pairingOdd: (n: number) => `Mình thấy ${n} tên lẻ — thừa 1 người. Gõ thêm 1 tên, hoặc:`,
     pairSeq: "Ghép theo thứ tự", pairSeqSub: "1+2, 3+4…",
     pairRandom: "Ghép ngẫu nhiên",
     pairLine: "Mỗi dòng là 1 đội",
     dropLast: (name: string) => `Bỏ “${name}”`,
-    mismatch: (m: number, n: number, u: string) => `Danh sách có ${m} ${u}, nhưng bạn nói ${n}. Lấy theo danh sách hay dán thêm?`,
+    mismatch: (m: number, n: number, u: string) => `Danh sách có ${m} ${u}, bạn nói ${n}. Lấy theo danh sách hay dán thêm?`,
     useList: (m: number, u: string) => `Lấy ${m} ${u}`,
     pasteMore: "Dán thêm",
     groups: (n: number, u: string) => `${n} ${u} chia thế nào?`,
-    groupsInvalid: (k: number, u: string) => `Không chia được ${k} bảng (mỗi bảng 3–8 ${u}, tối đa 16 bảng). Chọn một cách dưới đây nhé:`,
-    groupsBig: " Giải đông, nhiều bảng sẽ xong nhanh hơn.",
+    suggestGroups: (d: Draft) => groupSuggestion(d, "vi"),
+    groupsInvalid: (k: number, u: string) => `Không chia được ${k} bảng (3–8 ${u}/bảng, tối đa 16 bảng). Chọn:`,
+    groupsBig: " Giải đông, nhiều bảng xong nhanh hơn.",
     groupLabel: (o: GroupOption) => (o.groupCount === 1 ? "1 bảng vòng tròn" : `${o.groupCount} bảng × ${o.sizes[0] === o.sizes[o.sizes.length - 1] ? o.sizes[0] : `${o.sizes[o.sizes.length - 1]}–${o.sizes[0]}`}`),
     groupSub: (o: GroupOption, u: string) =>
       o.groupCount === 1
-        ? "Ai cũng gặp nhau, xếp theo thắng và thua"
+        ? "Ai cũng gặp nhau, xếp theo thắng thua"
         : `2 ${u} đứng đầu mỗi bảng đi tiếp`,
     recommended: "Khuyên dùng",
-    series: (u: string) => `Hết vòng bảng thì sao? Một vòng loại: lấy 2 ${u} đứng đầu mỗi bảng. Nhiều vòng: ${u} mạnh vào vòng đầu, ${u} còn lại vào vòng sau. Số không chẵn thì ${u} xếp cao được nghỉ vòng đầu.`,
+    series: (u: string) => `Sau vòng bảng? Một vòng: 2 ${u} đầu mỗi bảng. Nhiều vòng: mạnh vào vòng đầu, còn lại vòng sau.`,
     seriesOne: "Một vòng loại", seriesOneSub: (u: string) => `2 ${u} đứng đầu mỗi bảng đi tiếp`,
     seriesMany: (names: string[]) => `${names.length} vòng: ${names.join(" + ")}`,
-    seriesByRank: "Mỗi thứ hạng một vòng riêng",
+    seriesByRank: "Mỗi thứ hạng bảng một vòng",
+    seriesByRankWarn: (k: number, u: string) => `Lưu ý: vòng nào cũng chỉ 2 ${u} — thành ${k} trận tranh thứ hạng, mỗi vòng một trận.`,
     optStyle: (s: SeriesStyle): string => (s === "medal" ? "Đổi tên: Vòng loại 1, 2" : "Đổi tên: Vàng, Bạc"),
-    roster: (u: string) => `Bạn đã có tên từng ${u} chưa? Chưa có thì tạo giải rồi nhập sau.`,
+    roster: (u: string) => `Đã có danh sách ${u} chưa?`,
     pasteNow: "Dán danh sách tên",
     openRegistration: "Để người chơi tự đăng ký",
     later: "Tạo giải, nhập tên sau",
-    paste: (d: Draft) => `Dán danh sách vào ô bên dưới nhé — mỗi dòng 1 ${d.is_doubles === false ? "người" : "đội, kiểu “Nam - Hùng”"}. Ảnh (nhiều ảnh một lần), file Excel hoặc link Google Sheet cũng được.`,
+    paste: (d: Draft) => `Dán danh sách bên dưới — mỗi dòng 1 ${d.is_doubles === false ? "người" : "đội, kiểu “Nam - Hùng”"}.`,
     name: "Đặt tên giải là gì?",
-    courtsQ: "Có bao nhiêu sân thi đấu? Mình sẽ tự xếp sân và giờ cho từng trận.",
+    courtsQ: "Có mấy sân? Mình tự xếp sân, giờ.",
     courtN: (k: number) => `${k} sân`,
     courtsSkip: "Chưa biết, bỏ qua",
-    timeQ: "Mấy giờ bắt đầu? Bấm một nút, hoặc gõ kiểu “7h tối”.",
+    timeQ: "Mấy giờ bắt đầu? Bấm nút hoặc gõ “7h tối”.",
     timeNow: "Bây giờ",
     timeLater: "Để sau",
     timeSkip: "Chưa biết",
     fCourts: "Sân & giờ",
     undo: "Quay lại bước trước",
     reset: "Làm lại từ đầu",
-    resetTitle: "Xoá hết và làm lại?",
-    resetDesc: "Toàn bộ hội thoại và bản nháp sẽ bị xoá. Giải đã tạo không bị ảnh hưởng.",
+    resetTitle: "Xóa hết và làm lại?",
+    resetDesc: "Xóa hội thoại và bản nháp. Giải đã tạo vẫn giữ.",
     resetOk: "Làm lại",
     customName: "Gõ tên khác ở ô bên dưới",
-    options: "Gần xong rồi! Muốn thêm gì nữa không?",
-    optSeed: "Xếp người giỏi khác bảng", optSets: (s: number) => (s === 1 ? "Mỗi trận 1 set" : `Thắng ${Math.ceil(s / 2)} trong ${s} set`), optTeam: "Xếp cùng câu lạc bộ khác bảng",
+    options: "Gần xong! Thêm gì nữa không?",
+    optSeed: "Người giỏi khác bảng", optSets: (s: number) => (s === 1 ? "Mỗi trận 1 set" : `Thắng ${Math.ceil(s / 2)} trong ${s} set`), optTeam: "Cùng CLB khác bảng",
     optDone: "Xong, xem lại",
-    hintSeed: (u: string) => `Gõ các ${u} giỏi theo thứ tự, ví dụ: “người giỏi: Nam, Hùng”. Họ sẽ vào các bảng khác nhau.`,
-    hintTeam: "Gõ những người cùng câu lạc bộ, ví dụ: “Nam, Hùng cùng câu lạc bộ Hà Đông”. Mình xếp họ vào các bảng khác nhau.",
+    hintSeed: (u: string) => `Gõ ${u} giỏi theo thứ tự, ví dụ “người giỏi: Nam, Hùng” — mình xếp khác bảng.`,
+    hintTeam: "Gõ người cùng CLB, ví dụ “Nam, Hùng cùng CLB Hà Đông” — mình xếp khác bảng.",
     setsQ: "Mỗi trận đánh mấy set?",
     set1: "1 set", set3: "Thắng 2 trong 3 set", set5: "Thắng 3 trong 5 set",
-    confirm: "Mọi thứ đã sẵn sàng. Kiểm tra lại rồi bấm Tạo giải nhé.",
+    confirm: "Sẵn sàng. Kiểm tra rồi bấm Tạo giải nhé.",
     received: (n: number, u: string) => `Đã nhận ${n} ${u}.`,
     dupWarn: (n: number) => ` ⚠️ Có ${n} dòng trùng — xem lại trong Bản nháp.`,
-    aiError: "Mình chưa nghe rõ, mạng hoặc trợ lý đang chậm. Thử lại nhé?",
+    aiError: "Mạng hoặc trợ lý đang chậm. Thử lại nhé?",
     thinking: "Đang đọc tin nhắn…",
     thinkingSchedule: "Đang xếp lịch…",
     thinkingAlmost: "Sắp xong rồi…",
-    thinkingRetry: "Hơi chậm, mình thử lại một lần nữa…",
-    rephrase: "Mình chưa đổi được. Bấm một nút bên dưới, hoặc nói cách khác nhé.",
-    attachmentNoList: "Mình chưa thấy tên đội trong file này. Ảnh cần thấy rõ từng dòng. Danh sách dài thì gửi thêm ảnh. Hoặc dán chữ, file Excel, hay link Google Sheet.",
+    thinkingRetry: "Hơi chậm, thử lại lần nữa…",
+    rephrase: "Chưa đổi được. Bấm nút bên dưới hoặc nói cách khác nhé.",
+    attachmentNoList: "Chưa thấy tên trong file. Ảnh cần rõ từng dòng, hoặc dán chữ.",
     photoMissed: (n: number) => (n === 1 ? " Một ảnh chưa thấy tên." : ` ${n} ảnh chưa thấy tên.`),
     retry: "Thử lại",
-    quotaFull: (q: number) => `Bạn đang có đủ ${q} giải chia bảng. Kết thúc hoặc xoá bớt giải cũ để tạo giải mới nhé.`,
+    quotaFull: (q: number) => `Bạn đã có đủ ${q} giải chia bảng. Kết thúc hoặc xóa giải cũ nhé.`,
     myTables: "Xem giải của tôi",
     placeholder: "Nhắn hoặc dán danh sách…",
     send: "Gửi",
@@ -153,15 +160,15 @@ const COPY = {
     rosterReg: "Người chơi tự đăng ký", rosterLater: "Nhập sau",
     empty: "—",
     edit: "Sửa",
-    removeDup: (n: number) => `Xoá ${n} dòng trùng`,
+    removeDup: (n: number) => `Xóa ${n} dòng trùng`,
     addRow: "+ Thêm dòng",
     p1: "Người 1", p2: "Người 2",
     group: (i: number) => `Bảng ${GROUP_LETTERS[i]}`,
     reshuffle: "Trộn lại bảng",
     create: "Tạo giải",
     creating: "Đang xếp bảng và lịch…",
-    confirmReg: "Người chơi tự đăng ký qua link giải — bạn duyệt rồi xếp bảng sau.",
-    confirmLater: "Bước tiếp theo bạn nhập danh sách, mình mở sẵn trang nhập.",
+    confirmReg: "Người chơi tự đăng ký qua link — bạn duyệt rồi xếp bảng sau.",
+    confirmLater: "Bước tiếp: nhập danh sách.",
     created: (name: string) => `🎉 Đã tạo “${name}”!`,
     openTable: "Mở giải",
     enterRoster: "Nhập danh sách",
@@ -170,43 +177,63 @@ const COPY = {
     sendZalo: "Gửi qua Zalo",
     copied: "Đã copy",
     endTable: "Kết thúc giải",
-    deleteTable: "Xoá giải",
+    deleteTable: "Xóa giải",
     another: "Tạo giải khác",
-    rosterFailed: "Giải đã tạo nhưng chưa xếp được bảng. Mở trang nhập danh sách để thử lại.",
+    divSame: (n: string) => `Tạo tiếp “${n}” — cùng danh sách`,
+    divNew: (n: string) => `Tạo tiếp “${n}” — danh sách khác`,
+    divList: (n: string, k: number) => `Tạo tiếp “${n}” — ${k} tên đã dán`,
+    tmIntro: "Kiểu MLP / đổi partner → giải Đồng đội MLP: các đội đấu nhau, mỗi trận vài game đôi.",
+    tmTeams: "Có bao nhiêu đội?",
+    tmRoster: "Mỗi đội mấy người?",
+    tmFormat: "Các đội đấu theo thể thức nào?",
+    tmFmt: { round_robin: "Vòng tròn", rr_playoff: "Vòng tròn + playoff", single_elimination: "Loại trực tiếp" } as Record<TmFormat, string>,
+    tmPeople: (n: number) => `${n} người/đội`,
+    tmConfirm: (d: Required<TmDraft>, fmt: string) => `Đồng đội MLP “${d.name}”: ${d.team_count} đội × ${d.roster} người, ${fmt}. Bấm Tạo giải — ngày, sân, lệ phí chỉnh sau ở trang giải.`,
+    tmAuto: "Bạn chọn giúp",
+    tmForm: "Dùng form đầy đủ",
+    tmBack: "Về giải chia bảng",
+    tmCreated: (n: string) => `Đã tạo “${n}”`,
+    tmLimit: "Tối đa 3 giải đồng đội. Kết thúc hoặc xóa giải cũ nhé.",
+    tmFailed: "Chưa tạo được giải. Thử lại nhé?",
+    teamPasteAsk: (l: TeamList[]) => `Mình thấy ${l.length} danh sách: ${l.map((x) => `${x.label} (${x.names.length} người)`).join(", ")}. Làm Đồng đội MLP, hay ghép đôi chia bảng (trong đội hay chéo đội)? Chưa ghép cặp nào; tự ghép thì gõ “Nam - Hùng”.`,
+    teamPasteMlp: (n: number) => `Đồng đội MLP: ${n} đội đấu nhau`,
+    teamPasteWithin: "Ghép đôi trong cùng đội (theo thứ tự)",
+    teamPasteAcross: (a: string, b: string) => `Ghép chéo: 1 người ${a} + 1 người ${b}`,
+    rosterFailed: "Đã tạo giải nhưng chưa xếp bảng. Mở trang nhập để thử lại.",
     zaloLink: "Xem lịch & kết quả",
     courts: (c: number[]) => `Sân ${c.join(", ")}`,
-    reload: "Hội thoại được lưu trên máy này, tải lại trang không mất.",
+    reload: "Hội thoại lưu trên máy này, tải lại không mất.",
   },
   en: {
     layoutTitle: "Create a tournament by chat",
     title: "Create by chat",
     classicForm: "Use the classic form",
     loginTitle: "Sign in to create a tournament by chat",
-    loginDesc: "Describe your event or paste a player list from your group chat — groups are ready in seconds.",
+    loginDesc: "Describe your event or paste a player list — groups in seconds.",
     toolLabel: "Round robin",
-    welcome: "Hi 👋 Tell me about your event, e.g. “Club night Saturday, 16 doubles teams, 4 groups”. Or paste a list, send a Google Sheet link, or upload several photos or one Excel file.",
-    unit: (d: Draft): string => (d.is_doubles === false ? "players" : "teams"),
+    welcome: "Hi 👋 Tell me about your event, e.g. “Saturday club night, 16 doubles teams, 4 groups”, or paste a list, photos, Excel, a Sheet link.",
+    unit: (d: Draft): string => (d.is_doubles === false || needsPairing(d) ? "players" : "teams"),
     format: "Doubles or singles?",
     doubles: "Doubles", singles: "Singles",
-    count: (u: string) => `How many ${u}? Or paste the list right here.`,
+    count: (u: string) => `How many ${u}? Or paste the list.`,
     pasteList: "Paste a list",
     upload: "Upload photo / file",
-    uploadAria: "Upload a photo or a list file. Several photos are fine.",
-    fileUnreadable: "Couldn't read that file. Try a photo, Excel, CSV, PDF, or a Google Sheet link.",
-    fileTooBig: "That file is too big — 4 MB max.",
-    fileTooMany: "4 photos at a time. I took the first 4; send the rest next.",
-    oneFile: "One spreadsheet at a time. Photos can be several at once.",
-    fileNotList: "I couldn't see two names next to each other. For doubles, each row needs two players, like Nam - Hung, or two name columns. A team-name column isn't required.",
-    sheetPrivate: "I can't open this Google Sheet. Set sharing to “Anyone with the link”, then send it again. Or download the Excel file.",
-    sheetUnreadable: "That link didn't open, or the sheet is empty.",
+    uploadAria: "Upload photos or a list file",
+    fileUnreadable: "Couldn't read that file. Try a photo, Excel, CSV, PDF or Google Sheet link.",
+    fileTooBig: "File is over 4 MB.",
+    fileTooMany: "4 photos at a time — I took the first 4.",
+    oneFile: "One spreadsheet at a time.",
+    fileNotList: "No name pairs. Doubles: two players per row (Nam - Hung) or two name columns.",
+    sheetPrivate: "Can't open this Sheet. Set sharing to “Anyone with the link” and resend.",
+    sheetUnreadable: "Link didn't open or sheet is empty.",
     sheetLabel: "📊 Google Sheet",
-    added: (n: number, total: number, u: string) => `Added ${n} ${u}, ${total} in total. Open Draft to remove a wrong name.`,
+    added: (n: number, total: number, u: string) => `Added ${n} ${u}, ${total} in total. Fix names in Draft.`,
     alreadyThere: "Those names are already in the draft.",
     capped: ` The list stops at ${MAX_CHAT_ENTRIES}.`,
-    tooMany: (n: number, u: string) => `Chat can create up to ${MAX_CHAT_ENTRIES} ${u}. For ${n} ${u}, use the large playoff format in the classic form.`,
+    tooMany: (n: number, u: string) => `Chat handles up to ${MAX_CHAT_ENTRIES} ${u}. Use the classic form for ${n}.`,
     changeCount: "Change the number",
     pairing: (n: number) => `I see ${n} single names. How should I pair them?`,
-    pairingOdd: (n: number) => `I see ${n} single names — pairs need an even number, so one is left over. Type one more name, or:`,
+    pairingOdd: (n: number) => `I see ${n} single names — one is left over. Type one more name, or:`,
     pairSeq: "Pair in order", pairSeqSub: "1+2, 3+4…",
     pairRandom: "Pair randomly",
     pairLine: "Each line is a team",
@@ -215,7 +242,8 @@ const COPY = {
     useList: (m: number, u: string) => `Use ${m} ${u}`,
     pasteMore: "Paste more",
     groups: (n: number, u: string) => `How should ${n} ${u} be split?`,
-    groupsInvalid: (k: number, u: string) => `${k} groups won't work (3–8 ${u} per group, up to 16 groups). Pick one of these:`,
+    suggestGroups: (d: Draft) => groupSuggestion(d, "en"),
+    groupsInvalid: (k: number, u: string) => `${k} groups won't work (3–8 ${u} per group, max 16 groups). Pick one:`,
     groupsBig: " Big field — more groups finish faster.",
     groupLabel: (o: GroupOption) => (o.groupCount === 1 ? "1 round-robin group" : `${o.groupCount} groups × ${o.sizes[0] === o.sizes[o.sizes.length - 1] ? o.sizes[0] : `${o.sizes[o.sizes.length - 1]}–${o.sizes[0]}`}`),
     groupSub: (o: GroupOption, u: string) =>
@@ -223,21 +251,22 @@ const COPY = {
         ? "Everyone plays everyone, ranked by wins"
         : `Top 2 ${u} from each group go on`,
     recommended: "Recommended",
-    series: (u: string) => `After the groups, what next? One playoff takes the top 2 ${u} from each group. More than one: the stronger ${u} go to the first, everyone else to the next. If the count is uneven, the best ${u} rest the first round.`,
+    series: (u: string) => `After the groups? One playoff: top 2 ${u} per group. Several: stronger to the first, rest to the next.`,
     seriesOne: "One playoff", seriesOneSub: (u: string) => `Top 2 ${u} from each group go on`,
     seriesMany: (names: string[]) => `${names.length} brackets: ${names.join(" + ")}`,
-    seriesByRank: "One bracket per place",
+    seriesByRank: "One playoff per group place",
+    seriesByRankWarn: (k: number, u: string) => `Heads-up: every playoff has only 2 ${u} — that's ${k} single-match placement games.`,
     optStyle: (s: SeriesStyle): string => (s === "medal" ? "Rename: Series A, B" : "Rename: Gold, Silver"),
-    roster: (u: string) => `Do you have the list of ${u}? Paste it and I'll draw the groups now.`,
+    roster: (u: string) => `Got the list of ${u}?`,
     pasteNow: "Paste now",
     openRegistration: "Let players sign up",
     later: "Later, I'll type it",
-    paste: (d: Draft) => `Paste the list below — one ${d.is_doubles === false ? "player" : "team, like “Nam - Hung”"} per line. Several photos, an Excel file, or a Google Sheet link works too.`,
+    paste: (d: Draft) => `Paste the list below — one ${d.is_doubles === false ? "player" : "team, like “Nam - Hung”"} per line.`,
     name: "What's the tournament called?",
-    courtsQ: "How many courts do you have? I'll assign courts and times to every match.",
+    courtsQ: "How many courts? I'll assign courts and times.",
     courtN: (k: number) => `${k} ${k === 1 ? "court" : "courts"}`,
     courtsSkip: "Not sure, skip",
-    timeQ: "What time do you start? Tap a button, or type “7pm”.",
+    timeQ: "Start time? Tap a button or type “7pm”.",
     timeNow: "Start now",
     timeLater: "Decide later",
     timeSkip: "Not sure",
@@ -245,29 +274,29 @@ const COPY = {
     undo: "Undo last step",
     reset: "Start over",
     resetTitle: "Clear everything and start over?",
-    resetDesc: "The whole chat and draft will be cleared. Tournaments already created are not affected.",
+    resetDesc: "Clears the chat and draft. Created tournaments stay.",
     resetOk: "Start over",
     customName: "Type another name below",
     options: "Almost done! Anything else?",
     optSeed: "Seeds", optSets: (s: number) => `Sets: ${s === 1 ? "1 game" : `BO${s}`}`, optTeam: "Keep clubs apart",
     optDone: "Done, review",
-    hintSeed: (u: string) => `Type the seeded ${u} in order, e.g. “seeds: Nam - Hung, Tu - Long”. Seeds are placed in different groups.`,
-    hintTeam: "Tell me which teams share a club, e.g. “Nam - Hung, Tu - Long are Ha Dong club”. I'll keep them in different groups.",
+    hintSeed: (u: string) => `Type seeded ${u} in order, e.g. “seeds: Nam - Hung, Tu - Long” — I'll split them.`,
+    hintTeam: "Name same-club teams, e.g. “Nam - Hung, Tu - Long are Ha Dong club” — I'll split them.",
     setsQ: "How many games per match?",
     set1: "1 game", set3: "Best of 3", set5: "Best of 5",
     confirm: "All set. Check it over, then tap Create.",
     received: (n: number, u: string) => `Got ${n} ${u}.`,
     dupWarn: (n: number) => ` ⚠️ ${n} duplicate lines — check the Draft.`,
-    aiError: "I didn't catch that — the network or assistant is slow. Try again?",
+    aiError: "The network or assistant is slow. Try again?",
     thinking: "Reading your message…",
     thinkingSchedule: "Building the schedule…",
     thinkingAlmost: "Almost done…",
     thinkingRetry: "That was slow, trying once more…",
-    rephrase: "Nothing changed. Tap a button below, or say it another way.",
-    attachmentNoList: "I couldn't see team names in this file. The photo needs every line readable. A long list can be several photos. Or paste text, send Excel, or a Google Sheet link.",
+    rephrase: "Nothing changed. Tap a button or say it another way.",
+    attachmentNoList: "No names found. Photos need readable lines, or paste text.",
     photoMissed: (n: number) => (n === 1 ? " One photo had no names." : ` ${n} photos had no names.`),
     retry: "Try again",
-    quotaFull: (q: number) => `You already have ${q} round-robin tournaments. Finish or delete one to create another.`,
+    quotaFull: (q: number) => `You have ${q} round-robin tournaments. Finish or delete one first.`,
     myTables: "My tournaments",
     placeholder: "Message or paste a list…",
     send: "Send",
@@ -287,8 +316,8 @@ const COPY = {
     reshuffle: "Reshuffle groups",
     create: "Create tournament",
     creating: "Drawing groups and the schedule…",
-    confirmReg: "Players sign up through the tournament link — you approve them and draw groups later.",
-    confirmLater: "Next you'll enter the list — I'll open the entry page for you.",
+    confirmReg: "Players sign up via the link — you approve and draw groups later.",
+    confirmLater: "Next: enter the list.",
     created: (name: string) => `🎉 “${name}” is live!`,
     openTable: "Open tournament",
     enterRoster: "Enter the list",
@@ -299,10 +328,30 @@ const COPY = {
     endTable: "End tournament",
     deleteTable: "Delete tournament",
     another: "Create another",
-    rosterFailed: "The tournament was created but the groups weren't drawn. Open the entry page to try again.",
+    divSame: (n: string) => `Create “${n}” next — same list`,
+    divNew: (n: string) => `Create “${n}” next — different list`,
+    divList: (n: string, k: number) => `Create “${n}” next — the ${k} names you pasted`,
+    tmIntro: "MLP-style / rotating partners → MLP Team Match: teams face off over several doubles games.",
+    tmTeams: "How many teams?",
+    tmRoster: "How many players per team?",
+    tmFormat: "Which format between teams?",
+    tmFmt: { round_robin: "Round robin", rr_playoff: "Round robin + playoff", single_elimination: "Single elimination" } as Record<TmFormat, string>,
+    tmPeople: (n: number) => `${n} per team`,
+    tmConfirm: (d: Required<TmDraft>, fmt: string) => `MLP team match “${d.name}”: ${d.team_count} teams × ${d.roster} players, ${fmt}. Tap Create — date, venue, fees go on the tournament page.`,
+    tmAuto: "You choose",
+    tmForm: "Use the full form",
+    tmBack: "Back to group stage",
+    tmCreated: (n: string) => `Created “${n}”`,
+    tmLimit: "Max 3 team matches. Finish or delete one first.",
+    tmFailed: "Couldn't create the tournament. Try again?",
+    teamPasteAsk: (l: TeamList[]) => `I see ${l.length} lists: ${l.map((x) => `${x.label} (${x.names.length} players)`).join(", ")}. MLP Team Match, or doubles pairs for groups (within a team or across)? Nobody is paired yet; to pair yourself, type “Nam - Hung”.`,
+    teamPasteMlp: (n: number) => `MLP Team Match: ${n} teams play each other`,
+    teamPasteWithin: "Pair within each team (in order)",
+    teamPasteAcross: (a: string, b: string) => `Pair across: 1 from ${a} + 1 from ${b}`,
+    rosterFailed: "Created, but groups weren't drawn. Open the entry page to retry.",
     zaloLink: "Schedule & results",
     courts: (c: number[]) => `Courts ${c.join(", ")}`,
-    reload: "This chat is saved on this device — reloading won't lose it.",
+    reload: "Chat is saved on this device — reload is safe.",
   },
 };
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -381,7 +430,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   const restored = useMemo(() => {
     try {
       const raw = localStorage.getItem(storageKey);
-      return raw ? (JSON.parse(raw) as { lang?: Lang; draft: Draft; messages: Msg[] }) : null;
+      return raw ? (JSON.parse(raw) as { lang?: Lang; draft: Draft; messages: Msg[]; tm?: TmDraft | null }) : null;
     } catch {
       return null;
     }
@@ -402,6 +451,12 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   const [quotaFull, setQuotaFull] = useState<number | null>(null);
   const [quotaTables, setQuotaTables] = useState<QuickTable[]>([]);
   const [draftOpen, setDraftOpen] = useState(false);
+  // Nháp giải đồng đội MLP (Team Match). null = đang tạo giải chia bảng như thường.
+  const [tm, setTm] = useState<TmDraft | null>(restored?.lang === lang && restored.tm ? mergeTm({}, restored.tm) : null);
+  // Dán Team A / Team B: chờ người dùng chọn MLP hay cách ghép đôi (không lưu, không tự ghép).
+  const [teamPaste, setTeamPaste] = useState<TeamList[] | null>(null);
+  // Nhiều hạng: mỗi hạng một giải. done = số giải đã tạo; tạo xong thì đề nghị hạng labels[done].
+  const [div, setDiv] = useState<Divisions | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -412,9 +467,9 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   useEffect(() => {
     try {
       if (created) localStorage.removeItem(storageKey);
-      else localStorage.setItem(storageKey, JSON.stringify({ lang, draft, messages: messages.slice(-60) }));
+      else localStorage.setItem(storageKey, JSON.stringify({ lang, draft, messages: messages.slice(-60), tm }));
     } catch { /* private mode — chat still works, just not restorable */ }
-  }, [lang, draft, messages, created, storageKey]);
+  }, [lang, draft, messages, created, storageKey, tm]);
 
   useEffect(() => {
     getUserQuotaInfo().then((q) => { if (q && q.current_count >= q.quota) setQuotaFull(q.quota); });
@@ -466,24 +521,27 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
 
   /** Áp nháp mới rồi hỏi câu tiếp theo (kèm câu xác nhận ngắn nếu có). */
   const advance = useCallback((next: Draft, ack?: string) => {
-    const locked = lockAdvance(next);
+    const locked = clarifyDoublesCount(lockAdvance(next));
     setDraft(locked);
     setSubMenu(null);
     const q = questionFor(c, locked, nextSlot(locked));
     const unchanged = !ack || ack === (lang === "vi" ? "Bản nháp chưa đổi." : "The draft did not change.");
     setMessages((m) => {
       const last = [...m].reverse().find((x) => x.role === "bot")?.text ?? "";
-      let text = [ack?.trim(), q].filter(Boolean).join(" ").replace(/\.\s+\./g, ".").replace(/[ \t]{2,}/g, " ");
+      const lead = ack?.trim() ?? "";
+      let text = (lead && q && lead.includes(q) ? lead : [lead, q].filter(Boolean).join(" "))
+        .replace(/\.\s+\./g, ".")
+        .replace(/[ \t]{2,}/g, " ");
       if (q && last.includes(q) && unchanged) text = c.rephrase;
       return [...m, { id: uid(), role: "bot", text }];
     });
   }, [c, lang]);
 
   // Quay lại: ảnh chụp nháp + hội thoại trước mỗi lượt người dùng (chỉ trong phiên).
-  const history = useRef<Array<{ draft: Draft; messages: Msg[] }>>([]);
+  const history = useRef<Array<{ draft: Draft; messages: Msg[]; tm: TmDraft | null }>>([]);
   const [canUndo, setCanUndo] = useState(false);
   const snap = () => {
-    history.current = [...history.current.slice(-29), { draft, messages }];
+    history.current = [...history.current.slice(-29), { draft, messages, tm }];
     setCanUndo(true);
   };
   const undo = () => {
@@ -492,6 +550,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     if (!prev) return;
     setDraft(prev.draft);
     setMessages(prev.messages);
+    setTm(prev.tm);
     setSubMenu(null);
     setFailed(null);
   };
@@ -506,8 +565,53 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     advance({ ...draft, ...patch });
   };
 
+  // ---------- giải đồng đội MLP (Team Match): hỏi tại chỗ, không gọi AI ----------
+  const tmQuestion = (d: TmDraft): string => {
+    switch (nextTmSlot(d)) {
+      case "teams": return c.tmTeams;
+      case "roster": return c.tmRoster;
+      case "format": return c.tmFormat;
+      case "name": return c.name;
+      case "confirm": return c.tmConfirm(d as Required<TmDraft>, c.tmFmt[d.format!]);
+    }
+  };
+  const tmStep = (next: TmDraft, intro = false) => {
+    setTm(next);
+    pushBot([intro && c.tmIntro, tmQuestion(next)].filter(Boolean).join(" "));
+  };
+  const tmPick = (label: string, p: TmDraft) => () => { pushUser(label); tmStep(mergeTm(tm ?? {}, p)); };
+  const createTm = async () => {
+    const d = tm as Required<TmDraft>;
+    setBusy(true);
+    setBusyNote(`${c.create}…`);
+    try {
+      const t = await createTeamMatchTournament({
+        name: d.name,
+        team_roster_size: d.roster,
+        team_count: d.team_count,
+        format: d.format,
+        playoff_team_count: d.format === "rr_playoff" ? tmPlayoffCount(d.team_count) : undefined,
+        require_registration: false,
+        has_dreambreaker: false,
+        require_min_games_per_player: false,
+        // Bộ game mặc định của wizard theo số người/đội.
+        game_templates: getDefaultTemplates(d.roster).map(({ order_index, game_type, display_name, scoring_type }) => ({ order_index, game_type, display_name, scoring_type })),
+      });
+      toast({ title: c.tmCreated(t.name) });
+      // Nháp chia bảng (nếu có) giữ nguyên; hội thoại MLP xong thì dọn.
+      setTm(null);
+      setMessages(freshMessages(c, draft));
+      navigate(to(`/tools/team-match/${t.share_id}`));
+    } catch (e) {
+      pushBot((e as Error).message === "LIMIT_REACHED" ? c.tmLimit : c.tmFailed);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const send = async (out?: Outgoing, isRetry = false) => {
     let msg = out ?? { text: input.trim() };
+    let divs: string[] | null = null;
     // File vừa chọn vẫn phải đi tiếp dù lượt trước đang bận — nếu không, bấm file xong im luôn.
     if (!msg.text || (busy && !out)) return;
     // Lệnh gõ tay, xử lý tại chỗ không gọi AI.
@@ -515,6 +619,36 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       const cmd = msg.text.toLocaleLowerCase("vi").replace(/[.!]+$/, "").trim();
       if (/^(làm lại|lam lai|xoá hết|xóa hết|xoa het|reset|start over|restart)$/.test(cmd)) { setInput(""); void resetAll(); return; }
       if (/^(quay lại|quay lai|undo|back)$/.test(cmd)) { setInput(""); undo(); return; }
+      const lists = tm ? null : teamLists(msg.text);
+      const tmSeed: TmDraft = lists ? { team_count: lists.length, roster: Math.max(...lists.map((l) => l.names.length)) } : {};
+      setTeamPaste(null);
+      if (tm || wantsTeamMatch(msg.text)) { setInput(""); pushUser(msg.text); tmStep(tmAnswer(tm ?? mergeTm({}, tmSeed), msg.text, lang), !tm); return; }
+      if (lists) { setInput(""); pushUser(msg.text); setTeamPaste(lists); pushBot(c.teamPasteAsk(lists)); return; }
+      // Ca log 117 (11/11/2026): "Trình A" + tên, "TRÌNH B" + tên. Không gộp 16 tên vào một giải:
+      // làm hạng đầu với đúng tên của nó, tạo xong mời hạng sau với danh sách của hạng sau.
+      const byDiv = tm || (div && div.done > 0) ? null : divisionLists(msg.text);
+      if (byDiv) {
+        const labels = byDiv.map((l) => l.label);
+        setInput("");
+        pushUser(msg.text);
+        setDiv({ labels, done: 0, lists: byDiv });
+        const next = divisionDraft(draft, byDiv[0].names);
+        advance(next, `${divisionNote(labels, lang)}. ${rosterAck(c, c.unit(next), 0, next.entries!.length, next.entries!.length, next.entries)}`);
+        return;
+      }
+      // Ca báo cáo 21:30 15/11/2026: dán danh sách chia sẵn theo "Bảng A" / "Bảng B" — giữ đúng
+      // bảng người dùng đã chia, một giải chung (khác hạng/trình: mỗi hạng một giải riêng).
+      const byGroup = tm ? null : groupLists(msg.text);
+      if (byGroup) {
+        setInput("");
+        pushUser(msg.text);
+        const next = groupDraft(draft, byGroup);
+        advance(next, `${groupNote(byGroup, lang)}. ${rosterAck(c, c.unit(next), 0, next.entries!.length, next.entries!.length, next.entries)}`);
+        return;
+      }
+      // Câu đòi nhiều hạng đi qua AI để giữ các thông tin khác; câu trả lời kèm luật mỗi hạng một giải.
+      divs = div ? null : divisionsAsked(msg.text, lang);
+      if (divs) setDiv({ labels: divs, done: 0 });
       const sheet = googleSheetRef(msg.text);
       if (sheet) {
         setInput("");
@@ -549,7 +683,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
         }
         msg = { text: `${msg.text}\n${csv.trim().slice(0, 3500)}`, label: c.sheetLabel };
         isRetry = true;
-      } else {
+      } else if (!divs) {
         const local = localSlotPatch(msg.text, slot);
         if (local) { setInput(""); choose(msg.text, local); return; }
         const spoken = applySpokenEdit(draft, msg.text);
@@ -557,6 +691,31 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           setInput("");
           pushUser(msg.text);
           advance(spoken, factualAck(draft, spoken, lang, msg.text));
+          return;
+        }
+      }
+      if (slot === "name" && draft.name_needs_confirm) {
+        if (draft.name && affirmsDraftName(msg.text)) {
+          setInput("");
+          choose(msg.text, { name_needs_confirm: false, name_from_image: false });
+          return;
+        }
+        const typed = typedTournamentName(msg.text);
+        if (typed) {
+          setInput("");
+          pushUser(msg.text);
+          const next = applyPatch(draft, { name: typed, name_verbatim: true });
+          advance(next, factualAck(draft, next, lang, msg.text));
+          return;
+        }
+      }
+      if (slot === "name") {
+        const named = nameAnswer(msg.text);
+        if (named) {
+          setInput("");
+          pushUser(msg.text);
+          const next = applyPatch(draft, { name: named.name, name_needs_confirm: named.needsConfirm, name_from_image: false });
+          advance(next, factualAck(draft, next, lang, msg.text));
           return;
         }
       }
@@ -588,12 +747,13 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     // Mỗi ảnh một lượt. Gửi chung hai ảnh, kèm nháp 32 đội và câu "chia thế nào?",
     // mô hình trả entries rỗng dù ảnh có tên — rồi trang vẫn hỏi chia 32 đội.
     if (files.length) {
-      const hint = "Đọc hết tên trong ảnh này. Đánh đôi thì mỗi cặp một đội. Chỉ trả tên nhìn thấy trong ảnh, không chép danh sách khác.";
+      const hint = "Đọc hết tên trong ảnh này. Đánh đôi thì mỗi cặp một đội. Chỉ trả tên nhìn thấy trong ảnh, không chép danh sách khác. Nếu ảnh có tiêu đề giải, điền name và bỏ chữ dẫn thừa ở đầu (là, đấu là).";
       const history = [{ role: "user" as const, text: hint }];
       const draftWithoutList = { ...draft, entries: undefined, player_count: undefined };
       let incoming: Entry[] = [];
       let missed = 0;
       let transportFailed = false;
+      let visionName = "";
       try {
         for (const file of files) {
           const { data, error } = await invokeChat(
@@ -606,6 +766,10 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           if (res.intent !== "fill" && res.intent !== "answer") { missed++; continue; }
           const patch = trustPatch(res.patch, "", "count");
           const got = Array.isArray(patch.entries) ? (patch.entries as Entry[]) : [];
+          if (!visionName && typeof patch.name === "string") {
+            const cleaned = cleanTournamentName(patch.name);
+            if (cleaned.name) visionName = cleaned.name;
+          }
           if (!got.length) { missed++; continue; }
           incoming = mergeRoster(incoming, got);
         }
@@ -619,9 +783,17 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       }
       const before = draft.entries?.length ?? 0;
       const entries = mergeRoster(draft.entries, incoming);
-      const next = applyPatch(draft, { entries, roster_mode: "now" });
+      const namePatch = visionName && !draft.name
+        ? { name: visionName, name_needs_confirm: true, name_from_image: true }
+        : {};
+      const next = applyPatch(draft, { entries, roster_mode: "now", ...namePatch });
       let ack = rosterAck(c, c.unit(next), before, entries.length, incoming.length, next.entries);
       if (missed) ack += c.photoMissed(missed);
+      if (namePatch.name && next.name) {
+        ack += lang === "vi"
+          ? ` Tên đọc từ ảnh: “${next.name}” — mình sẽ hỏi lại trước khi tạo giải.`
+          : ` Name from the photo: “${next.name}” — I'll ask you to confirm it before creating.`;
+      }
       advance(next, ack);
       return;
     }
@@ -640,7 +812,13 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       return;
     }
     const res = data as { reply?: string; intent: string; patch: unknown; unmet?: string | null };
-    const said = typeof res.reply === "string" ? res.reply : "";
+    if (res.intent === "team_match") { tmStep(tmAnswer({}, msg.text, lang), true); return; }
+    // AI báo nhiều hạng mà client chưa bắt được cách diễn đạt → vẫn theo luật mỗi hạng một giải.
+    const manyDivs = unmetWantsDivisions(res.unmet);
+    const divLabels = div?.labels ?? divs ?? (manyDivs ? divisionsAsked(`${res.unmet}\n${msg.text}`, lang) : null);
+    if (manyDivs && !div && !divs && divLabels) setDiv({ labels: divLabels, done: 0 });
+    // Ca log 117: AI đáp "Bạn nói 8 đội nhưng danh sách có 16 người…" — câu ghép cặp chung nuốt mất luật hạng.
+    const said = manyDivs ? "" : typeof res.reply === "string" ? res.reply : "";
     if (res.intent !== "fill" && res.intent !== "answer") {
       const spoken = applySpokenEdit(draft, msg.text);
       const next = spoken ?? draft;
@@ -648,7 +826,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       // 22/10) → dùng câu fallback tử tế thay vì "bản nháp chưa đổi" chung
       // chung: nhắc lại yêu cầu, nói rõ chưa hỗ trợ, flow vẫn đi tiếp.
       const ack = !said.trim() && JSON.stringify(next) === JSON.stringify(draft)
-        ? fallbackReply(res.intent, res.unmet ?? null, lang)
+        ? fallbackReply(res.intent, res.unmet ?? null, lang, msg.text)
         : replyFromDraft(draft, next, said, lang, msg.text);
       advance(next, ack);
       return;
@@ -659,10 +837,21 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     const spoken = applySpokenEdit(patched, msg.text);
     const next = spoken ?? patched;
     let ack = replyFromDraft(draft, next, said, lang, msg.text);
+    // Ca log 116 (10/11/2026): intent "fill" + reply rỗng + unmet — nhánh fill
+    // trước đây không có chốt chặn: factualAck hụt nhận diện là lượt đó im lặng.
+    // Có unmet mà AI không nói gì thì gắn câu fallback gọi đích danh phần chưa hỗ trợ.
+    if (!said.trim() && res.unmet) {
+      const note = manyDivs && divLabels ? `${divisionNote(divLabels, lang)}.` : fallbackReply("unsupported", res.unmet, lang, msg.text);
+      if (!ack.includes(note.replace(/\.+$/, ""))) {
+        const unchangedAck = ack === "Bản nháp chưa đổi." || ack === "The draft did not change.";
+        ack = unchangedAck || !ack ? note : `${note} ${ack}`;
+      }
+    }
     const plan = draftSeriesPlan(next);
     if (plan && !next.advance_per_group && next.series_sizes && next.series_sizes.join() !== draft.series_sizes?.join()) {
       const line = plan.map((sl, i) => seriesLine(seriesName(next.series_style ?? "series", i, lang), sl, lang, c.unit(next))).join(" · ");
       if (!ack.includes(line)) ack = `${ack} ${line}.`;
+      if (plan.length > 1 && plan.every((sl) => sl.size === 2)) ack = `${ack} ${c.seriesByRankWarn(plan.length, c.unit(next))}`;
     }
     advance(next, ack);
   };
@@ -671,6 +860,45 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   const chips: Chip[] = (() => {
     if (created || quotaFull != null || busy) return [];
     if (failed) return [{ label: c.retry, onClick: () => send(failed, true) }];
+    if (teamPaste) {
+      const [a, b] = teamPaste;
+      const pairBy = (mode: "within" | "across", label: string) => () => {
+        setTeamPaste(null);
+        const entries = pairTeamLists(teamPaste, mode);
+        choose(label, { entries, is_doubles: true, pairing_done: true, player_count: entries.length });
+      };
+      return [
+        { label: c.teamPasteMlp(teamPaste.length), recommended: true, onClick: () => {
+          setTeamPaste(null);
+          pushUser(c.teamPasteMlp(teamPaste.length));
+          tmStep(mergeTm({}, { team_count: teamPaste.length, roster: Math.max(...teamPaste.map((l) => l.names.length)) }), true);
+        } },
+        ...(teamPaste.every((l) => l.names.length % 2 === 0) ? [{ label: c.teamPasteWithin, onClick: pairBy("within", c.teamPasteWithin) }] : []),
+        ...(teamPaste.length === 2 && a.names.length === b.names.length ? [{ label: c.teamPasteAcross(a.label, b.label), onClick: pairBy("across", c.teamPasteAcross(a.label, b.label)) }] : []),
+      ];
+    }
+    if (tm) {
+      const back = { label: c.tmBack, onClick: () => { pushUser(c.tmBack); setTm(null); pushBot(questionFor(c, draft, slot)); } };
+      const auto = { label: c.tmAuto, onClick: tmPick(c.tmAuto, { team_count: 4, roster: 4, format: "round_robin", name: tmDefaultName(lang), ...tm }) };
+      switch (nextTmSlot(tm)) {
+        case "teams":
+          return [...[4, 6, 8].map((k) => ({ label: lang === "vi" ? `${k} đội` : `${k} teams`, onClick: tmPick(String(k), { team_count: k }) })), auto, back];
+        case "roster":
+          return [...[4, 6, 8].map((k) => ({ label: c.tmPeople(k), onClick: tmPick(c.tmPeople(k), { roster: k }) })), auto, back];
+        case "format":
+          return (["round_robin", "rr_playoff", "single_elimination"] as const)
+            .filter((f) => f !== "single_elimination" || tmKnockoutOk(tm.team_count))
+            .map((f) => ({ label: c.tmFmt[f], onClick: tmPick(c.tmFmt[f], { format: f }) }));
+        case "name":
+          return [{ label: tmDefaultName(lang), onClick: tmPick(tmDefaultName(lang), { name: tmDefaultName(lang) }) }, back];
+        case "confirm":
+          return [
+            { label: c.create, recommended: true, onClick: () => void createTm() },
+            { label: c.tmForm, onClick: () => navigate(to("/tools/team-match/new")) },
+            back,
+          ];
+      }
+    }
     const n = entryCount(draft);
     const switchFormat: Chip[] = draft.is_doubles === undefined ? [] : [
       draft.is_doubles
@@ -683,12 +911,31 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           { label: c.doubles, onClick: () => choose(c.doubles, { is_doubles: true }) },
           { label: c.singles, onClick: () => choose(c.singles, { is_doubles: false }) },
         ];
-      case "count":
+      case "count": {
+        const pending = pendingDoublesHeadcount(draft);
+        if (pending) {
+          return [
+            ...headcountChoices(pending, lang).map((choice) => ({
+              label: choice.label,
+              recommended: choice.fromPlayers,
+              onClick: () => {
+                pushUser(choice.label);
+                advance(
+                  { ...draft, player_count: choice.teams, count_unit: "teams" as const, headcount_pending: undefined },
+                  choice.fromPlayers ? headcountResolvedNote(choice.teams, pending, lang) : undefined,
+                );
+              },
+            })),
+            { label: c.pasteList, onClick: () => inputRef.current?.focus() },
+            { label: c.upload, onClick: () => fileRef.current?.click() },
+          ];
+        }
         return [
-          ...[8, 12, 16, 24, 32].map((k) => ({ label: String(k), onClick: () => choose(`${k} ${unit}`, { player_count: k }) })),
+          ...[8, 12, 16, 24, 32].map((k) => ({ label: String(k), onClick: () => choose(`${k} ${unit}`, { player_count: k, count_unit: draft.is_doubles === false ? "players" as const : "teams" as const, headcount_pending: undefined }) })),
           { label: c.pasteList, onClick: () => inputRef.current?.focus() },
           { label: c.upload, onClick: () => fileRef.current?.click() },
         ];
+      }
       case "too_many":
         return [
           { label: c.classicForm, onClick: () => navigate(to("/tools/quick-tables")) },
@@ -740,7 +987,8 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
             onClick: () => choose(label, { series: k, series_sizes: undefined, advance_per_group: undefined }),
           };
         });
-        const ranks = rankSeriesSizes(sizes);
+        const offer = rankSeriesOffer(draft, !!div);
+        const ranks = offer?.sizes ?? null;
         const rankKey = ranks?.join();
         const already = ranks != null && bundled.some((_, i) => seriesPlan(sizes, i + 1)?.map((sl) => sl.size).join() === rankKey);
         if (!ranks || already) return [...bundled, ...switchFormat];
@@ -749,8 +997,17 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
           ...switchFormat,
           {
             label: c.seriesByRank,
-            sub: ranks.map((n, d) => seriesLine(seriesName("series", d, lang), seriesSlot(n), lang, unit)).join(" · "),
-            onClick: () => choose(c.seriesByRank, { series: ranks.length, series_sizes: ranks, series_style: "series", advance_per_group: undefined }),
+            sub: [
+              offer!.twoOnly && c.seriesByRankWarn(ranks.length, unit),
+              ranks.map((n, d) => seriesLine(seriesName("series", d, lang), seriesSlot(n), lang, unit)).join(" · "),
+            ].filter(Boolean).join(" "),
+            onClick: () => {
+              pushUser(c.seriesByRank);
+              advance(
+                { ...draft, series: ranks.length, series_sizes: ranks, series_style: "series", advance_per_group: undefined },
+                offer!.twoOnly ? c.seriesByRankWarn(ranks.length, unit) : undefined,
+              );
+            },
           },
         ];
       }
@@ -784,8 +1041,15 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
         ];
       }
       case "name": {
+        if (draft.name && draft.name_needs_confirm) {
+          const use = lang === "vi" ? `Đúng, “${draft.name}”` : `Yes, “${draft.name}”`;
+          return [
+            { label: use, recommended: true, onClick: () => choose(use, { name_needs_confirm: false, name_from_image: false }) },
+            { label: c.customName, onClick: () => inputRef.current?.focus() },
+          ];
+        }
         const name = defaultName(draft, lang);
-        return [{ label: name, onClick: () => choose(name, { name }) }];
+        return [{ label: name, onClick: () => choose(name, { name, name_needs_confirm: false, name_from_image: false }) }];
       }
       case "options": {
         if (subMenu === "sets") {
@@ -824,10 +1088,10 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     snap();
     const d = { ...draft };
     if (field === "format") { d.is_doubles = undefined; d.pairing_done = false; }
-    if (field === "count") { d.player_count = undefined; d.entries = undefined; d.roster_mode = undefined; d.group_count = undefined; d.series = undefined; d.series_sizes = undefined; }
+    if (field === "count") { d.player_count = undefined; d.entries = undefined; d.roster_mode = undefined; d.group_count = undefined; d.series = undefined; d.series_sizes = undefined; d.headcount_pending = undefined; d.count_unit = undefined; }
     if (field === "groups") { d.group_count = undefined; d.series = undefined; d.series_sizes = undefined; }
     if (field === "roster") { d.entries = undefined; d.roster_mode = undefined; d.options_done = false; }
-    if (field === "name") d.name = undefined;
+    if (field === "name") { d.name = undefined; d.name_needs_confirm = undefined; d.name_from_image = undefined; }
     if (field === "extra") d.options_done = false;
     if (field === "courts") { d.courts = undefined; d.group_courts = undefined; d.start_time = undefined; d.courts_done = false; d.time_done = false; }
     advance(d);
@@ -872,7 +1136,23 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     }
     setCreating(false);
     setCreated({ table, rosterOk });
+    if (div) setDiv({ ...div, done: div.done + 1 });
   };
+
+  // Hạng tiếp theo: tên chung + hậu tố hạng; chip hiện ngay dưới thẻ "đã tạo".
+  const nextDiv = created && div?.labels[div.done];
+  const nextName = nextDiv ? `${divisionBase(draft.name!, div!.labels)} — ${nextDiv}` : "";
+  const nextList = created && div?.lists?.[div.done];
+  const continueDivision = (same: boolean) => {
+    const next = nextList ? divisionDraft(draft, nextList.names, nextName) : nextDivisionDraft(draft, nextName, same);
+    setCreated(null);
+    pushUser(nextList ? c.divList(nextName, nextList.names.length) : (same ? c.divSame : c.divNew)(nextName));
+    advance(next, factualAck(draft, next, lang));
+  };
+  const divChips: Chip[] = !nextDiv ? [] : [
+    ...(draft.entries?.length && !nextList ? [{ label: c.divSame(nextName), recommended: true, onClick: () => continueDivision(true) }] : []),
+    { label: nextList ? c.divList(nextName, nextList.names.length) : c.divNew(nextName), recommended: !!nextList, onClick: () => continueDivision(false) },
+  ];
 
   const tableUrl = created ? `${getSiteUrl()}${to(`/tools/quick-tables/${created.table.share_id}`)}` : "";
   const groupsList = useMemo(() => {
@@ -920,6 +1200,9 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   const startOver = () => {
     setCreated(null);
     setDraft({});
+    setTm(null);
+    setTeamPaste(null);
+    setDiv(null);
     setMessages(freshMessages(c, {}));
     setSubMenu(null);
     setFailed(null);
@@ -950,7 +1233,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
   const deleteQuotaTable = async (table: QuickTable) => {
     if (!(await confirm({
       title: c.deleteTable,
-      description: lang === "vi" ? `Xoá “${table.name}”? Không lấy lại được.` : `Delete “${table.name}”? This cannot be undone.`,
+      description: lang === "vi" ? `Xóa “${table.name}”? Không lấy lại được.` : `Delete “${table.name}”? This cannot be undone.`,
       confirmText: c.deleteTable,
       destructive: true,
     }))) return;
@@ -986,7 +1269,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
         </header>
 
         {/* bản nháp dính trên cùng */}
-        {!created && (
+        {!created && !tm && (
           <section
             className="qt-chat-draft"
             style={{ background: "var(--tl-bg-elev)", border: "1px solid var(--tl-border)", borderRadius: "var(--tl-radius-lg)" }}
@@ -1028,7 +1311,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
             </div>
           )}
 
-          {slot === "confirm" && !created && !busy && (
+          {slot === "confirm" && !created && !busy && !tm && (
             <ConfirmCard
               draft={draft} c={c} lang={lang} groups={groupsList} creating={creating}
               onCreate={create}
@@ -1048,6 +1331,7 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
               onAnother={startOver}
             />
           )}
+          {divChips.length > 0 && <ChipRow chips={divChips} />}
           {quotaMsg && (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <Button variant="default" onClick={() => navigate(to("/tools/quick-tables"))}>{c.myTables}</Button>
@@ -1130,21 +1414,28 @@ function seriesLabel(d: Draft, lang: Lang): string | null {
   return plan.map((sl, i) => `${seriesName(d.series_style ?? "series", i, lang)}${sized ? ` ${sl.size}` : ""}`).join(" + ");
 }
 
+const langOf = (c: C): "vi" | "en" => (c.doubles === "Doubles" ? "en" : "vi");
+
 function questionFor(c: C, d: Draft, s: Slot): string {
   const u = c.unit(d);
   const n = entryCount(d);
+  const lang = langOf(c);
   switch (s) {
     case "format": return c.format;
-    case "count": return c.count(u);
+    case "count": {
+      const pending = pendingDoublesHeadcount(d);
+      return pending ? headcountAsk(pending, lang) : c.count(u);
+    }
     case "too_many": return c.tooMany(n, u);
     case "pairing": return (d.entries!.length % 2 ? c.pairingOdd : c.pairing)(d.entries!.length);
     case "mismatch": return c.mismatch(d.entries!.length, d.player_count!, u);
     case "groups":
-      return (d.group_count ? c.groupsInvalid(d.group_count, u) : c.groups(n, u)) + (n > 32 ? c.groupsBig : "");
+      return (d.group_count ? c.groupsInvalid(d.group_count, u) : [c.groups(n, u), c.suggestGroups(d)].filter(Boolean).join(" ")) + (n > 32 ? c.groupsBig : "");
     case "series": return c.series(u);
     case "roster": return c.roster(u);
     case "paste": return c.paste(d);
-    case "name": return c.name;
+    case "name":
+      return d.name && d.name_needs_confirm ? nameConfirmAsk(d.name, !!d.name_from_image, lang) : c.name;
     case "courts": return c.courtsQ;
     case "start_time": return c.timeQ;
     case "options": return c.options;

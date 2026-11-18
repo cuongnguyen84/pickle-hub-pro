@@ -1,4 +1,4 @@
-import { truncateForSeo } from "../../src/lib/seo-title";
+import { SEO_TITLE_MAX_CHARS, truncateForSeo, truncateTitleForSeo } from "../../src/lib/seo-title";
 /**
  * HTML page builder for SSR prerendering.
  */
@@ -104,7 +104,11 @@ function getFooterHtml(lang: Lang, siteUrl: string): string {
 // char accumulating UTF-8 byte length, then cuts at the last
 // whitespace within the budget. Ellipsis "\u2026" itself is 3 bytes,
 // reserved up front.
-const SEO_TITLE_MAX_BYTES = 60;
+// AUDIT-01 (2026-11-10): titles moved back to a 60-CHARACTER budget
+// (SEO_TITLE_MAX_CHARS, from seo-title.ts). The byte budget cut every VI
+// news title at ~40-50 chars, often mid-name ("Ho Chi…"); 60 characters is
+// the SERP guideline Google actually renders against. Descriptions stay on
+// the 160-byte budget.
 const SEO_DESCRIPTION_MAX_BYTES = 160;
 export function buildHtml(opts: BuildHtmlOptions): string {
   const {
@@ -125,7 +129,7 @@ export function buildHtml(opts: BuildHtmlOptions): string {
   // SEO audit batch 4 — clamp the user-visible title + description to
   // the recommended SERP previews. We keep the original (rawTitle /
   // rawDescription) for JSON-LD where the limits do not apply.
-  const title = truncateForSeo(rawTitle, SEO_TITLE_MAX_BYTES);
+  const title = truncateTitleForSeo(rawTitle, SEO_TITLE_MAX_CHARS);
   const description = truncateForSeo(rawDescription, SEO_DESCRIPTION_MAX_BYTES);
 
   const jsonLdScript = jsonLd

@@ -10,6 +10,291 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "daytona-beach-open-2026-womens-singles-wide-open",
+    "publishedDate": "2026-11-18",
+    "updatedDate": "2026-11-18",
+    "author": "The PickleHub Team",
+    "tags": [
+      "daytona beach open",
+      "ppa tour",
+      "womens singles",
+      "kiora kunimoto",
+      "analysis"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/daytona-beach-open-2026-womens-singles-wide-open-hero.webp",
+      "alt": "Women's singles player hitting a forehand at Pictona at Holly Hill, with the official Carvana PPA Pickleball Tour badge"
+    },
+    "titleEn": "Why the Women's Singles Draw at the Daytona Beach Open 2026 Is Wide Open",
+    "titleVi": "Đơn nữ tại Daytona Beach Open 2026 mở toang: cơ hội vàng cho Kunimoto và nhóm hạt giống phía sau",
+    "metaTitleEn": "Daytona 2026 Women's Singles: Why the Draw Is Wide Open",
+    "metaTitleVi": "Đơn Nữ Daytona Beach Open 2026 Mở Toang",
+    "metaDescriptionEn": "Waters, Fahey and Christian are absent from the Daytona Beach Open 2026 women's singles draw. Kunimoto, Buckner, Castillo and Parenteau chase an open title.",
+    "metaDescriptionVi": "Waters, Fahey và Christian vắng mặt ở đơn nữ Daytona Beach Open 2026. Kunimoto, Buckner, Castillo và Parenteau tranh danh hiệu PPA 1.000 điểm."
+  },
+  {
+    "slug": "5-cach-dut-diem-pickleball-putaway",
+    "publishedDate": "2026-11-14",
+    "updatedDate": "2026-11-14",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball putaway",
+      "pickleball technique",
+      "ava ignatowich",
+      "dupr",
+      "guide"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/5-cach-dut-diem-pickleball-putaway-hero.webp",
+      "alt": "Amateur pickleball player hitting a compact putaway at the kitchen line, driving the ball down across the net"
+    },
+    "titleEn": "5 Pickleball Putaway Tips From Ava Ignatowich: Hit Down, Use Angles, Keep It Compact",
+    "titleVi": "5 cách dứt điểm trong pickleball theo Ava Ignatowich: đánh xuống, đánh góc và đánh gọn",
+    "metaTitleEn": "5 Pickleball Putaway Tips From Ava Ignatowich",
+    "metaTitleVi": "5 Cách Dứt Điểm Pickleball Theo Ava Ignatowich",
+    "metaDescriptionEn": "PPA pro Ava Ignatowich shares 5 putaway fixes: hit down at the feet, angle overheads, attack straight ahead, shrink your backswing and watch the ball.",
+    "metaDescriptionVi": "Ava Ignatowich chia sẻ 5 cách dứt điểm: đánh xuống vào chân, overhead đánh góc, tấn công thẳng, thu gọn vòng vung, nhìn bóng."
+  },
+  {
+    "slug": "mlp-asia-business-model-home-nights",
+    "publishedDate": "2026-11-12",
+    "updatedDate": "2026-11-12",
+    "author": "The PickleHub Team",
+    "tags": [
+      "mlp asia",
+      "viet panthers",
+      "sports business",
+      "franchise",
+      "pickleball asia"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/mlp-asia-business-model-home-nights-hero.webp",
+      "alt": "Indoor pickleball arena during an evening team event with a packed crowd, with the official MLP Asia logo"
+    },
+    "titleEn": "MLP Asia's Business Model: Why Team Owners Are Buying One Home Night, Not a Season",
+    "titleVi": "Mô hình kinh doanh MLP Asia: vì sao chủ đội mua một đêm sân nhà, không mua cả mùa giải",
+    "metaTitleEn": "MLP Asia's Business Model: One Home Night Per Team",
+    "metaTitleVi": "Mô Hình Kinh Doanh MLP Asia: Một Đêm Sân Nhà",
+    "metaDescriptionEn": "MLP Asia sells six franchises as one-night events, not seasons. How the model works, what owners are buying, and the open questions for season one.",
+    "metaDescriptionVi": "MLP Asia bán 6 franchise dạng sự kiện một đêm thay vì cả mùa giải: cách mô hình vận hành, chủ đội mua gì và câu hỏi còn mở."
+  },
+  {
+    "slug": "daytona-beach-open-2026-results",
+    "publishedDate": "2026-11-16",
+    "updatedDate": "2026-11-18",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball",
+      "results",
+      "ppa daytona",
+      "2026"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/daytona-beach-open-2026-results-hero.webp",
+      "alt": "Official Proton Daytona Beach Open 2026 logo over the championship court at Pictona at Holly Hill"
+    },
+    "titleEn": "Daytona Beach Open 2026 Results: Daily Scores and Confirmed Winners",
+    "titleVi": "Kết quả Daytona Beach Open 2026: cập nhật hằng ngày",
+    "metaTitleEn": "PPA Daytona Beach Results 2026: Daytona Beach Open Scores",
+    "metaTitleVi": "Kết quả PPA Daytona Beach 2026: Daytona Beach Open",
+    "metaDescriptionEn": "PPA Daytona Beach results: Daytona Beach Open 2026 results and daily scores from the official PPA feed, checked by ThePickleHub.",
+    "metaDescriptionVi": "Kết quả Daytona Beach Open 2026 từ feed PPA chính thức, được ThePickleHub kiểm chứng."
+  },
+  {
+    "slug": "pickleball-stacking-guide-own-the-middle",
+    "publishedDate": "2026-11-11",
+    "updatedDate": "2026-11-11",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball stacking",
+      "doubles strategy",
+      "pickleball guide",
+      "technique"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-stacking-guide-own-the-middle-hero.webp",
+      "alt": "Illustration of a pickleball doubles pair stacking on the same side of the court, one partner sliding across toward the middle"
+    },
+    "titleEn": "Pickleball Stacking Explained: How to Own the Middle in Doubles",
+    "titleVi": "Stacking trong pickleball là gì? Cách xếp chồng vị trí để làm chủ khu vực giữa sân khi đánh đôi",
+    "metaTitleEn": "Pickleball Stacking Guide: Own the Middle",
+    "metaTitleVi": "Stacking Pickleball: Làm Chủ Giữa Sân",
+    "metaDescriptionEn": "Pickleball stacking explained: how to set up on the serve and the return, hand signals for the switch, 4 beginner mistakes, and a practice plan.",
+    "metaDescriptionVi": "Stacking trong pickleball là gì: cách xếp vị trí khi giao và trả giao, tín hiệu tay, 4 lỗi thường gặp và cách tập hiệu quả."
+  },
+  {
+    "slug": "pickleball-first-doping-testing-european-open",
+    "publishedDate": "2026-11-11",
+    "updatedDate": "2026-11-11",
+    "author": "The PickleHub Team",
+    "tags": [
+      "anti-doping",
+      "european open 2026",
+      "wpf",
+      "epf",
+      "analysis"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-first-doping-testing-european-open-hero.webp",
+      "alt": "Illustration of an empty pickleball court with two paddles and a ball on the surface and two sealed sample vials on a courtside table"
+    },
+    "titleEn": "Pickleball Doping Testing Arrives: WPF and EPF Run the Sport's First Official In-Competition Tests at the 2026 European Open",
+    "titleVi": "Pickleball lần đầu kiểm tra doping trong thi đấu: WPF và EPF thực hiện đợt kiểm tra chính thức đầu tiên tại European Open 2026",
+    "metaTitleEn": "Pickleball's First Doping Tests at the European Open",
+    "metaTitleVi": "Kiểm Tra Doping Đầu Tiên Của Pickleball",
+    "metaDescriptionEn": "WPF and EPF ran pickleball's first official in-competition doping tests at the 2026 European Open in Türkiye. What happened and what changes in 2027.",
+    "metaDescriptionVi": "WPF và EPF thực hiện đợt kiểm tra doping đầu tiên của pickleball tại European Open 2026. Bộ quy tắc có hiệu lực từ 01/01/2027."
+  },
+  {
+    "slug": "waters-bright-18-straight-titles-greatest-womens-doubles",
+    "publishedDate": "2026-11-11",
+    "updatedDate": "2026-11-11",
+    "author": "The PickleHub Team",
+    "tags": [
+      "anna leigh waters",
+      "anna bright",
+      "world championships 2026",
+      "ppa tour",
+      "women's doubles",
+      "analysis"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/waters-bright-18-straight-titles-greatest-womens-doubles-hero.webp",
+      "alt": "Anna Leigh Waters and Anna Bright holding the World Championships trophy after winning the women's doubles title at Brookhaven Country Club, with the Opendoor Pickleball World Championships badge"
+    },
+    "titleEn": "Anna Bright and Anna Leigh Waters Have Won 18 Straight Titles. Are They the Greatest Women's Doubles Team in PPA History?",
+    "titleVi": "Anna Bright và Anna Leigh Waters đã thắng 18 danh hiệu liên tiếp. Họ có phải cặp đôi nữ vĩ đại nhất lịch sử PPA?",
+    "metaTitleEn": "Waters and Bright: 18 Straight Titles",
+    "metaTitleVi": "Waters - Bright: 18 danh hiệu liên tiếp",
+    "metaDescriptionEn": "Anna Bright and Anna Leigh Waters won their 18th straight title at the 2026 World Championships. Are they the greatest women's doubles team in PPA history?",
+    "metaDescriptionVi": "Anna Bright và Anna Leigh Waters vô địch 18 giải liên tiếp tại World Championships 2026 - cặp đôi nữ vĩ đại nhất lịch sử PPA?"
+  },
+  {
+    "slug": "world-championships-2026-new-generation-analysis",
+    "publishedDate": "2026-11-10",
+    "updatedDate": "2026-11-10",
+    "author": "The PickleHub Team",
+    "tags": [
+      "world championships 2026",
+      "tama shimabukuro",
+      "john lucian goins",
+      "anna leigh waters",
+      "ppa tour",
+      "analysis"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/world-championships-2026-new-generation-analysis-hero.webp",
+      "alt": "John Lucian Goins lifts the World Championships trophy after winning the men's singles title at Brookhaven Country Club, with the Opendoor Pickleball World Championships badge"
+    },
+    "titleEn": "A 15-Year-Old and an 18-Year-Old Won at Worlds. Waters Didn't Blink.",
+    "titleVi": "Một cậu bé 15 tuổi và một chàng trai 18 tuổi vô địch Worlds. Waters vẫn không chớp mắt.",
+    "metaTitleEn": "Worlds 2026 Analysis: The New Generation Arrives",
+    "metaTitleVi": "Phân tích Worlds 2026: thế hệ mới lên ngôi",
+    "metaDescriptionEn": "A 15-year-old and an 18-year-old won at Worlds 2026, but Anna Leigh Waters didn't blink. Analysis of pickleball's new generation — and the Daytona test.",
+    "metaDescriptionVi": "Shimabukuro (15 tuổi) và Goins (18 tuổi) vô địch Worlds 2026, Waters vẫn thống trị. Phân tích thế hệ mới và phép thử Daytona."
+  },
+  {
+    "slug": "new-paddles-world-championships-2026",
+    "publishedDate": "2026-11-10",
+    "updatedDate": "2026-11-10",
+    "author": "The PickleHub Team",
+    "tags": [
+      "new pickleball paddles 2026",
+      "foam core",
+      "upa-a",
+      "proton",
+      "paddletek",
+      "pickleball gear"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Watch live tournaments on ThePickleHub",
+      "vi": "Xem giải trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/new-paddles-world-championships-2026-hero.webp",
+      "alt": "Three unbranded carbon-fiber pickleball paddles and a ball resting on a blue court beside the net at sunset"
+    },
+    "titleEn": "The New Paddles Pros Unveiled at Worlds 2026 — and What They Mean for Your Game",
+    "titleVi": "Vợt mới các tay vợt pro trình làng tại Worlds 2026 — và ý nghĩa với người chơi phong trào",
+    "metaTitleEn": "New Paddles at Worlds 2026: What Pros Played",
+    "metaTitleVi": "Vợt mới tại Worlds 2026: pro dùng gì?",
+    "metaDescriptionEn": "Foam cores, NanoTac grip surfaces and a new UPA-A stamp: the four paddle storylines from Worlds 2026 and what trickles down to club players.",
+    "metaDescriptionVi": "Lõi foam, mặt NanoTac và dấu phê duyệt UPA-A: 4 câu chuyện vợt tại Worlds 2026 và công nghệ nào sẽ xuống sân phong trào."
+  },
+  {
+    "slug": "vietnam-junior-world-championships-2026",
+    "publishedDate": "2026-11-02",
+    "updatedDate": "2026-11-02",
+    "author": "The PickleHub Team",
+    "tags": [
+      "junior world championships 2026",
+      "vietnam juniors",
+      "nguyen gia hung",
+      "dan linh huong",
+      "huynh phu qui",
+      "tran dinh dat",
+      "opendoor worlds",
+      "dallas",
+      "afp"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow live scores on ThePickleHub",
+      "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-world-championships-2026-results-hero.webp",
+      "alt": "Opendoor Pickleball World Championships 2026 at Brookhaven Country Club, Farmers Branch, Texas"
+    },
+    "titleEn": "Vietnam Juniors Head to Junior Worlds in Dallas",
+    "titleVi": "Đoàn trẻ Việt Nam dự giải trẻ Worlds tại Dallas",
+    "metaTitleEn": "VN Juniors at Worlds Dallas 2026",
+    "metaTitleVi": "Đoàn trẻ VN dự Worlds Dallas 2026",
+    "metaDescriptionEn": "Nine Vietnam juniors play Junior Worlds in Dallas (5–8/11). Coaches Huỳnh Phú Quí and Trần Đình Đạt lead the group.",
+    "metaDescriptionVi": "9 VĐV trẻ Việt Nam dự Junior Worlds Dallas 5–8/11. Đoàn có HLV Huỳnh Phú Quí và Trần Đình Đạt."
+  },
+  {
     "slug": "juan-benitez-coach-behind-patriquin-bright-staksrud",
     "publishedDate": "2026-10-28",
     "updatedDate": "2026-10-28",
@@ -262,7 +547,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     "slug": "pickleball-world-championships-2026-results",
     "publishedDate": "2026-11-02",
-    "updatedDate": "2026-10-29",
+    "updatedDate": "2026-11-09",
     "author": "The PickleHub Team",
     "tags": [
       "pickleball",
@@ -274,6 +559,10 @@ export const blogMetadata: BlogPostMetadata[] = [
     "ctaLabel": {
       "en": "Follow live scores on ThePickleHub",
       "vi": "Theo dõi điểm số trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-world-championships-2026-results-hero.webp",
+      "alt": "Opendoor Pickleball World Championships 2026 at Brookhaven Country Club, Farmers Branch, Texas"
     },
     "titleEn": "World Championship 2026 Results: Daily Scores and Confirmed Winners",
     "titleVi": "Kết quả World Championship 2026: cập nhật hằng ngày",
@@ -1441,7 +1730,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "pickleball-group-draw-schedule-guide",
     publishedDate: "2026-08-26",
-    updatedDate: "2026-08-26",
+    updatedDate: "2026-11-05",
     author: "Cuong Nguyen",
     tags: [
       "chia bảng pickleball",
@@ -1453,7 +1742,7 @@ export const blogMetadata: BlogPostMetadata[] = [
       "group draw",
       "round robin schedule",
     ],
-    ctaPath: "/tools",
+    ctaPath: "/tools/quick-tables",
     ctaLabel: {
       en: "Generate your bracket free — no signup",
       vi: "Chia bảng & tạo lịch miễn phí — không cần đăng ký",
@@ -1826,6 +2115,25 @@ export const blogMetadata: BlogPostMetadata[] = [
       "The Hang Seng Bank Hong Kong Slam, Oct 19–25 2026 at Kai Tak Arena: a US$1.1M PPA Tour Asia 1500 finale — Asia's first Slam. Dates, prize and registration.",
     metaDescriptionVi:
       "Hang Seng Bank Hong Kong Slam 19–25/10/2026 tại Kai Tak Arena: chung kết PPA Tour Asia 1500, thưởng 1,1 triệu USD, Slam đầu tiên châu Á.",
+  },
+  {
+    slug: "mlp-nations-cup-2026-results",
+    publishedDate: "2026-10-31",
+    updatedDate: "2026-11-02",
+    author: "The PickleHub Team",
+    tags: ["mlp nations cup", "results", "2026", "worlds", "asia domestic"],
+    ctaPath: "/live",
+    ctaLabel: { en: "Follow live scores on ThePickleHub", vi: "Theo dõi điểm số trên ThePickleHub" },
+    heroImage: {
+      src: "/images/blog/mlp-nations-cup-2026-results-hero.webp",
+      alt: "MLP Nations Cup 2026 Day 1 — Team USA player mid-swing on championship court at Brookhaven (official Major League Pickleball photo)",
+    },
+    titleEn: "MLP Nations Cup 2026 Results: USA Win the Title",
+    titleVi: "Kết quả MLP Nations Cup 2026: USA vô địch, tỷ số đầy đủ",
+    metaTitleEn: "MLP Nations Cup 2026 Results: USA Champions",
+    metaTitleVi: "Kết quả MLP Nations Cup 2026: USA vô địch",
+    metaDescriptionEn: "USA won the MLP Nations Cup 2026, sweeping Latin America 3–0 in the final. Full semifinal and final scores plus pool standings.",
+    metaDescriptionVi: "USA vô địch MLP Nations Cup 2026, thắng Latin America 3–0 ở chung kết. Tỷ số bán kết, chung kết và bảng xếp hạng đầy đủ.",
   },
   {
     slug: "mlp-orlando-super-sunday-2026-best-game",

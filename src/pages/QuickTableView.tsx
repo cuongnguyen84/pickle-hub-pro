@@ -52,6 +52,7 @@ import { playoffStartTime, schedulePlayoff } from '@/lib/quick-table-playoff-sch
 import { maxSeries, rankSeriesSizes, resolveSeriesSizes, seriesDraws, seriesLine, seriesName, seriesPlan, singleGroupPlayoffPlans, seriesPreview, seriesDrawPreview, slot } from '@/lib/quick-table-series';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { ASSISTANT_APPLIED_EVENT, useAssistantContext } from '@/lib/assistant-context';
 
 const QuickTableView = () => {
   const { shareId } = useParams<{ shareId: string }>();
@@ -252,6 +253,31 @@ const QuickTableView = () => {
     }
   }, [showTeam, shareId]);
 
+  // Trợ lý AI nổi: khai báo màn hình/bảng đang xem; tải lại khi trợ lý ghi thay đổi.
+  const viewingGroup = activeTab === 'groups' ? groups.find(g => g.id === activeGroupId) : undefined;
+  useAssistantContext(table ? {
+    screen: activeTab === 'groups' ? 'quick_table_groups'
+      : activeTab === 'playoff' ? 'quick_table_results'
+      : activeTab === 'registration' ? 'quick_table_registration'
+      : 'quick_table_detail',
+    label: viewingGroup ? `${table.name} — ${viewingGroup.name}` : table.name,
+    tournament: { kind: 'quick_table', share_id: table.share_id, name: table.name },
+    ...(viewingGroup ? { entity: { kind: 'group' as const, id: viewingGroup.id, name: viewingGroup.name } } : {}),
+    stage: table.status === 'setup' ? 'setup' : 'drawn',
+    facts: {
+      tournament: table.name, status: table.status, format: table.format, doubles: table.is_doubles,
+      groups: groups.length, teams: players.length, matches: matches.length,
+      matches_done: matches.filter((m) => m.status === 'completed').length,
+      tab: activeTab, viewing_group: viewingGroup?.name,
+      your_role: canManageTable ? 'organizer' : canEditScores ? 'referee' : user ? 'viewer' : 'guest',
+    },
+  } : null);
+  useEffect(() => {
+    const onApplied = () => { void loadData(); };
+    window.addEventListener(ASSISTANT_APPLIED_EVENT, onApplied);
+    return () => window.removeEventListener(ASSISTANT_APPLIED_EVENT, onApplied);
+  }, [loadData]);
+
   const handleScoreUpdate = async (matchId: string, score1: number, score2: number, _isPlayoff: boolean = false) => {
     const match = matches.find(m => m.id === matchId);
     if (!match || !table) return;
@@ -285,11 +311,15 @@ const QuickTableView = () => {
   );
   const allGroupMatchesPending = groupStageMatches.length > 0
     && groupStageMatches.every(match => match.status === 'pending');
+  // Giải có gán sân theo bảng (group_courts): bảng không gán mà hết sân tự do
+  // thì court_id = NULL là cố ý — "sửa" ở đây từng dồn cả bảng đó vào sân đã
+  // gán cho bảng khác (test trợ lý 28/10: bảng A thành sân 2).
+  const hasGroupPins = !!table?.group_courts?.some(court => court != null);
   const legacyScheduleNeedsRepair = allGroupMatchesPending
     && groupStageMatches.some(match =>
       match.rr_round_number === null
       || match.rr_match_index === null
-      || match.court_id === null,
+      || (match.court_id === null && !hasGroupPins),
     );
 
   // Old tournaments can contain nested-loop match rows with no round metadata.
@@ -426,11 +456,11 @@ const QuickTableView = () => {
     if (!table) return;
     const vi = language !== 'en';
     const ok = await confirm({
-      title: vi ? 'Huỷ playoff, quay về vòng bảng?' : 'Cancel the playoff and go back to the group stage?',
+      title: vi ? 'Hủy playoff, quay về vòng bảng?' : 'Cancel the playoff and go back to the group stage?',
       description: vi
-        ? 'Xoá toàn bộ sơ đồ vòng loại để chọn lại cách chia. Kết quả vòng bảng giữ nguyên.'
+        ? 'Xóa toàn bộ sơ đồ vòng loại để chọn lại cách chia. Kết quả vòng bảng giữ nguyên.'
         : 'Removes the whole playoff draw so you can pick a different split. Group results are kept.',
-      confirmText: vi ? 'Huỷ playoff' : 'Cancel playoff',
+      confirmText: vi ? 'Hủy playoff' : 'Cancel playoff',
       destructive: true,
     });
     if (!ok) return;
@@ -438,11 +468,11 @@ const QuickTableView = () => {
     const res = (data ?? {}) as { success?: boolean; error?: string };
     if (error || !res.success) {
       toast.error(res.error === 'PLAYOFF_STARTED'
-        ? (vi ? 'Playoff đã có trận nhập điểm, không huỷ được.' : 'A playoff match already has a score.')
+        ? (vi ? 'Playoff đã có trận nhập điểm, không hủy được.' : 'A playoff match already has a score.')
         : t.quickTable.view.errorOccurred);
       return;
     }
-    toast.success(vi ? 'Đã huỷ vòng loại. Chọn lại cách chia nhé.' : 'Playoff cancelled. Pick a split again.');
+    toast.success(vi ? 'Đã hủy vòng loại. Chọn lại cách chia nhé.' : 'Playoff cancelled. Pick a split again.');
     setSeriesChoice(null);
     setActiveTab('groups');
     await loadData();
@@ -1638,7 +1668,7 @@ const QuickTableView = () => {
                   )}
                   <Button type="button" variant="outline" size="sm" onClick={() => void cancelPlayoff()}>
                     <RotateCcw className="w-4 h-4" />
-                    {language === 'vi' ? 'Huỷ playoff, chọn lại cách chia' : 'Cancel playoff, re-split'}
+                    {language === 'vi' ? 'Hủy playoff, chọn lại cách chia' : 'Cancel playoff, re-split'}
                   </Button>
                 </div>
               )}

@@ -113,7 +113,7 @@ describe("the four page-level answers stay distinct", () => {
     expect(screen.getByText("Không có đơn nào khớp “ZZZ-KHONG-CO”")).toBeTruthy();
     expect(screen.queryByText("Anh/chị chưa có đơn hàng nào")).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "Xoá tìm kiếm" }));
+    fireEvent.click(screen.getByRole("button", { name: "Xóa tìm kiếm" }));
     expect(screen.getByText(/Vợt QA/)).toBeTruthy();
   });
 });
@@ -133,7 +133,7 @@ describe("the tabs", () => {
     expect(count("Tất cả")).toBe("5");
     expect(count("Đang tới")).toBe("3");
     expect(count("Đã xong")).toBe("1");
-    expect(count("Đã huỷ")).toBe("1");
+    expect(count("Đã hủy")).toBe("1");
   });
 
   it("are real tabs, and exactly one is selected", () => {
@@ -143,8 +143,8 @@ describe("the tabs", () => {
     expect(tabs).toHaveLength(4);
     expect(tabs.filter((t) => t.getAttribute("aria-selected") === "true")).toHaveLength(1);
 
-    fireEvent.click(screen.getByRole("tab", { name: /Đã huỷ/ }));
-    expect(screen.getByRole("tab", { name: /Đã huỷ/ }).getAttribute("aria-selected")).toBe("true");
+    fireEvent.click(screen.getByRole("tab", { name: /Đã hủy/ }));
+    expect(screen.getByRole("tab", { name: /Đã hủy/ }).getAttribute("aria-selected")).toBe("true");
     expect(screen.getByRole("tab", { name: /Tất cả/ }).getAttribute("aria-selected")).toBe("false");
   });
 });
@@ -154,7 +154,7 @@ describe("a row", () => {
     state.data = [row({ status: "pending" })];
     render(<Orders />);
     expect(
-      screen.getByText("Shop chưa xác nhận — chưa cần làm gì. Huỷ được nếu đổi ý."),
+      screen.getByText("Shop chưa xác nhận — chưa cần làm gì. Hủy được nếu đổi ý."),
     ).toBeTruthy();
     expect(document.querySelector(".tl-shop-pill")).toBeNull();
   });
@@ -173,7 +173,7 @@ describe("a row", () => {
       }),
     ];
     render(<Orders />);
-    expect(screen.getByText("Đã huỷ, do shop.")).toBeTruthy();
+    expect(screen.getByText("Đã hủy, do shop.")).toBeTruthy();
   });
 
   it("sends 'Tôi đã nhận hàng' to the order page rather than firing an RPC", () => {

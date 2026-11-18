@@ -45,6 +45,7 @@ struct TournamentDetailView: View {
             .padding(20)
         }
         .background(TLColor.bg)
+        .assistantContext(SiteAssistant.context(tournament: tournament))
         .navigationTitle("Giải đấu")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showWeb) {

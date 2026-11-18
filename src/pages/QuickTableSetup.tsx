@@ -5,6 +5,7 @@ import { DraftRestoredBanner, DraftSaveStatus } from '@/components/wizard/DraftA
 import { completeJourney, startJourney, trackJourneyStep } from '@/lib/journeys';
 import { TheLineLayout } from '@/components/layout';
 import { useQuickTable, type QuickTable } from '@/hooks/useQuickTable';
+import { ASSISTANT_APPLIED_EVENT, useAssistantContext } from '@/lib/assistant-context';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -45,6 +46,12 @@ const QuickTableSetup = () => {
   } = useQuickTable();
 
   const [table, setTable] = useState<QuickTable | null>(null);
+  useAssistantContext(table ? {
+    screen: 'quick_table_setup',
+    label: table.name,
+    tournament: { kind: 'quick_table', share_id: table.share_id, name: table.name },
+    stage: 'setup',
+  } : null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [players, setPlayers] = useState<PlayerInput[]>([]);
@@ -171,6 +178,14 @@ const QuickTableSetup = () => {
 
     loadTable();
   }, [shareId, getTableByShareId, navigate, lp]);
+
+  // Trợ lý AI nổi đổi tên/sân của giải → chỉ làm mới dòng giải, giữ nguyên form đang nhập.
+  useEffect(() => {
+    if (!shareId) return undefined;
+    const onApplied = () => { void getTableByShareId(shareId).then((d) => { if (d) setTable(d.table); }); };
+    window.addEventListener(ASSISTANT_APPLIED_EVENT, onApplied);
+    return () => window.removeEventListener(ASSISTANT_APPLIED_EVENT, onApplied);
+  }, [shareId, getTableByShareId]);
 
   const updatePlayer = (index: number, field: keyof PlayerInput, value: string) => {
     setPlayers(prev => {
@@ -439,7 +454,7 @@ const QuickTableSetup = () => {
 
   const handleDeleteTable = async () => {
     if (!table) return;
-    if (!(await confirm({ description: `Bạn có chắc chắn muốn xoá giải "${table.name}"? Tất cả dữ liệu sẽ bị xoá vĩnh viễn.`, destructive: true }))) {
+    if (!(await confirm({ description: `Bạn có chắc chắn muốn xóa giải "${table.name}"? Tất cả dữ liệu sẽ bị xóa vĩnh viễn.`, destructive: true }))) {
       return;
     }
     const success = await deleteTable(table.id);
@@ -515,7 +530,7 @@ const QuickTableSetup = () => {
                 }}
               >
                 <Trash2 className="w-3 h-3" />
-                {language === 'vi' ? 'Xoá giải' : 'Delete'}
+                {language === 'vi' ? 'Xóa giải' : 'Delete'}
               </button>
             )}
           </div>

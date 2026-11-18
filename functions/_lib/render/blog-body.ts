@@ -18,6 +18,8 @@ import { authorIdentity } from "../../../src/content/authors";
 
 import type { BlogPost, BlogPostContent } from "../../../src/content/blog/types";
 import { loadBlogPost } from "../../../src/content/blog/posts/all";
+import { blogMetadata } from "../../../src/content/blog/metadata";
+import { buildTournamentClusterLinks, type ClusterLink } from "../../../src/content/blog/tournament-cluster";
 import { BLOG_IMAGE_DIMS, blogImageDims } from "../../../src/content/blog/image-dims";
 import { escapeHtml } from "../utils";
 
@@ -149,6 +151,21 @@ export function renderResultsBoard(
   return out.join("");
 }
 
+/** Bot copy of the React TournamentClusterLinks chip row; "" when empty. */
+export function tournamentClusterHtml(links: ClusterLink[], siteUrl: string, label: string): string {
+  if (!links.length) return "";
+  const chips = links
+    .map((l) => `<a class="tl-rb-chip" href="${escapeHtml(siteUrl + l.path)}">${escapeHtml(l.text)}</a>`)
+    .join("");
+  return `<nav class="tl-rb-chips" aria-label="${escapeHtml(label)}">${chips}</nav>`;
+}
+
+/** Storylines block (paragraphs split by blank lines); "" when absent. */
+export function storylinesHtml(text: string | undefined, heading: string): string {
+  const paras = (text ?? "").split("\n\n").map((p) => p.trim()).filter(Boolean);
+  return paras.length ? `<section><h2>${escapeHtml(heading)}</h2>${paras.map((p) => `<p>${escapeHtml(p)}</p>`).join("")}</section>` : "";
+}
+
 function renderSections(
   content: BlogPostContent,
   siteUrl: string,
@@ -213,6 +230,8 @@ function renderSections(
     if (s.liveBlock && liveBlocks[s.liveBlock]) {
       out.push(liveBlocks[s.liveBlock]);
     }
+    // Storylines follow the intro (first section), as on the React page.
+    if (s === content.sections[0]) out.push(storylinesHtml(content.storylines, "Storylines"));
   }
   return out.join("\n");
 }
@@ -241,8 +260,12 @@ export async function renderEnBlogBody(
   const en = post.content.en;
   const identity = authorIdentity(post.author, siteUrl);
   const byline = 'url' in identity ? `<a href="${escapeHtml(identity.url!)}">${escapeHtml(identity.name)}</a>` : escapeHtml(identity.name);
+  const cluster = buildTournamentClusterLinks(slug, "en", (s) =>
+    blogMetadata.some((p) => p.slug === s) ? `/blog/${s}` : undefined,
+  );
   return (
     `<article><h1>${escapeHtml(en.title)}</h1><p>By ${byline} · Updated <time datetime="${escapeHtml(post.updatedDate)}">${escapeHtml(post.updatedDate)}</time></p>${heroFigure(post.heroImage)}` +
+    tournamentClusterHtml(cluster, siteUrl, "Tournament coverage") +
     `${renderSections(en, siteUrl, liveBlocks)}${renderFaq(en)}</article>`
   );
 }

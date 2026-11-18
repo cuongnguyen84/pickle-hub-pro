@@ -61,6 +61,7 @@ export function useNearbyVenues(): {
         .select(
           "id,slug,name,name_vi,city,district,address,latitude,longitude,num_courts,surface_type,is_indoor,is_verified",
         )
+        .eq("status", "active")
         .gte("latitude", geo.lat - dLat)
         .lte("latitude", geo.lat + dLat)
         .gte("longitude", geo.lng - dLng)

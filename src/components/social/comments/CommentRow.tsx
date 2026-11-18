@@ -95,7 +95,7 @@ export function CommentRow({
   const handleDelete = async () => {
     if (
       await confirm({
-        description: language === "vi" ? "Xoá bình luận này?" : "Delete this comment?",
+        description: language === "vi" ? "Xóa bình luận này?" : "Delete this comment?",
         destructive: true,
       })
     ) {
@@ -108,7 +108,7 @@ export function CommentRow({
       aria-label={
         comment.is_deleted
           ? language === "vi"
-            ? "Bình luận đã xoá"
+            ? "Bình luận đã xóa"
             : "Deleted comment"
           : `${comment.display_name ?? comment.username ?? "Anonymous"}: ${comment.body}`
       }
@@ -196,7 +196,7 @@ export function CommentRow({
             <ActionButton
               onClick={handleDelete}
               icon={<Trash2 style={{ width: 13, height: 13 }} />}
-              label={language === "vi" ? "Xoá" : "Delete"}
+              label={language === "vi" ? "Xóa" : "Delete"}
               tone={deleteActor === "owner" ? "danger" : "moderation"}
               title={deleteTooltip ?? undefined}
               disabled={deleteMutation.isPending}
@@ -336,7 +336,7 @@ function CommentByline({
           color: "var(--tl-fg-4)",
         }}
       >
-        {language === "vi" ? "Đã xoá" : "Deleted"}
+        {language === "vi" ? "Đã xóa" : "Deleted"}
       </span>
     );
   }

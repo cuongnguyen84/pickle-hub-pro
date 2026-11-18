@@ -186,20 +186,20 @@ export default function S07ProductEdit() {
                   <li>Gỡ sản phẩm khỏi trang mua hàng và khỏi tìm kiếm ngay lập tức.</li>
                   <li>
                     Giữ nguyên {openOrders.length} đơn chưa xong — anh/chị vẫn phải gửi hàng
-                    hoặc huỷ đơn đúng quy trình.
+                    hoặc hủy đơn đúng quy trình.
                   </li>
                   <li>
                     Người mua đã lưu sản phẩm sẽ thấy dòng &ldquo;Người bán đã gỡ sản
                     phẩm&rdquo;.
                   </li>
-                  <li>Không xoá dữ liệu — bật bán lại được bất cứ lúc nào.</li>
+                  <li>Không xóa dữ liệu — bật bán lại được bất cứ lúc nào.</li>
                 </ul>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <button type="button" className="tl-shop-btn tl-shop-btn--danger">
                     Vẫn ngừng bán
                   </button>
                   <button type="button" className="tl-shop-btn" onClick={() => setArchiveOpen(false)}>
-                    Huỷ
+                    Hủy
                   </button>
                 </div>
               </div>

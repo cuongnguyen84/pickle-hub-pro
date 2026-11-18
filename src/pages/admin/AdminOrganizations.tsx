@@ -123,11 +123,11 @@ export default function AdminOrganizations() {
     if (!orgToDelete) return;
     try {
       await deleteOrg.mutateAsync(orgToDelete.id);
-      toast.success("Xoá tổ chức thành công");
+      toast.success("Xóa tổ chức thành công");
       setDeleteDialogOpen(false);
       setOrgToDelete(null);
     } catch (error: any) {
-      toast.error(error.message || "Không thể xoá tổ chức. Có thể đang có nội dung liên kết.");
+      toast.error(error.message || "Không thể xóa tổ chức. Có thể đang có nội dung liên kết.");
     }
   };
 
@@ -287,20 +287,20 @@ export default function AdminOrganizations() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xoá tổ chức</AlertDialogTitle>
+            <AlertDialogTitle>Xác nhận xóa tổ chức</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xoá tổ chức <strong>{orgToDelete?.name}</strong>? 
+              Bạn có chắc chắn muốn xóa tổ chức <strong>{orgToDelete?.name}</strong>? 
               Hành động này không thể hoàn tác và có thể thất bại nếu tổ chức đang có nội dung liên kết.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Huỷ</AlertDialogCancel>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deleteOrg.isPending}
             >
-              {deleteOrg.isPending ? "Đang xoá..." : "Xoá"}
+              {deleteOrg.isPending ? "Đang xóa..." : "Xóa"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

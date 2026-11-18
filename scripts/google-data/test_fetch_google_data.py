@@ -179,42 +179,101 @@ class SnapshotShapeTests(unittest.TestCase):
             self.assertIn(key, snap)
 
 
+def _run(*args, **kw):
+    return subprocess.run(list(args), check=True, capture_output=True, text=True, **kw).stdout.strip()
+
+
 class CommitSnapshotsTests(unittest.TestCase):
-    def test_pathspec_commit_ignores_unrelated_dirt_and_push_failure_is_loud(self):
-        tmp = Path(tempfile.mkdtemp(prefix="google-data-git-"))
-        origin = tmp / "origin.git"
-        repo = tmp / "repo"
-        subprocess.run(["git", "init", "--bare", "-b", "main", str(origin)], check=True, capture_output=True)
-        subprocess.run(["git", "clone", "--quiet", str(origin), str(repo)], check=True, capture_output=True)
-        for args in [("config", "user.email", "t@example.com"), ("config", "user.name", "T")]:
-            subprocess.run(["git", "-C", str(repo), *args], check=True)
-        (repo / "README.md").write_text("hi\n")
-        subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True)
-        subprocess.run(["git", "-C", str(repo), "commit", "-m", "init"], check=True, capture_output=True)
-        subprocess.run(["git", "-C", str(repo), "push", "--quiet", "origin", "main"], check=True)
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="google-data-git-"))
+        self.origin = self.tmp / "origin.git"
+        self.repo = self.tmp / "repo"
+        _run("git", "init", "--bare", "-b", "main", str(self.origin))
+        _run("git", "clone", "--quiet", str(self.origin), str(self.repo))
+        for k, v in [("user.email", "t@example.com"), ("user.name", "T")]:
+            _run("git", "-C", str(self.repo), "config", k, v)
+        (self.repo / "README.md").write_text("hi\n")
+        _run("git", "-C", str(self.repo), "add", "-A")
+        _run("git", "-C", str(self.repo), "commit", "-m", "init")
+        _run("git", "-C", str(self.repo), "push", "--quiet", "origin", "main")
+        (self.repo / "data/google").mkdir(parents=True)
+        self.f1 = self.repo / "data/google/gsc-2026-10-26.json"; self.f1.write_text('{"a": 1}\n')
+        self.f2 = self.repo / "data/google/ga4-2026-10-26.json"; self.f2.write_text('{"b": 2}\n')
 
-        (repo / "data/google").mkdir(parents=True)
-        f1 = repo / "data/google/gsc-2026-10-26.json"; f1.write_text('{"a": 1}\n')
-        f2 = repo / "data/google/ga4-2026-10-26.json"; f2.write_text('{"b": 2}\n')
-        (repo / "unrelated.txt").write_text("dirty editor file\n")  # must NOT be committed
+    def _other_clone_pushes_to_main(self, name: str):
+        other = self.tmp / f"other-{name}"
+        _run("git", "clone", "--quiet", str(self.origin), str(other))
+        (other / f"{name}.txt").write_text("x\n")
+        _run("git", "-C", str(other), "add", "-A")
+        _run("git", "-C", str(other), "-c", "user.email=o@e", "-c", "user.name=O", "commit", "-m", name)
+        _run("git", "-C", str(other), "push", "--quiet", "origin", "main")
 
-        self.assertEqual(g.commit_snapshots(repo, [f1, f2], date(2026, 10, 26)), "committed")
-        shown = subprocess.run(["git", "--git-dir", str(origin), "show", "--stat", "--format=", "main"],
-                               capture_output=True, text=True, check=True).stdout
-        self.assertIn("gsc-2026-10-26.json", shown)
-        self.assertNotIn("unrelated.txt", shown)
-        status = subprocess.run(["git", "-C", str(repo), "status", "--porcelain"],
-                                capture_output=True, text=True, check=True).stdout
-        self.assertIn("unrelated.txt", status)  # still dirty, untouched
+    def _origin(self, *args):
+        return _run("git", "--git-dir", str(self.origin), *args)
 
-        # Second run with identical content: unchanged, no error.
-        self.assertEqual(g.commit_snapshots(repo, [f1, f2], date(2026, 10, 26)), "unchanged")
+    def test_feature_branch_checkout_pushes_onto_origin_main_without_touching_checkout(self):
+        # The 2026-11-02 failure: checkout on a dirty feature branch that is
+        # not a fast-forward of main, and main has moved since the last pull.
+        repo = self.repo
+        _run("git", "-C", str(repo), "checkout", "-q", "-b", "feat/x")
+        (repo / "feature.txt").write_text("wip\n")
+        _run("git", "-C", str(repo), "add", "feature.txt")
+        _run("git", "-C", str(repo), "commit", "-m", "feature work")
+        (repo / "unrelated.txt").write_text("dirty editor file\n")
+        (repo / "README.md").write_text("edited, unstaged\n")
+        _run("git", "-C", str(repo), "add", "README.md")  # staged change must survive too
+        self._other_clone_pushes_to_main("moved")
+        head_before = _run("git", "-C", str(repo), "rev-parse", "HEAD")
+        status_before = _run("git", "-C", str(repo), "status", "--porcelain")
 
-        # Break the remote: push must raise, not pass silently.
-        subprocess.run(["git", "-C", str(repo), "remote", "set-url", "origin", str(tmp / "gone.git")], check=True)
-        (repo / "data/google/gsc-2026-10-26.json").write_text('{"a": 2}\n')
+        self.assertEqual(g.commit_snapshots(repo, [self.f1, self.f2], date(2026, 10, 26)), "committed")
+
+        files = self._origin("ls-tree", "-r", "--name-only", "main").splitlines()
+        self.assertIn("data/google/gsc-2026-10-26.json", files)
+        self.assertIn("data/google/ga4-2026-10-26.json", files)
+        self.assertIn("moved.txt", files)            # built on the new main tip
+        self.assertNotIn("feature.txt", files)       # feature work never leaks
+        self.assertNotIn("unrelated.txt", files)
+        self.assertEqual(self._origin("show", "main:README.md"), "hi")  # staged edit not pushed
+        self.assertEqual(self._origin("log", "-1", "--format=%s", "main"),
+                         "data(google): GSC/GA4 snapshot 2026-10-26")
+        self.assertEqual(_run("git", "-C", str(repo), "rev-parse", "HEAD"), head_before)
+        self.assertEqual(_run("git", "-C", str(repo), "branch", "--show-current"), "feat/x")
+        self.assertEqual(_run("git", "-C", str(repo), "status", "--porcelain"), status_before)
+
+        # Identical rerun: unchanged, nothing new on main.
+        tip = self._origin("rev-parse", "main")
+        self.assertEqual(g.commit_snapshots(repo, [self.f1, self.f2], date(2026, 10, 26)), "unchanged")
+        self.assertEqual(self._origin("rev-parse", "main"), tip)
+
+        # Untracked copies are dropped so a later merge of main cannot abort.
+        g.drop_untracked_copies(repo, [self.f1, self.f2])
+        self.assertFalse(self.f1.exists())
+        self.assertTrue((repo / "unrelated.txt").exists())
+
+    def test_race_on_main_is_retried_on_the_new_tip_never_forced(self):
+        # pre-push hook simulates someone pushing to main between our fetch
+        # and our push, once: first push is rejected non-fast-forward.
+        hook = self.repo / ".git/hooks/pre-push"
+        marker = self.tmp / "raced"
+        other = self.tmp / "other-race"
+        _run("git", "clone", "--quiet", str(self.origin), str(other))
+        hook.write_text(
+            "#!/bin/sh\n"
+            f"[ -e '{marker}' ] && exit 0\n"
+            f"touch '{marker}'\n"
+            f"cd '{other}' && echo r > race.txt && git add race.txt && "
+            "git -c user.email=o@e -c user.name=O commit -qm race && git push -q origin main\n")
+        hook.chmod(0o755)
+
+        self.assertEqual(g.commit_snapshots(self.repo, [self.f1, self.f2], date(2026, 10, 26)), "committed")
+        log = self._origin("log", "--format=%s", "main").splitlines()
+        self.assertEqual(log[:2], ["data(google): GSC/GA4 snapshot 2026-10-26", "race"])
+
+    def test_push_failure_is_loud(self):
+        _run("git", "-C", str(self.repo), "remote", "set-url", "origin", str(self.tmp / "gone.git"))
         with self.assertRaises(g.GitPushError):
-            g.commit_snapshots(repo, [f1, f2], date(2026, 10, 26))
+            g.commit_snapshots(self.repo, [self.f1, self.f2], date(2026, 10, 26))
 
 
 class CaBundleTests(unittest.TestCase):

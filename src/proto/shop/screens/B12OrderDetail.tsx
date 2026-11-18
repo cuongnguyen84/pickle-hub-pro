@@ -28,7 +28,7 @@ const WHO_NEXT: Record<OrderStatus, { who: string; what: string; tone: "" | "--w
   "dang-xu-ly": { who: "Người bán", what: "chuẩn bị và gửi hàng", tone: "" },
   "dang-giao": { who: "Đơn vị vận chuyển", what: "giao hàng tới địa chỉ của anh/chị", tone: "" },
   "da-giao": { who: "Không ai", what: "đơn đã xong. Anh/chị có thể đánh giá hoặc yêu cầu đổi trả nếu còn hạn", tone: "--info" },
-  "da-huy": { who: "Không ai", what: "đơn đã huỷ", tone: "" },
+  "da-huy": { who: "Không ai", what: "đơn đã hủy", tone: "" },
   "tra-hang": { who: "Người bán", what: "trả lời yêu cầu trả hàng của anh/chị", tone: "--warn" },
   "khieu-nai": { who: "Quản trị viên", what: "xem xét khiếu nại và quyết định", tone: "--danger" },
   "da-hoan-tien": { who: "Không ai", what: "đơn đã hoàn tiền xong", tone: "--info" },

@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { tStandalone } from '@/lib/i18n-standalone';
 import type { QuickTableGroup, QuickTablePlayer, QuickTableMatch, QuickTableStatus } from './useQuickTable';
-import { distributePlayersToGroups } from '@/lib/quick-table-utils';
+import { addedPlayerSlot, distributePlayersToGroups } from '@/lib/quick-table-utils';
 import { generateCircleMethodMatches } from '@/lib/round-robin';
 import { accumulateGroupStats } from '@/lib/quickTableResult';
 import { sanitizeString } from '@/lib/validation';
@@ -282,15 +282,21 @@ export function useQuickTableMutations() {
   ): Promise<QuickTablePlayer | null> => {
     setPendingFor('addPlayerToGroup', true);
     try {
+      const [{ data: rows, error: rowsError }, { data: group, error: groupError }] = await Promise.all([
+        supabase.from('quick_table_players').select('group_id, team, display_order').eq('table_id', tableId),
+        supabase.from('quick_table_groups').select('name').eq('id', groupId).single(),
+      ]);
+      if (rowsError) throw rowsError;
+      if (groupError) throw groupError;
+      const slot = addedPlayerSlot(rows ?? [], groupId, group.name, playerData.name, playerData.team);
       const { data, error } = await supabase
         .from('quick_table_players')
         .insert({
           table_id: tableId,
           group_id: groupId,
           name: playerData.name,
-          team: playerData.team || null,
           seed: playerData.seed || null,
-          display_order: 999,
+          ...slot,
         })
         .select()
         .single();

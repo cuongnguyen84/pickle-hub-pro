@@ -195,7 +195,7 @@ describe("the slug is a link somebody may already hold", () => {
     render();
     await waitFor(() => screen.getByRole("button", { name: "Đổi đường dẫn" }));
     fireEvent.click(screen.getByRole("button", { name: "Đổi đường dẫn" }));
-    fireEvent.click(screen.getByRole("button", { name: "Huỷ" }));
+    fireEvent.click(screen.getByRole("button", { name: "Hủy" }));
     await waitFor(() => expect(screen.queryByLabelText("Đường dẫn mới")).toBeNull());
     expect(updateSlug).not.toHaveBeenCalled();
   });
@@ -218,7 +218,7 @@ describe("ngừng bán asks before it acts", () => {
     render();
     await waitFor(() => screen.getByRole("button", { name: "Ngừng bán sản phẩm này" }));
     fireEvent.click(screen.getByRole("button", { name: "Ngừng bán sản phẩm này" }));
-    fireEvent.click(screen.getByRole("button", { name: "Huỷ" }));
+    fireEvent.click(screen.getByRole("button", { name: "Hủy" }));
 
     await waitFor(() => expect(screen.queryByText("Ngừng bán sẽ làm những việc sau:")).toBeNull());
     expect(archive).not.toHaveBeenCalled();

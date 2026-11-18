@@ -347,7 +347,7 @@ function ProductList({
       setConfirmIds(null);
     } catch (error) {
       const message = error instanceof Error && error.message.includes("product_has_orders")
-        ? "Không thể xoá sản phẩm đã phát sinh đơn hàng. Anh/chị có thể ngừng bán sản phẩm đó."
+        ? "Không thể xóa sản phẩm đã phát sinh đơn hàng. Anh/chị có thể ngừng bán sản phẩm đó."
         : shopErrorMessage(error);
       setDeleteError(message);
     }
@@ -408,11 +408,11 @@ function ProductList({
         <p className="tl-shop-empty-title">Không có sản phẩm nào khớp</p>
         <p>
           {hasActiveFilter(filters)
-            ? "Bỏ bộ lọc trạng thái, ngành hàng hoặc xoá từ khoá để xem lại tất cả."
+            ? "Bỏ bộ lọc trạng thái, ngành hàng hoặc xóa từ khoá để xem lại tất cả."
             : "Danh mục trống ở trang này."}
         </p>
         <button type="button" className="tl-shop-btn" onClick={onClearFilters}>
-          Xoá bộ lọc
+          Xóa bộ lọc
         </button>
       </div>
     );
@@ -441,7 +441,7 @@ function ProductList({
             }}
           >
             <Trash2 size={15} aria-hidden="true" />
-            Xoá {selectedIds.length} sản phẩm
+            Xóa {selectedIds.length} sản phẩm
           </button>
         )}
       </div>
@@ -540,14 +540,14 @@ function ProductList({
       <AlertDialog open={confirmIds !== null} onOpenChange={(open) => !open && !deleteProducts.isPending && setConfirmIds(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xoá {confirmIds?.length ?? 0} sản phẩm?</AlertDialogTitle>
+            <AlertDialogTitle>Xóa {confirmIds?.length ?? 0} sản phẩm?</AlertDialogTitle>
             <AlertDialogDescription>
-              Sản phẩm và ảnh liên quan sẽ bị xoá vĩnh viễn. Sản phẩm đã phát sinh đơn hàng sẽ được giữ lại để bảo toàn lịch sử mua bán.
+              Sản phẩm và ảnh liên quan sẽ bị xóa vĩnh viễn. Sản phẩm đã phát sinh đơn hàng sẽ được giữ lại để bảo toàn lịch sử mua bán.
             </AlertDialogDescription>
           </AlertDialogHeader>
           {deleteError && <p className="text-sm text-destructive" role="alert">{deleteError}</p>}
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteProducts.isPending}>Huỷ</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteProducts.isPending}>Hủy</AlertDialogCancel>
             <AlertDialogAction
               disabled={deleteProducts.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -556,7 +556,7 @@ function ProductList({
                 void confirmDelete();
               }}
             >
-              {deleteProducts.isPending ? "Đang xoá…" : "Xoá vĩnh viễn"}
+              {deleteProducts.isPending ? "Đang xóa…" : "Xóa vĩnh viễn"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -696,10 +696,10 @@ function ProductTableRow({
               className="tl-shop-btn tl-shop-btn--sm"
               style={{ color: "var(--shop-danger)" }}
               onClick={onDelete}
-              aria-label={`Xoá sản phẩm ${row.title}`}
+              aria-label={`Xóa sản phẩm ${row.title}`}
             >
               <Trash2 size={15} aria-hidden="true" />
-              Xoá
+              Xóa
             </button>
           )}
         </div>
@@ -786,7 +786,7 @@ function ProductCard({
             onClick={onDelete}
           >
             <Trash2 size={15} aria-hidden="true" />
-            Xoá
+            Xóa
           </button>
         )}
       </div>

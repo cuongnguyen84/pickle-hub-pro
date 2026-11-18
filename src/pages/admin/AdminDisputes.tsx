@@ -195,7 +195,7 @@ function DisputeCard({ dispute }: { dispute: ResolvableDispute }) {
             <>
               <Button variant="ghost" size="sm" disabled={busy} onClick={() => setEditing(false)}>
                 <X className="mr-1 h-4 w-4" />
-                {vi ? "Huỷ" : "Cancel"}
+                {vi ? "Hủy" : "Cancel"}
               </Button>
               <Button size="sm" disabled={busy} onClick={onSaveEdit}>
                 {busy ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-1 h-4 w-4" />}

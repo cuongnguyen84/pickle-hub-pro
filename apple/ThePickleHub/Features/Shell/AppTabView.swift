@@ -25,7 +25,7 @@ struct AppTabView: View {
             if ShopFeatureGate.isEnabled {
                 NavigationStack { ShopHomeView() }
                     .tag(Tab.shop)
-                    .tabItem { Label("Chợ", systemImage: "storefront.fill") }
+                    .tabItem { Label(String(localized: "tab.shop", defaultValue: "Chợ", comment: "Tab bar: Shop"), systemImage: "storefront.fill") }
             } else {
                 SocialHubView()
                     .tag(Tab.social)
@@ -39,7 +39,7 @@ struct AppTabView: View {
             if ShopFeatureGate.isEnabled {
                 moreTab
                     .tag(Tab.more)
-                    .tabItem { Label("Thêm", systemImage: "ellipsis.circle.fill") }
+                    .tabItem { Label(String(localized: "tab.more", defaultValue: "Thêm", comment: "Tab bar: More (not Add)"), systemImage: "ellipsis.circle.fill") }
             } else {
                 ToolsView()
                     .tag(Tab.tools)
@@ -47,7 +47,27 @@ struct AppTabView: View {
             }
         }
         .tint(TLColor.accent)
+        // Trợ lý AI chung (site-assistant): nút nổi trên mọi tab, ngay trên thanh tab.
+        .assistantLauncher(page: SiteAssistant.page(for: selection), tab: selection.rawValue, bottomPadding: 61) { route($0) }
+        // Chip bấm từ trợ lý trong sheet deep-link: sheet đã đóng, tab bar nhận việc điều hướng.
+        .onChange(of: AssistantContextStore.shared.pendingRoute) { _, dest in
+            guard let dest else { return }
+            AssistantContextStore.shared.pendingRoute = nil
+            route(dest)
+        }
     }
+
+    private func route(_ dest: SiteAssistant.Destination) {
+        switch dest {
+        case .tab(let t): selection = t
+        case .home(let r):
+            selection = .home
+            homePath.append(r)
+        case .web(let url): openURL(url)
+        }
+    }
+
+    @Environment(\.openURL) private var openURL
 
     /// Initial tab, overridable via the `-startTab <tab>` launch argument
     /// (lands in the UserDefaults argument domain). Foundation for deep links.
@@ -81,7 +101,7 @@ struct AppTabView: View {
             }
             .scrollContentBackground(.hidden)
             .background(TLColor.bg)
-            .navigationTitle("Thêm")
+            .navigationTitle(String(localized: "tab.more", defaultValue: "Thêm", comment: "Tab bar: More (not Add)"))
         }
     }
 
