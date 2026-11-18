@@ -18,3 +18,4 @@
 | 2026-10-27 | 199 | 9674 | 7.6 | +43.2% | Đọc 30/10 (SEO-SAN-W39), kỳ 21–27/10; không cảnh báo (ngưỡng -20%). |
 | 2026-11-01 | 167 | 9121 | 7.6 | -7.7% | Đọc 04/11 (SEO-SAN-W39), kỳ 26/10–01/11; tuần trước 181 clicks. Không cảnh báo (ngưỡng -20%). Top page: /vi/san/aiko-pickleball-phu-do 5 click. |
 | 2026-11-08 | 163 | 8091 | 7.9 | -2.4% | Đọc 11/11 (SEO-SAN-W39), kỳ 02–08/11; tuần trước 167 clicks/9121 impr (impr -11.3%). Không cảnh báo (ngưỡng -20%). Top page: /vi/san/san-pickleball-ngo-161-nguyen-xien-ha-noi 7 click. |
+| 2026-11-15 | 134 | 8214 | 7.5 | -17.8% | Đọc 18/11 (SEO-SAN-W39), kỳ 09–15/11; tuần trước 163 clicks/8091 impr (impr +1.5%). Không cảnh báo (ngưỡng -20%), nhưng giảm 2 tuần liên tiếp, theo dõi kỳ sau. Top page: /san/tsa-newton 5 click. |
