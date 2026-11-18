@@ -282,6 +282,22 @@ export function jsonNotFound(pathname: string): Response {
   });
 }
 
+// apple-app-site-association has no file extension, so Pages labels the
+// static file application/octet-stream. Apple's crawler requires
+// application/json, and X-Content-Type-Options: nosniff makes that label
+// load-bearing. Keep a type that is already JSON (including charset).
+export function serveAppleAppSiteAssociation(response: Response): Response {
+  const contentType = (response.headers.get("content-type") || "").toLowerCase();
+  if (contentType.includes("application/json")) return response;
+  const headers = new Headers(response.headers);
+  headers.set("Content-Type", "application/json");
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 export function homepageMarkdown(siteUrl: string, lang: "en" | "vi"): Response {
   const body = lang === "vi"
     ? `# ThePickleHub\n\nThePickleHub là nền tảng pickleball song ngữ tại Việt Nam và châu Á, cung cấp giải đấu, livestream, bảng đấu, bảng xếp hạng, tin tức và công cụ miễn phí cho ban tổ chức.\n\n## Khám phá\n\n- [Giải đấu](${siteUrl}/vi/tournaments)\n- [Trực tiếp](${siteUrl}/vi/live)\n- [Tin tức](${siteUrl}/vi/news)\n- [Hướng dẫn cho AI agent](${siteUrl}/llms.txt)\n- [Đặc tả OpenAPI](${siteUrl}/openapi.json)\n- [Sitemap](${siteUrl}/sitemap.xml)\n`
@@ -841,11 +857,19 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // A missing machine-readable discovery document must not masquerade as a
   // valid JSON endpoint. Preserve real .well-known resources, but turn the
   // SPA rewrite fallback into an honest JSON 404.
+  //
+  // The association file is served here, before bot prerender, so a path
+  // edit does not change cached HTML and the pr:vN key stays put.
   if (isWellKnownPath(pathname)) {
     const discoveryResponse = await next();
-    return isHtmlSpaFallback(discoveryResponse)
-      ? jsonNotFound(pathname)
-      : discoveryResponse;
+    if (isHtmlSpaFallback(discoveryResponse)) return jsonNotFound(pathname);
+    if (
+      discoveryResponse.status === 200 &&
+      pathname === "/.well-known/apple-app-site-association"
+    ) {
+      return serveAppleAppSiteAssociation(discoveryResponse);
+    }
+    return discoveryResponse;
   }
 
   if (isStaticAssetPath(pathname)) {
