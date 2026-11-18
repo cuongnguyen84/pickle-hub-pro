@@ -31,7 +31,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA Daytona Beach results: Daytona Beach Open 2026 daily scores",
-          "content": "Last updated: November 18, 2026, 08:00 Vietnam time. ThePickleHub publishes this Daytona Beach Open 2026 results page from the official PPA scores feed for November 16–22, 2026 at Pictona at Holly Hill, Holly Hill, Florida. The feed currently contains 128 matches, including 68 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 19, 2026, 00:00 Vietnam time. ThePickleHub publishes this Daytona Beach Open 2026 results page from the official PPA scores feed for November 16–22, 2026 at Pictona at Holly Hill, Holly Hill, Florida. The feed currently contains 128 matches, including 68 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -843,11 +843,11 @@ const post: BlogPost = {
                 "label": "Round 64",
                 "matches": [
                   {
-                    "winner": "Mohaned Alhouni",
-                    "loser": "Matt Burkhardt",
+                    "winner": "Jonathan Truong",
+                    "loser": "Michael Loyd",
                     "sets": [
                       [
-                        7,
+                        4,
                         11
                       ],
                       [
@@ -856,21 +856,7 @@ const post: BlogPost = {
                       ],
                       [
                         11,
-                        9
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Zane Ford",
-                    "loser": "Casey Diamond",
-                    "sets": [
-                      [
-                        12,
-                        10
-                      ],
-                      [
-                        11,
-                        7
+                        6
                       ]
                     ]
                   },
@@ -890,6 +876,20 @@ const post: BlogPost = {
                       [
                         11,
                         1
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "John Lucian Goins",
+                    "loser": "Jemere Plummer",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        0
                       ]
                     ]
                   },
@@ -964,16 +964,16 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "John Lucian Goins",
-                    "loser": "Jemere Plummer",
+                    "winner": "Zane Ford",
+                    "loser": "Casey Diamond",
                     "sets": [
                       [
-                        11,
-                        5
+                        12,
+                        10
                       ],
                       [
                         11,
-                        0
+                        7
                       ]
                     ]
                   },
@@ -1030,24 +1030,6 @@ const post: BlogPost = {
                       [
                         13,
                         11
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Jonathan Truong",
-                    "loser": "Michael Loyd",
-                    "sets": [
-                      [
-                        4,
-                        11
-                      ],
-                      [
-                        11,
-                        8
-                      ],
-                      [
-                        11,
-                        6
                       ]
                     ]
                   },
@@ -1124,6 +1106,24 @@ const post: BlogPost = {
                         8
                       ]
                     ]
+                  },
+                  {
+                    "winner": "Mohaned Alhouni",
+                    "loser": "Matt Burkhardt",
+                    "sets": [
+                      [
+                        7,
+                        11
+                      ],
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
                   }
                 ],
                 "collapsed": true
@@ -1178,7 +1178,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Daytona Beach Open 2026",
-          "content": "Cập nhật: 08:00 ngày 18/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Daytona Beach Open 2026 từ feed điểm số chính thức của PPA cho thời gian 16–22/11/2026 tại Pictona at Holly Hill, Holly Hill, Florida. Feed hiện có 128 trận, gồm 68 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 00:00 ngày 19/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Daytona Beach Open 2026 từ feed điểm số chính thức của PPA cho thời gian 16–22/11/2026 tại Pictona at Holly Hill, Holly Hill, Florida. Feed hiện có 128 trận, gồm 68 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -1990,11 +1990,11 @@ const post: BlogPost = {
                 "label": "Vòng 64",
                 "matches": [
                   {
-                    "winner": "Mohaned Alhouni",
-                    "loser": "Matt Burkhardt",
+                    "winner": "Jonathan Truong",
+                    "loser": "Michael Loyd",
                     "sets": [
                       [
-                        7,
+                        4,
                         11
                       ],
                       [
@@ -2003,21 +2003,7 @@ const post: BlogPost = {
                       ],
                       [
                         11,
-                        9
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Zane Ford",
-                    "loser": "Casey Diamond",
-                    "sets": [
-                      [
-                        12,
-                        10
-                      ],
-                      [
-                        11,
-                        7
+                        6
                       ]
                     ]
                   },
@@ -2037,6 +2023,20 @@ const post: BlogPost = {
                       [
                         11,
                         1
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "John Lucian Goins",
+                    "loser": "Jemere Plummer",
+                    "sets": [
+                      [
+                        11,
+                        5
+                      ],
+                      [
+                        11,
+                        0
                       ]
                     ]
                   },
@@ -2111,16 +2111,16 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "John Lucian Goins",
-                    "loser": "Jemere Plummer",
+                    "winner": "Zane Ford",
+                    "loser": "Casey Diamond",
                     "sets": [
                       [
-                        11,
-                        5
+                        12,
+                        10
                       ],
                       [
                         11,
-                        0
+                        7
                       ]
                     ]
                   },
@@ -2177,24 +2177,6 @@ const post: BlogPost = {
                       [
                         13,
                         11
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Jonathan Truong",
-                    "loser": "Michael Loyd",
-                    "sets": [
-                      [
-                        4,
-                        11
-                      ],
-                      [
-                        11,
-                        8
-                      ],
-                      [
-                        11,
-                        6
                       ]
                     ]
                   },
@@ -2269,6 +2251,24 @@ const post: BlogPost = {
                       [
                         11,
                         8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Mohaned Alhouni",
+                    "loser": "Matt Burkhardt",
+                    "sets": [
+                      [
+                        7,
+                        11
+                      ],
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        9
                       ]
                     ]
                   }
