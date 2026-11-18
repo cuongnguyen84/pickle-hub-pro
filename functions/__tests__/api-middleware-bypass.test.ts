@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   homepageMarkdown,
@@ -6,6 +7,7 @@ import {
   isWellKnownPath,
   jsonNotFound,
   onRequest,
+  serveAppleAppSiteAssociation,
 } from "../_middleware";
 
 const invoke = (
@@ -112,6 +114,74 @@ describe("Pages API middleware bypass", () => {
     const response = await invoke("/.well-known/openid-configuration", source);
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ issuer: "https://issuer.example" });
+  });
+
+  it("serves apple-app-site-association as application/json", async () => {
+    const body = JSON.stringify({ applinks: { apps: [] } });
+    const response = await invoke(
+      "/.well-known/apple-app-site-association",
+      new Response(body, {
+        headers: {
+          "Content-Type": "application/octet-stream",
+          "Cache-Control": "public, max-age=0, must-revalidate",
+          ETag: "\"abc\"",
+        },
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("application/json");
+    expect(response.headers.get("cache-control")).toBe("public, max-age=0, must-revalidate");
+    expect(response.headers.get("etag")).toBe("\"abc\"");
+    await expect(response.json()).resolves.toEqual({ applinks: { apps: [] } });
+  });
+
+  it("keeps an association file that Pages already labeled as JSON", () => {
+    const source = new Response("{}", {
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+    });
+    const response = serveAppleAppSiteAssociation(source);
+    expect(response).toBe(source);
+    expect(response.headers.get("content-type")).toBe("application/json; charset=utf-8");
+  });
+
+  it("does not relabel other well-known documents", async () => {
+    const response = await invoke(
+      "/.well-known/openid-configuration",
+      new Response("{}", { headers: { "Content-Type": "application/octet-stream" } }),
+    );
+    expect(response.headers.get("content-type")).toBe("application/octet-stream");
+  });
+
+  it("claims only the blog, news, and court paths the native app opens", () => {
+    const aasa = JSON.parse(
+      readFileSync("public/.well-known/apple-app-site-association", "utf8"),
+    ) as {
+      applinks: { details: Array<{ appIDs: string[]; paths: string[] }> };
+    };
+    const prod = aasa.applinks.details.find((detail) =>
+      detail.appIDs.includes("5S49Q7AB7M.net.thepicklehub.app"),
+    );
+    const dev = aasa.applinks.details.find((detail) =>
+      detail.appIDs.includes("5S49Q7AB7M.net.thepicklehub.app.dev"),
+    );
+    expect(prod).toBeDefined();
+    expect(dev?.paths).toEqual(["/dang-ky/*", "/vi/dang-ky/*", "/join/*"]);
+
+    const paths = prod?.paths ?? [];
+    const exclusions = [
+      ["NOT /blog/*/*", "/blog/*"],
+      ["NOT /vi/blog/*/*", "/vi/blog/*"],
+      ["NOT /news/*/*", "/news/*"],
+      ["NOT /vi/news/*/*", "/vi/news/*"],
+      ["NOT /san/*/*", "/san/*"],
+      ["NOT /vi/san/*/*", "/vi/san/*"],
+      ["NOT /san/them", "/san/*"],
+      ["NOT /vi/san/them", "/vi/san/*"],
+    ] as const;
+    for (const [excluded, included] of exclusions) {
+      expect(paths.indexOf(excluded)).toBeGreaterThanOrEqual(0);
+      expect(paths.indexOf(excluded)).toBeLessThan(paths.indexOf(included));
+    }
   });
 
   it("serves a static markdown agent instruction file instead of SPA 404", async () => {

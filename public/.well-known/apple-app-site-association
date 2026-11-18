@@ -6,6 +6,9 @@
         "appIDs": ["5S49Q7AB7M.net.thepicklehub.app"],
         "paths": [
           "NOT /social/*/*", "NOT /vi/social/*/*",
+          "NOT /blog/*/*", "NOT /vi/blog/*/*",
+          "NOT /news/*/*", "NOT /vi/news/*/*",
+          "NOT /san/*/*", "NOT /vi/san/*/*", "NOT /san/them", "NOT /vi/san/them",
           "/auth/callback", "/auth/callback/*",
           "/live/*", "/vi/live/*",
           "/social/*", "/vi/social/*",
@@ -13,7 +16,10 @@
           "/shop", "/shop/search", "/shop/category/*", "/shop/product/*", "/shop/store/*", "/shop/order/*",
           "/vi/shop", "/vi/shop/search", "/vi/shop/category/*", "/vi/shop/product/*", "/vi/shop/store/*", "/vi/shop/order/*",
           "/dang-ky/*", "/vi/dang-ky/*",
-          "/join/*"
+          "/join/*",
+          "/blog/*", "/vi/blog/*",
+          "/news/*", "/vi/news/*",
+          "/san/*", "/vi/san/*"
         ]
       },
       {
