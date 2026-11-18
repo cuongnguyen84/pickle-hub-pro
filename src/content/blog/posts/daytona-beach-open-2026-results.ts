@@ -31,7 +31,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA Daytona Beach results: Daytona Beach Open 2026 daily scores",
-          "content": "Last updated: November 18, 2026, 07:30 Vietnam time. ThePickleHub publishes this Daytona Beach Open 2026 results page from the official PPA scores feed for November 16–22, 2026 at Pictona at Holly Hill, Holly Hill, Florida. The feed currently contains 127 matches, including 67 completed or final records and 1 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 18, 2026, 08:00 Vietnam time. ThePickleHub publishes this Daytona Beach Open 2026 results page from the official PPA scores feed for November 16–22, 2026 at Pictona at Holly Hill, Holly Hill, Florida. The feed currently contains 128 matches, including 68 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -46,7 +46,7 @@ const post: BlogPost = {
             },
             {
               "division": "Men's Doubles",
-              "note": "Through to the Round 64 · 9 matches",
+              "note": "Through to the Round 64 · 10 matches",
               "anchor": "rb-mens-doubles"
             },
             {
@@ -115,13 +115,31 @@ const post: BlogPost = {
         },
         {
           "heading": "Men's Doubles results",
-          "content": "No champion yet. 9 completed matches, latest round first.",
+          "content": "No champion yet. 10 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Men's Doubles",
             "rounds": [
               {
                 "label": "Round 64",
                 "matches": [
+                  {
+                    "winner": "Jace Morris / Caden Nemoff",
+                    "loser": "Chuck Taylor / John Cincola",
+                    "sets": [
+                      [
+                        6,
+                        11
+                      ],
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
                   {
                     "winner": "Ryan Torresin / Luca Mack",
                     "loser": "Pesa Teoni / Mota Alhouni",
@@ -1117,7 +1135,6 @@ const post: BlogPost = {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Men's Doubles, Round 64: Jace Morris / Caden Nemoff vs Chuck Taylor / John Cincola — status live.",
             "Women's Doubles, Round 32: Layne Sleeth / Cailyn Campbell vs Jessica Evanier / Alexa Quintanilla — status scheduled.",
             "Women's Doubles, Round 32: Mari Humberg / Milan Rane vs Ava Ignatowich / Maria Ford — status scheduled.",
             "Women's Doubles, Round 32: Christa Gecheva / Elsie Hendershot vs Luana Stanciu / Genie Bouchard — status scheduled.",
@@ -1126,7 +1143,8 @@ const post: BlogPost = {
             "Women's Doubles, Round 32: Nicole Conard / Jalina Ingram vs Carlota Trevino / Giovanna Morelli — status scheduled.",
             "Women's Doubles, Round 32: Brooke Buckner / Judit Castillo vs Ava Cavataio / Helena Jansen — status scheduled.",
             "Women's Doubles, Round 32: Liz Truluck / Kiora Kunimoto vs Kelly Goodnow / Naomi Nguyen — status scheduled.",
-            "Women's Doubles, Round 32: Lindsey Newman / Isabella Dunlap vs Brooke Caruso / Audrey Adele Brown — status scheduled."
+            "Women's Doubles, Round 32: Lindsey Newman / Isabella Dunlap vs Brooke Caruso / Audrey Adele Brown — status scheduled.",
+            "Women's Doubles, Round 32: Angie Walker / Alex Walker vs Caroline Maguire / Andi Godwin — status scheduled."
           ]
         },
         {
@@ -1160,7 +1178,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Daytona Beach Open 2026",
-          "content": "Cập nhật: 07:30 ngày 18/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Daytona Beach Open 2026 từ feed điểm số chính thức của PPA cho thời gian 16–22/11/2026 tại Pictona at Holly Hill, Holly Hill, Florida. Feed hiện có 127 trận, gồm 67 bản ghi đã kết thúc/chung cuộc và 1 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 08:00 ngày 18/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Daytona Beach Open 2026 từ feed điểm số chính thức của PPA cho thời gian 16–22/11/2026 tại Pictona at Holly Hill, Holly Hill, Florida. Feed hiện có 128 trận, gồm 68 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -1175,7 +1193,7 @@ const post: BlogPost = {
             },
             {
               "division": "Đôi nam",
-              "note": "Đã tới Vòng 64 · 9 trận",
+              "note": "Đã tới Vòng 64 · 10 trận",
               "anchor": "rb-doi-nam"
             },
             {
@@ -1244,13 +1262,31 @@ const post: BlogPost = {
         },
         {
           "heading": "Kết quả Đôi nam",
-          "content": "Chưa có nhà vô địch. 9 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Chưa có nhà vô địch. 10 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đôi nam",
             "rounds": [
               {
                 "label": "Vòng 64",
                 "matches": [
+                  {
+                    "winner": "Jace Morris / Caden Nemoff",
+                    "loser": "Chuck Taylor / John Cincola",
+                    "sets": [
+                      [
+                        6,
+                        11
+                      ],
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
                   {
                     "winner": "Ryan Torresin / Luca Mack",
                     "loser": "Pesa Teoni / Mota Alhouni",
@@ -2246,7 +2282,6 @@ const post: BlogPost = {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đôi nam, Round 64: Jace Morris / Caden Nemoff gặp Chuck Taylor / John Cincola — trạng thái live.",
             "Đôi nữ, Round 32: Layne Sleeth / Cailyn Campbell gặp Jessica Evanier / Alexa Quintanilla — trạng thái scheduled.",
             "Đôi nữ, Round 32: Mari Humberg / Milan Rane gặp Ava Ignatowich / Maria Ford — trạng thái scheduled.",
             "Đôi nữ, Round 32: Christa Gecheva / Elsie Hendershot gặp Luana Stanciu / Genie Bouchard — trạng thái scheduled.",
@@ -2255,7 +2290,8 @@ const post: BlogPost = {
             "Đôi nữ, Round 32: Nicole Conard / Jalina Ingram gặp Carlota Trevino / Giovanna Morelli — trạng thái scheduled.",
             "Đôi nữ, Round 32: Brooke Buckner / Judit Castillo gặp Ava Cavataio / Helena Jansen — trạng thái scheduled.",
             "Đôi nữ, Round 32: Liz Truluck / Kiora Kunimoto gặp Kelly Goodnow / Naomi Nguyen — trạng thái scheduled.",
-            "Đôi nữ, Round 32: Lindsey Newman / Isabella Dunlap gặp Brooke Caruso / Audrey Adele Brown — trạng thái scheduled."
+            "Đôi nữ, Round 32: Lindsey Newman / Isabella Dunlap gặp Brooke Caruso / Audrey Adele Brown — trạng thái scheduled.",
+            "Đôi nữ, Round 32: Angie Walker / Alex Walker gặp Caroline Maguire / Andi Godwin — trạng thái scheduled."
           ]
         },
         {
