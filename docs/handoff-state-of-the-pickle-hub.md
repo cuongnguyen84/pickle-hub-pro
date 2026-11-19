@@ -225,7 +225,7 @@ Quality gate nền + mở rộng coverage. Tất cả CI-safe: phần chưa có 
 
 **3D. Sitemap + hreflang reciprocity** ✅ — `tests/seo.spec.ts` (chạy trong project `ssr-bot`): fetch `/sitemap.xml` động → mọi child sitemap 200 + urlset hợp lệ; blog song ngữ có hreflang en↔vi đối xứng + x-default. Verify prod → pass.
 
-**3E. Security** ✅ — `.github/workflows/security.yml`: `npm audit --audit-level=high` (advisory, vì vuln tồn đọng) + CodeQL JS/TS (kết quả ở Security tab). PR + push main + cron tuần.
+**3E. Security** ✅ — `.github/workflows/security.yml`: `npm audit --audit-level=high` (advisory, vì vuln tồn đọng) + CodeQL JS/TS/Python với local SARIF gate theo baseline đã review. PR + push main + cron tuần; artifact SARIF lưu 30 ngày (CodeQL không upload Security tab).
 
 **3F. Bundle-size budget** ✅ — `scripts/check-bundle-size.mjs`: in bảng gzip JS sau build, advisory (chặn chỉ khi `BUNDLE_STRICT=1`, default `BUNDLE_BUDGET_KB=1800`). **Baseline 29/5: 1718.5 KB gz** (chunk nặng nhất `vendor-video` ~297KB, lazy-load).
 
