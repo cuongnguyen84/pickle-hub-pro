@@ -961,7 +961,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       // as the bot path.
       let publicCache: PublicPagePartsCache | null = null;
       if (env.PRERENDER_CACHE && url.searchParams.get("nocache") !== "1") {
-        const cacheKey = `pr:v153:human:${url.pathname}`;
+        const cacheKey = `pr:v154:human:${url.pathname}`;
         const ttl = Math.min(pathCacheTtl(pathname), 300);
         publicCache = {
           get: () => env.PRERENDER_CACHE.get(cacheKey),
@@ -1452,7 +1452,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // real <table>s in the bot HTML and the tournament page's broadcast
   // list becomes a structured table (Topical Authority proposals 4 + 1);
   // cached v152 HTML would keep the div-only score blocks.
-  const cacheKey = `pr:v153:${url.pathname}`;
+  // v154 (2026-11-19): city court hubs (/san/khu-vuc/<city>) group venues
+  // by district into comparison tables (name, address, courts, indoor/
+  // outdoor, verified price) instead of a bare name list (Topical
+  // Authority proposal 3); cached v153 HTML would keep the list.
+  const cacheKey = `pr:v154:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
