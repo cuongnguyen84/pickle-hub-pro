@@ -13,7 +13,7 @@ const post: BlogPost = {
   },
   heroImage: {
     src: "/images/blog/sophia-phuong-anh-dai-hoi-the-thao-toan-quoc-2026-hero.webp",
-    alt: "Young female pickleball player lunging for a forehand on an outdoor court (illustration)",
+    alt: "Sophia Phuong Anh on court in her black Vietjet Air kit, holding a pink paddle",
   },
   content: {
     en: {
