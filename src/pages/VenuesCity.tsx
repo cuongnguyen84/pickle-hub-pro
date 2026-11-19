@@ -13,7 +13,7 @@ import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/i18n";
 import { VenueCard } from "@/components/venues/VenueCard";
-import { type VenueListItem, VENUE_LIST_COLUMNS, cityNameFromSlug } from "@/lib/venues";
+import { type VenueListItem, VENUE_LIST_COLUMNS, cityNameFromSlug, districtSlug, MIN_DISTRICT_HUB_VENUES } from "@/lib/venues";
 
 export default function VenuesCity() {
   const { city: citySlug } = useParams<{ city: string }>();
@@ -60,6 +60,23 @@ export default function VenuesCity() {
     );
   }
 
+  // District hubs with enough courts to compare get their own page
+  // (/san/khu-vuc/:city/:district); link them from here so the city hub
+  // is not the only way in. Same threshold as the sitemap/renderer.
+  const districtGroups = (() => {
+    const groups = new Map<string, { raw: string; count: number }>();
+    for (const v of rows ?? []) {
+      const slug = districtSlug(v.district);
+      if (!slug || !v.district) continue;
+      const cur = groups.get(slug) ?? { raw: v.district, count: 0 };
+      cur.count += 1;
+      groups.set(slug, cur);
+    }
+    return [...groups.entries()]
+      .filter(([, g]) => g.count >= MIN_DISTRICT_HUB_VENUES)
+      .sort((a, b) => b[1].count - a[1].count);
+  })();
+
   const count = rows?.length ?? 0;
   const heading = vi ? `Sân Pickleball ${cityName}` : `Pickleball courts in ${cityName}`;
   const subheading = vi
@@ -85,6 +102,20 @@ export default function VenuesCity() {
             {vi ? `${count} sân tại ${cityName}.` : `${count} courts in ${cityName}.`} {subheading}
           </p>
         </header>
+
+        {districtGroups.length > 0 && (
+          <nav className="mb-6 flex flex-wrap gap-2" aria-label={vi ? "Sân theo quận/huyện" : "Courts by district"}>
+            {districtGroups.map(([slug, g]) => (
+              <Link
+                key={slug}
+                to={`/san/khu-vuc/${citySlug}/${slug}`}
+                className="rounded-full border border-border px-3 py-1 text-sm hover:bg-muted"
+              >
+                {g.raw} ({g.count})
+              </Link>
+            ))}
+          </nav>
+        )}
 
         {isLoading ? (
           <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
