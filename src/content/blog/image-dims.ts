@@ -231,7 +231,7 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/sophia-huynh-ken-tam-womens-doubles-gold-2026-hero-768.webp": [768, 404],
   "/images/blog/sophia-huynh-ken-tam-womens-doubles-gold-2026-hero.webp": [1600, 841],
   "/images/blog/sophia-phuong-anh-dai-hoi-the-thao-toan-quoc-2026-hero-768.webp": [768, 512],
-  "/images/blog/sophia-phuong-anh-dai-hoi-the-thao-toan-quoc-2026-hero.webp": [1920, 1280],
+  "/images/blog/sophia-phuong-anh-dai-hoi-the-thao-toan-quoc-2026-hero.webp": [900, 600],
   "/images/blog/tama-shimabukuro-atlanta-hero-768.webp": [768, 954],
   "/images/blog/tama-shimabukuro-atlanta-hero.webp": [1260, 1565],
   "/images/blog/thuat-ngu-pickleball-hero-768.webp": [768, 404],
