@@ -31,7 +31,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA Daytona Beach results: Daytona Beach Open 2026 daily scores",
-          "content": "Last updated: November 20, 2026, 00:00 Vietnam time. ThePickleHub publishes this Daytona Beach Open 2026 results page from the official PPA scores feed for November 16–22, 2026 at Pictona at Holly Hill, Holly Hill, Florida. The feed currently contains 168 matches, including 128 completed or final records and 1 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 20, 2026, 02:00 Vietnam time. ThePickleHub publishes this Daytona Beach Open 2026 results page from the official PPA scores feed for November 16–22, 2026 at Pictona at Holly Hill, Holly Hill, Florida. The feed currently contains 170 matches, including 134 completed or final records and 4 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -56,12 +56,12 @@ const post: BlogPost = {
             },
             {
               "division": "Women's Singles",
-              "note": "Through to the Round 32 · 28 matches",
+              "note": "Through to the Round 16 · 30 matches",
               "anchor": "rb-womens-singles"
             },
             {
               "division": "Men's Singles",
-              "note": "Through to the Round 32 · 32 matches",
+              "note": "Through to the Round 16 · 36 matches",
               "anchor": "rb-mens-singles"
             }
           ]
@@ -1137,13 +1137,64 @@ const post: BlogPost = {
         },
         {
           "heading": "Women's Singles results",
-          "content": "No champion yet. 28 completed matches, latest round first.",
+          "content": "No champion yet. 30 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Women's Singles",
             "rounds": [
               {
+                "label": "Round 16",
+                "matches": [
+                  {
+                    "winner": "Judit Castillo",
+                    "loser": "Jorja Johnson",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        12,
+                        10
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Isabella Dunlap",
+                    "loser": "Liz Truluck",
+                    "sets": [
+                      [
+                        8,
+                        11
+                      ],
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  }
+                ]
+              },
+              {
                 "label": "Round 32",
                 "matches": [
+                  {
+                    "winner": "Judit Castillo",
+                    "loser": "Luana Stanciu",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
                   {
                     "winner": "Jalina Ingram",
                     "loser": "Estee Widdershoven",
@@ -1261,20 +1312,6 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Judit Castillo",
-                    "loser": "Luana Stanciu",
-                    "sets": [
-                      [
-                        11,
-                        3
-                      ],
-                      [
-                        11,
-                        3
-                      ]
-                    ]
-                  },
-                  {
                     "winner": "Liz Truluck",
                     "loser": "Naomi Nguyen",
                     "sets": [
@@ -1327,12 +1364,26 @@ const post: BlogPost = {
                 "label": "Round 64",
                 "matches": [
                   {
-                    "winner": "Isabella Dunlap",
-                    "loser": "Jessica Evanier",
+                    "winner": "Carlota Trevino",
+                    "loser": "Valerie R Simon",
                     "sets": [
                       [
                         11,
-                        3
+                        7
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Luana Stanciu",
+                    "loser": "Paula Rives",
+                    "sets": [
+                      [
+                        11,
+                        2
                       ],
                       [
                         11,
@@ -1355,66 +1406,6 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Ella Yeh",
-                    "loser": "Elsie Hendershot",
-                    "sets": [
-                      [
-                        10,
-                        12
-                      ],
-                      [
-                        11,
-                        8
-                      ],
-                      [
-                        11,
-                        2
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Mya Bui",
-                    "loser": "Rose S",
-                    "sets": [
-                      [
-                        11,
-                        4
-                      ],
-                      [
-                        11,
-                        6
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Nicole Conard",
-                    "loser": "Cc Eleven Sacca",
-                    "sets": [
-                      [
-                        11,
-                        4
-                      ],
-                      [
-                        11,
-                        2
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Helena Jansen",
-                    "loser": "Rachel Rettger",
-                    "sets": [
-                      [
-                        11,
-                        3
-                      ],
-                      [
-                        11,
-                        1
-                      ]
-                    ]
-                  },
-                  {
                     "winner": "Kelly Goodnow",
                     "loser": "Giovanna Morelli",
                     "sets": [
@@ -1429,8 +1420,8 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Estee Widdershoven",
-                    "loser": "Alex Walker",
+                    "winner": "Nicole Conard",
+                    "loser": "Cc Eleven Sacca",
                     "sets": [
                       [
                         11,
@@ -1438,21 +1429,7 @@ const post: BlogPost = {
                       ],
                       [
                         11,
-                        4
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Victoria Simon",
-                    "loser": "Ava Ignatowich",
-                    "sets": [
-                      [
-                        11,
-                        7
-                      ],
-                      [
-                        11,
-                        1
+                        2
                       ]
                     ]
                   },
@@ -1475,30 +1452,30 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Naomi Nguyen",
-                    "loser": "Gianna Southwick",
+                    "winner": "Isabella Dunlap",
+                    "loser": "Jessica Evanier",
                     "sets": [
                       [
                         11,
-                        0
-                      ],
-                      [
-                        11,
-                        1
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Luana Stanciu",
-                    "loser": "Paula Rives",
-                    "sets": [
-                      [
-                        11,
-                        2
+                        3
                       ],
                       [
                         11,
                         6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Victoria Simon",
+                    "loser": "Ava Ignatowich",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        1
                       ]
                     ]
                   },
@@ -1535,16 +1512,16 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Carlota Trevino",
-                    "loser": "Valerie R Simon",
+                    "winner": "Mya Bui",
+                    "loser": "Rose S",
                     "sets": [
                       [
                         11,
-                        7
+                        4
                       ],
                       [
                         11,
-                        4
+                        6
                       ]
                     ]
                   },
@@ -1561,6 +1538,66 @@ const post: BlogPost = {
                         8
                       ]
                     ]
+                  },
+                  {
+                    "winner": "Naomi Nguyen",
+                    "loser": "Gianna Southwick",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Helena Jansen",
+                    "loser": "Rachel Rettger",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Estee Widdershoven",
+                    "loser": "Alex Walker",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Ella Yeh",
+                    "loser": "Elsie Hendershot",
+                    "sets": [
+                      [
+                        10,
+                        12
+                      ],
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
                   }
                 ],
                 "collapsed": true
@@ -1570,24 +1607,93 @@ const post: BlogPost = {
         },
         {
           "heading": "Men's Singles results",
-          "content": "No champion yet. 32 completed matches, latest round first.",
+          "content": "No champion yet. 36 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Men's Singles",
             "rounds": [
               {
-                "label": "Round 32",
+                "label": "Round 16",
                 "matches": [
                   {
-                    "winner": "Anouar Braham",
-                    "loser": "Adam Harvey",
+                    "winner": "Cason Campbell",
+                    "loser": "Mota Alhouni",
                     "sets": [
                       [
                         11,
-                        8
+                        5
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Federico Staksrud",
+                    "loser": "Miles Hoover",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Rafael Lenhard",
+                    "loser": "Christian Alshon",
+                    "sets": [
+                      [
+                        0,
+                        11
+                      ],
+                      [
+                        13,
+                        11
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "JW Johnson",
+                    "loser": "Noe Khlif",
+                    "sets": [
+                      [
+                        4,
+                        11
+                      ],
+                      [
+                        14,
+                        12
                       ],
                       [
                         11,
                         8
+                      ]
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "Round 32",
+                "matches": [
+                  {
+                    "winner": "George Rangelov",
+                    "loser": "Augustus Ge",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        1
                       ]
                     ]
                   },
@@ -1606,8 +1712,36 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Yates Johnson",
-                    "loser": "Camden Chaffin",
+                    "winner": "Zane Ford",
+                    "loser": "Jonathan Truong",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Noe Khlif",
+                    "loser": "Connor Mogle",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Anouar Braham",
+                    "loser": "Adam Harvey",
                     "sets": [
                       [
                         11,
@@ -1615,77 +1749,21 @@ const post: BlogPost = {
                       ],
                       [
                         11,
-                        6
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "George Rangelov",
-                    "loser": "Augustus Ge",
-                    "sets": [
-                      [
-                        11,
-                        6
-                      ],
-                      [
-                        11,
-                        1
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Hunter Johnson",
-                    "loser": "James Delgado",
-                    "sets": [
-                      [
-                        11,
-                        1
-                      ],
-                      [
-                        11,
-                        4
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Roscoe Bellamy",
-                    "loser": "Rafa Hewett",
-                    "sets": [
-                      [
-                        11,
                         8
-                      ],
-                      [
-                        11,
-                        6
                       ]
                     ]
                   },
                   {
-                    "winner": "John Lucian Goins",
-                    "loser": "Braden Jacobson",
+                    "winner": "Miles Hoover",
+                    "loser": "Kenta Miyoshi",
                     "sets": [
+                      [
+                        11,
+                        7
+                      ],
                       [
                         11,
                         6
-                      ],
-                      [
-                        11,
-                        3
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Rafael Lenhard",
-                    "loser": "William Hsieh",
-                    "sets": [
-                      [
-                        11,
-                        2
-                      ],
-                      [
-                        11,
-                        3
                       ]
                     ]
                   },
@@ -1708,12 +1786,40 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Miles Hoover",
-                    "loser": "Kenta Miyoshi",
+                    "winner": "Rafael Lenhard",
+                    "loser": "William Hsieh",
                     "sets": [
                       [
                         11,
-                        7
+                        2
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "John Lucian Goins",
+                    "loser": "Braden Jacobson",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Roscoe Bellamy",
+                    "loser": "Rafa Hewett",
+                    "sets": [
+                      [
+                        11,
+                        8
                       ],
                       [
                         11,
@@ -1722,30 +1828,30 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Noe Khlif",
-                    "loser": "Connor Mogle",
+                    "winner": "Hunter Johnson",
+                    "loser": "James Delgado",
                     "sets": [
                       [
                         11,
-                        9
+                        1
                       ],
                       [
                         11,
-                        0
+                        4
                       ]
                     ]
                   },
                   {
-                    "winner": "Zane Ford",
-                    "loser": "Jonathan Truong",
+                    "winner": "Yates Johnson",
+                    "loser": "Camden Chaffin",
                     "sets": [
                       [
                         11,
-                        6
+                        8
                       ],
                       [
                         11,
-                        0
+                        6
                       ]
                     ]
                   }
@@ -1756,16 +1862,34 @@ const post: BlogPost = {
                 "label": "Round 64",
                 "matches": [
                   {
-                    "winner": "William Hsieh",
-                    "loser": "Gregory Dow",
+                    "winner": "Jonathan Truong",
+                    "loser": "Michael Loyd",
                     "sets": [
                       [
+                        4,
+                        11
+                      ],
+                      [
                         11,
-                        5
+                        8
                       ],
                       [
                         11,
                         6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Zane Ford",
+                    "loser": "Casey Diamond",
+                    "sets": [
+                      [
+                        12,
+                        10
+                      ],
+                      [
+                        11,
+                        7
                       ]
                     ]
                   },
@@ -1780,6 +1904,20 @@ const post: BlogPost = {
                       [
                         11,
                         2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Mota Alhouni",
+                    "loser": "Jace Morris",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        8
                       ]
                     ]
                   },
@@ -1859,52 +1997,6 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "winner": "Mohaned Alhouni",
-                    "loser": "Matt Burkhardt",
-                    "sets": [
-                      [
-                        7,
-                        11
-                      ],
-                      [
-                        11,
-                        8
-                      ],
-                      [
-                        11,
-                        9
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Mota Alhouni",
-                    "loser": "Jace Morris",
-                    "sets": [
-                      [
-                        11,
-                        7
-                      ],
-                      [
-                        11,
-                        8
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Zane Ford",
-                    "loser": "Casey Diamond",
-                    "sets": [
-                      [
-                        12,
-                        10
-                      ],
-                      [
-                        11,
-                        7
-                      ]
-                    ]
-                  },
-                  {
                     "winner": "Kenta Miyoshi",
                     "loser": "Caden Nemoff",
                     "sets": [
@@ -1933,16 +2025,16 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "James Delgado",
-                    "loser": "Wil Shaffer",
+                    "winner": "William Hsieh",
+                    "loser": "Gregory Dow",
                     "sets": [
                       [
                         11,
-                        7
+                        5
                       ],
                       [
                         11,
-                        8
+                        6
                       ]
                     ]
                   },
@@ -1957,24 +2049,6 @@ const post: BlogPost = {
                       [
                         13,
                         11
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Jonathan Truong",
-                    "loser": "Michael Loyd",
-                    "sets": [
-                      [
-                        4,
-                        11
-                      ],
-                      [
-                        11,
-                        8
-                      ],
-                      [
-                        11,
-                        6
                       ]
                     ]
                   },
@@ -2037,6 +2111,38 @@ const post: BlogPost = {
                         1
                       ]
                     ]
+                  },
+                  {
+                    "winner": "James Delgado",
+                    "loser": "Wil Shaffer",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Mohaned Alhouni",
+                    "loser": "Matt Burkhardt",
+                    "sets": [
+                      [
+                        7,
+                        11
+                      ],
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
                   }
                 ],
                 "collapsed": true
@@ -2048,16 +2154,16 @@ const post: BlogPost = {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Men's Singles, Round 16: Mota Alhouni vs Cason Campbell — status live.",
+            "Women's Singles, Round 16: Jalina Ingram vs Mari Humberg — status live.",
+            "Women's Singles, Round 16: Cailyn Campbell vs Sofia Sewing — status live.",
+            "Men's Singles, Round 16: Zane Ford vs Anouar Braham — status live.",
+            "Men's Singles, Round 16: Roscoe Bellamy vs Eric Oncins — status live.",
             "Women's Doubles, Round 16: Mari Humberg / Milan Rane vs Christa Gecheva / Elsie Hendershot — status scheduled.",
             "Women's Doubles, Round 16: Alix Truong / Jessie Irvine vs Angie Walker / Alex Walker — status scheduled.",
             "Women's Doubles, Round 16: Jessica Evanier / Alexa Quintanilla vs Liz Truluck / Kiora Kunimoto — status scheduled.",
             "Women's Doubles, Round 16: Sofia Sewing / Catherine Parenteau vs Zoey Weil / Estee Widdershoven — status scheduled.",
             "Women's Doubles, Round 16: Brooke Buckner / Judit Castillo vs Lindsey Newman / Isabella Dunlap — status scheduled.",
-            "Women's Doubles, Round 16: Rachel Rohrabacher / Parris Todd vs Ella Yeh / Cc Eleven Sacca — status scheduled.",
-            "Women's Doubles, Round 16: Tyra Hurricane Black / Jorja Johnson vs Jade Rau / Mehvish Safdar — status scheduled.",
-            "Women's Doubles, Round 16: Anna Bright / Anna Leigh Waters vs Nicole Conard / Jalina Ingram — status scheduled.",
-            "Men's Doubles, Round 16: Jace Morris / Caden Nemoff vs Will Mackinnon / Wyatt Stone — status scheduled."
+            "Women's Doubles, Round 16: Rachel Rohrabacher / Parris Todd vs Ella Yeh / Cc Eleven Sacca — status scheduled."
           ]
         },
         {
@@ -2091,7 +2197,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Daytona Beach Open 2026",
-          "content": "Cập nhật: 00:00 ngày 20/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Daytona Beach Open 2026 từ feed điểm số chính thức của PPA cho thời gian 16–22/11/2026 tại Pictona at Holly Hill, Holly Hill, Florida. Feed hiện có 168 trận, gồm 128 bản ghi đã kết thúc/chung cuộc và 1 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 02:00 ngày 20/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Daytona Beach Open 2026 từ feed điểm số chính thức của PPA cho thời gian 16–22/11/2026 tại Pictona at Holly Hill, Holly Hill, Florida. Feed hiện có 170 trận, gồm 134 bản ghi đã kết thúc/chung cuộc và 4 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -2116,12 +2222,12 @@ const post: BlogPost = {
             },
             {
               "division": "Đơn nữ",
-              "note": "Đã tới Vòng 32 · 28 trận",
+              "note": "Đã tới Vòng 16 · 30 trận",
               "anchor": "rb-don-nu"
             },
             {
               "division": "Đơn nam",
-              "note": "Đã tới Vòng 32 · 32 trận",
+              "note": "Đã tới Vòng 16 · 36 trận",
               "anchor": "rb-don-nam"
             }
           ]
@@ -3197,13 +3303,64 @@ const post: BlogPost = {
         },
         {
           "heading": "Kết quả Đơn nữ",
-          "content": "Chưa có nhà vô địch. 28 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Chưa có nhà vô địch. 30 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đơn nữ",
             "rounds": [
               {
+                "label": "Vòng 16",
+                "matches": [
+                  {
+                    "winner": "Judit Castillo",
+                    "loser": "Jorja Johnson",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        12,
+                        10
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Isabella Dunlap",
+                    "loser": "Liz Truluck",
+                    "sets": [
+                      [
+                        8,
+                        11
+                      ],
+                      [
+                        11,
+                        1
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  }
+                ]
+              },
+              {
                 "label": "Vòng 32",
                 "matches": [
+                  {
+                    "winner": "Judit Castillo",
+                    "loser": "Luana Stanciu",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
                   {
                     "winner": "Jalina Ingram",
                     "loser": "Estee Widdershoven",
@@ -3321,20 +3478,6 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Judit Castillo",
-                    "loser": "Luana Stanciu",
-                    "sets": [
-                      [
-                        11,
-                        3
-                      ],
-                      [
-                        11,
-                        3
-                      ]
-                    ]
-                  },
-                  {
                     "winner": "Liz Truluck",
                     "loser": "Naomi Nguyen",
                     "sets": [
@@ -3387,12 +3530,26 @@ const post: BlogPost = {
                 "label": "Vòng 64",
                 "matches": [
                   {
-                    "winner": "Isabella Dunlap",
-                    "loser": "Jessica Evanier",
+                    "winner": "Carlota Trevino",
+                    "loser": "Valerie R Simon",
                     "sets": [
                       [
                         11,
-                        3
+                        7
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Luana Stanciu",
+                    "loser": "Paula Rives",
+                    "sets": [
+                      [
+                        11,
+                        2
                       ],
                       [
                         11,
@@ -3415,66 +3572,6 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Ella Yeh",
-                    "loser": "Elsie Hendershot",
-                    "sets": [
-                      [
-                        10,
-                        12
-                      ],
-                      [
-                        11,
-                        8
-                      ],
-                      [
-                        11,
-                        2
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Mya Bui",
-                    "loser": "Rose S",
-                    "sets": [
-                      [
-                        11,
-                        4
-                      ],
-                      [
-                        11,
-                        6
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Nicole Conard",
-                    "loser": "Cc Eleven Sacca",
-                    "sets": [
-                      [
-                        11,
-                        4
-                      ],
-                      [
-                        11,
-                        2
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Helena Jansen",
-                    "loser": "Rachel Rettger",
-                    "sets": [
-                      [
-                        11,
-                        3
-                      ],
-                      [
-                        11,
-                        1
-                      ]
-                    ]
-                  },
-                  {
                     "winner": "Kelly Goodnow",
                     "loser": "Giovanna Morelli",
                     "sets": [
@@ -3489,8 +3586,8 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Estee Widdershoven",
-                    "loser": "Alex Walker",
+                    "winner": "Nicole Conard",
+                    "loser": "Cc Eleven Sacca",
                     "sets": [
                       [
                         11,
@@ -3498,21 +3595,7 @@ const post: BlogPost = {
                       ],
                       [
                         11,
-                        4
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Victoria Simon",
-                    "loser": "Ava Ignatowich",
-                    "sets": [
-                      [
-                        11,
-                        7
-                      ],
-                      [
-                        11,
-                        1
+                        2
                       ]
                     ]
                   },
@@ -3535,30 +3618,30 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Naomi Nguyen",
-                    "loser": "Gianna Southwick",
+                    "winner": "Isabella Dunlap",
+                    "loser": "Jessica Evanier",
                     "sets": [
                       [
                         11,
-                        0
-                      ],
-                      [
-                        11,
-                        1
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Luana Stanciu",
-                    "loser": "Paula Rives",
-                    "sets": [
-                      [
-                        11,
-                        2
+                        3
                       ],
                       [
                         11,
                         6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Victoria Simon",
+                    "loser": "Ava Ignatowich",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        1
                       ]
                     ]
                   },
@@ -3595,16 +3678,16 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Carlota Trevino",
-                    "loser": "Valerie R Simon",
+                    "winner": "Mya Bui",
+                    "loser": "Rose S",
                     "sets": [
                       [
                         11,
-                        7
+                        4
                       ],
                       [
                         11,
-                        4
+                        6
                       ]
                     ]
                   },
@@ -3621,6 +3704,66 @@ const post: BlogPost = {
                         8
                       ]
                     ]
+                  },
+                  {
+                    "winner": "Naomi Nguyen",
+                    "loser": "Gianna Southwick",
+                    "sets": [
+                      [
+                        11,
+                        0
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Helena Jansen",
+                    "loser": "Rachel Rettger",
+                    "sets": [
+                      [
+                        11,
+                        3
+                      ],
+                      [
+                        11,
+                        1
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Estee Widdershoven",
+                    "loser": "Alex Walker",
+                    "sets": [
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        4
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Ella Yeh",
+                    "loser": "Elsie Hendershot",
+                    "sets": [
+                      [
+                        10,
+                        12
+                      ],
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        2
+                      ]
+                    ]
                   }
                 ],
                 "collapsed": true
@@ -3630,24 +3773,93 @@ const post: BlogPost = {
         },
         {
           "heading": "Kết quả Đơn nam",
-          "content": "Chưa có nhà vô địch. 32 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Chưa có nhà vô địch. 36 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đơn nam",
             "rounds": [
               {
-                "label": "Vòng 32",
+                "label": "Vòng 16",
                 "matches": [
                   {
-                    "winner": "Anouar Braham",
-                    "loser": "Adam Harvey",
+                    "winner": "Cason Campbell",
+                    "loser": "Mota Alhouni",
                     "sets": [
                       [
                         11,
-                        8
+                        5
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Federico Staksrud",
+                    "loser": "Miles Hoover",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Rafael Lenhard",
+                    "loser": "Christian Alshon",
+                    "sets": [
+                      [
+                        0,
+                        11
+                      ],
+                      [
+                        13,
+                        11
+                      ],
+                      [
+                        11,
+                        6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "JW Johnson",
+                    "loser": "Noe Khlif",
+                    "sets": [
+                      [
+                        4,
+                        11
+                      ],
+                      [
+                        14,
+                        12
                       ],
                       [
                         11,
                         8
+                      ]
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "Vòng 32",
+                "matches": [
+                  {
+                    "winner": "George Rangelov",
+                    "loser": "Augustus Ge",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        1
                       ]
                     ]
                   },
@@ -3666,8 +3878,36 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Yates Johnson",
-                    "loser": "Camden Chaffin",
+                    "winner": "Zane Ford",
+                    "loser": "Jonathan Truong",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Noe Khlif",
+                    "loser": "Connor Mogle",
+                    "sets": [
+                      [
+                        11,
+                        9
+                      ],
+                      [
+                        11,
+                        0
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Anouar Braham",
+                    "loser": "Adam Harvey",
                     "sets": [
                       [
                         11,
@@ -3675,77 +3915,21 @@ const post: BlogPost = {
                       ],
                       [
                         11,
-                        6
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "George Rangelov",
-                    "loser": "Augustus Ge",
-                    "sets": [
-                      [
-                        11,
-                        6
-                      ],
-                      [
-                        11,
-                        1
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Hunter Johnson",
-                    "loser": "James Delgado",
-                    "sets": [
-                      [
-                        11,
-                        1
-                      ],
-                      [
-                        11,
-                        4
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Roscoe Bellamy",
-                    "loser": "Rafa Hewett",
-                    "sets": [
-                      [
-                        11,
                         8
-                      ],
-                      [
-                        11,
-                        6
                       ]
                     ]
                   },
                   {
-                    "winner": "John Lucian Goins",
-                    "loser": "Braden Jacobson",
+                    "winner": "Miles Hoover",
+                    "loser": "Kenta Miyoshi",
                     "sets": [
+                      [
+                        11,
+                        7
+                      ],
                       [
                         11,
                         6
-                      ],
-                      [
-                        11,
-                        3
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Rafael Lenhard",
-                    "loser": "William Hsieh",
-                    "sets": [
-                      [
-                        11,
-                        2
-                      ],
-                      [
-                        11,
-                        3
                       ]
                     ]
                   },
@@ -3768,12 +3952,40 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Miles Hoover",
-                    "loser": "Kenta Miyoshi",
+                    "winner": "Rafael Lenhard",
+                    "loser": "William Hsieh",
                     "sets": [
                       [
                         11,
-                        7
+                        2
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "John Lucian Goins",
+                    "loser": "Braden Jacobson",
+                    "sets": [
+                      [
+                        11,
+                        6
+                      ],
+                      [
+                        11,
+                        3
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Roscoe Bellamy",
+                    "loser": "Rafa Hewett",
+                    "sets": [
+                      [
+                        11,
+                        8
                       ],
                       [
                         11,
@@ -3782,30 +3994,30 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "Noe Khlif",
-                    "loser": "Connor Mogle",
+                    "winner": "Hunter Johnson",
+                    "loser": "James Delgado",
                     "sets": [
                       [
                         11,
-                        9
+                        1
                       ],
                       [
                         11,
-                        0
+                        4
                       ]
                     ]
                   },
                   {
-                    "winner": "Zane Ford",
-                    "loser": "Jonathan Truong",
+                    "winner": "Yates Johnson",
+                    "loser": "Camden Chaffin",
                     "sets": [
                       [
                         11,
-                        6
+                        8
                       ],
                       [
                         11,
-                        0
+                        6
                       ]
                     ]
                   }
@@ -3816,16 +4028,34 @@ const post: BlogPost = {
                 "label": "Vòng 64",
                 "matches": [
                   {
-                    "winner": "William Hsieh",
-                    "loser": "Gregory Dow",
+                    "winner": "Jonathan Truong",
+                    "loser": "Michael Loyd",
                     "sets": [
                       [
+                        4,
+                        11
+                      ],
+                      [
                         11,
-                        5
+                        8
                       ],
                       [
                         11,
                         6
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Zane Ford",
+                    "loser": "Casey Diamond",
+                    "sets": [
+                      [
+                        12,
+                        10
+                      ],
+                      [
+                        11,
+                        7
                       ]
                     ]
                   },
@@ -3840,6 +4070,20 @@ const post: BlogPost = {
                       [
                         11,
                         2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Mota Alhouni",
+                    "loser": "Jace Morris",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        8
                       ]
                     ]
                   },
@@ -3919,52 +4163,6 @@ const post: BlogPost = {
                     "sets": []
                   },
                   {
-                    "winner": "Mohaned Alhouni",
-                    "loser": "Matt Burkhardt",
-                    "sets": [
-                      [
-                        7,
-                        11
-                      ],
-                      [
-                        11,
-                        8
-                      ],
-                      [
-                        11,
-                        9
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Mota Alhouni",
-                    "loser": "Jace Morris",
-                    "sets": [
-                      [
-                        11,
-                        7
-                      ],
-                      [
-                        11,
-                        8
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Zane Ford",
-                    "loser": "Casey Diamond",
-                    "sets": [
-                      [
-                        12,
-                        10
-                      ],
-                      [
-                        11,
-                        7
-                      ]
-                    ]
-                  },
-                  {
                     "winner": "Kenta Miyoshi",
                     "loser": "Caden Nemoff",
                     "sets": [
@@ -3993,16 +4191,16 @@ const post: BlogPost = {
                     ]
                   },
                   {
-                    "winner": "James Delgado",
-                    "loser": "Wil Shaffer",
+                    "winner": "William Hsieh",
+                    "loser": "Gregory Dow",
                     "sets": [
                       [
                         11,
-                        7
+                        5
                       ],
                       [
                         11,
-                        8
+                        6
                       ]
                     ]
                   },
@@ -4017,24 +4215,6 @@ const post: BlogPost = {
                       [
                         13,
                         11
-                      ]
-                    ]
-                  },
-                  {
-                    "winner": "Jonathan Truong",
-                    "loser": "Michael Loyd",
-                    "sets": [
-                      [
-                        4,
-                        11
-                      ],
-                      [
-                        11,
-                        8
-                      ],
-                      [
-                        11,
-                        6
                       ]
                     ]
                   },
@@ -4097,6 +4277,38 @@ const post: BlogPost = {
                         1
                       ]
                     ]
+                  },
+                  {
+                    "winner": "James Delgado",
+                    "loser": "Wil Shaffer",
+                    "sets": [
+                      [
+                        11,
+                        7
+                      ],
+                      [
+                        11,
+                        8
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Mohaned Alhouni",
+                    "loser": "Matt Burkhardt",
+                    "sets": [
+                      [
+                        7,
+                        11
+                      ],
+                      [
+                        11,
+                        8
+                      ],
+                      [
+                        11,
+                        9
+                      ]
+                    ]
                   }
                 ],
                 "collapsed": true
@@ -4108,16 +4320,16 @@ const post: BlogPost = {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đơn nam, Round 16: Mota Alhouni gặp Cason Campbell — trạng thái live.",
+            "Đơn nữ, Round 16: Jalina Ingram gặp Mari Humberg — trạng thái live.",
+            "Đơn nữ, Round 16: Cailyn Campbell gặp Sofia Sewing — trạng thái live.",
+            "Đơn nam, Round 16: Zane Ford gặp Anouar Braham — trạng thái live.",
+            "Đơn nam, Round 16: Roscoe Bellamy gặp Eric Oncins — trạng thái live.",
             "Đôi nữ, Round 16: Mari Humberg / Milan Rane gặp Christa Gecheva / Elsie Hendershot — trạng thái scheduled.",
             "Đôi nữ, Round 16: Alix Truong / Jessie Irvine gặp Angie Walker / Alex Walker — trạng thái scheduled.",
             "Đôi nữ, Round 16: Jessica Evanier / Alexa Quintanilla gặp Liz Truluck / Kiora Kunimoto — trạng thái scheduled.",
             "Đôi nữ, Round 16: Sofia Sewing / Catherine Parenteau gặp Zoey Weil / Estee Widdershoven — trạng thái scheduled.",
             "Đôi nữ, Round 16: Brooke Buckner / Judit Castillo gặp Lindsey Newman / Isabella Dunlap — trạng thái scheduled.",
-            "Đôi nữ, Round 16: Rachel Rohrabacher / Parris Todd gặp Ella Yeh / Cc Eleven Sacca — trạng thái scheduled.",
-            "Đôi nữ, Round 16: Tyra Hurricane Black / Jorja Johnson gặp Jade Rau / Mehvish Safdar — trạng thái scheduled.",
-            "Đôi nữ, Round 16: Anna Bright / Anna Leigh Waters gặp Nicole Conard / Jalina Ingram — trạng thái scheduled.",
-            "Đôi nam, Round 16: Jace Morris / Caden Nemoff gặp Will Mackinnon / Wyatt Stone — trạng thái scheduled."
+            "Đôi nữ, Round 16: Rachel Rohrabacher / Parris Todd gặp Ella Yeh / Cc Eleven Sacca — trạng thái scheduled."
           ]
         },
         {
