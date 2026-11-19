@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  renderVenueDetail, renderVenuesCity, isVerifiedSource, shortPrice, longPrice,
+  renderVenueDetail, renderVenuesCity, renderVenuesDistrict, isVerifiedSource, shortPrice, longPrice,
   priceRangeText, uniformHours, hoursLabel, haversineKm, formatKm,
 } from "../venues";
 import type { SupabaseClient } from "../../supabase";
@@ -756,5 +756,66 @@ describe("renderVenuesCity district tables (proposal 3)", () => {
     expect(html).toContain("<h2>Pickleball courts in Đống Đa</h2>");
     expect(html).toContain("<th>Address</th>");
     expect(html).toContain("<h2>Other areas</h2>");
+  });
+});
+
+describe("renderVenuesDistrict", () => {
+  const v = (slug: string, district: string, courts: number) => ({
+    slug,
+    name: `Sân ${slug}`,
+    name_vi: null,
+    district,
+    city: "Hà Nội",
+    num_courts: courts,
+    is_indoor: false,
+    is_verified: false,
+    address: `Địa chỉ ${slug}`,
+    price_min_vnd: null,
+    price_max_vnd: null,
+    price_source: null,
+  });
+  const DISTRICT_ROWS = [
+    v("hm-1", "Hoàng Mai", 6),
+    v("hm-2", "Hoàng Mai", 4),
+    v("hm-3", "Hoàng Mai", 2),
+    v("dd-1", "Đống Đa", 3),
+    v("dd-2", "Đống Đa", 2),
+  ];
+
+  const renderDistrict = async (dslug: string, lang: "vi" | "en" = "vi") =>
+    (await renderVenuesDistrict(stubClient(null, DISTRICT_ROWS), "ha-noi", dslug, SITE, lang)).text();
+
+  it("renders a focused comparison table for the district", async () => {
+    const html = await renderDistrict("hoang-mai", "vi");
+    expect(html).toContain("<h1>Sân Pickleball Hoàng Mai</h1>");
+    expect(html).toContain("<th>Tên sân</th>");
+    expect(html).toContain("Sân hm-1");
+    expect(html).not.toContain("Sân dd-1");
+    expect(html).not.toContain('content="noindex, follow"');
+    // Sibling nav never links a sub-threshold (noindex) district.
+    expect(html).not.toContain("/khu-vuc/ha-noi/dong-da");
+  });
+
+  it("renders the district hub in English", async () => {
+    const html = await renderDistrict("hoang-mai", "en");
+    expect(html).toContain("<h1>Pickleball courts in Hoàng Mai</h1>");
+    expect(html).toContain("<th>Address</th>");
+  });
+
+  it("404s for a district that does not exist in the city", async () => {
+    const res = await renderVenuesDistrict(stubClient(null, DISTRICT_ROWS), "ha-noi", "khong-co", SITE, "vi");
+    expect(res.status).toBe(404);
+  });
+
+  it("renders a small district but marks it noindex", async () => {
+    const html = await renderDistrict("dong-da", "vi");
+    expect(html).toContain("Sân dd-1");
+    expect(html).toContain('content="noindex, follow"');
+  });
+
+  it("city hub links only the districts that have their own hub", async () => {
+    const html = await (await renderVenuesCity(stubClient(null, DISTRICT_ROWS), "ha-noi", SITE, "vi")).text();
+    expect(html).toContain('<a href="https://www.thepicklehub.net/vi/san/khu-vuc/ha-noi/hoang-mai">');
+    expect(html).not.toContain("/khu-vuc/ha-noi/dong-da");
   });
 });

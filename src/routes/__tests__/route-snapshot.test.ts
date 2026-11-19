@@ -105,7 +105,8 @@ describe("App.tsx route table characterization", () => {
     // 73 -> 74: bilingual author profile.
     // 74 -> 75: create a quick table by AI chat.
     // 75 -> 76: quick-table referee scoring keeps /vi.
-    expect(mirrored.length).toBe(76);
+    // 76 -> 77: district court hub /san/khu-vuc/:city/:district.
+    expect(mirrored.length).toBe(77);
   });
 
   it("route table matches the checked-in snapshot exactly", () => {

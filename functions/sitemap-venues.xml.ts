@@ -8,6 +8,7 @@
 
 import { createSupabaseClient } from "./_lib/supabase";
 import { isThinVenue } from "./_lib/render/venues";
+import { citySlugFromName, districtSlug, MIN_DISTRICT_HUB_VENUES } from "../src/lib/venues";
 import {
   SITE_URL_DEFAULT,
   SITEMAP_CACHE_HEADERS,
@@ -31,6 +32,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   type VenueSitemapRow = {
     slug: string;
+    city: string | null;
+    district: string | null;
     updated_at: string | null;
     address: string | null;
     latitude: number | null;
@@ -58,7 +61,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const venues = await fetchAllRows<VenueSitemapRow>((from, to) =>
       supabase
         .from("venues")
-        .select("slug, updated_at, address, latitude, longitude, num_courts, phone")
+        .select("slug, updated_at, address, latitude, longitude, num_courts, phone, city, district")
         .order("updated_at", { ascending: false })
         .order("slug", { ascending: true })
         .range(from, to),
@@ -185,7 +188,39 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       ];
     });
 
-    return new Response(wrapUrlset([...entries, ...cityEntries]), { status: 200, headers: SITEMAP_CACHE_HEADERS });
+    // District hub pages (/san/khu-vuc/:city/:district) — only districts
+    // with at least MIN_DISTRICT_HUB_VENUES courts, the same threshold the
+    // renderer uses to decide indexability, so the sitemap never lists a
+    // noindex URL. lastmod is the freshest venue update in the district.
+    const districtGroups = new Map<string, { count: number; lastmod: string }>();
+    for (const v of venues) {
+      const citySlug = citySlugFromName(v.city);
+      const dSlug = districtSlug(v.district);
+      if (!citySlug || !dSlug) continue;
+      const key = `${citySlug}/${dSlug}`;
+      const cur = districtGroups.get(key) ?? { count: 0, lastmod: "" };
+      cur.count += 1;
+      const lm = toLastmod(v.updated_at, TODAY);
+      if (lm > cur.lastmod) cur.lastmod = lm;
+      districtGroups.set(key, cur);
+    }
+    const districtEntries = [...districtGroups.entries()]
+      .filter(([, g]) => g.count >= MIN_DISTRICT_HUB_VENUES)
+      .flatMap(([key, g]) => {
+        const enLoc = `${siteUrl}/san/khu-vuc/${key}`;
+        const viLoc = `${siteUrl}/vi/san/khu-vuc/${key}`;
+        const hreflang = [
+          { lang: "en", href: enLoc },
+          { lang: "vi", href: viLoc },
+          { lang: "x-default", href: enLoc },
+        ];
+        return [
+          buildUrlEntry({ loc: enLoc, lastmod: g.lastmod || TODAY, changefreq: "monthly", priority: "0.5", hreflang }),
+          buildUrlEntry({ loc: viLoc, lastmod: g.lastmod || TODAY, changefreq: "monthly", priority: "0.5", hreflang }),
+        ];
+      });
+
+    return new Response(wrapUrlset([...entries, ...cityEntries, ...districtEntries]), { status: 200, headers: SITEMAP_CACHE_HEADERS });
   } catch (err) {
     console.error("sitemap-venues: fatal:", err);
     return new Response(wrapUrlset([]), { status: 503, headers: SITEMAP_CACHE_HEADERS });

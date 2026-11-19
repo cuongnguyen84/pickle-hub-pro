@@ -978,5 +978,13 @@
   {
     "path": "/vi/tools/quick-tables/chat",
     "element": "<ViLanguageWrapper><QuickTableChat /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/san/khu-vuc/:city/:district",
+    "element": "<VenuesDistrict />"
+  },
+  {
+    "path": "/vi/san/khu-vuc/:city/:district",
+    "element": "<ViLanguageWrapper><VenuesDistrict /></ViLanguageWrapper>"
   }
 ]

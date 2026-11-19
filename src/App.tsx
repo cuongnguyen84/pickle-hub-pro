@@ -196,6 +196,7 @@ const loadVenueDetailPage = () => import("./pages/VenueDetail");
 const VenueDetail = lazyRetry(loadVenueDetailPage);
 const VenueSubmit = lazyRetry(() => import("./pages/VenueSubmit"));
 const VenuesCity = lazyRetry(() => import("./pages/VenuesCity"));
+const VenuesDistrict = lazyRetry(() => import("./pages/VenuesDistrict"));
 
 // Start the active public page chunk while the rest of App is still being
 // evaluated. This preserves code splitting without adding a render-time
@@ -724,6 +725,7 @@ const MIRRORED: MirroredRoute[] = [
   { path: "/san", element: <VenuesList /> },
   { path: "/san/them", element: <VenueSubmit /> },
   { path: "/san/khu-vuc/:city", element: <VenuesCity /> },
+  { path: "/san/khu-vuc/:city/:district", element: <VenuesDistrict /> },
   { path: "/tim-ban-choi", element: <FindPlayers /> },
   { path: "/tin-nhan", element: <Messages /> },
   { path: "/san/:slug", element: <VenueDetail /> },
