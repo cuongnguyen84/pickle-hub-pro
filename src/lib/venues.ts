@@ -302,7 +302,7 @@ export function indoorLabel(
 function slugifyBase(input: string): string {
   return input
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/đ/g, "d")
     .replace(/Đ/g, "d")
     .toLowerCase()
@@ -431,6 +431,34 @@ const VENUE_CITY_SLUG_BY_NAME: Record<string, string> = Object.fromEntries(
 export function citySlugFromName(name: string | null | undefined): string | null {
   return name ? VENUE_CITY_SLUG_BY_NAME[name] ?? null : null;
 }
+
+/**
+ * URL slug for a district hub: /san/khu-vuc/<city>/<districtSlug(name)>.
+ * Deterministic Vietnamese slugify (đ→d, NFD diacritic strip). Pure and
+ * shared on purpose: the React pages, the bot renderer and the venues
+ * sitemap must all derive the SAME slug from a raw district name or the
+ * URLs will not line up. Data check 2026-11-19: 306 distinct
+ * (city, district) pairs produce zero slug collisions within a city.
+ */
+export function districtSlug(name: string | null | undefined): string | null {
+  if (!name) return null;
+  const slug = name
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return slug || null;
+}
+
+/**
+ * A district hub needs enough courts to compare. Below this count the
+ * page still renders for direct visitors but carries noindex and stays
+ * out of the sitemap — the Guard-0 thin-page rule at district level.
+ */
+export const MIN_DISTRICT_HUB_VENUES = 3;
 
 /**
  * Which parts of the "Price & opening hours" block actually have something to
