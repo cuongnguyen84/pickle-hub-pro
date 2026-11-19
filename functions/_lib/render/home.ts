@@ -203,7 +203,7 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
       ],
     },
     bodyContent: `
-      <h1>Everything a pickleball player needs, in one place.</h1>
+      <h1>Pickleball tournaments, live results, courts and bracket tools - everything in one place.</h1>
       <p>ThePickleHub is a pickleball platform for players to follow news and livestreams, find players and courts, and create or join tournaments and community events.</p>
       <p>Google Sign-In uses only your name, email address, and profile photo to create, secure, and personalize your account. Read our <a href="${siteUrl}/privacy">Privacy Policy</a>.</p>
       <p>Our editorial team is headquartered in Ho Chi Minh City and reports from PPA, APP, MLP, European Open, and Asia Pacific Series venues worldwide.</p>
@@ -379,7 +379,7 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
       ],
     },
     bodyContent: `
-      <h1>Mọi thứ người chơi pickleball cần, trong một điểm đến.</h1>
+      <h1>Giải pickleball, kết quả trực tiếp, sân và công cụ tổ chức giải - tất cả trong một điểm đến.</h1>
       <p>ThePickleHub là nền tảng pickleball dành cho người chơi trên toàn thế giới theo dõi tin tức và livestream, tìm bạn chơi và sân, đồng thời tạo hoặc tham gia giải đấu và sự kiện cộng đồng.</p>
       <p>Đội ngũ biên tập đặt tại TP.HCM và tường thuật từ PPA, APP, MLP, European Open cùng Asia Pacific Series trên toàn thế giới.</p>
       <ul>
