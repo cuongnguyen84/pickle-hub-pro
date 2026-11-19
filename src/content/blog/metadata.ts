@@ -55,7 +55,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     },
     "heroImage": {
       "src": "/images/blog/sophia-phuong-anh-dai-hoi-the-thao-toan-quoc-2026-hero.webp",
-      "alt": "Young female pickleball player lunging for a forehand on an outdoor court (illustration)"
+      "alt": "Sophia Phuong Anh on court in her black Vietjet Air kit, holding a pink paddle"
     },
     "titleEn": "Who is Sophia Phuong Anh? The 18-year-old in the world Top 60 heading to Vietnam's National Sports Games 2026",
     "titleVi": "Sophia Phương Anh là ai? Tay vợt 18 tuổi vào Top 60 thế giới, sẵn sàng cho Đại hội Thể thao toàn quốc 2026",
