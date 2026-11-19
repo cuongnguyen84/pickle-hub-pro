@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/i18n";
-import { blogMetadata } from "@/content/blog/metadata";
+import { blogTeasers } from "@/content/blog/teasers";
 import {
   eventPhase,
   formatEventDates,
@@ -65,7 +65,7 @@ export default function PpaTourAsia() {
   const { language } = useI18n();
   const vi = language === "vi";
 
-  const metadataPosts = blogMetadata
+  const metadataPosts = blogTeasers
     .filter((post) => post.tags.includes("ppa tour asia"))
     .sort((a, b) => b.publishedDate.localeCompare(a.publishedDate));
 
