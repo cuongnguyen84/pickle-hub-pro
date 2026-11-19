@@ -31,7 +31,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "PPA Daytona Beach results: Daytona Beach Open 2026 daily scores",
-          "content": "Last updated: November 19, 2026, 10:00 Vietnam time. ThePickleHub publishes this Daytona Beach Open 2026 results page from the official PPA scores feed for November 16–22, 2026 at Pictona at Holly Hill, Holly Hill, Florida. The feed currently contains 167 matches, including 127 completed or final records and 1 live records. A missing score remains unconfirmed until the official feed supplies it.",
+          "content": "Last updated: November 19, 2026, 12:00 Vietnam time. ThePickleHub publishes this Daytona Beach Open 2026 results page from the official PPA scores feed for November 16–22, 2026 at Pictona at Holly Hill, Holly Hill, Florida. The feed currently contains 168 matches, including 128 completed or final records and 0 live records. A missing score remains unconfirmed until the official feed supplies it.",
           "internalLinks": [
             {
               "text": "Official event scores",
@@ -46,7 +46,7 @@ const post: BlogPost = {
             },
             {
               "division": "Men's Doubles",
-              "note": "Through to the Round 32 · 21 matches",
+              "note": "Through to the Round 32 · 22 matches",
               "anchor": "rb-mens-doubles"
             },
             {
@@ -284,7 +284,7 @@ const post: BlogPost = {
         },
         {
           "heading": "Men's Doubles results",
-          "content": "No champion yet. 21 completed matches, latest round first.",
+          "content": "No champion yet. 22 completed matches, latest round first.",
           "resultsBoard": {
             "division": "Men's Doubles",
             "rounds": [
@@ -394,6 +394,24 @@ const post: BlogPost = {
                       [
                         11,
                         2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jace Morris / Caden Nemoff",
+                    "loser": "Braden Jacobson / Collin Johns",
+                    "sets": [
+                      [
+                        13,
+                        15
+                      ],
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        6
                       ]
                     ]
                   },
@@ -2030,7 +2048,6 @@ const post: BlogPost = {
           "heading": "Live and upcoming status",
           "content": "The current feed status is listed below. Scheduled matchups are not results and must not be read as winners.",
           "listItems": [
-            "Men's Doubles, Round 32: Braden Jacobson / Collin Johns vs Jace Morris / Caden Nemoff — status live.",
             "Women's Doubles, Round 16: Mari Humberg / Milan Rane vs Christa Gecheva / Elsie Hendershot — status scheduled.",
             "Women's Doubles, Round 16: Alix Truong / Jessie Irvine vs Angie Walker / Alex Walker — status scheduled.",
             "Women's Doubles, Round 16: Jessica Evanier / Alexa Quintanilla vs Liz Truluck / Kiora Kunimoto — status scheduled.",
@@ -2039,6 +2056,7 @@ const post: BlogPost = {
             "Women's Doubles, Round 16: Rachel Rohrabacher / Parris Todd vs Ella Yeh / Cc Eleven Sacca — status scheduled.",
             "Women's Doubles, Round 16: Tyra Hurricane Black / Jorja Johnson vs Jade Rau / Mehvish Safdar — status scheduled.",
             "Women's Doubles, Round 16: Anna Bright / Anna Leigh Waters vs Nicole Conard / Jalina Ingram — status scheduled.",
+            "Men's Doubles, Round 16: Jace Morris / Caden Nemoff vs Will Mackinnon / Wyatt Stone — status scheduled.",
             "Men's Doubles, Round 16: Pablo Tellez / Federico Staksrud vs Will Howells / AJ Koller — status scheduled."
           ]
         },
@@ -2073,7 +2091,7 @@ const post: BlogPost = {
       "sections": [
         {
           "heading": "Kết quả Daytona Beach Open 2026",
-          "content": "Cập nhật: 10:00 ngày 19/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Daytona Beach Open 2026 từ feed điểm số chính thức của PPA cho thời gian 16–22/11/2026 tại Pictona at Holly Hill, Holly Hill, Florida. Feed hiện có 167 trận, gồm 127 bản ghi đã kết thúc/chung cuộc và 1 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
+          "content": "Cập nhật: 12:00 ngày 19/11/2026 (giờ Việt Nam). ThePickleHub đăng trang kết quả Daytona Beach Open 2026 từ feed điểm số chính thức của PPA cho thời gian 16–22/11/2026 tại Pictona at Holly Hill, Holly Hill, Florida. Feed hiện có 168 trận, gồm 128 bản ghi đã kết thúc/chung cuộc và 0 bản ghi đang diễn ra. Tỷ số chưa có trong nguồn vẫn được ghi là chưa xác minh.",
           "internalLinks": [
             {
               "text": "Nguồn điểm số chính thức",
@@ -2088,7 +2106,7 @@ const post: BlogPost = {
             },
             {
               "division": "Đôi nam",
-              "note": "Đã tới Vòng 32 · 21 trận",
+              "note": "Đã tới Vòng 32 · 22 trận",
               "anchor": "rb-doi-nam"
             },
             {
@@ -2326,7 +2344,7 @@ const post: BlogPost = {
         },
         {
           "heading": "Kết quả Đôi nam",
-          "content": "Chưa có nhà vô địch. 21 trận đã kết thúc, vòng mới nhất ở trên.",
+          "content": "Chưa có nhà vô địch. 22 trận đã kết thúc, vòng mới nhất ở trên.",
           "resultsBoard": {
             "division": "Đôi nam",
             "rounds": [
@@ -2436,6 +2454,24 @@ const post: BlogPost = {
                       [
                         11,
                         2
+                      ]
+                    ]
+                  },
+                  {
+                    "winner": "Jace Morris / Caden Nemoff",
+                    "loser": "Braden Jacobson / Collin Johns",
+                    "sets": [
+                      [
+                        13,
+                        15
+                      ],
+                      [
+                        11,
+                        4
+                      ],
+                      [
+                        11,
+                        6
                       ]
                     ]
                   },
@@ -4072,7 +4108,6 @@ const post: BlogPost = {
           "heading": "Trận đang đấu và sắp đấu",
           "content": "Trạng thái hiện tại của feed được ghi dưới đây. Trận scheduled chưa phải kết quả.",
           "listItems": [
-            "Đôi nam, Round 32: Braden Jacobson / Collin Johns gặp Jace Morris / Caden Nemoff — trạng thái live.",
             "Đôi nữ, Round 16: Mari Humberg / Milan Rane gặp Christa Gecheva / Elsie Hendershot — trạng thái scheduled.",
             "Đôi nữ, Round 16: Alix Truong / Jessie Irvine gặp Angie Walker / Alex Walker — trạng thái scheduled.",
             "Đôi nữ, Round 16: Jessica Evanier / Alexa Quintanilla gặp Liz Truluck / Kiora Kunimoto — trạng thái scheduled.",
@@ -4081,6 +4116,7 @@ const post: BlogPost = {
             "Đôi nữ, Round 16: Rachel Rohrabacher / Parris Todd gặp Ella Yeh / Cc Eleven Sacca — trạng thái scheduled.",
             "Đôi nữ, Round 16: Tyra Hurricane Black / Jorja Johnson gặp Jade Rau / Mehvish Safdar — trạng thái scheduled.",
             "Đôi nữ, Round 16: Anna Bright / Anna Leigh Waters gặp Nicole Conard / Jalina Ingram — trạng thái scheduled.",
+            "Đôi nam, Round 16: Jace Morris / Caden Nemoff gặp Will Mackinnon / Wyatt Stone — trạng thái scheduled.",
             "Đôi nam, Round 16: Pablo Tellez / Federico Staksrud gặp Will Howells / AJ Koller — trạng thái scheduled."
           ]
         },
