@@ -986,5 +986,13 @@
   {
     "path": "/vi/san/khu-vuc/:city/:district",
     "element": "<ViLanguageWrapper><VenuesDistrict /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/ppa-tour-asia",
+    "element": "<PpaTourAsia />"
+  },
+  {
+    "path": "/vi/ppa-tour-asia",
+    "element": "<ViLanguageWrapper><PpaTourAsia /></ViLanguageWrapper>"
   }
 ]
