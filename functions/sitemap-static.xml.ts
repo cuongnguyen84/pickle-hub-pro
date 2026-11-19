@@ -49,6 +49,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     { loc: "/vi/live", changefreq: "hourly", priority: "0.9", lastmod: TODAY, hreflang: bilingual("/live", "/vi/live") },
     { loc: "/tournaments", changefreq: "daily", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/tournaments", "/vi/tournaments") },
     { loc: "/vi/tournaments", changefreq: "daily", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/tournaments", "/vi/tournaments") },
+    { loc: "/ppa-tour-asia", changefreq: "daily", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/ppa-tour-asia", "/vi/ppa-tour-asia") },
+    { loc: "/vi/ppa-tour-asia", changefreq: "daily", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/ppa-tour-asia", "/vi/ppa-tour-asia") },
     { loc: "/videos", changefreq: "daily", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/videos", "/vi/videos") },
     { loc: "/vi/videos", changefreq: "daily", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/videos", "/vi/videos") },
     { loc: "/news", changefreq: "daily", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/news", "/vi/news") },

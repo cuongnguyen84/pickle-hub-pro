@@ -63,3 +63,4 @@ export {
   renderShopStore,
 } from "./shop";
 export { renderProTourEvent } from "./pro-tour-event";
+export { renderPpaAsiaHub } from "./ppa-hub";

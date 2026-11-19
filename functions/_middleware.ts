@@ -25,6 +25,7 @@ import {
   renderSocialList,
   renderClubList,
   renderVenuesList, renderVenueDetail, renderVenuesCity, renderVenuesDistrict,
+  renderPpaAsiaHub,
   renderShopCatalog, renderShopCategory, renderShopProduct, renderShopStore,
   renderOrgDetail,
   renderQuickTable, renderTeamMatch, renderDoublesElimination, renderFlexTournament,
@@ -961,7 +962,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       // as the bot path.
       let publicCache: PublicPagePartsCache | null = null;
       if (env.PRERENDER_CACHE && url.searchParams.get("nocache") !== "1") {
-        const cacheKey = `pr:v156:human:${url.pathname}`;
+        const cacheKey = `pr:v157:human:${url.pathname}`;
         const ttl = Math.min(pathCacheTtl(pathname), 300);
         publicCache = {
           get: () => env.PRERENDER_CACHE.get(cacheKey),
@@ -1459,7 +1460,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // by district into comparison tables (name, address, courts, indoor/
   // outdoor, verified price) instead of a bare name list (Topical
   // Authority proposal 3); cached v153 HTML would keep the list.
-  const cacheKey = `pr:v156:${url.pathname}`;
+  const cacheKey = `pr:v157:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
@@ -1836,6 +1837,10 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string, accep
   // Việt Nam title/default; query-string scopes never reach this renderer
   // (routeAndRender is pathname-only), so a "tab" could never be a landing.
   if (path === "/rankings/ppa-tour") return renderPpaRankings(siteUrl, rawPath, lang);
+
+  // PPA Tour Asia hub — results, schedule and coverage for the Asia circuit
+  // plus Vietnam tournaments; the SPA page mirrors the same data.
+  if (path === "/ppa-tour-asia") return await renderPpaAsiaHub(supabase, siteUrl, lang);
 
   // Privacy / Terms
   if (path === "/privacy") return renderPrivacy(siteUrl, rawPath, lang);
