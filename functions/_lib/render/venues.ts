@@ -1491,7 +1491,7 @@ export async function renderVenuesDistrict(
       .order("is_verified", { ascending: false })
       .order("num_courts", { ascending: false })
       .order("updated_at", { ascending: false })
-      .limit(300);
+      .limit(500);
     if (error) console.error("renderVenuesDistrict: query error", error);
     else rows = (data ?? []) as VenueListRow[];
   } catch (err) {
