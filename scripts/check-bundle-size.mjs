@@ -45,11 +45,15 @@ import { gzipSync } from "node:zlib";
 import { join, dirname, resolve } from "node:path";
 
 const BUDGETS = {
+  // 1910 -> 1920 (2026-11-19, PR #1042): new district court hub page
+  // (/san/khu-vuc/:city/:district) pushed CODE to 1910.1/1910; +10 KB
+  // keeps the same step size as the 1900 -> 1910 bump and leaves room
+  // for the PPA Tour Asia hub page landing next.
   // 1900 -> 1910 (2026-11-10, owner-approved): main sat at 1899.9/1900 and the 10/11 blog
   // batch (2 posts) needed +1.3 KB of metadata headroom.
   // 1800 -> 1900 (2026-10-01, DEBT-09, owner-approved): the blog metadata chunk grows
   // with every post and held CODE at 1799.7/1800. Paid back when /blog stops shipping it whole.
-  code: Number(process.env.BUNDLE_CODE_BUDGET_KB || 1910),
+  code: Number(process.env.BUNDLE_CODE_BUDGET_KB || 1920),
   initial: Number(process.env.BUNDLE_INITIAL_BUDGET_KB || 280),
   contentChunk: Number(process.env.BUNDLE_CONTENT_CHUNK_KB || 20),
 };
