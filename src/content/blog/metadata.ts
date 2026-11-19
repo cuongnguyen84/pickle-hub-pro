@@ -10,6 +10,61 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "ky-thuat-thang-hands-battle-pickleball",
+    "publishedDate": "2026-11-19",
+    "updatedDate": "2026-11-19",
+    "author": "The PickleHub Team",
+    "tags": [
+      "hands battle",
+      "pickleball technique",
+      "elliott schupp",
+      "kitchen line",
+      "guide"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Improve your game with ThePickleHub guides",
+      "vi": "Nâng trình cùng cẩm nang ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/ky-thuat-thang-hands-battle-pickleball-hero.webp",
+      "alt": "Pickleball player blocking a volley at the kitchen line with the paddle out in front of his body"
+    },
+    "titleEn": "How to win hands battles in pickleball: Elliott Schupp's three-step counter system",
+    "titleVi": "Thắng hands battle trong pickleball: bỏ thói quen đoán bóng, rút gọn cú đánh theo 3 bước của Elliott Schupp",
+    "metaTitleEn": "How to Win Hands Battles in Pickleball: 3 Steps",
+    "metaTitleVi": "Kỹ Thuật Thắng Hands Battle Trong Pickleball",
+    "metaDescriptionEn": "Elliott Schupp wins hands battles with a shorter swing: block with the paddle out front, push 6 inches to 1 foot, then build to 70-80% power. Drills inside.",
+    "metaDescriptionVi": "Elliott Schupp thắng hands battle bằng cú đánh ngắn 15-30 cm, lực 70-80%. Đủ 3 bước phản đòn và bài tập tường Two-Shot Survival."
+  },
+  {
+    "slug": "sophia-phuong-anh-dai-hoi-the-thao-toan-quoc-2026",
+    "publishedDate": "2026-11-19",
+    "updatedDate": "2026-11-19",
+    "author": "The PickleHub Team",
+    "tags": [
+      "sophia phuong anh",
+      "dai hoi the thao toan quoc 2026",
+      "vietnam pickleball",
+      "player profile"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Follow the National Games on ThePickleHub",
+      "vi": "Theo dõi Đại hội trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/sophia-phuong-anh-dai-hoi-the-thao-toan-quoc-2026-hero.webp",
+      "alt": "Young female pickleball player lunging for a forehand on an outdoor court (illustration)"
+    },
+    "titleEn": "Who is Sophia Phuong Anh? The 18-year-old in the world Top 60 heading to Vietnam's National Sports Games 2026",
+    "titleVi": "Sophia Phương Anh là ai? Tay vợt 18 tuổi vào Top 60 thế giới, sẵn sàng cho Đại hội Thể thao toàn quốc 2026",
+    "metaTitleEn": "Sophia Phuong Anh: 18, World Top 60, National Games",
+    "metaTitleVi": "Sophia Phương Anh: Tay Vợt 18 Tuổi Top 60 Thế Giới",
+    "metaDescriptionEn": "Sophia Phuong Anh, 18, is inside the world Top 60 and Vietnam's Female Athlete of the Year 2025. Her road from tennis to the 2026 National Sports Games.",
+    "metaDescriptionVi": "Tay vợt 18 tuổi vào Top 60 thế giới, Nữ VĐV xuất sắc nhất 2025. Hành trình từ tennis đến Đại hội Thể thao toàn quốc 2026."
+  },
+  {
     "slug": "daytona-beach-open-2026-womens-singles-wide-open",
     "publishedDate": "2026-11-18",
     "updatedDate": "2026-11-18",
