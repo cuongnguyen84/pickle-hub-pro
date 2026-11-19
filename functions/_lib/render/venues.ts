@@ -16,6 +16,7 @@ import { buildHtml, htmlResponse } from "../html";
 import { escapeHtml, buildTitle, breadcrumb, type Lang } from "../utils";
 import { fitLead, fitSegments, pickMetaDescription, upperFirst } from "../seo-helpers";
 import { render404 } from "./index";
+import { districtSlug, MIN_DISTRICT_HUB_VENUES } from "../../../src/lib/venues";
 
 const LIST_LIMIT = 100;
 
@@ -1287,10 +1288,6 @@ export async function renderVenuesCity(
     byDistrict.get(d)!.push(v);
   }
   districtOrder.sort((a, b) => (a === "" ? 1 : b === "" ? -1 : 0));
-  const th =
-    lang === "vi"
-      ? ["Tên sân", "Địa chỉ", "Số sân", "Loại sân", "Giá thuê"]
-      : ["Court", "Address", "Courts", "Type", "Price"];
   const itemsHtml = districtOrder
     .map((d) => {
       const group = byDistrict.get(d)!;
@@ -1302,20 +1299,17 @@ export async function renderVenuesCity(
           : lang === "vi"
             ? `Sân pickleball tại ${d}`
             : `Pickleball courts in ${d}`;
-      const trs = group
-        .map((v) => {
-          const nm = displayName(v, lang);
-          const addr = (v.address ?? "").trim();
-          const courts = v.num_courts && v.num_courts > 0 ? String(v.num_courts) : "-";
-          const type =
-            v.is_indoor == null ? "-" : lang === "vi" ? (v.is_indoor ? "Trong nhà" : "Ngoài trời") : v.is_indoor ? "Indoor" : "Outdoor";
-          const price = isVerifiedSource(v.price_source ?? null)
-            ? (priceRangeText(v.price_min_vnd ?? null, v.price_max_vnd ?? null, "short") ?? "-")
-            : "-";
-          return `<tr><td><a href="${sanBase}/${escapeHtml(v.slug)}">${escapeHtml(nm)}</a></td><td>${escapeHtml(addr || "-")}</td><td>${courts}</td><td>${type}</td><td>${escapeHtml(price)}</td></tr>`;
-        })
-        .join("");
-      return `<h2>${escapeHtml(heading)}</h2><table><thead><tr>${th.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${trs}</tbody></table>`;
+      // Districts with enough courts to compare get their own hub page
+      // (/san/khu-vuc/<city>/<district>, proposal 3 follow-up 2026-11-19);
+      // the heading links to it. Smaller groups stay a section of this
+      // page only — the same threshold the sitemap and the district
+      // renderer use, so the three surfaces agree on which hubs exist.
+      const dslug = d ? districtSlug(d) : null;
+      const headingHtml =
+        dslug && group.length >= MIN_DISTRICT_HUB_VENUES
+          ? `<h2><a href="${sanBase}/khu-vuc/${citySlug}/${dslug}">${escapeHtml(heading)}</a></h2>`
+          : `<h2>${escapeHtml(heading)}</h2>`;
+      return `${headingHtml}${venuesComparisonTable(group, lang, sanBase)}`;
     })
     .join("");
 
@@ -1427,6 +1421,195 @@ export async function renderVenuesCity(
         { hreflang: "x-default", href: enUrl },
       ],
       omitAutoHeader: true,
+    }),
+  );
+}
+
+/**
+ * The venue comparison table shared by the city hub and the district
+ * hubs: name (linked) | address | courts | indoor/outdoor | price.
+ * PRICE-01 binds here too: only a partner/manual price may appear as a
+ * venue's price; the 'default' blanket figure renders as "-".
+ */
+function venuesComparisonTable(group: VenueListRow[], lang: Lang, sanBase: string): string {
+  const th =
+    lang === "vi"
+      ? ["Tên sân", "Địa chỉ", "Số sân", "Loại sân", "Giá thuê"]
+      : ["Court", "Address", "Courts", "Type", "Price"];
+  const trs = group
+    .map((v) => {
+      const nm = displayName(v, lang);
+      const addr = (v.address ?? "").trim();
+      const courts = v.num_courts && v.num_courts > 0 ? String(v.num_courts) : "-";
+      const type =
+        v.is_indoor == null ? "-" : lang === "vi" ? (v.is_indoor ? "Trong nhà" : "Ngoài trời") : v.is_indoor ? "Indoor" : "Outdoor";
+      const price = isVerifiedSource(v.price_source ?? null)
+        ? (priceRangeText(v.price_min_vnd ?? null, v.price_max_vnd ?? null, "short") ?? "-")
+        : "-";
+      return `<tr><td><a href="${sanBase}/${escapeHtml(v.slug)}">${escapeHtml(nm)}</a></td><td>${escapeHtml(addr || "-")}</td><td>${courts}</td><td>${type}</td><td>${escapeHtml(price)}</td></tr>`;
+    })
+    .join("");
+  return `<table><thead><tr>${th.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${trs}</tbody></table>`;
+}
+
+/**
+ * District hub: /san/khu-vuc/<city>/<district> (+ /vi twin).
+ *
+ * One URL per (city, district) with enough courts to compare — the
+ * district-level landing the city hub's grouped tables point at
+ * (Topical Authority proposal 3 follow-up, 2026-11-19). The district is
+ * resolved by slugifying every district name in the city and matching
+ * the URL segment, so no hand-maintained district registry can drift
+ * from the data. Unknown city or district → 404. A district below
+ * MIN_DISTRICT_HUB_VENUES still renders for direct visitors but
+ * carries noindex and stays out of the sitemap (Guard-0 at district
+ * level); the city hub never links to it.
+ */
+export async function renderVenuesDistrict(
+  supabase: SupabaseClient,
+  citySlug: string,
+  districtSlugParam: string,
+  siteUrl: string,
+  lang: Lang,
+): Promise<Response> {
+  const cityName = VENUE_CITY_NAME[citySlug];
+  if (!cityName) return render404(`/san/khu-vuc/${citySlug}/${districtSlugParam}`, siteUrl);
+  const cc = cityCountry(citySlug);
+  const localeEn = cityName === cc.en ? cityName : `${cityName}, ${cc.en}`;
+  const enUrl = `${siteUrl}/san/khu-vuc/${citySlug}/${districtSlugParam}`;
+  const viUrl = `${siteUrl}/vi/san/khu-vuc/${citySlug}/${districtSlugParam}`;
+  const canonical = lang === "vi" ? viUrl : enUrl;
+  const sanBase = lang === "vi" ? `${siteUrl}/vi/san` : `${siteUrl}/san`;
+  const cityHubUrl = `${sanBase}/khu-vuc/${citySlug}`;
+
+  let rows: VenueListRow[] = [];
+  try {
+    const { data, error } = await supabase
+      .from("venues")
+      .select("slug, name, name_vi, district, city, num_courts, is_indoor, is_verified, address, price_min_vnd, price_max_vnd, price_source")
+      .eq("city", cityName)
+      .order("is_verified", { ascending: false })
+      .order("num_courts", { ascending: false })
+      .order("updated_at", { ascending: false })
+      .limit(300);
+    if (error) console.error("renderVenuesDistrict: query error", error);
+    else rows = (data ?? []) as VenueListRow[];
+  } catch (err) {
+    console.error("renderVenuesDistrict: fatal", err);
+  }
+
+  const matched = rows.filter((v) => districtSlug((v.district ?? "").trim()) === districtSlugParam);
+  if (matched.length === 0) {
+    return render404(`/san/khu-vuc/${citySlug}/${districtSlugParam}`, siteUrl);
+  }
+  // Display name: the most common raw spelling among the rows sharing
+  // this slug (spelling variants merge into one page by design).
+  const rawCounts = new Map<string, number>();
+  for (const v of matched) {
+    const raw = (v.district ?? "").trim();
+    rawCounts.set(raw, (rawCounts.get(raw) ?? 0) + 1);
+  }
+  const districtName = [...rawCounts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+
+  const n = matched.length;
+  const thin = n < MIN_DISTRICT_HUB_VENUES;
+  const title =
+    lang === "vi"
+      ? `Sân Pickleball ${districtName}, ${cityName} — ${n} sân | ThePickleHub`
+      : `Pickleball Courts in ${districtName}, ${cityName} (${n}) | ThePickleHub`;
+  const description =
+    lang === "vi"
+      ? `${n} sân pickleball tại ${districtName}, ${cityName} — địa chỉ, số sân, loại sân và giá thuê trên ThePickleHub.`
+      : `${n} pickleball courts in ${districtName}, ${localeEn} — address, court count, type and prices on ThePickleHub.`;
+  const h1 = lang === "vi" ? `Sân Pickleball ${districtName}` : `Pickleball courts in ${districtName}`;
+  const totalCourts = matched.reduce((sum, v) => sum + (v.num_courts ?? 0), 0);
+  const introHtml =
+    lang === "vi"
+      ? `<p>${n} sân pickleball tại ${escapeHtml(districtName)}, ${escapeHtml(cityName)}${totalCourts > 0 ? ` với tổng cộng ${totalCourts} sân đấu` : ""} — kèm địa chỉ, số sân, sân trong nhà/ngoài trời và giá thuê (chỉ hiện giá thật của từng sân). Xem thêm <a href="${cityHubUrl}">toàn bộ sân pickleball tại ${escapeHtml(cityName)}</a>.</p>`
+      : `<p>${n} pickleball courts in ${escapeHtml(districtName)}, ${escapeHtml(localeEn)}${totalCourts > 0 ? ` totalling ${totalCourts} playing courts` : ""} — with address, court count, indoor/outdoor and prices (only each court's real price is shown). See <a href="${cityHubUrl}">all pickleball courts in ${escapeHtml(cityName)}</a>.</p>`;
+
+  // Sibling district hubs in the same city — only districts over the
+  // same threshold, so this nav never links a noindex page.
+  const bySlug = new Map<string, { raw: string; count: number }>();
+  for (const v of rows) {
+    const raw = (v.district ?? "").trim();
+    const slug = districtSlug(raw);
+    if (!raw || !slug) continue;
+    const cur = bySlug.get(slug) ?? { raw, count: 0 };
+    cur.count += 1;
+    bySlug.set(slug, cur);
+  }
+  const siblings = [...bySlug.entries()]
+    .filter(([slug, g]) => slug !== districtSlugParam && g.count >= MIN_DISTRICT_HUB_VENUES)
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 12);
+  const siblingsHeading =
+    lang === "vi" ? `Sân pickleball ở quận/huyện khác tại ${cityName}` : `Pickleball courts in other districts of ${cityName}`;
+  const siblingsHtml =
+    siblings.length > 0
+      ? `<nav><h2>${escapeHtml(siblingsHeading)}</h2><ul>${siblings
+          .map(([slug, g]) => `<li><a href="${sanBase}/khu-vuc/${citySlug}/${slug}">${escapeHtml(g.raw)}</a> (${g.count})</li>`)
+          .join("")}</ul></nav>`
+      : "";
+
+  const itemListJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: title,
+    numberOfItems: n,
+    itemListElement: matched.map((v, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      url: `${siteUrl}/san/${v.slug}`,
+      item: {
+        "@type": "SportsActivityLocation",
+        name: displayName(v, lang),
+        url: `${siteUrl}/san/${v.slug}`,
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: v.city ?? cityName,
+          addressCountry: cc.code,
+        },
+      },
+    })),
+  };
+
+  const homeLabel = lang === "vi" ? "Trang chủ" : "Home";
+  const homeHref = lang === "vi" ? `${siteUrl}/vi` : siteUrl;
+  const courtsLabel = lang === "vi" ? "Tìm sân" : "Courts";
+  const bc = breadcrumb([
+    { label: homeLabel, href: homeHref },
+    { label: courtsLabel, href: sanBase },
+    { label: cityName, href: cityHubUrl },
+    { label: districtName },
+  ]);
+  const guidesHeading = lang === "vi" ? "Hướng dẫn chơi pickleball" : "Pickleball guides";
+  const guidesHtml = `<nav><h2>${escapeHtml(guidesHeading)}</h2><ul>${venueGuideLinksHtml(siteUrl, lang)}</ul></nav>`;
+
+  const bodyContent =
+    `${bc}<h1>${escapeHtml(h1)}</h1>` +
+    introHtml +
+    venuesComparisonTable(matched, lang, sanBase) +
+    siblingsHtml +
+    guidesHtml;
+
+  return htmlResponse(
+    buildHtml({
+      title,
+      description,
+      url: canonical,
+      siteUrl,
+      lang,
+      type: "website",
+      jsonLd: itemListJsonLd,
+      bodyContent,
+      alternates: [
+        { hreflang: "en", href: enUrl },
+        { hreflang: "vi", href: viUrl },
+        { hreflang: "x-default", href: enUrl },
+      ],
+      omitAutoHeader: true,
+      ...(thin ? { extraMeta: '<meta name="robots" content="noindex, follow"/>' } : {}),
     }),
   );
 }
