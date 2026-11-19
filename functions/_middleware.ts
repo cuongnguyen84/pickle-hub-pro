@@ -961,7 +961,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       // as the bot path.
       let publicCache: PublicPagePartsCache | null = null;
       if (env.PRERENDER_CACHE && url.searchParams.get("nocache") !== "1") {
-        const cacheKey = `pr:v151:human:${url.pathname}`;
+        const cacheKey = `pr:v152:human:${url.pathname}`;
         const ttl = Math.min(pathCacheTtl(pathname), 300);
         publicCache = {
           get: () => env.PRERENDER_CACHE.get(cacheKey),
@@ -1443,7 +1443,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v151 (2026-11-17): PPA WPR snapshot fetched-at 2026-11-17. Men #2/#3
   // swapped (Tardio ahead of Patriquin) and women top 25 moved; cached
   // v150 HTML would keep the 2026-11-09 table.
-  const cacheKey = `pr:v151:${url.pathname}`;
+  // v152 (2026-11-19): homepage H1 (EN+VI) now names the platform scope
+  // (tournaments, live results, courts, bracket tools) and tournament
+  // detail status is derived from start/end dates instead of the stored
+  // status column; cached v151 HTML would keep the slogan H1 and stale
+  // statuses.
+  const cacheKey = `pr:v152:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
