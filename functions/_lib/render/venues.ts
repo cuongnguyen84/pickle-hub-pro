@@ -28,6 +28,13 @@ interface VenueListRow {
   num_courts: number | null;
   is_indoor: boolean | null;
   is_verified: boolean | null;
+  // City-hub comparison table only (proposal 3, 2026-11-19): address + the
+  // PRICE-01 columns. Other list queries do not select them (undefined at
+  // runtime there); the city query below selects all four explicitly.
+  address?: string | null;
+  price_min_vnd?: number | null;
+  price_max_vnd?: number | null;
+  price_source?: SourceTag;
 }
 
 interface VenueDetailRow {
@@ -1237,7 +1244,7 @@ export async function renderVenuesCity(
   try {
     const { data, error } = await supabase
       .from("venues")
-      .select("slug, name, name_vi, district, city, num_courts, is_indoor, is_verified")
+      .select("slug, name, name_vi, district, city, num_courts, is_indoor, is_verified, address, price_min_vnd, price_max_vnd, price_source")
       .eq("city", cityName)
       .order("is_verified", { ascending: false })
       .order("num_courts", { ascending: false })
@@ -1259,15 +1266,56 @@ export async function renderVenuesCity(
       ? `${n} sân pickleball tại ${cityName} — địa chỉ, số sân, bản đồ và chỉ đường. Cộng đồng cùng đóng góp trên ThePickleHub.`
       : `${n} pickleball courts in ${localeEn} — address, court count, map and directions on ThePickleHub.`;
 
-  const itemsHtml = rows
-    .map((v) => {
-      const nm = displayName(v, lang);
-      const facts = [
-        v.district?.trim() || "",
-        v.num_courts && v.num_courts > 0 ? (lang === "vi" ? `${v.num_courts} sân` : `${v.num_courts} courts`) : "",
-        v.is_indoor == null ? "" : lang === "vi" ? (v.is_indoor ? "trong nhà" : "ngoài trời") : v.is_indoor ? "indoor" : "outdoor",
-      ].filter(Boolean);
-      return `<li><a href="${sanBase}/${escapeHtml(v.slug)}">${escapeHtml(nm)}</a>${facts.length ? ` — ${escapeHtml(facts.join(" · "))}` : ""}</li>`;
+  // District-grouped comparison tables (Topical Authority proposal 3,
+  // 2026-11-19): a bare <ul> of names gives a searcher - and a bot - nothing
+  // to compare. Each district gets one <table> (name | address | courts |
+  // indoor/outdoor | price) so the hub answers "which court near me, how
+  // much" in structured form, the same table pattern the results boards use.
+  // PRICE-01 still binds: only a partner/manual price may appear as this
+  // venue's price; a 'default' blanket figure renders as "-" here, never as
+  // a per-venue fact. Rows keep the query order (verified, then court
+  // count) inside each district; venues with no district group last.
+  const districtOf = (v: VenueListRow) => (v.district ?? "").trim();
+  const districtOrder: string[] = [];
+  const byDistrict = new Map<string, VenueListRow[]>();
+  for (const v of rows) {
+    const d = districtOf(v);
+    if (!byDistrict.has(d)) {
+      byDistrict.set(d, []);
+      districtOrder.push(d);
+    }
+    byDistrict.get(d)!.push(v);
+  }
+  districtOrder.sort((a, b) => (a === "" ? 1 : b === "" ? -1 : 0));
+  const th =
+    lang === "vi"
+      ? ["Tên sân", "Địa chỉ", "Số sân", "Loại sân", "Giá thuê"]
+      : ["Court", "Address", "Courts", "Type", "Price"];
+  const itemsHtml = districtOrder
+    .map((d) => {
+      const group = byDistrict.get(d)!;
+      const heading =
+        d === ""
+          ? lang === "vi"
+            ? "Khu vực khác"
+            : "Other areas"
+          : lang === "vi"
+            ? `Sân pickleball tại ${d}`
+            : `Pickleball courts in ${d}`;
+      const trs = group
+        .map((v) => {
+          const nm = displayName(v, lang);
+          const addr = (v.address ?? "").trim();
+          const courts = v.num_courts && v.num_courts > 0 ? String(v.num_courts) : "-";
+          const type =
+            v.is_indoor == null ? "-" : lang === "vi" ? (v.is_indoor ? "Trong nhà" : "Ngoài trời") : v.is_indoor ? "Indoor" : "Outdoor";
+          const price = isVerifiedSource(v.price_source ?? null)
+            ? (priceRangeText(v.price_min_vnd ?? null, v.price_max_vnd ?? null, "short") ?? "-")
+            : "-";
+          return `<tr><td><a href="${sanBase}/${escapeHtml(v.slug)}">${escapeHtml(nm)}</a></td><td>${escapeHtml(addr || "-")}</td><td>${courts}</td><td>${type}</td><td>${escapeHtml(price)}</td></tr>`;
+        })
+        .join("");
+      return `<h2>${escapeHtml(heading)}</h2><table><thead><tr>${th.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${trs}</tbody></table>`;
     })
     .join("");
 
@@ -1358,7 +1406,7 @@ export async function renderVenuesCity(
     `${bc}<h1>${escapeHtml(h1)}</h1>` +
     introHtml +
     eventHtml +
-    (n > 0 ? `<ul>${itemsHtml}</ul>` : `<p>${escapeHtml(emptyMsg)}</p>`) +
+    (n > 0 ? itemsHtml : `<p>${escapeHtml(emptyMsg)}</p>`) +
     guidesHtml +
     `<nav><h2>${escapeHtml(otherCitiesHeading)}</h2><ul>${otherCitiesHtml}</ul></nav>` +
     `<nav><h2>${escapeHtml(moreHeading)}</h2><ul>${moreLinks}</ul></nav>`;
