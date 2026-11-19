@@ -145,6 +145,42 @@ describe("renderShopProduct", () => {
     });
   });
 
+  it("answers buyer questions in a visible FAQ and mirrors them in FAQPage schema", async () => {
+    const html = await (await call()).text();
+    expect(html).toContain("Hỏi đáp về Kaiwin Diamond");
+    expect(html).toContain("Kaiwin Diamond giá bao nhiêu?");
+    const faq = nodeOfType(html, "FAQPage");
+    expect(faq).not.toBeNull();
+    const priceQ = faq.mainEntity.find((q: { name: string }) => q.name.includes("giá bao nhiêu"));
+    expect(priceQ).toBeDefined();
+    // The schema answer must be the same text the body prints — no drift.
+    expect(priceQ.acceptedAnswer.text).toContain("2.900.000₫");
+    expect(html).toContain(priceQ.acceptedAnswer.text);
+  });
+
+  it("drops FAQ questions whose fact the product does not have", async () => {
+    const html = await (
+      await call({
+        specs: {},
+        shop: { ...PRODUCT.shop, shipping_fee_vnd: null, shipping_note: null, return_note: null },
+      })
+    ).text();
+    const faq = nodeOfType(html, "FAQPage");
+    const questions = (faq?.mainEntity ?? []).map((q: { name: string }) => q.name);
+    expect(questions.some((q: string) => q.includes("Phí giao hàng"))).toBe(false);
+    expect(questions.some((q: string) => q.includes("đổi trả"))).toBe(false);
+    expect(questions.some((q: string) => q.includes("Thông số chính"))).toBe(false);
+    // Price + stock are always answerable, so the section itself stays.
+    expect(questions.some((q: string) => q.includes("giá bao nhiêu"))).toBe(true);
+  });
+
+  it("FAQ stock answer follows the real stock state", async () => {
+    const html = await (await call({ in_stock: false })).text();
+    const faq = nodeOfType(html, "FAQPage");
+    const stockQ = faq.mainEntity.find((q: { name: string }) => q.name.includes("còn hàng không"));
+    expect(stockQ.acceptedAnswer.text).toContain("tạm hết hàng");
+  });
+
   it("says OutOfStock when the product is out of stock", async () => {
     const offer = nodeOfType(await (await call({ in_stock: false })).text(), "Product")?.offers;
     expect(offer.availability).toBe("https://schema.org/OutOfStock");

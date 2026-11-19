@@ -647,6 +647,71 @@ export async function renderShopProduct(
       : "",
   ].join("");
 
+  // AEO FAQ (2026-11-19): the questions a buyer — or an AI answer engine —
+  // actually asks about this product, each answered ONLY from facts this
+  // page already states (price, stock, shipping, returns, headline specs).
+  // A question whose fact is missing is dropped, never padded with
+  // boilerplate. One source of strings feeds both the visible section and
+  // the FAQPage node, so body and schema cannot drift apart.
+  const faqItems: { q: string; a: string }[] = [];
+  if (priceMin != null) {
+    faqItems.push(
+      lang === "vi"
+        ? { q: `${product.title} giá bao nhiêu?`, a: `${product.title} có giá ${priceLabel}${shopName ? `, do ${shopName} bán` : ""} trên ThePickleHub.` }
+        : { q: `How much does ${product.title} cost?`, a: `${product.title} is priced at ${priceLabel}${shopName ? `, sold by ${shopName}` : ""} on ThePickleHub.` },
+    );
+  }
+  faqItems.push(
+    lang === "vi"
+      ? {
+          q: `${product.title} còn hàng không? Đặt hàng thế nào?`,
+          a: soldOut
+            ? `${product.title} hiện tạm hết hàng trên ThePickleHub.`
+            : orderingOff
+              ? `Shop ${shopName} hiện tạm chưa nhận đơn trực tuyến — liên hệ shop để đặt ${product.title}.`
+              : `${product.title} còn hàng. Đặt trực tiếp trên trang sản phẩm, thanh toán khi nhận hàng hoặc chuyển khoản.`,
+        }
+      : {
+          q: `Is ${product.title} in stock? How do I order?`,
+          a: soldOut
+            ? `${product.title} is currently sold out on ThePickleHub.`
+            : orderingOff
+              ? `${shopName} is not taking online orders right now — contact the shop to buy ${product.title}.`
+              : `${product.title} is in stock. Order on the product page and pay on delivery or by bank transfer.`,
+        },
+  );
+  if (shippingLabel || product.shop?.shipping_note) {
+    const shippingAnswer = [
+      shippingLabel ? (lang === "vi" ? `Phí giao hàng ${shippingLabel}.` : `Shipping is ${shippingLabel}.`) : "",
+      product.shop?.shipping_note ? (lang === "vi" ? `Ghi chú của shop: ${product.shop.shipping_note}` : `Shop note: ${product.shop.shipping_note}`) : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+    faqItems.push(
+      lang === "vi"
+        ? { q: `Phí giao hàng của ${product.title} là bao nhiêu?`, a: shippingAnswer }
+        : { q: `How much is shipping for ${product.title}?`, a: shippingAnswer },
+    );
+  }
+  if (product.shop?.return_note) {
+    faqItems.push(
+      lang === "vi"
+        ? { q: `Mua ${product.title} có đổi trả được không?`, a: `${product.shop.return_note} (theo ${shopName} trên ThePickleHub).` }
+        : { q: `Can I return ${product.title}?`, a: `${product.shop.return_note} (per ${shopName} on ThePickleHub).` },
+    );
+  }
+  if (specLead) {
+    faqItems.push(
+      lang === "vi"
+        ? { q: `Thông số chính của ${product.title} là gì?`, a: `Thông số: ${specLead}.` }
+        : { q: `What are the key specs of ${product.title}?`, a: `Key specs: ${specLead}.` },
+    );
+  }
+  const faqHtml =
+    faqItems.length > 0
+      ? `<section><h2>${escapeHtml(lang === "vi" ? `Hỏi đáp về ${product.title}` : `Questions about ${product.title}`)}</h2>${faqItems.map((f) => `<h3>${escapeHtml(f.q)}</h3><p>${escapeHtml(f.a)}</p>`).join("")}</section>`
+      : "";
+
   // Availability is stated only when it is actually known and actionable.
   // A shop with ordering switched off is not "InStock" no matter what the
   // variant rows say — emitting it anyway is how a rich result promises a
@@ -736,6 +801,18 @@ export async function renderShopProduct(
           },
         ],
       },
+      ...(faqItems.length > 0
+        ? [
+            {
+              "@type": "FAQPage",
+              mainEntity: faqItems.map((f) => ({
+                "@type": "Question",
+                name: f.q,
+                acceptedAnswer: { "@type": "Answer", text: f.a },
+              })),
+            },
+          ]
+        : []),
     ],
   };
 
@@ -752,6 +829,7 @@ ${lead}
 ${specs.length > 0 ? `<section><h2>${escapeHtml(lang === "vi" ? "Thông số" : "Specifications")}</h2><ul>${specs.map((s) => `<li><strong>${escapeHtml(s.label)}:</strong> ${escapeHtml(s.value)}</li>`).join("")}</ul></section>` : ""}
 ${product.description ? `<section><h2>${escapeHtml(lang === "vi" ? "Mô tả" : "Description")}</h2><p>${escapeHtml(product.description)}</p></section>` : ""}
 <section><h2>${escapeHtml(lang === "vi" ? "Thông tin" : "Details")}</h2><ul>${facts}</ul></section>
+${faqHtml}
 ${discoverNav(siteUrl, lang, product.shop ? [`<li><a href="${siteUrl}${lang === "vi" ? "/vi" : ""}/shop/store/${escapeHtml(product.shop.slug)}">${escapeHtml(lang === "vi" ? `Tất cả sản phẩm của ${shopName}` : `All products from ${shopName}`)}</a></li>`] : [])}
 ${swapLink(lang, enUrl, viUrl)}`;
 
