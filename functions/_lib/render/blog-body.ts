@@ -108,43 +108,58 @@ function resultsAnchor(division: string): string {
 function renderResultsSummary(
   draws: NonNullable<BlogPostContent["sections"][number]["resultsSummary"]>,
 ): string {
+  // Topical Authority proposal 4 (2026-11-19): the summary is tabular data
+  // (division - champion - note), so the bot path renders a real <table>,
+  // the same pattern wc-results.ts already uses for World Cup scores. The
+  // React card UI for humans is unchanged; this surface is the one search
+  // and AI answer engines read.
   const rows = draws
     .map(
       (d) =>
-        `<div class="tl-rb-srow"><span class="tl-rb-sdiv">${escapeHtml(d.division)}</span>` +
-        `<span class="tl-rb-sval">${escapeHtml(d.champion ?? "No champion yet")}<small>${escapeHtml(d.note)}</small></span></div>`,
+        `<tr><td>${escapeHtml(d.division)}</td>` +
+        `<td>${escapeHtml(d.champion ?? "No champion yet")}</td>` +
+        `<td>${escapeHtml(d.note)}</td></tr>`,
     )
     .join("");
-  return `<div class="tl-rb-summary"><h3>Tournament summary</h3>${rows}</div>`;
+  return (
+    `<div class="tl-rb-summary"><h3>Tournament summary</h3>` +
+    `<table><thead><tr><th>Division</th><th>Champion</th><th>Note</th></tr></thead>` +
+    `<tbody>${rows}</tbody></table></div>`
+  );
 }
 
 export function renderResultsBoard(
   board: NonNullable<BlogPostContent["sections"][number]["resultsBoard"]>,
 ): string {
+  // Topical Authority proposal 4 (2026-11-19): scores are a match - score -
+  // winner relation, so each round renders as a real <table> for machine
+  // readers instead of nested divs (the audit found 0 <table> elements in
+  // the bot HTML of every sampled results post). A fixture keeps an empty
+  // score and winner and is labelled "Fixture" in the Note column, so it is
+  // never readable as a result.
   const out: string[] = ['<div class="tl-rb">'];
   for (const r of board.rounds) {
-    const matches = r.matches
+    const rows = r.matches
       .map(
         (m) =>
           m.teamA
-            ? // Fixture: not played yet — neutral team lines, no winner, no score.
-              `<div class="tl-rb-match"><div class="tl-rb-teams">` +
-              `<div class="tl-rb-team">${escapeHtml(m.teamA)}</div>` +
-              `<div class="tl-rb-team">${escapeHtml(m.teamB ?? "")}</div>` +
-              `</div><div class="tl-rb-sets"></div></div>`
-            : `<div class="tl-rb-match"><div class="tl-rb-teams">` +
-              `<div class="tl-rb-win">${escapeHtml(m.winner ?? "")}</div>` +
-              `<div class="tl-rb-lose">${escapeHtml(m.loser ?? "")}</div>` +
-              (m.status ? `<div class="tl-rb-status">${escapeHtml(m.status)}</div>` : "") +
-              `</div><div class="tl-rb-sets">${m.sets.map(([w, l]) => `<strong>${w}</strong>-${l}`).join(" · ")}</div></div>`,
+            ? // Fixture: not played yet — neutral teams, no winner, no score.
+              `<tr><td>${escapeHtml(m.teamA)} — ${escapeHtml(m.teamB ?? "")}</td><td></td><td></td><td>Fixture</td></tr>`
+            : `<tr><td><strong>${escapeHtml(m.winner ?? "")}</strong> — ${escapeHtml(m.loser ?? "")}</td>` +
+              `<td>${m.sets.map(([w, l]) => `<strong>${w}</strong>-${l}`).join(" · ")}</td>` +
+              `<td>${escapeHtml(m.winner ?? "")}</td>` +
+              `<td>${escapeHtml(m.status ?? "")}</td></tr>`,
       )
       .join("");
+    const table =
+      `<table class="tl-rb-table"><thead><tr><th>Match</th><th>Score</th><th>Winner</th><th>Note</th></tr></thead>` +
+      `<tbody>${rows}</tbody></table>`;
     if (r.collapsed) {
       out.push(
-        `<details class="tl-rb-details"><summary>${escapeHtml(r.label)} — ${r.matches.length} ${r.matches.length === 1 ? "match" : "matches"}</summary>${matches}</details>`,
+        `<details class="tl-rb-details"><summary>${escapeHtml(r.label)} — ${r.matches.length} ${r.matches.length === 1 ? "match" : "matches"}</summary>${table}</details>`,
       );
     } else {
-      out.push(`<h3 class="tl-rb-round">${escapeHtml(r.label)}</h3>${matches}`);
+      out.push(`<h3 class="tl-rb-round">${escapeHtml(r.label)}</h3>${table}`);
     }
   }
   out.push("</div>");

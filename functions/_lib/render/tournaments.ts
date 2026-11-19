@@ -195,12 +195,16 @@ export async function renderTournamentDetail(supabase: SupabaseClient, slug: str
   ].join("");
 
   // Broadcast list — the only genuinely per-tournament content we hold.
-  const streamItems = streams
+  // Rendered as a real <table> (broadcast - day - status), not a bare list:
+  // this is the tournament page's structured schedule/results block
+  // (Topical Authority proposals 1 + 4, 2026-11-19), the same table pattern
+  // wc-results.ts uses for World Cup scores.
+  const streamTableRows = streams
     .map((s) => {
       const day = vnDayFromTimestamp(s.scheduled_start_at ?? s.started_at);
       const replay = !!(s.mux_playback_id || s.vod_url);
       const tag = replay ? "Xem lại" : s.status === "live" ? "Đang phát" : "Sắp phát";
-      return `<li><a href="${streamUrl(s)}">${escapeHtml(s.title)}</a>${day ? ` — ${escapeHtml(day)}` : ""} · ${tag}</li>`;
+      return `<tr><td><a href="${escapeHtml(streamUrl(s))}">${escapeHtml(s.title)}</a></td><td>${escapeHtml(day)}</td><td>${tag}</td></tr>`;
     })
     .join("");
   const replayCount = streams.filter((s) => s.mux_playback_id || s.vod_url).length;
@@ -208,7 +212,7 @@ export async function renderTournamentDetail(supabase: SupabaseClient, slug: str
   const broadcastSection = streams.length
     ? `<h2>Trận đấu &amp; livestream tại ${escapeHtml(t.name)}</h2>
 <p>ThePickleHub lưu ${streams.length} buổi phát của ${escapeHtml(t.name)}${dateRange ? ` (${escapeHtml(dateRange)})` : ""}${replayCount ? `, trong đó ${replayCount} buổi đã có bản xem lại đầy đủ` : ""}. Bấm vào từng trận để xem trực tiếp hoặc xem lại, kèm tỉ số và thành phần thi đấu.</p>
-<ul>${streamItems}</ul>`
+<table><thead><tr><th>Buổi phát</th><th>Ngày</th><th>Trạng thái</th></tr></thead><tbody>${streamTableRows}</tbody></table>`
     : "";
 
   // Static explainer — same for every row on purpose, but it is the section

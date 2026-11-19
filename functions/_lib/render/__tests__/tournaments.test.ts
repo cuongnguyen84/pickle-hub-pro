@@ -229,6 +229,17 @@ describe("renderTournamentDetail", () => {
     expect(html).toContain("12/3/2026");
   });
 
+  it("renders the broadcast list as a structured table", async () => {
+    const html = await render(ENDED_ROW, "s", STREAMS);
+
+    // Topical Authority proposals 1 + 4: the tournament page's schedule /
+    // results block is a real <table> (broadcast - day - status) so machine
+    // readers get the relation, not a bare list.
+    expect(html).toContain("<th>Buổi phát</th><th>Ngày</th><th>Trạng thái</th>");
+    expect(html).toContain("<td>Xem lại</td>");
+    expect(html).toContain("<td>Sắp phát</td>");
+  });
+
   it("clears the 145-word body floor that the thin-content audit flagged", async () => {
     expect(bodyWordCount(await render(ENDED_ROW, "s", STREAMS))).toBeGreaterThan(300);
     // Even with no broadcasts at all the explainer sections carry the page.
