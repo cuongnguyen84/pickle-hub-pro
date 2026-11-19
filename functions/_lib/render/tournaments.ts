@@ -154,7 +154,19 @@ export async function renderTournamentDetail(supabase: SupabaseClient, slug: str
   const org = (Array.isArray(rawOrg) ? rawOrg[0] : rawOrg) as { name?: string; slug?: string } | null | undefined;
   const broadcasterName = org?.name ?? null;
 
-  const statusText = t.status === "ongoing" ? "Đang diễn ra" : t.status === "upcoming" ? "Sắp diễn ra" : "Đã kết thúc";
+  // Derive status from dates because the stored status can go stale (2026-11-19):
+  // MLP Nations Cup 2026 ended on 31 Oct but still said ongoing on 19 Nov.
+  const vnNow = new Date(Date.now() + 7 * 60 * 60 * 1000);
+  const today = `${vnNow.getUTCFullYear()}-${String(vnNow.getUTCMonth() + 1).padStart(2, "0")}-${String(vnNow.getUTCDate()).padStart(2, "0")}`;
+  const startDate = t.start_date?.slice(0, 10);
+  const endDate = t.end_date?.slice(0, 10);
+  const statusText = endDate && today > endDate
+    ? "Đã kết thúc"
+    : startDate && today < startDate
+      ? "Sắp diễn ra"
+      : startDate || endDate
+        ? "Đang diễn ra"
+        : t.status === "ongoing" ? "Đang diễn ra" : t.status === "upcoming" ? "Sắp diễn ra" : "Đã kết thúc";
   const dateRange = tournamentDateRange(t.start_date, t.end_date);
   const title = buildTitle(t.name, " | Pickleball Tournament");
 

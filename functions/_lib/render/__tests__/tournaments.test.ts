@@ -150,15 +150,37 @@ describe("renderTournamentDetail", () => {
   it("renders a single-day event and an organiser-less row without empty fields", async () => {
     const html = await render({
       ...ENDED_ROW,
-      end_date: "2026-03-11",
+      start_date: "2027-03-11",
+      end_date: "2027-03-11",
       organizations: null,
       status: "upcoming",
     });
 
-    expect(html).toContain("11/3/2026");
+    expect(html).toContain("11/3/2027");
     expect(html).toContain("Sắp diễn ra");
     expect(html).not.toContain("Đơn vị phát sóng");
     expect(html).not.toContain("organizer");
+  });
+
+  it("shows Đã kết thúc when the stored status is stale but the end date has passed", async () => {
+    const html = await render({
+      ...ENDED_ROW,
+      status: "ongoing",
+    });
+
+    expect(html).toContain("Đã kết thúc");
+    expect(html).toContain("Trạng thái:</strong> Đã kết thúc");
+  });
+
+  it("falls back to the stored status when the row has no dates", async () => {
+    const html = await render({
+      ...ENDED_ROW,
+      start_date: null,
+      end_date: null,
+      status: "ongoing",
+    });
+
+    expect(html).toContain("Đang diễn ra");
   });
 
   it("formats cross-month and cross-year date ranges", async () => {
