@@ -77,6 +77,15 @@ return ({
   },
   plugins: [
     react(),
+    {
+      name: "guard-public-ide-metadata",
+      apply: "build",
+      buildStart() {
+        if (fs.existsSync(path.resolve("public/.idea"))) {
+          this.error("Move public/.idea outside public before building. Vite copies public files into the deploy artifact.");
+        }
+      },
+    },
     // Shop prototype separation (D4, 2026-08-11). The prototype keeps living in
     // the repo — source, tests, and a runnable preview — but it must not reach
     // the production artifact. App.tsx already drops the route behind a folded
