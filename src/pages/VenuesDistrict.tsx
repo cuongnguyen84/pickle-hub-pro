@@ -14,6 +14,7 @@ import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Plus, MapPin } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/i18n";
 import { VenueCard } from "@/components/venues/VenueCard";
@@ -68,7 +69,9 @@ export default function VenuesDistrict() {
           <h1 className="mb-3 font-serif text-3xl italic" style={{ fontFamily: "'Instrument Serif', serif" }}>
             {vi ? "Không tìm thấy khu vực này" : "Area not found"}
           </h1>
-          <Link to="/san" className="tl-btn">← {vi ? "Về danh sách sân" : "Back to courts"}</Link>
+          <Button asChild variant="outline">
+            <Link to="/san">← {vi ? "Về danh sách sân" : "Back to courts"}</Link>
+          </Button>
         </div>
       </TheLineLayout>
     );
@@ -148,9 +151,11 @@ export default function VenuesDistrict() {
           <Link to={`/san/khu-vuc/${citySlug}`} className="text-sm text-muted-foreground hover:underline">
             ← {vi ? `Tất cả sân tại ${cityName}` : `All courts in ${cityName}`}
           </Link>
-          <Link to="/san/them" className="tl-btn green" style={{ textDecoration: "none" }}>
-            <Plus className="h-4 w-4" /> {vi ? "Thêm sân" : "Add a court"}
-          </Link>
+          <Button asChild variant="tl-primary">
+            <Link to="/san/them">
+              <Plus className="h-4 w-4" /> {vi ? "Thêm sân" : "Add a court"}
+            </Link>
+          </Button>
         </div>
       </div>
     </TheLineLayout>
