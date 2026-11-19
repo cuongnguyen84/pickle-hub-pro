@@ -1015,8 +1015,13 @@ const QuickTableView = () => {
               >
                 <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               </button>
-              <button type="button" className="tl-btn" onClick={handleShare}>
-                <Share2 className="w-4 h-4" />
+              <button
+                type="button"
+                className="tl-btn"
+                onClick={handleShare}
+                aria-label={language === 'vi' ? 'Chia sẻ' : 'Share'}
+              >
+                <Share2 className="w-4 h-4" aria-hidden="true" />
                 <span className="hidden sm:inline">
                   {language === 'vi' ? 'Chia sẻ' : 'Share'}
                 </span>
