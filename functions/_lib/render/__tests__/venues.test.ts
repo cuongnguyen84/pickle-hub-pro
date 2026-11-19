@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  renderVenueDetail, isVerifiedSource, shortPrice, longPrice,
+  renderVenueDetail, renderVenuesCity, isVerifiedSource, shortPrice, longPrice,
   priceRangeText, uniformHours, hoursLabel, haversineKm, formatKm,
 } from "../venues";
 import type { SupabaseClient } from "../../supabase";
@@ -681,5 +681,80 @@ describe("renderVenueDetail — GEO opening (GEO-01)", () => {
     expect(p).toContain("listed on ThePickleHub");
     expect(p).toContain("Courts rent for 100.000đ–160.000đ per hour.");
     expect(p).not.toContain("below.");
+  });
+});
+
+describe("renderVenuesCity district tables (proposal 3)", () => {
+  const CITY_ROWS = [
+    {
+      slug: "dao-sen-pickleball-ha-noi",
+      name: "Đảo Sen Pickleball",
+      name_vi: null,
+      district: "Đống Đa",
+      city: "Hà Nội",
+      num_courts: 4,
+      is_indoor: false,
+      is_verified: true,
+      address: "Số 1 Đường Hoàng Cầu",
+      price_min_vnd: 100000,
+      price_max_vnd: 150000,
+      price_source: "manual",
+    },
+    {
+      slug: "san-default-gia",
+      name: "Sân Giá Mặc Định",
+      name_vi: null,
+      district: "Đống Đa",
+      city: "Hà Nội",
+      num_courts: 2,
+      is_indoor: true,
+      is_verified: false,
+      address: null,
+      price_min_vnd: 80000,
+      price_max_vnd: 200000,
+      price_source: "default",
+    },
+    {
+      slug: "san-khong-quan",
+      name: "Sân Không Quận",
+      name_vi: null,
+      district: null,
+      city: "Hà Nội",
+      num_courts: null,
+      is_indoor: null,
+      is_verified: false,
+      address: "Đường Láng",
+      price_min_vnd: null,
+      price_max_vnd: null,
+      price_source: null,
+    },
+  ];
+
+  const renderCity = async (lang: "vi" | "en" = "vi") =>
+    (await renderVenuesCity(stubClient(null, CITY_ROWS), "ha-noi", SITE, lang)).text();
+
+  it("groups venues into one comparison table per district", async () => {
+    const html = await renderCity("vi");
+    expect(html).toContain("<h2>Sân pickleball tại Đống Đa</h2>");
+    expect(html).toContain("<th>Tên sân</th>");
+    expect(html).toContain("<th>Địa chỉ</th>");
+    expect(html).toContain("<th>Giá thuê</th>");
+    expect(html).toContain("Số 1 Đường Hoàng Cầu");
+    expect(html).toContain("<h2>Khu vực khác</h2>");
+    // The district-less venue lands in the fallback group, after Đống Đa.
+    expect(html.indexOf("Khu vực khác")).toBeGreaterThan(html.indexOf("Đống Đa"));
+  });
+
+  it("shows a verified price but never the blanket default as a venue price", async () => {
+    const html = await renderCity("vi");
+    expect(html).toContain("100K–150K");
+    expect(html).not.toContain("80K–200K");
+  });
+
+  it("renders the same tables in English", async () => {
+    const html = await renderCity("en");
+    expect(html).toContain("<h2>Pickleball courts in Đống Đa</h2>");
+    expect(html).toContain("<th>Address</th>");
+    expect(html).toContain("<h2>Other areas</h2>");
   });
 });
