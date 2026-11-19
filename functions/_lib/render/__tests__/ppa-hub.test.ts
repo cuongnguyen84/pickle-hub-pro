@@ -88,7 +88,7 @@ describe("renderPpaAsiaHub", () => {
     expect(html).toContain("D-Joy Vietnam Masters 2026");
     expect(html).toContain("/tournament/d-joy-vietnam-masters-2026");
     expect(html).toContain("/rankings/ppa-tour");
-    expect(html).toContain('"@type": "ItemList"');
+    expect(html).toContain('"@type":"ItemList"');
     expect(html).toContain('rel="alternate" hreflang="vi"');
   });
 
