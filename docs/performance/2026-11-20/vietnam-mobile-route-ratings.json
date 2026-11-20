@@ -1,0 +1,3895 @@
+{
+  "observed_at": "2026-11-20T12:01:54.666535+00:00",
+  "window": [
+    "2026-10-23",
+    "2026-11-19"
+  ],
+  "segment": "country=Vietnam;deviceCategory=mobile;eventName=web_vital",
+  "metadata": {
+    "numeric_metric_value_dimension": false,
+    "numeric_metric_value_metrics": []
+  },
+  "request": {
+    "dateRanges": [
+      {
+        "startDate": "2026-10-23",
+        "endDate": "2026-11-19"
+      }
+    ],
+    "dimensions": [
+      {
+        "name": "customEvent:metric_name"
+      },
+      {
+        "name": "customEvent:metric_rating"
+      },
+      {
+        "name": "customEvent:route"
+      }
+    ],
+    "metrics": [
+      {
+        "name": "eventCount"
+      }
+    ],
+    "dimensionFilter": {
+      "andGroup": {
+        "expressions": [
+          {
+            "filter": {
+              "fieldName": "country",
+              "stringFilter": {
+                "matchType": "EXACT",
+                "value": "Vietnam"
+              }
+            }
+          },
+          {
+            "filter": {
+              "fieldName": "deviceCategory",
+              "stringFilter": {
+                "matchType": "EXACT",
+                "value": "mobile"
+              }
+            }
+          },
+          {
+            "filter": {
+              "fieldName": "eventName",
+              "stringFilter": {
+                "matchType": "EXACT",
+                "value": "web_vital"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "limit": 1000
+  },
+  "response": {
+    "dimensionHeaders": [
+      {
+        "name": "customEvent:metric_name"
+      },
+      {
+        "name": "customEvent:metric_rating"
+      },
+      {
+        "name": "customEvent:route"
+      }
+    ],
+    "metricHeaders": [
+      {
+        "name": "eventCount",
+        "type": "TYPE_INTEGER"
+      }
+    ],
+    "rows": [
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/news/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1528"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/news/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1513"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/live/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1113"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/live/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1106"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/news/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "786"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/live/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "694"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/live/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "596"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/blog/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "415"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/news/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "393"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/blog/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "301"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/login"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "286"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/login"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "286"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/blog/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "279"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/san/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "263"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/san/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "250"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/blog/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "224"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/live/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "217"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/login"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "207"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/san/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "186"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/login"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "162"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/news/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "162"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/auth/callback"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "158"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/blog/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "151"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/live/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "138"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/blog/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "137"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/news/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "137"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/news/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "118"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/san/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "112"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/news/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "110"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/auth/callback"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "109"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/blog/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "108"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/news/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "106"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "99"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/auth/callback"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "96"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/san/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "86"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "85"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/blog/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "83"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "80"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "77"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/live/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "59"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/live/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "59"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/san/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "55"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/live/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "48"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/live/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "46"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/san/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "41"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/live/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "39"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/news/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "38"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/news/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "36"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "36"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/san/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "35"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "34"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/news/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "34"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/tools"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "32"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/auth/callback"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "32"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/login"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "31"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/blog/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "29"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/live/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "27"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/news/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "26"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/auth/callback"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "25"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/live"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "25"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/blog/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "25"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/news/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "24"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/san/khu-vuc/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "24"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/live"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "23"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/tools"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "23"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/blog/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "22"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/san/khu-vuc/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "21"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/rankings"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "18"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/auth/callback"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "18"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/live"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "18"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/tools"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "17"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/rankings"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "17"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/auth/callback"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "17"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/live"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "16"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/auth/callback"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "16"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "16"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/tools"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "15"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/san/khu-vuc/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "15"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/tools"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "15"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/live/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "15"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/san/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "15"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/blog/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "14"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/live/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "14"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/auth/callback"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "14"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/rankings"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "13"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/rankings/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "13"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/rankings/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "12"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/san/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "12"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/san/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "12"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/tools"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "11"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "11"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/blog/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "11"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/live"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "10"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "10"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/:id/:id/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "10"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/:id/:id/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "9"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/rankings/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "9"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/san/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "9"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/tools/quick-tables/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "8"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/rankings"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "8"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/san/khu-vuc/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "8"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/login"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "8"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/news/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "8"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/tools/quick-tables/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "8"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/tools/quick-tables/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "7"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/tools/quick-tables/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "7"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "7"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/auth/callback"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "7"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/live/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "6"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "6"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/tools"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "5"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/auth/callback"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "5"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "5"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/auth/callback"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "5"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/rankings"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "4"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/tournament/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "4"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "4"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/tools/quick-tables/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "4"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/live"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "4"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/tournament/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "4"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/live"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "4"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/login"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "4"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/san/khu-vuc/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "4"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/san/khu-vuc/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/san/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/auth/callback"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/privacy"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/tools/quick-tables/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/san"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/blog/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/login"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/san/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/:id/:id/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/privacy"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/tools"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/tools/quick-tables/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/tools/quick-tables/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/rankings"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/tools/quick-tables/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/auth/callback"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/login"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/auth/reset-password"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/blog"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/san"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/rankings"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/auth/callback"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/tools"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/privacy"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/rankings"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/auth/reset-password"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/blog"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/rankings"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/san/khu-vuc/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/live"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/tournament/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/news"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/san"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/rankings/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/:id/:id/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/news"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/tools/quick-tables/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/san"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/san/khu-vuc/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/tools"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "CLS"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/san/khu-vuc/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/clb/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/news"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/org/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/tools/quick-tables"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/auth/reset-password"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/live"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/login"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/san"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/san/khu-vuc/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/tran-dau/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "FCP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/live"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/:id/:id/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/auth/reset-password"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/blog"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/rankings/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/tournament/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/:id/:id/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/live"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/tools/quick-tables/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/auth/reset-password"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/live"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "INP"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/tools"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/clb/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/news"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/san"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/tools/quick-tables"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/tournament/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/auth/reset-password"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "LCP"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/login"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/blog"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/clb/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/feed"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "good"
+          },
+          {
+            "value": "/org/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/blog"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/san"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/tools/quick-tables"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "needs-improvement"
+          },
+          {
+            "value": "/tran-dau/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/live"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/login"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "TTFB"
+          },
+          {
+            "value": "poor"
+          },
+          {
+            "value": "/san/khu-vuc/:id"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      }
+    ],
+    "rowCount": 211,
+    "metadata": {
+      "currencyCode": "USD",
+      "timeZone": "Asia/Saigon"
+    },
+    "kind": "analyticsData#runReport"
+  }
+}

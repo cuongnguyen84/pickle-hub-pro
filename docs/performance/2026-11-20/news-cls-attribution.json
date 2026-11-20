@@ -1,0 +1,367 @@
+{
+  "observed_at": "2026-11-20T12:05:49.288998+00:00",
+  "window": [
+    "2026-10-23",
+    "2026-11-19"
+  ],
+  "segment": "country=Vietnam;deviceCategory=mobile;eventName=web_vital",
+  "metadata": {
+    "numeric_metric_value_dimension": false,
+    "numeric_metric_value_metrics": []
+  },
+  "request": {
+    "dateRanges": [
+      {
+        "startDate": "2026-10-23",
+        "endDate": "2026-11-19"
+      }
+    ],
+    "dimensions": [
+      {
+        "name": "customEvent:cls_shift_target"
+      },
+      {
+        "name": "customEvent:cls_load_state"
+      },
+      {
+        "name": "customEvent:metric_rating"
+      }
+    ],
+    "metrics": [
+      {
+        "name": "eventCount"
+      }
+    ],
+    "dimensionFilter": {
+      "andGroup": {
+        "expressions": [
+          {
+            "filter": {
+              "fieldName": "country",
+              "stringFilter": {
+                "matchType": "EXACT",
+                "value": "Vietnam"
+              }
+            }
+          },
+          {
+            "filter": {
+              "fieldName": "deviceCategory",
+              "stringFilter": {
+                "matchType": "EXACT",
+                "value": "mobile"
+              }
+            }
+          },
+          {
+            "filter": {
+              "fieldName": "eventName",
+              "stringFilter": {
+                "matchType": "EXACT",
+                "value": "web_vital"
+              }
+            }
+          },
+          {
+            "filter": {
+              "fieldName": "customEvent:metric_name",
+              "stringFilter": {
+                "matchType": "EXACT",
+                "value": "CLS"
+              }
+            }
+          },
+          {
+            "filter": {
+              "fieldName": "customEvent:route",
+              "stringFilter": {
+                "matchType": "EXACT",
+                "value": "/news/:id"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "limit": 1000
+  },
+  "response": {
+    "dimensionHeaders": [
+      {
+        "name": "customEvent:cls_shift_target"
+      },
+      {
+        "name": "customEvent:cls_load_state"
+      },
+      {
+        "name": "customEvent:metric_rating"
+      }
+    ],
+    "metricHeaders": [
+      {
+        "name": "eventCount",
+        "type": "TYPE_INTEGER"
+      }
+    ],
+    "rows": [
+      {
+        "dimensionValues": [
+          {
+            "value": "#main-content>div.tl-root>div.tl-scroll>footer.tl-footer"
+          },
+          {
+            "value": "complete"
+          },
+          {
+            "value": "needs-improvement"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "71"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "#main-content>div.tl-root>div.tl-scroll>div.tl-shell>article>div.tl-longform"
+          },
+          {
+            "value": "complete"
+          },
+          {
+            "value": "good"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "65"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "#main-content>div.tl-root>div.tl-scroll>footer.tl-footer"
+          },
+          {
+            "value": "complete"
+          },
+          {
+            "value": "good"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "28"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "#main-content>div.tl-root>div.tl-scroll>div.tl-shell>article>div.tl-longform"
+          },
+          {
+            "value": "complete"
+          },
+          {
+            "value": "needs-improvement"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "23"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "(not set)"
+          },
+          {
+            "value": "(not set)"
+          },
+          {
+            "value": "good"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "22"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "#main-content>div.tl-root>div.tl-scroll>div.tl-shell>article>div.tl-longform"
+          },
+          {
+            "value": "complete"
+          },
+          {
+            "value": "poor"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "11"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "#main-content>div.tl-root>div.tl-scroll>footer.tl-footer"
+          },
+          {
+            "value": "complete"
+          },
+          {
+            "value": "poor"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "11"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "#main-content>div.tl-root>div.tl-scroll>div.tl-shell"
+          },
+          {
+            "value": "complete"
+          },
+          {
+            "value": "needs-improvement"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "9"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "#main-content>div.tl-root>div.tl-scroll>nav.tl-nav>div.tl-nav-right"
+          },
+          {
+            "value": "complete"
+          },
+          {
+            "value": "good"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "(not set)"
+          },
+          {
+            "value": "complete"
+          },
+          {
+            "value": "needs-improvement"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "2"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "#main-content>div.tl-root>div.tl-scroll>div.tl-shell>div"
+          },
+          {
+            "value": "complete"
+          },
+          {
+            "value": "poor"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "#main-content>div.tl-root>div.tl-scroll>div.tl-shell>nav>span"
+          },
+          {
+            "value": "complete"
+          },
+          {
+            "value": "good"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "(not set)"
+          },
+          {
+            "value": "(not set)"
+          },
+          {
+            "value": "needs-improvement"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "dimensionValues": [
+          {
+            "value": "(not set)"
+          },
+          {
+            "value": "(not set)"
+          },
+          {
+            "value": "poor"
+          }
+        ],
+        "metricValues": [
+          {
+            "value": "1"
+          }
+        ]
+      }
+    ],
+    "rowCount": 14,
+    "metadata": {
+      "currencyCode": "USD",
+      "timeZone": "Asia/Saigon"
+    },
+    "kind": "analyticsData#runReport"
+  }
+}
