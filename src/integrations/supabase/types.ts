@@ -6411,6 +6411,32 @@ export type Database = {
           },
         ]
       }
+      quick_table_score_evidence: {
+        Row: {
+          observed_at: string
+          receipt_id: string
+          table_id: string
+        }
+        Insert: {
+          observed_at?: string
+          receipt_id?: string
+          table_id: string
+        }
+        Update: {
+          observed_at?: string
+          receipt_id?: string
+          table_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quick_table_score_evidence_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: true
+            referencedRelation: "quick_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quick_table_teams: {
         Row: {
           btc_approved: boolean | null
@@ -7910,6 +7936,7 @@ export type Database = {
           description_en: string | null
           description_vi: string | null
           end_at: string
+          first_published_at: string | null
           free_perks: string[] | null
           id: string
           level_max: number | null
@@ -7942,6 +7969,7 @@ export type Database = {
           description_en?: string | null
           description_vi?: string | null
           end_at: string
+          first_published_at?: string | null
           free_perks?: string[] | null
           id?: string
           level_max?: number | null
@@ -7974,6 +8002,7 @@ export type Database = {
           description_en?: string | null
           description_vi?: string | null
           end_at?: string
+          first_published_at?: string | null
           free_perks?: string[] | null
           id?: string
           level_max?: number | null
