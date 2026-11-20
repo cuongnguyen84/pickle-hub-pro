@@ -1,0 +1,52 @@
+[
+  {
+    "path": "/tools",
+    "quicktable_links": [
+      "https://www.thepicklehub.net/tools/quick-tables"
+    ],
+    "body_words": 1407,
+    "noindex": false,
+    "h1": [
+      "Free Pickleball Bracket Generator | ThePickleHub"
+    ]
+  },
+  {
+    "path": "/vi/tools",
+    "quicktable_links": [
+      "https://www.thepicklehub.net/vi/tools/quick-tables"
+    ],
+    "body_words": 1565,
+    "noindex": false,
+    "h1": [
+      "Tạo Bảng Đấu Pickleball Miễn Phí | ThePickleHub"
+    ]
+  },
+  {
+    "path": "/tools/quick-tables",
+    "quicktable_links": [
+      "https://www.thepicklehub.net/tools/quick-tables",
+      "https://www.thepicklehub.net/tools/quick-tables",
+      "https://www.thepicklehub.net/vi/tools/quick-tables",
+      "https://www.thepicklehub.net/tools/quick-tables"
+    ],
+    "body_words": 80,
+    "noindex": false,
+    "h1": [
+      "Round Robin Generator"
+    ]
+  },
+  {
+    "path": "/vi/tools/quick-tables",
+    "quicktable_links": [
+      "https://www.thepicklehub.net/vi/tools/quick-tables",
+      "https://www.thepicklehub.net/tools/quick-tables",
+      "https://www.thepicklehub.net/vi/tools/quick-tables",
+      "https://www.thepicklehub.net/tools/quick-tables"
+    ],
+    "body_words": 103,
+    "noindex": false,
+    "h1": [
+      "Chia bảng vòng tròn"
+    ]
+  }
+]
