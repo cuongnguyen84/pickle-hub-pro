@@ -8,7 +8,7 @@ interface QuickTablePlayoffViewProps {
   players: QuickTablePlayer[];
   groups: QuickTableGroup[];
   canEdit: boolean;
-  onScoreUpdate: (matchId: string, score1: number, score2: number) => void;
+  onScoreUpdate: (matchId: string, score1: number, score2: number) => void | Promise<void>;
   onCourtNameUpdate?: (matchId: string, courtName: string) => void;
   onSwapPlayers?: (a: SwapSlot, b: SwapSlot) => void;
 }
