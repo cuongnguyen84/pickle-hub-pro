@@ -12,7 +12,7 @@ const GATE = 430322; // advisory lock key for the start barrier
 // Destructive-target guard (Codex P1, both rounds): this script DELETEs rows
 // from the budget table. A hostname allowlist is not enough — localhost can be
 // an SSH tunnel to production — so ANY override of the known disposable
-// default requires an explicit opt-in.
+// default is rejected; this harness never supports remote targets.
 if (DB !== DEFAULT_DB) {
   console.error(
     `DB_URL overrides the default disposable target (supabase db start). ` +
@@ -93,6 +93,6 @@ try {
 
  }
 } finally {
- await psql(`DELETE FROM public.social_events WHERE id='${event}'; DELETE FROM auth.users WHERE id='${owner}';`);
+ await psql(`DELETE FROM public.social_events WHERE id='${event}'; DELETE FROM public.profiles WHERE id='${owner}'; DELETE FROM auth.users WHERE id='${owner}';`);
 }
 console.log(`${ROUNDS} synchronized renewal proof races passed; one proof consumption, one current credential, one final phone budget slot.`);
