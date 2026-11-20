@@ -108,12 +108,20 @@ Primary funnel metric:
 
 `unique journey_id published within 24 hours / unique journey_id started`
 
-The canonical entity is `social_events.created_by`; an organizer activates on
-their first transition to `status = 'published'`. The current table has no
-`published_at`, so direct-publish rows can be reconstructed from `created_at`
-but draft-to-published transitions cannot be timed reliably. `BASE-02` must add
-a server-side publication timestamp or immutable transition event before the
-database is used as the canonical organizer activation series.
+The canonical entity is `social_events.created_by`. Migration
+`20261120130000_social_event_publication_timestamp.sql` adds server-owned
+`first_published_at`: a published INSERT or first observed transition from any
+other status to published is stamped using the database statement clock.
+Once set, the value survives edits, unpublish, republish and client attempts to
+clear or replace it. Draft INSERTs discard supplied timestamps.
+
+No historical rows are backfilled: NULL on a pre-rollout row means unknown,
+not proof it was never published. A later republish of such a row records the
+first observed post-rollout transition, not its first-ever publication.
+For canonical first-activation cohorts, restrict to organizers whose relevant
+history is fully covered after rollout; exclude or label legacy unknown rows.
+The timestamp cannot reconstruct earlier activations or distinguish test
+intent. Analytics still measures journey starts; DB timestamps measure commits.
 
 ## Livestream gate journey
 
