@@ -68,7 +68,7 @@ it.each(["cancelled", "expired", "provider-failure"])("does not disclose deliver
 it.each(["zalo", "email"])("does not accept malformed %s provider success", async (kind) => {
   state.rows = [{ ...registration, ...(kind === "zalo" ? { zalo_user_id: "stored-follower", contact_email: null } : {}) }];
   await run();
-  vi.stubGlobal("fetch", vi.fn(async (url) => String(url).includes("siteverify") ? Response.json({ success: true }) : Response.json({}))); 
+  vi.stubGlobal("fetch", vi.fn(async (url) => String(url).includes("siteverify") ? Response.json({ success: true }) : Response.json({})));
   const response = await state.handler!(new Request("https://example.test", { method: "POST", body: JSON.stringify({ phone_e164: "+84901234567", captcha_token: "test" }) }));
   expect(await response.json()).toEqual({ ok: true, channel: "registered_channel" });
   expect(state.ledger).toHaveBeenLastCalledWith(expect.objectContaining({ succeeded: false }));
