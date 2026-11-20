@@ -1,0 +1,116 @@
+[
+  {
+    "function": "dupr-org-link-club",
+    "bundle_sha256": "b478d1860c6d6c55e1c55c07c3386f3eb6d8e8af38e315dcf9868d8fe7678775",
+    "modules": {
+      "functions/_shared/dupr-user-client.ts": {
+        "sha256": "d4d8cbcc94d666c6a01042b76e2d754010dd6e3b8c2dc292d1e86130eb268e0e",
+        "bytes": 2440
+      },
+      "functions/_shared/dupr-token-keyring.ts": {
+        "sha256": "12303c5565ff2248568c225bb7a4e869990a79199059122d52f575713a746d3c",
+        "bytes": 3326
+      },
+      "functions/_shared/token-crypto.ts": {
+        "sha256": "07f2dd45829cc009bbcc7c13e90e514f84f2d066f868c0052595a1a9cb00bd77",
+        "bytes": 9539
+      }
+    }
+  },
+  {
+    "function": "dupr-entitlements",
+    "bundle_sha256": "207cecc23bafa66f035ba325d94372cd086c48e85599e2b79224e232324a11ac",
+    "modules": {
+      "functions/_shared/dupr-user-client.ts": {
+        "sha256": "d4d8cbcc94d666c6a01042b76e2d754010dd6e3b8c2dc292d1e86130eb268e0e",
+        "bytes": 2440
+      },
+      "functions/_shared/dupr-token-keyring.ts": {
+        "sha256": "12303c5565ff2248568c225bb7a4e869990a79199059122d52f575713a746d3c",
+        "bytes": 3326
+      },
+      "functions/_shared/token-crypto.ts": {
+        "sha256": "07f2dd45829cc009bbcc7c13e90e514f84f2d066f868c0052595a1a9cb00bd77",
+        "bytes": 9539
+      }
+    }
+  },
+  {
+    "function": "dupr-sso-callback",
+    "bundle_sha256": "6ae5576c7f82fccd7fdc4496a90028366d7ed61ba3b2afe1b37fb4da746d2530",
+    "modules": {
+      "functions/_shared/dupr-token-keyring.ts": {
+        "sha256": "12303c5565ff2248568c225bb7a4e869990a79199059122d52f575713a746d3c",
+        "bytes": 3326
+      },
+      "functions/_shared/token-crypto.ts": {
+        "sha256": "07f2dd45829cc009bbcc7c13e90e514f84f2d066f868c0052595a1a9cb00bd77",
+        "bytes": 9539
+      }
+    }
+  },
+  {
+    "function": "dupr-refresh-user-token",
+    "bundle_sha256": "5fb245d331954f93b349deac26fbff8d3e74dee3091fb68215a0485efde9699d",
+    "modules": {
+      "functions/_shared/dupr-token-keyring.ts": {
+        "sha256": "12303c5565ff2248568c225bb7a4e869990a79199059122d52f575713a746d3c",
+        "bytes": 3326
+      },
+      "functions/_shared/token-crypto.ts": {
+        "sha256": "07f2dd45829cc009bbcc7c13e90e514f84f2d066f868c0052595a1a9cb00bd77",
+        "bytes": 9539
+      }
+    }
+  },
+  {
+    "function": "dupr-token-backfill",
+    "bundle_sha256": "714a32eb3f92aaf899058a553f9d4a0b52737e8f138c618256a5e6e00601740b",
+    "modules": {
+      "functions/_shared/dupr-token-keyring.ts": {
+        "sha256": "12303c5565ff2248568c225bb7a4e869990a79199059122d52f575713a746d3c",
+        "bytes": 3326
+      },
+      "functions/_shared/token-crypto.ts": {
+        "sha256": "07f2dd45829cc009bbcc7c13e90e514f84f2d066f868c0052595a1a9cb00bd77",
+        "bytes": 9539
+      }
+    }
+  },
+  {
+    "function": "dupr-match-submit",
+    "bundle_sha256": "4bd22c825c872af7a2884444d7f147ac44b3806f6b5c6d1ff90acb3d643914b8",
+    "modules": {
+      "functions/_shared/dupr-user-client.ts": {
+        "sha256": "d4d8cbcc94d666c6a01042b76e2d754010dd6e3b8c2dc292d1e86130eb268e0e",
+        "bytes": 2440
+      },
+      "functions/_shared/dupr-token-keyring.ts": {
+        "sha256": "12303c5565ff2248568c225bb7a4e869990a79199059122d52f575713a746d3c",
+        "bytes": 3326
+      },
+      "functions/_shared/token-crypto.ts": {
+        "sha256": "07f2dd45829cc009bbcc7c13e90e514f84f2d066f868c0052595a1a9cb00bd77",
+        "bytes": 9539
+      }
+    }
+  },
+  {
+    "function": "dupr-clubs",
+    "bundle_sha256": "4df222a0f6af55d99feb6749173c78f42f1156a2fab3127f7cdf026a9c97ca92",
+    "modules": {
+      "functions/_shared/dupr-user-client.ts": {
+        "sha256": "d4d8cbcc94d666c6a01042b76e2d754010dd6e3b8c2dc292d1e86130eb268e0e",
+        "bytes": 2440
+      },
+      "functions/_shared/dupr-token-keyring.ts": {
+        "sha256": "12303c5565ff2248568c225bb7a4e869990a79199059122d52f575713a746d3c",
+        "bytes": 3326
+      },
+      "functions/_shared/token-crypto.ts": {
+        "sha256": "07f2dd45829cc009bbcc7c13e90e514f84f2d066f868c0052595a1a9cb00bd77",
+        "bytes": 9539
+      }
+    }
+  }
+]
