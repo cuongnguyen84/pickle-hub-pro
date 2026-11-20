@@ -10,6 +10,34 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "two-to-one-counter-pickleball-technique",
+    "publishedDate": "2026-11-20",
+    "updatedDate": "2026-11-20",
+    "author": "The PickleHub Team",
+    "tags": [
+      "two-to-one",
+      "pickleball technique",
+      "richard livornese",
+      "two-handed backhand",
+      "guide"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "Improve your game with ThePickleHub guides",
+      "vi": "Nâng trình cùng cẩm nang ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/two-to-one-counter-pickleball-technique-hero.webp",
+      "alt": "Doubles pair at the kitchen line: one player counters a body ball one-handed while his partner holds a two-handed ready position"
+    },
+    "titleEn": "The Two-to-One in Pickleball: How to Counter Body Balls Without Getting Jammed",
+    "titleVi": "Kỹ thuật two-to-one trong pickleball: hết bị kẹt vợt khi bóng bay thẳng vào người",
+    "metaTitleEn": "The Two-to-One in Pickleball: Counter Body Balls",
+    "metaTitleVi": "Kỹ Thuật Two-to-One Trong Pickleball",
+    "metaDescriptionEn": "APP Tour pro Richard Livornese's two-to-one counter: prep with a two-handed backhand, release the off hand on body balls. Needs a continental grip.",
+    "metaDescriptionVi": "Two-to-one: chuẩn bị hai tay, bóng vào người phản công một tay. Tay phụ chỉ chạm nhẹ cán vợt, điều kiện là cầm continental."
+  },
+  {
     "slug": "ky-thuat-thang-hands-battle-pickleball",
     "publishedDate": "2026-11-19",
     "updatedDate": "2026-11-19",
