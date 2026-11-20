@@ -578,9 +578,20 @@ try {
     UPDATE public.quick_table_matches SET score1=NULL,score2=NULL,
       winner_id=NULL,status='pending',score_version=0 WHERE table_id='${QT}';
     DELETE FROM public.quick_table_score_evidence WHERE table_id='${QT}';
+  `);
+  // psql -c sends all statements in one simple-query message. Commit fixture
+  // cleanup separately: otherwise the ROLLBACK below also undoes that cleanup
+  // and restores the final race round's scores/receipt (a false failure).
+  await psql(`
     BEGIN;
     UPDATE public.quick_table_matches SET score1=11,score2=7,status='completed'
       WHERE id='${QM1}';
+    DO $qa$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM public.quick_table_score_evidence WHERE table_id='${QT}')
+         OR NOT EXISTS (SELECT 1 FROM public.quick_table_matches WHERE id='${QM1}' AND score1=11 AND score2=7) THEN
+        RAISE EXCEPTION 'rollback fixture did not create a score and receipt';
+      END IF;
+    END $qa$;
     ROLLBACK;
   `);
   check((await psql(`SELECT count(*) FROM public.quick_table_score_evidence
