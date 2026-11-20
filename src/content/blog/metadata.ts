@@ -687,13 +687,13 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     "slug": "ly-hoang-nam-pickleball-national-games-2026",
     "publishedDate": "2026-10-23",
-    "updatedDate": "2026-10-23",
+    "updatedDate": "2026-11-20",
     "author": "The PickleHub Team",
     "tags": [
       "ly hoang nam",
       "dai hoi the thao toan quoc 2026",
       "pickleball viet nam",
-      "djoy nam sai gon",
+      "nsc the global city",
       "cong an nhan dan"
     ],
     "ctaPath": "/tournaments",
@@ -709,8 +709,8 @@ export const blogMetadata: BlogPostMetadata[] = [
     "titleVi": "Lý Hoàng Nam chơi pickleball tại Đại hội Thể thao toàn quốc 2026: cột mốc cho cả hai môn thể thao",
     "metaTitleEn": "Ly Hoang Nam Plays Pickleball at National Games",
     "metaTitleVi": "Hoàng Nam đấu pickleball ở Đại hội toàn quốc",
-    "metaDescriptionEn": "Pickleball debuts at Vietnam's National Games in Nov 2026, and tennis star Ly Hoang Nam will play it for the People's Public Security team. Analysis.",
-    "metaDescriptionVi": "Pickleball lần đầu vào Đại hội toàn quốc (23–29/11/2026): Lý Hoàng Nam khoác áo Công an nhân dân. Ý nghĩa cột mốc này."
+    "metaDescriptionEn": "Pickleball debuts at Vietnam's National Games in Dec 2026, and tennis star Ly Hoang Nam will play it for the People's Public Security team. Analysis.",
+    "metaDescriptionVi": "Pickleball lần đầu vào Đại hội toàn quốc (3-9/12/2026): Lý Hoàng Nam khoác áo Công an nhân dân. Ý nghĩa cột mốc này."
   },
   {
     "slug": "create-tournament-by-chat",
