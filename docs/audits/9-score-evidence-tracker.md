@@ -5,6 +5,27 @@ merged PR, an old report, or a lab check as proof that a product outcome is
 working. This file tracks the time-dependent evidence needed to move the
 15-category review from 7.6/10 toward 9/10.
 
+## Reviewed implementation status (2026-11-20)
+
+- CodeQL JS/TS/Python: PR #1047 merged after CI passed.
+- QuickTable compact action names/tests and page-wide light/dark contrast:
+  PR #1050 merged. Public club/rankings browser checks passed; event/organizer
+  paths still need suitable staging data and auth coverage.
+- Dependency patches and Zod Mini migration: PR #1051/#1052 merged. Production
+  dependency audit zero advisories at verification; all CI passed. This does
+  not close development dependency findings.
+- Weekly aggregate workflow: PR #1053 merged, first manually dispatched run
+  44667223381 succeeded and produced dated artifact. Thursday 08:31 ICT schedule.
+- Database ledger audit: PR #1055 merged, 427/427 parity. Schema, grants,
+  policies and function authorization equivalence still need proof.
+- Secret-table privilege hardening: PR #1057 open, ten pgTAP assertions,
+  not applied to production; requires clean-replay database CI.
+- DUPR fail-closed writer is local only. V1/V2 secret names absent at preflight;
+  activation must follow reader parity verification and tested durable key custody.
+- Fresh GSC/GA4 acquisition baselines are saved in
+  [20 November report](../seo/2026-11-20/README.md). Global traffic reports do
+  not establish segmented conversion, CWV or retention.
+
 ## Current evidence snapshot (2026-11-20)
 
 | Area | Last known evidence | Status | What is still missing |
