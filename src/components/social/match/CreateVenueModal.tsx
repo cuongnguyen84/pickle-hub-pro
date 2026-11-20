@@ -10,7 +10,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod/v4";
+import * as z from "zod/v4/mini";
 import { Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -82,24 +82,24 @@ const SURFACES_EN = [
 
 const buildSchema = (language: "vi" | "en") =>
   z.object({
-    name: z
-      .string()
-      .min(
+    name: z.string().check(
+        z.minLength(
         2,
         language === "vi"
           ? "Tên sân tối thiểu 2 ký tự"
           : "Venue name needs at least 2 characters",
-      )
-      .max(100),
-    name_vi: z.string().max(100).optional(),
-    city: z
-      .string()
-      .min(1, language === "vi" ? "Chọn thành phố" : "Pick a city"),
-    district: z.string().max(60).optional(),
-    address: z.string().max(200).optional(),
-    num_courts: z.coerce.number().int().min(0).max(50).optional(),
-    surface_type: z.string().optional(),
-    is_indoor: z.boolean().default(false),
+        ),
+        z.maxLength(100),
+      ),
+    name_vi: z.optional(z.string().check(z.maxLength(100))),
+    city: z.string().check(
+      z.minLength(1, language === "vi" ? "Chọn thành phố" : "Pick a city"),
+    ),
+    district: z.optional(z.string().check(z.maxLength(60))),
+    address: z.optional(z.string().check(z.maxLength(200))),
+    num_courts: z.optional(z.coerce.number().check(z.int(), z.minimum(0), z.maximum(50))),
+    surface_type: z.optional(z.string()),
+    is_indoor: z._default(z.boolean(), false),
   });
 
 type FormInput = z.input<ReturnType<typeof buildSchema>>;
