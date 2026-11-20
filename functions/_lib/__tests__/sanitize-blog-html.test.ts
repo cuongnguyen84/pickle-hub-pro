@@ -1,19 +1,8 @@
 // @vitest-environment jsdom
 import { expect, it } from "vitest";
 import { sanitizeBlogHtml } from "../sanitize-blog-html";
-const attacks = [
-  '<img src=x onerror=alert(1)>', '<a href=javascript:alert(1)>click</a>',
-  '<a href="java&#x73;cript:alert(1)">click</a>', '<a href="java&#9;script:alert(1)">x</a>',
-  '<svg><a xlink:href="javascript:alert(1)">x</a></svg>', '<math><mtext><img src=x onerror=alert(1)></mtext></math>',
-  '<style><img src=x onerror=alert(1)></style>', '<script>alert(1)</script>',
-  '<scr<script>ipt>alert(1)</scr</script>ipt>', '<iframe srcdoc="<script>alert(1)</script>"></iframe>',
-  '<math><mtext><table><mglyph><style><!--</style><img title="--><img src=1 onerror=alert(1)>">',
-  '<svg></p><style><g title="</style><img src onerror=alert(1)>">',
-  '<a href="data:text/html,evil">data</a><img src="data:image/svg+xml,evil">',
-  '<a href="//evil.test">x</a><a href="/\\evil.test">y</a>',
-  '<div id=location name=location style="background:url(evil)"><form><input name=attributes></form></div>',
-  '<template><img src=x onerror=alert(1)></template><custom onclick=alert(1)>text</custom>',
-];
+import { attacks } from "./sanitizer-fixtures";
+
 it.each(attacks)("sanitizes adversarial HTML before a browser DOM sink: %s", (input) => {
   const safe = sanitizeBlogHtml(input);
   const sink = document.createElement("div"); sink.innerHTML = safe;
@@ -37,4 +26,14 @@ it("retains article structure, accessible text, tables and safe links/images", (
 it("bounds oversized and deeply nested stored content", () => {
   expect(sanitizeBlogHtml("x".repeat(1_000_001))).toBe("");
   expect(() => sanitizeBlogHtml("<div>".repeat(1000) + "text" + "</div>".repeat(1000))).not.toThrow();
+});
+it("does not blank a representative full rendered article", async () => {
+  const { renderEnBlogBody } = await import("../render/blog-body");
+  const article = await renderEnBlogBody("pickleball-recovery-rest-hydration", "https://www.thepicklehub.net");
+  expect(article.length).toBeGreaterThan(1000);
+  const original = document.createElement("div"); original.innerHTML = article;
+  const clean = document.createElement("div"); clean.innerHTML = sanitizeBlogHtml(article);
+  expect(clean.textContent).toBe(original.textContent);
+  expect(clean.querySelectorAll("h2").length).toBe(original.querySelectorAll("h2").length);
+  expect(clean.querySelector("article")).not.toBeNull();
 });
