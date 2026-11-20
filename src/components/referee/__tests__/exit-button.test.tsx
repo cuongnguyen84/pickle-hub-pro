@@ -129,6 +129,23 @@ describe('RefereeScoringScreen', () => {
     expect(onLiveState).toHaveBeenLastCalledWith(null);
   });
 
+  it('failed finish preserves resume state and can retry without duplicate live cleanup', async () => {
+    resume('rally', { a: 11, b: 5 });
+    const onFinish = vi.fn().mockRejectedValueOnce(new Error('VERSION_CONFLICT')).mockResolvedValueOnce(undefined);
+    const onLiveState = vi.fn();
+    renderScreen({ onFinish, onLiveState });
+    fireEvent.click(screen.getByText('KẾT THÚC'));
+    fireEvent.click(screen.getByText('Xác nhận'));
+    await vi.waitFor(() => expect(onFinish).toHaveBeenCalledTimes(1));
+    expect(localStorage.getItem(PERSIST)).not.toBeNull();
+    expect(onLiveState.mock.calls.some(([state]) => state === null)).toBe(false);
+    await vi.waitFor(() => expect((screen.getByText('Xác nhận') as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(screen.getByText('Xác nhận'));
+    await vi.waitFor(() => expect(localStorage.getItem(PERSIST)).toBeNull());
+    expect(onFinish).toHaveBeenCalledTimes(2);
+    expect(onLiveState).toHaveBeenLastCalledWith(null);
+  });
+
   it('tỉ số hoà thì không cho xác nhận', () => {
     resume();
     renderScreen();
