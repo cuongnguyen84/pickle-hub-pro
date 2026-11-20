@@ -1,3 +1,4 @@
+import { prerenderCacheKey } from "./_lib/prerender-cache-key";
 import { renderAuthor } from "./_lib/render/author";
 /**
  * Cloudflare Pages Functions Middleware
@@ -962,7 +963,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       // as the bot path.
       let publicCache: PublicPagePartsCache | null = null;
       if (env.PRERENDER_CACHE && url.searchParams.get("nocache") !== "1") {
-        const cacheKey = `pr:v157:human:${url.pathname}`;
+        const cacheKey = prerenderCacheKey(url.pathname, true);
         const ttl = Math.min(pathCacheTtl(pathname), 300);
         publicCache = {
           get: () => env.PRERENDER_CACHE.get(cacheKey),
@@ -1460,7 +1461,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // by district into comparison tables (name, address, courts, indoor/
   // outdoor, verified price) instead of a bare name list (Topical
   // Authority proposal 3); cached v153 HTML would keep the list.
-  const cacheKey = `pr:v157:${url.pathname}`;
+  const cacheKey = prerenderCacheKey(url.pathname);
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
