@@ -26,7 +26,7 @@ Boot GA configuration sets sanitized page_location, empty referrer and static ti
 with send_page_view:false and debug mode removed. Public content SDKs remain enabled;
 this is not a third-party JavaScript sandbox or a universal PII guarantee.
 
-Cache namespace v159 invalidates v158 bot HTML/human extracted heads that contained
+Cache namespace v160 invalidates v158/v159 bot HTML/human extracted heads that contained
 raw analytics tags. Expect cold-cache rendering/database work until warmed. No
 purge API used. Previously installed/offline shells cannot be remotely certified;
 verify new shell/service-worker update and force reload in deployment QA.
@@ -87,3 +87,9 @@ were routed through trackEvent (including AuthProvider fallback), preserving
 safe public intent while removing registration identifiers. TypeScript/build
 and both offline browser scripts pass. Scoped ESLint has no errors and retains
 one preexisting useAuth fast-refresh warning. No production settings changed.
+
+Merge reconciliation (2026-11-21): main 48b0c12c introduced the AI-chat landing
+pages and cache namespace v159 before this privacy change. Both new route
+renderers and the existing 1935 KB CODE budget are retained from main; this PR
+does not increase the budget. Namespace v160 prevents reuse of those v159 heads
+without the privacy guard. Both bot and human lookups use the shared key helper.

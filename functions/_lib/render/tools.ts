@@ -13,6 +13,10 @@ import {
   TOOLS_HOWTO_VI,
   TOOLS_HOWTO_META,
 } from "../../../src/content/tools/hub-copy";
+import {
+  CREATE_BY_CHAT_COPY,
+  CREATE_BY_CHAT_PATHS,
+} from "../../../src/content/tools/create-by-chat-copy";
 import { renderNoindexShell } from "./static-pages";
 
 // ─── Tools hub ─────────────────────────────���──────────────
@@ -146,6 +150,8 @@ export function renderTools(siteUrl: string, _rawPath = "/tools", lang: "en" | "
   <li><a href="${siteUrl}/vi/tools/doubles-elimination">Loại trực tiếp Đôi</a></li>
   <li><a href="${siteUrl}/vi/tools/flex-tournament">Giải Linh hoạt – Luật tùy chỉnh</a></li>
 </ul>
+<h2>Tạo cả giải chỉ bằng chat</h2>
+<p>Công cụ tạo giải bằng chat AI đầu tiên dành riêng cho pickleball. Dán danh sách từ Zalo hoặc gửi ảnh danh sách - AI đọc tên, dựng bản nháp chia bảng và tạo bảng đấu trong khoảng 60 giây, kể cả thể thức đồng đội MLP. <a href="${siteUrl}/vi/tools/tao-giai-bang-chat">tạo giải bằng chat AI</a></p>
 <h2>Phần mềm quản lý giải pickleball — Bracket Lab làm gì</h2>
 <p>Bracket Lab là công cụ tạo bảng đấu và quản lý giải pickleball miễn phí, dành cho câu lạc bộ, người tổ chức giải cuối tuần và các sự kiện chuyên nghiệp tại Việt Nam và châu Á. Chọn định dạng — vòng tròn tính điểm, loại trực tiếp đơn, loại trực tiếp đôi, đấu đồng đội MLP, hay giải linh hoạt tùy chỉnh — công cụ sẽ tự chia cặp, dựng bảng đấu, xếp lịch trận, xoay sân và theo dõi tỉ số trực tiếp. Chia sẻ một link duy nhất cho người chơi và khán giả; cần thì in bracket treo tường.</p>
 <p>Đăng nhập để tạo giải; xem bảng đấu công khai không cần tài khoản. Không cần tải về. Không có kiểu dùng thử 14 ngày rồi thành gói $99/tháng. Xây dựng và duy trì bởi <a href="${siteUrl}/vi">ThePickleHub</a>, nền tảng pickleball song ngữ Việt-Anh đưa tin PPA Tour Asia, MLP và các giải pro khu vực.</p>
@@ -171,6 +177,8 @@ ${TOOLS_FAQ_VI.map(([q, a]) => `<p><strong>${q}</strong> ${a}</p>`).join("\n")}
   <li><a href="${siteUrl}/tools/doubles-elimination">Doubles Elimination Bracket</a></li>
   <li><a href="${siteUrl}/tools/flex-tournament">Flex Tournament</a></li>
 </ul>
+<h2>Create the whole tournament by chat</h2>
+<p>The first AI chat tournament builder made specifically for pickleball. Paste any player list - a message, an email, a spreadsheet, a photo - and the AI reads the names, drafts the groups and builds the bracket in about 60 seconds, including MLP Team Matches. The draw then lives on ThePickleHub with results, livestreams and courts. <a href="${siteUrl}/tools/create-by-chat">AI bracket generator</a></p>
 <h2>What Bracket Lab actually does</h2>
 <p>Bracket Lab is a free pickleball tournament bracket generator built for clubs, weekend organizers, and pro events across Asia. Pick a format — round robin, single elimination, double elimination, MLP team match, or a fully custom flex tournament — and the tool builds the bracket, schedules matches, rotates courts, and tracks live scores. Share a single link with players and spectators; print a wall bracket if you need one.</p>
 <p>Create and manage tournaments with a free account. Spectators can view public brackets without signing in. Built and maintained by <a href="${siteUrl}/blog/tournament-organizer-hub">ThePickleHub</a>, a bilingual Vietnamese-English platform reporting on PPA Tour Asia, MLP, and the regional pro circuit.</p>
@@ -360,4 +368,89 @@ export function renderToolNewPage(toolSlug: string, siteUrl: string, rawPath: st
   const back = lang === "vi" ? `${siteUrl}/vi/tools/${toolSlug}` : `${siteUrl}/tools/${toolSlug}`;
   const backLabel = lang === "vi" ? "← Quay lại" : "← Back";
   return renderToolShell(meta, siteUrl, rawPath, lang, `/tools/${toolSlug}/new`, back, backLabel);
+}
+
+// ─── AI-chat tournament creator landing ─────────────────────────────────────
+// /tools/create-by-chat (EN) and /vi/tools/tao-giai-bang-chat (VI) - the VI
+// slug differs from the EN slug, so _middleware.ts dispatches both stripped
+// paths here explicitly. Copy is shared with the React page
+// (src/pages/CreateByChat.tsx) via src/content/tools/create-by-chat-copy.ts,
+// the hub-copy pattern: SSR body, JSON-LD and the human page cannot drift.
+// FAQ answers rendered in the body match the FAQPage JSON-LD verbatim, and
+// the HowTo steps match the visible <ol>, per structured-data policy.
+export function renderCreateByChatPage(siteUrl: string, rawPath: string, lang: "en" | "vi" = "en"): Response {
+  const c = CREATE_BY_CHAT_COPY[lang];
+  const enUrl = `${siteUrl}${CREATE_BY_CHAT_PATHS.en}`;
+  const viUrl = `${siteUrl}${CREATE_BY_CHAT_PATHS.vi}`;
+  const canonical = `${siteUrl}${rawPath}`;
+  const chatUrl = `${siteUrl}${lang === "vi" ? CREATE_BY_CHAT_PATHS.chatVi : CREATE_BY_CHAT_PATHS.chatEn}`;
+  const esc = escapeHtml;
+  return htmlResponse(buildHtml({
+    title: c.metaTitle,
+    description: c.metaDescription,
+    url: canonical,
+    siteUrl,
+    lang,
+    omitAutoHeader: true,
+    extraMeta: bilingualHreflang(enUrl, viUrl),
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "@id": `${canonical}#app`,
+          name: c.h1,
+          url: canonical,
+          inLanguage: lang,
+          applicationCategory: "SportsApplication",
+          operatingSystem: "Web",
+          offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+          description: c.metaDescription,
+        },
+        {
+          "@type": "HowTo",
+          "@id": `${canonical}#howto`,
+          name: c.stepsHeading,
+          inLanguage: lang,
+          step: c.steps.map(([name, text], i) => ({
+            "@type": "HowToStep",
+            position: i + 1,
+            name,
+            text,
+            url: `${canonical}#step-${i + 1}`,
+          })),
+        },
+        {
+          "@type": "FAQPage",
+          "@id": `${canonical}#faq`,
+          mainEntity: c.faq.map(([q, a]) => ({
+            "@type": "Question",
+            name: q,
+            acceptedAnswer: { "@type": "Answer", text: a },
+          })),
+        },
+      ],
+    },
+    bodyContent: `<h1>${esc(c.h1)}</h1>
+<p>${esc(c.lead)}</p>
+<p><a href="${chatUrl}">${esc(c.cta)}</a></p>
+<h2>${esc(c.demoTitle)}</h2>
+${c.demo.map(([speaker, text]) => `<p><strong>${esc(speaker)}:</strong> ${esc(text)}</p>`).join("\n")}
+<h2>${esc(c.stepsHeading)}</h2>
+<ol>
+${c.steps.map(([name, text], i) => `  <li id="step-${i + 1}"><strong>${esc(name)}.</strong> ${esc(text)}</li>`).join("\n")}
+</ol>
+<h2>${esc(c.formatsHeading)}</h2>
+<ul>
+${c.formats.map((f) => `  <li>${esc(f)}</li>`).join("\n")}
+</ul>
+<p>${esc(c.formatsNote)}</p>
+<h2>${esc(c.proofHeading)}</h2>
+${c.proofStats.map(([value, label]) => `<p><strong>${esc(value)}</strong> ${esc(label)}</p>`).join("\n")}
+<p>${esc(c.proofText)}</p>
+<h2>${esc(c.faqHeading)}</h2>
+${c.faq.map(([q, a]) => `<p><strong>${esc(q)}</strong> ${esc(a)}</p>`).join("\n")}
+<h2>${esc(c.closing)}</h2>
+<p><a href="${chatUrl}">${esc(c.cta)}</a></p>`,
+  }));
 }

@@ -1,0 +1,48 @@
+{
+  "checked_at_utc": "2026-11-20T15:34:28.685105+00:00",
+  "method": "public GET Cache-Control:no-cache; no browser/SW involved",
+  "variants": [
+    {
+      "url": "https://www.thepicklehub.net/khoi-phuc-dang-ky",
+      "entry_scripts": [
+        "/assets/index-BU3kxHAk-mwp52l5e.js"
+      ],
+      "transport_ok": true
+    },
+    {
+      "url": "https://www.thepicklehub.net/khoi-phuc-dang-ky?verify=1076-1534",
+      "entry_scripts": [
+        "/assets/index-BU3kxHAk-mwp52l5e.js"
+      ],
+      "transport_ok": true
+    },
+    {
+      "url": "https://pickle-hub-pro.pages.dev/khoi-phuc-dang-ky",
+      "entry_scripts": [
+        "/assets/index-BU3kxHAk-mwp52l5e.js"
+      ],
+      "transport_ok": true
+    },
+    {
+      "url": "https://pickle-hub-pro.pages.dev/khoi-phuc-dang-ky?verify=1076-1534",
+      "entry_scripts": [
+        "/assets/index-BU3kxHAk-mwp52l5e.js"
+      ],
+      "transport_ok": true
+    },
+    {
+      "url": "https://f520d0cd.pickle-hub-pro.pages.dev/khoi-phuc-dang-ky",
+      "entry_scripts": [
+        "/assets/index-Dzcu77VT-mwp4pyb4.js"
+      ],
+      "transport_ok": true
+    },
+    {
+      "url": "https://f520d0cd.pickle-hub-pro.pages.dev/khoi-phuc-dang-ky?verify=1076-1534",
+      "entry_scripts": [
+        "/assets/index-Dzcu77VT-mwp4pyb4.js"
+      ],
+      "transport_ok": true
+    }
+  ]
+}

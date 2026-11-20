@@ -48,7 +48,7 @@ it("does not inject third-party analytics into private SSR shells",async()=>{
 it("invalidates previous cached bot and human heads",async()=>{
  const {prerenderCacheKey}=await import("../../../functions/_lib/prerender-cache-key");
  for(const human of [false,true]){
-  const cache=new Map([[`pr:v158:${human?"human:":""}/blog/test`,"unguarded analytics head"]]);
+  const cache=new Map([158,159].map(version=>[`pr:v${version}:${human?"human:":""}/blog/test`,"unguarded analytics head"]));
   expect(cache.get(prerenderCacheKey("/blog/test",human))).toBeUndefined();
  }
 });
@@ -68,4 +68,21 @@ it("accepts bounded primitive dimensions while rejecting malformed/secret/unboun
  expect(analyticsProps({count:2,enabled:true,nan:NaN,infinite:Infinity,missing:undefined,list:["secret"],large:"x".repeat(101),malformed_url:"http://[",email_value:"private@example.test",jwt_value:"eyJhbGciOiJSUzI1NiJ9.credential",journey_id:token,plain_uuid:token,source_route:"/blog/test?q=secret#frag",hash:"/auth/callback#access_token=credential",failure_code:"unknown",country_code:4})).toEqual({count:2,enabled:true,journey_id:token,source_route:"/blog/test",failure_code:"unknown"});
  expect(analyticsLocation("not-an-absolute-url")).toBeNull();
  expect(isPrivateAnalyticsUrl("https://www.thepicklehub.net/%E0%A4%A")).toBe(true);
+});
+
+it.each(["en", "vi"] as const)("merge retains main's %s AI-chat landing and private create route", async lang=>{
+ const {renderCreateByChatPage, renderTools}=await import("../../../functions/_lib/render/tools");
+ const {CREATE_BY_CHAT_PATHS, CREATE_BY_CHAT_COPY}=await import("../../content/tools/create-by-chat-copy");
+ const origin="https://www.thepicklehub.net";
+ const landingPath=CREATE_BY_CHAT_PATHS[lang];
+ const chatPath=lang==="vi"?CREATE_BY_CHAT_PATHS.chatVi:CREATE_BY_CHAT_PATHS.chatEn;
+ const landing=await renderCreateByChatPage(origin,landingPath,lang).text();
+ expect(landing).toContain(CREATE_BY_CHAT_COPY[lang].h1);
+ expect(landing).toContain(`href="${origin}${chatPath}"`);
+ expect(landing).toContain(`${origin}${landingPath}`);
+ expect(await renderTools(origin,lang==="vi"?"/vi/tools":"/tools",lang).text()).toContain(landingPath);
+ const middleware=readFileSync(resolve(import.meta.dirname,"../../../functions/_middleware.ts"),"utf8");
+ expect(middleware).toContain('if (path === "/tools/quick-tables/chat") return renderNoindexShell');
+ expect(middleware).toContain('if (path === "/tools/create-by-chat") return renderCreateByChatPage');
+ expect(middleware).toContain('if (path === "/tools/tao-giai-bang-chat") return renderCreateByChatPage');
 });

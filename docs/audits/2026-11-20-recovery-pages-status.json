@@ -1,0 +1,1327 @@
+{
+  "checked_at_utc": "2026-11-20T15:35:10.443578+00:00",
+  "projects": [
+    {
+      "name": "pickle-hub-pro",
+      "production_branch": "main",
+      "domains": [
+        "pickle-hub-pro.pages.dev",
+        "thepicklehub.net",
+        "www.thepicklehub.net"
+      ],
+      "canonical_deployment": {
+        "id": "10e7d24f-1ec8-4d16-a74f-982817c92fd8",
+        "url": "https://10e7d24f.pickle-hub-pro.pages.dev",
+        "environment": "production",
+        "created_on": "2026-11-20T15:26:02.455107Z",
+        "latest_stage": {
+          "name": "deploy",
+          "started_on": "2026-11-20T15:34:10.492697Z",
+          "ended_on": "2026-11-20T15:34:23.040093Z",
+          "status": "success"
+        },
+        "deployment_trigger": {
+          "type": "github:push",
+          "metadata": {
+            "branch": "main",
+            "commit_hash": "6a060661bf3f276bf35fbb2a2e4dd424ecba5e89",
+            "commit_message": "Fix registration recovery ownership and token disclosure (#1076)\n\n* Fix registration recovery ownership and credential disclosure\n\n* Fix recovery test types and verify rendered safe acknowledgement\n\n* Remove trailing whitespace in recovery regression fixture\n\n* Scope recovery regression tests to affected Edge Function",
+            "commit_dirty": false
+          }
+        },
+        "aliases": [
+          "https://thepicklehub.net",
+          "https://www.thepicklehub.net"
+        ],
+        "stages": [
+          {
+            "name": "queued",
+            "started_on": "2026-11-20T15:26:02.632053Z",
+            "ended_on": "2026-11-20T15:33:15.002616Z",
+            "status": "success"
+          },
+          {
+            "name": "initialize",
+            "started_on": "2026-11-20T15:33:15.002616Z",
+            "ended_on": "2026-11-20T15:33:19.71112Z",
+            "status": "success"
+          },
+          {
+            "name": "clone_repo",
+            "started_on": "2026-11-20T15:33:19.71112Z",
+            "ended_on": "2026-11-20T15:33:25.193894Z",
+            "status": "success"
+          },
+          {
+            "name": "build",
+            "started_on": "2026-11-20T15:33:25.193894Z",
+            "ended_on": "2026-11-20T15:34:10.492697Z",
+            "status": "success"
+          },
+          {
+            "name": "deploy",
+            "started_on": "2026-11-20T15:34:10.492697Z",
+            "ended_on": "2026-11-20T15:34:23.040093Z",
+            "status": "success"
+          }
+        ]
+      },
+      "latest_deployment": {
+        "id": "2886b0d3-6c29-4e2d-89f8-fe948b91c3d9",
+        "url": "https://2886b0d3.pickle-hub-pro.pages.dev",
+        "environment": "preview",
+        "created_on": "2026-11-20T15:33:57.381618Z",
+        "latest_stage": {
+          "name": "queued",
+          "started_on": "2026-11-20T15:33:57.521637Z",
+          "ended_on": null,
+          "status": "active"
+        },
+        "deployment_trigger": {
+          "type": "github:push",
+          "metadata": {
+            "branch": "codex/parser-blog-sanitizer-20261120",
+            "commit_hash": "8c0e8a3118411be80aa0e20909a003993a31c0d3",
+            "commit_message": "Preserve results article TOC with namespaced heading anchors",
+            "commit_dirty": false
+          }
+        },
+        "aliases": null,
+        "stages": [
+          {
+            "name": "queued",
+            "started_on": "2026-11-20T15:33:57.521637Z",
+            "ended_on": null,
+            "status": "active"
+          },
+          {
+            "name": "initialize",
+            "started_on": null,
+            "ended_on": null,
+            "status": "idle"
+          },
+          {
+            "name": "clone_repo",
+            "started_on": null,
+            "ended_on": null,
+            "status": "idle"
+          },
+          {
+            "name": "build",
+            "started_on": null,
+            "ended_on": null,
+            "status": "idle"
+          },
+          {
+            "name": "deploy",
+            "started_on": null,
+            "ended_on": null,
+            "status": "idle"
+          }
+        ]
+      },
+      "deployments": [
+        {
+          "id": "10e7d24f-1ec8-4d16-a74f-982817c92fd8",
+          "url": "https://10e7d24f.pickle-hub-pro.pages.dev",
+          "environment": "production",
+          "created_on": "2026-11-20T15:26:02.455107Z",
+          "latest_stage": {
+            "name": "deploy",
+            "started_on": "2026-11-20T15:34:10.492697Z",
+            "ended_on": "2026-11-20T15:34:23.040093Z",
+            "status": "success"
+          },
+          "deployment_trigger": {
+            "type": "github:push",
+            "metadata": {
+              "branch": "main",
+              "commit_hash": "6a060661bf3f276bf35fbb2a2e4dd424ecba5e89",
+              "commit_message": "Fix registration recovery ownership and token disclosure (#1076)\n\n* Fix registration recovery ownership and credential disclosure\n\n* Fix recovery test types and verify rendered safe acknowledgement\n\n* Remove trailing whitespace in recovery regression fixture\n\n* Scope recovery regression tests to affected Edge Function",
+              "commit_dirty": false
+            }
+          },
+          "aliases": [
+            "https://thepicklehub.net",
+            "https://www.thepicklehub.net"
+          ],
+          "stages": [
+            {
+              "name": "queued",
+              "started_on": "2026-11-20T15:26:02.632053Z",
+              "ended_on": "2026-11-20T15:33:15.002616Z",
+              "status": "success"
+            },
+            {
+              "name": "initialize",
+              "started_on": "2026-11-20T15:33:15.002616Z",
+              "ended_on": "2026-11-20T15:33:19.71112Z",
+              "status": "success"
+            },
+            {
+              "name": "clone_repo",
+              "started_on": "2026-11-20T15:33:19.71112Z",
+              "ended_on": "2026-11-20T15:33:25.193894Z",
+              "status": "success"
+            },
+            {
+              "name": "build",
+              "started_on": "2026-11-20T15:33:25.193894Z",
+              "ended_on": "2026-11-20T15:34:10.492697Z",
+              "status": "success"
+            },
+            {
+              "name": "deploy",
+              "started_on": "2026-11-20T15:34:10.492697Z",
+              "ended_on": "2026-11-20T15:34:23.040093Z",
+              "status": "success"
+            }
+          ]
+        },
+        {
+          "id": "f520d0cd-a4ce-408d-9498-29ef8352621d",
+          "url": "https://f520d0cd.pickle-hub-pro.pages.dev",
+          "environment": "production",
+          "created_on": "2026-11-20T15:18:22.377429Z",
+          "latest_stage": {
+            "name": "deploy",
+            "started_on": "2026-11-20T15:25:02.334092Z",
+            "ended_on": "2026-11-20T15:25:21.454465Z",
+            "status": "success"
+          },
+          "deployment_trigger": {
+            "type": "github:push",
+            "metadata": {
+              "branch": "main",
+              "commit_hash": "30ce267f0559106aee5a00cdc426b330913b140a",
+              "commit_message": "docs: reconcile roadmap evidence and current security SEO findings (#1074)\n\n* docs: reconcile roadmap evidence and current security SEO findings\n\n* docs: distinguish historical lifecycle proposal from deployed fixes",
+              "commit_dirty": false
+            }
+          },
+          "aliases": null,
+          "stages": [
+            {
+              "name": "queued",
+              "started_on": "2026-11-20T15:18:22.546052Z",
+              "ended_on": "2026-11-20T15:22:58.022777Z",
+              "status": "success"
+            },
+            {
+              "name": "initialize",
+              "started_on": "2026-11-20T15:22:58.022777Z",
+              "ended_on": "2026-11-20T15:23:02.121394Z",
+              "status": "success"
+            },
+            {
+              "name": "clone_repo",
+              "started_on": "2026-11-20T15:23:02.121394Z",
+              "ended_on": "2026-11-20T15:23:10.509454Z",
+              "status": "success"
+            },
+            {
+              "name": "build",
+              "started_on": "2026-11-20T15:23:10.509454Z",
+              "ended_on": "2026-11-20T15:25:02.334092Z",
+              "status": "success"
+            },
+            {
+              "name": "deploy",
+              "started_on": "2026-11-20T15:25:02.334092Z",
+              "ended_on": "2026-11-20T15:25:21.454465Z",
+              "status": "success"
+            }
+          ]
+        },
+        {
+          "id": "755bfb2b-311e-4cf8-a403-99ea243317ca",
+          "url": "https://755bfb2b.pickle-hub-pro.pages.dev",
+          "environment": "production",
+          "created_on": "2026-11-20T15:08:58.854391Z",
+          "latest_stage": {
+            "name": "deploy",
+            "started_on": "2026-11-20T15:13:09.593358Z",
+            "ended_on": "2026-11-20T15:13:24.225196Z",
+            "status": "success"
+          },
+          "deployment_trigger": {
+            "type": "github:push",
+            "metadata": {
+              "branch": "main",
+              "commit_hash": "eda688cf2396748cbfc96536eb4f35a8b2292c6a",
+              "commit_message": "fix(seo): point SSR live navigation at canonical routes (#1075)",
+              "commit_dirty": false
+            }
+          },
+          "aliases": null,
+          "stages": [
+            {
+              "name": "queued",
+              "started_on": "2026-11-20T15:08:58.995851Z",
+              "ended_on": "2026-11-20T15:11:45.829983Z",
+              "status": "success"
+            },
+            {
+              "name": "initialize",
+              "started_on": "2026-11-20T15:11:45.829983Z",
+              "ended_on": "2026-11-20T15:11:47.864442Z",
+              "status": "success"
+            },
+            {
+              "name": "clone_repo",
+              "started_on": "2026-11-20T15:11:47.864442Z",
+              "ended_on": "2026-11-20T15:11:53.833399Z",
+              "status": "success"
+            },
+            {
+              "name": "build",
+              "started_on": "2026-11-20T15:11:53.833399Z",
+              "ended_on": "2026-11-20T15:13:09.593358Z",
+              "status": "success"
+            },
+            {
+              "name": "deploy",
+              "started_on": "2026-11-20T15:13:09.593358Z",
+              "ended_on": "2026-11-20T15:13:24.225196Z",
+              "status": "success"
+            }
+          ]
+        },
+        {
+          "id": "f1f93398-2d0b-4735-813d-8289810c3eda",
+          "url": "https://f1f93398.pickle-hub-pro.pages.dev",
+          "environment": "production",
+          "created_on": "2026-11-20T14:54:13.101224Z",
+          "latest_stage": {
+            "name": "deploy",
+            "started_on": "2026-11-20T14:54:58.828605Z",
+            "ended_on": "2026-11-20T14:55:12.919854Z",
+            "status": "success"
+          },
+          "deployment_trigger": {
+            "type": "github:push",
+            "metadata": {
+              "branch": "main",
+              "commit_hash": "83ada796cf050151536c1f04060c85de8a89feb5",
+              "commit_message": "Add explicit isolated staging journey coverage gate (#1073)\n\n* Require explicit non-production staging coverage prerequisites\n\n* Require explicit non-production staging coverage prerequisites\n\n* Require explicit non-production staging coverage prerequisites\n\n* Report eligible executed and skipped journey checks\n\n* Report eligible executed and skipped journey checks\n\n* Report eligible executed and skipped journey checks",
+              "commit_dirty": false
+            }
+          },
+          "aliases": null,
+          "stages": [
+            {
+              "name": "queued",
+              "started_on": "2026-11-20T14:54:13.220048Z",
+              "ended_on": "2026-11-20T14:54:13.228588Z",
+              "status": "success"
+            },
+            {
+              "name": "initialize",
+              "started_on": "2026-11-20T14:54:13.228588Z",
+              "ended_on": "2026-11-20T14:54:14.720426Z",
+              "status": "success"
+            },
+            {
+              "name": "clone_repo",
+              "started_on": "2026-11-20T14:54:14.720426Z",
+              "ended_on": "2026-11-20T14:54:19.753514Z",
+              "status": "success"
+            },
+            {
+              "name": "build",
+              "started_on": "2026-11-20T14:54:19.753514Z",
+              "ended_on": "2026-11-20T14:54:58.828605Z",
+              "status": "success"
+            },
+            {
+              "name": "deploy",
+              "started_on": "2026-11-20T14:54:58.828605Z",
+              "ended_on": "2026-11-20T14:55:12.919854Z",
+              "status": "success"
+            }
+          ]
+        },
+        {
+          "id": "4c1eda60-220c-420f-8879-d1f7de8aeeec",
+          "url": "https://4c1eda60.pickle-hub-pro.pages.dev",
+          "environment": "production",
+          "created_on": "2026-11-20T14:08:47.578293Z",
+          "latest_stage": {
+            "name": "deploy",
+            "started_on": "2026-11-20T14:11:26.707473Z",
+            "ended_on": "2026-11-20T14:11:38.665528Z",
+            "status": "success"
+          },
+          "deployment_trigger": {
+            "type": "github:push",
+            "metadata": {
+              "branch": "main",
+              "commit_hash": "ca112da00f0ed0755e103aac1560965fa28507d5",
+              "commit_message": "Fix light story-tag contrast found in manual review (#1072)\n\n* Fix light story-tag contrast and document manual incomplete checks\n\n* Fix light story-tag contrast and document manual incomplete checks\n\n* Fix light story-tag contrast and document manual incomplete checks",
+              "commit_dirty": false
+            }
+          },
+          "aliases": null,
+          "stages": [
+            {
+              "name": "queued",
+              "started_on": "2026-11-20T14:08:47.978145Z",
+              "ended_on": "2026-11-20T14:10:34.563854Z",
+              "status": "success"
+            },
+            {
+              "name": "initialize",
+              "started_on": "2026-11-20T14:10:34.563854Z",
+              "ended_on": "2026-11-20T14:10:39.39668Z",
+              "status": "success"
+            },
+            {
+              "name": "clone_repo",
+              "started_on": "2026-11-20T14:10:39.39668Z",
+              "ended_on": "2026-11-20T14:10:44.733168Z",
+              "status": "success"
+            },
+            {
+              "name": "build",
+              "started_on": "2026-11-20T14:10:44.733168Z",
+              "ended_on": "2026-11-20T14:11:26.707473Z",
+              "status": "success"
+            },
+            {
+              "name": "deploy",
+              "started_on": "2026-11-20T14:11:26.707473Z",
+              "ended_on": "2026-11-20T14:11:38.665528Z",
+              "status": "success"
+            }
+          ]
+        },
+        {
+          "id": "444cc3b7-bb96-4010-92d7-166b39df43be",
+          "url": "https://444cc3b7.pickle-hub-pro.pages.dev",
+          "environment": "production",
+          "created_on": "2026-11-20T14:01:03.642443Z",
+          "latest_stage": {
+            "name": "deploy",
+            "started_on": "2026-11-20T14:02:05.929387Z",
+            "ended_on": "2026-11-20T14:02:29.884927Z",
+            "status": "success"
+          },
+          "deployment_trigger": {
+            "type": "github:push",
+            "metadata": {
+              "branch": "main",
+              "commit_hash": "7b794501d7b3f20b438f1068e2d31830c9b7cb6a",
+              "commit_message": "Fix light-theme contrast for homepage CTA and format labels (#1071)\n\n* Fix scoped light-theme text contrast\n\n* Fix scoped light-theme text contrast\n\n* Record public-route accessibility scan limits",
+              "commit_dirty": false
+            }
+          },
+          "aliases": null,
+          "stages": [
+            {
+              "name": "queued",
+              "started_on": "2026-11-20T14:01:03.863873Z",
+              "ended_on": "2026-11-20T14:01:03.873229Z",
+              "status": "success"
+            },
+            {
+              "name": "initialize",
+              "started_on": "2026-11-20T14:01:03.873229Z",
+              "ended_on": "2026-11-20T14:01:06.978788Z",
+              "status": "success"
+            },
+            {
+              "name": "clone_repo",
+              "started_on": "2026-11-20T14:01:06.978788Z",
+              "ended_on": "2026-11-20T14:01:16.060208Z",
+              "status": "success"
+            },
+            {
+              "name": "build",
+              "started_on": "2026-11-20T14:01:16.060208Z",
+              "ended_on": "2026-11-20T14:02:05.929387Z",
+              "status": "success"
+            },
+            {
+              "name": "deploy",
+              "started_on": "2026-11-20T14:02:05.929387Z",
+              "ended_on": "2026-11-20T14:02:29.884927Z",
+              "status": "success"
+            }
+          ]
+        },
+        {
+          "id": "41521ce1-9a2c-4290-9d1e-0f70f6269203",
+          "url": "https://41521ce1.pickle-hub-pro.pages.dev",
+          "environment": "production",
+          "created_on": "2026-11-20T13:49:46.038742Z",
+          "latest_stage": {
+            "name": "deploy",
+            "started_on": "2026-11-20T13:51:08.826137Z",
+            "ended_on": "2026-11-20T13:51:31.543518Z",
+            "status": "success"
+          },
+          "deployment_trigger": {
+            "type": "github:push",
+            "metadata": {
+              "branch": "main",
+              "commit_hash": "e51223bd187f1e66ea2c931bf6654a6ce2dd9bbe",
+              "commit_message": "Sync types for server-observed publication and score evidence (#1070)\n\n* Sync production types for observed publication and score evidence\n\n* Record scoped production schema type generation",
+              "commit_dirty": false
+            }
+          },
+          "aliases": null,
+          "stages": [
+            {
+              "name": "queued",
+              "started_on": "2026-11-20T13:49:46.152848Z",
+              "ended_on": "2026-11-20T13:49:46.155301Z",
+              "status": "success"
+            },
+            {
+              "name": "initialize",
+              "started_on": "2026-11-20T13:49:46.155301Z",
+              "ended_on": "2026-11-20T13:49:49.161245Z",
+              "status": "success"
+            },
+            {
+              "name": "clone_repo",
+              "started_on": "2026-11-20T13:49:49.161245Z",
+              "ended_on": "2026-11-20T13:49:55.194986Z",
+              "status": "success"
+            },
+            {
+              "name": "build",
+              "started_on": "2026-11-20T13:49:55.194986Z",
+              "ended_on": "2026-11-20T13:51:08.826137Z",
+              "status": "success"
+            },
+            {
+              "name": "deploy",
+              "started_on": "2026-11-20T13:51:08.826137Z",
+              "ended_on": "2026-11-20T13:51:31.543518Z",
+              "status": "success"
+            }
+          ]
+        },
+        {
+          "id": "a04e7561-df62-4e11-a63f-85fcead979b1",
+          "url": "https://a04e7561.pickle-hub-pro.pages.dev",
+          "environment": "production",
+          "created_on": "2026-11-20T13:41:35.571657Z",
+          "latest_stage": {
+            "name": "deploy",
+            "started_on": "2026-11-20T13:42:50.235979Z",
+            "ended_on": "2026-11-20T13:43:03.742342Z",
+            "status": "success"
+          },
+          "deployment_trigger": {
+            "type": "github:push",
+            "metadata": {
+              "branch": "main",
+              "commit_hash": "a3220d314de62c6f813d6245e5f2b89c4a20e1aa",
+              "commit_message": "Include server-observed commitments in weekly product report (#1069)\n\n* Include server-observed commitments in weekly evidence\n\n* Include server-observed commitments in weekly evidence\n\n* Define aggregate server-commit evidence snapshot\n\n* Define aggregate server-commit evidence snapshot",
+              "commit_dirty": false
+            }
+          },
+          "aliases": null,
+          "stages": [
+            {
+              "name": "queued",
+              "started_on": "2026-11-20T13:41:35.837391Z",
+              "ended_on": "2026-11-20T13:41:35.845578Z",
+              "status": "success"
+            },
+            {
+              "name": "initialize",
+              "started_on": "2026-11-20T13:41:35.845578Z",
+              "ended_on": "2026-11-20T13:41:38.896647Z",
+              "status": "success"
+            },
+            {
+              "name": "clone_repo",
+              "started_on": "2026-11-20T13:41:38.896647Z",
+              "ended_on": "2026-11-20T13:41:44.783947Z",
+              "status": "success"
+            },
+            {
+              "name": "build",
+              "started_on": "2026-11-20T13:41:44.783947Z",
+              "ended_on": "2026-11-20T13:42:50.235979Z",
+              "status": "success"
+            },
+            {
+              "name": "deploy",
+              "started_on": "2026-11-20T13:42:50.235979Z",
+              "ended_on": "2026-11-20T13:43:03.742342Z",
+              "status": "success"
+            }
+          ]
+        },
+        {
+          "id": "ef6ab0b4-b642-4dc9-89eb-b2ecc1599dd3",
+          "url": "https://ef6ab0b4.pickle-hub-pro.pages.dev",
+          "environment": "production",
+          "created_on": "2026-11-20T13:34:44.682801Z",
+          "latest_stage": {
+            "name": "deploy",
+            "started_on": "2026-11-20T13:36:46.532613Z",
+            "ended_on": "2026-11-20T13:36:58.998768Z",
+            "status": "success"
+          },
+          "deployment_trigger": {
+            "type": "github:push",
+            "metadata": {
+              "branch": "main",
+              "commit_hash": "08fbb83cace3bcea54eeb67e98f81f0d7ca870f6",
+              "commit_message": "Prepare isolated restore verification and backup evidence (#1068)\n\n* Prepare read-only restore verification and record backup inventory\n\n* Prepare read-only restore verification and record backup inventory\n\n* Prepare read-only restore verification and record backup inventory",
+              "commit_dirty": false
+            }
+          },
+          "aliases": null,
+          "stages": [
+            {
+              "name": "queued",
+              "started_on": "2026-11-20T13:34:44.787441Z",
+              "ended_on": "2026-11-20T13:35:57.579378Z",
+              "status": "success"
+            },
+            {
+              "name": "initialize",
+              "started_on": "2026-11-20T13:35:57.579378Z",
+              "ended_on": "2026-11-20T13:35:59.504426Z",
+              "status": "success"
+            },
+            {
+              "name": "clone_repo",
+              "started_on": "2026-11-20T13:35:59.504426Z",
+              "ended_on": "2026-11-20T13:36:02.958462Z",
+              "status": "success"
+            },
+            {
+              "name": "build",
+              "started_on": "2026-11-20T13:36:02.958462Z",
+              "ended_on": "2026-11-20T13:36:46.532613Z",
+              "status": "success"
+            },
+            {
+              "name": "deploy",
+              "started_on": "2026-11-20T13:36:46.532613Z",
+              "ended_on": "2026-11-20T13:36:58.998768Z",
+              "status": "success"
+            }
+          ]
+        },
+        {
+          "id": "235b373a-ec53-4048-935d-00abacc61edb",
+          "url": "https://235b373a.pickle-hub-pro.pages.dev",
+          "environment": "production",
+          "created_on": "2026-11-20T13:27:50.423074Z",
+          "latest_stage": {
+            "name": "deploy",
+            "started_on": "2026-11-20T13:28:37.238516Z",
+            "ended_on": "2026-11-20T13:28:48.593877Z",
+            "status": "success"
+          },
+          "deployment_trigger": {
+            "type": "github:push",
+            "metadata": {
+              "branch": "main",
+              "commit_hash": "ff1c04f71502eeffe5e65de19a3497953baa5439",
+              "commit_message": "Prevent false success after failed QuickTable score save (#1065)\n\n* Propagate rejected QuickTable score saves to editors\n\n* Propagate rejected QuickTable score saves to editors\n\n* Propagate rejected QuickTable score saves to editors\n\n* Propagate rejected QuickTable score saves to editors\n\n* Propagate rejected QuickTable score saves to editors\n\n* Propagate rejected QuickTable score saves to editors\n\n* Test rejected score save and retry behavior\n\n* Test isolated score commit boundary and editor retries\n\n* Test isolated score commit boundary and editor retries\n\n* Test isolated score commit boundary and editor retries\n\n* Test isolated score commit boundary and editor retries\n\n* Test isolated score commit boundary and editor retries\n\n* Replace broad hook test with isolated production-boundary tests",
+              "commit_dirty": false
+            }
+          },
+          "aliases": null,
+          "stages": [
+            {
+              "name": "queued",
+              "started_on": "2026-11-20T13:27:50.554901Z",
+              "ended_on": "2026-11-20T13:27:50.560778Z",
+              "status": "success"
+            },
+            {
+              "name": "initialize",
+              "started_on": "2026-11-20T13:27:50.560778Z",
+              "ended_on": "2026-11-20T13:27:52.257015Z",
+              "status": "success"
+            },
+            {
+              "name": "clone_repo",
+              "started_on": "2026-11-20T13:27:52.257015Z",
+              "ended_on": "2026-11-20T13:27:57.003059Z",
+              "status": "success"
+            },
+            {
+              "name": "build",
+              "started_on": "2026-11-20T13:27:57.003059Z",
+              "ended_on": "2026-11-20T13:28:37.238516Z",
+              "status": "success"
+            },
+            {
+              "name": "deploy",
+              "started_on": "2026-11-20T13:28:37.238516Z",
+              "ended_on": "2026-11-20T13:28:48.593877Z",
+              "status": "success"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "thepicklehub-shop-staging",
+      "production_branch": "feat/shop-closed-pilot",
+      "domains": [
+        "thepicklehub-shop-staging.pages.dev"
+      ],
+      "canonical_deployment": {
+        "id": "967d73c2-bafb-43a4-8a4e-603230900a94",
+        "url": "https://967d73c2.thepicklehub-shop-staging.pages.dev",
+        "environment": "production",
+        "created_on": "2026-08-15T16:58:58.374567Z",
+        "latest_stage": {
+          "name": "deploy",
+          "started_on": "2026-08-15T17:01:16.894247Z",
+          "ended_on": "2026-08-15T17:01:26.677155Z",
+          "status": "success"
+        },
+        "deployment_trigger": {
+          "type": "github:push",
+          "metadata": {
+            "branch": "feat/shop-closed-pilot",
+            "commit_hash": "ee09286479646d97187f26661b9e70e59904c40b",
+            "commit_message": "test(shop): the P0 publish wiring gets its tests, and two review findings land\n\nCodex review of e875ff01: (1) the approve\u2192publish path had no UI test \u2014\nthree now drive the REAL hooks against a fake shopRpc and functions.invoke:\na successful approve publishes exactly once for that product; a publish\nfailure leaves the recorded approve visible, raises its own message, and\nthe retry button re-invokes; request-changes never touches the worker.\n(2) VariantEditor tracked blur-touched groups by index, so deleting group i\nhanded its touched state to whichever group slid into slot i \u2014 removeGroup\nnow shifts the set with the rows. (3, contested with evidence) the\nsuggested publish-commit race cannot corrupt state: products carries\nCHECK products_publish_requires_approval (is_published=false OR\nstatus='approved'), so a reopen racing the worker ends in a loud 23514 and\nthe retry button, not needs_changes+published.\n\nAlso: the client import in usePublishProduct goes lazy \u2014 client.ts throws\nat module load without env vars, which is what failed CI quality on\ne875ff01 through the MediaEditor test import chain.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>",
+            "commit_dirty": false
+          }
+        },
+        "aliases": null,
+        "stages": [
+          {
+            "name": "queued",
+            "started_on": "2026-08-15T16:58:58.575183Z",
+            "ended_on": "2026-08-15T17:00:12.192935Z",
+            "status": "success"
+          },
+          {
+            "name": "initialize",
+            "started_on": "2026-08-15T17:00:12.192935Z",
+            "ended_on": "2026-08-15T17:00:16.016142Z",
+            "status": "success"
+          },
+          {
+            "name": "clone_repo",
+            "started_on": "2026-08-15T17:00:16.016142Z",
+            "ended_on": "2026-08-15T17:00:21.553064Z",
+            "status": "success"
+          },
+          {
+            "name": "build",
+            "started_on": "2026-08-15T17:00:21.553064Z",
+            "ended_on": "2026-08-15T17:01:16.894247Z",
+            "status": "success"
+          },
+          {
+            "name": "deploy",
+            "started_on": "2026-08-15T17:01:16.894247Z",
+            "ended_on": "2026-08-15T17:01:26.677155Z",
+            "status": "success"
+          }
+        ]
+      },
+      "latest_deployment": {
+        "id": "6716ed24-c684-4dff-af4b-d6c00c39cb8b",
+        "url": "https://6716ed24.thepicklehub-shop-staging.pages.dev",
+        "environment": "preview",
+        "created_on": "2026-11-20T15:33:57.381618Z",
+        "latest_stage": {
+          "name": "queued",
+          "started_on": "2026-11-20T15:33:57.596747Z",
+          "ended_on": null,
+          "status": "active"
+        },
+        "deployment_trigger": {
+          "type": "github:push",
+          "metadata": {
+            "branch": "codex/parser-blog-sanitizer-20261120",
+            "commit_hash": "8c0e8a3118411be80aa0e20909a003993a31c0d3",
+            "commit_message": "Preserve results article TOC with namespaced heading anchors",
+            "commit_dirty": false
+          }
+        },
+        "aliases": null,
+        "stages": [
+          {
+            "name": "queued",
+            "started_on": "2026-11-20T15:33:57.596747Z",
+            "ended_on": null,
+            "status": "active"
+          },
+          {
+            "name": "initialize",
+            "started_on": null,
+            "ended_on": null,
+            "status": "idle"
+          },
+          {
+            "name": "clone_repo",
+            "started_on": null,
+            "ended_on": null,
+            "status": "idle"
+          },
+          {
+            "name": "build",
+            "started_on": null,
+            "ended_on": null,
+            "status": "idle"
+          },
+          {
+            "name": "deploy",
+            "started_on": null,
+            "ended_on": null,
+            "status": "idle"
+          }
+        ]
+      },
+      "deployments": [
+        {
+          "id": "967d73c2-bafb-43a4-8a4e-603230900a94",
+          "url": "https://967d73c2.thepicklehub-shop-staging.pages.dev",
+          "environment": "production",
+          "created_on": "2026-08-15T16:58:58.374567Z",
+          "latest_stage": {
+            "name": "deploy",
+            "started_on": "2026-08-15T17:01:16.894247Z",
+            "ended_on": "2026-08-15T17:01:26.677155Z",
+            "status": "success"
+          },
+          "deployment_trigger": {
+            "type": "github:push",
+            "metadata": {
+              "branch": "feat/shop-closed-pilot",
+              "commit_hash": "ee09286479646d97187f26661b9e70e59904c40b",
+              "commit_message": "test(shop): the P0 publish wiring gets its tests, and two review findings land\n\nCodex review of e875ff01: (1) the approve\u2192publish path had no UI test \u2014\nthree now drive the REAL hooks against a fake shopRpc and functions.invoke:\na successful approve publishes exactly once for that product; a publish\nfailure leaves the recorded approve visible, raises its own message, and\nthe retry button re-invokes; request-changes never touches the worker.\n(2) VariantEditor tracked blur-touched groups by index, so deleting group i\nhanded its touched state to whichever group slid into slot i \u2014 removeGroup\nnow shifts the set with the rows. (3, contested with evidence) the\nsuggested publish-commit race cannot corrupt state: products carries\nCHECK products_publish_requires_approval (is_published=false OR\nstatus='approved'), so a reopen racing the worker ends in a loud 23514 and\nthe retry button, not needs_changes+published.\n\nAlso: the client import in usePublishProduct goes lazy \u2014 client.ts throws\nat module load without env vars, which is what failed CI quality on\ne875ff01 through the MediaEditor test import chain.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>",
+              "commit_dirty": false
+            }
+          },
+          "aliases": null,
+          "stages": [
+            {
+              "name": "queued",
+              "started_on": "2026-08-15T16:58:58.575183Z",
+              "ended_on": "2026-08-15T17:00:12.192935Z",
+              "status": "success"
+            },
+            {
+              "name": "initialize",
+              "started_on": "2026-08-15T17:00:12.192935Z",
+              "ended_on": "2026-08-15T17:00:16.016142Z",
+              "status": "success"
+            },
+            {
+              "name": "clone_repo",
+              "started_on": "2026-08-15T17:00:16.016142Z",
+              "ended_on": "2026-08-15T17:00:21.553064Z",
+              "status": "success"
+            },
+            {
+              "name": "build",
+              "started_on": "2026-08-15T17:00:21.553064Z",
+              "ended_on": "2026-08-15T17:01:16.894247Z",
+              "status": "success"
+            },
+            {
+              "name": "deploy",
+              "started_on": "2026-08-15T17:01:16.894247Z",
+              "ended_on": "2026-08-15T17:01:26.677155Z",
+              "status": "success"
+            }
+          ]
+        },
+        {
+          "id": "9105b918-c689-4fb0-8b6b-ce212a2d398a",
+          "url": "https://9105b918.thepicklehub-shop-staging.pages.dev",
+          "environment": "production",
+          "created_on": "2026-08-15T16:49:13.935579Z",
+          "latest_stage": {
+            "name": "deploy",
+            "started_on": "2026-08-15T16:51:30.564644Z",
+            "ended_on": "2026-08-15T16:51:41.09375Z",
+            "status": "success"
+          },
+          "deployment_trigger": {
+            "type": "github:push",
+            "metadata": {
+              "branch": "feat/shop-closed-pilot",
+              "commit_hash": "e875ff01f7c48b0651bce0923293a2be189a66c8",
+              "commit_message": "fix(shop): Wave 0 round 2 \u2014 approve now publishes, and anon lost the base tables\n\nP0: approving a product moved the state machine and nothing else \u2014 no\nclient anywhere called the shop-media-lifecycle publish action, so every\napproved product stayed invisible with its media in draft, and the admin\nscreen reported exactly that with no button to press. Approve now triggers\nthe publish call (the RPC itself still does not publish \u2014 the acceptance\ntests pin that), and an approved-but-not-visible product shows a '\u0110\u01b0a l\u00ean\ns\u00e0n' retry button, which also serves the reopen \u2192 approve cycle.\n\nP1 (migration 20260815090000): the anon key could read sku+stock_on_hand,\nproducts.internal_note, decided_by and draft_path straight off the base\ntables \u2014 RLS scopes rows, never columns, and the TO-public policies existed\nonly because public_products was security_invoker. The view is now DEFINER\n(its WHERE and column list are the boundary), the three public policies are\ndropped, and anon loses SELECT on the base tables outright: the Wave-0\nprobe answers 42501. Twelve new pgTAP assertions pin it (red-proved); four\nlegacy suites moved to the stronger contract, full suite 1403/1403.\n\nP2: /shop and the PDP claimed ThePickleHub verifies sellers' papers \u2014 the\npilot collects none. Both now state what actually happens.\n\nAlso, from the same test pass: raw enums labelled (SECTION_LABEL /\nSTATUS_LABEL, the page <title> included); category and admin-tab count\nchips get their missing CSS rule; group-value errors wait for blur instead\nof flashing mid-typing (validity still blocks Save live); the status\ntimeline overrides the app-wide refetchOnMount:false so a resubmit shows\nits milestone without a hard reload; an ACTIVE seller is routed to the\nseller channel instead of 'B\u1eaft \u0111\u1ea7u \u0111\u0103ng k\u00fd'; the seller-home overview stops\ncalling the products screen 's\u1eafp c\u00f3'.\n\nCoverage 83.76% (denominator +93, new code carries its tests); bundle\n1950.1/1970 KB.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>",
+              "commit_dirty": false
+            }
+          },
+          "aliases": null,
+          "stages": [
+            {
+              "name": "queued",
+              "started_on": "2026-08-15T16:49:14.168472Z",
+              "ended_on": "2026-08-15T16:50:29.577858Z",
+              "status": "success"
+            },
+            {
+              "name": "initialize",
+              "started_on": "2026-08-15T16:50:29.577858Z",
+              "ended_on": "2026-08-15T16:50:32.642067Z",
+              "status": "success"
+            },
+            {
+              "name": "clone_repo",
+              "started_on": "2026-08-15T16:50:32.642067Z",
+              "ended_on": "2026-08-15T16:50:37.779254Z",
+              "status": "success"
+            },
+            {
+              "name": "build",
+              "started_on": "2026-08-15T16:50:37.779254Z",
+              "ended_on": "2026-08-15T16:51:30.564644Z",
+              "status": "success"
+            },
+            {
+              "name": "deploy",
+              "started_on": "2026-08-15T16:51:30.564644Z",
+              "ended_on": "2026-08-15T16:51:41.09375Z",
+              "status": "success"
+            }
+          ]
+        },
+        {
+          "id": "d4876753-5bbd-4edb-b2c8-2594e8028c24",
+          "url": "https://d4876753.thepicklehub-shop-staging.pages.dev",
+          "environment": "production",
+          "created_on": "2026-08-14T16:11:45.867028Z",
+          "latest_stage": {
+            "name": "deploy",
+            "started_on": "2026-08-14T16:14:03.400225Z",
+            "ended_on": "2026-08-14T16:14:13.947888Z",
+            "status": "success"
+          },
+          "deployment_trigger": {
+            "type": "github:push",
+            "metadata": {
+              "branch": "feat/shop-closed-pilot",
+              "commit_hash": "3f83603261039b9e4d5f13368188487d0bf0cef8",
+              "commit_message": "fix(shop): Wave 0 findings \u2014 the admin frame could not scroll, and three rough edges\n\nP0: .tl-admin-frame clipped both axes inside a 100dvh shell, so review\ncontent taller than the frame had no scrollbar anywhere \u2014 mouse wheel dead,\nonly Tab and programmatic scrollIntoView reached the decision panel. The\nX-axis clip stays (it exists to contain wide tables); the body is now the\nY scroller, with min-height:0 on the grid items so it may be shorter than\nits content, and an auto-1fr row split on mobile.\n\nAlso from the same session: the review screen showed raw enums (ca-nhan,\nsubmitted) where the queue already spoke Vietnamese \u2014 both now share one\nlabel map in applicationState; the decision radios carry accessible names\ninstead of announcing 'on'; and Seller Rules v1 renders as readable\nmarkup (headings, lists, quotes \u2014 a ~70-line renderer, React-escaped, no\nmarkdown dependency at 20KB of bundle headroom) with the approval-desk\nmetadata table dropped from DISPLAY only \u2014 the stored body that acceptances\nsign keeps its bytes and hash.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>",
+              "commit_dirty": false
+            }
+          },
+          "aliases": null,
+          "stages": [
+            {
+              "name": "queued",
+              "started_on": "2026-08-14T16:11:46.064646Z",
+              "ended_on": "2026-08-14T16:13:01.77411Z",
+              "status": "success"
+            },
+            {
+              "name": "initialize",
+              "started_on": "2026-08-14T16:13:01.77411Z",
+              "ended_on": "2026-08-14T16:13:04.432092Z",
+              "status": "success"
+            },
+            {
+              "name": "clone_repo",
+              "started_on": "2026-08-14T16:13:04.432092Z",
+              "ended_on": "2026-08-14T16:13:10.205711Z",
+              "status": "success"
+            },
+            {
+              "name": "build",
+              "started_on": "2026-08-14T16:13:10.205711Z",
+              "ended_on": "2026-08-14T16:14:03.400225Z",
+              "status": "success"
+            },
+            {
+              "name": "deploy",
+              "started_on": "2026-08-14T16:14:03.400225Z",
+              "ended_on": "2026-08-14T16:14:13.947888Z",
+              "status": "success"
+            }
+          ]
+        },
+        {
+          "id": "a600adf1-e554-47fd-898b-21f0747cea38",
+          "url": "https://a600adf1.thepicklehub-shop-staging.pages.dev",
+          "environment": "production",
+          "created_on": "2026-08-14T08:26:49.782854Z",
+          "latest_stage": {
+            "name": "deploy",
+            "started_on": "2026-08-14T08:29:36.694917Z",
+            "ended_on": "2026-08-14T08:29:45.750824Z",
+            "status": "success"
+          },
+          "deployment_trigger": {
+            "type": "github:push",
+            "metadata": {
+              "branch": "feat/shop-closed-pilot",
+              "commit_hash": "2f5d950e6f555e5f1f8753c8f2f873af4813d66d",
+              "commit_message": "fix(shop-pilot): teardown deletes exact object names from the catalog, not folder prefixes\n\nThe seventh storage-teardown lie: the list endpoint returns one level of\nfolders, and remove() on those prefixes answers HTTP 200 having deleted\nnothing \u2014 13 objects survived a 'clean' run. Names now come straight from\nstorage.objects and the remaining count is read back after the delete.\nFinal counts: every fixture counter zero, including storage.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>",
+              "commit_dirty": false
+            }
+          },
+          "aliases": null,
+          "stages": [
+            {
+              "name": "queued",
+              "started_on": "2026-08-14T08:26:49.979933Z",
+              "ended_on": "2026-08-14T08:28:48.433663Z",
+              "status": "success"
+            },
+            {
+              "name": "initialize",
+              "started_on": "2026-08-14T08:28:48.433663Z",
+              "ended_on": "2026-08-14T08:28:50.197648Z",
+              "status": "success"
+            },
+            {
+              "name": "clone_repo",
+              "started_on": "2026-08-14T08:28:50.197648Z",
+              "ended_on": "2026-08-14T08:28:55.185415Z",
+              "status": "success"
+            },
+            {
+              "name": "build",
+              "started_on": "2026-08-14T08:28:55.185415Z",
+              "ended_on": "2026-08-14T08:29:36.694917Z",
+              "status": "success"
+            },
+            {
+              "name": "deploy",
+              "started_on": "2026-08-14T08:29:36.694917Z",
+              "ended_on": "2026-08-14T08:29:45.750824Z",
+              "status": "success"
+            }
+          ]
+        },
+        {
+          "id": "fb876f3b-99d0-42dd-ab30-4738de2e6822",
+          "url": "https://fb876f3b.thepicklehub-shop-staging.pages.dev",
+          "environment": "production",
+          "created_on": "2026-08-14T08:25:27.176965Z",
+          "latest_stage": {
+            "name": "deploy",
+            "started_on": "2026-08-14T08:27:36.575618Z",
+            "ended_on": "2026-08-14T08:27:48.826228Z",
+            "status": "success"
+          },
+          "deployment_trigger": {
+            "type": "github:push",
+            "metadata": {
+              "branch": "feat/shop-closed-pilot",
+              "commit_hash": "18e76c2c09058b02e57500eec0c01a70618ee072",
+              "commit_message": "test(shop-pilot): CP27 harness \u2014 the acceptance run as it actually happened\n\nThe full cp27-run harness, committed with every correction tonight's run\nforced: chain-a1 speaks shop_application_decide's vocabulary\n(request-changes, f-desc/f-addr targets); chain-a2 writes like the\nproduction client (return=minimal), reads shop_contact_channels.state and\ncalls shop_contact_decide(_id,...) pinning the 6-arg overload; chain-b2\nreads media under product.media; activate-shop covers the admin activation\nstep (pending_activation \u2192 active through the shops_update_admin policy \u2014\nthe run proved product_create refuses before it); finish-17e re-establishes\nthe 17e verdict after a platform blip (SUPABASE_EDGE_RUNTIME_SERVICE_DEGRADED,\none 503 at 14:17+07) killed the poll mid-loop; teardown sweeps the rewound\nshop's prefixes too and expects ledger 360. The resume-* runners document\nthe phase-wise re-entry used tonight; secrets.local.json, registry.json and\nlogs stay gitignored.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>",
+              "commit_dirty": false
+            }
+          },
+          "aliases": null,
+          "stages": [
+            {
+              "name": "queued",
+              "started_on": "2026-08-14T08:25:27.444595Z",
+              "ended_on": "2026-08-14T08:26:34.809654Z",
+              "status": "success"
+            },
+            {
+              "name": "initialize",
+              "started_on": "2026-08-14T08:26:34.809654Z",
+              "ended_on": "2026-08-14T08:26:38.029931Z",
+              "status": "success"
+            },
+            {
+              "name": "clone_repo",
+              "started_on": "2026-08-14T08:26:38.029931Z",
+              "ended_on": "2026-08-14T08:26:43.274676Z",
+              "status": "success"
+            },
+            {
+              "name": "build",
+              "started_on": "2026-08-14T08:26:43.274676Z",
+              "ended_on": "2026-08-14T08:27:36.575618Z",
+              "status": "success"
+            },
+            {
+              "name": "deploy",
+              "started_on": "2026-08-14T08:27:36.575618Z",
+              "ended_on": "2026-08-14T08:27:48.826228Z",
+              "status": "success"
+            }
+          ]
+        },
+        {
+          "id": "183644f4-e1eb-44e2-8e9a-6a2a94d923a0",
+          "url": "https://183644f4.thepicklehub-shop-staging.pages.dev",
+          "environment": "production",
+          "created_on": "2026-08-14T06:43:11.375455Z",
+          "latest_stage": {
+            "name": "deploy",
+            "started_on": "2026-08-14T06:45:44.628154Z",
+            "ended_on": "2026-08-14T06:45:55.80081Z",
+            "status": "success"
+          },
+          "deployment_trigger": {
+            "type": "github:push",
+            "metadata": {
+              "branch": "feat/shop-closed-pilot",
+              "commit_hash": "f6d42b5fe8f6c7f1ca67ebaf88b3b7c4d68d6994",
+              "commit_message": "fix(shop): StepBody remounted on every render, killing focus each time the form re-rendered\n\nThe real root of CP27 case 8: StepBody is defined inside the component, so\n<StepBody /> hands React a new element type on every render and the whole\nstep subtree is unmounted and remounted for every state change. The deep\nlink DID focus the field (the two earlier fixes made sure the timer waits\nfor the form) \u2014 and lost it half a second later when the next query settled\nand re-rendered. A hand-typing user loses focus the same way; automated\nfill() never sees it because it writes the value in one event. Calling\nStepBody() inlines the JSX with no component boundary, so the DOM nodes\nsurvive re-renders.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>",
+              "commit_dirty": false
+            }
+          },
+          "aliases": null,
+          "stages": [
+            {
+              "name": "queued",
+              "started_on": "2026-08-14T06:43:11.581058Z",
+              "ended_on": "2026-08-14T06:44:18.756584Z",
+              "status": "success"
+            },
+            {
+              "name": "initialize",
+              "started_on": "2026-08-14T06:44:18.756584Z",
+              "ended_on": "2026-08-14T06:44:21.694757Z",
+              "status": "success"
+            },
+            {
+              "name": "clone_repo",
+              "started_on": "2026-08-14T06:44:21.694757Z",
+              "ended_on": "2026-08-14T06:44:27.526185Z",
+              "status": "success"
+            },
+            {
+              "name": "build",
+              "started_on": "2026-08-14T06:44:27.526185Z",
+              "ended_on": "2026-08-14T06:45:44.628154Z",
+              "status": "success"
+            },
+            {
+              "name": "deploy",
+              "started_on": "2026-08-14T06:45:44.628154Z",
+              "ended_on": "2026-08-14T06:45:55.80081Z",
+              "status": "success"
+            }
+          ]
+        },
+        {
+          "id": "5e25bcd1-6c21-4898-bb03-f367ca08a77d",
+          "url": "https://5e25bcd1.thepicklehub-shop-staging.pages.dev",
+          "environment": "production",
+          "created_on": "2026-08-14T06:35:37.053272Z",
+          "latest_stage": {
+            "name": "deploy",
+            "started_on": "2026-08-14T06:38:12.097997Z",
+            "ended_on": "2026-08-14T06:38:22.609005Z",
+            "status": "success"
+          },
+          "deployment_trigger": {
+            "type": "github:push",
+            "metadata": {
+              "branch": "feat/shop-closed-pilot",
+              "commit_hash": "bd954a857533ceef384bd38a275bec78d336e54f",
+              "commit_message": "fix(shop): gate the deep-link focus on every query the form waits for\n\nRound 2 of the CP27 case 8 fix: the first gate covered remote.isLoading but\nthe form also waits for the pilot-access query, and on the deep-link click\nthat was the one still in flight \u2014 the 60ms focus timer fired against the\nLoadingState skeleton and never re-armed. The effect now mirrors the render\ngate exactly (pilot AND application loaded) so it re-fires when the form is\nreally on screen.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>",
+              "commit_dirty": false
+            }
+          },
+          "aliases": null,
+          "stages": [
+            {
+              "name": "queued",
+              "started_on": "2026-08-14T06:35:37.258215Z",
+              "ended_on": "2026-08-14T06:37:18.115796Z",
+              "status": "success"
+            },
+            {
+              "name": "initialize",
+              "started_on": "2026-08-14T06:37:18.115796Z",
+              "ended_on": "2026-08-14T06:37:20.400592Z",
+              "status": "success"
+            },
+            {
+              "name": "clone_repo",
+              "started_on": "2026-08-14T06:37:20.400592Z",
+              "ended_on": "2026-08-14T06:37:25.088882Z",
+              "status": "success"
+            },
+            {
+              "name": "build",
+              "started_on": "2026-08-14T06:37:25.088882Z",
+              "ended_on": "2026-08-14T06:38:12.097997Z",
+              "status": "success"
+            },
+            {
+              "name": "deploy",
+              "started_on": "2026-08-14T06:38:12.097997Z",
+              "ended_on": "2026-08-14T06:38:22.609005Z",
+              "status": "success"
+            }
+          ]
+        },
+        {
+          "id": "d458131d-232f-43f7-8643-1ca259316af9",
+          "url": "https://d458131d.thepicklehub-shop-staging.pages.dev",
+          "environment": "production",
+          "created_on": "2026-08-14T02:44:58.850452Z",
+          "latest_stage": {
+            "name": "deploy",
+            "started_on": "2026-08-14T02:48:10.457128Z",
+            "ended_on": "2026-08-14T02:48:20.676022Z",
+            "status": "success"
+          },
+          "deployment_trigger": {
+            "type": "github:push",
+            "metadata": {
+              "branch": "feat/shop-closed-pilot",
+              "commit_hash": "1df63465443de30a869379c51bbdafffc48f37dd",
+              "commit_message": "fix(shop): the moderator's deep link focused nothing on a cold load\n\nCP27 case 8: /seller/application?step=N&focus=<field> ran its focus effect\nagainst the loading skeleton \u2014 focusField found no element and returned\nsilently, and the effect's deps never re-fired it once the data arrived. So\nthe deep link moved focus only when the application draft happened to be\ncached, which is exactly the class of bug the VI anchors shipped once\nalready. The effect is now gated on remote.isLoading and re-fires when the\nform really exists.\n\nHarness: case 8 now clicks the per-field deep link (the first revision\nmatched the generic edit button by text and reported the deep link broken\nwithout ever clicking it), asserts the focused element IS the field named in\nthe href, and cp27-run gains the resume-from-7 runner used tonight.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>",
+              "commit_dirty": false
+            }
+          },
+          "aliases": null,
+          "stages": [
+            {
+              "name": "queued",
+              "started_on": "2026-08-14T02:44:59.075636Z",
+              "ended_on": "2026-08-14T02:47:07.939876Z",
+              "status": "success"
+            },
+            {
+              "name": "initialize",
+              "started_on": "2026-08-14T02:47:07.939876Z",
+              "ended_on": "2026-08-14T02:47:10.264242Z",
+              "status": "success"
+            },
+            {
+              "name": "clone_repo",
+              "started_on": "2026-08-14T02:47:10.264242Z",
+              "ended_on": "2026-08-14T02:47:16.413579Z",
+              "status": "success"
+            },
+            {
+              "name": "build",
+              "started_on": "2026-08-14T02:47:16.413579Z",
+              "ended_on": "2026-08-14T02:48:10.457128Z",
+              "status": "success"
+            },
+            {
+              "name": "deploy",
+              "started_on": "2026-08-14T02:48:10.457128Z",
+              "ended_on": "2026-08-14T02:48:20.676022Z",
+              "status": "success"
+            }
+          ]
+        },
+        {
+          "id": "4d499373-e90e-456c-8c54-b4f5f1a8fce3",
+          "url": "https://4d499373.thepicklehub-shop-staging.pages.dev",
+          "environment": "production",
+          "created_on": "2026-08-14T02:36:17.36758Z",
+          "latest_stage": {
+            "name": "deploy",
+            "started_on": "2026-08-14T02:38:23.858772Z",
+            "ended_on": "2026-08-14T02:38:36.068267Z",
+            "status": "success"
+          },
+          "deployment_trigger": {
+            "type": "github:push",
+            "metadata": {
+              "branch": "feat/shop-closed-pilot",
+              "commit_hash": "e0cda755e8d1c165252a0f7e17f045638f994a2f",
+              "commit_message": "fix(shop): the applicant could read the moderator's internal_note off the base table\n\nCP27 case 6c, against staging: every production call site reads through\nmy_shop_application (which has no internal_note column), but the base table\nstill granted SELECT on every column to authenticated and select_own hands\nthe applicant their row \u2014 so one hand-written REST call returned the\nmoderator's note verbatim. pgTAP never saw it because every assertion\nexercised the view or the RPCs, not a bare table read.\n\nSame shape as the cleanup-health fix (20260814130000): revoke at the layer\nthe request hits. authenticated keeps SELECT on every column except\ninternal_note, so select=* on the table now answers 42501 for sellers and\nadmins alike; the moderation screens move to shop_applications_admin, a\ndefiner view gated by is_admin() (aal2) \u2014 the boundary the decide RPC\nalready trusts. Writes untouched; service_role untouched.\n\nRegression: shop_application_internal_note_privacy.test.sql (10 assertions,\nred-proved: re-granting the table turns 3 red). shop_phase1_rls updated\nwhere the security got stronger than its assertions. Harness: chain-a1 sent\nproduct_decide's vocabulary (request_changes) to shop_application_decide,\nwhich takes request-changes \u2014 the 22023 it got back is what stopped the\nsuite one case before this leak. teardown now expects ledger 360.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>",
+              "commit_dirty": false
+            }
+          },
+          "aliases": null,
+          "stages": [
+            {
+              "name": "queued",
+              "started_on": "2026-08-14T02:36:17.60017Z",
+              "ended_on": "2026-08-14T02:37:30.019055Z",
+              "status": "success"
+            },
+            {
+              "name": "initialize",
+              "started_on": "2026-08-14T02:37:30.019055Z",
+              "ended_on": "2026-08-14T02:37:33.959286Z",
+              "status": "success"
+            },
+            {
+              "name": "clone_repo",
+              "started_on": "2026-08-14T02:37:33.959286Z",
+              "ended_on": "2026-08-14T02:37:38.655767Z",
+              "status": "success"
+            },
+            {
+              "name": "build",
+              "started_on": "2026-08-14T02:37:38.655767Z",
+              "ended_on": "2026-08-14T02:38:23.858772Z",
+              "status": "success"
+            },
+            {
+              "name": "deploy",
+              "started_on": "2026-08-14T02:38:23.858772Z",
+              "ended_on": "2026-08-14T02:38:36.068267Z",
+              "status": "success"
+            }
+          ]
+        },
+        {
+          "id": "0af49763-101d-4235-bfa8-4701afbc44c6",
+          "url": "https://0af49763.thepicklehub-shop-staging.pages.dev",
+          "environment": "production",
+          "created_on": "2026-08-14T02:18:09.170718Z",
+          "latest_stage": {
+            "name": "deploy",
+            "started_on": "2026-08-14T02:21:23.870789Z",
+            "ended_on": "2026-08-14T02:21:35.965245Z",
+            "status": "success"
+          },
+          "deployment_trigger": {
+            "type": "github:push",
+            "metadata": {
+              "branch": "feat/shop-closed-pilot",
+              "commit_hash": "ea62bba221f64c705fbc36e3cd0e47c16dd2e7b5",
+              "commit_message": "fix(shop-pilot): CP27 17e \u2014 monotonic clock for the 400s bound\n\nCodex round 4: Date.now() is non-monotonic, a forward clock jump could\nfalsely satisfy the worker wall-clock wait. performance.now() cannot.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>",
+              "commit_dirty": false
+            }
+          },
+          "aliases": null,
+          "stages": [
+            {
+              "name": "queued",
+              "started_on": "2026-08-14T02:18:09.376642Z",
+              "ended_on": "2026-08-14T02:19:52.942324Z",
+              "status": "success"
+            },
+            {
+              "name": "initialize",
+              "started_on": "2026-08-14T02:19:52.942324Z",
+              "ended_on": "2026-08-14T02:19:56.8886Z",
+              "status": "success"
+            },
+            {
+              "name": "clone_repo",
+              "started_on": "2026-08-14T02:19:56.8886Z",
+              "ended_on": "2026-08-14T02:20:02.629923Z",
+              "status": "success"
+            },
+            {
+              "name": "build",
+              "started_on": "2026-08-14T02:20:02.629923Z",
+              "ended_on": "2026-08-14T02:21:23.870789Z",
+              "status": "success"
+            },
+            {
+              "name": "deploy",
+              "started_on": "2026-08-14T02:21:23.870789Z",
+              "ended_on": "2026-08-14T02:21:35.965245Z",
+              "status": "success"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

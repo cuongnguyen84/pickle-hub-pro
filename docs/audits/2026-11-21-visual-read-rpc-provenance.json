@@ -1,0 +1,51 @@
+{
+  "replayRun": 44768549751,
+  "replaySource": {
+    "kind": "migration-replay",
+    "sha": "77e2efdd9e1460e7121d2902c131526f958f7965"
+  },
+  "rows": [
+    {
+      "signature": "dupr_leaderboard_vietnam(p_format text, p_limit integer)",
+      "volatility": "s",
+      "definitionHash": "c89338ef1b3e08dad9e8103ad999beb3",
+      "matchesReviewedReplay": true
+    },
+    {
+      "signature": "get_blog_post_view_counts_batch(p_pairs jsonb)",
+      "volatility": "s",
+      "definitionHash": "c6ba75db864adc8619a1dd2013759dc2",
+      "matchesReviewedReplay": true
+    },
+    {
+      "signature": "get_feed_timeline(p_limit integer, p_cursor_score double precision, p_cursor_item_id uuid, p_viewer_id uuid)",
+      "volatility": "s",
+      "definitionHash": "f9aa10ba2dc9d4329f05d103907804c6",
+      "matchesReviewedReplay": true
+    },
+    {
+      "signature": "get_homepage_stats()",
+      "volatility": "s",
+      "definitionHash": "6bd8bec91f9202efcbf5732acfc439ba",
+      "matchesReviewedReplay": true
+    },
+    {
+      "signature": "get_top_blog_posts(p_days integer, p_limit integer)",
+      "volatility": "s",
+      "definitionHash": "8867c0368645d8aa4b53fec78bae025a",
+      "matchesReviewedReplay": true
+    },
+    {
+      "signature": "shop_public_categories(_only_stocked boolean)",
+      "volatility": "s",
+      "definitionHash": "b6ba3e16f33a7d71ce8deb0a92e03c13",
+      "matchesReviewedReplay": true
+    },
+    {
+      "signature": "shop_public_search(_q text, _category_slug text, _shop_slug text, _condition text, _in_stock_only boolean, _sort text, _cursor_at timestamp with time zone, _cursor_id uuid, _limit integer)",
+      "volatility": "s",
+      "definitionHash": "7877452d620235e2c1826b0d6188e348",
+      "matchesReviewedReplay": true
+    }
+  ]
+}
