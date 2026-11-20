@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod/v4';
+import type * as z from 'zod/v4/mini';
+import { buildTeamMemberSchema } from '@/lib/team-social-form-schemas';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -166,11 +167,7 @@ export function TeamRosterManager({
     reject: language === 'vi' ? 'Từ chối' : 'Reject',
   };
 
-  const addMemberSchema = z.object({
-    player_name: z.string().min(2, txt.nameError).max(50),
-    gender: z.enum(['male', 'female']),
-    skill_level: z.number().min(1).max(8).optional(),
-  });
+  const addMemberSchema = buildTeamMemberSchema(txt.nameError);
 
   type AddMemberValues = z.infer<typeof addMemberSchema>;
 
