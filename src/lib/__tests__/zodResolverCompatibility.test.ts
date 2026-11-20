@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { z } from "zod";
+import * as z from "zod/v4/mini";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DuprSubmitResponseSchema } from "@/contracts/duprMatchSubmit";
 
 describe("Zod 4 resolver and API contract compatibility", () => {
   it("returns field errors instead of throwing a ZodError for invalid form input", async () => {
-    const schema = z.object({ name: z.string().min(2, "Name required"), courts: z.coerce.number().int().min(0).max(50) });
+    const schema = z.object({
+      name: z.string().check(z.minLength(2, "Name required")),
+      courts: z.coerce.number().check(z.int(), z.minimum(0), z.maximum(50)),
+    });
     const resolve = zodResolver(schema);
     const options = { fields: {}, shouldUseNativeValidation: false };
     const invalid = await resolve({ name: "", courts: "51" }, undefined, options);
