@@ -7,8 +7,8 @@ VALUES ('f6200000-0000-4000-8000-000000000001','token-lifecycle@thepicklehub.tes
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.social_events(id,slug,title_vi,start_at,end_at,created_by)
 VALUES ('f6200000-0000-4000-8000-000000000002','token-lifecycle-fixture','Fixture',now()+interval '1 day',now()+interval '2 days','f6200000-0000-4000-8000-000000000001');
-INSERT INTO public.event_registrations(id,event_id,profile_id)
-VALUES ('f6200000-0000-4000-8000-000000000003','f6200000-0000-4000-8000-000000000002','f6200000-0000-4000-8000-000000000001');
+INSERT INTO public.event_registrations(id,event_id,profile_id,display_name)
+VALUES ('f6200000-0000-4000-8000-000000000003','f6200000-0000-4000-8000-000000000002','f6200000-0000-4000-8000-000000000001','Fixture');
 INSERT INTO public.registration_secrets(registration_id,magic_token,expires_at)
 VALUES ('f6200000-0000-4000-8000-000000000003','f6200000-0000-4000-8000-000000000004',now()+interval '1 day');
 SELECT ok(NOT has_function_privilege('anon','public.registration_token_is_valid(uuid,uuid)','EXECUTE'),'anon cannot probe validity');
