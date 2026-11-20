@@ -1667,6 +1667,9 @@
   background: rgba(0, 185, 107, 0.9); color: var(--tl-bg);
   backdrop-filter: blur(6px);
 }
+[data-theme="the-line"][data-mode="light"] .tl-story-tag {
+  color: var(--tl-fg);
+}
 [data-theme="the-line"] .tl-story-body {
   padding: 20px 22px 22px;
   display: flex; flex-direction: column;
