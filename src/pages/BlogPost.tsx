@@ -424,6 +424,20 @@ const BlogPost = () => {
               )],
             )}
 
+            {post.tags.includes("results") && (
+              <section>
+                <p>
+                  Every draw like this one starts as a plain list of players. Paste any list into ThePickleHub AI chat - a message thread, an email, a spreadsheet, or a photo - and it builds your draw for you: round-robin groups, a knockout bracket, or an MLP Team Match, the team format traditional bracket tools barely support. The tournament then lives on ThePickleHub next to live results, livestreams, and court listings, not in a standalone bracket maker.
+                </p>
+                <p>
+                  <strong>
+                    Create your tournament by chat with the{" "}
+                    <Link to="/tools/create-by-chat">AI bracket generator</Link>.
+                  </strong>
+                </p>
+              </section>
+            )}
+
             {content.howToSteps && content.howToSteps.length > 0 && (
               <section>
                 <h2>Steps</h2>

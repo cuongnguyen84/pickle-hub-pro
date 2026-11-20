@@ -138,6 +138,13 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
   if (howToNode) graph.push(howToNode);
   const blogGraph = { "@context": "https://schema.org", "@graph": graph };
 
+  // Bài kết quả (tag "results") gắn khối giới thiệu chat AI ở cuối thân bài,
+  // khớp bản React trong src/pages/BlogPost.tsx.
+  const isResultsPost = (blogMetadata.find((post) => post.slug === slug)?.tags ?? []).includes("results");
+  const resultsChatBlock = isResultsPost
+    ? `<section><p>Every draw like this one starts as a plain list of players. Paste any list into ThePickleHub AI chat - a message thread, an email, a spreadsheet, or a photo - and it builds your draw for you: round-robin groups, a knockout bracket, or an MLP Team Match, the team format traditional bracket tools barely support. The tournament then lives on ThePickleHub next to live results, livestreams, and court listings, not in a standalone bracket maker.</p><p><strong>Create your tournament by chat with the <a href="${siteUrl}/tools/create-by-chat">AI bracket generator</a>.</strong></p></section>`
+    : "";
+
   return htmlResponse(buildHtml({
     title,
     description: meta.description,
@@ -149,7 +156,7 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
     omitAutoHeader: true,
     jsonLd: blogGraph,
     // The post's own sections — see blog-body.ts for why this was missing.
-    bodyContent: `${bc}${body}${relatedBlogLinks(slug, siteUrl)}`,
+    bodyContent: `${bc}${body}${resultsChatBlock}${relatedBlogLinks(slug, siteUrl)}`,
   }));
 }
 
