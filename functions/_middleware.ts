@@ -944,6 +944,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       const response = withSmartAppBanner(await next(), siteUrl, pathname);
       const headers = new Headers(response.headers);
       headers.set("X-Robots-Tag", X_ROBOTS_NOINDEX);
+      headers.set("Cache-Control", "no-store");
+      headers.set("Referrer-Policy", "no-referrer");
       return new Response(response.body, {
         status: response.status,
         statusText: response.statusText,
@@ -1024,8 +1026,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const shell = renderNoindexShell(siteUrl, pathname, lang);
     const headers = new Headers(shell.headers);
     headers.set("X-Robots-Tag", X_ROBOTS_NOINDEX);
+      headers.set("Cache-Control", "no-store");
+      headers.set("Referrer-Policy", "no-referrer");
     headers.set("X-Prerender-Cache", "BYPASS");
     applySecurityHeaders(headers);
+    headers.set("Referrer-Policy", "no-referrer");
     return new Response(shell.body, {
       status: shell.status,
       headers,
