@@ -3,7 +3,17 @@
 Status: proposed server receipt contract + pure payload builder; not emitting
 new production events. Existing organizer_tournament telemetry is preserved.
 
-## Existing facts and wiring limits
+## Current delta — 20 November 2026
+
+PR #1065 now rejects failed score saves and retains editable drafts. The older
+Promise<void> failure behavior described below is the historical proposal
+baseline, not current main. PR #1067 applied an atomic server-observed score
+receipt, with trigger/RLS/grants independently verified; it is first qualifying
+observed write after rollout, not proven first-ever score. No historical backfill
+or production emission of the proposed lifecycle events is claimed. Receipt
+review-pending language below describes the original proposal only.
+
+## Historical facts and wiring limits at proposal
 
 QuickTableSetup starts organizer_tournament_creation_started when a pre-created
 table loads and roster input becomes usable, not when a DB table is first
