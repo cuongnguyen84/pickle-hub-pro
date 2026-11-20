@@ -1,0 +1,37 @@
+{
+  "fixture": "Actual QuickTableMatchRow, real I18nProvider/BrowserRouter/styles, mock match + local no-op save; no production data",
+  "results": [
+    {
+      "width": 390,
+      "theme": "light",
+      "entryFocus": true,
+      "tabToSecond": true,
+      "escapeRestore": true,
+      "saveRestore": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "entryFocus": true,
+      "tabToSecond": true,
+      "escapeRestore": true,
+      "saveRestore": true
+    },
+    {
+      "width": 1280,
+      "theme": "light",
+      "entryFocus": true,
+      "tabToSecond": true,
+      "escapeRestore": true,
+      "saveRestore": true
+    },
+    {
+      "width": 1280,
+      "theme": "dark",
+      "entryFocus": true,
+      "tabToSecond": true,
+      "escapeRestore": true,
+      "saveRestore": true
+    }
+  ]
+}

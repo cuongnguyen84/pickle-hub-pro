@@ -44,11 +44,14 @@ function post(urls: string[] = ["https://www.thepicklehub.net/blog/x"]) {
 }
 
 // The Pages Function only ever reads `request` and `env` off the context.
-const call = (request: Request, e: FakeEnv) =>
-  (onRequest as unknown as (c: { request: Request; env: FakeEnv }) => Promise<Response>)({
-    request,
-    env: e,
-  });
+const call = async (request: Request, e: FakeEnv) => {
+  const upstreamFetch = globalThis.fetch;
+  vi.stubGlobal("fetch", (input: RequestInfo | URL, init?: RequestInit) =>
+    String(input).endsWith("/rpc/consume_indexnow_budget")
+      ? Promise.resolve(Response.json(true))
+      : upstreamFetch(input, init));
+  return (onRequest as unknown as (c: { request: Request; env: FakeEnv }) => Promise<Response>)({ request, env: e });
+};
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -110,7 +113,7 @@ describe("/api/indexnow upstream failure handling", () => {
     expect(body.indexnow_error).toBeUndefined();
   });
 
-  it("fails the rate limit open when KV throws, instead of 502-ing the request", async () => {
+  it("does not use the obsolete KV counter when the atomic budget allows", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(new Response("", { status: 200 })),

@@ -1,3 +1,4 @@
+import { prerenderCacheKey } from "../_lib/prerender-cache-key";
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -79,7 +80,8 @@ describe("/tools catch-all no longer soft-404s", () => {
   });
 
   it("bumps the prerender cache key so the cached duplicates expire", () => {
-    const match = MIDDLEWARE.match(/const cacheKey = `pr:v(\d+):/);
+    expect(MIDDLEWARE).toContain("const cacheKey = prerenderCacheKey(url.pathname)");
+    const match = prerenderCacheKey("/fixture").match(/^pr:v(\d+):/);
     expect(match).not.toBeNull();
     expect(Number(match![1])).toBeGreaterThanOrEqual(90);
   });
