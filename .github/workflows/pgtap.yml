@@ -60,3 +60,8 @@ jobs:
         # DB-01 capacity RPCs from two parallel psql sessions against the same
         # disposable database and requires exactly one winner per round.
         run: node scripts/qa/db-race.mjs
+
+      - name: Run atomic IndexNow budget race
+        # Separate sessions queue behind a coordinator, then compete for slot10.
+        # No production credentials; default disposable replay database only.
+        run: node scripts/qa/indexnow-budget-race.mjs
