@@ -19,6 +19,11 @@ on:
     # Monday 21:00 UTC = Tuesday 04:00 VN — quietest traffic window.
     - cron: "0 21 * * 1"
   workflow_dispatch:
+    inputs:
+      staging_coverage:
+        description: "Require event + organizer UI coverage using pre-existing staging fixtures"
+        type: boolean
+        default: false
 
 concurrency:
   group: playwright-full-${{ github.ref }}
@@ -50,6 +55,7 @@ jobs:
         run: echo "version=$(npx playwright --version | sed 's/Version //')" >> "$GITHUB_OUTPUT"
 
   full:
+    if: github.event_name != 'workflow_dispatch' || !inputs.staging_coverage
     needs: resolve-playwright
     timeout-minutes: 30
     runs-on: ubuntu-latest
@@ -86,6 +92,23 @@ jobs:
           PLAYWRIGHT_ORGANIZER_CLUB_SLUG: ${{ secrets.PLAYWRIGHT_ORGANIZER_CLUB_SLUG }}
         run: npx playwright test --project=auth --project=journeys --project=contract
 
+      - name: Record eligible, executed and skipped journey coverage
+        if: always()
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PLAYWRIGHT_ORGANIZER_CLUB_SLUG: ${{ secrets.PLAYWRIGHT_ORGANIZER_CLUB_SLUG }}
+        run: node scripts/playwright-coverage.mjs
+
+      - name: Upload journey coverage manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-full-coverage
+          path: playwright-report/coverage-manifest.json
+          retention-days: 7
+
       - name: Upload Playwright report on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -96,3 +119,45 @@ jobs:
 
       # Telegram step removed 2026-10-20: failures of this workflow are reported in the
       # Grok Bot digest (08:00/21:00 Asia/Saigon), which reads `gh run list` on the Mac.
+
+  # Explicit opt-in: missing prerequisites and skips fail this job, while the
+  # scheduled production suite keeps its state-aware read-only behavior.
+  staging-coverage:
+    if: github.event_name == 'workflow_dispatch' && inputs.staging_coverage
+    needs: resolve-playwright
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.resolve-playwright.outputs.version }}-noble
+    env:
+      PLAYWRIGHT_COVERAGE_REQUIRED: "1"
+      PLAYWRIGHT_BASE_URL: ${{ vars.STAGING_PLAYWRIGHT_BASE_URL }}
+      PLAYWRIGHT_STAGING_BASE_URL: ${{ vars.STAGING_PLAYWRIGHT_BASE_URL }}
+      PLAYWRIGHT_STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+      SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+      PLAYWRIGHT_ORGANIZER_CLUB_SLUG: ${{ vars.STAGING_PLAYWRIGHT_ORGANIZER_CLUB_SLUG }}
+      PLAYWRIGHT_EVENT_PATH: ${{ vars.STAGING_PLAYWRIGHT_EVENT_PATH }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - name: Verify mandatory staging prerequisites (names only)
+        run: node scripts/playwright-coverage.mjs --preflight
+      - name: Install npm deps
+        run: npm ci
+      - name: Inspect event, registration modal and organizer wizard
+        run: npx playwright test --project=a11y --project=journeys --grep '(P1 |P2 |O2 |J1 |J2 |J3 |J5 |J6 )'
+      - name: Require executed staging coverage and record skips
+        if: always()
+        run: node scripts/playwright-coverage.mjs
+      - name: Upload staging coverage manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-coverage-manifest
+          path: playwright-report/coverage-manifest.json
+          retention-days: 7
