@@ -48,4 +48,4 @@ async function main() {
  } else throw Error('Use replay OUTPUT | production OUTPUT | compare EXPECTED ACTUAL OUTPUT');
  validate(snapshot);snapshot.observedAt=new Date().toISOString();writeFileSync(args[0],JSON.stringify(snapshot,null,2)+'\n',{mode:0o600});console.log(JSON.stringify({scope:snapshot.scope,objects:snapshot.objects.length,source:snapshot.source}));
 }
-if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url))main().catch(()=>{console.error('Catalog operation failed; details suppressed to protect credentials.');process.exitCode=2;});
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url))main().catch(error=>{console.error(['Invalid or empty catalog snapshot','Invalid/duplicate object','Read-only request failed'].includes(error.message) ? error.message : 'Catalog operation failed; details suppressed to protect credentials.');process.exitCode=2;});
