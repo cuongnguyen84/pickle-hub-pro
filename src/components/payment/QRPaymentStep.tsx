@@ -23,6 +23,7 @@
 // can keep "Open Zalo group" + back-to-event CTAs in the footer.
 // ============================================================================
 
+import { confirmedPaymentClaim } from "@/lib/payment/claimState";
 import { useState } from "react";
 import { CheckCircle2, Copy, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -135,14 +136,15 @@ export function QRPaymentStep({
           magic_token: magicToken,
         },
       });
-      if (error || !data?.ok) {
+      const claim = confirmedPaymentClaim({ data, error }, order.order_id);
+      if (!claim) {
         toast({ title: pay.claimError, variant: "destructive" });
         return;
       }
       onClaimed({
         ...order,
-        player_claimed_paid: data.player_claimed_paid ?? true,
-        player_claimed_at: data.player_claimed_at ?? new Date().toISOString(),
+        player_claimed_paid: claim.player_claimed_paid,
+        player_claimed_at: claim.player_claimed_at,
       });
       toast({ title: pay.claimedToast });
     } finally {
