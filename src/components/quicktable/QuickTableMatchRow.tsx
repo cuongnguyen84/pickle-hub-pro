@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Check, Clock, Pencil, Play, Radio, MapPin } from 'lucide-react';
@@ -23,6 +23,16 @@ export default function QuickTableMatchRow({
   const navigate = useNavigate();
   const { t, language } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
+  const pendingSaveRef = useRef(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const editScoreButtonRef = useRef<HTMLButtonElement>(null);
+  const restoreScoreFocusRef = useRef(false);
+  useEffect(() => {
+    if (!isEditing && restoreScoreFocusRef.current) {
+      restoreScoreFocusRef.current = false;
+      editScoreButtonRef.current?.focus();
+    }
+  }, [isEditing]);
   const [s1, setS1] = useState<string>(match.score1?.toString() ?? '');
   const [s2, setS2] = useState<string>(match.score2?.toString() ?? '');
   const [editingCourtName, setEditingCourtName] = useState(false);
@@ -41,25 +51,33 @@ export default function QuickTableMatchRow({
   const isLive = !!('live_referee_id' in match && match.live_referee_id);
 
   const handleStartEdit = () => {
+    restoreScoreFocusRef.current = true;
     setS1(match.score1?.toString() ?? '');
     setS2(match.score2?.toString() ?? '');
     setIsEditing(true);
   };
 
   const handleSubmit = async () => {
+    if (pendingSaveRef.current) return;
     const score1 = parseInt(s1) || 0;
     const score2 = parseInt(s2) || 0;
     if (score1 > 0 || score2 > 0) {
+      pendingSaveRef.current = true;
+      setIsSaving(true);
       try {
         await onScoreUpdate(score1, score2);
         setIsEditing(false);
       } catch {
         // Mutation already reported the failure; keep typed scores for retry.
+      } finally {
+        pendingSaveRef.current = false;
+        setIsSaving(false);
       }
     }
   };
 
   const handleCancel = () => {
+    if (pendingSaveRef.current) return;
     setS1(match.score1?.toString() ?? '');
     setS2(match.score2?.toString() ?? '');
     setIsEditing(false);
@@ -319,6 +337,13 @@ export default function QuickTableMatchRow({
       </div>
 
       <div
+        onKeyDown={(event) => {
+          if (isEditing && event.key === 'Escape') {
+            event.preventDefault();
+            event.stopPropagation();
+            handleCancel();
+          }
+        }}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -336,6 +361,8 @@ export default function QuickTableMatchRow({
                     type="number"
                     className="w-14 sm:w-16 h-9 text-center text-base p-1"
                     min={0}
+                    aria-label={`${t.quickTable.view.inputInlineScore}: ${formatPlayerName(player1)} (1)`}
+                    readOnly={isSaving}
                     value={s1}
                     onChange={(e) => setS1(e.target.value)}
                     autoFocus
@@ -345,14 +372,16 @@ export default function QuickTableMatchRow({
                     type="number"
                     className="w-14 sm:w-16 h-9 text-center text-base p-1"
                     min={0}
+                    aria-label={`${t.quickTable.view.inputInlineScore}: ${formatPlayerName(player2)} (2)`}
+                    readOnly={isSaving}
                     value={s2}
                     onChange={(e) => setS2(e.target.value)}
                   />
                 </div>
-                <button type="button" className="tl-btn" style={{ padding: '7px 12px', fontSize: 12.5 }} onClick={handleCancel}>
+                <button type="button" className="tl-btn" style={{ padding: '7px 12px', fontSize: 12.5 }} aria-disabled={isSaving} onClick={handleCancel}>
                   {t.quickTable.view.cancelEdit}
                 </button>
-                <button type="button" className="tl-btn green" style={{ padding: '7px 12px', fontSize: 12.5 }} onClick={handleSubmit}>
+                <button type="button" className="tl-btn green" style={{ padding: '7px 12px', fontSize: 12.5 }} aria-disabled={isSaving} onClick={handleSubmit}>
                   <Check className="w-4 h-4" />
                   {t.quickTable.view.saveScore}
                 </button>
@@ -380,6 +409,7 @@ export default function QuickTableMatchRow({
                   type="button"
                   className="tl-btn"
                   style={{ padding: '6px 10px', fontSize: 11.5 }}
+                  ref={editScoreButtonRef}
                   onClick={handleStartEdit}
                   aria-label={isCompleted ? t.quickTable.view.editInlineScore : t.quickTable.view.inputInlineScore}
                 >
