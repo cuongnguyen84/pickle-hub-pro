@@ -1,0 +1,45 @@
+# Aggregate-only read of production Product/Event data. The script uses the
+# Supabase Management API read-only query endpoint and uploads a dated report.
+# This does NOT run GSC, CrUX/RUM, native device, Shop-cohort, or DUPR checks.
+name: Weekly product evidence
+
+on:
+  schedule:
+    - cron: "31 1 * * 4" # Thursday 08:31 Asia/Ho_Chi_Minh
+  workflow_dispatch:
+
+concurrency:
+  group: weekly-product-evidence
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  aggregate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+
+      - name: Verify read-only report contract
+        run: node --test scripts/weekly-product-evidence.node-test.mjs
+
+      - name: Query aggregate evidence
+        id: report
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          EVIDENCE_OUTPUT_DIR: artifacts/weekly-evidence
+        run: node scripts/weekly-product-evidence.mjs
+
+      - name: Upload dated aggregate report
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-product-evidence-${{ github.run_id }}
+          path: ${{ steps.report.outputs.report }}
+          if-no-files-found: error
+          retention-days: 90
