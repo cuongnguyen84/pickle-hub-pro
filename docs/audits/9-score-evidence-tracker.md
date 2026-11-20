@@ -215,3 +215,38 @@ Snapshot UTC: 2026-11-20T15:52:45.695897+00:00; remote main `95de8c26`. This del
 - **Analytics / AN-1, UX-3:** [PR1080](https://github.com/cuongnguyen84/pickle-hub-pro/pull/1080) merged as95de8c26, allowlisting Social Event failure-code telemetry. Source commit ordering and local tests do not establish production delivery, matched-window DB/GA4 reconciliation, retention or conversion outcome.
 
 All fifteen categories remain governed by the full roadmap. These scoped fixes and verified deployments do not establish135/150, a minimum8.5/category or an overall9/10.
+
+## Scoped catalog and preview evidence — 20 November, later review
+
+- DB-1 actual catalog comparison: successful disposable replay44768549751,
+  merge checkout77e2efdd9e1460e7121d2902c131526f958f7965, versus production
+ 9,730 objects yielded2,546 differences, not parity. See
+  [classification](2026-11-20-schema-equivalence.md). Ledger equality never
+  establishes schema equivalence. Broader grants/FKs/functions remain open.
+- PUBLIC schema CREATE: PR1087 mergedf52e0193 and primary applied exact
+  migration240000+ledger. Independent effective privilege read-back denies
+  anon/member CREATE, preserves their USAGE and service/owner CREATE. Fresh
+  [schema-ACL delta](2026-11-20-public-schema-create-rollout.json) confirms
+  only PUBLIC CREATE removal and explicit service CREATE addition in this
+  scoped before/after. This is browser hardening, not trusted-service least
+  privilege or whole-schema closure.
+- OPS preview resolver: PR1089 mergedb98e1bd9 after required Actions and both
+  Cloudflare checks passed; original-head36b345aa run44773469452 verified
+  immutable14ad82bd preview for that exact commit and executed both visual
+  projects after a real14minute CF queue. Later source heads require their
+  own gates. Resolver success does not equal visual acceptance: raw suite
+  recorded24 pixel mismatches and4 missing Shop baselines under existing
+  advisory semantics. [Detailed cases](2026-11-20-visual-failure-classification.md)
+  retain old-baseline/live-data/font fallback and missing-baseline distinctions.
+- Missing auth FKs: [aggregate/source evidence](2026-11-20-missing-fk-classification.md)
+  confirms23 columns have no FK replacement. Profiles958 unmatched auth refs
+  include957 explicit ghosts; user_roles2 and view_events33 need provenance
+  review, QuickTable creator refs0 unmatched. Do not install original profile
+  auth FK against the explicit ghost model or perform blanket orphan cleanup.
+
+- Visual determinism follow-up (21 November): PR1091 is source under review,
+  not baseline acceptance. Guarded local34/34 contracts passed with32 telemetry
+  requests blocked,16 explicitly allowlisted catalog/replay-matched STABLE read
+  RPC calls, no unapproved writes forwarded. Earlier unguarded local proof and
+  CI44784116210 have UNKNOWN tracking contamination; no cleanup was performed.
+  Root reviewed all24 contact-sheet comparisons but approved no golden updates.

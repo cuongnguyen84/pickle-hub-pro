@@ -42,3 +42,20 @@ already assigned to registration-token validity and230000 to its SQL consumers.
 The explicit service CREATE preserves compatibility, not least-privilege closure
 for the trusted service role. Browser CREATE removal and USAGE preservation are
 the narrowly tested objective.
+
+## Scoped rollout evidence
+
+PR1087 merged asf52e0193c6ea1f4a469a4edad689d35c73d9d4d7 after quality,
+smoke, visual, CodeQL and pgTAP passed under normal protection. Primary applied
+exact merged GRANT service CREATE + REVOKE PUBLIC CREATE and ledger atomically;
+independent read-only verification confirmed ledger=true, anon/member CREATE=false,
+service/owner CREATE=true, anon/member USAGE=true. No production DDL probes were
+used. This records primary's application; this agent did not reapply SQL.
+
+This agent refreshed the production catalog read-only after rollout. The
+[schema-ACL-only before/after delta](2026-11-20-public-schema-create-rollout.json)
+contains exactly PUBLIC CREATE removal and explicit service_role CREATE addition.
+Other grants/owner differences and the full public-catalog comparison are not
+closed by this scoped check. Original replay expectations predate this explicit
+service compatibility grant and must not be blindly copied. No broad parity or
+trusted service least-privilege claim follows.

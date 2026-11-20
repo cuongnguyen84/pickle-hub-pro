@@ -30,3 +30,14 @@ failed deployment, missing URL, host/alias/credential rejection, fork refusal,
 credential-free HEAD200, persistent404 deadline and newest-check precedence.
 Actual workflow execution on the patch still needs CI evidence. No deployment,
 baseline replacement or production write was performed by this agent.
+
+## Executed proof
+
+Run44773469452 completed on head36b345aadff19ecfeb079f58871bc0cf43d60b76.
+Resolver tests and exact immutable preview verification passed, then the visual
+suite executed. Detailed [pixel-failure classification](2026-11-20-visual-failure-classification.md)
+records24 pixel mismatches and4 missing baselines under existing advisory
+semantics. Job green is not visual acceptance. Resolver scope is verified;
+UI/baseline/fixture/font work remains open. CF metadata confirmed a roughly
+14minute deployment queue, with all branches/path includes enabled; no extra
+preview build or production deployment was triggered to manufacture proof.

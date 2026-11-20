@@ -107,5 +107,18 @@ Temporary log: /tmp/tph-native-main-tests.log. The first attempted command
 failed before compilation because the ignored project was not generated;
 the successful run above followed project generation.
 
-Unsigned Release build of the same isolated export also **BUILD SUCCEEDED**:\nxcodebuild build -project ThePickleHub.xcodeproj -scheme ThePickleHub\n-configuration Release -destination 'generic/platform=iOS Simulator'\n-derivedDataPath /tmp/tph-native-main-derived CODE_SIGNING_ALLOWED=NO.\nLog: /tmp/tph-native-main-release.log. No signing, upload, physical-device\nexecution, production transactions or push sends occurred. These results are\npinned to the fetched SHA above; later main changes need their own delta review.\nEOF
-git diff --check
+Unsigned Release build of the same isolated export also **BUILD SUCCEEDED**:
+xcodebuild build -project ThePickleHub.xcodeproj -scheme ThePickleHub
+-configuration Release -destination 'generic/platform=iOS Simulator'
+-derivedDataPath /tmp/tph-native-main-derived CODE_SIGNING_ALLOWED=NO.
+Log: /tmp/tph-native-main-release.log. No signing, upload, physical-device
+execution, production transactions or push sends occurred. These results are
+pinned to the fetched SHA above; later main changes need their own delta review.
+
+## Physical-device availability — 21 November 2026 (Vietnam)
+
+Read-only devicectl inventory returned nine registered device entries; all
+reported disconnected. No connected physical device was available for the
+required task checks. No device names or identifiers are included here, and
+no pairing, installation, signing or device mutation was attempted. This does
+not establish physical-device acceptance or replace the simulator evidence.
