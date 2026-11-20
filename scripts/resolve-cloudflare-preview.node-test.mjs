@@ -1,0 +1,14 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {previewFromChecks,resolvePreview} from './resolve-cloudflare-preview.mjs';
+const sha='a'.repeat(40),url='https://1234abcd.pickle-hub-pro.pages.dev';
+const check=(x={})=>({id:1,head_sha:sha,name:'Cloudflare Pages: pickle-hub-pro',app:{slug:'cloudflare-workers-and-pages'},status:'completed',conclusion:'success',output:{summary:`<a href='${url}'>Preview</a>`},...x});
+const options={sha,repo:'owner/repo',token:'test-read-token'};
+test('exact head trusted immutable only',()=>assert.equal(previewFromChecks([check()],sha),url));
+test('wrong SHA and wrong app cannot satisfy',()=>{assert.equal(previewFromChecks([check({head_sha:'b'.repeat(40)})],sha),null);assert.equal(previewFromChecks([check({app:{slug:'spoof'}})],sha),null)});
+test('queued and in-progress remain pending',()=>{for(const status of ['queued','in_progress'])assert.equal(previewFromChecks([check({status})],sha),null)});
+test('failed build fails explicitly',()=>assert.throws(()=>previewFromChecks([check({conclusion:'failure'})],sha)));
+test('alias, production, arbitrary hosts and credentialed URLs never accepted',()=>{for(const u of ['https://branch.pickle-hub-pro.pages.dev','https://www.thepicklehub.net',url+'@evil.test',url+'/private','https://1234abcd.other.pages.dev'])assert.throws(()=>previewFromChecks([check({output:{summary:`<a href="${u}">link</a>`}})],sha))});
+test('success without URL fails',()=>assert.throws(()=>previewFromChecks([check({output:null})],sha)));
+test('fork refuses before token/network use',async()=>{let called=false;await assert.rejects(resolvePreview({...options,fork:true,fetcher:()=>{called=true}}));assert.equal(called,false)});
+test('late build then HEAD200 succeeds and HEAD gets no credentials',async()=>{let time=0,calls=0;const result=await resolvePreview({...options,now:()=>time,sleep:async ms=>{time+=ms},fetcher:async(u,init)=>{if(u.startsWith('https://api.github.com'))return Response.json({check_runs:++calls===1?[check({status:'queued'})]:[check()]});assert.equal(init.headers,undefined);assert.equal(init.method,'HEAD');assert.equal(init.redirect,'error');return new Response(null,{status:200})}});assert.equal(result,url);assert.equal(calls,2)});
+test('HEAD404 waits to deadline with no alias fallback',async()=>{let time=0;const requested=[];await assert.rejects(resolvePreview({...options,timeoutMs:60000,now:()=>time,sleep:async ms=>{time+=ms},fetcher:async u=>{requested.push(u);return u.startsWith('https://api.github.com')?Response.json({check_runs:[check()]}):new Response(null,{status:404})}}));assert(requested.every(u=>u.startsWith('https://api.github.com')||u===url))});
+test('newest pending check supersedes old same-SHA success',()=>assert.equal(previewFromChecks([check(),check({id:2,status:'queued'})],sha),null));
