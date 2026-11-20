@@ -92,13 +92,19 @@ jobs:
           PREVIEW_IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
         run: node scripts/resolve-cloudflare-preview.mjs
 
+      - name: Require visual harness contract
+        if: steps.gate.outputs.have == '1'
+        env:
+          VISUAL: "1"
+        run: npx playwright test --project=visual --project=visual-mobile --grep 'visual harness contract'
+
       - name: Visual diff (advisory)
         id: visual
         if: steps.gate.outputs.have == '1'
         continue-on-error: true
         env:
           VISUAL: "1"
-        run: npx playwright test --project=visual --project=visual-mobile
+        run: npx playwright test --project=visual --project=visual-mobile --grep-invert 'visual harness contract'
 
       - name: Upload diff artifacts
         # continue-on-error makes the step succeed at the job level, so use the
