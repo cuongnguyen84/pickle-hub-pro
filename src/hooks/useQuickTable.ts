@@ -60,6 +60,8 @@ export interface QuickTable {
   playoff_series_style?: "series" | "medal";
   /** cỡ từng nhánh đặt lúc tạo giải (chat), null = luật mặc định */
   playoff_series_sizes?: number[] | null;
+  /** nguồn tạo giải: 'chat' = tạo từ chat AI, còn lại 'manual' (cột có từ 2026-11-21) */
+  created_via?: string | null;
   /** gán cứng sân theo bảng (index 0 = bảng A), null = không gán */
   group_courts?: (number | null)[] | null;
 }
