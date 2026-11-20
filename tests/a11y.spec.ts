@@ -14,24 +14,7 @@ import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { discoverEventHref, discoverSlugHref } from "./helpers/discover";
 
-// color-contrast is disabled HERE, for whole-page scans only, because the
-// public pages carry older contrast debt that would drown out new failures.
-//
-// Treat that exemption with suspicion. It was originally written as "Lighthouse
-// has flagged them repo-wide" — a belief that turned out to be wrong, and it
-// cost us: `.tl-filter.active .count` sat at 3.69:1 for months precisely
-// because the one tool that could see it had been told not to look. Lighthouse
-// only caught it once UX-08 changed render timing; the green runs before that
-// were false greens.
-//
-// So: new surfaces get contrast checked explicitly (see expectNoContrastViolations
-// below). Do not extend this blanket disable to cover new debt.
-/**
- * Contrast-only scan of one component, with the rule ENABLED.
- *
- * Scoped rather than page-wide so a new surface can be held to AA without
- * first paying off every older violation on the same page.
- */
+// Page-level accessibility scans include contrast in both supported modes.
 /**
  * QA-04: axe injects a script into the page; if a late client-side reload or
  * URL rewrite is still in flight when the scan starts (chunk-retry reload,
@@ -77,20 +60,49 @@ async function expectNoContrastViolations(page: Page, selector: string, context:
 
 async function expectNoViolations(page: Page, context: string) {
   await waitForStableDocument(page);
-  const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa"])
-    .disableRules(["color-contrast"])
-    .analyze();
-  const serious = results.violations.filter(
+  const previousTheme = await page.evaluate(() => ({
+    dataMode: document.documentElement.getAttribute("data-mode"),
+    hadDark: document.documentElement.classList.contains("dark"),
+    hadLight: document.documentElement.classList.contains("light"),
+  }));
+  const results = [];
+  try {
+    for (const mode of ["dark", "light"] as const) {
+      await page.evaluate((nextMode) => {
+      const root = document.documentElement;
+      if (nextMode === "light") root.setAttribute("data-mode", "light");
+      else root.removeAttribute("data-mode");
+      root.classList.remove("dark", "light");
+      root.classList.add(nextMode);
+      }, mode);
+      await page.waitForTimeout(100);
+      results.push({ mode, ...(await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze()) });
+    }
+  } finally {
+    await page.evaluate((theme) => {
+      const root = document.documentElement;
+      if (theme.dataMode === null) root.removeAttribute("data-mode");
+      else root.setAttribute("data-mode", theme.dataMode);
+      root.classList.remove("dark", "light");
+      if (theme.hadDark) root.classList.add("dark");
+      if (theme.hadLight) root.classList.add("light");
+    }, previousTheme);
+  }
+  const violations = results.flatMap(({ mode, violations }) => violations.map((item) => ({ ...item, help: `${mode}: ${item.help}` })));
+  const incomplete = results.flatMap(({ mode, incomplete }) => incomplete.map((item) => ({ ...item, help: `${mode}: ${item.help}` })));
+  const seriousOrCritical = violations.filter(
     (v) => v.impact === "serious" || v.impact === "critical",
   );
+  const contrastFailures = violations.filter((v) => v.id === "color-contrast");
+  const contrastIncomplete = incomplete.filter((v) => v.id === "color-contrast");
+  const failures = [...new Set([...seriousOrCritical, ...contrastFailures, ...contrastIncomplete])];
   expect(
-    serious,
-    `${context}: ${serious.length} serious/critical axe violations:\n` +
-      serious
+    failures,
+    `${context}: contrast violations/inconclusive scans or serious/critical axe findings:\n` +
+      failures
         .map(
           (v) =>
-            `  [${v.impact}] ${v.id}: ${v.help}\n` +
+            `  [${v.impact ?? "incomplete"}] ${v.id}: ${v.help}\n` +
             v.nodes.slice(0, 3).map((n) => `    ${n.target.join(" ")}`).join("\n"),
         )
         .join("\n"),
