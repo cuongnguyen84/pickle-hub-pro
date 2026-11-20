@@ -19,6 +19,7 @@
 // ============================================================================
 
 import { test, expect } from "@playwright/test";
+import { prepareVisualPage, settleVisualFonts, assertNavigationUnmasked, VISUAL_MASK_SELECTORS, waitForVisualContent } from "./helpers/visual-stability";
 
 test.describe("visual regression", () => {
   test.skip(process.env.VISUAL !== "1", "VISUAL not set — skipping pixel diff");
@@ -54,33 +55,56 @@ test.describe("visual regression", () => {
     { name: "shop-sell", path: "/shop/sell" },
   ];
 
+  test('visual harness contract: fixtures, fonts and navigation', async ({ page }) => {
+    await prepareVisualPage(page);
+    await page.goto('/clubs', { waitUntil: 'load' });
+    await expect(page.getByText('Riverside Pickleball Club', { exact: true })).toBeVisible();
+    await expect(page.getByText('Câu lạc bộ Pickleball Thành Phố', { exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Sign in to create a club/ })).toBeVisible();
+    await expect(page.getByRole('textbox')).toBeVisible();
+    await waitForVisualContent(page, '/clubs');
+    await settleVisualFonts(page);
+    await assertNavigationUnmasked(page);
+    // Force paint before checking actual glyph fonts (font-family alone can lie).
+    await page.screenshot();
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('DOM.enable'); await cdp.send('CSS.enable');
+    const root = await cdp.send('DOM.getDocument');
+    const heading = await cdp.send('DOM.querySelector', { nodeId: root.root.nodeId, selector: 'h1' });
+    const fonts = await cdp.send('CSS.getPlatformFontsForNode', { nodeId: heading.nodeId });
+    expect(fonts.fonts.some(font => font.isCustomFont && font.familyName === 'Instrument Serif' && font.glyphCount > 0)).toBe(true);
+    await cdp.detach();
+  });
+
+  for (const state of ['populated', 'empty'] as const) {
+    test(`visual harness contract: live ${state} is explicit`, async ({ page }) => {
+      await prepareVisualPage(page, state);
+      await page.goto('/live', { waitUntil: 'load' });
+      await page.getByRole('heading').first().waitFor({ state: 'visible' });
+      if (state === 'populated') {
+        await expect(page.getByText('Visual live doubles match', { exact: true })).toBeVisible();
+      } else {
+        await expect(page.getByRole('heading', { name: 'No matches in this view.' })).toBeVisible();
+        await expect(page.getByText('Visual live doubles match', { exact: true })).toHaveCount(0);
+      }
+      await assertNavigationUnmasked(page);
+    });
+  }
+
   for (const p of PAGES) {
     test(`${p.name} matches baseline`, async ({ page }) => {
       // Full-page shots of heavy pages can exceed the global 30s budget.
       test.setTimeout(60_000);
       // NOT networkidle: realtime channels + analytics beacons keep the
       // network busy forever on / — capture run 29692427270 timed out there.
+      await prepareVisualPage(page);
       await page.goto(p.path, { waitUntil: "load" });
-      // Settle fonts + lazy images. A late SPA navigation (locale redirect on
-      // /) can destroy the execution context mid-evaluate — same failure class
-      // mobile.spec handles; settle again on the landed page (run 29717406856).
-      try {
-        await page.waitForTimeout(1200);
-        await page.evaluate(() => document.fonts?.ready);
-      } catch {
-        await page.waitForLoadState();
-        await page.waitForTimeout(1200);
-        await page.evaluate(() => document.fonts?.ready).catch(() => undefined);
-      }
+      await waitForVisualContent(page, p.path);
+      await settleVisualFonts(page);
 
       // Mask volatile content so only structural changes trip the diff.
-      const masks = [
-        page.locator("img"),
-        page.locator("[data-testid='live-score']"),
-        page.locator("time"),
-        page.locator("[class*='avatar' i]"),
-        page.locator("[class*='news' i]"),
-      ];
+      await assertNavigationUnmasked(page);
+      const masks = VISUAL_MASK_SELECTORS.map(selector => page.locator(selector));
 
       await expect(page).toHaveScreenshot(`${p.name}.png`, {
         ...SCREENSHOT_OPTS,
