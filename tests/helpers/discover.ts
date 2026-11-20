@@ -9,6 +9,19 @@
 
 import type { Page } from "@playwright/test";
 
+/** Explicit, pre-existing staging fixture; never create data during discovery. */
+function stagingEventPath(): string | undefined {
+  const path = process.env.PLAYWRIGHT_EVENT_PATH;
+  if (!path) return undefined;
+  if (process.env.PLAYWRIGHT_COVERAGE_REQUIRED !== "1") return undefined;
+  const base = new URL(process.env.PLAYWRIGHT_BASE_URL ?? "https://www.thepicklehub.net");
+  const declared = new URL(process.env.PLAYWRIGHT_STAGING_BASE_URL ?? "https://www.thepicklehub.net");
+  if (base.origin !== declared.origin || base.protocol !== "https:" || base.hostname === "thepicklehub.net" || base.hostname.endsWith(".thepicklehub.net") || !/^\/social\/[a-zA-Z0-9_-]+$/.test(path)) {
+    throw new Error("PLAYWRIGHT_EVENT_PATH requires an explicit non-production HTTPS staging origin and relative /social/<slug> path");
+  }
+  return path;
+}
+
 /** First detail link on a listing page, or null when the listing is empty. */
 export async function discoverSlugHref(
   page: Page,
@@ -35,6 +48,8 @@ export async function discoverSlugHref(
 let cachedEventHref: string | null | undefined;
 
 export async function discoverEventHref(page: Page): Promise<string | null> {
+  const fixture = stagingEventPath();
+  if (fixture) return fixture;
   if (cachedEventHref !== undefined) return cachedEventHref;
   cachedEventHref = await discoverEventHrefUncached(page);
   return cachedEventHref;
@@ -80,6 +95,8 @@ export async function discoverOpenEventHref(
   page: Page,
   maxToCheck = 5,
 ): Promise<string | null> {
+  const fixture = stagingEventPath();
+  if (fixture) return fixture;
   if (cachedOpenEventHref !== undefined) return cachedOpenEventHref;
   cachedOpenEventHref = null;
 
