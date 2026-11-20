@@ -12,40 +12,40 @@
 // supabase/functions/dupr-match-submit/index.ts.
 // ============================================================================
 
-import { z } from "zod/v4";
+import * as z from "zod/v4/mini";
 
 /** Error envelope returned by err() in the edge function. */
 export const DuprErrorSchema = z.object({
   error: z.string(),
-  code: z.string().optional(),
-  details: z.unknown().optional(),
+  code: z.optional(z.string()),
+  details: z.optional(z.unknown()),
 });
 export type DuprError = z.infer<typeof DuprErrorSchema>;
 
 /** Success envelope for action="create" (new match submitted to DUPR). */
 export const DuprCreateSuccessSchema = z.object({
   created: z.literal(true),
-  match_code: z.string().min(1),
-  hashed_match_code: z.string().nullable().optional(),
+  match_code: z.string().check(z.minLength(1)),
+  hashed_match_code: z.optional(z.nullable(z.string())),
   identifier: z.string(),
-  club_id: z.string().nullable().optional(),
+  club_id: z.optional(z.nullable(z.string())),
   match_source: z.enum(["CLUB", "PARTNER"]),
   // Present only when the DUPR side succeeded but the local persist failed.
-  persist_warning: z.string().optional(),
+  persist_warning: z.optional(z.string()),
 });
 export type DuprCreateSuccess = z.infer<typeof DuprCreateSuccessSchema>;
 
 /** Success envelope for action="update". */
 export const DuprUpdateSuccessSchema = z.object({
   updated: z.literal(true),
-  match_code: z.string().min(1),
+  match_code: z.string().check(z.minLength(1)),
 });
 export type DuprUpdateSuccess = z.infer<typeof DuprUpdateSuccessSchema>;
 
 /** Success envelope for action="delete". */
 export const DuprDeleteSuccessSchema = z.object({
   deleted: z.literal(true),
-  match_code: z.string().optional(),
+  match_code: z.optional(z.string()),
 });
 export type DuprDeleteSuccess = z.infer<typeof DuprDeleteSuccessSchema>;
 
