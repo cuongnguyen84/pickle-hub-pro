@@ -1,0 +1,33 @@
+{
+  "checked_at_utc": "2026-11-20T15:28:48.317383+00:00",
+  "source": "Management API GET function body; ESZIP2.3 decoded in memory",
+  "function": "request-recovery-link",
+  "merge_commit": "6a060661bf3f276bf35fbb2a2e4dd424ecba5e89",
+  "deploy_guard_run": 44763225691,
+  "deploy_guard_conclusion": "success",
+  "deploy_scope": [
+    "request-recovery-link"
+  ],
+  "bundle_sha256": "1c0160de4e44dce454b8be408b3d399b153612067a1be36dcb0e9f56300a2582",
+  "modules": {
+    "functions/request-recovery-link/index.ts": {
+      "sha256": "fd2e73463a9ef1cd87f85bd617c1eb792cc67f87bb68118ffd5f5fdec417ba17",
+      "bytes": 9869
+    },
+    "functions/_shared/auth.ts": {
+      "sha256": "3f69af8a039a279f8c9f47723de6fbaf38a3bad76bc17d99708ad27bb03c0119",
+      "bytes": 2156
+    },
+    "functions/_shared/cors.ts": {
+      "sha256": "1cda4774a018797557c34315c0e5e3e1dbd1b097a85668e4c9bbbe9a37bb666c",
+      "bytes": 2649
+    }
+  },
+  "checks": {
+    "uniform_registered_channel_response": true,
+    "verified_auth_email": true,
+    "expiry_guard": true,
+    "no_token_response_branch": true
+  },
+  "limitations": "Source inspection only; no recovery request, notification, or user-data query."
+}
