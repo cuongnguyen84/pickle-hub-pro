@@ -63,3 +63,9 @@ it("does not turn cross-origin history writes into navigations",()=>{
  history.pushState({},"","https://other.test/dang-ky/credential");
  expect(fixture.assign).not.toHaveBeenCalled();expect(fixture.push).toHaveBeenCalled();
 });
+
+it("accepts bounded primitive dimensions while rejecting malformed/secret/unbounded values",()=>{
+ expect(analyticsProps({count:2,enabled:true,nan:NaN,infinite:Infinity,missing:undefined,list:["secret"],large:"x".repeat(101),malformed_url:"http://[",email_value:"private@example.test",jwt_value:"eyJhbGciOiJSUzI1NiJ9.credential",journey_id:token,plain_uuid:token,source_route:"/blog/test?q=secret#frag",hash:"/auth/callback#access_token=credential",failure_code:"unknown",country_code:4})).toEqual({count:2,enabled:true,journey_id:token,source_route:"/blog/test",failure_code:"unknown"});
+ expect(analyticsLocation("not-an-absolute-url")).toBeNull();
+ expect(isPrivateAnalyticsUrl("https://www.thepicklehub.net/%E0%A4%A")).toBe(true);
+});
