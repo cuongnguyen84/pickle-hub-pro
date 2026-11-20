@@ -163,3 +163,36 @@ describe("QuickTable score editor keyboard focus", () => {
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Edit score" }));
   });
 });
+
+describe("QuickTable pending save safety and score names", () => {
+  it.each(["en", "vi"] as const)("names both score fields with localized action and player (%s)", (language) => {
+    testI18n.language = language;
+    render(<QuickTableMatchRow match={match} index={0} player1={undefined} player2={undefined}
+      canEdit onScoreUpdate={vi.fn()} formatPlayerName={() => "Local player"} />);
+    fireEvent.click(screen.getByRole("button", { name: language === "en" ? "Edit score" : "Sửa điểm" }));
+    const label = language === "en" ? "Enter score" : "Nhập điểm";
+    expect(screen.getByRole("spinbutton", { name: `${label}: Local player (1)` })).toBeTruthy();
+    expect(screen.getByRole("spinbutton", { name: `${label}: Local player (2)` })).toBeTruthy();
+  });
+
+  it("does not cancel or discard a pending save on Escape; rejection keeps the draft and focus", async () => {
+    testI18n.language = "en";
+    let rejectSave!: (error: Error) => void;
+    const save = vi.fn(() => new Promise<void>((_, reject) => { rejectSave = reject; }));
+    render(<QuickTableMatchRow match={match} index={0} player1={undefined} player2={undefined}
+      canEdit onScoreUpdate={save} formatPlayerName={() => "Player"} />);
+    fireEvent.click(screen.getByRole("button", { name: "Edit score" }));
+    fireEvent.change(screen.getAllByRole("spinbutton")[0], { target: { value: "13" } });
+    const button = screen.getByRole("button", { name: "Save score" });
+    button.focus(); fireEvent.click(button);
+    fireEvent.keyDown(button, { key: "Escape" });
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.click(button);
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(screen.getAllByRole("spinbutton")).toHaveLength(2);
+    rejectSave(new Error("VERSION_CONFLICT"));
+    await waitFor(() => expect(button.getAttribute("aria-disabled")).toBe("false"));
+    await waitFor(() => expect(screen.getAllByRole("spinbutton")[0]).toHaveProperty("value", "13"));
+    expect(document.activeElement).toBe(button);
+  });
+});
