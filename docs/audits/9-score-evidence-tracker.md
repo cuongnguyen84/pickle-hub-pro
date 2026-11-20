@@ -18,27 +18,60 @@ working. This file tracks the time-dependent evidence needed to move the
   44667223381 succeeded and produced dated artifact. Thursday 08:31 ICT schedule.
 - Database ledger audit: PR #1055 merged, 427/427 parity. Schema, grants,
   policies and function authorization equivalence still need proof.
-- Secret-table privilege hardening: PR #1057 open, ten pgTAP assertions,
-  not applied to production; requires clean-replay database CI.
+- Secret-table privilege hardening: PR #1057 merged after all five gates, including
+  clean replay and race harness; applied production and independently verified
+  denied browser secret reads with required metadata/service access preserved.
 - DUPR fail-closed writer is local only. V1/V2 secret names absent at preflight;
   activation must follow reader parity verification and tested durable key custody.
 - Fresh GSC/GA4 acquisition baselines are saved in
   [20 November report](../seo/2026-11-20/README.md). Global traffic reports do
   not establish segmented conversion, CWV or retention.
 
+## Additional verified rollout (20 November)
+
+- PR #1059/#1062: server and client reject unconfirmed claim success. CI passed.
+- PR #1060: reserved news image geometry; exact production URL verified with
+  fresh Chrome context. This closes image-load shift reproduction, not field CWV.
+- PR #1061: server publication timestamp applied; trigger enabled, 27 historical
+  rows remain unknown. No fabricated historical dates.
+- PR #1065: failed score saves reject, editors retain draft on retry; CI passed
+  with tested isolated production score module and unchanged coverage thresholds.
+- PR #1067: internal score evidence applied after clean replay and multi-session
+  race/rollback PASS; browser grants absent, RLS/trigger enabled, no backfill.
+- PR #1069: weekly report includes server-observed evidence. Manual post-merge
+  run 44746616112 succeeded; downloaded artifact confirms new report sections.
+- PR #1070: scoped types generated from actual production schema; CI passed.
+- PR #1071/#1072: light-mode CTA and story-tag contrast fixes merged after CI.
+  Manual incomplete-node rationale remains scoped; authenticated journeys and full
+  keyboard/focus acceptance are still open. No whole-product AA claim.
+- PR #1073: mandatory staging coverage gate merged at 14:54:11 UTC as
+  `83ada796cf050151536c1f04060c85de8a89feb5`; all PR checks passed and local
+  coverage regression tests passed 13/13. No real staging no-skip run or
+  registration/publish write-journey proof exists yet.
+- Release protection is enabled (strict quality/smoke checks, administrator
+  enforcement and PR policy). Reviewed migration #1064 was applied atomically
+  with its ledger row; re-enabled drift run 44752651464 succeeded. See
+  [release control evidence](2026-11-20-release-controls.md). Full schema
+  equivalence and an actual restore drill remain open.
+- [Current security reconciliation](2026-11-20-security-finding-reconciliation.md)
+  covers all 25 historical findings with separate source/deployment status.
+  This does not mean all findings are fixed; recovery authorization is a priority.
+- Current fetched-main native SHA 156a61d7: 298 Swift Testing tests, 16 XCTest,
+  unsigned Release simulator build passed. Physical-device checks remain open.
+
 ## Current evidence snapshot (2026-11-20)
 
 | Area | Last known evidence | Status | What is still missing |
 |---|---|---|---|
 | QuickTable activation | Historical 20/10–19/11 snapshot: 49 created, 10 with scored matches, 5 completed, 34 creators, 1/34 had any earlier table. Reconciled current 21/10–20/11 cohort: 45 created, stages 14/0/21/5/5, 32 creators; stage observed 2026-11-20T01:31:53Z. Verified calendar-window reconciliation: 49 - 5 tables on Oct 20 + 1 on Nov 19 = 45. Source: [baseline](2026-11-19-event-baseline.md). | **Measured, exploratory** | No deletion inference. Snapshots are mutable; stage is not intent or abandonment. Current score/complete counts are not retention. |
-| Social Event activation | 0 new registrations and 0 events past their scheduled end in the 20/10–18/11 window; all-time snapshot in the report: 27 events and 107 registrations. | **No current funnel sample** | Verify GA4 journey events against committed rows when a real event is available. The event contract also calls out the missing canonical publication timestamp. |
+| Social Event activation | 0 new registrations and 0 events past their scheduled end in the 20/10–18/11 window; all-time snapshot in the report: 27 events and 107 registrations. | **No current funnel sample** | Verify GA4 journey events against committed rows when a real event is available. Canonical publication timestamp is now deployed (#1061), with 27 historical unknowns preserved; post-rollout commit/event reconciliation is still missing. |
 | Retention | Historical 1/34 returning-creator signal; current cohort has 32 creators and requires a fresh prior-activity comparison. | **Insufficient cohort** | Define first meaningful action, exclude test/admin traffic through a verified explicit marker, and observe a full 30 days. |
-| GSC / indexing | The SEO follow-up uses a 2026-08-01 export and still lists coverage inspection and the 61-URL 404 export as unchecked. | **Stale** | New GSC export, URL dispositions, and production verification. |
-| Organic CTR | A 28-day clean post-change window is required by the SEO follow-up. No current result is recorded here. | **Not measured** | Record VI/EN CTR by query group and position after the new baseline window. |
-| CWV field data | The historical scorecard records LCP p75 2423 ms and CLS about 0.67, with INP lacking enough CrUX samples. | **Historical / partial** | Read current Vietnam mobile RUM/CrUX after at least 28 days and report LCP, INP, and CLS separately. |
+| GSC / indexing | [Current acquisition baseline](../seo/2026-11-20/README.md): GSC 21/10–17/11, 2,845 clicks and 83,819 impressions. | **Current acquisition; coverage partial** | URL dispositions, internal links and VI/EN parity still need representative current inspection. The historical 61-URL export is not a current error count. |
+| Organic CTR | Current global 28-day CTR 3.39%, previous 3.76%; position 7.9 vs 7.4. | **Measured, descriptive** | Segment VI/EN query groups and position; this is not causal post-change improvement evidence. |
+| CWV field data | [Vietnam mobile GA4 ratings](2026-11-20-field-vitals.md), 23/10–19/11: LCP 3,040 events / 76.61% good; INP 1,936 / 91.22%; CLS 823 / 70.11%. | **Current ratings; numeric p75 missing** | Rating shares are not numeric p75 or CrUX. Numeric collection and remaining route-level shifts remain open; historical p75 is not current acceptance evidence. |
 | Native device quality | The manual backlog still contains unchecked iPhone payment, VoiceOver, push, offline scoring, deep-link, locale, and draft-recovery checks. | **Not verified on device** | Record device, OS, app build, date, scenario, result, and evidence for each high-risk path. |
 | Shop demand | The release packet (dated 2026-08-28) says the MVP was not released; historical evidence was 2 products and 1 real order. | **Stale / owner-gated** | Run the 5-person usability check, then the 20-buyer/2-seller 14-day cohort and the 30-day repeat check. Do not treat code readiness as demand validation. |
-| DUPR production readiness | The readiness report (dated 2026-05-24) says UAT was verified and user tokens were plaintext, with production secret/webhook/migration work listed. | **Must re-verify** | Confirm current environment and whether real users are connected. If production SSO is live, encrypt durable access and refresh tokens and verify rotation/revocation. |
+| DUPR production readiness | [Deployed-reader preflight](2026-11-20-dupr-rollout-preflight.md) and source manifest verified dual readers; V1/V2 key names absent, fail-closed writer local only. Historical May readiness text is superseded for these facts. | **Partial / custody prerequisite** | Test durable key recovery before activation; partner-cache plaintext, rotation/revocation and zero-plaintext verification remain open. |
 
 ## Weekly protocol
 
