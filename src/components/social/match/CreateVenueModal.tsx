@@ -10,7 +10,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -102,16 +102,8 @@ const buildSchema = (language: "vi" | "en") =>
     is_indoor: z.boolean().default(false),
   });
 
-type FormValues = {
-  name: string;
-  name_vi?: string;
-  city: string;
-  district?: string;
-  address?: string;
-  num_courts?: number;
-  surface_type?: string;
-  is_indoor: boolean;
-};
+type FormInput = z.input<ReturnType<typeof buildSchema>>;
+type FormValues = z.output<ReturnType<typeof buildSchema>>;
 
 interface CreateVenueModalProps {
   open: boolean;
@@ -125,7 +117,7 @@ export const CreateVenueModal = ({ open, onOpenChange, onCreated }: CreateVenueM
   const VN_CITIES = language === "vi" ? VN_CITIES_VI : VN_CITIES_EN;
   const SURFACES = language === "vi" ? SURFACES_VI : SURFACES_EN;
   const [submitting, setSubmitting] = useState(false);
-  const form = useForm<FormValues>({
+  const form = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(buildSchema(language)),
     defaultValues: {
       name: "", name_vi: "", city: "", district: "",
