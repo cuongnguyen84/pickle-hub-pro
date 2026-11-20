@@ -439,7 +439,7 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
       {active && <TimeoutOverlay vi={vi} loaded={loaded} active={active} onClose={() => setActive(null)} />}
       {showSwitch && <SwitchOverlay vi={vi} point={sideSwitchPoint(target)} onDone={() => setShowSwitch(false)} />}
       {confirming && state && (
-        <ConfirmOverlay vi={vi} loaded={loaded} state={state} saving={saving} onEdit={() => setConfirming(false)} onConfirm={() => finish(state)} />
+        <ConfirmOverlay vi={vi} loaded={loaded} state={state} saving={saving} onEdit={() => setConfirming(false)} onConfirm={() => { void finish(state).catch(() => { /* Save failure already reported; resume state was restored. */ }); }} />
       )}
     </div>
   );
