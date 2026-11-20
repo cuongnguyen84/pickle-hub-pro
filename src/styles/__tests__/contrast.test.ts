@@ -202,6 +202,13 @@ describe("token hygiene", () => {
 });
 
 describe("light-mode compact action text", () => {
+  it("keeps story tags readable over any image under their translucent green fill", () => {
+    const rule = theLine.split('[data-theme="the-line"][data-mode="light"] .tl-story-tag {')[1]?.split("}")[0];
+    expect(rule).toContain("color: var(--tl-fg)");
+    // 90% green over black is the darkest possible rendered image backdrop.
+    // Over brighter images contrast with the dark foreground only increases.
+    expect(ratio("--tl-fg", "#00a660", "light")).toBeGreaterThanOrEqual(4.5);
+  });
   it("keeps AI CTA text legible on the light green fill", () => {
     const rule = theLine.split('[data-theme="the-line"][data-mode="light"] .tl-ai-cta-go {')[1]?.split("}")[0];
     expect(rule).toContain("color: #ffffff");
