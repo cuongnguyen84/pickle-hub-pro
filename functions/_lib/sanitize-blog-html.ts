@@ -23,14 +23,14 @@ function safeUrl(value: string, image: boolean): boolean {
         (!image && (url.protocol === "mailto:" || url.protocol === "tel:")));
   } catch { return false; }
 }
-function clean(parent: Tree.ParentNode, anchors: Map<string, string>, depth = 0): void {
+function clean(parent: Tree.ParentNode, anchors: Map<string, string>, emitted: Set<string>, depth = 0): void {
   if (depth >= 64) { parent.childNodes = []; return; }
   const children: Tree.ChildNode[] = [];
   for (const child of parent.childNodes) {
     if (child.nodeName === "#text") { children.push(child); continue; }
     if (!("tagName" in child)) continue;
     if (child.namespaceURI !== "http://www.w3.org/1999/xhtml" || DROP_CONTENT.has(child.tagName)) continue;
-    clean(child, anchors, depth + 1);
+    clean(child, anchors, emitted, depth + 1);
     if (!TAGS.has(child.tagName)) {
       for (const nested of child.childNodes) { nested.parentNode = parent; children.push(nested); }
       continue;
@@ -39,7 +39,8 @@ function clean(parent: Tree.ParentNode, anchors: Map<string, string>, depth = 0)
       if (attr.namespace || attr.prefix) return false;
       if (attr.name === "id" && /^h[1-6]$/.test(child.tagName)) {
         const safe = anchors.get(attr.value);
-        if (!safe) return false;
+        if (!safe || emitted.has(safe)) return false;
+        emitted.add(safe);
         attr.value = safe;
         return true;
       }
@@ -73,16 +74,24 @@ export function sanitizeBlogHtml(html: string): string {
   // so TOC links before their headings are rewritten consistently. Generic IDs
   // and every name attribute remain forbidden (DOM clobbering boundary).
   const anchors = new Map<string, string>();
+  const used = new Set<string>();
   const pending: Tree.ChildNode[] = [...fragment.childNodes];
   while (pending.length) {
     const node = pending.pop()!;
     if (!("tagName" in node) || node.namespaceURI !== "http://www.w3.org/1999/xhtml" || DROP_CONTENT.has(node.tagName)) continue;
     const id = node.attrs.find((attr) => attr.name === "id" && !attr.namespace)?.value;
     if (/^h[1-6]$/.test(node.tagName) && id && /^[a-z][a-z0-9_-]{0,127}$/i.test(id)) {
-      anchors.set(id, id.startsWith("tph-blog-") ? id : `tph-blog-${id}`);
+      if (!anchors.has(id)) {
+        const base = id.startsWith("tph-blog-") ? id : `tph-blog-${id}`;
+        let target = base;
+        let suffix = 2;
+        while (used.has(target)) target = `${base}-${suffix++}`;
+        used.add(target);
+        anchors.set(id, target);
+      }
     }
-    pending.push(...node.childNodes);
+    for (const child of node.childNodes) pending.push(child);
   }
-  clean(fragment, anchors);
+  clean(fragment, anchors, new Set());
   return serialize(fragment);
 }

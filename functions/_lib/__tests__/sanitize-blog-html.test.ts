@@ -56,3 +56,16 @@ it("preserves VI pipeline heading/TOC fixtures without arbitrary clobbering IDs"
   expect(sink.querySelector('#tph-blog-rb-don-nam')?.textContent).toBe('Kết quả');
   expect(sink.querySelector('#location,[name],[style]')).toBeNull();
 });
+it("handles wide trees within the input bound without spread argument overflow", () => {
+  const input = '<div>' + '<br>'.repeat(150000) + '</div>';
+  expect(input.length).toBeLessThan(1_000_000);
+  expect(sanitizeBlogHtml(input)).toBe(input);
+});
+it("keeps colliding raw/prefixed and duplicate heading IDs deterministic and unique", () => {
+  const safe = sanitizeBlogHtml('<a href="#rb-a">A</a><a href="#tph-blog-rb-a">B</a><h2 id="rb-a">A</h2><h2 id="tph-blog-rb-a">B</h2><h2 id="rb-a">Duplicate</h2>');
+  const sink = document.createElement('div'); sink.innerHTML = safe;
+  const ids = [...sink.querySelectorAll('[id]')].map(e => e.id);
+  expect(new Set(ids).size).toBe(ids.length);
+  for (const link of sink.querySelectorAll('a')) expect(sink.querySelector(link.getAttribute('href')!)?.textContent).toBe(link.textContent);
+  expect(sanitizeBlogHtml(safe)).toBe(safe);
+});
