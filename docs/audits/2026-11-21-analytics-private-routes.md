@@ -44,3 +44,12 @@ measurement/property settings need separate account-side review. Existing HTTP
 logs or data previously collected are not deleted by source changes. No historical
 exposure claim or legal conclusion is made. Verify network requests and GA debug
 capture using synthetic owned credentials after deployment; never use real tokens.
+
+Event-property filtering is defense in depth, NOT a universal PII classifier.
+Callers still require event-specific reviewed schemas; arbitrary free text under
+unrecognized keys cannot be automatically certified harmless. Explicit name fields
+are omitted, approved registration failure_code uses a shared closed enum (unknown
+provider strings become unknown), and country_code permits two-letter enums.
+Sensitive code fields do not gain a free-text exception. Nested percent encoding
+is decoded at most three rounds; malformed/over-depth input fails closed in both
+boot and utility predicates, including match invite confirmation capabilities.

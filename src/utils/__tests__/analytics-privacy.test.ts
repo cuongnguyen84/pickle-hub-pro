@@ -6,7 +6,7 @@ import vm from "node:vm";
 import { isPrivateAnalyticsUrl, analyticsLocation, analyticsProps } from "../analyticsPrivacy";
 import { trackEvent, trackPageView } from "../ga";
 const token="f6200000-0000-4000-8000-000000000004";
-const privatePaths=[`/login?redirect=${encodeURIComponent("/auth/callback?code=secret")}`,`/dang-ky/${token}`,`/vi/%64ang-ky/${token}`,`/auth/callback#access_token=secret`,`/join/${token}`,`/login?redirect=${encodeURIComponent('/dang-ky/'+token)}`,`/blog/test?magic_token=${token}`,`/blog/test?phone=0901234567`,`/khoi-phuc-dang-ky`];
+const privatePaths=[`/match/confirm/${token}`,`/login?next=%252Fdang-ky%252F${token}`,`/login?next=${encodeURIComponent(encodeURIComponent(encodeURIComponent(encodeURIComponent("/dang-ky/"+token))))}`,`/login?redirect=${encodeURIComponent("/auth/callback?code=secret")}`,`/dang-ky/${token}`,`/vi/%64ang-ky/${token}`,`/auth/callback#access_token=secret`,`/join/${token}`,`/login?redirect=${encodeURIComponent('/dang-ky/'+token)}`,`/blog/test?magic_token=${token}`,`/blog/test?phone=0901234567`,`/khoi-phuc-dang-ky`];
 const html=readFileSync(resolve(import.meta.dirname,"../../../index.html"),"utf8");
 const guard=html.match(/<script id="analytics-privacy-guard">([\s\S]*?)<\/script>/)![1];
 function boot(path:string){
@@ -51,4 +51,9 @@ it("invalidates previous cached bot and human heads",async()=>{
   const cache=new Map([[`pr:v158:${human?"human:":""}/blog/test`,"unguarded analytics head"]]);
   expect(cache.get(prerenderCacheKey("/blog/test",human))).toBeUndefined();
  }
+});
+
+it("retains approved failure/country enums while removing raw codes and personal name fields",()=>{
+ expect(analyticsProps({failure_code:"otp_expired",country_code:"VN",otp_code:"123456",display_name:"A private name"})).toEqual({failure_code:"otp_expired",country_code:"VN"});
+ expect(analyticsProps({failure_code:"provider says private phone123",country_code:"123456",code:"123456"})).toEqual({failure_code:"unknown"});
 });

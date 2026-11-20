@@ -20,12 +20,19 @@
       (function () {
         function privateUrl(input) {
           try {
-            var url = new URL(input, window.location.href);
+            var decoded = input;
+            for (var depth = 0; depth < 3; depth++) {
+              var next = decodeURIComponent(decoded);
+              if (next === decoded) break;
+              decoded = next;
+            }
+            if (/%[0-9a-f]{2}/i.test(decoded)) return true;
+            var url = new URL(decoded, window.location.href);
             var path = decodeURIComponent(url.pathname).replace(/\/+/g, '/').toLowerCase();
-            if (/^\/(?:vi\/)?(?:dang-ky|join|auth|reset-password|update-password|khoi-phuc-dang-ky)(?:\/|$)/.test(path)) return true;
+            if (/^\/(?:vi\/)?(?:dang-ky|join|auth|match\/confirm|reset-password|update-password|khoi-phuc-dang-ky)(?:\/|$)/.test(path)) return true;
             if (/(?:access_token|refresh_token|magic_token|authorization|password|otp|session|(?:^|[&#])code)=/i.test(url.hash)) return true;
             for (var pair of url.searchParams) {
-              if (/token|secret|code|otp|phone|email|password|session|authorization/i.test(pair[0]) || /(?:dang-ky(?:\/|%2f)|(?:access_token|refresh_token|magic_token|code|otp|password)(?:=|%3d))/i.test(pair[1])) return true;
+              if (/token|secret|code|otp|phone|email|password|session|authorization/i.test(pair[0]) || /(?:(?:dang-ky|match\/confirm)(?:\/|%2f)|(?:access_token|refresh_token|magic_token|code|otp|password)(?:=|%3d))/i.test(pair[1])) return true;
             }
             return false;
           } catch (e) { return true; }
