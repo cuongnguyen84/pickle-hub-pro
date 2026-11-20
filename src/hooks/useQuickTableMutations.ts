@@ -1,3 +1,4 @@
+import { saveQuickTableScore } from '@/lib/quickTableScoreSave';
 import { useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -68,14 +69,6 @@ const EMPTY_PENDING: QuickTableMutationsPending = {
   updateCourtName: false,
   swapPlayoffPlayers: false,
 };
-
-/** A rejected score save must never resolve like a committed RPC. */
-export class QuickTableScoreSaveError extends Error {
-  constructor(readonly code: string) {
-    super(code);
-    this.name = 'QuickTableScoreSaveError';
-  }
-}
 
 export function useQuickTableMutations() {
   // W1.2 — per-mutation pending state. Lets a consumer wire
@@ -158,41 +151,24 @@ export function useQuickTableMutations() {
   ): Promise<void> => {
     setPendingFor('updateMatchScore', true);
     try {
-      const { data: match, error: fetchError } = await supabase
-        .from('quick_table_matches')
-        .select('score_version')
-        .eq('id', matchId)
-        .single();
-
-      if (fetchError || !match) {
-        console.error('[useQuickTableMutations] updateMatchScore fetch:', fetchError);
-        toast.error('Không thể lưu điểm.');
-        throw new QuickTableScoreSaveError('SCORE_LOOKUP_FAILED');
-      }
-
-      const { data, error } = await supabase.rpc('score_quick_table_match_atomic', {
-        p_match_id: matchId,
-        p_score1: score1,
-        p_score2: score2,
-        p_expected_version: match.score_version,
+      await saveQuickTableScore({
+        fetchVersion: async () => {
+          const { data, error } = await supabase.from('quick_table_matches')
+            .select('score_version').eq('id', matchId).single();
+          return { data, error };
+        },
+        commit: async (version) => {
+          const { data, error } = await supabase.rpc('score_quick_table_match_atomic', {
+            p_match_id: matchId, p_score1: score1, p_score2: score2,
+            p_expected_version: version,
+          });
+          return { data, error };
+        },
+      }, {
+        error: (message) => toast.error(message),
+        permissionDenied: tStandalone('toast.table.updateMatchScore.permissionDenied'),
+        log: (error) => console.error('[useQuickTableMutations] updateMatchScore:', error),
       });
-      const result = (data ?? {}) as Record<string, unknown>;
-
-      if (error || result.success !== true) {
-        console.error('[useQuickTableMutations] updateMatchScore:', error || result);
-        if (isPermissionDenied(error)) {
-          toast.error(tStandalone('toast.table.updateMatchScore.permissionDenied'));
-        } else if (result.error === 'VERSION_CONFLICT') {
-          toast.error('Điểm vừa được cập nhật ở thiết bị khác. Hãy tải lại.');
-        } else if (result.error === 'DOWNSTREAM_LOCKED') {
-          toast.error('Không thể sửa vì trận tiếp theo đã bắt đầu.');
-        } else {
-          toast.error(typeof result.error === 'string' ? result.error : 'Không thể lưu điểm.');
-        }
-        throw new QuickTableScoreSaveError(
-          typeof result.error === 'string' ? result.error : 'SCORE_SAVE_FAILED',
-        );
-      }
     } finally {
       setPendingFor('updateMatchScore', false);
     }
