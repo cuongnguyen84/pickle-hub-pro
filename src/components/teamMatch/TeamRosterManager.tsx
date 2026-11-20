@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod/v4';
+import * as z from 'zod/v4/mini';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -167,9 +167,9 @@ export function TeamRosterManager({
   };
 
   const addMemberSchema = z.object({
-    player_name: z.string().min(2, txt.nameError).max(50),
+    player_name: z.string().check(z.minLength(2, txt.nameError), z.maxLength(50)),
     gender: z.enum(['male', 'female']),
-    skill_level: z.number().min(1).max(8).optional(),
+    skill_level: z.optional(z.number().check(z.minimum(1), z.maximum(8))),
   });
 
   type AddMemberValues = z.infer<typeof addMemberSchema>;
