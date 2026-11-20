@@ -39,7 +39,7 @@ export function isPublicContentPath(pathname: string): boolean {
   const path = pathname.replace(/^\/vi(?=\/|$)/, '') || '/';
   return ['/', '/blog', '/tools', '/about', '/contact', '/authors/cuong-nguyen'].includes(path)
     || /^\/blog\/[^/]+$/.test(path)
-    || /^\/tools\/(quick-tables|team-match|doubles-elimination|flex-tournament)$/.test(path);
+    || /^\/tools\/(quick-tables|team-match|doubles-elimination|flex-tournament|create-by-chat|tao-giai-bang-chat)$/.test(path);
 }
 
 /** Extract only SEO nodes; never copy the renderer's global CSS or analytics. */

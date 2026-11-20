@@ -136,6 +136,14 @@
     "element": "<RequireAuth requiredRole=\"admin\"><AdminErrors /></RequireAuth>"
   },
   {
+    "path": "/tools/create-by-chat",
+    "element": "<CreateByChat />"
+  },
+  {
+    "path": "/vi/tools/tao-giai-bang-chat",
+    "element": "<ViLanguageWrapper><CreateByChat /></ViLanguageWrapper>"
+  },
+  {
     "path": "/match",
     "element": "<RequireAuth><MatchSubmitPage /></RequireAuth>"
   },

@@ -120,6 +120,7 @@ const ShopOrders = lazyRetry(() => import("./pages/shop/Orders"));
 const SellerOrders = lazyRetry(() => import("./pages/shop/SellerOrders"));
 const SellerOrderDetail = lazyRetry(() => import("./pages/shop/SellerOrderDetail"));
 const Tools = lazyRetry(() => import("./pages/Tools"));
+const CreateByChat = lazyRetry(() => import("./pages/CreateByChat"));
 const QuickTables = lazyRetry(() => import("./pages/QuickTables"));
 const QuickTableSetup = lazyRetry(() => import("./pages/QuickTableSetup"));
 const QuickTableChat = lazyRetry(() => import("./pages/QuickTableChat"));
@@ -829,6 +830,9 @@ const App = () => (
                     <Route path="/dupr" element={<RequireAuth><DuprConnect /></RequireAuth>} />
                     <Route path="/admin/dupr" element={<RequireAuth requiredRole="admin"><AdminDuprDashboard /></RequireAuth>} />
                     <Route path="/admin/errors" element={<RequireAuth requiredRole="admin"><AdminErrors /></RequireAuth>} />
+                    {/* AI-chat tournament creator landing - literal pair because the VI slug differs from the EN slug (no MIRRORED mirror, so /vi/tools/create-by-chat intentionally does not exist). */}
+                    <Route path="/tools/create-by-chat" element={<CreateByChat />} />
+                    <Route path="/vi/tools/tao-giai-bang-chat" element={<ViLanguageWrapper><CreateByChat /></ViLanguageWrapper>} />
                     <Route path="/match" element={<RequireAuth><MatchSubmitPage /></RequireAuth>} />
                     <Route path="/match/new" element={<RequireAuth><MatchNewPage /></RequireAuth>} />
                     <Route path="/match/confirm" element={<RequireAuth><MatchConfirm /></RequireAuth>} />

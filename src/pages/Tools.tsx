@@ -227,6 +227,23 @@ const Tools = () => {
           </div>
         </section>
 
+        {/* AI chat feature - landing page pair /tools/create-by-chat and
+            /vi/tools/tao-giai-bang-chat (literal routes, VI slug differs,
+            so the href is written out per language instead of lp()). */}
+        <section style={{ marginBottom: 48 }}>
+          <div className="tl-sec-head">
+            <h2>{isVi ? "Tạo cả giải chỉ bằng chat" : "Create the whole tournament by chat"}</h2>
+          </div>
+          <p>
+            {isVi
+              ? "Công cụ tạo giải bằng chat AI đầu tiên dành riêng cho pickleball. Dán danh sách từ Zalo hoặc gửi ảnh danh sách - AI đọc tên, dựng bản nháp chia bảng và tạo bảng đấu trong khoảng 60 giây, kể cả thể thức đồng đội MLP."
+              : "The first AI chat tournament builder made specifically for pickleball. Paste any player list - a message, an email, a spreadsheet, a photo - and the AI reads the names, drafts the groups and builds the bracket in about 60 seconds, including MLP Team Matches. The draw then lives on ThePickleHub with results, livestreams and courts."}
+          </p>
+          <Link to={isVi ? "/vi/tools/tao-giai-bang-chat" : "/tools/create-by-chat"} className="tl-btn green">
+            {isVi ? "tạo giải bằng chat AI →" : "AI bracket generator →"}
+          </Link>
+        </section>
+
         {/* Format cards */}
         <section style={{ marginBottom: 48 }}>
           <div className="tl-sec-head">

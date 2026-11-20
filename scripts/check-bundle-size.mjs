@@ -45,6 +45,11 @@ import { gzipSync } from "node:zlib";
 import { join, dirname, resolve } from "node:path";
 
 const BUDGETS = {
+  // 1930 -> 1935 (2026-11-21, owner-approved): the AI-chat tournament
+  // creator landing pages (/tools/create-by-chat + /vi/tools/tao-giai-bang-chat)
+  // add a dedicated page chunk (~3.2 KB gz: page + shared EN/VI copy module)
+  // plus a feature block on /tools. Local build measured CODE at
+  // 1932.1/1930 KB, so 1935 leaves ~2.9 KB of headroom.
   // 1920 -> 1930 (2026-11-20, owner-approved, PR #1052): the Zod 4 migration
   // added ~12.5-13.7 KB gzipped in structural Zod v4 classic cost that
   // tree-shaking cannot remove: classic schemas hard-import the toJSONSchema
@@ -60,7 +65,7 @@ const BUDGETS = {
   // batch (2 posts) needed +1.3 KB of metadata headroom.
   // 1800 -> 1900 (2026-10-01, DEBT-09, owner-approved): the blog metadata chunk grows
   // with every post and held CODE at 1799.7/1800. Paid back when /blog stops shipping it whole.
-  code: Number(process.env.BUNDLE_CODE_BUDGET_KB || 1930),
+  code: Number(process.env.BUNDLE_CODE_BUDGET_KB || 1935),
   initial: Number(process.env.BUNDLE_INITIAL_BUDGET_KB || 280),
   contentChunk: Number(process.env.BUNDLE_CONTENT_CHUNK_KB || 20),
 };

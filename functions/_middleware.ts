@@ -30,7 +30,7 @@ import {
   renderShopCatalog, renderShopCategory, renderShopProduct, renderShopStore,
   renderOrgDetail,
   renderQuickTable, renderTeamMatch, renderDoublesElimination, renderFlexTournament,
-  renderTools, renderToolPage, renderToolNewPage,
+  renderTools, renderToolPage, renderToolNewPage, renderCreateByChatPage,
   renderBlogPost, renderBlog,
   renderViBlogPost, renderViBlogIndex,
   renderLivestreamList, renderRankings, renderPpaRankings, renderPrivacy, renderTerms, renderAdvertise,
@@ -1760,6 +1760,15 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string, accep
   if (path === "/tools/flex-tournament/new") return renderToolNewPage("flex-tournament", siteUrl, rawPath, lang);
   if (path === "/tools/team-match/new") return renderToolNewPage("team-match", siteUrl, rawPath, lang);
 
+  // The create-by-chat app surface. React Router ranks the static route
+  // above /tools/quick-tables/:shareId for humans, but this bot router
+  // would otherwise treat "chat" as a tournament shareId below and 404
+  // when no such tournament exists (the GSC "Not found" Bot SEO flagged
+  // on 2026-11-21). It is an auth-gated create flow, so bots get the
+  // noindex shell like other private surfaces; the indexable marketing
+  // surface is the landing page dispatched further down.
+  if (path === "/tools/quick-tables/chat") return renderNoindexShell(siteUrl, rawPath, lang);
+
   // Tool instances (noindex)
   match = path.match(/^\/tools\/quick-tables\/([^/]+)$/);
   if (match) return await renderQuickTable(supabase, match[1], siteUrl, { pageUrl: `${siteUrl}${rawPath}`, lang });
@@ -1774,6 +1783,8 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string, accep
   if (match) return await renderFlexTournament(supabase, match[1], siteUrl);
 
   // Tool list pages (must come before catch-all)
+  if (path === "/tools/create-by-chat") return renderCreateByChatPage(siteUrl, rawPath, lang);
+  if (path === "/tools/tao-giai-bang-chat") return renderCreateByChatPage(siteUrl, rawPath, lang);
   if (path === "/tools/quick-tables") return renderToolPage("quick-tables", siteUrl, rawPath, lang);
   if (path === "/tools/team-match") return renderToolPage("team-match", siteUrl, rawPath, lang);
   if (path === "/tools/doubles-elimination") return renderToolPage("doubles-elimination", siteUrl, rawPath, lang);
