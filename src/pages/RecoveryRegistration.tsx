@@ -1,17 +1,12 @@
 // ============================================================================
 // RecoveryRegistration (`/khoi-phuc-dang-ky`) — phone-keyed recovery flow.
 // ----------------------------------------------------------------------------
-// Public page (no auth). Player enters their phone number, the
-// request-recovery-link edge fn picks the best channel:
-//   - Zalo ZNS    — sent silently, page just says "check Zalo"
-//   - Email       — sent silently, page says "check inbox" with masked addr
-//   - CAPTCHA     — page surfaces a Turnstile widget; on solve, token is
-//                   returned and we deep-link straight to /dang-ky/:token
+// CAPTCHA gates notification abuse. Credentials are delivered out of band only.
 // ============================================================================
 
 import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
-import { Loader2, Phone, MessageCircle, Mail, ShieldCheck, ExternalLink } from "lucide-react";
+import { Loader2, Phone, MessageCircle, Mail, ShieldCheck,  } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,15 +26,13 @@ type ResultState =
   | { kind: "zalo"; count: number }
   | { kind: "email"; masked: string; count: number }
   | { kind: "captcha_required"; count: number }
-  | { kind: "captcha_solved"; magic_token: string; recovery_url: string }
+  | { kind: "registered_channel" }
   | { kind: "error"; code: string };
 
 interface RecoveryResponse {
   ok?: boolean;
-  channel?: "zalo" | "email" | "captcha";
+  channel?: "zalo" | "email" | "registered_channel";
   masked_email?: string;
-  magic_token?: string;
-  recovery_url?: string;
   count?: number;
   code?: string;
   error?: string;
@@ -50,7 +43,7 @@ export default function RecoveryRegistration() {
   // form state + masked email; must stay out of any search index.
   useNoindex();
 
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const tr = t.socialEvents.recovery;
 
   const [phone, setPhone] = useState("");
@@ -110,16 +103,8 @@ export default function RecoveryRegistration() {
         setResult({ kind: "error", code: data?.code ?? "generic" });
         return;
       }
-      if (data.channel === "zalo") {
-        setResult({ kind: "zalo", count: data.count ?? 1 });
-      } else if (data.channel === "email") {
-        setResult({ kind: "email", masked: data.masked_email ?? "", count: data.count ?? 1 });
-      } else if (data.channel === "captcha" && data.magic_token) {
-        setResult({
-          kind: "captcha_solved",
-          magic_token: data.magic_token,
-          recovery_url: data.recovery_url ?? `/dang-ky/${data.magic_token}`,
-        });
+      if (data.channel === "registered_channel") {
+        setResult({ kind: "registered_channel" });
       } else {
         setResult({ kind: "error", code: "generic" });
       }
@@ -157,7 +142,7 @@ export default function RecoveryRegistration() {
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+84..."
                   className="pl-9"
-                  disabled={result.kind === "submitting" || result.kind === "captcha_required" || result.kind === "captcha_solved"}
+                  disabled={result.kind === "submitting" || result.kind === "captcha_required" || result.kind === "registered_channel"}
                 />
               </div>
               {phone.length > 0 && !phoneValid && (
@@ -249,22 +234,11 @@ export default function RecoveryRegistration() {
               </div>
             )}
 
-            {/* CAPTCHA solved → deep link */}
-            {result.kind === "captcha_solved" && (
-              <div className="rounded-md border border-emerald-400/40 bg-emerald-50 p-4 dark:bg-emerald-950/30">
-                <p className="font-semibold text-emerald-900 dark:text-emerald-100">
-                  {tr.captchaSuccessTitle}
-                </p>
-                <p className="text-sm text-emerald-800 dark:text-emerald-200">
-                  {tr.captchaSuccessBody}
-                </p>
-                <a
-                  href={`/dang-ky/${result.magic_token}`}
-                  className="tl-btn green mt-3 w-full justify-center"
-                  style={{ textDecoration: "none" }}
-                >
-                  <ExternalLink className="h-4 w-4" /> {tr.captchaOpenCta} →
-                </a>
+            {result.kind === "registered_channel" && (
+              <div role="status" className="rounded-md border border-border p-4 text-sm">
+                {language === "vi"
+                  ? "Nếu đăng ký có kênh khôi phục đã xác minh, đường dẫn sẽ được gửi qua Zalo hoặc email đó. Nếu không nhận được, hãy liên hệ ban tổ chức để xác minh quyền sở hữu đăng ký. CAPTCHA không thay thế xác minh danh tính."
+                  : "If the registration has a verified recovery channel, a link will be sent there by Zalo or email. If it does not arrive, contact the organizer to verify ownership of your registration. CAPTCHA does not verify identity."}
               </div>
             )}
 
