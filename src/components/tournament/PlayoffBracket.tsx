@@ -44,7 +44,7 @@ interface PlayoffBracketProps {
   matches: BracketMatch[];
   players: BracketPlayer[];
   canEdit: boolean;
-  onScoreUpdate: (matchId: string, score1: number, score2: number) => void;
+  onScoreUpdate: (matchId: string, score1: number, score2: number) => void | Promise<void>;
   onCourtNameUpdate?: (matchId: string, courtName: string) => void;
   /** Chủ giải đổi chỗ 2 người giữa 2 trận vòng 1 chưa đá (chạm 2 lần). */
   onSwapPlayers?: (a: SwapSlot, b: SwapSlot) => void;
@@ -342,7 +342,7 @@ interface BracketMatchCardProps {
   player2: BracketPlayer | undefined;
   canEdit: boolean;
   canEditCourt: boolean;
-  onScoreUpdate: (matchId: string, score1: number, score2: number) => void;
+  onScoreUpdate: (matchId: string, score1: number, score2: number) => void | Promise<void>;
   onCourtNameUpdate?: (matchId: string, courtName: string) => void;
   getGroupName: (player: BracketPlayer | undefined) => string | null;
   formatPlayerName: (player: BracketPlayer | undefined) => string;
@@ -391,7 +391,7 @@ const BracketMatchCard = ({
     setIsEditing(true);
   }, [match.score1, match.score2]);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     const score1 = parseInt(localScore1) || 0;
     const score2 = parseInt(localScore2) || 0;
 
@@ -401,8 +401,12 @@ const BracketMatchCard = ({
     }
 
     if (score1 > 0 || score2 > 0) {
-      onScoreUpdate(match.id, score1, score2);
-      setIsEditing(false);
+      try {
+        await onScoreUpdate(match.id, score1, score2);
+        setIsEditing(false);
+      } catch {
+        // Save failed; preserve draft values and let the mutation own its toast.
+      }
     }
   }, [localScore1, localScore2, match.id, onScoreUpdate, t]);
 
