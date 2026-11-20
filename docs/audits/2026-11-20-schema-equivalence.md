@@ -41,6 +41,7 @@ pinned to github.sha (actual checkout merge SHA for pull requests). CI must pass
 SQL capture and comparator tests. Production comparison is a separate read-only
 operation so ordinary pull requests never receive production credentials.
 
-Current status: local comparator tests4/4 pass. Production read-only snapshot
-collection and actual CI replay/compare results will be recorded after execution.
+Current status: local comparator tests5/5 pass. Actual production read-only
+collection succeeded with9,730 catalog objects saved locally mode0600. Actual
+CI replay/compare results remain pending; the snapshot alone cannot show drift.
 No equivalence or 9/10 closure is claimed from a tool implementation or ledger.
