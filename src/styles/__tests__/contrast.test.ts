@@ -200,3 +200,17 @@ describe("token hygiene", () => {
     }
   });
 });
+
+describe("light-mode compact action text", () => {
+  it("keeps AI CTA text legible on the light green fill", () => {
+    const rule = theLine.split('[data-theme="the-line"][data-mode="light"] .tl-ai-cta-go {')[1]?.split("}")[0];
+    expect(rule).toContain("color: #ffffff");
+    expect(ratio("#ffffff", "--tl-green", "light")).toBeGreaterThanOrEqual(4.5);
+  });
+  it("uses readable text color instead of decorative format accents", () => {
+    const rule = theLine.split('[data-theme="the-line"][data-mode="light"] .tl-format-kicker {')[1]?.split("}")[0];
+    expect(rule).toContain("color: var(--tl-green)");
+    expect(ratio("--tl-green", "--tl-bg", "light")).toBeGreaterThanOrEqual(4.5);
+    expect(ratio("--tl-green", "--tl-bg-elev", "light")).toBeGreaterThanOrEqual(4.5);
+  });
+});
