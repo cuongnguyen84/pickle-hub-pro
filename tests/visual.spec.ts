@@ -19,10 +19,16 @@
 // ============================================================================
 
 import { test, expect } from "@playwright/test";
-import { prepareVisualPage, settleVisualFonts, assertNavigationUnmasked, VISUAL_MASK_SELECTORS, waitForVisualContent } from "./helpers/visual-stability";
+import { prepareVisualPage, settleVisualFonts, assertNavigationUnmasked, VISUAL_MASK_SELECTORS, waitForVisualContent, assertNoUnapprovedWrites, visualNetworkSummary } from "./helpers/visual-stability";
 
 test.describe("visual regression", () => {
+  test.use({ serviceWorkers: 'block' });
   test.skip(process.env.VISUAL !== "1", "VISUAL not set — skipping pixel diff");
+
+  test.afterEach(async ({ page }, info) => {
+    console.log(`VISUAL_NETWORK_AUDIT ${JSON.stringify({ project: info.project.name, test: info.title, ...visualNetworkSummary(page) })}`);
+    assertNoUnapprovedWrites(page);
+  });
 
   // Tolerances: allow tiny anti-aliasing noise but catch real layout shifts.
   const SCREENSHOT_OPTS = {

@@ -63,3 +63,24 @@ cases require reviewed current screenshots, not automatic acceptance.
 Finish route-owned fixtures/readiness, review intended current layout and both
 populated/empty states, then submit reviewed baseline proposals separately.
 No full visual compliance, no universal image acceptance or UI9/10 is claimed.
+
+## Telemetry containment correction
+
+The initial34-contract local proof and initial PR1091 CI run44784116210 did not
+instrument automatic heartbeat/analytics traffic. Their contamination count is
+UNKNOWN; page navigation is not proof of zero product-tracking writes. No cleanup
+or deletion was attempted. Their evidence is limited to UI/harness execution.
+
+The corrected harness blocks known analytics/heartbeat requests synthetically,
+rejects every other non-read request before network unless the exact public
+read-RPC name is explicitly allowed, blocks service workers and closes all
+WebSockets. It logs only category counts, method/path and read-RPC names, never
+headers, payloads, query strings or user identifiers. Seven allowed read RPCs
+are STABLE and their definition hashes match the reviewed disposable replay;
+changed/unreviewed get_trending_feed is not allowed. This is a scoped read-RPC
+contract, not blanket permission for get_* or arbitrary POSTs.
+
+Guarded actual rerun:34/34 passed17.7seconds,32 telemetry requests blocked,
+zero forbidden requests forwarded,16 allowlisted read-RPC calls. Full synthetic
+case counts and provenance are retained in the adjacent JSON files. These
+counts do not retroactively clean or quantify earlier unguarded tracking.

@@ -1,5 +1,24 @@
 import type { Page, Request } from '@playwright/test';
 
+const networkAudit = new WeakMap<Page, { blockedTelemetry: number; forbidden: string[]; readRpc: string[] }>();
+export const VISUAL_READ_RPCS = ['get_homepage_stats', 'get_top_blog_posts', 'get_blog_post_view_counts_batch', 'get_feed_timeline', 'dupr_leaderboard_vietnam', 'shop_public_categories', 'shop_public_search'];
+export function visualNetworkPolicy(rawUrl: string, method: string): 'read' | 'telemetry' | 'forbidden' {
+  const url = new URL(rawUrl);
+  const telemetryHost = /(^|\.)(google-analytics\.com|googletagmanager\.com|cloudflareinsights\.com|ahrefs\.com|doubleclick\.net|googlesyndication\.com)$/.test(url.hostname);
+  const telemetryPath = /\/(?:g\/)?collect(?:\/|$)|\/cdn-cgi\/rum(?:\/|$)|\/rpc\/(record_heartbeat|record_view_event|record_site_visit)$|\/functions\/v1\/log-client-event$/.test(url.pathname);
+  if (telemetryHost || telemetryPath) return 'telemetry';
+  if (['GET', 'HEAD', 'OPTIONS'].includes(method)) return 'read';
+  if (method === 'POST' && /^https:\/\/[a-z0-9]{20}\.supabase\.co$/.test(url.origin) && VISUAL_READ_RPCS.includes(url.pathname.replace('/rest/v1/rpc/', '')) && url.pathname.startsWith('/rest/v1/rpc/')) return 'read';
+  return 'forbidden';
+}
+export function visualNetworkSummary(page: Page) {
+  return networkAudit.get(page) ?? { blockedTelemetry: 0, forbidden: [], readRpc: [] };
+}
+export function assertNoUnapprovedWrites(page: Page) {
+  const audit = visualNetworkSummary(page);
+  if (audit.forbidden.length) throw Error(`Unapproved write blocked before network: ${audit.forbidden.join(',')}`);
+}
+
 const pendingReads = new WeakMap<Page, Set<Request>>();
 
 export const VISUAL_MASK_SELECTORS = ['img', '[data-testid="live-score"]', 'time'];
@@ -28,6 +47,9 @@ export const VISUAL_STREAMS = ['live', 'scheduled', 'ended'].map((status, index)
   ended_at: status === 'ended' ? '2026-11-19T12:00:00Z' : null,
 }));
 export async function prepareVisualPage(page: Page, liveState: 'populated' | 'empty' = 'populated') {
+  const audit = { blockedTelemetry: 0, forbidden: [] as string[], readRpc: [] as string[] };
+  networkAudit.set(page, audit);
+  await page.routeWebSocket('**/*', socket => socket.close());
   const pending = new Set<Request>();
   pendingReads.set(page, pending);
   page.on('request', request => {
@@ -42,8 +64,19 @@ export async function prepareVisualPage(page: Page, liveState: 'populated' | 'em
   });
   // Fix dates, not timers: loading/animation/layout behavior remains real.
   await page.clock.setFixedTime(new Date('2026-11-20T12:00:00Z'));
-  await page.route('**/rest/v1/**', async route => {
+  await page.route('**/*', async route => {
     const request = route.request(), url = new URL(request.url());
+    const policy = visualNetworkPolicy(request.url(), request.method());
+    if (policy === 'telemetry') {
+      audit.blockedTelemetry++;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: 'null' });
+    }
+    if (policy === 'forbidden') {
+      // Store only method+path, never headers, payload, query or credentials.
+      audit.forbidden.push(`${request.method()} ${url.pathname}`);
+      return route.abort('blockedbyclient');
+    }
+    if (request.method() === 'POST') audit.readRpc.push(url.pathname.split('/').at(-1)!);
     if (isClubFixtureRequest(request.url(), request.method())) {
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(VISUAL_CLUBS) });
     }
@@ -56,6 +89,7 @@ export async function prepareVisualPage(page: Page, liveState: 'populated' | 'em
   });
 }
 export async function waitForVisualContent(page: Page, path: string) {
+  assertNoUnapprovedWrites(page);
   await page.getByRole('heading').first().waitFor({ state: 'visible' });
   await page.locator('[role="status"].min-h-screen').waitFor({ state: 'hidden' });
   // Finish outstanding content reads and React paint, not a fixed sleep.
@@ -66,6 +100,7 @@ export async function waitForVisualContent(page: Page, path: string) {
     if (!pendingReads.get(page)?.size) break;
     if (pass === 7) throw Error('Content reads did not settle before visual capture');
   }
+  assertNoUnapprovedWrites(page);
   if (path === '/blog' || path === '/vi/blog') {
     await page.locator('.tl-blog-hero, .tl-blog-card').first().waitFor({ state: 'visible' });
   }
