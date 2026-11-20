@@ -3,14 +3,8 @@
 // ----------------------------------------------------------------------------
 // POST { phone_e164, event_id?: string, captcha_token?: string }
 //
-// Tiered recovery flow for players who lost their /dang-ky/:token URL.
-// Channel resolution order:
-//   1. Zalo ZNS — when the matched profile has zalo_user_id set
-//   2. Email   — when the matched profile has contact_email set
-//   3. CAPTCHA — when neither channel is available but a valid
-//                Cloudflare Turnstile token is presented; returns the
-//                magic_token in the response so the client can deep-link
-//
+// Recovery is delivered only through a registered channel. CAPTCHA is an
+// abuse check, never proof of phone ownership or permission to receive a token.
 // Rate-limited at 5 attempts/phone/24h via public.recovery_attempts. The
 // table itself is service-role-only.
 //
@@ -72,7 +66,7 @@ async function verifyTurnstile(token: string, ip?: string): Promise<boolean> {
     const body = (await res.json()) as { success?: boolean };
     return Boolean(body.success);
   } catch (e) {
-    logEvent({ step: "turnstile_error", error: String(e) });
+    logEvent({ step: "turnstile_error", error: "provider_request_failed" });
     return false;
   }
 }
@@ -111,11 +105,11 @@ async function sendZalo(args: {
       },
     );
     const body = (await res.json()) as { error?: number; message?: string };
-    if (body.error === 0 || body.error === undefined) return true;
-    logEvent({ step: "zalo_send_failed", error: body.error, message: body.message });
+    if (res.ok && body.error === 0) return true;
+    logEvent({ step: "zalo_send_failed", status: res.status, error: typeof body.error === "number" ? body.error : "invalid_provider_response" });
     return false;
   } catch (e) {
-    logEvent({ step: "zalo_error", error: String(e) });
+    logEvent({ step: "zalo_error", error: "provider_request_failed" });
     return false;
   }
 }
@@ -167,13 +161,13 @@ async function sendEmail(args: {
       }),
     });
     if (!res.ok) {
-      const text = await res.text();
-      logEvent({ step: "resend_send_failed", status: res.status, body: text });
+      logEvent({ step: "resend_send_failed", status: res.status });
       return false;
     }
-    return true;
+    const result = await res.json() as { id?: unknown };
+    return typeof result.id === "string" && result.id.length > 0;
   } catch (e) {
-    logEvent({ step: "resend_error", error: String(e) });
+    logEvent({ step: "resend_error", error: "provider_request_failed" });
     return false;
   }
 }
@@ -214,16 +208,23 @@ Deno.serve(async (req) => {
 
   // ─── Rate limit: 5 attempts / phone / 24h ────────────────────────────────
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const { count: recentCount } = await supabase
+  const { count: recentCount, error: rateError } = await supabase
     .from("recovery_attempts")
     .select("id", { count: "exact", head: true })
     .eq("phone_e164", phone)
     .gte("attempted_at", since);
+  if (rateError) return err("rate_limit_check_failed", 503, "rate_limit_check_failed");
   if ((recentCount ?? 0) >= MAX_ATTEMPTS_PER_DAY) {
     await supabase
       .from("recovery_attempts")
       .insert({ phone_e164: phone, method: "rejected", succeeded: false });
     return err("rate_limit_exceeded", 429, "rate_limit_exceeded");
+  }
+
+  // Require the abuse check before any lookup or notification, for every phone.
+  if (!captchaToken) return jsonResponse({ ok: false, code: "captcha_required" });
+  if (!await verifyTurnstile(captchaToken, req.headers.get("cf-connecting-ip") ?? undefined)) {
+    return err("captcha_failed", 400, "captcha_failed");
   }
 
   // ─── Lookup registrations ────────────────────────────────────────────────
@@ -238,84 +239,42 @@ Deno.serve(async (req) => {
   const allRegs = (rows ?? []) as RegistrationRow[];
   const regs = eventId ? allRegs.filter((r) => r.event_id === eventId) : allRegs;
 
-  // SECURITY (M9): do NOT reveal whether a phone is registered before the
-  // caller proves control via Turnstile. "No registration" and "registration
-  // without a Zalo/email channel" both return the identical captcha_required
-  // response (no count), so this endpoint can't be used to enumerate which
-  // phone numbers are registered. Existence is only disclosed either by the
-  // auto-send to the owner's own Zalo/email (standard reset behaviour) or
-  // AFTER a valid CAPTCHA.
-  const target = regs.length > 0 ? regs[0] : null;
-  const siteUrl =
-    Deno.env.get("SITE_URL") ?? "https://www.thepicklehub.net";
+  let target = regs.find((row) => !row.cancelled_at) ?? null;
+  if (target) {
+    const { data: secret, error } = await supabase.from("registration_secrets")
+      .select("expires_at").eq("registration_id", target.registration_id).maybeSingle();
+    const expires = secret?.expires_at ? Date.parse(secret.expires_at) : NaN;
+    if (error || !Number.isFinite(expires) || expires <= Date.now()) target = null;
+  }
+  const siteUrl = Deno.env.get("SITE_URL") ?? "https://www.thepicklehub.net";
   const recoveryUrl = target ? `${siteUrl}/dang-ky/${target.magic_token}` : "";
-
-  // ─── Channel selection ───────────────────────────────────────────────────
-  // 1. Zalo (if zalo_user_id present + secrets configured)
+  let method = "rejected";
+  let delivered = false;
+  // ZNS delivers to the registered phone, never to a request-supplied address.
   if (target?.zalo_user_id) {
-    const ok = await sendZalo({
-      phone_no_plus: phone.replace(/^\+/, ""),
-      zalo_user_id: target.zalo_user_id,
-      event_title: target.event_title_vi,
-      recovery_url: recoveryUrl,
+    delivered = await sendZalo({
+      phone_no_plus: phone.replace(/^\+/, ""), zalo_user_id: target.zalo_user_id,
+      event_title: target.event_title_vi, recovery_url: recoveryUrl,
       tracking_id: target.registration_id,
     });
-    if (ok) {
-      await supabase
-        .from("recovery_attempts")
-        .insert({ phone_e164: phone, method: "zalo", succeeded: true });
-      return jsonResponse({ ok: true, channel: "zalo" });
-    }
-    // fall through to email if Zalo failed
+    if (delivered) method = "zalo";
   }
-
-  // 2. Email
-  if (target?.contact_email) {
-    const ok = await sendEmail({
-      to: target.contact_email,
-      event_title: target.event_title_vi,
-      recovery_url: recoveryUrl,
-    });
-    if (ok) {
-      await supabase
-        .from("recovery_attempts")
-        .insert({ phone_e164: phone, method: "email", succeeded: true });
-      const masked = target.contact_email.replace(
-        /^(.).+(@.+)$/,
-        (_m, a, c) => `${a}***${c}`,
-      );
-      return jsonResponse({ ok: true, channel: "email", masked_email: masked });
+  // contact_email is user-supplied. Require an independently confirmed Auth
+  // email for that profile, not merely a matching string in profiles.
+  if (!delivered && target?.contact_email && target.profile_id) {
+    const { data, error } = await supabase.auth.admin.getUserById(target.profile_id);
+    const owner = data?.user;
+    if (!error && owner?.email_confirmed_at && owner.email &&
+        owner.email.toLowerCase() === target.contact_email.toLowerCase()) {
+      delivered = await sendEmail({ to: owner.email,
+        event_title: target.event_title_vi, recovery_url: recoveryUrl });
+      if (delivered) method = "email";
     }
   }
-
-  // 3. CAPTCHA — the only path that discloses (non-)existence, and only after
-  // a valid Turnstile solve. We echo the magic_token here, never via logs.
-  if (captchaToken) {
-    const ip = req.headers.get("cf-connecting-ip") ?? undefined;
-    const captchaOk = await verifyTurnstile(captchaToken, ip);
-    if (!captchaOk) {
-      return err("captcha_failed", 400, "captcha_failed");
-    }
-    if (!target) {
-      await supabase
-        .from("recovery_attempts")
-        .insert({ phone_e164: phone, method: "rejected", succeeded: false });
-      return err("no_registration_found", 404, "no_registration_found");
-    }
-    await supabase
-      .from("recovery_attempts")
-      .insert({ phone_e164: phone, method: "captcha", succeeded: true });
-    return jsonResponse({
-      ok: true,
-      channel: "captcha",
-      magic_token: target.magic_token,
-      recovery_url: recoveryUrl,
-    });
-  }
-
-  // Pre-CAPTCHA, nothing auto-sent → uniform prompt (no count → no oracle).
-  await supabase
-    .from("recovery_attempts")
-    .insert({ phone_e164: phone, method: "rejected", succeeded: false });
-  return jsonResponse({ ok: false, code: "captcha_required" }, 200);
+  await supabase.from("recovery_attempts").insert({
+    phone_e164: phone, method, succeeded: delivered,
+  });
+  // Same response for absent registration, no verified channel, provider failure
+  // and successful delivery. Never return a bearer token or a channel hint.
+  return jsonResponse({ ok: true, channel: "registered_channel" });
 });
