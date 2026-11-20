@@ -1,3 +1,4 @@
+import { registrationRenewalEnabled } from "@/lib/social-events/renewalFlag";
 // ============================================================================
 // SocialEventDetail (`/social/:slug`) — public landing page for one event.
 // ----------------------------------------------------------------------------
@@ -527,10 +528,10 @@ export default function SocialEventDetail() {
           )}
           {/* PR59 — lost-link recovery CTA. Subtle, only relevant when
               we don't already know the viewer is registered. */}
-          {!myStored && canRegister && (
+          {!myStored && (canRegister || registrationRenewalEnabled()) && (
             <p className="mt-2 text-xs text-center text-muted-foreground">
               {t.socialEvents.recovery.lostLinkHint}{" "}
-              <Link to="/khoi-phuc-dang-ky" className="underline">
+              <Link to={registrationRenewalEnabled() ? `/khoi-phuc-dang-ky?event_id=${encodeURIComponent(data.id)}` : "/khoi-phuc-dang-ky"} className="underline">
                 {t.socialEvents.recovery.lostLinkCta} →
               </Link>
             </p>
