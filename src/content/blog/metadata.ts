@@ -743,7 +743,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     "slug": "create-tournament-by-chat",
     "publishedDate": "2026-10-20",
-    "updatedDate": "2026-10-20",
+    "updatedDate": "2026-11-21",
     "author": "The PickleHub Team",
     "tags": ["tạo giải pickleball", "dán danh sách", "chat", "vòng bảng", "round robin"],
     "ctaPath": "/tools/quick-tables/chat",
@@ -752,11 +752,11 @@ export const blogMetadata: BlogPostMetadata[] = [
       "src": "/images/blog/create-tournament-by-chat-hero-en-v2.webp",
       "alt": "ThePickleHub chat review for Saturday Night Club, with groups A and B and a Create tournament button"
     },
-    "titleEn": "AI Pickleball Round Robin: Paste a List in Chat, Up to 48 Teams",
+    "titleEn": "Create a Pickleball Tournament by Chat: Paste a List, Up to 48 Teams",
     "titleVi": "Tạo giải pickleball bằng AI: dán danh sách Zalo, tối đa 48 đội",
-    "metaTitleEn": "AI Pickleball Round Robin in Chat | ThePickleHub",
+    "metaTitleEn": "Create a Pickleball Tournament by Chat | ThePickleHub",
     "metaTitleVi": "Tạo giải AI pickleball | Dán danh sách Zalo",
-    "metaDescriptionEn": "44 teams, 11 groups, then 2 or 3 brackets. ThePickleHub AI reads a pasted list or photo. Up to 48 teams. 20 Oct 2026.",
+    "metaDescriptionEn": "Round robin, single elimination and MLP Team Match from a pasted list or photo. ThePickleHub AI reads the list, shows a preview card, up to 48 teams. Nov 2026.",
     "metaDescriptionVi": "44 đội, 11 bảng, rồi 2 hoặc 3 nhánh. AI ThePickleHub đọc ảnh hoặc tin Zalo. Tối đa 48 đội. 20/10/2026."
   },
   {
