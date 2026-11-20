@@ -90,7 +90,7 @@ describe("sanitizeBlogHtml", () => {
     const html =
       '<h2>Tiêu đề</h2><p>Đoạn văn <a href="https://example.com">link</a> ' +
       '<img src="https://lh3.googleusercontent.com/d/abc"></p><ul><li>score < 5</li></ul>';
-    expect(sanitizeBlogHtml(html)).toBe(html);
+    expect(sanitizeBlogHtml(html)).toBe(html.replace("score < 5", "score &lt; 5"));
   });
 
   it("strips nested fragments that reassemble into a tag after one pass", () => {

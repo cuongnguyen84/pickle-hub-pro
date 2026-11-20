@@ -1,3 +1,4 @@
+import { prerenderCacheKey } from "../_lib/prerender-cache-key";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -71,7 +72,8 @@ describe("sitemap crawl budget", () => {
     // Those five paths have a cached 404 body. Without a new key the KV copy
     // outlives the deploy and the 410 never reaches a crawler.
     const mw = source("functions/_middleware.ts");
-    const m = mw.match(/const cacheKey = `pr:v(\d+):/);
+    expect(mw).toContain("const cacheKey = prerenderCacheKey(url.pathname)");
+    const m = prerenderCacheKey("/fixture").match(/^pr:v(\d+):/);
     expect(m, "cacheKey not found — did the format change?").toBeTruthy();
     expect(Number(m![1])).toBeGreaterThanOrEqual(107);
   });
