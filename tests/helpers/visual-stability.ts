@@ -1,12 +1,14 @@
-import type { Page } from '@playwright/test';
+import type { Page, Request } from '@playwright/test';
+
+const pendingReads = new WeakMap<Page, Set<Request>>();
 
 export const VISUAL_MASK_SELECTORS = ['img', '[data-testid="live-score"]', 'time'];
 export async function assertNavigationUnmasked(page: Page) {
-  const collisions = await page.locator('nav svg').evaluateAll((icons, selectors) =>
-    icons.filter(icon => selectors.some(selector => icon.matches(selector) || icon.closest(selector))).length,
+  const collisions = await page.locator('nav svg, nav a, nav button, a.tl-btn, button.tl-btn, h1, h2, h3').evaluateAll((elements, selectors) =>
+    elements.filter(element => selectors.some(selector => element.matches(selector) || element.closest(selector))).length,
     VISUAL_MASK_SELECTORS,
   );
-  if (collisions) throw Error('A visual mask covers navigation controls');
+  if (collisions) throw Error('A visual mask covers navigation, primary controls or headings');
 }
 
 // Synthetic public data only. No captured user records or private credentials.
@@ -26,6 +28,14 @@ export const VISUAL_STREAMS = ['live', 'scheduled', 'ended'].map((status, index)
   ended_at: status === 'ended' ? '2026-11-19T12:00:00Z' : null,
 }));
 export async function prepareVisualPage(page: Page, liveState: 'populated' | 'empty' = 'populated') {
+  const pending = new Set<Request>();
+  pendingReads.set(page, pending);
+  page.on('request', request => {
+    const url = new URL(request.url());
+    if (/^[a-z0-9]{20}\.supabase\.co$/.test(url.hostname) && url.pathname.startsWith('/rest/v1/')) pending.add(request);
+  });
+  page.on('requestfinished', request => pending.delete(request));
+  page.on('requestfailed', request => pending.delete(request));
   // Explicit URL locale keeps geo-IP from switching dictionary mid-capture.
   await page.addInitScript(() => {
     localStorage.setItem('pickleball-hub-language', /^\/vi(?:\/|$)/.test(location.pathname) ? 'vi' : 'en');
@@ -48,6 +58,14 @@ export async function prepareVisualPage(page: Page, liveState: 'populated' | 'em
 export async function waitForVisualContent(page: Page, path: string) {
   await page.getByRole('heading').first().waitFor({ state: 'visible' });
   await page.locator('[role="status"].min-h-screen').waitFor({ state: 'hidden' });
+  // Finish outstanding content reads and React paint, not a fixed sleep.
+  for (let pass = 0; pass < 8; pass++) {
+    const reads = [...(pendingReads.get(page) ?? [])];
+    await Promise.all(reads.map(async request => { const response = await request.response(); if (response) await response.finished(); }));
+    await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+    if (!pendingReads.get(page)?.size) break;
+    if (pass === 7) throw Error('Content reads did not settle before visual capture');
+  }
   if (path === '/blog' || path === '/vi/blog') {
     await page.locator('.tl-blog-hero, .tl-blog-card').first().waitFor({ state: 'visible' });
   }

@@ -1,0 +1,22 @@
+{
+  "checked_at_utc": "2026-11-20T15:35:10.388356+00:00",
+  "source": "Public production SPA page asset discovery; GET only",
+  "page": "/khoi-phuc-dang-ky",
+  "entry_scripts": [
+    "/assets/index-BU3kxHAk-mwp52l5e.js"
+  ],
+  "recovery_chunks": [
+    {
+      "url": "https://www.thepicklehub.net/assets/RecoveryRegistration-CH_ALUcE.js",
+      "sha256": "eb2f4998eb3590516e9afedafb6dcaac3f1847d88df145839e5bb509aa2b09c1",
+      "bytes": 5890,
+      "checks": {
+        "uniform_channel_present": true,
+        "old_captcha_solved_absent": true,
+        "old_magic_token_sink_absent": true,
+        "old_recovery_url_sink_absent": true
+      }
+    }
+  ],
+  "limitation": "Static production asset inspection, not an interactive recovery flow or all CDN POPs."
+}

@@ -32,9 +32,9 @@ fallback cannot silently pass through the advisory step.
   neither a matching mask nor a masked ancestor. CTA/text stay visible.
 
 Local verification: two fixture-scope unit tests, scoped ESLint and tsc pass.
-Six actual Playwright contracts (desktop+mobile: fonts/club controls, populated
-live, empty live) passed against exact immutable14ad82bd preview using Node22
-and system Chrome. No screenshot baseline was written or accepted by these
+Thirty-four actual Playwright contracts (all14routes×desktop/mobile readiness,
+plus desktop/mobile fonts/club controls and populated/empty live) passed against exact immutable14ad82bd preview using Node22
+and system Chrome. The latest2worker run passed34/34 in23.1seconds. No screenshot baseline was written or accepted by these
 contract runs. Exact-head CI still needs execution after review.
 
 ## Limits and next steps

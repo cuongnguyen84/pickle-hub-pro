@@ -91,6 +91,16 @@ test.describe("visual regression", () => {
     });
   }
 
+  for (const target of PAGES) {
+    test(`visual harness contract: ready ${target.name}`, async ({ page }) => {
+      await prepareVisualPage(page);
+      await page.goto(target.path, { waitUntil: 'load' });
+      await waitForVisualContent(page, target.path);
+      await assertNavigationUnmasked(page);
+      await expect(page.getByRole('heading').first()).toBeVisible();
+    });
+  }
+
   for (const p of PAGES) {
     test(`${p.name} matches baseline`, async ({ page }) => {
       // Full-page shots of heavy pages can exceed the global 30s budget.
