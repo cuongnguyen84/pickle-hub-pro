@@ -49,7 +49,7 @@ function getHeaderHtml(lang: Lang, siteUrl: string): string {
 <a href="${siteUrl}${prefix}/blog">Blog</a>
 <a href="${siteUrl}${prefix}/tools">Công cụ</a>
 <a href="${siteUrl}${prefix}/tournaments">Giải đấu</a>
-<a href="${siteUrl}${prefix}/livestream">Livestream</a>
+<a href="${siteUrl}${prefix}/live">Livestream</a>
 <a href="${siteUrl}${prefix}/news">Tin tức</a>
 <a href="${siteUrl}${prefix}/videos">Video</a>
 <a href="${siteUrl}${prefix}/forum">Diễn đàn</a>
@@ -61,7 +61,7 @@ function getHeaderHtml(lang: Lang, siteUrl: string): string {
 <a href="${siteUrl}/blog">Blog</a>
 <a href="${siteUrl}/tools">Tools</a>
 <a href="${siteUrl}/tournaments">Tournaments</a>
-<a href="${siteUrl}/livestream">Livestream</a>
+<a href="${siteUrl}/live">Livestream</a>
 <a href="${siteUrl}/news">News</a>
 <a href="${siteUrl}/videos">Videos</a>
 <a href="${siteUrl}/forum">Forum</a>
