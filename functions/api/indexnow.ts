@@ -18,8 +18,6 @@ interface Env {
   INDEXNOW_SECRET: string;
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
-  // Shared prerender KV, reused here as a best-effort rate-limit store.
-  PRERENDER_CACHE?: KVNamespace;
 }
 
 // Constant-time string comparison to avoid leaking the secret via response
@@ -35,31 +33,28 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-// Best-effort per-IP rate limit using the prerender KV (M7). If no KV binding
-// is present it degrades to no limit (secret auth still applies).
-//
-// "Best-effort" has to mean it too (2026-08-28): this runs on the request path
-// and a KV read/write that throws would propagate out of the handler and become
-// an opaque Cloudflare 502 HTML page. The rate limit is defence-in-depth behind
-// a secret, so failing open is strictly better than failing the request.
-//
-// This is not hypothetical. Workers KV caps writes at roughly one per second
-// per key, and every request from a given IP writes the SAME key. Two calls in
-// quick succession from one address are enough to make `put()` throw — which is
-// the most reproducible of the 502s in
-// docs/defects/2026-08-25-indexnow-endpoint-502.md, and the one that explains
-// the otherwise-unaccounted-for `retry-after: 60` on the failing response.
-async function isRateLimited(env: Env, ip: string): Promise<boolean> {
-  if (!env.PRERENDER_CACHE) return false;
+// A single service-only Postgres bucket serializes all authenticated callers.
+// Global 10/minute bounds upstream work even when callers rotate IPs. No IP or
+// secret is stored. KV read-modify-write is not an enforceable counter.
+async function consumeBudget(env: Env): Promise<boolean | null> {
+  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) return null;
   try {
-    const key = `indexnow:rl:${ip}`;
-    const current = parseInt((await env.PRERENDER_CACHE.get(key)) || "0", 10);
-    if (current >= 10) return true; // >10 requests / 60s window
-    await env.PRERENDER_CACHE.put(key, String(current + 1), { expirationTtl: 60 });
-    return false;
-  } catch (err) {
-    console.error(`[indexnow] rate-limit KV unavailable, failing open: ${errorMessage(err)}`);
-    return false;
+    const result = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/consume_indexnow_budget`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+      },
+      body: "{}",
+      signal: AbortSignal.timeout(3_000),
+    });
+    if (!result.ok) return null;
+    const allowed: unknown = await result.json();
+    return typeof allowed === "boolean" ? allowed : null;
+  } catch {
+    // Never surface credentials, upstream bodies, URLs or exception messages.
+    return null;
   }
 }
 
@@ -208,12 +203,16 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     });
   }
 
-  // Rate limit (defense-in-depth if the secret ever leaks): the GET path runs
-  // a full Supabase query per call, so cap requests per IP.
-  const ip = request.headers.get("cf-connecting-ip") || "unknown";
-  if (await isRateLimited(env, ip)) {
-    return new Response(JSON.stringify({ error: "Rate limited" }), {
-      status: 429,
+  if (request.method !== "GET" && request.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405, headers: { "Content-Type": "application/json", Allow: "GET, POST" },
+    });
+  }
+
+  const allowed = await consumeBudget(env);
+  if (allowed !== true) {
+    return new Response(JSON.stringify({ error: allowed === false ? "Rate limited" : "Rate limit unavailable" }), {
+      status: allowed === false ? 429 : 503,
       headers: { "Content-Type": "application/json", "Retry-After": "60" },
     });
   }
