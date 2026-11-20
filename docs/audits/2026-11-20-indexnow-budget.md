@@ -44,3 +44,14 @@ bucket exists; it cannot rewind window_start or count. pgTAP seeds a future
 bucket to prove both fields stay unchanged and tests actual service-role
 execution plus anon/member permission errors. Races also execute as service_role;
 coordinator/racers are killed and settled in finally on failure or timeout.
+
+## CI verification update
+
+GitHub Actions pgTAP run44761086238 completed SUCCESS on reviewed pre-update
+head216d052f1d86e73ee9184f0506db20ef3e82cc44. Disposable migration replay,
+full pgTAP suite, existing QA-03 races and the15 synchronized service-role
+IndexNow budget races all passed. This supersedes the pending-CI status above
+for that exact source. After documentation1074 merged, PR1078 was updated via
+the expected-head GitHub update-branch endpoint; all gates rerun on the updated
+head. This evidence does not authorize treating an unobserved rerun as passed,
+and no production application or handler deployment is claimed.
