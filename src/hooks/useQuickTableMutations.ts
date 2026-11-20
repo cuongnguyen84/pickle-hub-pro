@@ -69,6 +69,14 @@ const EMPTY_PENDING: QuickTableMutationsPending = {
   swapPlayoffPlayers: false,
 };
 
+/** A rejected score save must never resolve like a committed RPC. */
+export class QuickTableScoreSaveError extends Error {
+  constructor(readonly code: string) {
+    super(code);
+    this.name = 'QuickTableScoreSaveError';
+  }
+}
+
 export function useQuickTableMutations() {
   // W1.2 — per-mutation pending state. Lets a consumer wire
   // `disabled={pending.deleteTable}` on a delete button so a double
@@ -158,7 +166,8 @@ export function useQuickTableMutations() {
 
       if (fetchError || !match) {
         console.error('[useQuickTableMutations] updateMatchScore fetch:', fetchError);
-        return;
+        toast.error('Không thể lưu điểm.');
+        throw new QuickTableScoreSaveError('SCORE_LOOKUP_FAILED');
       }
 
       const { data, error } = await supabase.rpc('score_quick_table_match_atomic', {
@@ -180,7 +189,9 @@ export function useQuickTableMutations() {
         } else {
           toast.error(typeof result.error === 'string' ? result.error : 'Không thể lưu điểm.');
         }
-        return;
+        throw new QuickTableScoreSaveError(
+          typeof result.error === 'string' ? result.error : 'SCORE_SAVE_FAILED',
+        );
       }
     } finally {
       setPendingFor('updateMatchScore', false);
