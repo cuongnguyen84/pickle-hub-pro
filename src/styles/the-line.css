@@ -4554,6 +4554,12 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   font-size: 14px;
   white-space: nowrap;
 }
+[data-theme="the-line"][data-mode="light"] .tl-ai-cta-go {
+  color: #ffffff;
+}
+[data-theme="the-line"][data-mode="light"] .tl-format-kicker {
+  color: var(--tl-green);
+}
 @media (max-width: 640px) {
   .tl-ai-cta { flex-wrap: wrap; padding: 16px; }
   .tl-ai-cta-body { flex-basis: calc(100% - 64px); }
