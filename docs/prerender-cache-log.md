@@ -188,3 +188,10 @@ the next crawl of any consequence. The sitemap is generated per request and was
 never cached, so the hreflang removal is live immediately. Bumping would purge
 all 3,218 prerendered URLs to fix a cosmetic heading, which costs a full re-render
 of the site for no gain.
+
+## pr:v159 → pr:v160 — 2026-11-21 (private URL analytics boundary)
+
+Invalidate bot HTML and human extracted heads containing unguarded analytics
+scripts. Preserve v159's AI-chat landing routes and tools hub content. Both
+cache read/write paths use prerenderCacheKey; v158/v159 entries expire naturally.
+The first request per public page is a cold render; no purge API is invoked.
