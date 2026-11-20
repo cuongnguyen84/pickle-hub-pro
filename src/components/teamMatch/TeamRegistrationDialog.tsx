@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod/v4';
+import * as z from 'zod/v4/mini';
 import {
   Dialog,
   DialogContent,
@@ -188,10 +188,10 @@ export function TeamRegistrationDialog({
   };
 
   const formSchema = z.object({
-    team_name: z.string().min(2, c.teamNameError).max(50),
-    captain_name: z.string().min(2, c.captainNameError).max(50),
+    team_name: z.string().check(z.minLength(2, c.teamNameError), z.maxLength(50)),
+    captain_name: z.string().check(z.minLength(2, c.captainNameError), z.maxLength(50)),
     captain_gender: z.enum(['male', 'female']),
-    captain_skill_level: z.number().min(1).max(8).optional(),
+    captain_skill_level: z.optional(z.number().check(z.minimum(1), z.maximum(8))),
   });
 
   type FormValues = z.infer<typeof formSchema>;
