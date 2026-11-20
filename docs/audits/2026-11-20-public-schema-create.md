@@ -36,3 +36,9 @@ preserved usage, actual service create/drop and migration-owner create/drop. The
 on disposable CI only. Production reconciliation requires reviewed CI pass,
 exact SQL+ledger atomic application and independent privilege read-back. No
 production DDL or application mutation was performed by this agent.
+
+Migration version20261120240000 is reserved for this scoped change;220000 is
+already assigned to registration-token validity and230000 to its SQL consumers.
+The explicit service CREATE preserves compatibility, not least-privilege closure
+for the trusted service role. Browser CREATE removal and USAGE preservation are
+the narrowly tested objective.
