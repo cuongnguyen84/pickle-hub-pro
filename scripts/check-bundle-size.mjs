@@ -45,6 +45,13 @@ import { gzipSync } from "node:zlib";
 import { join, dirname, resolve } from "node:path";
 
 const BUDGETS = {
+  // 1920 -> 1930 (2026-11-20, owner-approved, PR #1052): the Zod 4 migration
+  // added ~12.5-13.7 KB gzipped in structural Zod v4 classic cost that
+  // tree-shaking cannot remove: classic schemas hard-import the toJSONSchema
+  // machinery the app never calls. The form resolver imports no Zod at
+  // runtime. Both findings were verified against the production build
+  // sourcemap. CI measured CODE at 1926.7/1920 KB, so 1930 leaves ~3.3 KB
+  // of headroom.
   // 1910 -> 1920 (2026-11-19, PR #1042): new district court hub page
   // (/san/khu-vuc/:city/:district) pushed CODE to 1910.1/1910; +10 KB
   // keeps the same step size as the 1900 -> 1910 bump and leaves room
@@ -53,7 +60,7 @@ const BUDGETS = {
   // batch (2 posts) needed +1.3 KB of metadata headroom.
   // 1800 -> 1900 (2026-10-01, DEBT-09, owner-approved): the blog metadata chunk grows
   // with every post and held CODE at 1799.7/1800. Paid back when /blog stops shipping it whole.
-  code: Number(process.env.BUNDLE_CODE_BUDGET_KB || 1920),
+  code: Number(process.env.BUNDLE_CODE_BUDGET_KB || 1930),
   initial: Number(process.env.BUNDLE_INITIAL_BUDGET_KB || 280),
   contentChunk: Number(process.env.BUNDLE_CONTENT_CHUNK_KB || 20),
 };
