@@ -12,7 +12,7 @@ interface QuickTableMatchRowProps {
   player1: QuickTablePlayer | undefined;
   player2: QuickTablePlayer | undefined;
   canEdit: boolean;
-  onScoreUpdate: (score1: number, score2: number) => void;
+  onScoreUpdate: (score1: number, score2: number) => void | Promise<void>;
   onCourtNameUpdate?: (courtName: string) => void;
   formatPlayerName: (player: QuickTablePlayer | undefined) => string;
 }
@@ -46,12 +46,16 @@ export default function QuickTableMatchRow({
     setIsEditing(true);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const score1 = parseInt(s1) || 0;
     const score2 = parseInt(s2) || 0;
     if (score1 > 0 || score2 > 0) {
-      onScoreUpdate(score1, score2);
-      setIsEditing(false);
+      try {
+        await onScoreUpdate(score1, score2);
+        setIsEditing(false);
+      } catch {
+        // Mutation already reported the failure; keep typed scores for retry.
+      }
     }
   };
 
