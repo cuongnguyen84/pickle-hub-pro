@@ -244,9 +244,15 @@ All fifteen categories remain governed by the full roadmap. These scoped fixes a
   review, QuickTable creator refs0 unmatched. Do not install original profile
   auth FK against the explicit ghost model or perform blanket orphan cleanup.
 
-- Visual determinism follow-up (21 November): PR1091 is source under review,
-  not baseline acceptance. Guarded local34/34 contracts passed with32 telemetry
+- Visual determinism follow-up (21 November): PR1091 mergedb43225f5 under normal protection;
+  this is not baseline acceptance. Guarded local34/34 contracts passed with32 telemetry
   requests blocked,16 explicitly allowlisted catalog/replay-matched STABLE read
   RPC calls, no unapproved writes forwarded. Earlier unguarded local proof and
   CI44784116210 have UNKNOWN tracking contamination; no cleanup was performed.
   Root reviewed all24 contact-sheet comparisons but approved no golden updates.
+
+- Guarded CI run44786214360 on1091 head541e189c resolved immutable
+  d42503e5 preview, mandatory34/34 passed32.6s,32 telemetry requests blocked
+  and no forbidden requests forwarded. Across84 audited attempts,80 telemetry
+  requests were blocked. Advisory pixel result remained26 failed/2 passed;
+  no golden image update or whole-product visual acceptance follows.

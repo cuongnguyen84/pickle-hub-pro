@@ -1,0 +1,293 @@
+{
+  "target": "https://14ad82bd.pickle-hub-pro.pages.dev",
+  "targetCommit": "36b345aadff19ecfeb079f58871bc0cf43d60b76",
+  "node": "22",
+  "browser": "system Chrome",
+  "projects": [
+    "visual",
+    "visual-mobile"
+  ],
+  "testsPassed": 34,
+  "durationSeconds": 17.7,
+  "blockedTelemetry": 32,
+  "forbiddenRequests": 0,
+  "allowedReadRpcCounts": {
+    "dupr_leaderboard_vietnam": 4,
+    "get_homepage_stats": 4,
+    "get_blog_post_view_counts_batch": 2,
+    "get_feed_timeline": 2,
+    "shop_public_categories": 2,
+    "shop_public_search": 2
+  },
+  "priorUnguardedContamination": "unknown",
+  "cases": [
+    {
+      "project": "visual",
+      "test": "visual harness contract: live populated is explicit",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": []
+    },
+    {
+      "project": "visual",
+      "test": "visual harness contract: fixtures, fonts and navigation",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": []
+    },
+    {
+      "project": "visual",
+      "test": "visual harness contract: live empty is explicit",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": []
+    },
+    {
+      "project": "visual",
+      "test": "visual harness contract: ready rankings",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": [
+        "dupr_leaderboard_vietnam"
+      ]
+    },
+    {
+      "project": "visual",
+      "test": "visual harness contract: ready home",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": [
+        "get_homepage_stats"
+      ]
+    },
+    {
+      "project": "visual",
+      "test": "visual harness contract: ready blog-index",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": [
+        "get_blog_post_view_counts_batch"
+      ]
+    },
+    {
+      "project": "visual",
+      "test": "visual harness contract: ready tournaments",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": []
+    },
+    {
+      "project": "visual",
+      "test": "visual harness contract: ready clubs",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": []
+    },
+    {
+      "project": "visual",
+      "test": "visual harness contract: ready live",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": []
+    },
+    {
+      "project": "visual",
+      "test": "visual harness contract: ready news",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": []
+    },
+    {
+      "project": "visual",
+      "test": "visual harness contract: ready feed",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": [
+        "get_feed_timeline"
+      ]
+    },
+    {
+      "project": "visual",
+      "test": "visual harness contract: ready tools",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": []
+    },
+    {
+      "project": "visual",
+      "test": "visual harness contract: ready rankings-vi",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": [
+        "dupr_leaderboard_vietnam"
+      ]
+    },
+    {
+      "project": "visual",
+      "test": "visual harness contract: ready home-vi",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": [
+        "get_homepage_stats"
+      ]
+    },
+    {
+      "project": "visual",
+      "test": "visual harness contract: ready news-vi",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": []
+    },
+    {
+      "project": "visual",
+      "test": "visual harness contract: ready shop-home",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": [
+        "shop_public_categories",
+        "shop_public_search"
+      ]
+    },
+    {
+      "project": "visual",
+      "test": "visual harness contract: ready shop-sell",
+      "blockedTelemetry": 0,
+      "forbidden": [],
+      "readRpc": []
+    },
+    {
+      "project": "visual-mobile",
+      "test": "visual harness contract: live populated is explicit",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": []
+    },
+    {
+      "project": "visual-mobile",
+      "test": "visual harness contract: fixtures, fonts and navigation",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": []
+    },
+    {
+      "project": "visual-mobile",
+      "test": "visual harness contract: live empty is explicit",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": []
+    },
+    {
+      "project": "visual-mobile",
+      "test": "visual harness contract: ready home",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": [
+        "get_homepage_stats"
+      ]
+    },
+    {
+      "project": "visual-mobile",
+      "test": "visual harness contract: ready rankings",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": [
+        "dupr_leaderboard_vietnam"
+      ]
+    },
+    {
+      "project": "visual-mobile",
+      "test": "visual harness contract: ready blog-index",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": [
+        "get_blog_post_view_counts_batch"
+      ]
+    },
+    {
+      "project": "visual-mobile",
+      "test": "visual harness contract: ready tournaments",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": []
+    },
+    {
+      "project": "visual-mobile",
+      "test": "visual harness contract: ready live",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": []
+    },
+    {
+      "project": "visual-mobile",
+      "test": "visual harness contract: ready clubs",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": []
+    },
+    {
+      "project": "visual-mobile",
+      "test": "visual harness contract: ready news",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": []
+    },
+    {
+      "project": "visual-mobile",
+      "test": "visual harness contract: ready tools",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": []
+    },
+    {
+      "project": "visual-mobile",
+      "test": "visual harness contract: ready feed",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": [
+        "get_feed_timeline"
+      ]
+    },
+    {
+      "project": "visual-mobile",
+      "test": "visual harness contract: ready home-vi",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": [
+        "get_homepage_stats"
+      ]
+    },
+    {
+      "project": "visual-mobile",
+      "test": "visual harness contract: ready rankings-vi",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": [
+        "dupr_leaderboard_vietnam"
+      ]
+    },
+    {
+      "project": "visual-mobile",
+      "test": "visual harness contract: ready news-vi",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": []
+    },
+    {
+      "project": "visual-mobile",
+      "test": "visual harness contract: ready shop-home",
+      "blockedTelemetry": 1,
+      "forbidden": [],
+      "readRpc": [
+        "shop_public_categories",
+        "shop_public_search"
+      ]
+    },
+    {
+      "project": "visual-mobile",
+      "test": "visual harness contract: ready shop-sell",
+      "blockedTelemetry": 0,
+      "forbidden": [],
+      "readRpc": []
+    }
+  ]
+}
