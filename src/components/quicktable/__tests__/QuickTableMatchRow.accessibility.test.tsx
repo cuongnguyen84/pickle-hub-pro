@@ -124,11 +124,42 @@ describe("QuickTable inline score commit failure", () => {
     fireEvent.click(screen.getByRole("button", { name: "Edit score" }));
     const scores = screen.getAllByRole("spinbutton");
     fireEvent.change(scores[0], { target: { value: "12" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save score" }));
+    const saveButton = screen.getByRole("button", { name: "Save score" });
+    saveButton.focus();
+    fireEvent.click(saveButton);
     await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
     expect((screen.getAllByRole("spinbutton")[0] as HTMLInputElement).value).toBe("12");
+    expect(document.activeElement).toBe(saveButton);
     fireEvent.click(screen.getByRole("button", { name: "Save score" }));
     await waitFor(() => expect(screen.queryAllByRole("spinbutton")).toHaveLength(0));
     expect(save).toHaveBeenLastCalledWith(12, 8);
+  });
+});
+
+describe("QuickTable score editor keyboard focus", () => {
+  it("Escape cancels without saving and restores focus to Edit score", async () => {
+    testI18n.language = "en";
+    const save = vi.fn();
+    render(<QuickTableMatchRow match={match} index={0} player1={undefined} player2={undefined}
+      canEdit onScoreUpdate={save} formatPlayerName={() => "Player"} />);
+    fireEvent.click(screen.getByRole("button", { name: "Edit score" }));
+    const first = screen.getAllByRole("spinbutton")[0];
+    expect(document.activeElement).toBe(first);
+    fireEvent.keyDown(first, { key: "Escape" });
+    await waitFor(() => expect(screen.queryAllByRole("spinbutton")).toHaveLength(0));
+    expect(save).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Edit score" }));
+  });
+
+  it.each(["Cancel", "Save score"])("restores focus after %s closes the inline editor", async (action) => {
+    testI18n.language = "en";
+    render(<QuickTableMatchRow match={match} index={0} player1={undefined} player2={undefined}
+      canEdit onScoreUpdate={vi.fn().mockResolvedValue(undefined)} formatPlayerName={() => "Player"} />);
+    fireEvent.click(screen.getByRole("button", { name: "Edit score" }));
+    const button = screen.getByRole("button", { name: action });
+    button.focus();
+    fireEvent.click(button);
+    await waitFor(() => expect(screen.queryAllByRole("spinbutton")).toHaveLength(0));
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Edit score" }));
   });
 });

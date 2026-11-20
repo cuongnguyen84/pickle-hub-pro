@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Check, Clock, Pencil, Play, Radio, MapPin } from 'lucide-react';
@@ -23,6 +23,14 @@ export default function QuickTableMatchRow({
   const navigate = useNavigate();
   const { t, language } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
+  const editScoreButtonRef = useRef<HTMLButtonElement>(null);
+  const restoreScoreFocusRef = useRef(false);
+  useEffect(() => {
+    if (!isEditing && restoreScoreFocusRef.current) {
+      restoreScoreFocusRef.current = false;
+      editScoreButtonRef.current?.focus();
+    }
+  }, [isEditing]);
   const [s1, setS1] = useState<string>(match.score1?.toString() ?? '');
   const [s2, setS2] = useState<string>(match.score2?.toString() ?? '');
   const [editingCourtName, setEditingCourtName] = useState(false);
@@ -41,6 +49,7 @@ export default function QuickTableMatchRow({
   const isLive = !!('live_referee_id' in match && match.live_referee_id);
 
   const handleStartEdit = () => {
+    restoreScoreFocusRef.current = true;
     setS1(match.score1?.toString() ?? '');
     setS2(match.score2?.toString() ?? '');
     setIsEditing(true);
@@ -319,6 +328,13 @@ export default function QuickTableMatchRow({
       </div>
 
       <div
+        onKeyDown={(event) => {
+          if (isEditing && event.key === 'Escape') {
+            event.preventDefault();
+            event.stopPropagation();
+            handleCancel();
+          }
+        }}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -380,6 +396,7 @@ export default function QuickTableMatchRow({
                   type="button"
                   className="tl-btn"
                   style={{ padding: '6px 10px', fontSize: 11.5 }}
+                  ref={editScoreButtonRef}
                   onClick={handleStartEdit}
                   aria-label={isCompleted ? t.quickTable.view.editInlineScore : t.quickTable.view.inputInlineScore}
                 >
