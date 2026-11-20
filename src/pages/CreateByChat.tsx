@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { HreflangTags } from "@/components/seo/HreflangTags";
@@ -37,12 +38,12 @@ export default function CreateByChat() {
           <h1>{c.h1}</h1>
           <p>{c.lead}</p>
           <div style={{ display: "flex", gap: 10, marginTop: 28, flexWrap: "wrap" }}>
-            <Link to={chatHref} className="tl-btn green">
-              {c.cta} →
-            </Link>
-            <Link to={guideHref} className="tl-btn">
-              {vi ? "Đọc hướng dẫn" : "Read the guide"}
-            </Link>
+            <Button asChild variant="tl-primary">
+              <Link to={chatHref}>{c.cta} →</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to={guideHref}>{vi ? "Đọc hướng dẫn" : "Read the guide"}</Link>
+            </Button>
           </div>
         </header>
 
@@ -118,9 +119,9 @@ export default function CreateByChat() {
         <section style={{ marginBottom: 80, textAlign: "center" }}>
           <h2>{c.closing}</h2>
           <p>{c.lead}</p>
-          <Link to={chatHref} className="tl-btn green">
-            {c.cta} →
-          </Link>
+          <Button asChild variant="tl-primary">
+            <Link to={chatHref}>{c.cta} →</Link>
+          </Button>
         </section>
       </div>
     </TheLineLayout>
