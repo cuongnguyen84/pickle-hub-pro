@@ -9,6 +9,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PROJECT_REF = process.env.SUPABASE_PROJECT_REF || "ajvlcamxemgbxduhiqrl";
 const QUERY_FILES = {
+  committed: "docs/sql/committed-product-evidence.sql",
   stages: "docs/sql/quicktable-observable-stages.sql",
   quicktable: "docs/sql/quicktable-baseline.sql",
   repeat: "docs/sql/quicktable-returning-creators.sql",
@@ -135,7 +136,7 @@ function asPercent(part, total) {
   return total === 0 ? "n/a (n=0)" : `${(100 * part / total).toFixed(1)}%`;
 }
 
-export function renderReport({ stages, quicktable, repeat, social, generatedAt }) {
+export function renderReport({ stages, quicktable, repeat, social, committed, generatedAt }) {
   const stageTotal = stages.stages.reduce((sum, stage) => sum + stage.tables, 0);
   const reconciliation = stageTotal === quicktable.created
     ? "matches"
@@ -168,7 +169,12 @@ export function renderReport({ stages, quicktable, repeat, social, generatedAt }
     `Past-scheduled-end events in published/completed status: ${social.eventsPastEnd}; marked completed: ${social.markedCompleted}; with a completed scored match: ${social.withCompletedScore}; completed + scored: ${social.completedWithScore}.`,
     `All-time counts at observation: ${social.eventsAllTime} Social Events and ${social.registrationsAllTime} registration rows.`,
     "",
-    "These are current-state aggregates, not timestamped transition history or user funnel events. GA4 journeys, GSC, field CWV, native device tests, and Shop cohorts are not queried by this workflow.",
+    "## Server-observed publication and score writes",
+    `Observation window: ${committed.fromAt} ≤ transition timestamp < ${committed.untilAt}; read at ${committed.observedAt}.`,
+    `Observed Social Event publications: ${committed.publications}; rows with unknown publication timestamp: ${committed.publicationUnknown}.`,
+    `QuickTable qualifying score-write receipts in window: ${committed.scoreReceipts}; all retained receipts: ${committed.scoreReceiptsAllTime}.`,
+    "Publication timestamps and score receipts start after their respective rollouts, with no historical backfill. A legacy republish or score correction can produce observed evidence. These are not first-ever activation, intent, user funnel delivery or retention. Receipt rows disappear when their tournament is deleted.",
+    "Other tables above are current-state aggregates, not timestamped transition history. GA4 journeys, GSC, field CWV, native device tests, and Shop cohorts are not queried by this workflow.",
     "",
   ];
   return lines.join("\n");
@@ -192,12 +198,17 @@ export async function collectSnapshot({ token, projectRef, fetchImpl = fetch, re
   }
   const stageRows = await run("stages");
   const stageRowWindow = normalizeStages(stageRows);
-  const [baselineRows, repeatRows, socialRows] = await Promise.all([run("quicktable"), run("repeat"), run("social")]);
+  const [baselineRows, repeatRows, socialRows, committedRows] = await Promise.all([run("quicktable"), run("repeat"), run("social"), run("committed")]);
   const quicktableRow = one(baselineRows, "quicktable baseline");
   const repeatRow = one(repeatRows, "creator repeat");
   const socialRow = one(socialRows, "Social Event baseline");
   const snapshot = {
     generatedAt: now().toISOString(),
+    committed: normalizeSingleRow(committedRows, "committed evidence", {
+      fromAt: "from_at", untilAt: "until_at", observedAt: "observed_at",
+      publications: "publications_in_window", publicationUnknown: "publication_timestamp_unknown",
+      scoreReceipts: "score_receipts_in_window", scoreReceiptsAllTime: "score_receipts_all_time",
+    }),
     stages: stageRowWindow,
     quicktable: normalizeSingleRow([quicktableRow], "quicktable baseline", {
       fromAt: "from_at", untilAt: "until_at", observedAt: "observed_at", created: "created",
@@ -222,7 +233,7 @@ export async function collectSnapshot({ token, projectRef, fetchImpl = fetch, re
     },
   };
   const window = `${snapshot.stages.fromAt}|${snapshot.stages.untilAt}`;
-  if ([snapshot.quicktable, snapshot.repeat, snapshot.social].some((item) => `${item.fromAt}|${item.untilAt}` !== window)) {
+  if ([snapshot.quicktable, snapshot.repeat, snapshot.social, snapshot.committed].some((item) => `${item.fromAt}|${item.untilAt}` !== window)) {
     throw new Error("Aggregate queries crossed a cohort boundary; rerun the snapshot");
   }
   return snapshot;

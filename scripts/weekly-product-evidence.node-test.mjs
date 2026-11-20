@@ -13,6 +13,7 @@ import {
 } from "./weekly-product-evidence.mjs";
 
 const SQL_FILES = [
+  "docs/sql/committed-product-evidence.sql",
   "docs/sql/quicktable-observable-stages.sql",
   "docs/sql/quicktable-baseline.sql",
   "docs/sql/quicktable-returning-creators.sql",
@@ -87,6 +88,7 @@ test("collector accepts only matching windows and records aggregate results", as
     ...row, cohort_from_at: cohortFrom, cohort_until_at: cohortUntil, observed_at: observedAt,
   }));
   const canned = {
+    committed: [{ from_at: cohortFrom, until_at: cohortUntil, observed_at: observedAt, publications_in_window: 2, publication_timestamp_unknown: 27, score_receipts_in_window: 3, score_receipts_all_time: 4 }],
     stages: stageData,
     quicktable: [{ from_at: cohortFrom, until_at: cohortUntil, observed_at: observedAt, created: 45, with_score: 10, with_completed_match: 9, finished: 5, completed: 5, archived: 0, completed_matches: 49, creators: 32 }],
     repeat: [{ from_at: cohortFrom, until_at: cohortUntil, observed_at: observedAt, recent_creators: 32, returning_creators: 1 }],
@@ -97,6 +99,7 @@ test("collector accepts only matching windows and records aggregate results", as
     projectRef: "test-ref",
     now: () => new Date(observedAt),
     readSql: async (path) => `select '${({
+      "docs/sql/committed-product-evidence.sql": "committed",
       "docs/sql/quicktable-observable-stages.sql": "stages",
       "docs/sql/quicktable-baseline.sql": "quicktable",
       "docs/sql/quicktable-returning-creators.sql": "repeat",
@@ -111,12 +114,16 @@ test("collector accepts only matching windows and records aggregate results", as
   });
   assert.equal(snapshot.stages.stages.reduce((sum, row) => sum + row.tables, 0), 45);
   assert.equal(snapshot.repeat.returningCreators, 1);
+  assert.equal(snapshot.committed.publications, 2);
+  assert.equal(snapshot.committed.publicationUnknown, 27);
+  assert.equal(snapshot.committed.scoreReceipts, 3);
   assert.deepEqual(snapshot.social.registrationRowsBySource, { self: 0 });
 });
 
 test("report shows date/window, stage sums and caveats without IDs", () => {
   const stages = normalizeStages(stageRows());
   const report = renderReport({
+    committed: {fromAt, untilAt, observedAt, publications: 0, publicationUnknown: 27, scoreReceipts: 0, scoreReceiptsAllTime: 0},
     generatedAt: observedAt,
     stages,
     quicktable: {
@@ -133,6 +140,9 @@ test("report shows date/window, stage sums and caveats without IDs", () => {
   assert.match(report, /2026-10-20.*2026-11-19/s);
   assert.match(report, /\*\*45\*\*/);
   assert.match(report, /does not reveal intent/);
+  assert.match(report, /unknown publication timestamp: 27/);
+  assert.match(report, /no historical backfill/);
+  assert.match(report, /not first-ever activation/);
   assert.doesNotMatch(report, /creator_user_id|table_id|secret-token-test/);
   assert.equal(dateInVietnam(new Date("2026-11-19T17:30:00.000Z")), "2026-11-20");
 });
