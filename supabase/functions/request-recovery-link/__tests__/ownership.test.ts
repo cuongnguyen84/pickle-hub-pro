@@ -9,7 +9,7 @@ vi.mock("https://esm.sh/@supabase/supabase-js@2.89.0", () => ({ createClient: ()
   rpc: async () => { state.rpc(); return { data: state.rows }; },
   auth: { admin: { getUserById: async () => ({ data: { user: { email: state.email, email_confirmed_at: state.confirmed ? "2026-01-01" : null } } }) } },
 }) }));
-vi.mock("../auth.ts", () => ({ jsonResponse: (body: unknown, status = 200) => new Response(JSON.stringify(body), { status }) }));
+vi.mock("../../_shared/auth.ts", () => ({ jsonResponse: (body: unknown, status = 200) => new Response(JSON.stringify(body), { status }) }));
 afterEach(() => { vi.unstubAllGlobals(); vi.resetModules(); state.rows = []; state.confirmed = true; state.rateError = false; state.send.mockReset(); state.rpc.mockReset(); state.ledger.mockReset(); state.captcha = true; state.email = "owner@example.test"; state.expired = false; state.providerOk = true; });
 async function run(captcha = true) {
   vi.stubGlobal("Deno", { env: { get: (key: string) => ({ TURNSTILE_SECRET: "test", RESEND_API_KEY: "test", ZALO_OA_ACCESS_TOKEN: "test", ZALO_TEMPLATE_ID_RECOVERY: "test" }[key]) }, serve: (handler: Handler) => { state.handler = handler; } });
@@ -17,7 +17,7 @@ async function run(captcha = true) {
     if (String(url).includes("siteverify")) return Response.json({ success: state.captcha });
     state.send(url, init); return state.providerOk ? Response.json({ id: "test", error: 0 }) : new Response("provider unavailable", { status: 503 });
   }));
-  await import("../../request-recovery-link/index.ts");
+  await import("../index.ts");
   return state.handler!(new Request("https://example.test", { method: "POST", body: JSON.stringify({ phone_e164: "+84901234567", ...(captcha ? { captcha_token: "human-not-owner" } : {}) }) }));
 }
 const registration = { registration_id: "reg", magic_token: "never-disclose-this-token", profile_id: "profile", contact_email: "owner@example.test", event_title_vi: "Test", cancelled_at: null };
