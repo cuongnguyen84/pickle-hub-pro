@@ -68,7 +68,7 @@ Phase-1 source is pinned to `1384fc1b2ec182f8207e57fa214164d3e3296c95`:
 registration-scoped predicate requiring a matching UUID token and finite future
 expiry. It does not mutate rows/defaults/constraints, rotate tokens, change JWT
 paths or gate cancellation status. No existing consumer is switched. pgTAP adds
-12 cases including scope, role grants, valid/expired/null/infinity and legitimate
+18 cases including scope, role grants, valid/expired/null/infinity and legitimate
 cancelled registration authorization for the caller's reactivation decision.
 Runtime pgTAP requires clean-replay CI; local Docker daemon is unavailable.
 This additive primitive is NOT end-to-end M6 closure. Phase2 must wire all SQL
