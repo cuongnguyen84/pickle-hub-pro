@@ -367,8 +367,9 @@ export default function QuickTableMatchRow({
                   }}
                   onClick={handleOpenScoring}
                   title={t.quickTable.view.openScoringPage}
+                  aria-label={t.quickTable.view.openScoringPage}
                 >
-                  <Play className="w-3 h-3" />
+                  <Play className="w-3 h-3" aria-hidden="true" />
                   <span className="hidden sm:inline">{t.quickTable.view.openScoringPage}</span>
                 </button>
                 <button
@@ -376,8 +377,9 @@ export default function QuickTableMatchRow({
                   className="tl-btn"
                   style={{ padding: '6px 10px', fontSize: 11.5 }}
                   onClick={handleStartEdit}
+                  aria-label={isCompleted ? t.quickTable.view.editInlineScore : t.quickTable.view.inputInlineScore}
                 >
-                  <Pencil className="w-3 h-3" />
+                  <Pencil className="w-3 h-3" aria-hidden="true" />
                   <span className="hidden sm:inline">
                     {isCompleted ? t.quickTable.view.editInlineScore : t.quickTable.view.inputInlineScore}
                   </span>
