@@ -524,6 +524,70 @@ try {
       `pending_limit round ${i + 1}: buyer holds exactly 5 pending orders`,
     );
   }
+
+  // Race 7: different match saves contend on ONE tournament/evidence key.
+  // Parent table lock in the RPC gives the same lock order for both writers.
+  // The shared advisory gate above ensures both sessions are actually queued.
+  const QT = "00000000-0000-4000-8000-00000a08a001";
+  const QA = "00000000-0000-4000-8000-00000a08a002";
+  const QB = "00000000-0000-4000-8000-00000a08a003";
+  const QM1 = "00000000-0000-4000-8000-00000a08a004";
+  const QM2 = "00000000-0000-4000-8000-00000a08a005";
+  await psql(`
+    DELETE FROM public.quick_tables WHERE id='${QT}';
+    INSERT INTO public.quick_tables(id,creator_user_id,name,player_count,format,status,share_id)
+      VALUES('${QT}','${USER}','Evidence race',4,'round_robin','group_stage','qa-score-evidence');
+    INSERT INTO public.quick_table_players(id,table_id,name,display_order) VALUES
+      ('${QA}','${QT}','A',0),('${QB}','${QT}','B',1);
+    INSERT INTO public.quick_table_matches(id,table_id,player1_id,player2_id,display_order,status)
+      VALUES('${QM1}','${QT}','${QA}','${QB}',0,'pending'),
+            ('${QM2}','${QT}','${QA}','${QB}',1,'pending');
+  `);
+  const scoreTxn = (match) => `
+    BEGIN;
+    SET LOCAL lock_timeout='10s';
+    SET LOCAL statement_timeout='15s';
+    SET LOCAL ROLE authenticated;
+    SELECT set_config('request.jwt.claim.sub','${USER}',true);
+    DO $qa$ BEGIN
+      IF public.score_quick_table_match_atomic('${match}',11,7,0)->>'success'
+          IS DISTINCT FROM 'true' THEN
+        RAISE EXCEPTION 'score race RPC did not commit successfully';
+      END IF;
+    END $qa$;
+    COMMIT;
+    SELECT 'ok';
+  `;
+  for (let i=0; i<ROUNDS; i++) {
+    await psql(`
+      UPDATE public.quick_table_matches SET score1=NULL,score2=NULL,
+        winner_id=NULL,status='pending',score_version=0 WHERE table_id='${QT}';
+      DELETE FROM public.quick_table_score_evidence WHERE table_id='${QT}';
+    `);
+    const results=await racePair(scoreTxn(QM1),scoreTxn(QM2));
+    check(results.every((v)=>v==='ok'),
+      `score evidence round ${i+1}: both distinct match transactions commit`);
+    check((await psql(`SELECT count(*) FROM public.quick_table_matches
+       WHERE table_id='${QT}' AND status='completed'`))==='2',
+      `score evidence round ${i+1}: both match scores persisted`);
+    check((await psql(`SELECT count(*) FROM public.quick_table_score_evidence
+       WHERE table_id='${QT}'`))==='1',
+      `score evidence round ${i+1}: one durable tournament receipt`);
+  }
+  await psql(`
+    UPDATE public.quick_table_matches SET score1=NULL,score2=NULL,
+      winner_id=NULL,status='pending',score_version=0 WHERE table_id='${QT}';
+    DELETE FROM public.quick_table_score_evidence WHERE table_id='${QT}';
+    BEGIN;
+    UPDATE public.quick_table_matches SET score1=11,score2=7,status='completed'
+      WHERE id='${QM1}';
+    ROLLBACK;
+  `);
+  check((await psql(`SELECT count(*) FROM public.quick_table_score_evidence
+    WHERE table_id='${QT}'`))==='0','rolled-back score leaves no receipt');
+  check((await psql(`SELECT count(*) FROM public.quick_table_matches
+    WHERE table_id='${QT}' AND score1 IS NOT NULL`))==='0',
+    'rolled-back score leaves no persisted score');
 } finally {
   // ─── Cleanup (the local db is disposable, but leave it consistent) ────────
   await psql(`
@@ -531,6 +595,7 @@ try {
     DROP FUNCTION IF EXISTS public.qa03_try_member_register(UUID);
     DELETE FROM public.event_registrations WHERE event_id = '${EVENT}';
     DELETE FROM public.social_events WHERE id = '${EVENT}';
+    DELETE FROM public.quick_tables WHERE id='00000000-0000-4000-8000-00000a08a001';
     DELETE FROM auth.users WHERE id = '${USER}';
     DELETE FROM auth.users WHERE id = '${USER2}';
     DELETE FROM public.doubles_elimination_teams WHERE tournament_id = '${DE_TOURNAMENT}';
@@ -548,8 +613,8 @@ try {
   `);
 }
 
-// 5 races × 2 assertions + 1 race × 5 assertions, every round.
+// Six existing races plus three evidence checks/round and two rollback checks.
 console.log(
-  failures === 0 ? `\nAll ${ROUNDS * 15} race assertions passed.` : `\n${failures} FAILED`,
+  failures === 0 ? `\nAll ${ROUNDS * 18 + 2} race assertions passed.` : `\n${failures} FAILED`,
 );
 process.exit(failures === 0 ? 0 : 1);
