@@ -27,3 +27,31 @@ describe("actual scraper entry network guards",()=>{
     const options=fetcher.mock.calls[0][1]!;expect(options.redirect).toBe("manual");expect(JSON.parse(options.body as string)).toMatchObject({url:ppa,allowRequestPattern:BROWSER_REQUEST_ALLOWLIST});expect(fetcher).toHaveBeenCalledTimes(2);
   });
 });
+
+// Synthetic but protocol-shaped legacy RSC fixture: verifies the real
+// iframe/pool path still reaches ingest through the new network boundary.
+it("preserves MLP iframe/pool scores, game labels and player lineups", async () => {
+  const html=(s:string)=>new Response(s,{headers:{"content-type":"text/html"}});
+  const api=(v:unknown)=>new Response(JSON.stringify(v),{headers:{"content-type":"application/json"}});
+  const source="https://majorleaguepickleball.co/events-2026/fixture-event/";
+  const overview="https://brackets.pickleballteamleagues.com/team-leagues/aaaa/tournaments/bbbb/overview";
+  const teamOneUuid="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+  const teamTwoUuid="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+  const game=(group:string,format:string,scoreA:number,scoreB:number)=>({teamOneUuid,teamOneTitle:null,playerGroupTitle:group,formatTitle:format,teamOneGameOneScore:scoreA,teamTwoGameOneScore:scoreB,teamOnePlayerOneName:"Fixture Alex",teamOnePlayerTwoName:"Fixture Blair",teamTwoPlayerOneName:"Fixture Casey",teamTwoPlayerTwoName:"Fixture Drew"});
+  const records=[{...game("Womens","Doubles",11,8),teamOneTitle:"Fixture Alpha",teamTwoTitle:"Fixture Beta",teamTwoUuid,teamOneAbbreviation:"ALP",teamTwoAbbreviation:"BET",teamOneLogo:{url:"https://images.example/alpha.png"},teamTwoLogo:{url:"https://images.example/beta.png"},teamOneScore:3,teamTwoScore:2,plannedStartDate:"2026-05-20T10:00:00Z",venue:"Fixture court"},game("Mens","Doubles",8,11),game("Mixed","Doubles",11,7),game("Mixed","Doubles",6,11),game("Coed","Singles",21,18)];
+  const escaped=(v:unknown)=>JSON.stringify(v).replaceAll('"','\\"');
+  const fetcher=vi.spyOn(globalThis,"fetch")
+    .mockResolvedValueOnce(html(`<h1>Fixture <b>Series</b> tournament</h1><iframe src="${overview}"></iframe>`))
+    .mockResolvedValueOnce(html(escaped({poolId:"cccccccc-cccc-cccc-cccc-cccccccccccc"})))
+    .mockResolvedValueOnce(html(escaped(records)))
+    .mockResolvedValueOnce(api({log_id:"legacy-fixture-log",matches_imported:1}));
+  const res=await worker.fetch(signed(source),env);expect(res.status).toBe(200);expect(await res.json()).toMatchObject({ok:true,matches_extracted:1});
+  expect(fetcher).toHaveBeenCalledTimes(4);
+  expect(fetcher.mock.calls.slice(0,3).every(([,options])=>options?.redirect==="manual")).toBe(true);
+  const payload=JSON.parse(fetcher.mock.calls[3][1]?.body as string).scrape_result;
+  expect(payload.tournament_name).toBe("Fixture Series");
+  expect(payload.matches[0]).toMatchObject({winner_team:"one",scores_team_one:[11,8,11,6,21],scores_team_two:[8,11,7,11,18]});
+  const notes=JSON.parse(payload.matches[0].notes);expect(notes.games.map((g:{label:string})=>g.label)).toEqual(["WD","MD","MXD1","MXD2","DB"]);
+  expect(notes.games[0].players_a).toEqual(["Fixture Alex","Fixture Blair"]);
+  expect(payload.players.map((p:{display_name:string})=>p.display_name)).toEqual(expect.arrayContaining(["Fixture Alpha","Fixture Beta","Fixture Alex","Fixture Casey"]));
+});
