@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod/v4';
+import type * as z from 'zod/v4/mini';
+import { buildTeamSchema } from '@/lib/team-social-form-schemas';
 import {
   Dialog,
   DialogContent,
@@ -187,12 +188,7 @@ export function TeamRegistrationDialog({
     errorTitle: language === 'vi' ? 'Lỗi' : 'Error',
   };
 
-  const formSchema = z.object({
-    team_name: z.string().min(2, c.teamNameError).max(50),
-    captain_name: z.string().min(2, c.captainNameError).max(50),
-    captain_gender: z.enum(['male', 'female']),
-    captain_skill_level: z.number().min(1).max(8).optional(),
-  });
+  const formSchema = buildTeamSchema(c.teamNameError, c.captainNameError);
 
   type FormValues = z.infer<typeof formSchema>;
 

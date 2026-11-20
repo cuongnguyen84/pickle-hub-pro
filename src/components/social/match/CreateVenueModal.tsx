@@ -10,7 +10,8 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod/v4";
+import type * as z from "zod/v4/mini";
+import { buildVenueSchema as buildSchema } from "@/lib/team-social-form-schemas";
 import { Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -79,28 +80,6 @@ const SURFACES_EN = [
   { value: "wood",     label: "Wood" },
   { value: "other",    label: "Other" },
 ];
-
-const buildSchema = (language: "vi" | "en") =>
-  z.object({
-    name: z
-      .string()
-      .min(
-        2,
-        language === "vi"
-          ? "Tên sân tối thiểu 2 ký tự"
-          : "Venue name needs at least 2 characters",
-      )
-      .max(100),
-    name_vi: z.string().max(100).optional(),
-    city: z
-      .string()
-      .min(1, language === "vi" ? "Chọn thành phố" : "Pick a city"),
-    district: z.string().max(60).optional(),
-    address: z.string().max(200).optional(),
-    num_courts: z.coerce.number().int().min(0).max(50).optional(),
-    surface_type: z.string().optional(),
-    is_indoor: z.boolean().default(false),
-  });
 
 type FormInput = z.input<ReturnType<typeof buildSchema>>;
 type FormValues = z.output<ReturnType<typeof buildSchema>>;
