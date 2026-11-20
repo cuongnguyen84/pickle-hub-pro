@@ -245,13 +245,14 @@ const NewsArticle = ({ language }: Props) => {
                   display: "block",
                   width: "100%",
                   height: "auto",
+                  aspectRatio: "16 / 9",
                   maxHeight: 480,
                   objectFit: "cover",
                 }}
                 onError={(e) => {
-                  // Source CDN may block referrer or 404 — hide gracefully.
-                  (e.currentTarget.parentElement as HTMLElement).style.display =
-                    "none";
+                  // Preserve the reserved media space if a CDN image fails.
+                  // Collapsing it moves the article body and footer mid-read.
+                  e.currentTarget.style.visibility = "hidden";
                 }}
               />
             </figure>
