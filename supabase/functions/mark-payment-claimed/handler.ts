@@ -120,13 +120,19 @@ export async function processMarkPaymentClaimed(
     // Race with another claim — the winner already fired the organizer
     // push. Re-read the row and return without a second push.
     const post = await store.getClaimState(orderId);
+    // A zero-row update is not proof another request committed. The order
+    // may have been deleted, or the reread may not show a successful claim.
+    // Let the client retry instead of inventing a payment-claim timestamp.
+    if (!post?.player_claimed_paid || !post.player_claimed_at) {
+      return err("claim_state_unconfirmed", 503, "claim_state_unconfirmed");
+    }
     return {
       status: 200,
       body: {
         ok: true,
         order_id: orderId,
-        player_claimed_paid: post?.player_claimed_paid ?? true,
-        player_claimed_at: post?.player_claimed_at ?? claimedAt,
+        player_claimed_paid: post.player_claimed_paid,
+        player_claimed_at: post.player_claimed_at,
       },
     };
   }
