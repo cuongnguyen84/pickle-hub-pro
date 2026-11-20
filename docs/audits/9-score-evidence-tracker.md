@@ -202,3 +202,16 @@ an earlier result.
 This tracker is evidence-only. It does not authorize production writes or
 claim that a score has improved until the corresponding gate has a dated
 result.
+
+## Evidence delta after PR1074 — 20 November 2026
+
+Snapshot UTC: 2026-11-20T15:52:45.695897+00:00; remote main `95de8c26`. This delta updates only the scoped observations below; it does not close roadmap categories or assign a new score. Pending PR states are point-in-time observations, not guarantees about later CI.
+
+- **Recovery / SEC-4:** PR1076 merged as `6a060661`; deploy-guard44763225691 success deployed only request-recovery-link. Management API source hashes confirm uniform response, independently confirmed Auth-email matching and finite future expiry guard, with no token-return branch. Cloudflare production deployment10e7d24f (same commit) completed15:34:23UTC. At15:35UTC custom domain and production Pages alias served the new acknowledgement asset without the old captcha_solved/token navigation sink. [Recovery production verification](2026-11-20-recovery-production-verification.md) links exact scope and evidence; no synthetic recovery/provider delivery test was run. Broader registration-token consumer expiry and lifecycle remain unresolved.
+- **Token lifecycle / SEC-4:** [PR1083 inventory and staged predicate](https://github.com/cuongnguyen84/pickle-hub-pro/pull/1083) is OPEN, additive helper + pgTAP only. Existing consumers are not rewired; no rotation, production application or universal expiry guarantee is claimed. Historical source inventory is not current catalog parity. Existing aggregate validity observations do not prove expiry enforcement.
+- **A11Y-2:** [PR1082](https://github.com/cuongnguyen84/pickle-hub-pro/pull/1082) OPEN, head3ee0518d. Scoped QuickTable inline editor Escape/focus restoration has7passing component tests and actual-component browser evidence at390/1280 light/dark. Failed save keeps draft/focus. CI remains pending; this is not merged/deployed/full-dialog, authenticated-journey or screen-reader acceptance. Evidence is owned by that PR and deliberately not duplicated here.
+- **IndexNow / SEC-4:** Migration-first PR1078 merged as1384fc1b; primary independently applied/read back ledger, RLS, definer/empty search path, service execute/browser denial and zero bucket rows. Read-only REST schema visibility also exposes the budget RPC. Handler activation [PR1081](https://github.com/cuongnguyen84/pickle-hub-pro/pull/1081) remains OPEN: schema presence does not establish live handler enforcement. No budget RPC invocation or IndexNow submission was performed for this evidence.
+- **Sanitizer / SEC-4:** HTML5 parser sanitization [PR1079](https://github.com/cuongnguyen84/pickle-hub-pro/pull/1079) remains OPEN; local code/tests and pending CI are not deployed SSR sanitization proof.
+- **Analytics / AN-1, UX-3:** [PR1080](https://github.com/cuongnguyen84/pickle-hub-pro/pull/1080) merged as95de8c26, allowlisting Social Event failure-code telemetry. Source commit ordering and local tests do not establish production delivery, matched-window DB/GA4 reconciliation, retention or conversion outcome.
+
+All fifteen categories remain governed by the full roadmap. These scoped fixes and verified deployments do not establish135/150, a minimum8.5/category or an overall9/10.
