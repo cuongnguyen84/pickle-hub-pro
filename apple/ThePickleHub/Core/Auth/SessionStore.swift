@@ -185,9 +185,11 @@ final class SessionStore {
     }
 
     static func isAuthCallbackURL(_ url: URL) -> Bool {
+        guard url.user == nil, url.password == nil else { return false }
         if url.scheme == "thepicklehub" {
-            return url.host == "auth" && url.path == "/callback"
+            return url.port == nil && url.host == "auth" && url.path == "/callback"
         }
+        guard url.scheme == "https", url.port == nil || url.port == 443 else { return false }
         return (url.host == "www.thepicklehub.net" || url.host == "thepicklehub.net") &&
             url.path == "/auth/callback"
     }
