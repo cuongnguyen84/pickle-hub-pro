@@ -1,0 +1,538 @@
+{
+  "observedAt": "2026-11-20T16:23:05.025221+00:00",
+  "sourceAndExpected": [
+    {
+      "table": "api_keys",
+      "constraint": "api_keys_created_by_fkey",
+      "column": "created_by",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20260116084308_24bbbafc-9837-4e8f-9b45-ef979ff2fcbc.sql",
+          "definition": "created_by UUID REFERENCES auth.users(id)"
+        }
+      ]
+    },
+    {
+      "table": "blocked_users",
+      "constraint": "blocked_users_blocked_user_id_fkey",
+      "column": "blocked_user_id",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20260305141227_a693882b-e7e4-48f8-b980-7da4a5773caa.sql",
+          "definition": "blocked_user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "table": "blocked_users",
+      "constraint": "blocked_users_blocker_user_id_fkey",
+      "column": "blocker_user_id",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20260305141227_a693882b-e7e4-48f8-b980-7da4a5773caa.sql",
+          "definition": "blocker_user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "table": "comments",
+      "constraint": "comments_user_id_fkey",
+      "column": "user_id",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20251221153808_1fd33e01-b473-4bd8-a664-cb09ce5b5f0b.sql",
+          "definition": "user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "table": "content_reports",
+      "constraint": "content_reports_reporter_user_id_fkey",
+      "column": "reporter_user_id",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20260305141227_a693882b-e7e4-48f8-b980-7da4a5773caa.sql",
+          "definition": "reporter_user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "table": "content_reports",
+      "constraint": "content_reports_resolved_by_fkey",
+      "column": "resolved_by",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20260305141227_a693882b-e7e4-48f8-b980-7da4a5773caa.sql",
+          "definition": "resolved_by uuid REFERENCES auth.users(id)"
+        }
+      ]
+    },
+    {
+      "table": "doubles_elimination_matches",
+      "constraint": "doubles_elimination_matches_live_referee_id_fkey",
+      "column": "live_referee_id",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20260122020801_220449dd-ee22-4f21-8b1b-d58a20ac5676.sql",
+          "definition": "live_referee_id UUID REFERENCES auth.users(id)"
+        }
+      ]
+    },
+    {
+      "table": "doubles_elimination_referees",
+      "constraint": "doubles_elimination_referees_user_id_fkey",
+      "column": "user_id",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20260122020801_220449dd-ee22-4f21-8b1b-d58a20ac5676.sql",
+          "definition": "user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "table": "doubles_elimination_tournaments",
+      "constraint": "doubles_elimination_tournaments_creator_user_id_fkey",
+      "column": "creator_user_id",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20260122020801_220449dd-ee22-4f21-8b1b-d58a20ac5676.sql",
+          "definition": "creator_user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "table": "follows",
+      "constraint": "follows_user_id_fkey",
+      "column": "user_id",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20251222080505_f178f771-1db9-498d-bb92-f98748273d8d.sql",
+          "definition": "user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "table": "forum_comments",
+      "constraint": "forum_comments_user_id_fkey",
+      "column": "user_id",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20260227041508_1f655b0a-eab9-4d14-bd05-92f803d9fa09.sql",
+          "definition": "user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "table": "forum_likes",
+      "constraint": "forum_likes_user_id_fkey",
+      "column": "user_id",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20260227041508_1f655b0a-eab9-4d14-bd05-92f803d9fa09.sql",
+          "definition": "user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "table": "forum_posts",
+      "constraint": "forum_posts_user_id_fkey",
+      "column": "user_id",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20260227041508_1f655b0a-eab9-4d14-bd05-92f803d9fa09.sql",
+          "definition": "user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "table": "likes",
+      "constraint": "likes_user_id_fkey",
+      "column": "user_id",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20251221153808_1fd33e01-b473-4bd8-a664-cb09ce5b5f0b.sql",
+          "definition": "user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "table": "notifications",
+      "constraint": "notifications_user_id_fkey",
+      "column": "user_id",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20251222080505_f178f771-1db9-498d-bb92-f98748273d8d.sql",
+          "definition": "user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "table": "profiles",
+      "constraint": "profiles_id_fkey",
+      "column": "id",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20251221153808_1fd33e01-b473-4bd8-a664-cb09ce5b5f0b.sql",
+          "definition": "id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "table": "quick_table_registrations",
+      "constraint": "quick_table_registrations_user_id_fkey",
+      "column": "user_id",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20251225041737_3966174b-ee11-4549-86a3-cb58e4b0367a.sql",
+          "definition": "user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "table": "quick_tables",
+      "constraint": "quick_tables_creator_user_id_fkey",
+      "column": "creator_user_id",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20251223034604_88ebf84f-5dfa-4d32-8da7-d983f85bf487.sql",
+          "definition": "creator_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL"
+        }
+      ]
+    },
+    {
+      "table": "team_match_roster",
+      "constraint": "team_match_roster_user_id_fkey",
+      "column": "user_id",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20260107133349_4d81fec4-b11a-4c56-9afa-20bedccb7bfa.sql",
+          "definition": "user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL"
+        }
+      ]
+    },
+    {
+      "table": "team_match_teams",
+      "constraint": "team_match_teams_captain_user_id_fkey",
+      "column": "captain_user_id",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20260107133349_4d81fec4-b11a-4c56-9afa-20bedccb7bfa.sql",
+          "definition": "captain_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL"
+        }
+      ]
+    },
+    {
+      "table": "team_match_tournaments",
+      "constraint": "team_match_tournaments_created_by_fkey",
+      "column": "created_by",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20260107133349_4d81fec4-b11a-4c56-9afa-20bedccb7bfa.sql",
+          "definition": "created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL"
+        }
+      ]
+    },
+    {
+      "table": "user_roles",
+      "constraint": "user_roles_user_id_fkey",
+      "column": "user_id",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20251221153808_1fd33e01-b473-4bd8-a664-cb09ce5b5f0b.sql",
+          "definition": "user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "table": "view_events",
+      "constraint": "view_events_viewer_user_id_fkey",
+      "column": "viewer_user_id",
+      "reviewedSource": [
+        {
+          "source": "supabase/migrations/20251221153808_1fd33e01-b473-4bd8-a664-cb09ce5b5f0b.sql",
+          "definition": "viewer_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL"
+        }
+      ]
+    }
+  ],
+  "counts": [
+    {
+      "constraint_id": "api_keys.api_keys_created_by_fkey",
+      "rows": 7,
+      "nonnull_refs": 7,
+      "missing_auth": 0,
+      "missing_auth_known_ghost": 0
+    },
+    {
+      "constraint_id": "blocked_users.blocked_users_blocked_user_id_fkey",
+      "rows": 0,
+      "nonnull_refs": 0,
+      "missing_auth": 0,
+      "missing_auth_known_ghost": 0
+    },
+    {
+      "constraint_id": "blocked_users.blocked_users_blocker_user_id_fkey",
+      "rows": 0,
+      "nonnull_refs": 0,
+      "missing_auth": 0,
+      "missing_auth_known_ghost": 0
+    },
+    {
+      "constraint_id": "comments.comments_user_id_fkey",
+      "rows": 94,
+      "nonnull_refs": 94,
+      "missing_auth": 0,
+      "missing_auth_known_ghost": 0
+    },
+    {
+      "constraint_id": "content_reports.content_reports_reporter_user_id_fkey",
+      "rows": 1,
+      "nonnull_refs": 1,
+      "missing_auth": 0,
+      "missing_auth_known_ghost": 0
+    },
+    {
+      "constraint_id": "content_reports.content_reports_resolved_by_fkey",
+      "rows": 1,
+      "nonnull_refs": 0,
+      "missing_auth": 0,
+      "missing_auth_known_ghost": 0
+    },
+    {
+      "constraint_id": "doubles_elimination_matches.doubles_elimination_matches_live_referee_id_fkey",
+      "rows": 199,
+      "nonnull_refs": 1,
+      "missing_auth": 0,
+      "missing_auth_known_ghost": 0
+    },
+    {
+      "constraint_id": "doubles_elimination_referees.doubles_elimination_referees_user_id_fkey",
+      "rows": 1,
+      "nonnull_refs": 1,
+      "missing_auth": 0,
+      "missing_auth_known_ghost": 0
+    },
+    {
+      "constraint_id": "doubles_elimination_tournaments.doubles_elimination_tournaments_creator_user_id_fkey",
+      "rows": 5,
+      "nonnull_refs": 5,
+      "missing_auth": 0,
+      "missing_auth_known_ghost": 0
+    },
+    {
+      "constraint_id": "follows.follows_user_id_fkey",
+      "rows": 7,
+      "nonnull_refs": 7,
+      "missing_auth": 0,
+      "missing_auth_known_ghost": 0
+    },
+    {
+      "constraint_id": "forum_comments.forum_comments_user_id_fkey",
+      "rows": 3,
+      "nonnull_refs": 3,
+      "missing_auth": 0,
+      "missing_auth_known_ghost": 0
+    },
+    {
+      "constraint_id": "forum_likes.forum_likes_user_id_fkey",
+      "rows": 2,
+      "nonnull_refs": 2,
+      "missing_auth": 0,
+      "missing_auth_known_ghost": 0
+    },
+    {
+      "constraint_id": "forum_posts.forum_posts_user_id_fkey",
+      "rows": 7,
+      "nonnull_refs": 7,
+      "missing_auth": 0,
+      "missing_auth_known_ghost": 0
+    },
+    {
+      "constraint_id": "likes.likes_user_id_fkey",
+      "rows": 23,
+      "nonnull_refs": 23,
+      "missing_auth": 0,
+      "missing_auth_known_ghost": 0
+    },
+    {
+      "constraint_id": "notifications.notifications_user_id_fkey",
+      "rows": 400,
+      "nonnull_refs": 400,
+      "missing_auth": 0,
+      "missing_auth_known_ghost": 0
+    },
+    {
+      "constraint_id": "profiles.profiles_id_fkey",
+      "rows": 4339,
+      "nonnull_refs": 4339,
+      "missing_auth": 958,
+      "missing_auth_known_ghost": 957
+    },
+    {
+      "constraint_id": "quick_table_registrations.quick_table_registrations_user_id_fkey",
+      "rows": 0,
+      "nonnull_refs": 0,
+      "missing_auth": 0,
+      "missing_auth_known_ghost": 0
+    },
+    {
+      "constraint_id": "quick_tables.quick_tables_creator_user_id_fkey",
+      "rows": 208,
+      "nonnull_refs": 208,
+      "missing_auth": 0,
+      "missing_auth_known_ghost": 0
+    },
+    {
+      "constraint_id": "team_match_roster.team_match_roster_user_id_fkey",
+      "rows": 229,
+      "nonnull_refs": 50,
+      "missing_auth": 0,
+      "missing_auth_known_ghost": 0
+    },
+    {
+      "constraint_id": "team_match_teams.team_match_teams_captain_user_id_fkey",
+      "rows": 57,
+      "nonnull_refs": 49,
+      "missing_auth": 0,
+      "missing_auth_known_ghost": 0
+    },
+    {
+      "constraint_id": "team_match_tournaments.team_match_tournaments_created_by_fkey",
+      "rows": 33,
+      "nonnull_refs": 33,
+      "missing_auth": 0,
+      "missing_auth_known_ghost": 0
+    },
+    {
+      "constraint_id": "user_roles.user_roles_user_id_fkey",
+      "rows": 3384,
+      "nonnull_refs": 3384,
+      "missing_auth": 2,
+      "missing_auth_known_ghost": 0
+    },
+    {
+      "constraint_id": "view_events.view_events_viewer_user_id_fkey",
+      "rows": 33712,
+      "nonnull_refs": 31954,
+      "missing_auth": 33,
+      "missing_auth_known_ghost": 0
+    }
+  ],
+  "actualForeignKeys": [
+    {
+      "tbl": "api_keys",
+      "col": "created_by",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "blocked_users",
+      "col": "blocked_user_id",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "blocked_users",
+      "col": "blocker_user_id",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "comments",
+      "col": "user_id",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "content_reports",
+      "col": "reporter_user_id",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "content_reports",
+      "col": "resolved_by",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "doubles_elimination_matches",
+      "col": "live_referee_id",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "doubles_elimination_referees",
+      "col": "user_id",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "doubles_elimination_tournaments",
+      "col": "creator_user_id",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "follows",
+      "col": "user_id",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "forum_comments",
+      "col": "user_id",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "forum_likes",
+      "col": "user_id",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "forum_posts",
+      "col": "user_id",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "likes",
+      "col": "user_id",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "notifications",
+      "col": "user_id",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "profiles",
+      "col": "id",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "quick_table_registrations",
+      "col": "user_id",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "quick_tables",
+      "col": "creator_user_id",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "team_match_roster",
+      "col": "user_id",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "team_match_teams",
+      "col": "captain_user_id",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "team_match_tournaments",
+      "col": "created_by",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "user_roles",
+      "col": "user_id",
+      "actual_foreign_keys": []
+    },
+    {
+      "tbl": "view_events",
+      "col": "viewer_user_id",
+      "actual_foreign_keys": []
+    }
+  ]
+}

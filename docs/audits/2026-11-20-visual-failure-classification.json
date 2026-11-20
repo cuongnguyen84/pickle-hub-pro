@@ -1,0 +1,170 @@
+[
+  {
+    "project": "visual",
+    "route": "home",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual",
+    "route": "rankings",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual",
+    "route": "blog-index",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual",
+    "route": "tournaments",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual",
+    "route": "live",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual",
+    "route": "clubs",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual",
+    "route": "news",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual",
+    "route": "tools",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual",
+    "route": "feed",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual",
+    "route": "home-vi",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual",
+    "route": "rankings-vi",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual",
+    "route": "news-vi",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual",
+    "route": "shop-home",
+    "classification": "missing-baseline",
+    "error": "A snapshot doesn't exist at /__w/pickle-hub-pro/pickle-hub-pro/tests/visual.spec.ts-snapshots/shop-home-visual-linux.png, writing actual."
+  },
+  {
+    "project": "visual",
+    "route": "shop-sell",
+    "classification": "missing-baseline",
+    "error": "A snapshot doesn't exist at /__w/pickle-hub-pro/pickle-hub-pro/tests/visual.spec.ts-snapshots/shop-sell-visual-linux.png, writing actual."
+  },
+  {
+    "project": "visual-mobile",
+    "route": "home",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual-mobile",
+    "route": "rankings",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual-mobile",
+    "route": "blog-index",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual-mobile",
+    "route": "tournaments",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual-mobile",
+    "route": "live",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual-mobile",
+    "route": "clubs",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual-mobile",
+    "route": "news",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual-mobile",
+    "route": "tools",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual-mobile",
+    "route": "feed",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual-mobile",
+    "route": "home-vi",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual-mobile",
+    "route": "rankings-vi",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual-mobile",
+    "route": "news-vi",
+    "classification": "pixel-mismatch",
+    "error": "expect(page).toHaveScreenshot(expected) failed"
+  },
+  {
+    "project": "visual-mobile",
+    "route": "shop-home",
+    "classification": "missing-baseline",
+    "error": "A snapshot doesn't exist at /__w/pickle-hub-pro/pickle-hub-pro/tests/visual.spec.ts-snapshots/shop-home-visual-mobile-linux.png, writing actual."
+  },
+  {
+    "project": "visual-mobile",
+    "route": "shop-sell",
+    "classification": "missing-baseline",
+    "error": "A snapshot doesn't exist at /__w/pickle-hub-pro/pickle-hub-pro/tests/visual.spec.ts-snapshots/shop-sell-visual-mobile-linux.png, writing actual."
+  }
+]
