@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { normalizeVietnamPhone } from "@/lib/phone";
 import { saveMyRegistration, readMyRegistration } from "@/lib/social-events/myRegistration";
 import { registrationRenewalEnabled } from "@/lib/social-events/renewalFlag";
+import { Button } from "@/components/ui/button";
 import { TurnstileWidget } from "./TurnstileWidget";
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const copy={
@@ -68,8 +69,8 @@ function RenewalForm({context,text}:{context:Context;text:typeof copy.en}){
  }
  return <div className="space-y-3"><h3>{context.title}</h3>
   {stage==="success"?<><p role="status">{text.success}</p><Link to={`/social/${encodeURIComponent(context.slug)}`}>{text.event}</Link></>:<>
-   {context.ownerRegistrationId && <button type="button" className="tl-btn" disabled={busy} onClick={()=>void invoke("owner")}>{text.owner}</button>}
-   {stage==="request"?<><label htmlFor="renewal-phone">{text.phone}</label><input id="renewal-phone" type="tel" value={phone} disabled={busy} maxLength={20} onChange={e=>setPhone(e.target.value)}/><TurnstileWidget onVerify={setCaptcha} onError={()=>setCaptcha(null)}/><button type="button" className="tl-btn green" disabled={busy||!normalized||!captcha} onClick={()=>void invoke("request")}>{text.request}</button></>:<><p role="status">{text.ack}</p><label htmlFor="renewal-code">{text.code}</label><input id="renewal-code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} disabled={busy} onChange={e=>setCode(e.target.value.replace(/\D/g,""))}/><button type="button" className="tl-btn green" disabled={busy||!/^\d{6}$/.test(code)} onClick={()=>void invoke("verify")}>{text.verify}</button><button type="button" disabled={busy} onClick={()=>{generation.current++;setCode("");setCaptcha(null);setFailed(false);setStorageFailed(false);setStage("request");}}>{text.again}</button></>}
+   {context.ownerRegistrationId && <Button type="button" variant="outline" disabled={busy} onClick={()=>void invoke("owner")}>{text.owner}</Button>}
+   {stage==="request"?<><label htmlFor="renewal-phone">{text.phone}</label><input id="renewal-phone" type="tel" value={phone} disabled={busy} maxLength={20} onChange={e=>setPhone(e.target.value)}/><TurnstileWidget onVerify={setCaptcha} onError={()=>setCaptcha(null)}/><Button type="button" variant="tl-primary" disabled={busy||!normalized||!captcha} onClick={()=>void invoke("request")}>{text.request}</Button></>:<><p role="status">{text.ack}</p><label htmlFor="renewal-code">{text.code}</label><input id="renewal-code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} disabled={busy} onChange={e=>setCode(e.target.value.replace(/\D/g,""))}/><Button type="button" variant="tl-primary" disabled={busy||!/^\d{6}$/.test(code)} onClick={()=>void invoke("verify")}>{text.verify}</Button><button type="button" disabled={busy} onClick={()=>{generation.current++;setCode("");setCaptcha(null);setFailed(false);setStorageFailed(false);setStage("request");}}>{text.again}</button></>}
   </>}{busy&&<p role="status">{text.busy}</p>}{(failed||storageFailed)&&<p role="alert">{storageFailed?text.storage:text.error}</p>}
  </div>;
 }
