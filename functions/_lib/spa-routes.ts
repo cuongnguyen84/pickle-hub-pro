@@ -9,6 +9,7 @@ const STATIC_PATHS = new Set([
   "/tools/quick-tables", "/tools/team-match", "/tools/team-match/new",
   "/tools/doubles-elimination", "/tools/doubles-elimination/new",
   "/tools/flex-tournament", "/tools/flex-tournament/new", "/tools/dashboard",
+  "/tools/create-by-chat", "/tools/tao-giai-bang-chat",
   "/authors/cuong-nguyen", "/privacy", "/terms", "/about", "/contact", "/advertise",
   "/affiliate-disclosure", "/livestream", "/auth/callback",
   "/auth/reset-password", "/dupr", "/match", "/match/new", "/match/confirm",

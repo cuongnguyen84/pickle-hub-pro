@@ -21,7 +21,7 @@ export {
 export { renderNews, renderNewsPost, renderViNewsPost } from "./news";
 export { renderForum, renderForumCategory, renderForumPost } from "./forum";
 export { renderOrgDetail } from "./org";
-export { renderTools, renderToolPage, renderToolNewPage } from "./tools";
+export { renderTools, renderToolPage, renderToolNewPage, renderCreateByChatPage } from "./tools";
 export { renderBlogPost, renderBlog, renderViBlogPost, renderViBlogIndex } from "./blog";
 export { renderRankings } from "./rankings";
 export { renderPpaRankings } from "./ppa-rankings";

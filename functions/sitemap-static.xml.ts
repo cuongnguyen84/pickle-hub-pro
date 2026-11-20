@@ -74,6 +74,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     { loc: "/vi/clubs", changefreq: "daily", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/clubs", "/vi/clubs") },
     { loc: "/tools", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/tools", "/vi/tools") },
     { loc: "/vi/tools", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/tools", "/vi/tools") },
+    { loc: "/tools/create-by-chat", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/tools/create-by-chat", "/vi/tools/tao-giai-bang-chat") },
+    { loc: "/vi/tools/tao-giai-bang-chat", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/tools/create-by-chat", "/vi/tools/tao-giai-bang-chat") },
     { loc: "/tools/flex-tournament", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/tools/flex-tournament", "/vi/tools/flex-tournament") },
     { loc: "/vi/tools/flex-tournament", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/tools/flex-tournament", "/vi/tools/flex-tournament") },
     { loc: "/tools/doubles-elimination", changefreq: "weekly", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/tools/doubles-elimination", "/vi/tools/doubles-elimination") },
