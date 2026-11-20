@@ -23,15 +23,16 @@ assembly or external privileged SQL clients; no such runtime dependency is
 established by the current source. Temporary objects use temporary namespace,
 and owner execution is preserved.
 
-Migration only REVOKEs CREATE ON SCHEMA public FROM PUBLIC. It does not revoke
-USAGE, table/routine privileges, explicit role grants, or owner rights. Service
-USAGE stays; service CREATE inherited solely via PUBLIC intentionally goes away,
-unless an explicit existing role grant independently supplies it. Do not add
-service CREATE merely to reproduce accidental inherited capability. No blanket
+Migration preserves the existing effective service CREATE capability via an
+explicit GRANT CREATE TO service_role before REVOKE CREATE FROM PUBLIC. Browser
+roles lose inherited DDL; schema USAGE, table/routine privileges, other explicit
+grants and owner rights are preserved. This is not a capability expansion for
+service_role; production preflight confirms it already has effective CREATE.
+No blanket
 ACL mirroring and no public_profiles invoker change are included.
 
-pgTAP10 checks catalog/effective privileges, actual anon/member CREATE denial,
-preserved usage and actual migration-owner create/drop. They run transactionally
+pgTAP13 checks catalog/effective privileges, actual anon/member CREATE denial,
+preserved usage, actual service create/drop and migration-owner create/drop. They run transactionally
 on disposable CI only. Production reconciliation requires reviewed CI pass,
 exact SQL+ledger atomic application and independent privilege read-back. No
 production DDL or application mutation was performed by this agent.
