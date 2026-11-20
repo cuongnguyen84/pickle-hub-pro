@@ -3,13 +3,13 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "ly-hoang-nam-pickleball-national-games-2026",
   publishedDate: "2026-10-23",
-  updatedDate: "2026-10-23",
+  updatedDate: "2026-11-20",
   author: "The PickleHub Team",
   tags: [
     "ly hoang nam",
     "dai hoi the thao toan quoc 2026",
     "pickleball viet nam",
-    "djoy nam sai gon",
+    "nsc the global city",
     "cong an nhan dan",
   ],
   ctaPath: "/tournaments",
@@ -26,24 +26,24 @@ const post: BlogPost = {
       title: "Ly Hoang Nam Switches to Pickleball for Vietnam's 2026 National Games",
       metaTitle: "Ly Hoang Nam Plays Pickleball at National Games",
       metaDescription:
-        "Pickleball debuts at Vietnam's National Games in Nov 2026, and tennis star Ly Hoang Nam will play it for the People's Public Security team. Analysis.",
+        "Pickleball debuts at Vietnam's National Games in Dec 2026, and tennis star Ly Hoang Nam will play it for the People's Public Security team. Analysis.",
       sections: [
         {
           heading: "A first for the National Games",
           content:
-            "Pickleball will be contested at Vietnam's National Games for the first time at the 10th edition in 2026, with five events scheduled for November 23–29 at the Djoy Pickleball Club in southern Ho Chi Minh City. Inclusion in the National Games programme is the strongest official recognition a sport can receive in Vietnam — it unlocks provincial team structures, budgets and athlete pathways that club competition cannot.",
+            "Pickleball will be contested at Vietnam's National Games for the first time at the 10th edition in 2026, with five events scheduled for December 3-9 at the NSC The Global City courts in Ho Chi Minh City. Inclusion in the National Games programme is the strongest official recognition a sport can receive in Vietnam — it unlocks provincial team structures, budgets and athlete pathways that club competition cannot.",
         },
         {
           heading: "The crossover everyone will watch",
           content:
-            "The headline name is Ly Hoang Nam, for years Vietnam's No. 1 tennis player and a Wimbledon junior doubles champion, who will represent the People's Public Security team in pickleball. The full analysis — what his switch says about the tennis-to-pickleball pipeline and what to watch in November — is in the Vietnamese version of this article.",
+            "The headline name is Ly Hoang Nam, for years Vietnam's No. 1 tennis player and a Wimbledon junior doubles champion, who will represent the People's Public Security team in pickleball. The full analysis — what his switch says about the tennis-to-pickleball pipeline and what to watch in December — is in the Vietnamese version of this article.",
         },
       ],
       faqItems: [
         {
           question: "When and where is pickleball played at Vietnam's 2026 National Games?",
           answer:
-            "November 23–29, 2026 at the Djoy Pickleball Club in southern Ho Chi Minh City, with five events on the programme.",
+            "December 3-9, 2026 at the NSC The Global City courts in Ho Chi Minh City, with five events on the programme.",
         },
         {
           question: "Which team will Ly Hoang Nam represent?",
@@ -56,12 +56,12 @@ const post: BlogPost = {
       title: "Lý Hoàng Nam chơi pickleball tại Đại hội Thể thao toàn quốc 2026: cột mốc cho cả hai môn thể thao",
       metaTitle: "Hoàng Nam đấu pickleball ở Đại hội toàn quốc",
       metaDescription:
-        "Pickleball lần đầu vào Đại hội toàn quốc (23–29/11/2026): Lý Hoàng Nam khoác áo Công an nhân dân. Ý nghĩa cột mốc này.",
+        "Pickleball lần đầu vào Đại hội toàn quốc (3-9/12/2026): Lý Hoàng Nam khoác áo Công an nhân dân. Ý nghĩa cột mốc này.",
       sections: [
         {
           heading: "Lần đầu tiên pickleball có mặt ở Đại hội Thể thao toàn quốc",
           content:
-            "Đại hội Thể thao toàn quốc lần thứ X năm 2026 sẽ là kỳ Đại hội đầu tiên có pickleball trong chương trình thi đấu. Môn này dự kiến tranh tài từ ngày 23 đến 29/11 tại CLB Pickleball Djoy Nam Sài Gòn (phường Tân Mỹ, TP.HCM) với 5 nội dung. Với thể thao Việt Nam, được vào chương trình Đại hội là dấu mốc công nhận chính thức ở cấp cao nhất: từ đây, các tỉnh thành và ngành mới có cơ sở để thành lập đội tuyển, bố trí ngân sách và xây dựng lực lượng vận động viên ăn lương tập luyện — những thứ mà sân chơi phong trào, dù sôi động đến đâu, cũng không tự tạo ra được.",
+            "Đại hội Thể thao toàn quốc lần thứ X năm 2026 sẽ là kỳ Đại hội đầu tiên có pickleball trong chương trình thi đấu. Môn này dự kiến tranh tài từ ngày 3 đến 9/12/2026 tại cụm sân NSC The Global City (TP.HCM) với 5 nội dung. Với thể thao Việt Nam, được vào chương trình Đại hội là dấu mốc công nhận chính thức ở cấp cao nhất: từ đây, các tỉnh thành và ngành mới có cơ sở để thành lập đội tuyển, bố trí ngân sách và xây dựng lực lượng vận động viên ăn lương tập luyện — những thứ mà sân chơi phong trào, dù sôi động đến đâu, cũng không tự tạo ra được.",
         },
         {
           heading: "Lý Hoàng Nam: cú chuyển hướng đáng chú ý nhất",
@@ -80,16 +80,16 @@ const post: BlogPost = {
             "Thứ nhất là hiệu ứng hệ thống: một khi có huy chương Đại hội, các đơn vị sẽ đầu tư HLV, tuyển chọn trẻ và lịch thi đấu nội bộ — bộ máy mà pickleball Việt Nam đang thiếu nhất khi bước ra châu Á. Thứ hai là hiệu ứng chuyển đổi: quần vợt Việt Nam có sẵn một lớp vận động viên kỹ thuật nền tốt, thể lực tốt; nếu kênh chuyển sang pickleball được mở chính thức qua các đội ngành và đội tỉnh, nguồn cung vận động viên chất lượng cao cho các giải PPA Asia sẽ đa dạng hơn hẳn lớp phong trào hiện nay. Thứ ba là hiệu ứng khán giả: Đại hội toàn quốc là sự kiện được truyền thông đại chúng theo dõi, và pickleball cần đúng loại ánh đèn đó để bước từ 'môn đang hot trên mạng xã hội' thành 'môn thể thao quốc gia' trong nhận thức công chúng.",
         },
         {
-          heading: "Những gì đáng chờ vào tháng 11",
+          heading: "Những gì đáng chờ vào tháng 12",
           content:
-            "Câu hỏi chuyên môn lớn nhất: trình độ của các đội tuyển mới thành lập sẽ ở đâu khi đặt cạnh lớp vận động viên phong trào đã chơi 2–3 năm và nhóm đang đánh tour châu Á. Câu hỏi thứ hai là nhân sự: ngoài Lý Hoàng Nam, còn tay vợt tên tuổi nào của quần vợt hay cầu lông xuất hiện trong danh sách các đoàn. Và câu hỏi dài hạn: sau kỳ Đại hội này, pickleball có được giữ lại ở kỳ Đại hội tiếp theo và xa hơn là các kỳ đại hội khu vực hay không. Câu trả lời bắt đầu từ một tuần ở Nam Sài Gòn cuối tháng 11 — tuần mà pickleball Việt Nam chính thức bước vào hệ thống thể thao thành tích cao.",
+            "Câu hỏi chuyên môn lớn nhất: trình độ của các đội tuyển mới thành lập sẽ ở đâu khi đặt cạnh lớp vận động viên phong trào đã chơi 2–3 năm và nhóm đang đánh tour châu Á. Câu hỏi thứ hai là nhân sự: ngoài Lý Hoàng Nam, còn tay vợt tên tuổi nào của quần vợt hay cầu lông xuất hiện trong danh sách các đoàn. Và câu hỏi dài hạn: sau kỳ Đại hội này, pickleball có được giữ lại ở kỳ Đại hội tiếp theo và xa hơn là các kỳ đại hội khu vực hay không. Câu trả lời bắt đầu từ một tuần ở NSC The Global City đầu tháng 12 — tuần mà pickleball Việt Nam chính thức bước vào hệ thống thể thao thành tích cao.",
         },
       ],
       faqItems: [
         {
           question: "Pickleball thi đấu ở Đại hội Thể thao toàn quốc 2026 khi nào, ở đâu?",
           answer:
-            "Từ ngày 23 đến 29/11/2026 tại CLB Pickleball Djoy Nam Sài Gòn (phường Tân Mỹ, TP.HCM), với 5 nội dung thi đấu. Đây là lần đầu pickleball có mặt trong chương trình Đại hội.",
+            "Từ ngày 3 đến 9/12/2026 tại cụm sân NSC The Global City (TP.HCM), với 5 nội dung thi đấu. Đây là lần đầu pickleball có mặt trong chương trình Đại hội.",
         },
         {
           question: "Lý Hoàng Nam khoác áo đội nào ở môn pickleball?",
