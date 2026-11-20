@@ -65,3 +65,6 @@ jobs:
         # Separate sessions queue behind a coordinator, then compete for slot10.
         # No production credentials; default disposable replay database only.
         run: node scripts/qa/indexnow-budget-race.mjs
+
+      - name: Run verified registration renewal proof race
+        run: node scripts/qa/registration-renewal-race.mjs
