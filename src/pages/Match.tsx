@@ -18,6 +18,7 @@ import { useI18n } from "@/i18n";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useDuprClubs } from "@/hooks/useDuprClubs";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 type Tab = "create" | "pending" | "queue" | "history";
 
@@ -404,13 +405,105 @@ function ProposalCard({
   row,
   showActions,
   onAction,
+  playerNames,
+  verifications,
+  currentUserId,
+  showVerifyStatus,
 }: {
   row: ProposalRow;
   showActions: ("verify" | "dispute" | "approve" | "reject")[];
   onAction: (action: string, reason?: string) => void;
+  playerNames: ReadonlyMap<string, string>;
+  verifications: readonly MatchPlayerVerification[];
+  currentUserId: string | undefined;
+  showVerifyStatus: boolean;
 }) {
   const { language } = useI18n();
   const vi = language === "vi";
+
+  const hasDispute = verifications.some((verification) => !!verification.disputed_at);
+  const aCovered = verifications.some(
+    (verification) =>
+      verification.side === "A" &&
+      !!verification.verified_at &&
+      !verification.disputed_at,
+  );
+  const bCovered = verifications.some(
+    (verification) =>
+      verification.side === "B" &&
+      !!verification.verified_at &&
+      !verification.disputed_at,
+  );
+  const currentUserVerified =
+    showVerifyStatus &&
+    !!currentUserId &&
+    verifications.some(
+      (verification) =>
+        verification.player_user_id === currentUserId &&
+        !!verification.verified_at &&
+        !verification.disputed_at,
+    );
+
+  let summary: string;
+  if (hasDispute) {
+    summary = vi
+      ? "Đang có tranh chấp - cần xử lý trước khi chuyển bước"
+      : "A dispute is open - it must be resolved before this match can move on";
+  } else if (aCovered && bCovered) {
+    summary = vi ? "Cả hai đội đã đủ xác nhận ✓" : "Both teams have confirmed ✓";
+  } else if (aCovered) {
+    summary = vi
+      ? "Team A đã đủ ✓ - còn thiếu xác nhận từ Team B"
+      : "Team A is covered ✓ - still waiting on a confirmation from Team B";
+  } else if (bCovered) {
+    summary = vi
+      ? "Team B đã đủ ✓ - còn thiếu xác nhận từ Team A"
+      : "Team B is covered ✓ - still waiting on a confirmation from Team A";
+  } else {
+    summary = vi
+      ? "Còn thiếu xác nhận từ cả Team A và Team B"
+      : "Waiting on confirmations from both Team A and Team B";
+  }
+
+  const renderPlayers = (playerIds: readonly string[], side: "A" | "B") =>
+    playerIds.map((playerId, index) => {
+      const playerVerifications = verifications.filter(
+        (verification) =>
+          verification.player_user_id === playerId && verification.side === side,
+      );
+      // Dispute wins over verified when both timestamps sit on the row.
+      const state: "disputed" | "verified" | "pending" = playerVerifications.some(
+        (verification) => !!verification.disputed_at,
+      )
+        ? "disputed"
+        : playerVerifications.some((verification) => !!verification.verified_at)
+          ? "verified"
+          : "pending";
+      const statusText =
+        state === "disputed"
+          ? (vi ? "đã tranh chấp" : "disputed")
+          : state === "verified"
+            ? "✓"
+            : (vi ? "chưa xác nhận" : "not confirmed");
+      const statusColor =
+        state === "disputed"
+          ? "var(--tl-live)"
+          : state === "verified"
+            ? "var(--tl-green)"
+            : "var(--tl-fg-3)";
+
+      return (
+        <span key={`${playerId}-${index}`}>
+          {index > 0 && ", "}
+          <span style={{ color: "var(--tl-fg)" }}>{playerNames.get(playerId) ?? "—"}</span>
+          {showVerifyStatus && (
+            <span className="ml-1" style={{ color: statusColor }} title={statusText}>
+              {statusText}
+            </span>
+          )}
+        </span>
+      );
+    });
 
   return (
     <div
@@ -430,8 +523,22 @@ function ProposalCard({
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-xs" style={{ color: "var(--tl-fg-3)" }}>
-        <div>Team A: {row.team_a_player_ids.length} players</div>
-        <div>Team B: {row.team_b_player_ids.length} players</div>
+        <div>Team A: {renderPlayers(row.team_a_player_ids, "A")}</div>
+        <div>Team B: {renderPlayers(row.team_b_player_ids, "B")}</div>
+        {showVerifyStatus && (
+          <div
+            className="col-span-2"
+            style={{
+              color: hasDispute
+                ? "var(--tl-live)"
+                : aCovered && bCovered
+                  ? "var(--tl-green)"
+                  : "var(--tl-fg-3)",
+            }}
+          >
+            {summary}
+          </div>
+        )}
         <div>Score: <span style={{ color: "var(--tl-fg)" }}>{fmtScore(row.team_a_scores, row.team_b_scores)}</span></div>
         {row.dupr_match_code && (
           <div>matchCode: <span className="font-mono">{row.dupr_match_code}</span></div>
@@ -443,9 +550,14 @@ function ProposalCard({
         )}
       </div>
 
-      {showActions.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {showActions.includes("verify") && (
+      {(showActions.length > 0 || currentUserVerified) && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {currentUserVerified && (
+            <span className="text-xs" style={{ color: "var(--tl-green)" }}>
+              {vi ? "Bạn đã xác nhận ✓" : "You have confirmed ✓"}
+            </span>
+          )}
+          {showActions.includes("verify") && !currentUserVerified && (
             <button type="button" className="tl-btn primary" onClick={() => onAction("verify")}>
               {vi ? "Xác nhận" : "Confirm"}
             </button>
@@ -485,6 +597,14 @@ function ProposalCard({
   );
 }
 
+type MatchPlayerVerification = {
+  proposal_id: string;
+  player_user_id: string;
+  side: string;
+  verified_at: string | null;
+  disputed_at: string | null;
+};
+
 function useProposals(filter: "pending" | "queue" | "history") {
   const { user } = useAuth();
   return useQuery({
@@ -511,11 +631,90 @@ function useProposals(filter: "pending" | "queue" | "history") {
 
 function ListTab({ filter }: { filter: "pending" | "queue" | "history" }) {
   const { user } = useAuth();
+  const { isAdmin, isLoading: adminLoading } = useAdminAuth();
   const { language } = useI18n();
   const vi = language === "vi";
   const { toast } = useToast();
   const q = useProposals(filter);
   const qc = useQueryClient();
+  const userId = user?.id;
+  const waitingForAdmin = filter !== "queue" && adminLoading;
+
+  const visibleRows = useMemo(() => {
+    const rows = q.data ?? [];
+    if (filter === "queue") return rows;
+    if (waitingForAdmin) return [];
+    if (isAdmin) return rows;
+    if (!userId) return [];
+    return rows.filter(
+      (row) =>
+        row.team_a_player_ids.includes(userId) ||
+        row.team_b_player_ids.includes(userId),
+    );
+  }, [q.data, filter, waitingForAdmin, isAdmin, userId]);
+
+  const playerIds = useMemo(
+    () =>
+      [...new Set(
+        visibleRows.flatMap((row) => [
+          ...row.team_a_player_ids,
+          ...row.team_b_player_ids,
+        ]),
+      )].sort(),
+    [visibleRows],
+  );
+
+  const proposalIds = useMemo(
+    () => [...new Set(visibleRows.map((row) => row.id))].sort(),
+    [visibleRows],
+  );
+
+  const namesQuery = useQuery({
+    queryKey: ["match-player-names", ...playerIds],
+    enabled: !!userId && playerIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, display_name, username")
+        .in("id", playerIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const verificationsQuery = useQuery({
+    queryKey: ["match-verifications", ...proposalIds],
+    enabled: !!userId && filter === "pending" && proposalIds.length > 0,
+    queryFn: async (): Promise<MatchPlayerVerification[]> => {
+      const { data, error } = await supabase
+        .from("match_proposal_verifications")
+        .select("proposal_id, player_user_id, side, verified_at, disputed_at")
+        .in("proposal_id", proposalIds);
+      if (error) throw error;
+      return (data ?? []) as MatchPlayerVerification[];
+    },
+  });
+
+  const playerNames = useMemo(() => {
+    const names = new Map<string, string>();
+    for (const profile of namesQuery.data ?? []) {
+      names.set(profile.id, profile.display_name ?? profile.username ?? "—");
+    }
+    return names;
+  }, [namesQuery.data]);
+
+  const verificationsByProposal = useMemo(() => {
+    const grouped = new Map<string, MatchPlayerVerification[]>();
+    for (const verification of verificationsQuery.data ?? []) {
+      const existing = grouped.get(verification.proposal_id);
+      if (existing) {
+        existing.push(verification);
+      } else {
+        grouped.set(verification.proposal_id, [verification]);
+      }
+    }
+    return grouped;
+  }, [verificationsQuery.data]);
 
   const callAction = async (proposalId: string, action: string, reason?: string) => {
     const { data, error } = await supabase.functions.invoke("match-proposal", {
@@ -538,11 +737,20 @@ function ListTab({ filter }: { filter: "pending" | "queue" | "history" }) {
     } else {
       toast({ title: action, description: JSON.stringify(data) });
       qc.invalidateQueries({ queryKey: ["match-proposals"] });
+      qc.invalidateQueries({ queryKey: ["match-verifications"] });
     }
   };
 
-  if (q.isLoading) return <div className="text-sm" style={{ color: "var(--tl-fg-3)" }}><Loader2 className="inline h-3 w-3 animate-spin" /> Loading…</div>;
-  if ((q.data ?? []).length === 0) {
+  if (
+    q.isLoading ||
+    waitingForAdmin ||
+    (!!userId && playerIds.length > 0 && namesQuery.isLoading) ||
+    (!!userId && filter === "pending" && proposalIds.length > 0 && verificationsQuery.isLoading)
+  ) {
+    return <div className="text-sm" style={{ color: "var(--tl-fg-3)" }}><Loader2 className="inline h-3 w-3 animate-spin" /> Loading…</div>;
+  }
+
+  if (visibleRows.length === 0) {
     return (
       <p className="text-sm" style={{ color: "var(--tl-fg-3)" }}>
         {filter === "pending"
@@ -561,8 +769,7 @@ function ListTab({ filter }: { filter: "pending" | "queue" | "history" }) {
           <RefreshCw className={`h-3 w-3 ${q.isFetching ? "animate-spin" : ""}`} />
         </button>
       </div>
-      {(q.data ?? []).map((row) => {
-        const userId = user?.id;
+      {visibleRows.map((row) => {
         const isPlayer = userId
           ? row.team_a_player_ids.includes(userId) || row.team_b_player_ids.includes(userId)
           : false;
@@ -579,6 +786,10 @@ function ListTab({ filter }: { filter: "pending" | "queue" | "history" }) {
             row={row}
             showActions={actions}
             onAction={(action, reason) => callAction(row.id, action, reason)}
+            playerNames={playerNames}
+            verifications={verificationsByProposal.get(row.id) ?? []}
+            currentUserId={userId}
+            showVerifyStatus={filter === "pending"}
           />
         );
       })}
