@@ -87,10 +87,14 @@ enum DeepLink: Identifiable, Equatable {
     static func parse(_ url: URL) -> DeepLink? {
         // Đường dẫn: https → path; custom scheme → host là segment đầu
         // (thepicklehub://dang-ky/<token> có host="dang-ky", path="/<token>").
+        guard url.user == nil, url.password == nil else { return nil }
         var segments: [String]
         if url.scheme == "thepicklehub" {
+            guard url.port == nil else { return nil }
             segments = [url.host].compactMap { $0 } + url.pathComponents.filter { $0 != "/" }
-        } else if let host = url.host,
+        } else if url.scheme == "https",
+                  url.port == nil || url.port == 443,
+                  let host = url.host,
                   host == "www.thepicklehub.net" || host == "thepicklehub.net" {
             segments = url.pathComponents.filter { $0 != "/" }
         } else {
