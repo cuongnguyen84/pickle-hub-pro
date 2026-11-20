@@ -7,6 +7,16 @@
 
 ---
 
+## Đối soát hiện tại — 20/11/2026 (SEC-4)
+
+Đã đối chiếu remote main `ca112da00f0ed0755e103aac1560965fa28507d5` và bằng chứng catalog hiện có. **Không dùng các nhãn LIVE tháng 7 dưới đây làm chứng nhận production hiện tại.** Nội dung lịch sử được giữ nguyên; các câu “đang live”, “tất cả đã fix” chỉ mô tả ghi nhận tại thời điểm lịch sử.
+
+[Bảng đầy đủ C1, H1–H4, M1–M9 và toàn bộ 11 Low/Info](audits/2026-11-20-security-finding-reconciliation.md) phân biệt PASS source, PARTIAL và UNVERIFIED deployment. C1 PASS hẹp cho quyền đọc trực tiếp email/phone theo catalog ngày 20/11; không xác nhận mọi RPC/view. H1 PASS cho tên file env đang track; không phải quét toàn bộ lịch sử secret. H4 PASS source fail-closed, deployment hiện tại chưa xác minh. H2/H3/M4/M5/M6/M7/M8/M9 còn PARTIAL. M1/M2/M3 có mitigation source nhưng deployment hiện tại chưa xác minh. Low/Info: HSTS và Permissions-Policy PASS source; các mục còn lại PARTIAL hoặc UNVERIFIED theo bảng chi tiết.
+
+**Ưu tiên cao nhất:** `request-recovery-link` trả magic token sau CAPTCHA mà chưa chứng minh quyền sở hữu số điện thoại (M9); limiter newsletter không atomic; expiry/rotation M6 chưa đầy đủ. Không gửi yêu cầu khai thác hoặc thay đổi production trong lần đối soát này. Không thể kết luận bảo mật đạt 9/10 từ báo cáo cũ.
+
+---
+
 ## Trạng thái khắc phục — ĐÃ DEPLOY PRODUCTION (2026-07-06)
 
 Tất cả 1 Critical + 4 High đã fix và **đã lên `main` + áp dụng production**, verified.
