@@ -1,0 +1,478 @@
+{
+  "site": "sc-domain:thepicklehub.net",
+  "window": {
+    "current": [
+      "2026-10-21",
+      "2026-11-17"
+    ],
+    "previous": [
+      "2026-09-23",
+      "2026-10-20"
+    ]
+  },
+  "totals": {
+    "current": {
+      "clicks": 2845,
+      "impressions": 83819,
+      "ctr": 3.39,
+      "position": 7.9
+    },
+    "previous": {
+      "clicks": 2569,
+      "impressions": 68263,
+      "ctr": 3.76,
+      "position": 7.4
+    }
+  },
+  "wow_pct": {
+    "clicks": 10.7,
+    "impressions": 22.8,
+    "position_delta": 0.5
+  },
+  "top_queries": [
+    {
+      "query": "mlp nations cup results",
+      "clicks": 72,
+      "impressions": 313,
+      "ctr": 23.0,
+      "position": 1.7
+    },
+    {
+      "query": "mlp nations cup 2026 results",
+      "clicks": 17,
+      "impressions": 95,
+      "ctr": 17.89,
+      "position": 1.9
+    },
+    {
+      "query": "mlp nations cup",
+      "clicks": 16,
+      "impressions": 888,
+      "ctr": 1.8,
+      "position": 7.5
+    },
+    {
+      "query": "mlp nations cup scores",
+      "clicks": 15,
+      "impressions": 43,
+      "ctr": 34.88,
+      "position": 1.9
+    },
+    {
+      "query": "ppa worlds 2026 results",
+      "clicks": 13,
+      "impressions": 88,
+      "ctr": 14.77,
+      "position": 3.6
+    },
+    {
+      "query": "ppa hong kong 2026 results",
+      "clicks": 12,
+      "impressions": 208,
+      "ctr": 5.77,
+      "position": 3.6
+    },
+    {
+      "query": "ppa hong kong results",
+      "clicks": 12,
+      "impressions": 179,
+      "ctr": 6.7,
+      "position": 4.6
+    },
+    {
+      "query": "picklehub",
+      "clicks": 10,
+      "impressions": 511,
+      "ctr": 1.96,
+      "position": 6.3
+    },
+    {
+      "query": "xem trực tiếp pickleball hôm nay",
+      "clicks": 9,
+      "impressions": 122,
+      "ctr": 7.38,
+      "position": 4.2
+    },
+    {
+      "query": "mlp nations cup standings",
+      "clicks": 8,
+      "impressions": 146,
+      "ctr": 5.48,
+      "position": 2.2
+    },
+    {
+      "query": "pickleball world championship 2026 results",
+      "clicks": 8,
+      "impressions": 109,
+      "ctr": 7.34,
+      "position": 4.4
+    },
+    {
+      "query": "789 pickleball club",
+      "clicks": 7,
+      "impressions": 153,
+      "ctr": 4.58,
+      "position": 4.4
+    },
+    {
+      "query": "ppa hong kong slam 2026 results",
+      "clicks": 7,
+      "impressions": 58,
+      "ctr": 12.07,
+      "position": 3.8
+    },
+    {
+      "query": "mlp nations cup 2026",
+      "clicks": 6,
+      "impressions": 586,
+      "ctr": 1.02,
+      "position": 7.3
+    },
+    {
+      "query": "mlp nations cup results today",
+      "clicks": 6,
+      "impressions": 48,
+      "ctr": 12.5,
+      "position": 3.2
+    },
+    {
+      "query": "cpx hyper+",
+      "clicks": 5,
+      "impressions": 19,
+      "ctr": 26.32,
+      "position": 3.7
+    },
+    {
+      "query": "lịch thi đấu ppa hong kong",
+      "clicks": 5,
+      "impressions": 68,
+      "ctr": 7.35,
+      "position": 6.0
+    },
+    {
+      "query": "file excel chia bảng pickleball",
+      "clicks": 4,
+      "impressions": 21,
+      "ctr": 19.05,
+      "position": 4.0
+    },
+    {
+      "query": "mlp nations cup bracket",
+      "clicks": 4,
+      "impressions": 17,
+      "ctr": 23.53,
+      "position": 4.2
+    },
+    {
+      "query": "ppa europe schedule",
+      "clicks": 4,
+      "impressions": 38,
+      "ctr": 10.53,
+      "position": 3.9
+    },
+    {
+      "query": "ppa world championships results",
+      "clicks": 4,
+      "impressions": 62,
+      "ctr": 6.45,
+      "position": 4.5
+    },
+    {
+      "query": "proton project bluejay",
+      "clicks": 4,
+      "impressions": 68,
+      "ctr": 5.88,
+      "position": 7.8
+    },
+    {
+      "query": "sân pick 1a tăng bạt hổ",
+      "clicks": 4,
+      "impressions": 16,
+      "ctr": 25.0,
+      "position": 5.4
+    },
+    {
+      "query": "sân pickleball gần đây",
+      "clicks": 4,
+      "impressions": 59,
+      "ctr": 6.78,
+      "position": 5.4
+    },
+    {
+      "query": "the pickle hub",
+      "clicks": 4,
+      "impressions": 393,
+      "ctr": 1.02,
+      "position": 7.4
+    }
+  ],
+  "top_pages": [
+    {
+      "page": "https://www.thepicklehub.net/blog/mlp-nations-cup-2026-results",
+      "clicks": 397,
+      "impressions": 5949,
+      "ctr": 6.67,
+      "position": 5.1
+    },
+    {
+      "page": "https://www.thepicklehub.net/blog/pickleball-world-championships-2026-results",
+      "clicks": 263,
+      "impressions": 2561,
+      "ctr": 10.27,
+      "position": 4.8
+    },
+    {
+      "page": "https://www.thepicklehub.net/blog/hong-kong-slam-2026-results",
+      "clicks": 230,
+      "impressions": 3011,
+      "ctr": 7.64,
+      "position": 5.2
+    },
+    {
+      "page": "https://www.thepicklehub.net/blog/hong-kong-slam-2026-schedule",
+      "clicks": 127,
+      "impressions": 1807,
+      "ctr": 7.03,
+      "position": 5.3
+    },
+    {
+      "page": "https://www.thepicklehub.net/vi/blog/lich-thi-dau-hong-kong-slam-2026",
+      "clicks": 109,
+      "impressions": 874,
+      "ctr": 12.47,
+      "position": 4.4
+    },
+    {
+      "page": "https://www.thepicklehub.net/vi/blog/cach-chia-bang-xep-lich-thi-dau-pickleball",
+      "clicks": 101,
+      "impressions": 1922,
+      "ctr": 5.25,
+      "position": 4.4
+    },
+    {
+      "page": "https://www.thepicklehub.net/vi/tools",
+      "clicks": 68,
+      "impressions": 291,
+      "ctr": 23.37,
+      "position": 4.5
+    },
+    {
+      "page": "https://www.thepicklehub.net/vi/blog/ket-qua-hong-kong-slam-2026",
+      "clicks": 59,
+      "impressions": 258,
+      "ctr": 22.87,
+      "position": 4.5
+    },
+    {
+      "page": "https://www.thepicklehub.net/vi",
+      "clicks": 54,
+      "impressions": 701,
+      "ctr": 7.7,
+      "position": 4.9
+    },
+    {
+      "page": "https://www.thepicklehub.net/vi/news/ppa-tour-asia-1500-hong-kong-slam-lich-thi-dau-va-ket-qua-41bdb2c7",
+      "clicks": 54,
+      "impressions": 448,
+      "ctr": 12.05,
+      "position": 5.6
+    },
+    {
+      "page": "https://www.thepicklehub.net/tools",
+      "clicks": 37,
+      "impressions": 1087,
+      "ctr": 3.4,
+      "position": 9.4
+    },
+    {
+      "page": "https://www.thepicklehub.net/vi/blog/the-thuc-mlp-la-gi",
+      "clicks": 36,
+      "impressions": 729,
+      "ctr": 4.94,
+      "position": 4.9
+    },
+    {
+      "page": "https://www.thepicklehub.net/blog/pickleball-world-cup-2026-da-nang-results",
+      "clicks": 35,
+      "impressions": 1064,
+      "ctr": 3.29,
+      "position": 6.2
+    },
+    {
+      "page": "https://www.thepicklehub.net/",
+      "clicks": 28,
+      "impressions": 2540,
+      "ctr": 1.1,
+      "position": 6.5
+    },
+    {
+      "page": "https://www.thepicklehub.net/blog/new-paddles-world-championships-2026",
+      "clicks": 25,
+      "impressions": 344,
+      "ctr": 7.27,
+      "position": 7.5
+    },
+    {
+      "page": "https://www.thepicklehub.net/vi/blog/cong-cu-tao-vong-tron-pickleball",
+      "clicks": 24,
+      "impressions": 768,
+      "ctr": 3.12,
+      "position": 5.5
+    },
+    {
+      "page": "https://www.thepicklehub.net/vi/rankings",
+      "clicks": 24,
+      "impressions": 409,
+      "ctr": 5.87,
+      "position": 5.6
+    },
+    {
+      "page": "https://www.thepicklehub.net/blog/ppa-tour-europe-2026-27-schedule",
+      "clicks": 22,
+      "impressions": 693,
+      "ctr": 3.17,
+      "position": 7.1
+    },
+    {
+      "page": "https://www.thepicklehub.net/blog/ppa-brisbane-2026-results",
+      "clicks": 21,
+      "impressions": 444,
+      "ctr": 4.73,
+      "position": 7.0
+    },
+    {
+      "page": "https://www.thepicklehub.net/blog/vietnam-pickleball-tournament-calendar-2026",
+      "clicks": 18,
+      "impressions": 385,
+      "ctr": 4.68,
+      "position": 6.1
+    },
+    {
+      "page": "https://www.thepicklehub.net/vi/blog/lich-giai-pickleball-viet-nam-2026",
+      "clicks": 18,
+      "impressions": 714,
+      "ctr": 2.52,
+      "position": 6.2
+    },
+    {
+      "page": "https://www.thepicklehub.net/vi/blog/xem-ppa-tour-truc-tiep-2026",
+      "clicks": 18,
+      "impressions": 108,
+      "ctr": 16.67,
+      "position": 7.4
+    },
+    {
+      "page": "https://www.thepicklehub.net/vi/blog/ket-qua-pickleball-world-cup-2026-da-nang",
+      "clicks": 17,
+      "impressions": 204,
+      "ctr": 8.33,
+      "position": 4.6
+    },
+    {
+      "page": "https://www.thepicklehub.net/vi/san/789-pickleball-club-ha-noi",
+      "clicks": 17,
+      "impressions": 375,
+      "ctr": 4.53,
+      "position": 5.6
+    },
+    {
+      "page": "https://www.thepicklehub.net/blog/pickleball-round-robin-generator-guide",
+      "clicks": 16,
+      "impressions": 1587,
+      "ctr": 1.01,
+      "position": 6.1
+    }
+  ],
+  "pages_losing_clicks": [
+    {
+      "page": "https://www.thepicklehub.net/blog/ppa-brisbane-2026-results",
+      "clicks_prev": 326,
+      "clicks_now": 21,
+      "delta": -305
+    },
+    {
+      "page": "https://www.thepicklehub.net/blog/veolia-chicago-cup-2026-results",
+      "clicks_prev": 262,
+      "clicks_now": 0,
+      "delta": -262
+    },
+    {
+      "page": "https://www.thepicklehub.net/blog/virginia-beach-open-2026-results",
+      "clicks_prev": 236,
+      "clicks_now": 0,
+      "delta": -236
+    },
+    {
+      "page": "https://www.thepicklehub.net/blog/pickleball-world-cup-2026-da-nang-results",
+      "clicks_prev": 141,
+      "clicks_now": 35,
+      "delta": -106
+    },
+    {
+      "page": "https://www.thepicklehub.net/vi/blog/lich-thi-dau-ppa-las-vegas-open-2026",
+      "clicks_prev": 65,
+      "clicks_now": 0,
+      "delta": -65
+    },
+    {
+      "page": "https://www.thepicklehub.net/blog/rate-las-vegas-open-2026-results",
+      "clicks_prev": 52,
+      "clicks_now": 0,
+      "delta": -52
+    },
+    {
+      "page": "https://www.thepicklehub.net/vi/blog/ket-qua-ppa-las-vegas-open-2026",
+      "clicks_prev": 28,
+      "clicks_now": 0,
+      "delta": -28
+    },
+    {
+      "page": "https://www.thepicklehub.net/vi/blog/du-toan-ngan-sach-giai-pickleball",
+      "clicks_prev": 21,
+      "clicks_now": 0,
+      "delta": -21
+    },
+    {
+      "page": "https://www.thepicklehub.net/vi/blog/cac-the-thuc-giai-pickleball",
+      "clicks_prev": 17,
+      "clicks_now": 0,
+      "delta": -17
+    },
+    {
+      "page": "https://www.thepicklehub.net/vi/blog/ket-qua-ppa-brisbane-2026",
+      "clicks_prev": 17,
+      "clicks_now": 0,
+      "delta": -17
+    },
+    {
+      "page": "https://www.thepicklehub.net/blog/pickleball-world-cup-2026-da-nang-schedule",
+      "clicks_prev": 16,
+      "clicks_now": 0,
+      "delta": -16
+    },
+    {
+      "page": "https://www.thepicklehub.net/blog/vietnam-pickleball-tournament-calendar-2026",
+      "clicks_prev": 33,
+      "clicks_now": 18,
+      "delta": -15
+    },
+    {
+      "page": "https://www.thepicklehub.net/vi/blog/hop-dong-app-tour-vs-ppa-tour-2026",
+      "clicks_prev": 15,
+      "clicks_now": 0,
+      "delta": -15
+    },
+    {
+      "page": "https://www.thepicklehub.net/vi/blog/lich-thi-dau-pickleball-world-cup-2026-da-nang",
+      "clicks_prev": 15,
+      "clicks_now": 0,
+      "delta": -15
+    },
+    {
+      "page": "https://www.thepicklehub.net/blog/ppa-tour-europe-2026-27-schedule",
+      "clicks_prev": 36,
+      "clicks_now": 22,
+      "delta": -14
+    }
+  ]
+}
