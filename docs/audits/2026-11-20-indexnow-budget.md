@@ -33,8 +33,14 @@ SUPABASE_URL/service credential must point to the project receiving migration.
 4. Verify normal scheduled invocation without triggering extra search submissions.
 
 No production mutation/deployment performed by this patch. Local handler tests
-passed14/14 across budget, upstream guards and slug parity. SQL pgTAP14 and
+passed14/14 across budget, upstream guards and slug parity. SQL pgTAP20 and
 15-round synchronized two-session race scripts are supplied, and the pgTAP
 workflow executes both against its disposable migration replay. They were not executed locally
 in this environment (local database unavailable). Database acceptance remains
 unverified until replay/race passes; mocks do not prove SQL atomicity.
+
+Review correction: an older queued statement is denied when a strictly newer
+bucket exists; it cannot rewind window_start or count. pgTAP seeds a future
+bucket to prove both fields stay unchanged and tests actual service-role
+execution plus anon/member permission errors. Races also execute as service_role;
+coordinator/racers are killed and settled in finally on failure or timeout.
