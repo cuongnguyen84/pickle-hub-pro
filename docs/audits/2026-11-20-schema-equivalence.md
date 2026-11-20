@@ -45,3 +45,53 @@ Current status: local comparator tests5/5 pass. Actual production read-only
 collection succeeded with9,730 catalog objects saved locally mode0600. Actual
 CI replay/compare results remain pending; the snapshot alone cannot show drift.
 No equivalence or 9/10 closure is claimed from a tool implementation or ledger.
+
+## Executed replay comparison
+
+CI run44768549751 succeeded; its artifact records actual merge checkout
+77e2efdd9e1460e7121d2902c131526f958f7965, PostgreSQL17.12. Production snapshot
+uses PostgreSQL17.6 and9,730 public-catalog objects. Comparator returned exit1:
+**2,546 differences**, detailed in [object diff](2026-11-20-schema-equivalence-diff.json).
+This contradicts public schema parity despite ledger equality.
+
+| Category | Replay-only | Production-only | Changed |
+|---|---:|---:|---:|
+| Relation ACL |1741|129|0|
+| Function ACL |401|23|0|
+| Default ACL |80|0|0|
+| Columns |0|61|1|
+| Constraints |23|18|1|
+| Indexes |0|18|0|
+| Policies |0|10|0|
+| Functions |2|9|4|
+| Relations |0|7|1|
+| Column ACL |0|6|0|
+| Schema ACL |2|2|5|
+| Triggers |0|2|0|
+
+Priority1: public schema permits PUBLIC CREATE in production but not replay.
+Review scoped revoke with role-effective tests; do not mirror all ACLs. Replay
+has991 extra anon and745 extra authenticated relation grant records, so copying
+its defaults could broaden access rather than harden production. Grantor/owner
+variation (pg_database_owner vs postgres) also requires classification, not
+silent normalization. Version formatting may explain hashes but not missing
+objects/grants or relation security_invoker options.
+
+Priority2 compatibility review: public_profiles has security_invoker=true in
+replay, production reloptions=NULL. Changing it blindly may break a public view
+whose base PII column grants were intentionally revoked. Inspect role-effective
+view/base permissions and intended public projection before changing either.
+
+Integrity review:23 replay-only foreign-key constraints include profiles_id_fkey,
+user_roles_user_id_fkey and quick_tables_creator_user_id_fkey. Do not add them
+without aggregate orphan checks and production-safe validation planning. Existing
+production-only conversation/messages/play_requests/telegram/zalo objects and
+functions require recovering reviewed source, not dropping live features.
+
+Four differing function definitions: get_trending_feed,
+mark_match_ready_for_dupr, ops_admin_probe_edge_functions and
+publish_rewritten_news. Definition hashes identify investigation targets; retrieve
+only reviewed routine bodies for a private diff, check hardcoded literal secrets
+before artifact inclusion, and reconcile deliberately. Two replay-only signatures
+(create_quick_table_with_quota and log_audit_event overloads) likewise need caller
+compatibility review. No schema/security change was applied during this audit.
