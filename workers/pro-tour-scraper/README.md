@@ -180,3 +180,48 @@ indicating which step died:
 | `[render-http]` | CF REST returned non-2xx HTTP status |
 | `[render-parse]` | CF REST returned 2xx but body wasn't a usable HTML envelope |
 | `Ingest failed:` | HTML parsed OK, but Supabase edge function rejected the upsert |
+
+## Network boundary hardening — 21 November 2026 (source only)
+
+This increment is not deployed. Scraper entry points still converge on the
+same PPA Browser Rendering / MLP raw-HTML adapters and existing ingest API.
+Every Worker-owned outbound fetch now goes through `src/safe-fetch.ts`:
+
+- Explicit HTTPS/default443, no userinfo or encoded/ambiguous authorities;
+  exact supported scrape hosts and per-origin API policies. IP/private/loopback
+  and unapproved hosts are rejected before network access. This is a trusted
+  hostname allowlist, not a DNS-pinning or compromised-provider guarantee.
+- Direct HTTP redirects are manual, destination-validated on every hop, at most
+  three; mutation redirects are rejected. Credential-bearing GETs cannot cross
+  API origins. A redirect body is cancelled before the next request.
+- Streaming caps cover bodies even without Content-Length or with a lying
+  length:8MiB per source HTML,10MiB Cloudflare JSON envelope,2MiB internal JSON;
+  only declared HTML/XHTML or JSON content types for the appropriate path.
+  Empty204 API responses remain supported. Decoded stream bytes are counted,
+  not just the declared transfer size. HTML retained across the MLP pages is
+  capped at16MiB and32pool IDs to bound fan-out/memory.
+- Whole fetch+body deadlines:25seconds for direct/backend fetches and130seconds
+  for Browser Rendering. Caller aborts cancel body reading. Timeout timers are
+  cleared after body consumption, not merely receipt of headers.
+- Incoming POST body is capped at64KiB/10seconds before HMAC verification; no
+  unbounded unsigned request.text allocation remains.
+
+The remote Cloudflare browser is a different network boundary from the
+Worker's HTTP redirect loop. Its request body now uses documented
+`allowRequestPattern` restricted to the PPA brackets HTTPS origin, constraining
+its navigation/redirect/subresource requests through the provider's policy.
+This is not represented as our manually inspecting the browser's redirect
+chain, and provider enforcement/real rendered hydration still needs a staging
+integration check before production rollout. Existing PPA HTML parsing and
+mocked actual-worker ingestion remain covered; arbitrary third-party browser
+resources are deliberately denied rather than broadening the allowlist.
+
+Primary API contract reviewed: `https://developers.cloudflare.com/api/resources/browser_rendering/subresources/content/methods/create/`.
+
+Validation: network mocks only (no private/live upstream requests), unsafe
+hosts/schemes/userinfo/ports/encoded authorities, every redirect, chain limits,
+unsupported content types, oversized declarations/chunks/cumulative streams,
+missing Content-Length, stalled bodies/caller aborts, exact byte cap and real
+PPA fixture. Actual signed Worker entry tests cover admission and preserved
+mocked PPA ingest/provider policy. Source checks/build do not establish a
+production deployment or full scraper SSRF closure across other Workers.

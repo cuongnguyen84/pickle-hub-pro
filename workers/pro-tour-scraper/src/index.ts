@@ -1,3 +1,4 @@
+import { assertAllowedUrl, SCRAPE_HOSTS, BROWSER_REQUEST_ALLOWLIST, workerFetch, readScrapeRequest, addScrapeBytes } from "./safe-fetch";
 /**
  * Sprint 6 — pro-tour-scraper Cloudflare Worker
  *
@@ -68,6 +69,7 @@ import type { TournamentScrapeResult } from "@/lib/pro-tour/types";
  *  Each adapter's own pattern stays the source of truth for that
  *  adapter's dispatch; this union is just for the up-front URL check. */
 function isSupportedTournamentUrl(url: string): boolean {
+  try { assertAllowedUrl(url, SCRAPE_HOSTS); } catch { return false; }
   return PRO_TOUR_HOST_PATTERN.test(url) || MLP_EVENT_HOST_PATTERN.test(url);
 }
 
@@ -143,7 +145,9 @@ export default {
     // HMAC-style shared-secret check. The admin UI computes the same
     // signature over the body before POSTing; mismatch → 401.
     const sig = request.headers.get("X-Scraper-Signature") ?? "";
-    const bodyText = await request.text();
+    let bodyText: string;
+    try { bodyText = await readScrapeRequest(request); }
+    catch { return jsonResponse({ ok: false, error: "Request body rejected" }, 413); }
     if (!(await verifySignature(bodyText, sig, env.SCRAPER_AUTH_SECRET))) {
       return new Response("Unauthorized", { status: 401 });
     }
@@ -290,7 +294,7 @@ async function recordProTourJobRun(
   },
 ): Promise<void> {
   try {
-    const response = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/ops_record_job_run`, {
+    const response = await workerFetch(`${env.SUPABASE_URL}/rest/v1/rpc/ops_record_job_run`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -406,7 +410,7 @@ async function runScrape(
   // Hand off to the Supabase edge function. The function signs its own
   // auth (service_role) and writes the ingestion log row + ghost profiles
   // + matches transactionally.
-  const ingestRes = await fetch(`${env.SUPABASE_URL}/functions/v1/pro-tour-ingest`, {
+  const ingestRes = await workerFetch(`${env.SUPABASE_URL}/functions/v1/pro-tour-ingest`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -467,11 +471,12 @@ async function scrapeMlpViaBrackets(
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
     "(KHTML, like Gecko) Chrome/130.0 Safari/537.36";
 
-  const mlpRes = await fetch(mlpEventUrl, { headers: { "User-Agent": ua } });
+  const mlpRes = await workerFetch(mlpEventUrl, { headers: { "User-Agent": ua } });
   if (!mlpRes.ok) {
     throw new Error(`MLP page fetch failed: HTTP ${mlpRes.status}`);
   }
   const mlpHtml = await mlpRes.text();
+  let retainedHtmlBytes = addScrapeBytes(0, mlpHtml);
 
   const tournamentName = extractTournamentName(mlpHtml);
 
@@ -488,13 +493,15 @@ async function scrapeMlpViaBrackets(
     );
   }
 
-  const overviewRes = await fetch(overviewUrl, { headers: { "User-Agent": ua } });
+  const overviewRes = await workerFetch(overviewUrl, { headers: { "User-Agent": ua } });
   if (!overviewRes.ok) {
     throw new Error(`Brackets overview fetch failed: HTTP ${overviewRes.status}`);
   }
   const overviewHtml = await overviewRes.text();
+  retainedHtmlBytes = addScrapeBytes(retainedHtmlBytes, overviewHtml);
 
   const poolIds = extractPoolIds(overviewHtml);
+  if (poolIds.length > 32) throw new Error("Too many bracket pools");
   if (poolIds.length === 0) {
     throw new Error("MLP scrape: no pool IDs found in brackets overview");
   }
@@ -502,14 +509,16 @@ async function scrapeMlpViaBrackets(
   const poolHtmls: string[] = [];
   for (const poolId of poolIds) {
     const url = bracketsPoolUrl(overviewUrl, poolId);
-    const r = await fetch(url, { headers: { "User-Agent": ua } });
+    const r = await workerFetch(url, { headers: { "User-Agent": ua } });
     if (!r.ok) {
       // One pool failing shouldn't kill the whole scrape; skip + continue
       // so the other pool's matchups still ingest.
       console.error(`Pool fetch failed (${url}): HTTP ${r.status}`);
       continue;
     }
-    poolHtmls.push(await r.text());
+    const poolHtml = await r.text();
+    retainedHtmlBytes = addScrapeBytes(retainedHtmlBytes, poolHtml);
+    poolHtmls.push(poolHtml);
   }
 
   return parseMlpFromBracketsPools(poolHtmls, mlpEventUrl, tournamentName);
@@ -596,8 +605,10 @@ async function renderWithBrowserRendering(env: Env, url: string): Promise<string
   // MLP path no longer goes through Browser Rendering (raw fetch suffices —
   // see scrapeMlpViaBrackets). This call is now PPA-only, so the request
   // body keeps the original lean shape.
+  assertAllowedUrl(url, ["brackets.pickleballtournaments.com"]);
   const requestBody: Record<string, unknown> = {
     url,
+    allowRequestPattern: BROWSER_REQUEST_ALLOWLIST,
     gotoOptions: {
       waitUntil: "domcontentloaded" as const,
       timeout: PAGE_GOTO_TIMEOUT_MS,
@@ -620,7 +631,7 @@ async function renderWithBrowserRendering(env: Env, url: string): Promise<string
   let res: Response;
   try {
     res = await withStage("render-fetch", () =>
-      fetch(apiUrl, {
+      workerFetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -738,7 +749,7 @@ async function fetchDueWatchlistRows(env: Env): Promise<WatchlistRow[]> {
     // safely under the ceiling; oldest-due first so the rest rotate through
     // on the following ticks instead of starving.
     `&order=next_scrape_at.asc.nullsfirst&limit=4`;
-  const res = await fetch(url, {
+  const res = await workerFetch(url, {
     headers: {
       apikey: env.SUPABASE_SERVICE_ROLE_KEY,
       Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
@@ -757,7 +768,7 @@ async function fetchDueWatchlistRows(env: Env): Promise<WatchlistRow[]> {
 async function isLiveEventWindow(env: Env): Promise<boolean> {
   const today = new Date(Date.now() + 8 * 3600_000).toISOString().slice(0, 10);
   try {
-    const res = await fetch(
+    const res = await workerFetch(
       `${env.SUPABASE_URL}/rest/v1/pro_tour_events?select=slug&start_date=lte.${today}&end_date=gte.${today}&limit=1`,
       { headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}` } },
     );
@@ -794,7 +805,7 @@ async function updateWatchlistAfterScrape(
   liveNow: boolean,
 ): Promise<void> {
   const next = nextScrapeAt(frequency, liveNow);
-  await fetch(`${env.SUPABASE_URL}/rest/v1/pro_tour_watchlist?id=eq.${id}`, {
+  await workerFetch(`${env.SUPABASE_URL}/rest/v1/pro_tour_watchlist?id=eq.${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -821,7 +832,7 @@ async function markLogFailed(
   errorMessage: string,
   durationMs: number,
 ): Promise<void> {
-  const res = await fetch(
+  const res = await workerFetch(
     `${env.SUPABASE_URL}/rest/v1/pro_tour_ingestion_logs?id=eq.${logId}`,
     {
       method: "PATCH",
@@ -858,7 +869,7 @@ async function insertFailedLog(
   errorMessage: string,
   durationMs: number,
 ): Promise<void> {
-  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/pro_tour_ingestion_logs`, {
+  const res = await workerFetch(`${env.SUPABASE_URL}/rest/v1/pro_tour_ingestion_logs`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
