@@ -1,6 +1,6 @@
 -- Catalog only. No application relation reads or function execution.
 WITH objects AS (
- SELECT 'relation' kind, c.relname key, jsonb_build_object('kind',c.relkind,'rls',c.relrowsecurity,'force_rls',c.relforcerowsecurity,'options',c.reloptions,'owner',pg_get_userbyid(c.relowner)) value
+ SELECT 'relation' kind, c.relname::text key, jsonb_build_object('kind',c.relkind,'rls',c.relrowsecurity,'force_rls',c.relforcerowsecurity,'options',c.reloptions,'owner',pg_get_userbyid(c.relowner)) value
  FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind IN ('r','p','v','m','S','f')
  UNION ALL SELECT 'column', c.relname||'.'||a.attname, jsonb_build_object('type',format_type(a.atttypid,a.atttypmod),'notnull',a.attnotnull,'identity',a.attidentity,'generated',a.attgenerated,'default_hash',md5(coalesce(pg_get_expr(d.adbin,d.adrelid),'')))
  FROM pg_attribute a JOIN pg_class c ON c.oid=a.attrelid JOIN pg_namespace n ON n.oid=c.relnamespace LEFT JOIN pg_attrdef d ON d.adrelid=c.oid AND d.adnum=a.attnum
