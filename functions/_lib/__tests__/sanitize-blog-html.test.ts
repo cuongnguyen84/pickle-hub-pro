@@ -37,3 +37,22 @@ it("does not blank a representative full rendered article", async () => {
   expect(clean.querySelectorAll("h2").length).toBe(original.querySelectorAll("h2").length);
   expect(clean.querySelector("article")).not.toBeNull();
 });
+it("preserves actual results-article TOC links with namespaced heading IDs", async () => {
+  const { renderEnBlogBody } = await import("../render/blog-body");
+  const article = await renderEnBlogBody("daytona-beach-open-2026-results", "https://www.thepicklehub.net");
+  const before = document.createElement("div"); before.innerHTML = article;
+  expect(before.querySelectorAll('a[href^="#rb-"]').length).toBeGreaterThan(1);
+  const safe = sanitizeBlogHtml(article);
+  const sink = document.createElement("div"); sink.innerHTML = safe;
+  const links = sink.querySelectorAll('a[href^="#tph-blog-rb-"]');
+  expect(links.length).toBe(before.querySelectorAll('a[href^="#rb-"]').length);
+  for (const link of links) expect(sink.querySelector(link.getAttribute("href")!)).not.toBeNull();
+  expect(sanitizeBlogHtml(safe)).toBe(safe);
+});
+it("preserves VI pipeline heading/TOC fixtures without arbitrary clobbering IDs", () => {
+  const safe = sanitizeBlogHtml('<nav><a href="#rb-don-nam">Đơn nam</a></nav><h2 id="rb-don-nam">Kết quả</h2><h2 id="location">Title</h2><div id="location" name="location" style="color:red">Text</div>');
+  const sink = document.createElement("div"); sink.innerHTML = safe;
+  expect(sink.querySelector('a')?.getAttribute('href')).toBe('#tph-blog-rb-don-nam');
+  expect(sink.querySelector('#tph-blog-rb-don-nam')?.textContent).toBe('Kết quả');
+  expect(sink.querySelector('#location,[name],[style]')).toBeNull();
+});
