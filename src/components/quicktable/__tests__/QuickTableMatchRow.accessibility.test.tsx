@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { QuickTableMatch } from "@/hooks/useQuickTable";
 
 const navigate = vi.fn();
@@ -112,5 +112,23 @@ describe("QuickTable match actions on compact screens", () => {
     );
 
     expect(screen.getByRole("button", { name: "Enter score" })).toBeTruthy();
+  });
+});
+
+describe("QuickTable inline score commit failure", () => {
+  it("keeps entered scores on failure and exits only after commit", async () => {
+    testI18n.language = "en";
+    const save = vi.fn().mockRejectedValueOnce(new Error("VERSION_CONFLICT")).mockResolvedValueOnce(undefined);
+    render(<QuickTableMatchRow match={match} index={0} player1={undefined} player2={undefined}
+      canEdit onScoreUpdate={save} formatPlayerName={() => "Player"} />);
+    fireEvent.click(screen.getByRole("button", { name: "Edit score" }));
+    const scores = screen.getAllByRole("spinbutton");
+    fireEvent.change(scores[0], { target: { value: "12" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save score" }));
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+    expect((screen.getAllByRole("spinbutton")[0] as HTMLInputElement).value).toBe("12");
+    fireEvent.click(screen.getByRole("button", { name: "Save score" }));
+    await waitFor(() => expect(screen.queryAllByRole("spinbutton")).toHaveLength(0));
+    expect(save).toHaveBeenLastCalledWith(12, 8);
   });
 });
