@@ -6,7 +6,7 @@
 
 import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
-import { Loader2, Phone, MessageCircle, Mail, ShieldCheck,  } from "lucide-react";
+import { Loader2, Phone, MessageCircle, Mail, ShieldCheck } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
