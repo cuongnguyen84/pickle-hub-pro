@@ -1,5 +1,5 @@
 /// <reference types="vitest" />
-import { createServer, defineConfig, loadEnv } from "vite";
+import { createServer, defineConfig, loadEnv, transformWithEsbuild } from "vite";
 import { coverageConfigDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react-swc";
 import fs from "fs";
@@ -192,6 +192,19 @@ return ({
           );
         }
         fs.writeFileSync(headers, before.replaceAll("%SUPABASE_ORIGIN%", SUPABASE_ORIGIN));
+      },
+    },
+    // Public worker helpers bypass Vite's module pipeline. Keep readable source,
+    // but apply the same production minification before shipping their bytes.
+    {
+      name: "minify-private-navigation-worker",
+      apply: "build" as const,
+      async closeBundle(error?: Error) {
+        if (error || !copiesPublicDir) return;
+        const worker = path.resolve(resolvedOutDir, "sw-private-navigation.js");
+        const source = fs.readFileSync(worker, "utf8");
+        const result = await transformWithEsbuild(source, worker, { minify: true, target: "es2020" });
+        fs.writeFileSync(worker, result.code);
       },
     },
     // /build-id.txt — freshness beacon for staleShell.ts. Root-level txt is
