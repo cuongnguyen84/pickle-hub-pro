@@ -17,6 +17,7 @@
 // Auth is still the proxy_magic_token (A's registration token).
 // ============================================================================
 
+import { confirmedPaymentClaim } from "@/lib/payment/claimState";
 import { useEffect, useMemo, useState } from "react";
 import {
   Loader2,
@@ -302,7 +303,7 @@ export function ProxyRegistrationModal({
           },
         })
           .then((resp) => {
-            if (!resp.error && resp.data?.ok) okCount += 1;
+            if (confirmedPaymentClaim(resp, r.payment_order_id!)) okCount += 1;
             return resp;
           }),
       );
