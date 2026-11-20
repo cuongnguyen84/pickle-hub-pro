@@ -34,6 +34,18 @@ import { AUTH_CACHE_DIR, TEST_USERS, type Role } from "./helpers/auth";
 const ROLES: Role[] = ["viewer", "viewerConnected", "admin"];
 
 setup("mint sessions once per role (real magic-link round-trip)", async () => {
+  // Enforce isolation even when a developer invokes Playwright directly and
+  // omits the workflow's preflight. This must precede every session mint.
+  if (process.env.PLAYWRIGHT_COVERAGE_REQUIRED === "1") {
+    const { missingPrerequisites, stagingErrors, verifyFrontendBackend } = await import("../scripts/playwright-coverage.mjs");
+    const errors = [
+      ...missingPrerequisites(process.env, true).map((name: string) => `Missing prerequisite: ${name}`),
+      ...stagingErrors(process.env),
+    ];
+    if (errors.length) throw new Error(errors.join("; "));
+    const pairing = await verifyFrontendBackend(process.env);
+    if (pairing.errors.length) throw new Error(pairing.errors.join("; "));
+  }
   setup.skip(!authEnvOrFailInCI(), "Auth env not set — local run without secrets");
   setup.setTimeout(120_000);
 
