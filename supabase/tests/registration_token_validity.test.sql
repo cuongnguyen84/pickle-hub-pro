@@ -43,7 +43,7 @@ SELECT lives_ok($outer$ DO $block$ BEGIN
   IF public.registration_token_is_valid('f6200000-0000-4000-8000-000000000003','f6200000-0000-4000-8000-000000000004') THEN
     RAISE EXCEPTION 'expiry equal to current statement must be denied';
   END IF;
-END $block$ $outer$, 'exact statement timestamp equality denied');
+END; $block$ $outer$, 'exact statement timestamp equality denied');
 UPDATE public.registration_secrets SET expires_at='-infinity' WHERE registration_id='f6200000-0000-4000-8000-000000000003';
 SELECT ok(NOT public.registration_token_is_valid('f6200000-0000-4000-8000-000000000003','f6200000-0000-4000-8000-000000000004'),'negative infinity denied');
 SELECT ok((SELECT prosecdef FROM pg_proc WHERE oid='public.registration_token_is_valid(uuid,uuid)'::regprocedure),'predicate is a definer');
