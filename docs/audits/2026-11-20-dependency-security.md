@@ -1,4 +1,3 @@
-Warning: fs was declared with const; use let for reassignable variables.
 # Dependency security baseline — 20/11/2026
 
 Scope: production dependency tree from `npm audit --omit=dev`; versions verified
