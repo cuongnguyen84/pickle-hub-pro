@@ -1,52 +1,21 @@
-/**
- * Google Analytics 4 Utility Functions
- * Measurement ID: G-JQG63B6NX0
- */
-
+/** Manual GA calls never include credential URLs, query/hash or raw referrers. */
+import { analyticsLocation, analyticsProps, isPrivateAnalyticsUrl } from "./analyticsPrivacy";
 declare global {
   interface Window {
     gtag: (command: string, ...args: unknown[]) => void;
     dataLayer: unknown[];
+    __tphAnalyticsAllowed?: () => boolean;
   }
 }
-
-/**
- * Track page view - call on route change
- * @param path - The page path to track (defaults to current pathname)
- */
 export const trackPageView = (path?: string): void => {
-  if (typeof window.gtag === 'function') {
-    window.gtag('event', 'page_view', {
-      page_path: path || window.location.pathname,
-      page_location: window.location.href,
-      page_title: document.title,
-    });
-  }
+  if (typeof window.gtag !== "function" || isPrivateAnalyticsUrl(window.location.href) || path && isPrivateAnalyticsUrl(path)) return;
+  const location = analyticsLocation(window.location.href);
+  if (!location) return;
+  window.gtag("event", "page_view", location);
 };
-
-/**
- * Track custom events
- * @param eventName - Name of the event
- * @param params - Event parameters
- */
 export const trackEvent = (eventName: string, params?: Record<string, unknown>): void => {
-  if (typeof window.gtag === 'function') {
-    window.gtag('event', eventName, {
-      ...params,
-      transport_type: 'beacon',
-    });
-    console.log(`[GA4] Event sent: ${eventName}`, params);
-  } else {
-    console.warn('[GA4] gtag not available, event not sent:', eventName);
-  }
+  if (typeof window.gtag !== "function" || isPrivateAnalyticsUrl(window.location.href) || !/^[a-z][a-z0-9_]{0,63}$/i.test(eventName)) return;
+  const location = analyticsLocation(window.location.href);
+  if (!location) return;
+  window.gtag("event", eventName, { ...analyticsProps(params), ...location, transport_type: "beacon" });
 };
-
-/**
- * Predefined events for future use:
- * - view_livestream
- * - watch_replay
- * - create_tournament
- * - view_tools
- * - login
- * - signup
- */

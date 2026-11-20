@@ -77,12 +77,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (ageMs < 120000) {
               signupTrackedRef.current = true;
               const method = session.user.app_metadata?.provider || "email";
-              console.log("[GA4] sign_up event fired!", { method, ageMs });
               trackEvent("sign_up", { method });
-              // Fallback: push to dataLayer directly
-              if (window.dataLayer) {
-                window.dataLayer.push({ event: "sign_up", method });
-              }
+
             }
           }
         }
