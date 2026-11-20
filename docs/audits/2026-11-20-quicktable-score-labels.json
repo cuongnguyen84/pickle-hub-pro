@@ -1,0 +1,77 @@
+{
+  "fixture": "Actual component + real i18n/styles, mock Local player",
+  "results": [
+    {
+      "width": 390,
+      "theme": "light",
+      "language": "en",
+      "scoreFieldsAX": [
+        "- 'spinbutton \"Enter score: Local player (1)\"': \"11\"",
+        "- 'spinbutton \"Enter score: Local player (2)\"': \"8\""
+      ]
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "language": "vi",
+      "scoreFieldsAX": [
+        "- 'spinbutton \"Nhập điểm: Local player (1)\"': \"11\"",
+        "- 'spinbutton \"Nhập điểm: Local player (2)\"': \"8\""
+      ]
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "language": "en",
+      "scoreFieldsAX": [
+        "- 'spinbutton \"Enter score: Local player (1)\"': \"11\"",
+        "- 'spinbutton \"Enter score: Local player (2)\"': \"8\""
+      ]
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "language": "vi",
+      "scoreFieldsAX": [
+        "- 'spinbutton \"Nhập điểm: Local player (1)\"': \"11\"",
+        "- 'spinbutton \"Nhập điểm: Local player (2)\"': \"8\""
+      ]
+    },
+    {
+      "width": 1280,
+      "theme": "light",
+      "language": "en",
+      "scoreFieldsAX": [
+        "- 'spinbutton \"Enter score: Local player (1)\"': \"11\"",
+        "- 'spinbutton \"Enter score: Local player (2)\"': \"8\""
+      ]
+    },
+    {
+      "width": 1280,
+      "theme": "light",
+      "language": "vi",
+      "scoreFieldsAX": [
+        "- 'spinbutton \"Nhập điểm: Local player (1)\"': \"11\"",
+        "- 'spinbutton \"Nhập điểm: Local player (2)\"': \"8\""
+      ]
+    },
+    {
+      "width": 1280,
+      "theme": "dark",
+      "language": "en",
+      "scoreFieldsAX": [
+        "- 'spinbutton \"Enter score: Local player (1)\"': \"11\"",
+        "- 'spinbutton \"Enter score: Local player (2)\"': \"8\""
+      ]
+    },
+    {
+      "width": 1280,
+      "theme": "dark",
+      "language": "vi",
+      "scoreFieldsAX": [
+        "- 'spinbutton \"Nhập điểm: Local player (1)\"': \"11\"",
+        "- 'spinbutton \"Nhập điểm: Local player (2)\"': \"8\""
+      ]
+    }
+  ]
+}
