@@ -12,7 +12,7 @@
 // supabase/functions/dupr-match-submit/index.ts.
 // ============================================================================
 
-import { z } from "zod";
+import { z } from "zod/v4";
 
 /** Error envelope returned by err() in the edge function. */
 export const DuprErrorSchema = z.object({
