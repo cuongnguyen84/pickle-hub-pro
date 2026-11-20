@@ -1,0 +1,1796 @@
+{
+  "started_utc": "2026-11-20T14:27:06.185370+00:00",
+  "finished_utc": "2026-11-20T14:54:34.935525+00:00",
+  "sources": {
+    "sitemap": "https://www.thepicklehub.net/sitemap.xml",
+    "inspection_property": "sc-domain:thepicklehub.net",
+    "user_agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+    "methods": "HTTP GET, GSC URL Inspection read-only; no indexing requests"
+  },
+  "limits": {
+    "inspection_calls_max": 13,
+    "inspection_calls_attempted": 13,
+    "link_cap": 180,
+    "links_discovered": 561,
+    "links_checked": 180,
+    "sample_selection": "VI/EN court directory and sitemap venue pair; blog directory and latest VI blog slug also present under EN static sitemap; tools directory and quick tables pair",
+    "rendering": "server HTTP HTML only; no browser JS rendering",
+    "historic_61_url_export": "not available in repository search; not reconstructed from aggregate exports",
+    "inspection_note": "Initial 12 attempts produced 11 records; one missing response retried once, total 13 attempts."
+  },
+  "sitemaps": {
+    "sitemap-static.xml": {
+      "count": 178
+    },
+    "sitemap-blog.xml": {
+      "count": 132
+    },
+    "sitemap-news.xml": {
+      "count": 1027
+    },
+    "sitemap-tournaments.xml": {
+      "count": 18
+    },
+    "sitemap-events.xml": {
+      "count": 11
+    },
+    "sitemap-players.xml": {
+      "count": 13
+    },
+    "sitemap-videos.xml": {
+      "count": 6
+    },
+    "sitemap-livestreams.xml": {
+      "count": 35
+    },
+    "sitemap-organizations.xml": {
+      "count": 3
+    },
+    "sitemap-venues.xml": {
+      "count": 2090
+    },
+    "sitemap-shop.xml": {
+      "count": 62
+    }
+  },
+  "sitemap_total": 3575,
+  "sitemap_unique": 3575,
+  "http_pages": [
+    {
+      "url": "https://www.thepicklehub.net/san",
+      "status": 200,
+      "redirect_to": "",
+      "canonical": [
+        "https://www.thepicklehub.net/san"
+      ],
+      "alternates": [
+        {
+          "lang": "en",
+          "url": "https://www.thepicklehub.net/san"
+        },
+        {
+          "lang": "vi",
+          "url": "https://www.thepicklehub.net/vi/san"
+        },
+        {
+          "lang": "x-default",
+          "url": "https://www.thepicklehub.net/san"
+        }
+      ],
+      "html_lang": "en",
+      "robots_meta": [],
+      "title": "Find Pickleball Courts in Vietnam | ThePickleHub"
+    },
+    {
+      "url": "https://www.thepicklehub.net/vi/san",
+      "status": 200,
+      "redirect_to": "",
+      "canonical": [
+        "https://www.thepicklehub.net/vi/san"
+      ],
+      "alternates": [
+        {
+          "lang": "en",
+          "url": "https://www.thepicklehub.net/san"
+        },
+        {
+          "lang": "vi",
+          "url": "https://www.thepicklehub.net/vi/san"
+        },
+        {
+          "lang": "x-default",
+          "url": "https://www.thepicklehub.net/san"
+        }
+      ],
+      "html_lang": "vi",
+      "robots_meta": [],
+      "title": "Tìm sân Pickleball Việt Nam | ThePickleHub"
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/tsa-newton",
+      "status": 200,
+      "redirect_to": "",
+      "canonical": [
+        "https://www.thepicklehub.net/san/tsa-newton"
+      ],
+      "alternates": [
+        {
+          "lang": "en",
+          "url": "https://www.thepicklehub.net/san/tsa-newton"
+        },
+        {
+          "lang": "vi",
+          "url": "https://www.thepicklehub.net/vi/san/tsa-newton"
+        },
+        {
+          "lang": "x-default",
+          "url": "https://www.thepicklehub.net/san/tsa-newton"
+        }
+      ],
+      "html_lang": "en",
+      "robots_meta": [],
+      "title": "TSA @ Newton Pickleball Court – Singapore | ThePickleHub"
+    },
+    {
+      "url": "https://www.thepicklehub.net/vi/san/tsa-newton",
+      "status": 200,
+      "redirect_to": "",
+      "canonical": [
+        "https://www.thepicklehub.net/vi/san/tsa-newton"
+      ],
+      "alternates": [
+        {
+          "lang": "en",
+          "url": "https://www.thepicklehub.net/san/tsa-newton"
+        },
+        {
+          "lang": "vi",
+          "url": "https://www.thepicklehub.net/vi/san/tsa-newton"
+        },
+        {
+          "lang": "x-default",
+          "url": "https://www.thepicklehub.net/san/tsa-newton"
+        }
+      ],
+      "html_lang": "vi",
+      "robots_meta": [],
+      "title": "Sân Pickleball TSA @ Newton – Singapore | ThePickleHub"
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog",
+      "status": 200,
+      "redirect_to": "",
+      "canonical": [
+        "https://www.thepicklehub.net/blog"
+      ],
+      "alternates": [
+        {
+          "lang": "en",
+          "url": "https://www.thepicklehub.net/blog"
+        },
+        {
+          "lang": "vi",
+          "url": "https://www.thepicklehub.net/vi/blog"
+        },
+        {
+          "lang": "x-default",
+          "url": "https://www.thepicklehub.net/blog"
+        }
+      ],
+      "html_lang": "en",
+      "robots_meta": [],
+      "title": "Pickleball Blog – Tips & Guides | ThePickleHub"
+    },
+    {
+      "url": "https://www.thepicklehub.net/vi/blog",
+      "status": 200,
+      "redirect_to": "",
+      "canonical": [
+        "https://www.thepicklehub.net/vi/blog"
+      ],
+      "alternates": [
+        {
+          "lang": "en",
+          "url": "https://www.thepicklehub.net/blog"
+        },
+        {
+          "lang": "vi",
+          "url": "https://www.thepicklehub.net/vi/blog"
+        },
+        {
+          "lang": "x-default",
+          "url": "https://www.thepicklehub.net/blog"
+        }
+      ],
+      "html_lang": "vi",
+      "robots_meta": [],
+      "title": "Blog Pickleball Việt Nam | ThePickleHub"
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique",
+      "status": 200,
+      "redirect_to": "",
+      "canonical": [
+        "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique"
+      ],
+      "alternates": [
+        {
+          "lang": "en",
+          "url": "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique"
+        },
+        {
+          "lang": "vi",
+          "url": "https://www.thepicklehub.net/vi/blog/two-to-one-counter-pickleball-technique"
+        },
+        {
+          "lang": "x-default",
+          "url": "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique"
+        }
+      ],
+      "html_lang": "en",
+      "robots_meta": [],
+      "title": "The Two-to-One in Pickleball: Counter Body Balls"
+    },
+    {
+      "url": "https://www.thepicklehub.net/vi/blog/two-to-one-counter-pickleball-technique",
+      "status": 200,
+      "redirect_to": "",
+      "canonical": [
+        "https://www.thepicklehub.net/vi/blog/two-to-one-counter-pickleball-technique"
+      ],
+      "alternates": [
+        {
+          "lang": "en",
+          "url": "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique"
+        },
+        {
+          "lang": "vi",
+          "url": "https://www.thepicklehub.net/vi/blog/two-to-one-counter-pickleball-technique"
+        },
+        {
+          "lang": "x-default",
+          "url": "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique"
+        }
+      ],
+      "html_lang": "vi",
+      "robots_meta": [],
+      "title": "Kỹ Thuật Two-to-One Trong Pickleball | ThePickleHub"
+    },
+    {
+      "url": "https://www.thepicklehub.net/tools",
+      "status": 200,
+      "redirect_to": "",
+      "canonical": [
+        "https://www.thepicklehub.net/tools"
+      ],
+      "alternates": [
+        {
+          "lang": "en",
+          "url": "https://www.thepicklehub.net/tools"
+        },
+        {
+          "lang": "vi",
+          "url": "https://www.thepicklehub.net/vi/tools"
+        },
+        {
+          "lang": "x-default",
+          "url": "https://www.thepicklehub.net/tools"
+        }
+      ],
+      "html_lang": "en",
+      "robots_meta": [],
+      "title": "Free Pickleball Bracket Generator | ThePickleHub"
+    },
+    {
+      "url": "https://www.thepicklehub.net/vi/tools",
+      "status": 200,
+      "redirect_to": "",
+      "canonical": [
+        "https://www.thepicklehub.net/vi/tools"
+      ],
+      "alternates": [
+        {
+          "lang": "en",
+          "url": "https://www.thepicklehub.net/tools"
+        },
+        {
+          "lang": "vi",
+          "url": "https://www.thepicklehub.net/vi/tools"
+        },
+        {
+          "lang": "x-default",
+          "url": "https://www.thepicklehub.net/tools"
+        }
+      ],
+      "html_lang": "vi",
+      "robots_meta": [],
+      "title": "Tạo Bảng Đấu Pickleball Miễn Phí | ThePickleHub"
+    },
+    {
+      "url": "https://www.thepicklehub.net/tools/quick-tables",
+      "status": 200,
+      "redirect_to": "",
+      "canonical": [
+        "https://www.thepicklehub.net/tools/quick-tables"
+      ],
+      "alternates": [
+        {
+          "lang": "en",
+          "url": "https://www.thepicklehub.net/tools/quick-tables"
+        },
+        {
+          "lang": "vi",
+          "url": "https://www.thepicklehub.net/vi/tools/quick-tables"
+        },
+        {
+          "lang": "x-default",
+          "url": "https://www.thepicklehub.net/tools/quick-tables"
+        }
+      ],
+      "html_lang": "en",
+      "robots_meta": [],
+      "title": "Round Robin Generator | ThePickleHub"
+    },
+    {
+      "url": "https://www.thepicklehub.net/vi/tools/quick-tables",
+      "status": 200,
+      "redirect_to": "",
+      "canonical": [
+        "https://www.thepicklehub.net/vi/tools/quick-tables"
+      ],
+      "alternates": [
+        {
+          "lang": "en",
+          "url": "https://www.thepicklehub.net/tools/quick-tables"
+        },
+        {
+          "lang": "vi",
+          "url": "https://www.thepicklehub.net/vi/tools/quick-tables"
+        },
+        {
+          "lang": "x-default",
+          "url": "https://www.thepicklehub.net/tools/quick-tables"
+        }
+      ],
+      "html_lang": "vi",
+      "robots_meta": [],
+      "title": "Chia bảng vòng tròn | ThePickleHub"
+    }
+  ],
+  "internal_links": [
+    {
+      "url": "https://www.thepicklehub.net",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san/tsa-newton",
+        "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san",
+        "https://www.thepicklehub.net/san/tsa-newton",
+        "https://www.thepicklehub.net/blog",
+        "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique",
+        "https://www.thepicklehub.net/tools",
+        "https://www.thepicklehub.net/tools/quick-tables"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/about",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san",
+        "https://www.thepicklehub.net/san/tsa-newton",
+        "https://www.thepicklehub.net/blog",
+        "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique",
+        "https://www.thepicklehub.net/tools",
+        "https://www.thepicklehub.net/tools/quick-tables"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/advertise",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san",
+        "https://www.thepicklehub.net/san/tsa-newton",
+        "https://www.thepicklehub.net/blog",
+        "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique",
+        "https://www.thepicklehub.net/tools",
+        "https://www.thepicklehub.net/tools/quick-tables"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san",
+        "https://www.thepicklehub.net/san/tsa-newton",
+        "https://www.thepicklehub.net/blog",
+        "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique",
+        "https://www.thepicklehub.net/tools",
+        "https://www.thepicklehub.net/tools/quick-tables"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/5-cach-dut-diem-pickleball-putaway",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/app-tour-vs-ppa-tour-contracts-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/best-pickleball-clubs-get-five-things-right",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/best-pickleball-paddles-beginners-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/best-pickleball-tournament-software-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/create-tournament-by-chat",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/crosscourt-drop-against-hard-hitters",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/daytona-beach-open-2026-results",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/daytona-beach-open-2026-womens-singles-wide-open",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/dragon-medals-ppa-tour-asia",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/dupr-algorithm-explained-performance-vs-expectation",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/dupr-rating-improvement-30-day-plan",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/dupr-thepicklehub-user-guide",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/dupr-vietnam-partnership-ta-pickleball-thepicklehub",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/entered-35-tournament-playing-45s-sandbagging",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/forced-vs-unforced-errors-what-they-reveal",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/graphite-vs-carbon-pickleball-paddle",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/hcmc-open-2026-preview",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/hcmc-open-2026-recap",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/hien-truong-quan-do-vietnam-pickleball-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/hong-kong-slam-2026-post-analysis",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/hong-kong-slam-2026-preview",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/hong-kong-slam-2026-results",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/hong-kong-slam-2026-schedule",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/how-new-jersey-won-mlp-2026-analysis",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/how-to-choose-a-pickleball-paddle",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/how-to-create-pickleball-bracket",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog",
+        "https://www.thepicklehub.net/tools"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/how-to-organize-pickleball-tournament",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/how-to-play-pickleball",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san/tsa-newton",
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/how-to-watch-ppa-tour-live-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/jogarbola-team-pickleball-vietnam",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/juan-benitez-coach-behind-patriquin-bright-staksrud",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/kuala-lumpur-cup-2026-preview",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/kuala-lumpur-cup-2026-results",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/ky-thuat-thang-hands-battle-pickleball",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog",
+        "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/ly-hoang-nam-pickleball-national-games-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/mlp-2026-semifinals-new-york-preview",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/mlp-asia-business-model-home-nights",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/mlp-asia-draft-2026-viet-panthers",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/mlp-format-explained",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/mlp-nations-cup-2026-results",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/mlp-orlando-super-sunday-2026-best-game",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/mlp-vs-ppa-2026-which-tour-to-watch",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/new-paddles-world-championships-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-club-management-software-comparison",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-cost-vietnam-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san/tsa-newton",
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-court-dimensions-setup-guide",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san/tsa-newton",
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-courts-bac-ninh-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-courts-binh-duong-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-courts-can-tho-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-courts-dong-nai-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-courts-ha-tinh-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-courts-hai-phong-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-courts-nha-trang-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-courts-vietnam-guide-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-courts-vinh-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-courts-vung-tau-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-dink-technique-mastery",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-doubles-stacking-strategy",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-doubles-strategy-guide",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-elbow-pain-causes-safe-steps",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-erne-shot-tutorial",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-first-doping-testing-european-open",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-for-kids-drills-gear-session-length",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-for-older-adults-safe-start",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-for-tennis-players-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-group-draw-schedule-guide",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-kitchen-foot-fault",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-line-calls-in-or-out",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-live-streaming-guide",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-lob-technique",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog",
+        "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-recovery-rest-hydration",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-round-robin-generator-guide",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog",
+        "https://www.thepicklehub.net/tools"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-rules-complete-guide",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san/tsa-newton",
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-scoring-rules-guide",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-singles-strategy",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-stacking-guide-own-the-middle",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-third-shot-drop-vs-drive",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-tour-wars-2023-explained",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-tournament-budget-calculator-guide",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog",
+        "https://www.thepicklehub.net/tools"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-tournament-formats-explained",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-volley-technique",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog",
+        "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-vs-padel-vs-paddle-tennis",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-warm-up-injury-prevention",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-world-championships-2026-results",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-world-cup-2026-da-nang",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-world-cup-2026-da-nang-from-the-stands",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-world-cup-2026-da-nang-how-to-watch",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-world-cup-2026-da-nang-results",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-world-cup-2026-da-nang-schedule",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-world-cup-2026-group-a-vietnam",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/pickleball-world-cup-2026-mens-pro-doubles-field",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/ppa-beijing-open-2026-recap",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/ppa-brisbane-2026-results",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/ppa-tour-asia-2026-complete-guide",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/ppa-tour-asia-2026-recap",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/ppa-tour-europe-2026-27-schedule",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/professional-pickleball-tours-guide-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/rate-las-vegas-open-2026-results",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/rate-las-vegas-open-2026-schedule",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/shenzhen-open-2026-preview",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/singapore-open-2026-preview",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/singapore-open-2026-recap",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/sophia-huynh-ken-tam-womens-doubles-gold-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/sophia-phuong-anh-dai-hoi-the-thao-toan-quoc-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/tama-shimabukuro-ppa-atlanta-final-15-year-old",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/tournament-organizer-hub",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog",
+        "https://www.thepicklehub.net/tools"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/veolia-chicago-cup-2026-results",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/vietnam-dupr-leaderboard-launch",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/vietnam-hosts-ppa-tour-asia-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/vietnam-junior-world-championships-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/vietnam-pickleball-community-guide-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/vietnam-pickleball-federation-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/vietnam-pickleball-players-to-watch-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/vietnam-pickleball-tournament-calendar-2026",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog",
+        "https://www.thepicklehub.net/tools"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/virginia-beach-open-2026-results",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/waters-bright-18-straight-titles-greatest-womens-doubles",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/what-is-dupr-pickleball-rating-system",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/why-your-backhand-flick-has-no-power",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/world-championships-2026-new-generation-analysis",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/blog/world-pickleball-rankings-wpr-explained",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/blog"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/clubs",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san",
+        "https://www.thepicklehub.net/vi/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/contact",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san",
+        "https://www.thepicklehub.net/san/tsa-newton",
+        "https://www.thepicklehub.net/blog",
+        "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique",
+        "https://www.thepicklehub.net/tools",
+        "https://www.thepicklehub.net/tools/quick-tables"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/forum",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san",
+        "https://www.thepicklehub.net/san/tsa-newton",
+        "https://www.thepicklehub.net/blog",
+        "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique",
+        "https://www.thepicklehub.net/tools",
+        "https://www.thepicklehub.net/tools/quick-tables"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/livestream",
+      "status": 301,
+      "sources": [
+        "https://www.thepicklehub.net/san",
+        "https://www.thepicklehub.net/san/tsa-newton",
+        "https://www.thepicklehub.net/blog",
+        "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique",
+        "https://www.thepicklehub.net/tools",
+        "https://www.thepicklehub.net/tools/quick-tables"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/news",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san",
+        "https://www.thepicklehub.net/san/tsa-newton",
+        "https://www.thepicklehub.net/blog",
+        "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique",
+        "https://www.thepicklehub.net/tools",
+        "https://www.thepicklehub.net/tools/quick-tables"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/privacy",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san",
+        "https://www.thepicklehub.net/san/tsa-newton",
+        "https://www.thepicklehub.net/blog",
+        "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique",
+        "https://www.thepicklehub.net/tools",
+        "https://www.thepicklehub.net/tools/quick-tables"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san/tsa-newton"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/002-pickleball-club-khang-dien",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/09-hub-picleball",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/2max-pickleball",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/aba-fit-max-hud",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/aba-fit-max-hud-cn2",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/atc-tennis-and-pickleball-thao-dien",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/bich-phuong-pickleball",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/bon-pick",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/cau-long-truong-dai-hoc-tdtt-da-nang",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/clb-pickleball-189-pham-tu",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/clb-pickleball-d-villa-coffee",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/clb-pickleball-vu-dai-kim",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/club-86-pickleball",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/cm-pickleball",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/d-complex",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/d-lucky",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/dai-linh-pickleball",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/dai-phat-2",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/dai-phat-3",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/dong-khoa-picklball-by-dd-sol",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/dong-khoa-picklball-by-dd-sol-cn1",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/fit-max-hud-cn1",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/go-pickleball-nha-trang",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/go-pickleball-vung-tau",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/happy-pickleball-ba-ria",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/hhp-pickelball",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/hoang-ngheu-tennis-pickleball",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/htl-pickleball-ham-tu-quan",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/khanh-pickleball",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/khu-vuc/bac-giang",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/khu-vuc/bac-ninh",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/khu-vuc/bao-loc",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/khu-vuc/ben-tre",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/khu-vuc/bien-hoa",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/khu-vuc/binh-duong",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/khu-vuc/buon-ma-thuot",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/khu-vuc/ca-mau",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/khu-vuc/cam-pha",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/khu-vuc/can-tho",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/khu-vuc/cao-bang",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/khu-vuc/cao-lanh",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/khu-vuc/chau-doc",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/khu-vuc/chau-hung",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/khu-vuc/chi-linh",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/khu-vuc/da-lat",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    },
+    {
+      "url": "https://www.thepicklehub.net/san/khu-vuc/da-nang",
+      "status": 200,
+      "sources": [
+        "https://www.thepicklehub.net/san"
+      ]
+    }
+  ],
+  "inspection": {
+    "https://www.thepicklehub.net/san": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/san",
+      "user_canonical": "https://www.thepicklehub.net/san",
+      "last_crawl": "2026-11-10T18:24:24Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/vi/san": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/vi/san",
+      "user_canonical": "https://www.thepicklehub.net/vi/san",
+      "last_crawl": "2026-11-10T18:24:24Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/san/tsa-newton": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/san/tsa-newton",
+      "user_canonical": "https://www.thepicklehub.net/san/tsa-newton",
+      "last_crawl": "2026-11-11T12:17:38Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/vi/san/tsa-newton": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/vi/san/tsa-newton",
+      "user_canonical": "https://www.thepicklehub.net/vi/san/tsa-newton",
+      "last_crawl": "2026-11-11T12:17:39Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog",
+      "user_canonical": "https://www.thepicklehub.net/blog",
+      "last_crawl": "2026-11-07T19:07:08Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/vi/blog": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/vi/blog",
+      "user_canonical": "https://www.thepicklehub.net/vi/blog",
+      "last_crawl": "2026-09-05T07:18:22Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique",
+      "user_canonical": "https://www.thepicklehub.net/blog/two-to-one-counter-pickleball-technique",
+      "last_crawl": "2026-11-20T04:43:04Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/tools": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/tools",
+      "user_canonical": "https://www.thepicklehub.net/tools",
+      "last_crawl": "2026-11-19T10:39:54Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/vi/tools": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/vi/tools",
+      "user_canonical": "https://www.thepicklehub.net/vi/tools",
+      "last_crawl": "2026-11-19T23:28:57Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/tools/quick-tables": {
+      "state": "DISCOVERED",
+      "verdict": "NEUTRAL",
+      "robots": "ROBOTS_TXT_STATE_UNSPECIFIED",
+      "google_canonical": "",
+      "user_canonical": "",
+      "last_crawl": "",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/vi/tools/quick-tables": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/vi/tools/quick-tables",
+      "user_canonical": "https://www.thepicklehub.net/vi/tools/quick-tables",
+      "last_crawl": "2026-09-04T09:51:38Z",
+      "cached": false
+    },
+    "https://www.thepicklehub.net/vi/blog/two-to-one-counter-pickleball-technique": {
+      "state": "INDEXED",
+      "verdict": "PASS",
+      "robots": "ALLOWED",
+      "google_canonical": "https://www.thepicklehub.net/vi/blog/two-to-one-counter-pickleball-technique",
+      "user_canonical": "https://www.thepicklehub.net/vi/blog/two-to-one-counter-pickleball-technique",
+      "last_crawl": "2026-11-20T06:47:59Z",
+      "cached": false
+    }
+  },
+  "redirect_followup": {
+    "url": "https://www.thepicklehub.net/livestream",
+    "final_url": "https://www.thepicklehub.net/live",
+    "final_status": 200
+  }
+}
