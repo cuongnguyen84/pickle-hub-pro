@@ -36,6 +36,7 @@ import { useI18n } from "@/i18n";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { completeJourney, startJourney, trackJourneyStep } from "@/lib/journeys";
+import { trackSocialRegistrationFailure } from "./registrationAnalytics";
 import {
   createPaymentOrder,
   registerAsMember,
@@ -286,12 +287,8 @@ export function RegistrationModal({
     }
   }, [open]);
 
-  const trackFailure = (failureStage: string, failureCode: string | undefined) => {
-    trackJourneyStep("player_registration", "player_registration_failed", {
-      ...journeyPropsRef.current,
-      failure_stage: failureStage,
-      failure_code: failureCode || "unknown",
-    });
+  const trackFailure = (failureStage: "otp_send" | "otp_verify" | "member_register", failureCode: string | undefined) => {
+    trackSocialRegistrationFailure(failureStage, failureCode, journeyPropsRef.current);
   };
 
   // PR69 v3 — Turnstile callback timeout watchdog. Start a 20s timer when
