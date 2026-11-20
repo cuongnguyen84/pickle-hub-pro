@@ -46,7 +46,7 @@
         ['pushState', 'replaceState'].forEach(function (method) {
           var original = window.history[method];
           window.history[method] = function (state, title, target) {
-            if (target && window.__tphAnalyticsAllowed() && privateUrl(String(target))) { window.location.assign(String(target)); return; }
+            if (target && new URL(String(target), window.location.href).origin === new URL(window.location.href).origin && window.__tphAnalyticsAllowed() && privateUrl(String(target))) { window.location.assign(String(target)); return; }
             return original.apply(window.history, arguments);
           };
         });

@@ -268,6 +268,8 @@ return ({
         ],
       },
       workbox: {
+        // Installs private NetworkOnly routing before Workbox fallback/cache routes.
+        importScripts: ["/sw-private-navigation.js"],
         // PERF-03: precache is a WHITELIST of the boot-critical core (entry,
         // non-heavy vendors, the north-star journey screens) + styles/icons.
         // The old catch-all "**/*.js" precached ~300 route chunks (~8 MB);
@@ -358,6 +360,12 @@ return ({
             handler: "NetworkFirst",
             options: {
               cacheName: "html-shell",
+              plugins: [{
+                handlerDidError: async () => new Response(
+                  '<!doctype html><p>This page is not available offline. Reconnect and reload.</p>',
+                  { status: 503, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } },
+                ),
+              }],
               networkTimeoutSeconds: 20,
               expiration: { maxEntries: 5, maxAgeSeconds: 24 * 60 * 60 },
               cacheableResponse: { statuses: [0, 200] },
@@ -433,17 +441,10 @@ return ({
           },
         ],
         // SPA fallback for client-side routes
-        navigateFallback: "/index.html",
-        // Don't fallback for these — let server/CDN handle
-        navigateFallbackDenylist: [
-          /^\/api\//,
-          /^\/functions\//,
-          /^\/og\//,
-          /^\/sitemap/,
-          /^\/robots\.txt/,
-          /^\/.well-known/,
-          /\.(xml|txt|json)$/,
-        ],
+        // index.html is intentionally excluded from precache. Binding a
+        // precache NavigationRoute to it throws during SW startup and prevents
+        // the public html-shell runtime route above from registering.
+        navigateFallback: undefined,
       },
       devOptions: {
         enabled: false,

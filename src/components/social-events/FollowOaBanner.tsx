@@ -1,3 +1,4 @@
+import { trackEvent } from "@/utils/ga";
 // ============================================================================
 // FollowOaBanner — inline CTA after successful event registration
 // ----------------------------------------------------------------------------
@@ -34,11 +35,11 @@ const ZALO_OA_URL =
   (import.meta.env.VITE_ZALO_OA_URL as string | undefined) || DEFAULT_OA_URL;
 
 interface Props {
-  /** Registration ID — passed to analytics for conversion tracking. */
+  /** Accepted for existing callers; never included in analytics. */
   registrationId?: string;
 }
 
-export function FollowOaBanner({ registrationId }: Props) {
+export function FollowOaBanner(_props: Props) {
   const { t } = useI18n();
   const copy = t.socialEvents.playerRegistration.followOaBanner;
 
@@ -69,15 +70,7 @@ export function FollowOaBanner({ registrationId }: Props) {
   const handleFollow = () => {
     // Track conversion intent. Best-effort — never block the navigation.
     try {
-      const w = window as unknown as {
-        gtag?: (cmd: string, eventName: string, params: Record<string, unknown>) => void;
-      };
-      if (typeof w.gtag === "function") {
-        w.gtag("event", "follow_oa_cta_click", {
-          registration_id: registrationId ?? null,
-          source: "registration_success_banner",
-        });
-      }
+      trackEvent("follow_oa_cta_click", { source: "registration_success_banner" });
     } catch {
       /* ignore */
     }

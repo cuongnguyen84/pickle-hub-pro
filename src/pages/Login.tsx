@@ -237,14 +237,8 @@ const Login = () => {
           // Show verification message since email confirmation is required
           setShowVerificationMessage(true);
           
-          // GA4 sign_up tracking - multiple methods for reliability
+          // One privacy-checked telemetry path; no direct SDK/dataLayer bypass.
           trackEvent("sign_up", { method: "email" });
-          if (typeof window.gtag === 'function') {
-            window.gtag('event', 'sign_up', { method: 'email' });
-          }
-          if (window.dataLayer) {
-            window.dataLayer.push({ event: "sign_up", method: "email" });
-          }
 
           toast({
             title: t.auth.signupSuccess,

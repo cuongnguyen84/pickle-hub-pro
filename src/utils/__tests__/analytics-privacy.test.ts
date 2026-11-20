@@ -57,3 +57,9 @@ it("retains approved failure/country enums while removing raw codes and personal
  expect(analyticsProps({failure_code:"otp_expired",country_code:"VN",otp_code:"123456",display_name:"A private name"})).toEqual({failure_code:"otp_expired",country_code:"VN"});
  expect(analyticsProps({failure_code:"provider says private phone123",country_code:"123456",code:"123456"})).toEqual({failure_code:"unknown"});
 });
+
+it("does not turn cross-origin history writes into navigations",()=>{
+ const fixture=boot("/blog/test");const history=fixture.context.history as History;
+ history.pushState({},"","https://other.test/dang-ky/credential");
+ expect(fixture.assign).not.toHaveBeenCalled();expect(fixture.push).toHaveBeenCalled();
+});

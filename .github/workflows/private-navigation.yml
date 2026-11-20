@@ -1,0 +1,44 @@
+name: Private navigation privacy
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'vite.config.ts'
+      - 'public/sw-private-navigation.js'
+      - 'src/utils/analyticsPrivacy.ts'
+      - 'src/utils/ga.ts'
+      - 'scripts/security/*'
+      - '.github/workflows/private-navigation.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'vite.config.ts'
+      - 'public/sw-private-navigation.js'
+      - 'src/utils/analyticsPrivacy.ts'
+      - 'scripts/security/*'
+      - '.github/workflows/private-navigation.yml'
+permissions:
+  contents: read
+jobs:
+  private-navigation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Build actual worker using synthetic public configuration
+        env:
+          VITE_SUPABASE_URL: https://supabase.invalid
+          VITE_SUPABASE_PUBLISHABLE_KEY: synthetic-build-only
+        run: npm run build
+      - name: Check analytics boot without contacting providers
+        run: node scripts/security/analytics-privacy-browser.mjs
+      - name: Check generated worker activation and offline privacy
+        run: node scripts/security/private-navigation-offline.mjs

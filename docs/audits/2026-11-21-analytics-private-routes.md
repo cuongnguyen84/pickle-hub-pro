@@ -53,3 +53,37 @@ provider strings become unknown), and country_code permits two-letter enums.
 Sensitive code fields do not gain a free-text exception. Nested percent encoding
 is decoded at most three rounds; malformed/over-depth input fails closed in both
 boot and utility predicates, including match invite confirmation capabilities.
+
+## Installed service-worker boundary
+
+The generated worker imports sw-private-navigation.js before Workbox routes. Its
+first fetch listener uses strict NetworkOnly behavior for private navigations and
+stops later fallback handlers. Offline private requests receive a static no-store
+503 without SDKs or reflected URLs. Activation enumerates existing caches and
+removes only same-origin GET keys classified private; public entries, draft keys,
+other-origin entries and all localStorage/IndexedDB stores are untouched.
+
+Build inspection found a preexisting startup defect: index.html is deliberately
+excluded from precache, yet navigateFallback bound a precache handler to it.
+Workbox throws non-precached-url before registering later runtime handlers. Remove
+that invalid fallback without adding index to precache; retain public html-shell
+NetworkFirst and add a controlled503 for a genuinely cold offline public miss.
+This is a necessary startup/runtime correction, not a general PWA redesign.
+
+Persistent actual-generated-SW browser test installs the built worker on localhost,
+seeds old private/encoded/public/draft caches before activation, verifies scoped
+cleanup, tests three offline private requests against cached old SDK shells,
+asserts warm public offline content remains available and cold misses fail safely,
+and rejects generated-worker startup exceptions. A dedicated CI job builds using
+synthetic Supabase configuration and runs both browser scripts without secrets,
+application modules, real SDKs, notifications or production requests.
+
+Final local validation after PWA/callback changes:5350Vitest assertions pass,
+69existing skips; coverage statements83.52%,branches72.12%,functions79.78%,
+lines85.53% with the existing83% statements gate unchanged. Four real Login/OA
+callback tests also preload a fake SDK in a private context and prove no event
+or dataLayer transmission. All remaining direct callback SDK/dataLayer writes
+were routed through trackEvent (including AuthProvider fallback), preserving
+safe public intent while removing registration identifiers. TypeScript/build
+and both offline browser scripts pass. Scoped ESLint has no errors and retains
+one preexisting useAuth fast-refresh warning. No production settings changed.
