@@ -13,6 +13,8 @@ on:
       - "supabase/migrations/**"
       - "supabase/tests/**"
       - "scripts/qa/**"
+      - "scripts/schema-catalog*"
+      - "scripts/sql/schema-catalog-snapshot.sql"
       - ".github/workflows/pgtap.yml"
   push:
     branches: [main]
@@ -20,6 +22,8 @@ on:
       - "supabase/migrations/**"
       - "supabase/tests/**"
       - "scripts/qa/**"
+      - "scripts/schema-catalog*"
+      - "scripts/sql/schema-catalog-snapshot.sql"
       - ".github/workflows/pgtap.yml"
   workflow_dispatch:
 
