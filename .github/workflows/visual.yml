@@ -93,10 +93,22 @@ jobs:
         run: node scripts/resolve-cloudflare-preview.mjs
 
       - name: Require visual harness contract
+        id: contract
         if: steps.gate.outputs.have == '1'
         env:
           VISUAL: "1"
         run: npx playwright test --project=visual --project=visual-mobile --grep 'visual harness contract'
+
+      - name: Upload mandatory visual contract diagnostics
+        if: failure() && steps.contract.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-contract-failure
+          path: |
+            test-results/**/test-failed-*.png
+            test-results/**/error-context.md
+            test-results/**/visual-contract-diagnostics.json
+          retention-days: 2
 
       - name: Visual diff (advisory)
         id: visual

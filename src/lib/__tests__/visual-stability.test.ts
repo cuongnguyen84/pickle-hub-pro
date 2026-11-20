@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isClubFixtureRequest, VISUAL_CLUBS, visualNetworkPolicy } from '../../../tests/helpers/visual-stability';
+import { isClubFixtureRequest, VISUAL_CLUBS, visualNetworkPolicy, safeVisualDiagnostic } from '../../../tests/helpers/visual-stability';
 describe('visual fixtures stay scoped and useful',()=>{
  it('intercepts only the public read contract',()=>{
   const origin='https://ajvlcamxemgbxduhiqrl.supabase.co';
@@ -22,4 +22,9 @@ describe('visual network guard',()=>{
   expect(visualNetworkPolicy('https://ajvlcamxemgbxduhiqrl.supabase.co/rest/v1/rpc/get_homepage_stats','POST')).toBe('read');
   expect(visualNetworkPolicy('https://evil.test/rest/v1/rpc/get_homepage_stats','POST')).toBe('forbidden');
  });
+});
+
+it('diagnostics strip query credentials, tokens and record identifiers',()=>{
+ const diagnostic=safeVisualDiagnostic('GET https://example.test/rest/v1/items?apikey=secret&id=private 00000000-0000-4000-8000-000000000101 eyJabc.def.ghi');
+ expect(diagnostic).not.toContain('secret');expect(diagnostic).not.toContain('private');expect(diagnostic).not.toContain('000000000101');expect(diagnostic).not.toContain('eyJabc');
 });

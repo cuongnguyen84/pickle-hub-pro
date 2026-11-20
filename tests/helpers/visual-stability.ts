@@ -1,6 +1,12 @@
 import type { Page, Request } from '@playwright/test';
 
-const networkAudit = new WeakMap<Page, { blockedTelemetry: number; forbidden: string[]; readRpc: string[] }>();
+type VisualAudit = { blockedTelemetry: number; forbidden: string[]; readRpc: string[]; fixtureHits: { clubs: number; livestreams: number }; resourceFailures: string[]; pageErrors: string[]; failedReads: string[] };
+const networkAudit = new WeakMap<Page, VisualAudit>();
+export function safeVisualDiagnostic(text: string) {
+  return text.replace(/https?:\/\/[^\s"']+/g, raw => { try { const url = new URL(raw); return url.origin + url.pathname; } catch { return '[url]'; } })
+    .replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, '[token]')
+    .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, ':uuid').slice(0, 240);
+}
 export const VISUAL_READ_RPCS = ['get_homepage_stats', 'get_top_blog_posts', 'get_blog_post_view_counts_batch', 'get_feed_timeline', 'dupr_leaderboard_vietnam', 'shop_public_categories', 'shop_public_search'];
 export function visualNetworkPolicy(rawUrl: string, method: string): 'read' | 'telemetry' | 'forbidden' {
   const url = new URL(rawUrl);
@@ -12,7 +18,7 @@ export function visualNetworkPolicy(rawUrl: string, method: string): 'read' | 't
   return 'forbidden';
 }
 export function visualNetworkSummary(page: Page) {
-  return networkAudit.get(page) ?? { blockedTelemetry: 0, forbidden: [], readRpc: [] };
+  return networkAudit.get(page) ?? { blockedTelemetry: 0, forbidden: [], readRpc: [], fixtureHits: { clubs: 0, livestreams: 0 }, resourceFailures: [], pageErrors: [], failedReads: [] };
 }
 export function assertNoUnapprovedWrites(page: Page) {
   const audit = visualNetworkSummary(page);
@@ -47,7 +53,7 @@ export const VISUAL_STREAMS = ['live', 'scheduled', 'ended'].map((status, index)
   ended_at: status === 'ended' ? '2026-11-19T12:00:00Z' : null,
 }));
 export async function prepareVisualPage(page: Page, liveState: 'populated' | 'empty' = 'populated') {
-  const audit = { blockedTelemetry: 0, forbidden: [] as string[], readRpc: [] as string[] };
+  const audit: VisualAudit = { blockedTelemetry: 0, forbidden: [], readRpc: [], fixtureHits: { clubs: 0, livestreams: 0 }, resourceFailures: [], pageErrors: [], failedReads: [] };
   networkAudit.set(page, audit);
   await page.routeWebSocket('**/*', socket => socket.close());
   const pending = new Set<Request>();
@@ -57,7 +63,18 @@ export async function prepareVisualPage(page: Page, liveState: 'populated' | 'em
     if (/^[a-z0-9]{20}\.supabase\.co$/.test(url.hostname) && url.pathname.startsWith('/rest/v1/')) pending.add(request);
   });
   page.on('requestfinished', request => pending.delete(request));
-  page.on('requestfailed', request => pending.delete(request));
+  page.on('requestfailed', request => {
+    pending.delete(request);
+    if (['document', 'script', 'stylesheet'].includes(request.resourceType()) && audit.resourceFailures.length < 40) {
+      audit.resourceFailures.push(safeVisualDiagnostic(`${request.resourceType()} ${request.url()} ${request.failure()?.errorText ?? 'failed'}`));
+    }
+  });
+  page.on('pageerror', error => { if (audit.pageErrors.length < 20) audit.pageErrors.push(safeVisualDiagnostic(`${error.name}: ${error.message}`)); });
+  page.on('response', response => {
+    if (response.status() >= 400 && response.url().includes('/rest/v1/') && audit.failedReads.length < 30) {
+      audit.failedReads.push(safeVisualDiagnostic(`${response.status()} ${response.url()}`));
+    }
+  });
   // Explicit URL locale keeps geo-IP from switching dictionary mid-capture.
   await page.addInitScript(() => {
     localStorage.setItem('pickleball-hub-language', /^\/vi(?:\/|$)/.test(location.pathname) ? 'vi' : 'en');
@@ -78,9 +95,11 @@ export async function prepareVisualPage(page: Page, liveState: 'populated' | 'em
     }
     if (request.method() === 'POST') audit.readRpc.push(url.pathname.split('/').at(-1)!);
     if (isClubFixtureRequest(request.url(), request.method())) {
+      audit.fixtureHits.clubs++;
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(VISUAL_CLUBS) });
     }
     if (request.method() === 'GET' && /^https:\/\/[a-z0-9]{20}\.supabase\.co$/.test(url.origin) && url.pathname === '/rest/v1/public_livestreams') {
+      audit.fixtureHits.livestreams++;
       const status = url.searchParams.get('status')?.replace(/^eq\./, '');
       const rows = liveState === 'empty' ? [] : VISUAL_STREAMS.filter(row => !status || row.status === status);
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(rows) });

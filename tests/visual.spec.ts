@@ -18,6 +18,7 @@
 // so they don't cause flaky diffs.
 // ============================================================================
 
+import { writeFile } from 'node:fs/promises';
 import { test, expect } from "@playwright/test";
 import { prepareVisualPage, settleVisualFonts, assertNavigationUnmasked, VISUAL_MASK_SELECTORS, waitForVisualContent, assertNoUnapprovedWrites, visualNetworkSummary } from "./helpers/visual-stability";
 
@@ -27,6 +28,10 @@ test.describe("visual regression", () => {
 
   test.afterEach(async ({ page }, info) => {
     console.log(`VISUAL_NETWORK_AUDIT ${JSON.stringify({ project: info.project.name, test: info.title, ...visualNetworkSummary(page) })}`);
+    if (info.status !== info.expectedStatus) {
+      const url = new URL(page.url());
+      await writeFile(info.outputPath('visual-contract-diagnostics.json'), JSON.stringify({ path: url.pathname, ...visualNetworkSummary(page) }, null, 2));
+    }
     assertNoUnapprovedWrites(page);
   });
 
@@ -64,8 +69,10 @@ test.describe("visual regression", () => {
   test('visual harness contract: fixtures, fonts and navigation', async ({ page }) => {
     await prepareVisualPage(page);
     await page.goto('/clubs', { waitUntil: 'load' });
+    await waitForVisualContent(page, '/clubs');
     await expect(page.getByText('Riverside Pickleball Club', { exact: true })).toBeVisible();
     await expect(page.getByText('Câu lạc bộ Pickleball Thành Phố', { exact: true })).toBeVisible();
+    expect(visualNetworkSummary(page).fixtureHits.clubs).toBeGreaterThan(0);
     await expect(page.getByRole('link', { name: /Sign in to create a club/ })).toBeVisible();
     await expect(page.getByRole('textbox')).toBeVisible();
     await waitForVisualContent(page, '/clubs');
