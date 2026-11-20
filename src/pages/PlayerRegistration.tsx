@@ -14,6 +14,7 @@
 // through the cancel-registration / reactivate-registration edge fns.
 // ============================================================================
 
+import { confirmedPaymentClaim } from "@/lib/payment/claimState";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -383,7 +384,7 @@ export default function PlayerRegistration() {
                                   if (!magic_token || !data.payment_order_id) return;
                                   setMarkingPaid(true);
                                   try {
-                                    const { error } = await invokeWithBlobRetry(
+                                    const response = await invokeWithBlobRetry(
                                       "mark-payment-claimed",
                                       {
                                         body: {
@@ -392,7 +393,7 @@ export default function PlayerRegistration() {
                                         },
                                       },
                                     );
-                                    if (error) {
+                                    if (!confirmedPaymentClaim(response, data.payment_order_id)) {
                                       toast({
                                         title: tr.errors.generic,
                                         variant: "destructive",
