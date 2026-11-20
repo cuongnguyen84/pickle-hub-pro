@@ -13,7 +13,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod/v4";
+import * as z from "zod/v4/mini";
 import { Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -65,24 +65,21 @@ const VN_PHONE_RE = /^(0\d{9}|\+84\d{9})$/;
 
 const buildSchema = (language: "vi" | "en") =>
   z.object({
-    display_name: z
-      .string()
-      .min(
-        2,
-        language === "vi" ? "Tên tối thiểu 2 ký tự" : "Name needs at least 2 characters",
-      )
-      .max(50),
-    phone: z
-      .string()
-      .regex(
+    display_name: z.string().check(
+      z.minLength(2, language === "vi" ? "Tên tối thiểu 2 ký tự" : "Name needs at least 2 characters"),
+      z.maxLength(50),
+    ),
+    phone: z.string().check(
+      z.regex(
         VN_PHONE_RE,
         language === "vi"
           ? "Số điện thoại VN: 0xxxxxxxxx hoặc +84xxxxxxxxx"
           : "VN phone format: 0xxxxxxxxx or +84xxxxxxxxx",
       ),
-    city: z
-      .string()
-      .min(1, language === "vi" ? "Chọn thành phố" : "Pick a city"),
+    ),
+    city: z.string().check(
+      z.minLength(1, language === "vi" ? "Chọn thành phố" : "Pick a city"),
+    ),
   });
 
 type FormValues = {
