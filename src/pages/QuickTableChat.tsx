@@ -1109,6 +1109,8 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
       requires_registration: draft.roster_mode === "registration",
     });
     if (!table) { setCreating(false); return; } // createTable đã toast lỗi (quota/auth)
+    // Ghi riêng: cột mới, lỡ chưa có trên DB thì luồng tạo vẫn chạy.
+    await supabase.from("quick_tables").update({ created_via: "chat" } as never).eq("id", table.id);
     const custom = customSeries(draft);
     const series = custom ? custom.length : Math.min(draft.series ?? 1, seriesCap(draft));
     // Có danh sách → setupRosterAtomic lưu sân + xếp lịch; chưa có → lưu sẵn lên giải cho bước nhập sau.
@@ -1162,10 +1164,15 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     return out;
   }, [draft.entries, draft.group_count, assignments]);
 
+  const attribution = lang === "vi"
+    ? "Bảng đấu này được tạo bằng chat AI của ThePickleHub - dán danh sách của bạn để tạo giải trong 60 giây\nhttps://www.thepicklehub.net/vi/tools/tao-giai-bang-chat"
+    : "This draw was created with ThePickleHub AI chat - paste your list to build a tournament in 60 seconds\nhttps://www.thepicklehub.net/tools/create-by-chat";
+
   const zaloText = () => [
     `🏓 ${draft.name}`,
     ...(draft.entries?.length ? groupsList.map((g, i) => `${c.group(i)}: ${g.map(entryLabel).join(", ")}`) : []),
     `${c.zaloLink}: ${tableUrl}`,
+    attribution,
   ].join("\n");
 
   const onFiles = async (list: FileList | null) => {
