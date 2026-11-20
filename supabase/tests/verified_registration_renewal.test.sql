@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(23);
+SELECT plan(31);
 INSERT INTO auth.users(id, email, raw_user_meta_data)
 VALUES ('f6200000-0000-4000-8000-000000000001','token-lifecycle@thepicklehub.test','{}');
 INSERT INTO public.profiles(id,email,display_name)
@@ -57,6 +57,24 @@ RESET ROLE;
 UPDATE auth.users SET email_confirmed_at=NULL,phone_confirmed_at=NULL WHERE id='f6200000-0000-4000-8000-000000000001';
 SET LOCAL ROLE service_role;
 SELECT is((SELECT count(*)::int FROM public.renew_registration_token_by_owner('f6200000-0000-4000-8000-000000000003','f6200000-0000-4000-8000-000000000001')),0,'unconfirmed account not ownership proof');
+RESET ROLE;
+SET LOCAL ROLE service_role;
+INSERT INTO public.registration_renewal_challenges(registration_id,phone,ip_hash,code_hash,created_at,expires_at)
+VALUES('f6200000-0000-4000-8000-000000000003','+84901234567',repeat('f',64),repeat('a',64),now()-interval '8 days',now()-interval '7 days'),
+('f6200000-0000-4000-8000-000000000003','+84901234567',repeat('f',64),repeat('a',64),now()-interval '8 days',now()+interval '1 day');
+SELECT is(public.cleanup_registration_renewal_challenges(),1::bigint,'retention removes old inactive sensitive proof only');
+SELECT is((SELECT count(*)::int FROM public.registration_renewal_challenges WHERE created_at<now()-interval '7 days'),1,'active old proof retained');
+SELECT ok((SELECT count(*) FROM public.registration_renewal_challenges WHERE created_at>now()-interval '1 day')>=3,'complete recent budget ledger retained');
+SELECT is((SELECT count(*)::int FROM public.begin_registration_renewal('invalid','f6200000-0000-4000-8000-000000000002',repeat('a',64),repeat('a',64))),0,'invalid phone rejected without exception');
+SELECT is((SELECT count(*)::int FROM public.begin_registration_renewal('+84901234567',NULL,repeat('a',64),repeat('a',64))),0,'missing event rejected without exception');
+SELECT is((SELECT count(*)::int FROM public.renew_registration_token_by_phone('+84901234567','f6200000-0000-4000-8000-000000000002','malformed')),0,'invalid digest rejected without exception');
+RESET ROLE;
+SET LOCAL ROLE service_role;
+SELECT is((SELECT count(*)::int FROM public.begin_registration_renewal('+84901234567','f6200000-0000-4000-8000-000000000002',repeat('0',64),repeat('a',64))),0,'rotating forged IP cannot bypass phone budget');
+INSERT INTO public.registration_renewal_challenges(registration_id,phone,ip_hash,code_hash)
+SELECT 'f6200000-0000-4000-8000-000000000003','+848'||lpad(i::text,8,'0'),repeat('1',64),repeat('2',64) FROM generate_series(1,50) i;
+UPDATE public.event_registrations SET phone='+84907654321' WHERE id='f6200000-0000-4000-8000-000000000003';
+SELECT is((SELECT count(*)::int FROM public.begin_registration_renewal('+84907654321','f6200000-0000-4000-8000-000000000002',repeat('3',64),repeat('a',64))),0,'global cost budget denies even a new advisory IP and phone');
 RESET ROLE;
 SELECT * FROM finish();
 ROLLBACK;

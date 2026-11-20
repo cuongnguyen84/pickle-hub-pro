@@ -90,9 +90,42 @@ try {
   SELECT '${registration}','${phone}',repeat('c',64),repeat('d',64) FROM generate_series(1,2);`);
   const budget=`SELECT count(*) FROM public.begin_registration_renewal('${phone}','${event}',repeat('e',64),repeat('f',64))`;
   if((await racePair(budget,budget)).sort().join()!=='0,1') throw Error('phone provider budget final slot overspent');
+  await psql(`DELETE FROM public.registration_renewal_challenges WHERE registration_id='${registration}';
+  INSERT INTO public.registration_renewal_challenges(registration_id,phone,ip_hash,code_hash)
+  SELECT '${registration}','+848'||lpad(i::text,8,'0'),repeat('c',64),repeat('d',64) FROM generate_series(1,49) i;`);
+  if((await racePair(budget,budget)).sort().join()!=='0,1') throw Error('global provider budget final slot overspent');
 
+
+ }
+ // A stale joined snapshot must not authorize after a locked phone reassignment.
+ await psql(`DELETE FROM public.registration_renewal_challenges WHERE registration_id='${registration}';
+ UPDATE public.registration_secrets SET expires_at=now()-interval '1 day' WHERE registration_id='${registration}';
+ INSERT INTO public.registration_renewal_challenges(registration_id,phone,ip_hash,code_hash,delivered_at)
+ VALUES('${registration}','${phone}',repeat('a',64),repeat('b',64),now());`);
+ const holder=spawn('psql',[DB,'-X','-A','-t','-v','ON_ERROR_STOP=1'],{stdio:['pipe','pipe','pipe'],env:{...process.env,PGAPPNAME:'renewal-phone-holder'}});
+ holder.stdout.resume();holder.stderr.resume();holder.stdin.on('error',()=>{});
+ const done=new Promise(resolve=>{holder.on('close',resolve);holder.on('error',resolve);});
+ let pending;
+ const waitActivity=async(name,condition)=>{
+  for(let i=0;i<200;i++){
+   if(await psql(`SELECT count(*) FROM pg_stat_activity WHERE application_name='${name}' AND ${condition}`)==='1')return;
+   await sleep(25);
+  }
+  throw Error('mutable recipient race did not reach lock barrier');
+ };
+ try {
+  holder.stdin.write(`BEGIN; SELECT id FROM public.event_registrations WHERE id='${registration}' FOR UPDATE;` + String.fromCharCode(10));
+  await waitActivity('renewal-phone-holder',"state='idle in transaction'");
+  pending=run('psql',[DB,'-X','-A','-t','-v','ON_ERROR_STOP=1','-c',`SET ROLE service_role; SELECT count(*) FROM public.renew_registration_token_by_phone('${phone}','${event}',repeat('b',64))`],{timeout:15000,env:{...process.env,PGAPPNAME:'renewal-phone-racer'}}).then(r=>({value:r.stdout.trim().split(String.fromCharCode(10)).at(-1)}),error=>({error}));
+  await waitActivity('renewal-phone-racer',"wait_event_type='Lock'");
+  holder.stdin.end(`UPDATE public.event_registrations SET phone='+84909999999' WHERE id='${registration}'; COMMIT;` + String.fromCharCode(10));
+  const result=await pending;
+  if(result.error || result.value!=='0')throw Error('phone reassignment bypassed locked ownership recheck');
+ } finally {
+  if(holder.exitCode===null)holder.kill('SIGKILL');
+  await Promise.allSettled([done,...(pending?[pending]:[])]);
  }
 } finally {
  await psql(`DELETE FROM public.social_events WHERE id='${event}'; DELETE FROM public.profiles WHERE id='${owner}'; DELETE FROM auth.users WHERE id='${owner}';`);
 }
-console.log(`${ROUNDS} synchronized renewal proof races passed; one proof consumption, one current credential, one final phone budget slot.`);
+console.log(`${ROUNDS} synchronized renewal proof races passed; one proof consumption, one current credential, one final phone and global budget slot; mutable recipient race denied.`);
