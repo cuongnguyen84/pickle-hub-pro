@@ -52,6 +52,25 @@ jobs:
       - name: Start local Postgres from migrations
         run: supabase db start
 
+      - name: Test catalog comparison and capture clean replay before tests
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: "54322"
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: postgres
+          SCHEMA_SOURCE_SHA: ${{ github.sha }}
+        run: |
+          node --test scripts/schema-catalog.node-test.mjs
+          node scripts/schema-catalog.mjs replay schema-replay.json
+
+      - name: Upload SHA-pinned clean catalog snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: schema-replay-${{ github.sha }}
+          path: schema-replay.json
+          retention-days: 7
+
       - name: Run pgTAP suite
         run: supabase test db --local supabase/tests
 
