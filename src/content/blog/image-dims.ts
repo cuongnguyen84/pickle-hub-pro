@@ -242,6 +242,8 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/tournament-organizer-hub-hero.webp": [1536, 1024],
   "/images/blog/two-to-one-counter-pickleball-technique-hero-768.webp": [768, 512],
   "/images/blog/two-to-one-counter-pickleball-technique-hero.webp": [1920, 1280],
+  "/images/blog/usa-pickleball-owl-paddles-degrade-to-benefit-hero-768.webp": [768, 512],
+  "/images/blog/usa-pickleball-owl-paddles-degrade-to-benefit-hero.webp": [1536, 1024],
   "/images/blog/veolia-chicago-cup-2026-results-hero-768.webp": [768, 432],
   "/images/blog/veolia-chicago-cup-2026-results-hero.webp": [1672, 941],
   "/images/blog/vietnam-hosts-ppa-tour-asia-2026-hero-768.webp": [768, 404],
