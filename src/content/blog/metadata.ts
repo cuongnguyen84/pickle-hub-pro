@@ -1756,6 +1756,7 @@ export const blogMetadata: BlogPostMetadata[] = [
       "pickleball da nang 2026",
       "doi tuyen pickleball viet nam",
       "pro singles pickleball",
+      "results",
     ],
     ctaPath: "/live",
     ctaLabel: {

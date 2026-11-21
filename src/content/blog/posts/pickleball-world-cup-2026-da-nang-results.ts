@@ -33,6 +33,7 @@ const post: BlogPost = {
     "doi tuyen pickleball viet nam",
     "pickleball da nang 2026",
     "pro singles pickleball",
+    "results",
   ],
   ctaPath: "/live",
   ctaLabel: {
