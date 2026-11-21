@@ -1,7 +1,8 @@
+import { VerifiedRegistrationRenewal } from "@/components/registration/VerifiedRegistrationRenewal";
 // ============================================================================
 // RecoveryRegistration (`/khoi-phuc-dang-ky`) — phone-keyed recovery flow.
 // ----------------------------------------------------------------------------
-// CAPTCHA gates notification abuse. Credentials are delivered out of band only.
+// Default recovery delivers links out of band. Gated renewal requires owned proof.
 // ============================================================================
 
 import { useCallback, useState } from "react";
@@ -130,6 +131,7 @@ export default function RecoveryRegistration() {
           <p>{tr.subheading}</p>
         </header>
 
+        <VerifiedRegistrationRenewal />
         <Card>
           <CardContent className="space-y-5 pt-6">
             <div className="space-y-2">
