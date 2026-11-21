@@ -465,3 +465,6 @@ verify_jwt = false
 
 [functions.site-assistant]
 verify_jwt = false
+
+[functions.renew-registration-token]
+verify_jwt = false
