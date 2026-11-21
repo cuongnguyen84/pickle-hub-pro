@@ -1,0 +1,25 @@
+{
+  "scope": "public schema ACL before/after; not full parity",
+  "beforeObservedAt": "2026-11-20T15:56:08.703Z",
+  "afterObservedAt": "2026-11-20T16:37:15.811Z",
+  "migrationVersion": "20261120240000",
+  "mergeCommit": "f52e0193c6ea1f4a469a4edad689d35c73d9d4d7",
+  "delta": [
+    {
+      "key": "public:PUBLIC:CREATE",
+      "before": {
+        "grantor": "postgres",
+        "grantable": false
+      },
+      "after": null
+    },
+    {
+      "key": "public:service_role:CREATE",
+      "before": null,
+      "after": {
+        "grantor": "postgres",
+        "grantable": false
+      }
+    }
+  ]
+}
