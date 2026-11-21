@@ -10,6 +10,35 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "usa-pickleball-owl-paddles-degrade-to-benefit",
+    "publishedDate": "2026-11-21",
+    "updatedDate": "2026-11-21",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball",
+      "usa pickleball",
+      "owl sport",
+      "quiet category",
+      "paddle approval",
+      "2026"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "See live results on ThePickleHub",
+      "vi": "Xem kết quả trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/usa-pickleball-owl-paddles-degrade-to-benefit-hero.webp",
+      "alt": "Close-up of a plain black pickleball paddle and a yellow ball resting on an outdoor pickleball court"
+    },
+    "titleEn": "USA Pickleball to Drop Six OWL Quiet Paddles in 2028: What \"Degrade to Benefit\" Means for Players",
+    "titleVi": "USA Pickleball loại 6 vợt yên tĩnh OWL từ 1/2/2028: Degrade to Benefit là gì?",
+    "metaTitleEn": "USA Pickleball Drops Six OWL Quiet Paddles in 2028",
+    "metaTitleVi": "USA Pickleball loại 6 vợt yên tĩnh OWL từ 1/2/2028",
+    "metaDescriptionEn": "Six OWL quiet paddles lose USA Pickleball approval on February 1, 2028 because they get better with use. What Degrade to Benefit means for owners.",
+    "metaDescriptionVi": "6 mẫu vợt OWL mất phê duyệt USA Pickleball từ 1/2/2028 vì càng dùng càng mạnh. Degrade to Benefit là gì?"
+  },
+  {
     "slug": "two-to-one-counter-pickleball-technique",
     "publishedDate": "2026-11-20",
     "updatedDate": "2026-11-20",
