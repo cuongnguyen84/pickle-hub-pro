@@ -263,6 +263,21 @@ const ViBlogPost = () => {
             ));
           })()}
 
+          {post.tags?.includes("results") && (
+            <div className={PROSE_CLASS}>
+              <p>
+                Mọi bảng đấu như thế này đều bắt đầu từ một danh sách người chơi đơn giản. Dán bất kỳ danh sách nào vào chat AI của ThePickleHub - tin nhắn Zalo, email, file Excel hay ảnh chụp - và chat dựng bảng đấu cho bạn: vòng tròn chia bảng, loại trực tiếp, hay MLP Team Match, thể thức đồng đội mà các công cụ bracket truyền thống gần như không hỗ trợ. Giải sau đó nằm ngay trên ThePickleHub cùng kết quả trực tiếp, livestream và danh sách sân, không phải trong một công cụ bracket đứng một mình.
+              </p>
+              <p>
+                <strong>
+                  Dùng thử{" "}
+                  <Link to="/vi/tools/tao-giai-bang-chat">tạo giải bằng chat AI</Link>
+                  {" "}cho giải tiếp theo của bạn.
+                </strong>
+              </p>
+            </div>
+          )}
+
           {faqItems.length > 0 && (
             <section className="mt-12 border-t border-border pt-8">
               <h2 className="text-2xl font-bold text-foreground mb-6">Câu hỏi thường gặp</h2>

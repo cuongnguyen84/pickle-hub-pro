@@ -45,6 +45,11 @@ import { gzipSync } from "node:zlib";
 import { join, dirname, resolve } from "node:path";
 
 const BUDGETS = {
+  // 1935 -> 1940 (2026-11-21, owner-approved): main itself sat at
+  // 1935.1/1935 KB, so every open PR tripped the gate (PR #1101 VI
+  // results block + PR #1102 OWL blog both measured CODE 1935.1 KB in
+  // CI with all other quality steps green). 1940 restores ~4.9 KB of
+  // headroom for the metadata growth of the 21/11 blog batch.
   // 1930 -> 1935 (2026-11-21, owner-approved): the AI-chat tournament
   // creator landing pages (/tools/create-by-chat + /vi/tools/tao-giai-bang-chat)
   // add a dedicated page chunk (~3.2 KB gz: page + shared EN/VI copy module)
@@ -65,7 +70,7 @@ const BUDGETS = {
   // batch (2 posts) needed +1.3 KB of metadata headroom.
   // 1800 -> 1900 (2026-10-01, DEBT-09, owner-approved): the blog metadata chunk grows
   // with every post and held CODE at 1799.7/1800. Paid back when /blog stops shipping it whole.
-  code: Number(process.env.BUNDLE_CODE_BUDGET_KB || 1935),
+  code: Number(process.env.BUNDLE_CODE_BUDGET_KB || 1940),
   initial: Number(process.env.BUNDLE_INITIAL_BUDGET_KB || 280),
   contentChunk: Number(process.env.BUNDLE_CONTENT_CHUNK_KB || 20),
 };
