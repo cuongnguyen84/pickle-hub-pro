@@ -10,6 +10,34 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "djoy-vietnam-pickleball-ecosystem-academy-tour",
+    "publishedDate": "2026-11-21",
+    "updatedDate": "2026-11-21",
+    "author": "The PickleHub Team",
+    "tags": [
+      "d-joy",
+      "pickleball vietnam",
+      "dupr",
+      "d-joy sports academy",
+      "vietnam masters"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "See live results on ThePickleHub",
+      "vi": "Xem kết quả trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/djoy-vietnam-pickleball-ecosystem-academy-tour-hero.webp",
+      "alt": "Wide view of a large outdoor pickleball complex with rows of courts and players training in warm evening light"
+    },
+    "titleEn": "How is D-Joy growing pickleball in Vietnam? Inside the academy-to-tour ecosystem",
+    "titleVi": "D-Joy phát triển pickleball Việt Nam như thế nào? Bên trong hệ sinh thái từ học viện tới giải đấu",
+    "metaTitleEn": "How D-Joy Is Growing Pickleball in Vietnam",
+    "metaTitleVi": "D-Joy phát triển pickleball Việt Nam như thế nào?",
+    "metaDescriptionEn": "D-Joy's academy-to-tour ecosystem in Ho Chi Minh City: 76 courts, a DUPR-verified four-stage tour and the Vietnam Masters 2026 finale.",
+    "metaDescriptionVi": "Hệ sinh thái D-Joy tại TP.HCM: học viện, tour 4 chặng xác thực DUPR, 76 sân và chung kết Vietnam Masters 2026."
+  },
+  {
     "slug": "usa-pickleball-owl-paddles-degrade-to-benefit",
     "publishedDate": "2026-11-21",
     "updatedDate": "2026-11-21",
