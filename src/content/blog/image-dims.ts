@@ -38,6 +38,8 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/daytona-beach-open-2026-results-hero.webp": [1200, 675],
   "/images/blog/daytona-beach-open-2026-womens-singles-wide-open-hero-768.webp": [768, 432],
   "/images/blog/daytona-beach-open-2026-womens-singles-wide-open-hero.webp": [2048, 1152],
+  "/images/blog/djoy-vietnam-pickleball-ecosystem-academy-tour-hero-768.webp": [768, 512],
+  "/images/blog/djoy-vietnam-pickleball-ecosystem-academy-tour-hero.webp": [1536, 1024],
   "/images/blog/dupr-algorithm-performance-vs-expectation-hero-768.webp": [768, 455],
   "/images/blog/dupr-algorithm-performance-vs-expectation-hero.webp": [1600, 948],
   "/images/blog/dupr-pickleball-rating-hero-768.webp": [768, 1152],
