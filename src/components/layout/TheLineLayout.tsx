@@ -15,6 +15,7 @@ import { ConnectDuprBanner } from "@/components/dupr/ConnectDuprBanner";
 import { HeaderDuprBadge } from "@/components/dupr/HeaderDuprBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { NAV_ITEMS, type Active } from "./navItems";
+import { editorialHomeHref } from "@/lib/home-feed-redirect";
 import "@/styles/the-line.css";
 
 export interface TheLineLayoutProps {
@@ -867,7 +868,7 @@ export const TheLineLayout = ({ title, exactTitle, description, noindex = false,
 
             <div className="tl-drawer-nav">
               <Link
-                to={language === "vi" ? "/vi" : "/"}
+                to={editorialHomeHref(language)}
                 onClick={() => setMenuOpen(false)}
                 className={active === "home" ? "active" : ""}
               >

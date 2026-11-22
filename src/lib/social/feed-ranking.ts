@@ -221,3 +221,50 @@ export function interleaveFeedResults<T>(
 
   return [...out, ...rest];
 }
+
+export interface QuickTableCopyRef {
+  type?: string;
+  item_type?: string;
+  slug?: string | null;
+  source_provider?: string | null;
+  tournament_name?: string | null;
+}
+
+function feedItemKind(item: QuickTableCopyRef): string | undefined {
+  return item.type ?? item.item_type;
+}
+
+/** Table name is the only shared key the feed rows expose. SQL is not required. */
+function quickTableNameKey(name: string | null | undefined): string | null {
+  const key = name?.trim().toLocaleLowerCase();
+  return key ? key : null;
+}
+
+function isQuickTableFinalCard(item: QuickTableCopyRef): boolean {
+  return feedItemKind(item) === "result" && item.source_provider === "quick_table";
+}
+
+function isQuickTableMatchCopy(item: QuickTableCopyRef): boolean {
+  return feedItemKind(item) === "match" && /^qt-/i.test(item.slug ?? "");
+}
+
+/**
+ * surface_quick_table_results copies semifinals into public.matches as
+ * qt-{table}-{match}. The feed also shows the Quick Table final card.
+ * Drop those copies only while the final card for the same table is in
+ * the list. A table with no final card keeps its qt-* rows.
+ */
+export function hideQuickTableMatchCopies<T extends QuickTableCopyRef>(items: readonly T[]): T[] {
+  const shownTables = new Set<string>();
+  for (const item of items) {
+    if (!isQuickTableFinalCard(item)) continue;
+    const key = quickTableNameKey(item.tournament_name);
+    if (key) shownTables.add(key);
+  }
+  if (shownTables.size === 0) return [...items];
+  return items.filter((item) => {
+    if (!isQuickTableMatchCopy(item)) return true;
+    const key = quickTableNameKey(item.tournament_name);
+    return key == null || !shownTables.has(key);
+  });
+}
