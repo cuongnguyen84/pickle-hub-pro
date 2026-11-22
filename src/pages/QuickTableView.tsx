@@ -1057,7 +1057,11 @@ const QuickTableView = () => {
             <QuickTableShareActions
               url={shareUrl}
               title={table.name}
-              message={`🏓 ${table.name}\n${shareUrl}`}
+              message={`🏓 ${table.name}\n${shareUrl}${table.created_via === "chat"
+                ? language === "vi"
+                  ? "\nBảng đấu này được tạo bằng chat AI của ThePickleHub - dán danh sách của bạn để tạo giải trong 60 giây\nhttps://www.thepicklehub.net/vi/tools/tao-giai-bang-chat"
+                  : "\nThis draw was created with ThePickleHub AI chat - paste your list to build a tournament in 60 seconds\nhttps://www.thepicklehub.net/tools/create-by-chat"
+                : ""}`}
               copyLink={language === 'vi' ? 'Sao chép link' : 'Copy link'}
               copyZalo={language === 'vi' ? 'Sao chép tin nhắn Zalo' : 'Copy Zalo message'}
               sendZalo={t.quickTable.view.shareZalo}
@@ -2026,6 +2030,18 @@ const QuickTableView = () => {
           currentStartTime={table.start_time}
           onSave={handleSaveCourtsAndTime}
         />
+
+        {table.created_via === "chat" && (
+          <p style={{ color: "var(--tl-fg-2)", fontSize: 13, textAlign: "center", marginTop: 32 }}>
+            <a href={language === "vi"
+              ? "https://www.thepicklehub.net/vi/tools/tao-giai-bang-chat"
+              : "https://www.thepicklehub.net/tools/create-by-chat"}>
+              {language === "vi"
+                ? "Bảng đấu này được tạo bằng chat AI của ThePickleHub - dán danh sách của bạn để tạo giải trong 60 giây"
+                : "This draw was created with ThePickleHub AI chat - paste your list to build a tournament in 60 seconds"}
+            </a>
+          </p>
+        )}
       </div>
     </TheLineLayout>
   );

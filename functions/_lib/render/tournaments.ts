@@ -385,7 +385,7 @@ export async function renderQuickTable(
   siteUrl: string,
   opts?: { pageUrl?: string; lang?: "vi" | "en" },
 ): Promise<Response> {
-  const { data: qt } = await supabase.from("quick_tables").select("id, name, format, player_count, status, share_id, is_public, champion_name, is_doubles, group_count").eq("share_id", shareId).single();
+  const { data: qt } = await supabase.from("quick_tables").select("id, name, format, player_count, status, share_id, is_public, champion_name, is_doubles, group_count, created_via").eq("share_id", shareId).single();
   // Client service-role bypass RLS — bảng private phải 404 y hệt không tồn tại.
   if (!qt || !qt.is_public) return render404(`/tools/quick-tables/${shareId}`, siteUrl);
 
@@ -410,7 +410,11 @@ export async function renderQuickTable(
     lang,
     // Ảnh chia sẻ mặc định là 1024×1024. Khai đúng kích thước để Zalo không bỏ ảnh.
     extraMeta: `<meta name="robots" content="noindex, follow"/>\n<meta property="og:image:width" content="1024"/>\n<meta property="og:image:height" content="1024"/>`,
-    bodyContent: `${bc}${relatedToolLinks("quick-tables", siteUrl)}`,
+    bodyContent: `${bc}${relatedToolLinks("quick-tables", siteUrl)}${qt.created_via === "chat"
+      ? `<p style="color:var(--tl-fg-2);font-size:13px;text-align:center;margin-top:32px"><a href="${siteUrl}${lang === "vi" ? "/vi/tools/tao-giai-bang-chat" : "/tools/create-by-chat"}">${lang === "vi"
+        ? "Bảng đấu này được tạo bằng chat AI của ThePickleHub - dán danh sách của bạn để tạo giải trong 60 giây"
+        : "This draw was created with ThePickleHub AI chat - paste your list to build a tournament in 60 seconds"}</a></p>`
+      : ""}`,
   }));
 }
 
