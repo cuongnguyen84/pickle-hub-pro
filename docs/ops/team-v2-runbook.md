@@ -211,6 +211,52 @@ re-exec đúng file trong worktree. Không cần copy script vào snapshot
 file này vào checkout trước khi merge — re-exec sẽ chạy bản `origin/main` cũ
 và lại đẩy thẳng `main`.
 
+## Kết quả trận trên /feed (PPA + MLP)
+
+Bài blog không ghi bảng `matches`. `/feed` chỉ thấy trận pro khi có dòng
+`source_provider` `ppa_tour` hoặc `mlp`. Pipeline cũ là worker
+`pro-tour-scraper`: cron đọc `pro_tour_watchlist` (URL bracket thêm tay) rồi
+gọi edge function `pro-tour-ingest`. Sau Las Vegas (trận mới nhất 05/10/2026)
+giải mới chỉ được thêm vào `scripts/ops/team_tournament_coverage.json` để
+`tournament_results_autopublish.py` đăng bài, không còn URL trên watchlist,
+nên tháng 11 không có dòng mới.
+
+Nguồn thay thế, cùng feed bài blog đang đọc:
+
+- PPA: `https://www.ppatour.com/api/scores/?event=<uuid>`
+- MLP: `scoreTickerEventUuid` trên trang sự kiện, rồi
+  `https://majorleaguepickleball.co/wp-json/fau-scores-and-stats/v1/event-matchups?event_uuid=<uuid>`
+  (header `Origin: https://majorleaguepickleball.co`)
+
+Cron GitHub Actions `Pro results ingest` (mỗi 2 giờ) gọi
+`node scripts/pro-tour/run-ingest.mjs` từ gốc repo. Cửa sổ là 21 ngày qua
+đến 2 ngày tới. Thiếu `SUPABASE_URL` hoặc `SUPABASE_SERVICE_ROLE_KEY` thì
+job thoát 0, không gọi mạng, không ghi DB. Job không chạy migration và
+không chạy backfill.
+
+Backfill một lần cho giải 01/10–30/11/2026 (Chicago, Virginia Beach,
+Brisbane, Hong Kong, World Championships, Daytona, MLP Nations Cup, và mọi
+event trong catalog có `result_source` trỏ `/api/scores/` trong cửa sổ đó).
+Chưa chạy trong PR. Xem trước, không ghi:
+
+```sh
+node scripts/pro-tour/run-ingest.mjs --backfill
+```
+
+Ghi thật (idempotent: trùng `(source_provider, external_match_id)` thì cập
+nhật tỷ số, không tạo dòng thứ hai). Cần hai biến trên trong môi trường.
+Không chạy nếu chưa muốn đụng production:
+
+```sh
+SUPABASE_URL=https://ajvlcamxemgbxduhiqrl.supabase.co \
+SUPABASE_SERVICE_ROLE_KEY=... \
+node scripts/pro-tour/run-ingest.mjs --backfill --execute
+```
+
+Trận `scheduled` (kể cả chung kết còn `Date TBA`) không được ghi. Lần cron
+sau sẽ nhận khi feed chính thức chuyển `final`. Daytona ngày 22/11/2026:
+5 trận Finals vẫn `scheduled`; bán kết trở đi đã `final`.
+
 ## Phần cần triển khai tiếp, không coi là đã tự động hóa
 
 1. QA thực thi trong sandbox và approval gắn đúng patch/commit; sau đó mới bật PR,
