@@ -289,7 +289,7 @@ const ROUND_TITLE_TO_CODE: Array<{ pattern: RegExp; code: string }> = [
   { pattern: /^(round\s+(?:of\s+)?128|r128)$/i, code: "R128" },
 ];
 
-function canonicalRoundName(rawTitle: string, bracketType: string): string {
+export function canonicalRoundName(rawTitle: string, bracketType: string): string {
   const trimmed = rawTitle.trim();
   for (const { pattern, code } of ROUND_TITLE_TO_CODE) {
     if (pattern.test(trimmed)) return code;
