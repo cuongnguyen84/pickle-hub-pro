@@ -20,6 +20,7 @@ describe('visual network guard',()=>{
   expect(visualNetworkPolicy('https://ajvlcamxemgbxduhiqrl.supabase.co/rest/v1/rpc/get_or_create_dm','POST')).toBe('forbidden');
   expect(visualNetworkPolicy('https://ajvlcamxemgbxduhiqrl.supabase.co/rest/v1/event_registrations','POST')).toBe('forbidden');
   expect(visualNetworkPolicy('https://ajvlcamxemgbxduhiqrl.supabase.co/rest/v1/rpc/get_homepage_stats','POST')).toBe('read');
+  expect(visualNetworkPolicy('https://ajvlcamxemgbxduhiqrl.supabase.co/rest/v1/rpc/get_feed_recent_results','POST')).toBe('read');
   expect(visualNetworkPolicy('https://evil.test/rest/v1/rpc/get_homepage_stats','POST')).toBe('forbidden');
  });
 });
