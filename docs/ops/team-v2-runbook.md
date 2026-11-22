@@ -187,6 +187,30 @@ Rollback chỉ khôi phục lịch cũ, không reset repo, xóa tasks hoặc ho�
 sản phẩm. Muốn phát hành runtime mới: pause, đợi idle, rollback rồi install bản
 đã test. installation.json ghi snapshot/runtime chính xác đang dùng.
 
+## Kết quả giải: pull request, không đẩy thẳng `main`
+
+`main` bắt buộc pull request (quality + smoke, `enforce_admins`), nên
+`scripts/blog/tournament_results_autopublish.py` không còn
+`git push origin HEAD:main`. Feed đổi thật thì pipeline commit trên nhánh
+`results/<slug>-<sha>` (worktree `~/Library/Application Support/PickleHub/team-v2/publish-worktree`,
+reset về `origin/main`), đẩy nhánh đó, và mở pull request vào `main`.
+Không tự merge, không bật auto-merge. Trang production đứng yên cho tới khi
+anh squash-merge và Cloudflare Pages deploy xong. Nhiều PR cùng một slug:
+merge bản mới nhất, đóng các bản cũ — mỗi PR là một snapshot đủ từ
+`origin/main`, merge bản cũ sau bản mới sẽ kéo trang lùi.
+
+Credential mở PR là credential git đang dùng để đẩy (token trong URL remote,
+`GH_TOKEN` / `GITHUB_TOKEN`, `git credential fill`, hoặc `gh auth token`).
+Pipeline không in token. Cảnh báo verify-live sau 30 phút vẫn chạy: production
+chưa có câu marker cho tới khi PR được merge.
+
+Sau khi bản sửa pipeline này nằm trên `main`, lượt kết quả kế tiếp tự dùng mã
+mới: worktree fetch `origin/main`, fingerprint lệch với process đang chạy thì
+re-exec đúng file trong worktree. Không cần copy script vào snapshot
+`team-v2/releases/.../scripts/ops`, không cần restart LaunchAgent. Đừng copy
+file này vào checkout trước khi merge — re-exec sẽ chạy bản `origin/main` cũ
+và lại đẩy thẳng `main`.
+
 ## Phần cần triển khai tiếp, không coi là đã tự động hóa
 
 1. QA thực thi trong sandbox và approval gắn đúng patch/commit; sau đó mới bật PR,
