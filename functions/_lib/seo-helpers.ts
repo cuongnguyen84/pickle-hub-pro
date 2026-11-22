@@ -398,6 +398,8 @@ export interface TimelineRowForSeo {
   cover_image_url?: string | null;
   category?: string | null;
   duration_seconds?: number | null;
+  /** Set by localizeFeedBlogs. Absent rows follow the page language. */
+  blog_lang?: "en" | "vi" | null;
 }
 
 export interface TimelineFeedJsonLdInput {
@@ -489,13 +491,18 @@ function rowToSchemaItem(
     return item;
   }
   if (row.item_type === "blog" && row.slug && row.title) {
-    const blogUrl = `${siteUrl}/vi/blog/${row.slug}`;
+    const blogLang = row.blog_lang === "en" || row.blog_lang === "vi"
+      ? row.blog_lang
+      : lang === "vi" ? "vi" : "en";
+    const blogUrl = blogLang === "en"
+      ? `${siteUrl}/blog/${row.slug}`
+      : `${siteUrl}/vi/blog/${row.slug}`;
     const item: Record<string, unknown> = {
       "@type": "BlogPosting",
       headline: row.title,
       datePublished: row.published_at,
       url: blogUrl,
-      inLanguage: "vi-VN",
+      inLanguage: blogLang === "en" ? "en-US" : "vi-VN",
     };
     if (row.excerpt) item.description = row.excerpt;
     if (row.cover_image_url) item.image = row.cover_image_url;

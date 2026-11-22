@@ -7,6 +7,7 @@ import {
   dedupeFeedItems,
   feedResultHref,
   feedResultLabels,
+  hideQuickTableMatchCopies,
   interleaveFeedResults,
   isMatchResult,
   selectFeedResults,
@@ -195,5 +196,66 @@ describe("dedupeFeedItems", () => {
       { id: "m1", from: "timeline" },
       { id: "qt1", from: "overlay" },
     ]);
+  });
+});
+
+describe("hideQuickTableMatchCopies", () => {
+  const finalCard = {
+    type: "result" as const,
+    source_provider: "quick_table",
+    tournament_name: "Sunday Cup",
+    slug: "share-abc",
+  };
+  const semi = {
+    type: "match" as const,
+    slug: "qt-abcdef12-11111111",
+    tournament_name: "Sunday Cup",
+    source_provider: "community",
+  };
+
+  it("hides qt-* copies of the table whose final card is on the page", () => {
+    const otherTable = {
+      type: "match" as const,
+      slug: "qt-99999999-22222222",
+      tournament_name: "Monday Cup",
+    };
+    const sameNamePro = {
+      type: "match" as const,
+      slug: "ppa-open-final",
+      tournament_name: "Sunday Cup",
+      source_provider: "ppa_tour",
+    };
+    const kept = hideQuickTableMatchCopies([finalCard, semi, otherTable, sameNamePro]);
+    expect(kept.map((row) => row.slug)).toEqual(["share-abc", "qt-99999999-22222222", "ppa-open-final"]);
+  });
+
+  it("keeps qt-* rows when that table has no final card", () => {
+    expect(hideQuickTableMatchCopies([semi]).map((row) => row.slug)).toEqual([semi.slug]);
+  });
+
+  it("matches the SSR row shape and ignores surrounding whitespace in the table name", () => {
+    const kept = hideQuickTableMatchCopies([
+      {
+        item_type: "result",
+        source_provider: "quick_table",
+        tournament_name: "Sunday Cup",
+        slug: "share-abc",
+      },
+      {
+        item_type: "match",
+        slug: "QT-abcdef12-11111111",
+        tournament_name: "  sunday cup ",
+      },
+    ]);
+    expect(kept).toHaveLength(1);
+    expect(kept[0]?.slug).toBe("share-abc");
+  });
+
+  it("does not hide a copy it cannot tie to a table", () => {
+    const kept = hideQuickTableMatchCopies([
+      { type: "result", source_provider: "quick_table", tournament_name: " ", slug: "share-abc" },
+      { type: "match", slug: "qt-abcdef12-11111111", tournament_name: "" },
+    ]);
+    expect(kept).toHaveLength(2);
   });
 });

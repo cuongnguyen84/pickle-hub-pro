@@ -14,6 +14,7 @@ import {
   type Language,
 } from "./loader";
 import { detectCountryFromEdge } from "./geo";
+import { initialLanguageForPath, isEnglishFeedPath } from "./initial-language";
 
 interface I18nContextType {
   language: Language;
@@ -40,28 +41,14 @@ const getHtmlLangFromPath = (): "en" | "vi" => {
 };
 
 const getInitialLanguage = (): Language => {
-  if (typeof window !== "undefined") {
-    // 0. URL-based: /vi/* routes force Vietnamese
-    const path = window.location.pathname;
-    if (isVietnamesePath(path)) {
-      return "vi";
-    }
-
-    // 1. User explicitly chose a language
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === "vi" || stored === "en") {
-      return stored;
-    }
-
-    // 2. Previously geo-detected
-    const geoCached = sessionStorage.getItem(GEO_LANG_KEY);
-    if (geoCached === "vi" || geoCached === "en") {
-      return geoCached;
-    }
-  }
-
-  // 3. Default to English (EN routes are default)
-  return "en";
+  if (typeof window === "undefined") return "en";
+  // /vi/* is Vietnamese. /feed is the English twin of /vi/feed, so a stored
+  // "vi" choice or a Vietnam geo cache must not paint its dates in Vietnamese.
+  return initialLanguageForPath(
+    window.location.pathname,
+    localStorage.getItem(STORAGE_KEY),
+    sessionStorage.getItem(GEO_LANG_KEY),
+  );
 };
 
 const I18nBootstrap = ({
@@ -177,6 +164,9 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
         const detectedLang: Language = country === "VN" ? "vi" : "en";
         sessionStorage.setItem(GEO_LANG_KEY, detectedLang);
+        // Cache the guess, but leave /feed in English. Feed restores this
+        // value when the visitor navigates away.
+        if (isEnglishFeedPath(window.location.pathname)) return;
         activateLanguage(detectedLang);
         document.documentElement.lang = getHtmlLangFromPath();
       } catch (err) {
