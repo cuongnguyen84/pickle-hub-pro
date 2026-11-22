@@ -324,10 +324,18 @@ class PublishWorktreeTests(unittest.TestCase):
         self.team_home = self.tmp / "team-home"
         self.team_home.mkdir()
         self._saved = (autopublish.REPO, autopublish.fetch, autopublish._upsert_vi,
-                       autopublish._worktree_pipeline_fingerprint, os.environ.get("PICKLEHUB_TEAM_HOME"))
+                       autopublish._worktree_pipeline_fingerprint, autopublish._open_results_pr,
+                       os.environ.get("PICKLEHUB_TEAM_HOME"))
         autopublish.REPO = self.main
         autopublish.fetch = lambda url, eid: (feed("final"), self.fp)
         autopublish._upsert_vi = lambda pkg: None
+        self.opened = []
+
+        def _fake_open_pr(root, branch, slug, head):
+            self.opened.append({"branch": branch, "slug": slug, "head": head})
+            return "https://github.com/cuongnguyen84/pickle-hub-pro/pull/9001"
+
+        autopublish._open_results_pr = _fake_open_pr
         # The sandbox repo does not model the pipeline source tree, so the
         # worktree fingerprint is pinned to the loaded one (no delegation);
         # the delegation decision itself is covered by ReexecPublishTests.
@@ -337,25 +345,44 @@ class PublishWorktreeTests(unittest.TestCase):
 
     def tearDown(self):
         (autopublish.REPO, autopublish.fetch, autopublish._upsert_vi,
-         autopublish._worktree_pipeline_fingerprint, saved_home) = self._saved
+         autopublish._worktree_pipeline_fingerprint, autopublish._open_results_pr, saved_home) = self._saved
         if saved_home is None:
             os.environ.pop("PICKLEHUB_TEAM_HOME", None)
         else:
             os.environ["PICKLEHUB_TEAM_HOME"] = saved_home
         shutil.rmtree(self.tmp, ignore_errors=True)
 
-    def _origin_has_post(self):
-        out = subprocess.run(["git", "--git-dir", str(self.origin), "ls-tree", "-r", "--name-only", "main"],
-                             capture_output=True, text=True, check=True).stdout
-        return "src/content/blog/posts/test-open-results.ts" in out
+    def _rev_parse(self, rev):
+        return subprocess.run(["git", "--git-dir", str(self.origin), "rev-parse", rev],
+                              capture_output=True, text=True, check=True).stdout.strip()
 
-    def _origin_file(self, path):
-        return subprocess.run(["git", "--git-dir", str(self.origin), "show", f"main:{path}"],
+    def _tree_has(self, rev, path):
+        out = subprocess.run(["git", "--git-dir", str(self.origin), "ls-tree", "-r", "--name-only", rev],
+                             capture_output=True, text=True, check=True).stdout
+        return path in out.splitlines()
+
+    def _rev_file(self, rev, path):
+        return subprocess.run(["git", "--git-dir", str(self.origin), "show", f"{rev}:{path}"],
                               capture_output=True, text=True, encoding="utf-8", check=True).stdout
 
-    def _origin_commit_count(self):
-        return subprocess.run(["git", "--git-dir", str(self.origin), "rev-list", "--count", "main"],
-                              capture_output=True, text=True, check=True).stdout.strip()
+    def _results_refs(self):
+        out = subprocess.run(
+            ["git", "--git-dir", str(self.origin), "for-each-ref", "--format=%(refname:short)", "refs/heads/results/"],
+            capture_output=True, text=True, check=True).stdout
+        return [line for line in out.splitlines() if line]
+
+    def _assert_opened_pr(self, result):
+        post = "src/content/blog/posts/test-open-results.ts"
+        self.assertEqual(result["status"], "published")
+        self.assertTrue(result["pr_url"].startswith("https://github.com/cuongnguyen84/pickle-hub-pro/pull/"))
+        self.assertTrue(result["branch"].startswith("results/test-open-results-"))
+        self.assertEqual(result["branch"], f"results/test-open-results-{result['head'][:12]}")
+        self.assertNotIn("main", result["branch"].split("/"))
+        self.assertFalse(self._tree_has("main", post))
+        self.assertTrue(self._tree_has(result["branch"], post))
+        self.assertEqual(self.opened[-1]["branch"], result["branch"])
+        self.assertEqual(self.opened[-1]["head"], result["head"])
+        self.assertEqual(self._rev_parse(result["branch"]), result["head"])
 
     def test_dirty_unrelated_file_and_behind_checkout_cannot_block_publish(self):
         # The incident setup: Xcode-style dirt on an unrelated tracked file,
@@ -370,11 +397,13 @@ class PublishWorktreeTests(unittest.TestCase):
         _git(other, "add", "-A"); _git(other, "commit", "-m", "some PR")
         _git(other, "push", "--quiet", "origin", "main")
         main_head_before = _git(self.main, "rev-parse", "HEAD").stdout.strip()
+        origin_main_before = self._rev_parse("main")
 
         result = autopublish.publish_event(dict(self.EVENT), now=datetime(2026, 10, 3, tzinfo=timezone.utc), push=True)
 
-        self.assertEqual(result["status"], "published")
-        self.assertTrue(self._origin_has_post())
+        self._assert_opened_pr(result)
+        # origin/main is not the push target: the other clone's commit stays put.
+        self.assertEqual(self._rev_parse("main"), origin_main_before)
         # The working checkout was neither cleaned nor committed over.
         self.assertEqual(_git(self.main, "rev-parse", "HEAD").stdout.strip(), main_head_before)
         self.assertIn("Localizable.xcstrings", _git(self.main, "status", "--porcelain").stdout)
@@ -396,9 +425,10 @@ class PublishWorktreeTests(unittest.TestCase):
         changed["matches"][0]["teams"][1]["games"] = [9, 7]
         autopublish.fetch = lambda url, eid: (changed, self.fp)
         second = autopublish.publish_event(dict(self.EVENT), now=datetime(2026, 10, 4, tzinfo=timezone.utc), push=True)
-        self.assertEqual(second["status"], "published")
+        self._assert_opened_pr(second)
         self.assertFalse((wt / "junk.txt").exists())
-        self.assertRegex(self._origin_file("src/content/blog/posts/test-open-results.ts"), r"11,\n\s+9\n")
+        self.assertRegex(self._rev_file(second["branch"], "src/content/blog/posts/test-open-results.ts"), r"11,\n\s+9\n")
+        self.assertNotEqual(second["branch"], first["branch"])
 
     def test_occupied_worktree_path_fails_loudly_with_named_error(self):
         wt = self.team_home / "publish-worktree"
@@ -421,15 +451,17 @@ class PublishWorktreeTests(unittest.TestCase):
         autopublish._upsert_vi = lambda pkg: upserts.append(pkg["slug"])
         t1 = datetime(2026, 10, 28, 5, 0, tzinfo=timezone.utc)  # 12:00 VN, UTC date 10-28
         first = autopublish.publish_event(dict(self.EVENT), now=t1, push=True)
-        self.assertEqual(first["status"], "published")
+        self._assert_opened_pr(first)
         self.assertEqual(upserts, ["test-open-results"])
-        self.assertEqual(self._origin_commit_count(), "2")  # skeleton + first publish
-        post = self._origin_file("src/content/blog/posts/test-open-results.ts")
-        meta = self._origin_file("src/content/blog/metadata.ts")
+        self.assertEqual(self._results_refs(), [first["branch"]])
+        self.assertEqual(len(self._rev_parse("main")), 40)
+        post = self._rev_file(first["branch"], "src/content/blog/posts/test-open-results.ts")
+        meta = self._rev_file(first["branch"], "src/content/blog/metadata.ts")
         self.assertIn("Last updated: October 28, 2026, 12:00 Vietnam time.", post)
         self.assertIn("Cập nhật: 12:00 ngày 28/10/2026 (giờ Việt Nam).", post)
         self.assertIn('"updatedDate": "2026-10-28"', post)
         self.assertIn('"updatedDate": "2026-10-28"', meta)
+        self.assertNotIn("test-open-results", self._rev_file("main", "src/content/blog/metadata.ts"))
 
         self.fp = "fingerprint-2"  # hash churned; matches did not
         t2 = datetime(2026, 10, 29, 23, 0, tzinfo=timezone.utc)  # 06:00 VN on 10-30, UTC date 10-29
@@ -437,9 +469,10 @@ class PublishWorktreeTests(unittest.TestCase):
         self.assertEqual(second["status"], "unchanged")
         self.assertEqual(second["reason"], "timestamps_only")
         self.assertEqual(upserts, ["test-open-results"])
-        self.assertEqual(self._origin_commit_count(), "2")
-        post = self._origin_file("src/content/blog/posts/test-open-results.ts")
-        meta = self._origin_file("src/content/blog/metadata.ts")
+        self.assertEqual(self._results_refs(), [first["branch"]])
+        self.assertEqual(len(self.opened), 1)
+        post = self._rev_file(first["branch"], "src/content/blog/posts/test-open-results.ts")
+        meta = self._rev_file(first["branch"], "src/content/blog/metadata.ts")
         self.assertIn("Last updated: October 28, 2026, 12:00 Vietnam time.", post)
         self.assertIn('"updatedDate": "2026-10-28"', post)
         self.assertIn('"updatedDate": "2026-10-28"', meta)
@@ -455,11 +488,12 @@ class PublishWorktreeTests(unittest.TestCase):
         self.fp = "fingerprint-3"
         autopublish.fetch = lambda url, eid: (changed, self.fp)
         third = autopublish.publish_event(dict(self.EVENT), now=t2, push=True)
-        self.assertEqual(third["status"], "published")
+        self._assert_opened_pr(third)
         self.assertEqual(upserts, ["test-open-results", "test-open-results"])
-        self.assertEqual(self._origin_commit_count(), "3")
-        post = self._origin_file("src/content/blog/posts/test-open-results.ts")
-        meta = self._origin_file("src/content/blog/metadata.ts")
+        self.assertEqual(sorted(self._results_refs()), sorted([first["branch"], third["branch"]]))
+        self.assertNotEqual(first["branch"], third["branch"])
+        post = self._rev_file(third["branch"], "src/content/blog/posts/test-open-results.ts")
+        meta = self._rev_file(third["branch"], "src/content/blog/metadata.ts")
         self.assertRegex(post, r"11,\n\s+3\n")
         self.assertIn("Last updated: October 30, 2026, 06:00 Vietnam time.", post)
         self.assertIn("Cập nhật: 06:00 ngày 30/10/2026 (giờ Việt Nam).", post)
@@ -467,7 +501,9 @@ class PublishWorktreeTests(unittest.TestCase):
         self.assertIn('"updatedDate": "2026-10-29"', meta)
 
 
+import io
 import json
+import urllib.error
 from unittest import mock
 
 
@@ -617,6 +653,131 @@ class ReexecPublishTests(unittest.TestCase):
             with mock.patch.object(subprocess, "run", crashed_run):
                 with self.assertRaisesRegex(RuntimeError, "reexec_publish_failed:exit=2"):
                     autopublish._delegate_publish(root, dict(self.EVENT), datetime(2026, 10, 26, tzinfo=timezone.utc), True)
+
+
+class ResultsPullRequestTests(unittest.TestCase):
+    """Branch protection rejects a direct push to main. A results update
+    pushes results/<slug>-<sha> and opens a pull request. It does not merge."""
+
+    def test_branch_name_stays_off_main(self):
+        self.assertEqual(
+            autopublish._results_branch("Daytona Beach Open 2026 Results", "ABCDEF1234567890abcd"),
+            "results/daytona-beach-open-2026-results-abcdef123456")
+        with self.assertRaises(autopublish.PublishWorktreeError):
+            autopublish._results_branch("slug", "zz")
+
+    def test_remote_slug_drops_userinfo(self):
+        token = "gh" + "p_" + "notarealtoken0123456789"
+        url = f"https://cuong:{token}@github.com/cuongnguyen84/pickle-hub-pro.git"
+        self.assertEqual(autopublish._slug_from_remote(url), "cuongnguyen84/pickle-hub-pro")
+        self.assertEqual(autopublish._token_from_remote_url(url), token)
+        self.assertNotIn(token, autopublish._slug_from_remote(url))
+        ssh = "git@github.com:cuongnguyen84/pickle-hub-pro.git"
+        self.assertEqual(autopublish._slug_from_remote(ssh), "cuongnguyen84/pickle-hub-pro")
+        self.assertEqual(autopublish._token_from_remote_url(ssh), "")
+        with self.assertRaises(autopublish.PublishWorktreeError):
+            autopublish._slug_from_remote("/tmp/origin.git")
+
+    def test_scrub_removes_tokens_and_userinfo(self):
+        token = "gh" + "s_" + "abcdefghijklmnopqrst"
+        cleaned = autopublish._scrub_secret(f"push failed https://cuong:{token}@github.com/o/r.git {token}")
+        self.assertNotIn(token, cleaned)
+        self.assertNotIn("cuong:", cleaned)
+        self.assertIn("[redacted]", cleaned)
+
+    def _patch_repo(self, token):
+        return mock.patch.multiple(
+            autopublish,
+            _origin_url=lambda root: "git@github.com:cuongnguyen84/pickle-hub-pro.git",
+            _github_token=lambda root: token,
+        )
+
+    def test_open_pr_posts_pulls_api_and_does_not_merge(self):
+        token = "token-secret-value"
+        seen = []
+
+        class Resp:
+            status = 201
+
+            def read(self, _n=-1):
+                return b'{"html_url":"https://github.com/cuongnguyen84/pickle-hub-pro/pull/9"}'
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+        def urlopen(req, timeout=0, context=None):
+            seen.append(req)
+            self.assertNotIn(token, req.full_url)
+            self.assertEqual(req.get_method(), "POST")
+            self.assertTrue(req.full_url.endswith("/repos/cuongnguyen84/pickle-hub-pro/pulls"))
+            self.assertNotIn("/merge", req.full_url)
+            body = json.loads(req.data.decode())
+            self.assertEqual(body["base"], "main")
+            self.assertEqual(body["head"], "results/test-open-results-abc123def456")
+            self.assertNotIn("merge_method", body)
+            self.assertIn("does not merge", body["body"])
+            self.assertTrue(req.get_header("Authorization").startswith("Bearer "))
+            return Resp()
+
+        with self._patch_repo(token), mock.patch.object(autopublish.urllib.request, "urlopen", urlopen):
+            url = autopublish._open_results_pr(
+                Path("/wt"), "results/test-open-results-abc123def456", "test-open-results", "abc123def4567890")
+        self.assertEqual(url, "https://github.com/cuongnguyen84/pickle-hub-pro/pull/9")
+        self.assertEqual(len(seen), 1)
+
+    def test_existing_pr_is_reused_not_merged(self):
+        token = "token-secret-value"
+        calls = []
+
+        class Resp:
+            status = 200
+
+            def read(self, _n=-1):
+                return b'[{"html_url":"https://github.com/cuongnguyen84/pickle-hub-pro/pull/8"}]'
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+        def urlopen(req, timeout=0, context=None):
+            calls.append((req.get_method(), req.full_url))
+            if len(calls) == 1:
+                body = json.dumps({
+                    "message": "Validation Failed",
+                    "errors": [{"message": "A pull request already exists for owner:branch."}],
+                }).encode()
+                raise urllib.error.HTTPError(req.full_url, 422, "Unprocessable Entity", None, io.BytesIO(body))
+            return Resp()
+
+        with self._patch_repo(token), mock.patch.object(autopublish.urllib.request, "urlopen", urlopen):
+            url = autopublish._open_results_pr(
+                Path("/wt"), "results/test-open-results-abc123def456", "test-open-results", "abc123def4567890")
+        self.assertEqual(url, "https://github.com/cuongnguyen84/pickle-hub-pro/pull/8")
+        self.assertEqual([method for method, _url in calls], ["POST", "GET"])
+        self.assertTrue(calls[1][1].startswith("https://api.github.com/repos/cuongnguyen84/pickle-hub-pro/pulls?"))
+        self.assertNotIn("/merge", calls[1][1])
+
+    def test_pr_error_scrubs_the_token(self):
+        token = "gh" + "p_" + "notarealtoken0123456789"
+
+        def fake_json(_token, method, path, payload=None):
+            self.assertEqual(method, "POST")
+            self.assertNotIn(token, path)
+            return 401, {"message": f"bad credential {token}"}
+
+        with self._patch_repo(token), mock.patch.object(autopublish, "_github_json", fake_json):
+            with self.assertRaises(autopublish.PublishWorktreeError) as ctx:
+                autopublish._open_results_pr(
+                    Path("/wt"), "results/daytona-beach-open-2026-results-abcdef123456",
+                    "daytona-beach-open-2026-results", "abcdef1234567890")
+        self.assertNotIn(token, str(ctx.exception))
+        self.assertIn("HTTP 401", str(ctx.exception))
+        self.assertIn("results/daytona-beach-open-2026-results-abcdef123456", str(ctx.exception))
 
 
 if __name__ == "__main__":

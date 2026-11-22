@@ -5,10 +5,12 @@ This is deliberately deterministic: it only accepts the event's official PPA
 scores feed, validates the event id and final-match winners, and regenerates the
 same four blog surfaces used by the normal blog pipeline.  It never guesses a
 score.  The caller may run it repeatedly; an unchanged feed is a no-op, and so
-is a feed whose rendered page differs from main only by the publish timestamp
-(updatedDate and the "Last updated" / "Cập nhật" sentence).  Those fields move
-on every run, so committing them redeploys main without a new score, status,
-or match count.
+is a feed whose rendered page differs from the published snapshot only by the
+publish timestamp (updatedDate and the "Last updated" / "Cập nhật" sentence).
+Those fields move on every run, so committing them used to redeploy main
+without a new score, status, or match count.  A real change is committed on
+``results/<slug>-<sha>`` and opened as a pull request against main.  This
+pipeline does not push main and does not merge.
 """
 from __future__ import annotations
 
@@ -16,10 +18,12 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import string
 import subprocess
 import sys
 import tempfile
+import urllib.error
 import urllib.request
 import urllib.parse
 import ssl
@@ -481,7 +485,7 @@ class PublishWorktreeError(RuntimeError):
 
 
 class _PushRejected(Exception):
-    """The publish commit was created but origin moved; regenerate once."""
+    """The results branch push was rejected; regenerate once. Never main."""
 
 
 def _publish_worktree_path() -> Path:
@@ -622,27 +626,305 @@ def _git_utf8(root: Path, *args: str) -> subprocess.CompletedProcess:
     return subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True, encoding="utf-8")
 
 
-def _working_tree_is_timestamps_only(root: Path, files: list[str]) -> bool:
-    """Compare the files write_source just wrote with HEAD.
+def _working_tree_is_timestamps_only(root: Path, files: list[str], rev: str = "HEAD") -> bool:
+    """Compare the files write_source just wrote with ``rev``.
 
-    Untracked paths are a first publish (git diff hides them), so they are
-    never a timestamp no-op."""
-    untracked = _git_utf8(root, "ls-files", "--others", "--exclude-standard", "--", *files)
-    if untracked.returncode:
-        raise PublishWorktreeError(f"publish worktree status failed: {untracked.stderr.strip()[:200]}")
-    if untracked.stdout.strip():
-        return False
-    diff = _git_utf8(root, "diff", "--unified=0", "--no-ext-diff", "HEAD", "--", *files)
-    if diff.returncode:
-        raise PublishWorktreeError(f"publish worktree diff failed: {diff.stderr.strip()[:200]}")
-    return _diff_is_timestamps_only(diff.stdout)
+    A path missing from ``rev`` is a first publish against that snapshot, so
+    it is never a timestamp no-op. Against HEAD, an untracked path is that
+    case and ``git diff`` would hide it. Against another snapshot the post
+    may be untracked only because main does not have the open pull request
+    yet; stage the files so the diff sees them, then unstage."""
+    if rev == "HEAD":
+        untracked = _git_utf8(root, "ls-files", "--others", "--exclude-standard", "--", *files)
+        if untracked.returncode:
+            raise PublishWorktreeError(f"publish worktree status failed: {_scrub_secret(untracked.stderr.strip())}")
+        if untracked.stdout.strip():
+            return False
+        diff = _git_utf8(root, "diff", "--unified=0", "--no-ext-diff", "HEAD", "--", *files)
+        if diff.returncode:
+            raise PublishWorktreeError(f"publish worktree diff failed: {_scrub_secret(diff.stderr.strip())}")
+        return _diff_is_timestamps_only(diff.stdout)
+    added = _git(root, "add", "--", *files)
+    if added.returncode:
+        raise PublishWorktreeError(f"publish worktree add failed: {_scrub_secret(added.stderr.strip())}")
+    try:
+        for path in files:
+            present = _git_utf8(root, "cat-file", "-e", f"{rev}:{path}")
+            if present.returncode:
+                return False
+        diff = _git_utf8(root, "diff", "--cached", "--unified=0", "--no-ext-diff", rev, "--", *files)
+        if diff.returncode:
+            raise PublishWorktreeError(f"publish worktree diff failed: {_scrub_secret(diff.stderr.strip())}")
+        return _diff_is_timestamps_only(diff.stdout)
+    finally:
+        reset = _git(root, "reset", "--quiet", "--", *files)
+        if reset.returncode:
+            raise PublishWorktreeError(f"publish worktree reset failed: {_scrub_secret(reset.stderr.strip())}")
 
 
-def _publish_once(root: Path, event: dict, feed: dict, now: datetime, push: bool) -> tuple[dict, str] | None:
+def _latest_results_tip(root: Path, slug: str) -> str | None:
+    """Newest ``results/<slug>-<sha>`` ref on origin, if one exists.
+
+    While that snapshot is still an open pull request it is not on main, so
+    a later feed-hash churn has to be compared with the branch, not only
+    with origin/main. Lookup failure returns None and the caller keeps the
+    main comparison.
+    """
+    safe = _results_slug_token(slug)
+    prefix = f"refs/heads/results/{safe}-"
+    listed = _git(root, "ls-remote", "--heads", "origin", prefix + "*")
+    if listed.returncode or not listed.stdout.strip():
+        return None
+    refs: list[str] = []
+    for line in listed.stdout.splitlines():
+        parts = line.split()
+        if len(parts) != 2 or not parts[1].startswith(prefix):
+            continue
+        if re.fullmatch(r"[0-9a-f]{12}", parts[1][len(prefix):]):
+            refs.append(parts[1])
+    newest = ""
+    newest_ts = -1
+    for ref in refs:
+        remote = "refs/remotes/origin/" + ref.removeprefix("refs/heads/")
+        fetched = _git(root, "fetch", "--quiet", "origin", f"{ref}:{remote}")
+        if fetched.returncode:
+            continue
+        when = _git(root, "log", "-1", "--format=%ct", remote)
+        if when.returncode or not when.stdout.strip().isdigit():
+            continue
+        ts = int(when.stdout.strip())
+        if ts >= newest_ts:
+            newest_ts = ts
+            newest = remote
+    return newest or None
+
+
+def _timestamps_only_base(root: Path, files: list[str], slug: str) -> str | None:
+    """Revision whose blog files differ from the worktree only by timestamps.
+
+    ``HEAD`` is origin/main. An open results pull request is not on main, so
+    the same no-op is also checked against the newest ``results/<slug>-*`` tip.
+    """
+    if _working_tree_is_timestamps_only(root, files):
+        return "HEAD"
+    tip = _latest_results_tip(root, slug)
+    if tip and _working_tree_is_timestamps_only(root, files, tip):
+        return tip
+    return None
+
+
+def _scrub_secret(text: str) -> str:
+    """Drop credential material before any error string leaves this module."""
+    text = re.sub(r"gh[pousr]_[A-Za-z0-9_]+", "[redacted]", text)
+    text = re.sub(r"github_pat_[A-Za-z0-9_]+", "[redacted]", text)
+    text = re.sub(r"https://[^@\s/]+@", "https://[redacted]@", text)
+    return text[:240]
+
+
+def _results_slug_token(slug: str) -> str:
+    return re.sub(r"[^a-z0-9-]+", "-", slug.lower()).strip("-")[:48] or "update"
+
+
+def _results_branch(slug: str, head: str) -> str:
+    """One branch per snapshot. The name cannot be main."""
+    safe = _results_slug_token(slug)
+    short = re.sub(r"[^0-9a-f]", "", head.lower())[:12]
+    if len(short) < 7:
+        raise PublishWorktreeError("publish commit sha missing")
+    branch = f"results/{safe}-{short}"
+    if branch == "main" or not branch.startswith("results/"):
+        raise PublishWorktreeError("refusing to publish results onto main")
+    return branch
+
+
+def _origin_url(root: Path) -> str:
+    """Remote URL. May embed a credential — callers must not log it."""
+    proc = _git(root, "remote", "get-url", "origin")
+    url = proc.stdout.strip()
+    if proc.returncode or not url:
+        raise PublishWorktreeError("publish worktree has no origin remote")
+    return url
+
+
+def _slug_from_remote(url: str) -> str:
+    cleaned = re.sub(r"https://[^@/]+@", "https://", url.strip())
+    match = re.search(r"github\.com[:/]([^/\s]+)/([^/\s]+?)(?:\.git)?$", cleaned)
+    if not match:
+        raise PublishWorktreeError("origin is not a github.com repository")
+    return f"{match.group(1)}/{match.group(2)}"
+
+
+def _token_from_remote_url(url: str) -> str:
+    match = re.match(r"https://(?:[^:/@]+):([^@/]+)@github\.com/", url.strip())
+    if not match:
+        return ""
+    return urllib.parse.unquote(match.group(1))
+
+
+def _token_from_git_credential(root: Path) -> str:
+    env = dict(os.environ, GIT_TERMINAL_PROMPT="0")
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(root), "credential", "fill"],
+            input="protocol=https\nhost=github.com\n\n",
+            capture_output=True, text=True, timeout=20, env=env)
+    except subprocess.TimeoutExpired:
+        return ""
+    if proc.returncode:
+        return ""
+    for line in proc.stdout.splitlines():
+        if line.startswith("password="):
+            return line.split("=", 1)[1].strip()
+    return ""
+
+
+def _token_from_gh() -> str:
+    if not shutil.which("gh"):
+        return ""
+    try:
+        proc = subprocess.run(["gh", "auth", "token"], capture_output=True, text=True, timeout=20)
+    except subprocess.TimeoutExpired:
+        return ""
+    if proc.returncode:
+        return ""
+    token = proc.stdout.strip()
+    if not token or any(ch.isspace() for ch in token):
+        return ""
+    return token
+
+
+def _github_token(root: Path) -> str:
+    """Same credential git push already uses. Never log the return value."""
+    embedded = _token_from_remote_url(_origin_url(root))
+    if embedded:
+        return embedded
+    for key in ("GH_TOKEN", "GITHUB_TOKEN"):
+        value = os.environ.get(key, "").strip()
+        if value:
+            return value
+    filled = _token_from_git_credential(root)
+    if filled:
+        return filled
+    gh_token = _token_from_gh()
+    if gh_token:
+        return gh_token
+    raise PublishWorktreeError(
+        "no GitHub credential available to open a pull request "
+        "(origin URL, GH_TOKEN/GITHUB_TOKEN, git credential, or gh)")
+
+
+def _github_json(token: str, method: str, path: str, payload: dict | None = None):
+    data = None if payload is None else json.dumps(payload).encode()
+    req = urllib.request.Request(
+        "https://api.github.com" + path,
+        data=data,
+        method=method,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "Content-Type": "application/json",
+            "User-Agent": "ThePickleHub-results/1.0",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+    )
+    context = ssl.create_default_context(cafile="/etc/ssl/cert.pem") if Path("/etc/ssl/cert.pem").exists() else None
+    try:
+        with urllib.request.urlopen(req, timeout=30, context=context) as response:
+            raw = response.read(1_000_000)
+            return response.status, json.loads(raw.decode() or "null")
+    except urllib.error.HTTPError as exc:
+        raw = exc.read(8000).decode("utf-8", "replace")
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError:
+            parsed = {"message": raw[:300]}
+        return exc.code, parsed
+
+
+def _github_error_text(payload) -> str:
+    if not isinstance(payload, dict):
+        return ""
+    parts = [str(payload.get("message") or "")]
+    for err in payload.get("errors") or []:
+        if isinstance(err, dict):
+            parts.append(str(err.get("message") or ""))
+        else:
+            parts.append(str(err))
+    return _scrub_secret(" ".join(part for part in parts if part))
+
+
+def _results_pr_body(slug: str, branch: str, head: str) -> str:
+    return (
+        "Automated tournament results update from the Mac team-v2 pipeline.\n\n"
+        f"- Slug: `{slug}`\n"
+        f"- Branch: `{branch}`\n"
+        f"- Commit: `{head}`\n\n"
+        "Review and squash-merge. This pipeline does not merge and does not "
+        "enable auto-merge. Production stays on the previous page until this "
+        "pull request is merged and Cloudflare Pages deploys.\n\n"
+        f"If several `results/{slug}-*` pull requests are open, merge the newest "
+        "and close the older ones. Each is a full snapshot from origin/main, so "
+        "merging an older one after a newer one rewrites the page backwards.\n"
+    )
+
+
+def _open_results_pr(root: Path, branch: str, slug: str, head: str) -> str:
+    """Open a pull request for a branch that is already on origin. Never merges."""
+    try:
+        repo = _slug_from_remote(_origin_url(root))
+        token = _github_token(root)
+        status, payload = _github_json(token, "POST", f"/repos/{repo}/pulls", {
+            "title": f"content(blog): update {slug}",
+            "head": branch,
+            "base": "main",
+            "body": _results_pr_body(slug, branch, head),
+        })
+        if status in (200, 201) and isinstance(payload, dict) and payload.get("html_url"):
+            return str(payload["html_url"])
+        message = _github_error_text(payload)
+        if status == 422 and "already exists" in message.lower():
+            owner = repo.split("/", 1)[0]
+            query = urllib.parse.urlencode({"head": f"{owner}:{branch}", "base": "main", "state": "open"})
+            found_status, found = _github_json(token, "GET", f"/repos/{repo}/pulls?{query}")
+            if found_status == 200 and isinstance(found, list) and found and found[0].get("html_url"):
+                return str(found[0]["html_url"])
+            message = _github_error_text(found) or message
+            status = found_status
+        raise PublishWorktreeError(
+            f"results branch {branch} was pushed but the pull request was not opened "
+            f"(GitHub HTTP {status}: {message[:180]})")
+    except PublishWorktreeError as exc:
+        text = str(exc)
+        if text.startswith("results branch "):
+            raise
+        raise PublishWorktreeError(
+            f"results branch {branch} was pushed but the pull request was not opened: {_scrub_secret(text)}"
+        ) from None
+    except Exception as exc:
+        raise PublishWorktreeError(
+            f"results branch {branch} was pushed but the pull request was not opened: "
+            f"{_scrub_secret(type(exc).__name__ + ': ' + str(exc))}"
+        ) from None
+
+
+def _deliver_results_pr(root: Path, slug: str, head: str) -> dict:
+    """Push a new results branch and open a PR. The refspec never names main."""
+    branch = _results_branch(slug, head)
+    ref = f"refs/heads/{branch}"
+    if not ref.startswith("refs/heads/results/"):
+        raise PublishWorktreeError("refusing to publish results onto main")
+    pushed = _git(root, "push", "--quiet", "origin", f"HEAD:{ref}")
+    if pushed.returncode:
+        raise _PushRejected(_scrub_secret(pushed.stderr.strip()))
+    return {"branch": branch, "pr_url": _open_results_pr(root, branch, slug, head)}
+
+
+def _publish_once(root: Path, event: dict, feed: dict, now: datetime, push: bool) -> tuple[dict, str, dict] | None:
     """Generate, write and commit one snapshot inside the publish worktree.
 
-    Returns None when the only difference from HEAD is the publish
-    timestamp. The caller records the feed fingerprint and does not push.
+    Returns None when the only difference from origin/main, or from the
+    newest unmerged ``results/<slug>-*`` snapshot, is the publish timestamp.
+    The caller records the feed fingerprint and does not push.
     """
     today = now.astimezone(timezone.utc).date().isoformat()
     pkg = package(event, feed, now)
@@ -653,13 +935,12 @@ def _publish_once(root: Path, event: dict, feed: dict, now: datetime, push: bool
     post_text = (root / "src/content/blog/posts" / f"{pkg['slug']}.ts").read_text(encoding="utf-8")
     _assert_results_boards(pkg, feed, post_text)
     files = [f"src/content/blog/posts/{pkg['slug']}.ts", "src/content/blog/metadata.ts", "src/content/blog/posts/all.ts"]
-    if _working_tree_is_timestamps_only(root, files):
-        # Drop the timestamp rewrite so the worktree stays on the published
-        # copy. checkout does not delete untracked files; a timestamps-only
-        # result never includes one.
-        restored = _git(root, "checkout", "--quiet", "--", *files)
+    base = _timestamps_only_base(root, files, pkg["slug"])
+    if base:
+        # Drop the timestamp rewrite and leave the snapshot we already published.
+        restored = _git(root, "checkout", "--quiet", base, "--", *files)
         if restored.returncode:
-            raise PublishWorktreeError(f"publish worktree restore failed: {restored.stderr.strip()[:200]}")
+            raise PublishWorktreeError(f"publish worktree restore failed: {_scrub_secret(restored.stderr.strip())}")
         return None
     _upsert_vi(pkg)
     added = _git(root, "add", "--", *files)
@@ -675,12 +956,12 @@ def _publish_once(root: Path, event: dict, feed: dict, now: datetime, push: bool
     if committed.returncode:
         raise PublishWorktreeError(f"publish worktree commit failed: {committed.stderr.strip()[:200]}")
     head = _git(root, "rev-parse", "HEAD").stdout.strip()
+    delivery = {"branch": "", "pr_url": ""}
     if push:
-        pushed = _git(root, "push", "origin", "HEAD:main")
-        if pushed.returncode:
-            raise _PushRejected(pushed.stderr.strip()[:200])
-        head = _git(root, "rev-parse", "HEAD").stdout.strip()
-    return pkg, head
+        # Branch + pull request. main is protected (quality + smoke, enforce_admins);
+        # a direct push is rejected and the results page stays stale.
+        delivery = _deliver_results_pr(root, pkg["slug"], head)
+    return pkg, head, delivery
 
 
 # --- Re-exec when the in-memory code is stale (incident 2026-10-24) ------
@@ -813,6 +1094,8 @@ def publish_event(event: dict, now: datetime | None = None, push: bool = True) -
     _prepare_publish_worktree), never in the editor's working checkout, so
     unrelated local state cannot block it.  ``push=False`` is useful for QA
     and unit tests and leaves a reviewable commit in the worktree only.
+    ``push=True`` pushes ``results/<slug>-<sha>`` and opens a pull request
+    against main.  It does not push main and does not merge.
     A snapshot that would change only ``updatedDate`` and the opening
     "Last updated" / "Cập nhật" sentence returns status ``unchanged``
     with reason ``timestamps_only`` and does not commit.
@@ -832,9 +1115,9 @@ def publish_event(event: dict, now: datetime | None = None, push: bool = True) -
     try:
         published = _publish_once(root, event, feed, now, push)
     except _PushRejected:
-        # Someone merged between our fetch and push: reset the worktree to
-        # the new origin/main and regenerate once on top of it — re-checking
-        # first whether that merge also moved the pipeline code itself.
+        # The results-branch push was rejected. Reset onto the current
+        # origin/main and regenerate once. The retry still pushes a
+        # results/* branch, never main.
         root = _prepare_publish_worktree(True)
         event = _refresh_event(root, event)
         delegated = _maybe_delegate_publish(root, event, now, push)
@@ -846,14 +1129,17 @@ def publish_event(event: dict, now: datetime | None = None, push: bool = True) -
         # next identical snapshot short-circuits, and leave updatedDate alone.
         remember(event, fingerprint)
         return {"status": "unchanged", "fingerprint": fingerprint, "reason": "timestamps_only"}
-    pkg, head = published
+    pkg, head, delivery = published
     remember(event, fingerprint)
-    # What production must serve once the deploy lands; checked by team_tournament_coverage.verify_live.
+    # What production must serve once the pull request is merged and the
+    # deploy lands; checked by team_tournament_coverage.verify_live.
     marker = pkg["en"]["sections"][0]["content"].split(". ", 1)[0]
     # `pipeline` = the fingerprint of the code that ACTUALLY generated this
     # publish; the ops freshness check compares it (and the commit stamp)
     # against main. `reexec` False here: this process generated it itself.
+    # `pr_url` is the review link. Nothing in this function merges it.
     return {"status": "published", "fingerprint": fingerprint, "head": head, "pushed": push,
+            "branch": delivery["branch"], "pr_url": delivery["pr_url"],
             "slug": pkg["slug"], "marker": marker, "pipeline": PIPELINE_FINGERPRINT, "reexec": False}
 
 
