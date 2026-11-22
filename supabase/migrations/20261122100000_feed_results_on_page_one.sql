@@ -7,7 +7,10 @@
 -- get_feed_recent_results for the page-1 overlay.
 --
 --   * Blog type bonus drops from 1.0 to 0.25.
---   * Completed matches stay eligible for 90 days. Blogs and videos stay at 30.
+--   * get_feed_timeline keeps matches on a 30-day window. The overlay
+--     (get_feed_recent_results) may look back 90 days, but only after capping
+--     the match ids so participant/kudos/comment aggregates do not scan the
+--     whole history.
 --   * A result older than 14 days keeps only a 0.2 bonus, so a quiet month
 --     does not push every post off the RPC page. The overlay still returns
 --     those rows by time, and the client / SSR interleave places them.
@@ -105,7 +108,14 @@ AS $$
   )::double precision, 0);
 $$;
 
-CREATE OR REPLACE FUNCTION public.feed_result_rows(p_viewer_id uuid DEFAULT NULL)
+-- p_match_cap NULL means no LIMIT (Postgres treats LIMIT NULL as LIMIT ALL).
+-- get_feed_timeline passes 30 days and no cap. The overlay passes 90 days
+-- and a small cap so the expensive per-match aggregates stay bounded.
+CREATE OR REPLACE FUNCTION public.feed_result_rows(
+  p_viewer_id uuid DEFAULT NULL,
+  p_match_window interval DEFAULT INTERVAL '30 days',
+  p_match_cap integer DEFAULT NULL
+)
 RETURNS TABLE (
   item_type text,
   item_id uuid,
@@ -144,14 +154,47 @@ AS $$
   WITH result_window AS (
     SELECT NOW() - INTERVAL '90 days' AS ts
   ),
+  match_window AS (
+    SELECT NOW() - p_match_window AS ts
+  ),
+  -- Only rows whose bracket_position was never set. A labelled final
+  -- (bracket_position = 'final') does not need this max.
   qt_final_round AS (
     SELECT qm.table_id,
            qm.playoff_division,
            MAX(COALESCE(qm.playoff_round, qm.large_playoff_round)) AS final_round
     FROM public.quick_table_matches qm
     WHERE qm.is_playoff IS TRUE
+      AND qm.bracket_position IS NULL
       AND COALESCE(qm.playoff_round, qm.large_playoff_round) IS NOT NULL
+      AND qm.updated_at >= (SELECT ts FROM result_window)
     GROUP BY qm.table_id, qm.playoff_division
+  ),
+  match_candidates AS (
+    SELECT m.id
+    FROM public.matches m
+    WHERE m.is_public = TRUE
+      AND m.verification_status IN ('verified', 'disputed')
+      AND m.winning_team IS NOT NULL
+      AND m.played_at <= NOW()
+      AND CASE
+        WHEN m.source_provider IN ('ppa_tour', 'mlp', 'app_tour')
+          THEN COALESCE(m.verified_at, m.updated_at, m.played_at)
+        ELSE m.played_at
+      END >= (SELECT ts FROM match_window)
+      -- surface_quick_table_results copies the final into matches. The
+      -- quick-table row below is the one that links to the tool page.
+      AND NOT (
+        m.slug LIKE 'qt-%'
+        AND m.external_match_id IS NOT NULL
+        AND lower(COALESCE(m.round_name, '')) = 'final'
+      )
+    ORDER BY CASE
+      WHEN m.source_provider IN ('ppa_tour', 'mlp', 'app_tour')
+        THEN COALESCE(m.verified_at, m.updated_at, m.played_at)
+      ELSE m.played_at
+    END DESC
+    LIMIT p_match_cap
   ),
   match_rows AS (
     SELECT 'match'::text AS item_type,
@@ -201,7 +244,8 @@ AS $$
           THEN COALESCE(m.verified_at, m.updated_at, m.played_at)
         ELSE m.played_at
       END AS _ranking_at
-    FROM public.matches m
+    FROM match_candidates mc
+    JOIN public.matches m ON m.id = mc.id
     LEFT JOIN public.venues v ON v.id = m.venue_id
     LEFT JOIN LATERAL (
       SELECT COUNT(*) AS cnt FROM public.kudos k
@@ -213,37 +257,32 @@ AS $$
       SELECT COUNT(*) AS cnt FROM public.social_comments sc
       WHERE sc.target_type = 'match' AND sc.target_id = m.id AND sc.is_deleted = FALSE
     ) cc ON TRUE
-    WHERE m.is_public = TRUE
-      AND m.verification_status IN ('verified', 'disputed')
-      AND m.winning_team IS NOT NULL
-      AND m.played_at <= NOW()
-      AND CASE
-        WHEN m.source_provider IN ('ppa_tour', 'mlp', 'app_tour')
-          THEN COALESCE(m.verified_at, m.updated_at, m.played_at)
-        ELSE m.played_at
-      END >= (SELECT ts FROM result_window)
-      -- surface_quick_table_results copies the final into matches. The
-      -- quick-table row below is the one that links to the tool page.
-      AND NOT (
-        m.slug LIKE 'qt-%'
-        AND m.external_match_id IS NOT NULL
-        AND lower(COALESCE(m.round_name, '')) = 'final'
-      )
   ),
   qt_rows AS (
     SELECT * FROM (
       SELECT DISTINCT ON (qm.table_id, qm.playoff_division)
         'result'::text AS item_type,
         qm.id AS item_id,
-        COALESCE(qm.updated_at, qt.updated_at, qt.created_at) AS published_at,
+        qm.updated_at AS published_at,
         qt.share_id AS slug,
         CASE WHEN qt.is_doubles THEN 'doubles' ELSE 'singles' END AS format,
         'tournament'::text AS match_type,
         'verified'::text AS verification_status,
         NULL::text AS venue_name,
-        ARRAY[qm.score1]::integer[] AS team_a_score,
-        ARRAY[qm.score2]::integer[] AS team_b_score,
-        CASE WHEN qm.score1 > qm.score2 THEN 'a' ELSE 'b' END AS winning_team,
+        CASE
+          WHEN qm.score1 IS NULL AND qm.score2 IS NULL THEN ARRAY[]::integer[]
+          ELSE ARRAY[COALESCE(qm.score1, 0)]::integer[]
+        END AS team_a_score,
+        CASE
+          WHEN qm.score1 IS NULL AND qm.score2 IS NULL THEN ARRAY[]::integer[]
+          ELSE ARRAY[COALESCE(qm.score2, 0)]::integer[]
+        END AS team_b_score,
+        CASE
+          WHEN qm.winner_id IS NOT NULL AND qm.winner_id = qm.player1_id THEN 'a'
+          WHEN qm.winner_id IS NOT NULL AND qm.winner_id = qm.player2_id THEN 'b'
+          WHEN qm.score1 > qm.score2 THEN 'a'
+          ELSE 'b'
+        END AS winning_team,
         public.feed_named_side(
           'a', p1.id,
           COALESCE(NULLIF(btrim(p1.player1_name), ''), NULLIF(btrim(p1.name), '')),
@@ -274,27 +313,38 @@ AS $$
         qm.playoff_division::text AS category,
         NULL::integer AS duration_seconds,
         'result:quick_table:' || qt.id::text AS _cluster_key,
-        COALESCE(qm.updated_at, qt.updated_at, qt.created_at) AS _ranking_at
+        -- No completed_at/finished_at column. updated_at is the clock the
+        -- scorer bumps when the final is saved.
+        qm.updated_at AS _ranking_at
       FROM public.quick_table_matches qm
-      JOIN qt_final_round fr
+      LEFT JOIN qt_final_round fr
         ON fr.table_id = qm.table_id
        AND fr.playoff_division = qm.playoff_division
-       AND COALESCE(qm.playoff_round, qm.large_playoff_round) = fr.final_round
       JOIN public.quick_tables qt ON qt.id = qm.table_id
       LEFT JOIN public.quick_table_players p1 ON p1.id = qm.player1_id
       LEFT JOIN public.quick_table_players p2 ON p2.id = qm.player2_id
       WHERE qt.is_public IS TRUE
         AND qm.is_playoff IS TRUE
         AND qm.status = 'completed'
-        AND qm.score1 IS NOT NULL
-        AND qm.score2 IS NOT NULL
-        AND qm.score1 <> qm.score2
-        AND COALESCE(qm.updated_at, qt.updated_at, qt.created_at) >= (SELECT ts FROM result_window)
+        AND qm.updated_at >= (SELECT ts FROM result_window)
+        AND (
+          qm.bracket_position = 'final'
+          OR (
+            qm.bracket_position IS NULL
+            AND COALESCE(qm.playoff_round, qm.large_playoff_round) = fr.final_round
+          )
+        )
+        AND (
+          (qm.winner_id IS NOT NULL AND qm.winner_id IN (qm.player1_id, qm.player2_id))
+          OR (qm.score1 IS NOT NULL AND qm.score2 IS NOT NULL AND qm.score1 <> qm.score2)
+        )
         AND COALESCE(NULLIF(btrim(p1.player1_name), ''), NULLIF(btrim(p1.name), '')) IS NOT NULL
         AND COALESCE(NULLIF(btrim(p2.player1_name), ''), NULLIF(btrim(p2.name), '')) IS NOT NULL
         AND lower(COALESCE(NULLIF(btrim(p1.player1_name), ''), btrim(p1.name))) NOT IN ('bye', 'tbd')
         AND lower(COALESCE(NULLIF(btrim(p2.player1_name), ''), btrim(p2.name))) NOT IN ('bye', 'tbd')
-      ORDER BY qm.table_id, qm.playoff_division, qm.updated_at DESC
+      ORDER BY qm.table_id, qm.playoff_division,
+        CASE WHEN qm.bracket_position = 'final' THEN 0 ELSE 1 END,
+        qm.updated_at DESC
     ) qt_finals
     ORDER BY published_at DESC
     LIMIT 40
@@ -450,7 +500,8 @@ AS $$
     SELECT NOW() - INTERVAL '30 days' AS ts
   ),
   result_rows AS (
-    SELECT * FROM public.feed_result_rows(p_viewer_id)
+    -- 30 days, no row cap: same match cost as before this feed change.
+    SELECT * FROM public.feed_result_rows(p_viewer_id, INTERVAL '30 days', NULL)
   ),
   blog_rows AS (
     SELECT 'blog'::text, b.id, b.published_at, b.slug,
@@ -546,17 +597,17 @@ AS $$
     kudos_count, viewer_kudoed, comment_count,
     source_provider, source_url, tournament_name, tournament_event, round_name, notes,
     title, excerpt, cover_image_url, category, duration_seconds
-  FROM public.feed_result_rows(NULL)
+  FROM public.feed_result_rows(NULL, INTERVAL '90 days', 40)
   WHERE item_type IN ('match', 'result')
     AND winning_team IN ('a', 'b')
   ORDER BY _ranking_at DESC, item_id DESC
   LIMIT GREATEST(LEAST(COALESCE(p_limit, 12), 24), 1);
 $$;
 
-REVOKE ALL ON FUNCTION public.feed_named_side(text, uuid, text, text) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.feed_type_bonus(text, text, timestamptz) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.feed_item_score(timestamptz, integer, integer, text, text) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.feed_result_rows(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.feed_named_side(text, uuid, text, text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.feed_type_bonus(text, text, timestamptz) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.feed_item_score(timestamptz, integer, integer, text, text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.feed_result_rows(uuid, interval, integer) FROM PUBLIC, anon, authenticated;
 
 GRANT EXECUTE ON FUNCTION public.get_feed_timeline(integer, double precision, uuid, uuid) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_feed_recent_results(integer) TO anon, authenticated;
@@ -564,6 +615,11 @@ GRANT EXECUTE ON FUNCTION public.get_feed_recent_results(integer) TO anon, authe
 CREATE INDEX IF NOT EXISTS idx_qt_matches_playoff_completed
   ON public.quick_table_matches (table_id, playoff_division, playoff_round DESC)
   WHERE is_playoff IS TRUE AND status = 'completed';
+
+-- qt_final_round filters is_playoff AND updated_at >= now() - 90 days.
+CREATE INDEX IF NOT EXISTS idx_qt_matches_playoff_updated
+  ON public.quick_table_matches (updated_at)
+  WHERE is_playoff IS TRUE;
 
 CREATE INDEX IF NOT EXISTS idx_de_matches_completed_finals
   ON public.doubles_elimination_matches (tournament_id)
