@@ -10729,6 +10729,41 @@ export type Database = {
           slot_id: string
         }[]
       }
+      get_feed_recent_results: {
+        Args: {
+          p_limit?: number
+        }
+        Returns: {
+          category: string
+          comment_count: number
+          cover_image_url: string
+          duration_seconds: number
+          excerpt: string
+          format: string
+          item_id: string
+          item_type: string
+          kudos_count: number
+          match_type: string
+          notes: string
+          participants: Json
+          published_at: string
+          ranked_at: string
+          round_name: string
+          score: number
+          slug: string
+          source_provider: string
+          source_url: string
+          team_a_score: number[]
+          team_b_score: number[]
+          title: string
+          tournament_event: string
+          tournament_name: string
+          venue_name: string
+          verification_status: string
+          viewer_kudoed: boolean
+          winning_team: string
+        }[]
+      }
       get_feed_timeline: {
         Args: {
           p_cursor_item_id?: string

@@ -16,6 +16,49 @@
          the viewport — unrelated to zoom, and load-bearing for the scroll shells. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=overlays-content" />
     
+    <script id="analytics-privacy-guard">
+      (function () {
+        function privateUrl(input) {
+          try {
+            var decoded = input;
+            for (var depth = 0; depth < 3; depth++) {
+              var next = decodeURIComponent(decoded);
+              if (next === decoded) break;
+              decoded = next;
+            }
+            if (/%[0-9a-f]{2}/i.test(decoded)) return true;
+            var url = new URL(decoded, window.location.href);
+            var path = decodeURIComponent(url.pathname).replace(/\/+/g, '/').toLowerCase();
+            if (/^\/(?:vi\/)?(?:dang-ky|join|auth|match\/confirm|reset-password|update-password|khoi-phuc-dang-ky)(?:\/|$)/.test(path)) return true;
+            if (/(?:access_token|refresh_token|magic_token|authorization|password|otp|session|(?:^|[&#])code)=/i.test(url.hash)) return true;
+            for (var pair of url.searchParams) {
+              if (/token|secret|code|otp|phone|email|password|session|authorization/i.test(pair[0]) || /(?:(?:dang-ky|match\/confirm)(?:\/|%2f)|(?:access_token|refresh_token|magic_token|code|otp|password)(?:=|%3d))/i.test(pair[1])) return true;
+            }
+            return false;
+          } catch (e) { return true; }
+        }
+        window.__tphAnalyticsAllowed = function () { return !privateUrl(window.location.href); };
+        if (!window.__tphAnalyticsAllowed()) {
+          var meta = document.createElement('meta'); meta.name = 'referrer'; meta.content = 'no-referrer'; document.head.appendChild(meta);
+        }
+        // SDKs already loaded on public pages must not observe bearer addresses
+        // after SPA history updates. Enter a clean document with the boot guard.
+        ['pushState', 'replaceState'].forEach(function (method) {
+          var original = window.history[method];
+          window.history[method] = function (state, title, target) {
+            if (target && new URL(String(target), window.location.href).origin === new URL(window.location.href).origin && window.__tphAnalyticsAllowed() && privateUrl(String(target))) { window.location.assign(String(target)); return; }
+            return original.apply(window.history, arguments);
+          };
+        });
+        window.addEventListener('click', function (event) {
+          var link = event.target && event.target.closest ? event.target.closest('a[href]') : null;
+          if (!link || !window.__tphAnalyticsAllowed() || !privateUrl(link.href)) return;
+          event.stopImmediatePropagation();
+          if (!event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && (!link.target || link.target === '_self')) { event.preventDefault(); window.location.assign(link.href); }
+        }, true);
+      })();
+    </script>
+
     <!-- Google tag (gtag.js) -->
     <script>
       // Defer Google Tag Manager until after first paint.
@@ -23,14 +66,14 @@
       // Chrome from Boydton/Cheyenne/Des Moines etc.) were ~95% of GA4
       // "users", drowning real traffic. window.gtag stays undefined for
       // them — src/utils/ga.ts already no-ops when gtag is missing.
-      if (!(navigator.webdriver || /bot|crawl|spider|headless|lighthouse|slurp|bingpreview/i.test(navigator.userAgent))) {
+      if (window.__tphAnalyticsAllowed() && !(navigator.webdriver || /bot|crawl|spider|headless|lighthouse|slurp|bingpreview/i.test(navigator.userAgent))) {
         window.dataLayer = window.dataLayer || [];
         window.gtag = function(){dataLayer.push(arguments);};
         window.gtag('js', new Date());
-        window.gtag('config', 'G-JQG63B6NX0', { send_page_view: false, debug_mode: true });
+        window.gtag('config', 'G-JQG63B6NX0', { send_page_view: false, page_location: window.location.origin + window.location.pathname, page_referrer: '', page_title: 'ThePickleHub' });
         var gtagLoaded = false;
         function loadGoogleTag() {
-          if (gtagLoaded) return;
+          if (gtagLoaded || !window.__tphAnalyticsAllowed()) return;
           gtagLoaded = true;
           var s = document.createElement('script');
           s.async = true;
@@ -217,10 +260,10 @@
     <script>
       (function () {
         var isAudit = navigator.webdriver || /bot|crawl|spider|headless|lighthouse|slurp|bingpreview/i.test(navigator.userAgent);
-        if (isAudit) return;
+        if (isAudit || !window.__tphAnalyticsAllowed()) return;
         var loaded = false;
         function loadThirdParty() {
-          if (loaded) return;
+          if (loaded || !window.__tphAnalyticsAllowed()) return;
           loaded = true;
 
           if (!document.getElementById('adsbygoogle-js')) {

@@ -1,7 +1,7 @@
 import type { Page, Request } from '@playwright/test';
 
 const networkAudit = new WeakMap<Page, { blockedTelemetry: number; forbidden: string[]; readRpc: string[] }>();
-export const VISUAL_READ_RPCS = ['get_homepage_stats', 'get_top_blog_posts', 'get_blog_post_view_counts_batch', 'get_feed_timeline', 'dupr_leaderboard_vietnam', 'shop_public_categories', 'shop_public_search'];
+export const VISUAL_READ_RPCS = ['get_homepage_stats', 'get_top_blog_posts', 'get_blog_post_view_counts_batch', 'get_feed_timeline', 'get_feed_recent_results', 'dupr_leaderboard_vietnam', 'shop_public_categories', 'shop_public_search'];
 export function visualNetworkPolicy(rawUrl: string, method: string): 'read' | 'telemetry' | 'forbidden' {
   const url = new URL(rawUrl);
   const telemetryHost = /(^|\.)(google-analytics\.com|googletagmanager\.com|cloudflareinsights\.com|ahrefs\.com|doubleclick\.net|googlesyndication\.com)$/.test(url.hostname);
@@ -77,6 +77,11 @@ export async function prepareVisualPage(page: Page, liveState: 'populated' | 'em
       return route.abort('blockedbyclient');
     }
     if (request.method() === 'POST') audit.readRpc.push(url.pathname.split('/').at(-1)!);
+    // Stable empty overlay. Live finals would move the /feed screenshot
+    // every time a tournament ends; the ranking itself is unit-tested.
+    if (request.method() === 'POST' && url.pathname === '/rest/v1/rpc/get_feed_recent_results') {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+    }
     if (isClubFixtureRequest(request.url(), request.method())) {
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(VISUAL_CLUBS) });
     }

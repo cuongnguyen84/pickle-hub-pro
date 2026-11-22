@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState, Fragment, FormEvent, ReactNode } from "react";
 import { useAssistantContext } from "@/lib/assistant-context";
-import { Link } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { Clock, Diamond, CircleDot, Target, Check, Trophy } from "lucide-react";
 import { useI18n } from "@/i18n";
+import { useAuth } from "@/hooks/useAuth";
+import { loggedInFeedRedirect } from "@/lib/home-feed-redirect";
 import { useLivestreams, useTournaments, useVideos } from "@/hooks/useSupabaseData";
 import { useLiveStatusRealtime } from "@/hooks/useLiveStatusRealtime";
 import { LiveSection, LiveSectionSkeleton } from "@/components/home/LiveSection";
@@ -101,6 +103,8 @@ const StoryImage = ({
 
 const Index = () => {
   const { language } = useI18n();
+  const location = useLocation();
+  const { user, loading: authLoading } = useAuth();
   const liveQuery = useLivestreams("live");
   const scheduledQuery = useLivestreams("scheduled");
   // Luồng vừa kết thúc — giữ trên home 7 ngày, tối đa 4 dòng replay.
@@ -376,6 +380,14 @@ const Index = () => {
       },
     );
   };
+
+  const feedHome = loggedInFeedRedirect({
+    pathname: location.pathname,
+    search: location.search,
+    isAuthenticated: !!user,
+    authResolved: !authLoading,
+  });
+  if (feedHome) return <Navigate to={feedHome} replace />;
 
   return (
     <TheLineLayout

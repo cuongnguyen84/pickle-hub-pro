@@ -138,6 +138,13 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
   if (howToNode) graph.push(howToNode);
   const blogGraph = { "@context": "https://schema.org", "@graph": graph };
 
+  // Bài kết quả (tag "results") gắn khối giới thiệu chat AI ở cuối thân bài,
+  // khớp bản React trong src/pages/BlogPost.tsx.
+  const isResultsPost = (blogMetadata.find((post) => post.slug === slug)?.tags ?? []).includes("results");
+  const resultsChatBlock = isResultsPost
+    ? `<section><p>Every draw like this one starts as a plain list of players. Paste any list into ThePickleHub AI chat - a message thread, an email, a spreadsheet, or a photo - and it builds your draw for you: round-robin groups, a knockout bracket, or an MLP Team Match, the team format traditional bracket tools barely support. The tournament then lives on ThePickleHub next to live results, livestreams, and court listings, not in a standalone bracket maker.</p><p><strong>Create your tournament by chat with the <a href="${siteUrl}/tools/create-by-chat">AI bracket generator</a>.</strong></p></section>`
+    : "";
+
   return htmlResponse(buildHtml({
     title,
     description: meta.description,
@@ -149,7 +156,7 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
     omitAutoHeader: true,
     jsonLd: blogGraph,
     // The post's own sections — see blog-body.ts for why this was missing.
-    bodyContent: `${bc}${body}${relatedBlogLinks(slug, siteUrl)}`,
+    bodyContent: `${bc}${body}${resultsChatBlock}${relatedBlogLinks(slug, siteUrl)}`,
   }));
 }
 
@@ -268,7 +275,7 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
   const [postRes, relatedRes] = await Promise.all([
     supabase
       .from("vi_blog_posts")
-      .select("title, meta_title, meta_description, content_html, cover_image_url, faq_items, alternate_en_slug, published_at, updated_at, author_name")
+      .select("title, meta_title, meta_description, content_html, cover_image_url, faq_items, alternate_en_slug, published_at, updated_at, author_name, tags")
       .eq("slug", slug)
       .eq("status", "published")
       .single(),
@@ -438,6 +445,12 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
   // database only says where it goes.
   viBody = viBody.split(WC_RESULTS_MARKER).join(wc?.html ?? "");
 
+  // Bài kết quả (tag "results") gắn khối giới thiệu chat AI ở cuối thân bài,
+  // khớp bản React trong src/pages/ViBlogPost.tsx.
+  const viResultsChatBlock = (Array.isArray(p.tags) && p.tags.includes("results"))
+    ? `<section><p>Mọi bảng đấu như thế này đều bắt đầu từ một danh sách người chơi đơn giản. Dán bất kỳ danh sách nào vào chat AI của ThePickleHub - tin nhắn Zalo, email, file Excel hay ảnh chụp - và chat dựng bảng đấu cho bạn: vòng tròn chia bảng, loại trực tiếp, hay MLP Team Match, thể thức đồng đội mà các công cụ bracket truyền thống gần như không hỗ trợ. Giải sau đó nằm ngay trên ThePickleHub cùng kết quả trực tiếp, livestream và danh sách sân, không phải trong một công cụ bracket đứng một mình.</p><p><strong>Dùng thử <a href="${siteUrl}/vi/tools/tao-giai-bang-chat">tạo giải bằng chat AI</a> cho giải tiếp theo của bạn.</strong></p></section>`
+    : "";
+
   return htmlResponse(buildHtml({
     title: buildTitle(p.meta_title.replace(/ \| ThePickleHub$/, "")),
     description: p.meta_description,
@@ -448,7 +461,7 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
     lang: "vi",
     extraMeta,
     jsonLd: articleSchema,
-    bodyContent: `${bc}<article>${viCluster}${viBody}${viFaqSection}</article>${relatedSection}`,
+    bodyContent: `${bc}<article>${viCluster}${viBody}${viResultsChatBlock}${viFaqSection}</article>${relatedSection}`,
   }));
 }
 

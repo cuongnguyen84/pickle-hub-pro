@@ -1,3 +1,4 @@
+import { isPrivateAnalyticsUrl } from "../../src/utils/analyticsPrivacy";
 import { SEO_TITLE_MAX_CHARS, truncateForSeo, truncateTitleForSeo } from "../../src/lib/seo-title";
 /**
  * HTML page builder for SSR prerendering.
@@ -184,7 +185,7 @@ ${ogLocaleAlternateTag}
 <meta name="twitter:title" content="${escapeHtml(title)}"/>
 <meta name="twitter:description" content="${escapeHtml(description)}"/>
 <meta name="twitter:image" content="${escapeHtml(image)}"/>
-<script src="https://analytics.ahrefs.com/analytics.js" data-key="6MywJYt95FkvqAAYCgzVCA" async></script>
+${isPrivateAnalyticsUrl(url) ? '<meta name="referrer" content="no-referrer"/>' : '<script>if(window.__tphAnalyticsAllowed && window.__tphAnalyticsAllowed() && !document.getElementById("ahrefs-analytics-js")){var ah=document.createElement("script");ah.id="ahrefs-analytics-js";ah.src="https://analytics.ahrefs.com/analytics.js";ah.async=true;ah.setAttribute("data-key","6MywJYt95FkvqAAYCgzVCA");document.head.appendChild(ah);}</script>'}
 ${extraMeta}
 ${jsonLdScript}
 </head>

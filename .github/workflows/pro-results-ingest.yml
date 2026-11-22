@@ -1,0 +1,68 @@
+# Ingest recent PPA and MLP results into public.matches.
+#
+# The Cloudflare pro-tour-scraper only re-reads bracket URLs already on
+# pro_tour_watchlist. New events never land there on their own, so /feed
+# stops at the last watchlist event. This cron reads the public scores
+# feeds and POSTs them to the existing pro-tour-ingest function.
+#
+# No-op when SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is unset: the gate
+# exits 0 before checkout, and the script exits 0 before any request.
+# It does not apply migrations and it does not run the Oct–Nov backfill.
+# Backfill is local only — see the header of scripts/pro-tour/ingest-results.ts
+# and docs/ops/team-v2-runbook.md. Run from the repo root.
+#
+# actions/checkout and actions/setup-node are @v7, the same major as
+# quality.yml, dupr-canary.yml, and the rest of this directory.
+# private-navigation.yml is the only workflow still on @v4.
+
+name: Pro results ingest
+
+on:
+  schedule:
+    - cron: "15 */2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pro-results-ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Skip when secrets are absent
+        id: gate
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::pro-results-ingest is a no-op: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set. The cron stays green and writes no matches until both repository secrets exist."
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.gate.outputs.ready == 'true'
+
+      - uses: actions/setup-node@v7
+        if: steps.gate.outputs.ready == 'true'
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        if: steps.gate.outputs.ready == 'true'
+        run: npm ci
+
+      - name: Ingest the rolling window
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/pro-tour/run-ingest.mjs

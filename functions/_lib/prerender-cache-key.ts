@@ -1,7 +1,7 @@
-// v159 invalidates both bot HTML and human public-page parts after the
-// AI-chat landing pages (/tools/create-by-chat, /vi/tools/tao-giai-bang-chat)
-// and the /tools hub feature block shipped. Old KV entries expire naturally;
-// no purge API required.
+// v162 /feed EN lists English posts, drops quick-table semifinal copies, and the footer no longer says realtime or 30 days.
+// v161 feed SSR interleaves finished match results onto /feed.
+// v160 invalidates cached bot/human heads containing unguarded analytics tags.
+// v159 added the AI-chat landing pages and tools hub; retain those routes.
 export function prerenderCacheKey(pathname: string, human = false): string {
-  return `pr:v159:${human ? "human:" : ""}${pathname}`;
+  return `pr:v162:${human ? "human:" : ""}${pathname}`;
 }

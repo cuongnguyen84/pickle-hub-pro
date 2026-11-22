@@ -376,21 +376,30 @@ export function buildFeedJsonLd(input: FeedJsonLdInput): Record<string, unknown>
  * change. renderFeed switches to this builder now that /feed is mixed.
  */
 export interface TimelineRowForSeo {
-  item_type: "match" | "blog" | "video" | string;
+  item_type: "match" | "blog" | "video" | "result" | string;
   item_id: string;
   published_at: string;
-  // match-specific
+  ranked_at?: string | null;
+  score?: number | null;
+  // match / result
   slug?: string | null;
   venue_name?: string | null;
   team_a_score?: number[] | null;
   team_b_score?: number[] | null;
+  winning_team?: string | null;
   participants?: unknown;
+  source_provider?: string | null;
+  source_url?: string | null;
+  tournament_name?: string | null;
+  round_name?: string | null;
   // blog/video shared
   title?: string | null;
   excerpt?: string | null;
   cover_image_url?: string | null;
   category?: string | null;
   duration_seconds?: number | null;
+  /** Set by localizeFeedBlogs. Absent rows follow the page language. */
+  blog_lang?: "en" | "vi" | null;
 }
 
 export interface TimelineFeedJsonLdInput {
@@ -444,6 +453,21 @@ function rowToSchemaItem(
   siteUrl: string,
   lang: Lang,
 ): Record<string, unknown> | null {
+  if (row.item_type === "result" && row.source_url && row.source_url.startsWith("/")) {
+    const parts = Array.isArray(row.participants)
+      ? (row.participants as FeedSeoParticipant[])
+      : [];
+    const teamA = feedTeamLabel(parts, "a");
+    const teamB = feedTeamLabel(parts, "b");
+    const eventName = row.tournament_name?.trim() || `${teamA} vs ${teamB}`;
+    return {
+      "@type": "SportsEvent",
+      name: eventName,
+      sport: "Pickleball",
+      startDate: row.published_at,
+      url: `${siteUrl}${row.source_url}`,
+    };
+  }
   if (row.item_type === "match" && row.slug) {
     const parts = Array.isArray(row.participants)
       ? (row.participants as FeedSeoParticipant[])
@@ -467,13 +491,18 @@ function rowToSchemaItem(
     return item;
   }
   if (row.item_type === "blog" && row.slug && row.title) {
-    const blogUrl = `${siteUrl}/vi/blog/${row.slug}`;
+    const blogLang = row.blog_lang === "en" || row.blog_lang === "vi"
+      ? row.blog_lang
+      : lang === "vi" ? "vi" : "en";
+    const blogUrl = blogLang === "en"
+      ? `${siteUrl}/blog/${row.slug}`
+      : `${siteUrl}/vi/blog/${row.slug}`;
     const item: Record<string, unknown> = {
       "@type": "BlogPosting",
       headline: row.title,
       datePublished: row.published_at,
       url: blogUrl,
-      inLanguage: "vi-VN",
+      inLanguage: blogLang === "en" ? "en-US" : "vi-VN",
     };
     if (row.excerpt) item.description = row.excerpt;
     if (row.cover_image_url) item.image = row.cover_image_url;

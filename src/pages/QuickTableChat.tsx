@@ -170,6 +170,10 @@ const COPY = {
     confirmReg: "Người chơi tự đăng ký qua link — bạn duyệt rồi xếp bảng sau.",
     confirmLater: "Bước tiếp: nhập danh sách.",
     created: (name: string) => `🎉 Đã tạo “${name}”!`,
+    createdMsg: (name: string, detail: string, url: string) =>
+      `🎉 Đã tạo giải “${name}”${detail ? ` - ${detail}` : ""}. Link giải: ${url}. Giải đã xong, bạn không cần dán lại danh sách. Mở link để xem bảng đấu và gửi cho người chơi.`,
+    createdDetail: (n: number, groups: number, isDoubles: boolean) =>
+      `${n} ${isDoubles ? "đội" : "người chơi"}${groups > 1 ? `, chia thành ${groups} bảng` : ""}`,
     openTable: "Mở giải",
     enterRoster: "Nhập danh sách",
     copyLink: "Sao chép link",
@@ -319,6 +323,10 @@ const COPY = {
     confirmReg: "Players sign up via the link — you approve and draw groups later.",
     confirmLater: "Next: enter the list.",
     created: (name: string) => `🎉 “${name}” is live!`,
+    createdMsg: (name: string, detail: string, url: string) =>
+      `🎉 Created tournament “${name}”${detail ? ` - ${detail}` : ""}. Tournament link: ${url}. Your tournament is ready - no need to paste the list again. Open the link to view the draw and share it with players.`,
+    createdDetail: (n: number, groups: number, isDoubles: boolean) =>
+      `${n} ${isDoubles ? "teams" : "players"}${groups > 1 ? `, split into ${groups} groups` : ""}`,
     openTable: "Open tournament",
     enterRoster: "Enter the list",
     copyLink: "Copy link",
@@ -1139,6 +1147,15 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
     setCreating(false);
     setCreated({ table, rosterOk });
     if (div) setDiv({ ...div, done: div.done + 1 });
+    // Tin nhắn xác nhận ngay trong luồng chat: nêu rõ giải nào + link, để người
+    // dùng biết giải đã xong và không dán lại danh sách (ca trùng 3 giải 21/11).
+    const url = `${getSiteUrl()}${to(`/tools/quick-tables/${table.share_id}`)}`;
+    const detail = draft.entries?.length
+      ? c.createdDetail(n, draft.group_count ?? 1, draft.is_doubles !== false)
+      : "";
+    let message = c.createdMsg(draft.name ?? table.name, detail, url);
+    if (!rosterOk) message += " " + c.rosterFailed;
+    pushBot(message);
   };
 
   // Hạng tiếp theo: tên chung + hậu tố hạng; chip hiện ngay dưới thẻ "đã tạo".

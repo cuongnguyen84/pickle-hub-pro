@@ -14,9 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
  *     readers see EN news, VI readers see VI translations.
  *
  * Scoring mirrors useFeedTimeline's Phase 1 formula for non-engagement
- * items: recency_decay + type_bonus. We use a slightly lower type_bonus
- * for news (0.6 vs blog's 1.0) so editorial blog posts still float above
- * generic aggregated news inside the same recency band.
+ * items: recency_decay + type_bonus. News uses 1.2. The blog type bonus
+ * is 0.25 (feed_type_bonus), so a fresh report still outranks a post.
  */
 
 const WINDOW_DAYS = 30;
