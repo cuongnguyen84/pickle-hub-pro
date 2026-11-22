@@ -10,6 +10,10 @@
 # It does not apply migrations and it does not run the Oct–Nov backfill.
 # Backfill is local only — see the header of scripts/pro-tour/ingest-results.ts
 # and docs/ops/team-v2-runbook.md. Run from the repo root.
+#
+# actions/checkout and actions/setup-node are @v7, the same major as
+# quality.yml, dupr-canary.yml, and the rest of this directory.
+# private-navigation.yml is the only workflow still on @v4.
 
 name: Pro results ingest
 
@@ -38,7 +42,7 @@ jobs:
         run: |
           if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "pro-results-ingest: no-op (SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set)"
+            echo "::warning::pro-results-ingest is a no-op: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set. The cron stays green and writes no matches until both repository secrets exist."
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi

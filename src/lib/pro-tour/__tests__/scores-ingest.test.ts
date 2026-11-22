@@ -257,6 +257,67 @@ describe("parseMlpEventMatchups", () => {
     expect(notes.games.map((g) => g.label)).toEqual(["WD"]);
   });
 
+  it("keeps an in-progress 2–1 matchup live and does not crown the leader", () => {
+    const result = parseMlpEventMatchups(
+      {
+        results: {
+          system_matchups: [
+            {
+              matchup_date: "2026-11-01",
+              divisions: [
+                {
+                  matchups: [
+                    {
+                      uuid: "11111111-2222-3333-4444-555555555555",
+                      team_one_title: "Asia International",
+                      team_two_title: "Australia",
+                      team_one_uuid: "4eb3d92c-36a7-4a74-8538-8ea4e2628626",
+                      team_two_uuid: "2506c9d8-764d-4b00-a2ef-a9a2263860f8",
+                      team_one_score: 2,
+                      team_two_score: 1,
+                      matchup_status: "IN_PROGRESS_MATCHUP_STATUS",
+                      winner: null,
+                      round_text: "Round 1",
+                      planned_start_date: "2026-11-01T18:00:00Z",
+                      matches: [
+                        {
+                          match_abbreviation: "WD",
+                          team_one_player_one_name: "Lingwei Kong",
+                          team_two_player_one_name: "Danni-Elle Townsend",
+                          team_one_game_one_score: 11,
+                          team_two_game_one_score: 7,
+                        },
+                        {
+                          match_abbreviation: "MD",
+                          team_one_player_one_name: "Quang Duong",
+                          team_two_player_one_name: "Hayden Patriquin",
+                          team_one_game_one_score: 6,
+                          team_two_game_one_score: 4,
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+      {
+        eventUrl: "https://majorleaguepickleball.co/events-2026/mlp-nations-cup/",
+        tournamentName: "MLP Nations Cup",
+      },
+    );
+    expect(result).not.toBeNull();
+    expect(result!.matches).toHaveLength(1);
+    const match = result!.matches[0];
+    expect(match.external_match_id).toBe("mlp-11111111-2222-3333-4444-555555555555");
+    expect(match.winner_team).toBeNull();
+    const notes = JSON.parse(match.notes ?? "{}") as { format: string; live?: boolean };
+    expect(notes.format).toBe("mlp_team_matchup");
+    expect(notes.live).toBe(true);
+  });
+
   it("returns null when the payload has no matchup list", () => {
     expect(parseMlpEventMatchups({}, { eventUrl: "https://example.test", tournamentName: "MLP" })).toBeNull();
   });
