@@ -1,9 +1,10 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { FeedMatch } from "./useFollowingFeed";
 import type { FeedParticipant } from "@/lib/social/feed-formatters";
 import { blogTeasers } from "@/content/blog/teasers";
+import { BLOG_TYPE_BONUS, feedResultHref } from "@/lib/social/feed-ranking";
 
 /**
  * Sprint 7 — single mixed timeline for /feed Trending tab.
@@ -48,6 +49,28 @@ export type FeedTimelineItem =
       ranked_at: string;
       score: number;
       lang: "vi" | "en";
+    }
+  | {
+      type: "result";
+      cursor_id: string;
+      id: string;
+      slug: string;
+      href: string;
+      source_provider: string;
+      tournament_name: string;
+      tournament_event: string | null;
+      round_name: string | null;
+      /** playoff_division as text. "0" is the championship bracket. */
+      division: string | null;
+      format: string;
+      participants: FeedParticipant[];
+      team_a_score: number[];
+      team_b_score: number[];
+      winning_team: string;
+      venue_name: string | null;
+      published_at: string;
+      ranked_at: string;
+      score: number;
     }
   | {
       type: "video";
@@ -104,12 +127,11 @@ interface RpcRow {
 const PAGE_SIZE = 20;
 const WINDOW_DAYS = 30;
 
-// Phase 1 scoring constants — kept here in sync with the SQL function
-// body in supabase/migrations/20260515100000_feed_timeline_scored.sql.
+// Phase 1 scoring constants — kept in sync with feed_item_score /
+// feed_type_bonus in supabase/migrations/20261122100000_feed_results_on_page_one.sql.
 // EN blog rows have no DB engagement signals, so client-side scoring
-// reduces to recency_decay + type_bonus.
+// reduces to recency_decay + BLOG_TYPE_BONUS (0.25).
 const HALF_LIFE_HOURS = 48;
-const BLOG_TYPE_BONUS = 1.0;
 
 export function useFeedTimeline() {
   const { user } = useAuth();
@@ -176,9 +198,30 @@ export function useFeedTimeline() {
   });
 }
 
+/**
+ * Newest finished results, independent of the blog-heavy timeline page.
+ * The migration that creates `get_feed_recent_results` is not applied
+ * automatically — until it is, this returns an empty overlay and /feed
+ * keeps its previous timeline.
+ */
+export function useFeedResults() {
+  return useQuery({
+    queryKey: ["feed", "results"] as const,
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<FeedTimelineItem[]> => {
+      const { data, error } = await supabase.rpc("get_feed_recent_results", {
+        p_limit: 12,
+      });
+      if (error) return [];
+      return ((data ?? []) as RpcRow[])
+        .map(normalizeRow)
+        .filter((item): item is FeedTimelineItem => item != null);
+    },
+  });
+}
+
 function isDbItem(item: FeedTimelineItem): boolean {
-  if (item.type === "match") return true;
-  if (item.type === "video") return true;
+  if (item.type === "match" || item.type === "video" || item.type === "result") return true;
   return item.type === "blog" && item.lang === "vi";
 }
 
@@ -220,6 +263,32 @@ function normalizeRow(row: RpcRow): FeedTimelineItem | null {
       tournament_event: row.tournament_event,
       round_name: row.round_name,
       notes: row.notes,
+    };
+  }
+  if (row.item_type === "result") {
+    const source = row.source_provider ?? "";
+    return {
+      type: "result",
+      cursor_id: row.item_id,
+      id: row.item_id,
+      slug: row.slug ?? "",
+      href: feedResultHref(source, row.slug, row.source_url),
+      source_provider: source,
+      tournament_name: row.tournament_name ?? "",
+      tournament_event: row.tournament_event,
+      round_name: row.round_name,
+      division: row.category,
+      format: row.format ?? "",
+      participants: Array.isArray(row.participants)
+        ? (row.participants as FeedParticipant[])
+        : [],
+      team_a_score: row.team_a_score ?? [],
+      team_b_score: row.team_b_score ?? [],
+      winning_team: row.winning_team ?? "",
+      venue_name: row.venue_name,
+      published_at: row.published_at,
+      ranked_at: row.ranked_at,
+      score: row.score,
     };
   }
   if (row.item_type === "blog") {
@@ -265,7 +334,7 @@ function normalizeRow(row: RpcRow): FeedTimelineItem | null {
  * Build FeedTimelineItem rows for EN blog posts that fall inside the
  * timeline window. publishedDate is a date-only string ("YYYY-MM-DD") in
  * the metadata file — we treat it as midnight UTC, then convert to an
- * ISO timestamp + compute the Phase 1 score (recency_decay + 1.0 type
+ * ISO timestamp + compute the Phase 1 score (recency_decay + blog type
  * bonus, no engagement signals) so the merged sort lines up with what
  * the SQL function would have produced if the row lived in vi_blog_posts.
  */

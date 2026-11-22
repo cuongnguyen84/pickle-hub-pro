@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useFollowingCount } from "@/hooks/social/useFollowingCount";
 import { useFollowingFeed, type FeedMatch } from "@/hooks/social/useFollowingFeed";
 import {
+  useFeedResults,
   useFeedTimeline,
   type FeedTimelineItem,
 } from "@/hooks/social/useFeedTimeline";
@@ -24,6 +25,17 @@ import { FeedNewsCard } from "@/components/social/feed/FeedNewsCard";
 import { FeedEmbedCard } from "@/components/social/feed/FeedEmbedCard";
 import { FeedHappeningCard } from "@/components/social/feed/FeedHappeningCard";
 import { FeedHighlightCard } from "@/components/social/feed/FeedHighlightCard";
+import { FeedResultCard } from "@/components/social/feed/FeedResultCard";
+import {
+  dedupeFeedItems,
+  FEED_PAGE_SIZE,
+  FEED_RESULT_EVERY,
+  FEED_RESULT_WIDE_WINDOW_MS,
+  FEED_STANDARD_WINDOW_MS,
+  interleaveFeedResults,
+  isMatchResult,
+  selectFeedResults,
+} from "@/lib/social/feed-ranking";
 
 // Local union extending the RPC-driven FeedTimelineItem with news items
 // merged client-side (see useFeedNews). News is intentionally NOT in the
@@ -107,6 +119,7 @@ const Feed = () => {
     tab === "following" ? user?.id : undefined,
   );
   const timelineFeed = useFeedTimeline();
+  const resultsFeed = useFeedResults();
   const newsFeed = useFeedNews(language === "vi" ? "vi" : "en");
   const embedsFeed = useFeedEmbeds();
   const happeningsFeed = useFeedHappenings();
@@ -147,8 +160,25 @@ const Feed = () => {
 
     // Happenings (live/tournament/event) are never windowed — they're
     // few, actionable, and lose all value if pushed past the fold.
+    const overlay = (resultsFeed.data ?? []).filter(
+      (item) => item.type !== "blog" || item.lang === language,
+    );
+    const withResults = dedupeFeedItems([filtered, overlay], (item) => item.cursor_id);
+    const rankedAtMs = (item: StreamItem): number => {
+      const iso = "ranked_at" in item && item.ranked_at ? item.ranked_at : item.published_at;
+      const ms = Date.parse(iso);
+      return Number.isNaN(ms) ? Number.NaN : ms;
+    };
+    const selected = selectFeedResults(withResults, {
+      isResult: isMatchResult,
+      rankedAtMs,
+      nowMs: Date.now(),
+      standardWindowMs: FEED_STANDARD_WINDOW_MS,
+      wideWindowMs: FEED_RESULT_WIDE_WINDOW_MS,
+    });
+
     const merged: StreamItem[] = [
-      ...filtered,
+      ...selected,
       ...windowedNews,
       ...windowedEmbeds,
       ...(happeningsFeed.data ?? []),
@@ -165,10 +195,13 @@ const Feed = () => {
     //     reshuffles between visits without the SQL/data changing. Seed
     //     is stable for the lifetime of the Feed component instance
     //     (set in a ref), so React re-renders don't reshuffle mid-scroll.
-    //   - Stale-content hide: items older than 14 days are dropped from
-    //     /feed entirely (still visible on /news, /blog directly).
+    //   - Stale-content hide: posts older than 14 days are dropped.
+    //     Finished results use that same window unless it would leave
+    //     the page with no result, in which case selectFeedResults has
+    //     already kept the newest ones out to 90 days.
     const sessionSeed = sessionSeedRef.current;
     const now = Date.now();
+    const wideResultHours = FEED_RESULT_WIDE_WINDOW_MS / 3_600_000;
     const effectiveScore = (item: StreamItem): number => {
       const ageHours = Math.max(
         0,
@@ -179,7 +212,10 @@ const Feed = () => {
       else if (ageHours > 24 && ageHours <= 72) mult *= 0.55;
       else if (ageHours > 72 && ageHours <= 168) mult *= 0.25;
       else if (ageHours > 168 && ageHours <= 336) mult *= 0.08;
-      else if (ageHours > 336) return -Infinity; // >14d: drop from feed
+      else if (ageHours > 336) {
+        if (isMatchResult(item) && ageHours <= wideResultHours) mult *= 0.08;
+        else return -Infinity;
+      }
       if (viewed.viewedSet.has(item.cursor_id)) mult *= 0.4;
       // Jitter: deterministic per (sessionSeed, cursor_id) so the same
       // mount produces a stable order. fnv1a-style hash → fraction in
@@ -207,49 +243,56 @@ const Feed = () => {
     const head = scored.slice(0, TOP_WINDOW);
     const tail = scored.slice(TOP_WINDOW);
     const headNewsCount = head.filter((r) => r.item.type === "news").length;
+    let pinned: StreamItem[];
     if (headNewsCount >= MIN_NEWS_IN_TOP) {
-      return [...head, ...tail].map((r) => r.item);
-    }
-    const headNonNews = head.filter((r) => r.item.type !== "news");
-    const headNews = head.filter((r) => r.item.type === "news");
-    const reserveNews = scored
-      .filter((r) => r.item.type === "news")
-      .slice(0, MIN_NEWS_IN_TOP);
-    const reserveIds = new Set(reserveNews.map((r) => r.item.cursor_id));
-    const remainingHeadNonNews = headNonNews.filter(
-      (r) => !reserveIds.has(r.item.cursor_id),
-    );
-    const remainingHeadNews = headNews.filter(
-      (r) => !reserveIds.has(r.item.cursor_id),
-    );
-    const merged2: typeof scored = [];
-    let nonNewsCursor = 0;
-    let newsCursor = 0;
-    const otherNewsQueue = remainingHeadNews;
-    for (let i = 0; i < TOP_WINDOW; i += 1) {
-      const slotIsNews = i % 4 === 3 && newsCursor < reserveNews.length;
-      if (slotIsNews) {
-        merged2.push(reserveNews[newsCursor]);
-        newsCursor += 1;
-        continue;
+      pinned = [...head, ...tail].map((r) => r.item);
+    } else {
+      const headNonNews = head.filter((r) => r.item.type !== "news");
+      const headNews = head.filter((r) => r.item.type === "news");
+      const reserveNews = scored
+        .filter((r) => r.item.type === "news")
+        .slice(0, MIN_NEWS_IN_TOP);
+      const reserveIds = new Set(reserveNews.map((r) => r.item.cursor_id));
+      const remainingHeadNonNews = headNonNews.filter(
+        (r) => !reserveIds.has(r.item.cursor_id),
+      );
+      const remainingHeadNews = headNews.filter(
+        (r) => !reserveIds.has(r.item.cursor_id),
+      );
+      const merged2: typeof scored = [];
+      let nonNewsCursor = 0;
+      let newsCursor = 0;
+      const otherNewsQueue = remainingHeadNews;
+      for (let i = 0; i < TOP_WINDOW; i += 1) {
+        const slotIsNews = i % 4 === 3 && newsCursor < reserveNews.length;
+        if (slotIsNews) {
+          merged2.push(reserveNews[newsCursor]);
+          newsCursor += 1;
+          continue;
+        }
+        if (nonNewsCursor < remainingHeadNonNews.length) {
+          merged2.push(remainingHeadNonNews[nonNewsCursor]);
+          nonNewsCursor += 1;
+        } else if (newsCursor < reserveNews.length) {
+          merged2.push(reserveNews[newsCursor]);
+          newsCursor += 1;
+        } else if (otherNewsQueue.length > 0) {
+          const next = otherNewsQueue.shift();
+          if (next) merged2.push(next);
+        }
       }
-      if (nonNewsCursor < remainingHeadNonNews.length) {
-        merged2.push(remainingHeadNonNews[nonNewsCursor]);
-        nonNewsCursor += 1;
-      } else if (newsCursor < reserveNews.length) {
-        merged2.push(reserveNews[newsCursor]);
-        newsCursor += 1;
-      } else if (otherNewsQueue.length > 0) {
-        const next = otherNewsQueue.shift();
-        if (next) merged2.push(next);
-      }
+      pinned = [...merged2, ...tail].map((r) => r.item);
     }
-    return [...merged2, ...tail].map((r) => r.item);
+    return interleaveFeedResults(pinned, isMatchResult, {
+      windowSize: FEED_PAGE_SIZE,
+      every: FEED_RESULT_EVERY,
+    });
   }, [
     timelineFeed.data,
     timelineFeed.hasNextPage,
     language,
     newsFeed.data,
+    resultsFeed.data,
     embedsFeed.data,
     happeningsFeed.data,
     highlightsFeed.data,
@@ -535,6 +578,15 @@ function TimelineRow({
         language={language}
         published_at={item.published_at}
         aiTranslated={item.ai_translated}
+        staggerIndex={staggerIndex}
+      />
+    );
+  }
+  if (item.type === "result") {
+    return (
+      <FeedResultCard
+        item={item}
+        language={language}
         staggerIndex={staggerIndex}
       />
     );
