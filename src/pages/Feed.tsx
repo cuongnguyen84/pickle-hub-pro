@@ -1,8 +1,11 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useAssistantContext } from "@/lib/assistant-context";
 import { Loader2 } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { useI18n } from "@/i18n";
+import { languageChosenOutsideFeed } from "@/i18n/initial-language";
+import { isVietnamesePath } from "@/i18n/loader";
 import { useAuth } from "@/hooks/useAuth";
 import { useFollowingCount } from "@/hooks/social/useFollowingCount";
 import { useFollowingFeed, type FeedMatch } from "@/hooks/social/useFollowingFeed";
@@ -32,10 +35,13 @@ import {
   FEED_RESULT_EVERY,
   FEED_RESULT_WIDE_WINDOW_MS,
   FEED_STANDARD_WINDOW_MS,
+  hideQuickTableMatchCopies,
   interleaveFeedResults,
   isMatchResult,
   selectFeedResults,
 } from "@/lib/social/feed-ranking";
+import { feedFooterCopy, feedRouteLanguage } from "@/lib/social/feed-locale";
+import { editorialHomeHref } from "@/lib/home-feed-redirect";
 
 // Local union extending the RPC-driven FeedTimelineItem with news items
 // merged client-side (see useFeedNews). News is intentionally NOT in the
@@ -95,7 +101,20 @@ const getSessionShuffleSeed = (): number => {
   return fresh;
 };
 const Feed = () => {
-  const { language } = useI18n();
+  const { setLanguageFromUrl } = useI18n();
+  const location = useLocation();
+  // /feed stays English even when geo or a stored preference is Vietnamese.
+  // Date labels ("5 THÁNG 10") were coming from that preference.
+  const language = feedRouteLanguage(location.pathname);
+  useEffect(() => {
+    setLanguageFromUrl(language);
+    return () => {
+      const next = window.location.pathname;
+      if (next === "/feed" || next.startsWith("/feed/") || isVietnamesePath(next)) return;
+      const restore = languageChosenOutsideFeed();
+      if (restore) setLanguageFromUrl(restore);
+    };
+  }, [language, setLanguageFromUrl]);
   const { user, loading: authLoading } = useAuth();
   // UX-08 — jitter seed for tie-breaking in the score sort, stable per tab
   // session. This used to be per-mount random, which re-seeded on every
@@ -169,13 +188,13 @@ const Feed = () => {
       const ms = Date.parse(iso);
       return Number.isNaN(ms) ? Number.NaN : ms;
     };
-    const selected = selectFeedResults(withResults, {
+    const selected = hideQuickTableMatchCopies(selectFeedResults(withResults, {
       isResult: isMatchResult,
       rankedAtMs,
       nowMs: Date.now(),
       standardWindowMs: FEED_STANDARD_WINDOW_MS,
       wideWindowMs: FEED_RESULT_WIDE_WINDOW_MS,
-    });
+    }));
 
     const merged: StreamItem[] = [
       ...selected,
@@ -325,8 +344,21 @@ const Feed = () => {
             <span className="pip" />
             <span>{language === "vi" ? "BẢNG TIN" : "THE FEED"}</span>
             <span className="sep">·</span>
-            <span>{language === "vi" ? "CẬP NHẬT TRỰC TIẾP" : "LIVE NOW"}</span>
+            <span>{language === "vi" ? "MỖI 5 PHÚT" : "EVERY 5 MIN"}</span>
           </div>
+          <p style={{ margin: "12px 0 18px", fontSize: 14, lineHeight: 1.4 }}>
+            <Link
+              to={editorialHomeHref(language)}
+              style={{ color: "var(--tl-green)", fontWeight: 600, textDecoration: "none" }}
+            >
+              {language === "vi" ? "Trang chủ" : "Home"}
+            </Link>
+            <span style={{ color: "var(--tl-fg-3)" }}>
+              {language === "vi"
+                ? " — livestream, giải đấu, tin tức"
+                : " — livestreams, tournaments, news"}
+            </span>
+          </p>
           <h1
             style={{
               fontFamily: "'Instrument Serif', serif",
@@ -509,9 +541,7 @@ const Feed = () => {
               )}
 
               <div className="tl-feed-foot">
-                {language === "vi"
-                  ? "Cập nhật theo thời gian thực · Sắp xếp theo thời gian, 30 ngày gần đây"
-                  : "Real-time updates · Sorted by recency, last 30 days"}
+                {feedFooterCopy(language)}
               </div>
             </>
           )}

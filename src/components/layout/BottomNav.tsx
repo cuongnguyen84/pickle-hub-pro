@@ -50,13 +50,15 @@ import MoreSheet from "./MoreSheet";
 
 interface NavSlot {
   path: string;
+  /** Overrides `path` when the visible destination is not the active-state path. */
+  to?: string;
   label: string;
   icon: LucideIcon;
   liveBadge?: boolean;
 }
 
 const BottomNav = () => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const location = useLocation();
   const keyboardHeight = useKeyboardHeight();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -113,7 +115,9 @@ const BottomNav = () => {
     : { path: "/tools", label: t.nav.tools, icon: Wrench };
 
   const navItems: NavSlot[] = [
-    { path: "/", label: t.nav.home, icon: Home },
+    // ?home=1 shows the editorial homepage. Without it, a signed-in visitor
+    // who taps Trang chủ is sent straight back to /feed.
+    { path: "/", to: "/?home=1", label: t.nav.home, icon: Home },
     secondSlot,
     { path: "/shop", label: t.nav.shop, icon: Store },
     { path: "/feed", label: t.nav.feed, icon: Newspaper },
@@ -197,7 +201,13 @@ const BottomNav = () => {
             return (
               <Link
                 key={item.path}
-                to={item.path}
+                to={
+                  item.path === "/feed"
+                    ? language === "vi"
+                      ? "/vi/feed"
+                      : "/feed"
+                    : (item.to ?? item.path)
+                }
                 aria-label={item.label}
                 aria-current={isActive ? "page" : undefined}
                 className={CELL_CLASS}
