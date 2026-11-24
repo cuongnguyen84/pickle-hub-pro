@@ -234,4 +234,108 @@ describe("useTargetModerationContext", () => {
     });
     expect(fromMock).not.toHaveBeenCalled();
   });
+
+  it("a roles query error leaves the context all-false", async () => {
+    authState.user = { id: "user-1" };
+    const builder: Record<string, unknown> = {};
+    builder.select = () => builder;
+    builder.eq = () => builder;
+    builder.in = () => Promise.resolve({ data: null, error: new Error("rls") });
+    fromMock.mockReturnValue(builder);
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useTargetModerationContext(), {
+      wrapper,
+    });
+    await waitFor(() => expect(result.current.viewerId).toBe("user-1"));
+    expect(result.current.isAdmin).toBe(false);
+    expect(result.current.isModerator).toBe(false);
+  });
+});
+
+describe("useTargetComments error paths", () => {
+  it("surfaces an RPC error from the comments query", async () => {
+    rpc.mockResolvedValue({ data: null, error: new Error("boom") });
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useTargetComments("news", "n-1"), {
+      wrapper,
+    });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+  });
+
+  it("add mutation rejects and toasts on an RPC error", async () => {
+    authState.user = { id: "user-1" };
+    rpc.mockResolvedValue({ data: null, error: new Error("insert fail") });
+    const { wrapper } = makeWrapper();
+    const add = renderHook(() => useAddTargetCommentMutation("news", "n-1"), {
+      wrapper,
+    });
+    await act(async () => {
+      await expect(
+        add.result.current.mutateAsync({ body: "hi" }),
+      ).rejects.toThrow("insert fail");
+    });
+    expect(toast).toHaveBeenCalled();
+  });
+
+  it("edit mutation rejects guests before any RPC", async () => {
+    authState.user = null;
+    const { wrapper } = makeWrapper();
+    const edit = renderHook(
+      () => useEditTargetCommentMutation("news", "n-1"),
+      { wrapper },
+    );
+    await act(async () => {
+      await expect(
+        edit.result.current.mutateAsync({ commentId: "c-1", body: "x" }),
+      ).rejects.toThrow("not_authenticated");
+    });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("edit mutation rejects and toasts on an RPC error", async () => {
+    authState.user = { id: "user-1" };
+    rpc.mockResolvedValue({ data: null, error: new Error("edit fail") });
+    const { wrapper } = makeWrapper();
+    const edit = renderHook(
+      () => useEditTargetCommentMutation("news", "n-1"),
+      { wrapper },
+    );
+    await act(async () => {
+      await expect(
+        edit.result.current.mutateAsync({ commentId: "c-1", body: "x" }),
+      ).rejects.toThrow("edit fail");
+    });
+    expect(toast).toHaveBeenCalled();
+  });
+
+  it("delete mutation rejects guests before any RPC", async () => {
+    authState.user = null;
+    const { wrapper } = makeWrapper();
+    const del = renderHook(
+      () => useDeleteTargetCommentMutation("news", "n-1"),
+      { wrapper },
+    );
+    await act(async () => {
+      await expect(del.result.current.mutateAsync("c-1")).rejects.toThrow(
+        "not_authenticated",
+      );
+    });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("delete mutation rejects and toasts on an RPC error", async () => {
+    authState.user = { id: "user-1" };
+    rpc.mockResolvedValue({ data: null, error: new Error("delete fail") });
+    const { wrapper } = makeWrapper();
+    const del = renderHook(
+      () => useDeleteTargetCommentMutation("news", "n-1"),
+      { wrapper },
+    );
+    await act(async () => {
+      await expect(del.result.current.mutateAsync("c-1")).rejects.toThrow(
+        "delete fail",
+      );
+    });
+    expect(toast).toHaveBeenCalled();
+  });
 });
