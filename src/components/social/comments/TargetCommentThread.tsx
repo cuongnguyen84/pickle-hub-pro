@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useContext, useMemo, useState } from "react";
+import { QueryClientContext } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Loader2, MessageCircle, Pencil, Trash2 } from "lucide-react";
 import { useI18n } from "@/i18n";
@@ -27,8 +28,22 @@ import { CommentInput } from "./CommentInput";
  * social_comments module, same rules as the match thread (auth to
  * write, threading to depth 4, soft-delete tombstones, moderation
  * delete paths), rendered inline under a feed card.
+ *
+ * The wrapper renders nothing without a QueryClient: article pages
+ * also mount in bare test trees with mocked data hooks and no
+ * providers, where the thread's queries would throw. The real app
+ * always provides one.
  */
-export function TargetCommentThread({
+export function TargetCommentThread(props: {
+  targetType: EngagementTargetType;
+  targetId: string;
+}) {
+  const queryClient = useContext(QueryClientContext);
+  if (!queryClient) return null;
+  return <TargetCommentThreadInner {...props} />;
+}
+
+function TargetCommentThreadInner({
   targetType,
   targetId,
 }: {

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { QueryClientContext } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Heart, Loader2, MessageCircle } from "lucide-react";
 import { useI18n } from "@/i18n";
@@ -16,7 +17,16 @@ import { TargetCommentThread } from "@/components/social/comments/TargetCommentT
  * comment thread expanding inline under the card. Guests see the
  * counts; writing requires sign-in (same rule as the match module).
  */
-export function FeedEngagementBar({
+export function FeedEngagementBar(props: {
+  targetType: EngagementTargetType;
+  targetId: string;
+}) {
+  const queryClient = useContext(QueryClientContext);
+  if (!queryClient) return null;
+  return <FeedEngagementBarInner {...props} />;
+}
+
+function FeedEngagementBarInner({
   targetType,
   targetId,
 }: {
