@@ -1,6 +1,6 @@
 BEGIN;
 
-SELECT plan(13);
+SELECT plan(15);
 
 -- pgTAP in this environment lacks the *_policy helpers; assert against
 -- the native catalogs instead (see notification_insert_rls.test.sql).
@@ -12,14 +12,36 @@ SELECT ok(
   'RLS enabled on social_posts'
 );
 
--- 2. Guests get nothing: no policy includes the anon role.
+-- 2. Guests read APPROVED posts only (Cuong decision, 2026-11-24,
+-- migration 20261124220000): exactly one policy includes the anon
+-- role - a narrow SELECT policy restricted to approved posts.
+-- Pending / rejected / hidden stay invisible to guests.
 SELECT ok(
-  NOT EXISTS (
+  EXISTS (
     SELECT 1 FROM pg_policies
     WHERE schemaname = 'public' AND tablename = 'social_posts'
+      AND policyname = 'social_posts_select_approved_anon'
+      AND cmd = 'SELECT'
       AND 'anon' = ANY (roles)
+      AND array_length(roles, 1) = 1
   ),
-  'no social_posts policy includes the anon role'
+  'anon approved-read policy exists (SELECT, anon only)'
+);
+SELECT ok(
+  (
+    SELECT count(*) FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'social_posts'
+      AND 'anon' = ANY (roles)
+  ) = 1,
+  'exactly one social_posts policy includes the anon role'
+);
+SELECT ok(
+  (
+    SELECT qual FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'social_posts'
+      AND policyname = 'social_posts_select_approved_anon'
+  ) LIKE '%approved%',
+  'anon policy is restricted to approved posts'
 );
 
 -- 3-6. The read/insert policy set from migration 20261123100000 exists.

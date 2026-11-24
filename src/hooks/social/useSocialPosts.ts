@@ -10,11 +10,13 @@ import { useAuth } from "@/hooks/useAuth";
  * 20261123100000, applied 2026-11-23), so the read goes through an
  * `as never` table cast - the same pattern this codebase uses for
  * new-schema access - with the row shape declared locally. RLS is the
- * real boundary: approved posts are readable by any signed-in user,
- * authors also read their own posts in any status, admins read all.
- * The query still asks only for the rows the stream can show (own +
- * approved) so a pending post from someone else never reaches the
- * client merge even before RLS trims it.
+ * real boundary: approved posts are readable by anyone (signed-in
+ * users since 20261123100000, anonymous visitors since
+ * 20261124220000 - Cuong decision 2026-11-24), authors also read
+ * their own posts in any status, admins read all. The query still
+ * asks only for the rows the stream can show (own + approved, or
+ * approved-only when signed out) so a pending post from someone
+ * else never reaches the client merge even before RLS trims it.
  */
 
 export const SOCIAL_POST_TOPICS = [
@@ -62,7 +64,7 @@ export function useSocialPosts(options?: { enabled?: boolean }) {
   const { user } = useAuth();
   return useQuery({
     queryKey: ["feed", "social-posts", user?.id ?? "anon"],
-    enabled: (options?.enabled ?? true) && !!user,
+    enabled: options?.enabled ?? true,
     staleTime: 60_000,
     queryFn: async (): Promise<FeedSocialPostItem[]> => {
       const windowStart = new Date(
@@ -73,7 +75,11 @@ export function useSocialPosts(options?: { enabled?: boolean }) {
         .from("social_posts" as never)
         .select("id, author_id, body, image_url, topic, status, created_at")
         .eq("kind", "post")
-        .or(`status.eq.approved,author_id.eq.${user!.id}`)
+        .or(
+          user
+            ? `status.eq.approved,author_id.eq.${user.id}`
+            : "status.eq.approved",
+        )
         .gte("created_at", windowStart)
         .order("created_at", { ascending: false })
         .limit(30);
