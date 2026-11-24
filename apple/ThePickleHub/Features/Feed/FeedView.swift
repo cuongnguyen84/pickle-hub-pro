@@ -6,6 +6,7 @@ import SwiftUI
 struct FeedView: View {
     @State private var model = FeedViewModel()
     @State private var openURL: IdentifiedURL?
+    @State private var showComposer = false
 
     var body: some View {
         ScrollView {
@@ -21,6 +22,31 @@ struct FeedView: View {
         .task { await model.loadInitial() }
         .sheet(item: $openURL) { item in
             SafariView(url: item.url).ignoresSafeArea()
+        }
+        .overlay(alignment: .bottomTrailing) {
+            // Admin-only in this phase, mirroring the web gate: the
+            // composer button floats above the assistant launcher.
+            if model.isAdmin {
+                Button {
+                    showComposer = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(TLColor.accentInk)
+                        .frame(width: 52, height: 52)
+                        .background(TLColor.accent, in: Circle())
+                        .shadow(color: .black.opacity(0.35), radius: 10, y: 4)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Tạo bài đăng")
+                .padding(.trailing, 16)
+                .padding(.bottom, 70)
+            }
+        }
+        .sheet(isPresented: $showComposer) {
+            SocialPostComposerView {
+                Task { await model.refresh() }
+            }
         }
     }
 
