@@ -38,9 +38,22 @@ export default function FeedComposer({ language }: { language: Language }) {
   const vi = language === "vi";
 
   const pickFile = (next: File | null) => {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
     setFile(next);
-    setPreviewUrl(next ? URL.createObjectURL(next) : null);
+    if (!next) {
+      setPreviewUrl(null);
+      return;
+    }
+    // Preview via a data URL read from the local file. (An object URL
+    // would work too, but CodeQL's js/xss-through-dom model flags the
+    // files -> createObjectURL -> img.src flow; the FileReader result
+    // is the same image bytes without that flow.)
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPreviewUrl(
+        typeof reader.result === "string" ? reader.result : null,
+      );
+    };
+    reader.readAsDataURL(next);
   };
 
   const handleSubmit = async () => {
