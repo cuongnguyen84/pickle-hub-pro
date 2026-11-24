@@ -36,10 +36,14 @@ export function FeedPostCard({
       : "0ms";
   const topic = SOCIAL_POST_TOPICS.find((t) => t.key === item.topic);
   const pending = item.status === "pending";
-  // The profile page is opt-in (is_public_profile): link only when
-  // the author's page actually resolves, never a dead link.
+  // Profile link rule (Cuong, 2026-11-24): the /nguoi-choi page opens
+  // for opted-in public profiles AND for authors with at least one
+  // approved community post. An approved item on this card proves
+  // the second case by itself; the author's own pending card links
+  // only when their profile is public (the owner bypass on the
+  // profile page covers their other surfaces).
   const profileHref =
-    item.author_username && item.author_is_public
+    item.author_username && (item.author_is_public || item.status === "approved")
       ? `/nguoi-choi/${item.author_username}`
       : null;
   const authorIdentity = (

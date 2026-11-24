@@ -22,8 +22,12 @@ export interface ModerationPost {
   author_username: string | null;
   author_avatar_url: string | null;
   author_is_verified: boolean;
-  /** profiles.is_public_profile - the /nguoi-choi page is opt-in. */
-  author_is_public: boolean;
+  /**
+   * Whether the author's /nguoi-choi page opens for viewers:
+   * profiles.is_public_profile OR the author has at least one
+   * approved community post (Cuong rule, 2026-11-24).
+   */
+  author_profile_linkable: boolean;
   body: string | null;
   image_url: string;
   topic: string | null;
@@ -92,13 +96,32 @@ async function withAuthorNames(rows: SocialPostRow[]): Promise<ModerationPost[]>
     reportCounts.set(r.content_id, (reportCounts.get(r.content_id) ?? 0) + 1);
   }
 
+  // Authors with at least one approved post have a publicly
+  // viewable profile even without the opt-in (Cuong rule,
+  // 2026-11-24) - one tally query over the batch's authors.
+  const approvedAuthors = new Set<string>();
+  if (authorIds.length > 0) {
+    const { data: approvedRows } = await supabase
+      .from("social_posts" as never)
+      .select("author_id")
+      .in("author_id", authorIds)
+      .eq("kind", "post")
+      .eq("status", "approved")
+      .limit(500);
+    for (const r of (approvedRows as { author_id: string }[] | null) ?? []) {
+      approvedAuthors.add(r.author_id);
+    }
+  }
+
   return rows.map((row) => ({
     ...row,
     author_name: authors.get(row.author_id)?.name ?? "ThePickleHub",
     author_username: authors.get(row.author_id)?.username ?? null,
     author_avatar_url: authors.get(row.author_id)?.avatar_url ?? null,
     author_is_verified: authors.get(row.author_id)?.is_verified ?? false,
-    author_is_public: authors.get(row.author_id)?.is_public ?? false,
+    author_profile_linkable:
+      (authors.get(row.author_id)?.is_public ?? false) ||
+      approvedAuthors.has(row.author_id),
     report_count: reportCounts.get(row.id) ?? 0,
   }));
 }

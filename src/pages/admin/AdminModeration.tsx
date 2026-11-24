@@ -185,7 +185,7 @@ export default function AdminModeration() {
                     {initials(post.author_name)}
                   </AvatarFallback>
                 </Avatar>
-                {post.author_username && post.author_is_public ? (
+                {post.author_username && post.author_profile_linkable ? (
                   <Link
                     to={`/nguoi-choi/${post.author_username}`}
                     className="font-medium hover:underline inline-flex items-center gap-1.5"
