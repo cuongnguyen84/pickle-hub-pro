@@ -963,6 +963,18 @@ export default function TeamMatchView() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {tournament?.created_via === "chat" && (
+          <p style={{ color: "var(--tl-fg-2)", fontSize: 13, textAlign: "center", marginTop: 32 }}>
+            <a href={language === "vi"
+              ? "https://www.thepicklehub.net/vi/tools/tao-giai-bang-chat"
+              : "https://www.thepicklehub.net/tools/create-by-chat"}>
+              {language === "vi"
+                ? "Bảng đấu này được tạo bằng chat AI của ThePickleHub - dán danh sách của bạn để tạo giải trong 60 giây"
+                : "This draw was created with ThePickleHub AI chat - paste your list to build a tournament in 60 seconds"}
+            </a>
+          </p>
+        )}
       </div>
     </TheLineLayout>
   );

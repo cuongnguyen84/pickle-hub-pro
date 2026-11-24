@@ -1778,7 +1778,7 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string, accep
   if (match) return await renderQuickTable(supabase, match[1], siteUrl, { pageUrl: `${siteUrl}${rawPath}`, lang });
 
   match = path.match(/^\/tools\/team-match\/([^/]+)$/);
-  if (match) return await renderTeamMatch(supabase, match[1], siteUrl);
+  if (match) return await renderTeamMatch(supabase, match[1], siteUrl, { lang });
 
   match = path.match(/^\/tools\/doubles-elimination\/([^/]+)$/);
   if (match) return await renderDoublesElimination(supabase, match[1], siteUrl);
