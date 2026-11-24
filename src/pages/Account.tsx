@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DeleteAccountDialog } from "@/components/account/DeleteAccountDialog";
 import { PublicProfileToggle } from "@/components/account/PublicProfileToggle";
+import { coverPalette } from "@/lib/social/cover-palette";
 import { 
   LogOut, 
   Palette, 
@@ -38,7 +39,7 @@ const Account = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const { isCreator, isLoading: creatorLoading } = useCreatorAuth();
   const { isAdmin, isLoading: adminLoading } = useAdminAuth();
-  const { profile, isLoading: profileLoading, uploadAvatar, updateProfile } = useUserProfile();
+  const { profile, isLoading: profileLoading, uploadAvatar, uploadCover, updateProfile } = useUserProfile();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -49,6 +50,7 @@ const Account = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
   const isLoading = authLoading || creatorLoading || adminLoading || profileLoading;
 
@@ -91,6 +93,17 @@ const Account = () => {
       }
       uploadAvatar.mutate(file);
     }
+  };
+
+  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        return;
+      }
+      uploadCover.mutate(file);
+    }
+    e.target.value = "";
   };
 
   const handleSaveDisplayName = () => {
@@ -183,6 +196,42 @@ const Account = () => {
                 />
               </div>
               
+              {/* Cover photo */}
+              <div className="mt-5 w-full">
+                <div
+                  className="relative w-full overflow-hidden rounded-lg"
+                  style={{
+                    aspectRatio: "3 / 1",
+                    background: profile?.cover_url
+                      ? undefined
+                      : `linear-gradient(120deg, ${coverPalette(profile?.username ?? displayName)[0]} 0%, ${coverPalette(profile?.username ?? displayName)[1]} 130%)`,
+                  }}
+                >
+                  {profile?.cover_url && (
+                    <img src={profile.cover_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                  )}
+                  <button
+                    onClick={() => coverInputRef.current?.click()}
+                    className="absolute bottom-2 right-2 flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-xs text-white cursor-pointer"
+                    disabled={uploadCover.isPending}
+                  >
+                    {uploadCover.isPending ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Camera className="w-3.5 h-3.5" />
+                    )}
+                    Ảnh bìa
+                  </button>
+                  <input
+                    ref={coverInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCoverChange}
+                    className="hidden"
+                  />
+                </div>
+              </div>
+
               {/* Display Name */}
               <div className="mt-4 flex items-center gap-2">
                 {isEditingName ? (

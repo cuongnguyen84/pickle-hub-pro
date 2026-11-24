@@ -73,7 +73,7 @@ export async function renderProfile(
   const { data: profileRow, error: profileErr } = await supabase
     .from("profiles")
     .select(
-      `id, username, display_name, avatar_url, bio,
+      `id, username, display_name, avatar_url, cover_url, bio,
        city, country, skill_level,
        dupr_singles, dupr_doubles,
        is_ghost, is_public_profile, onboarding_completed_at, created_at`,
@@ -116,6 +116,7 @@ export async function renderProfile(
     username: string;
     display_name: string | null;
     avatar_url: string | null;
+    cover_url: string | null;
     bio: string | null;
     city: string | null;
     country: string | null;
@@ -201,8 +202,13 @@ export async function renderProfile(
       ? `<p>${escapeHtml(duprBits.join(" · "))}</p>`
       : "";
   const bioLine = p.bio ? `<p>${escapeHtml(p.bio)}</p>` : "";
+  // 2026-11-24 redesign parity: the SPA hero opens with the cover band.
+  const coverLine = p.cover_url
+    ? `<p><img src="${escapeHtml(absImage(p.cover_url, siteUrl))}" alt="" width="1200" height="400"/></p>`
+    : "";
 
   const bodyContent = `${bc}
+${coverLine}
 <h1>${escapeHtml(displayName)} <span>@${escapeHtml(p.username)}</span></h1>
 ${cityLine}
 ${skillLine}

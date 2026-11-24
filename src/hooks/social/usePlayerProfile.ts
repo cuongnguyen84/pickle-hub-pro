@@ -25,7 +25,10 @@ export type PlayerProfile = Pick<
   | "is_ghost"
   | "is_public_profile"
   | "created_at"
->;
+> & {
+  // Added by migration 20261124230000; the generated types predate it.
+  cover_url?: string | null;
+};
 
 /**
  * Fetch the public profile for /nguoi-choi/:username.
@@ -56,7 +59,7 @@ export function usePlayerProfile(usernameOrSlug: string | undefined) {
       const ownUserId = authData.user?.id ?? null;
 
       const SELECT_COLS =
-        "id, username, display_name, avatar_url, bio, city, country, skill_level, favorite_venue_id, dupr_id, dupr_singles, dupr_doubles, dupr_synced_at, is_pro, is_verified, is_ghost, is_public_profile, created_at";
+        "id, username, display_name, avatar_url, cover_url, bio, city, country, skill_level, favorite_venue_id, dupr_id, dupr_singles, dupr_doubles, dupr_synced_at, is_pro, is_verified, is_ghost, is_public_profile, created_at";
 
       // Exact username always wins. Only fall back to a profile_slug prefix match
       // (for /u/<hex> short links) when there is no exact-username hit — and make
