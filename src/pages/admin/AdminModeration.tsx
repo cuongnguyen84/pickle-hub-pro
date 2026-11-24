@@ -36,7 +36,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { EditLivestreamDialog } from "@/components/admin/EditLivestreamDialog";
-import { Video, Radio, Eye, EyeOff, StopCircle, Pencil, Trash2 } from "lucide-react";
+import {
+  useModerationPosts,
+  useReportedPosts,
+  useResolvePostReport,
+  useUpdatePostStatus,
+  type ModerationPost,
+  type SocialPostStatus,
+} from "@/hooks/usePostModeration";
+import { SOCIAL_POST_TOPICS } from "@/hooks/social/useSocialPosts";
+import { Video, Radio, Eye, EyeOff, StopCircle, Pencil, Trash2, Images, Check, X, Flag, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 
 export default function AdminModeration() {
@@ -59,6 +68,132 @@ export default function AdminModeration() {
   const updateLivestreamStatus = useUpdateLivestreamStatus();
   const updateLivestream = useUpdateLivestream();
   const deleteLivestream = useDeleteLivestream();
+
+  // Community photo posts (UGC PR-B): pending queue, reported posts and
+  // decision history. Status changes go through the admin's own session -
+  // RLS (social_posts_update_admin) plus the status-guard trigger are
+  // what authorize them.
+  const { data: pendingPosts, isLoading: pendingPostsLoading } = useModerationPosts("pending");
+  const { data: historyPosts, isLoading: historyPostsLoading } = useModerationPosts("history");
+  const { data: reportedPosts, isLoading: reportedPostsLoading } = useReportedPosts();
+  const updatePostStatus = useUpdatePostStatus();
+  const resolvePostReport = useResolvePostReport();
+
+  const handlePostStatus = async (postId: string, status: SocialPostStatus) => {
+    try {
+      await updatePostStatus.mutateAsync({ id: postId, status });
+      toast.success(
+        status === "approved"
+          ? "Đã duyệt bài"
+          : status === "rejected"
+            ? "Đã từ chối bài"
+            : "Đã ẩn bài",
+      );
+    } catch (error: any) {
+      toast.error(error.message || "Có lỗi xảy ra");
+    }
+  };
+
+  const handleResolveReport = async (reportId: string) => {
+    try {
+      await resolvePostReport.mutateAsync(reportId);
+      toast.success("Đã đánh dấu xử lý báo cáo");
+    } catch (error: any) {
+      toast.error(error.message || "Có lỗi xảy ra");
+    }
+  };
+
+  const getPostStatusBadge = (status: SocialPostStatus) => {
+    switch (status) {
+      case "approved":
+        return <Badge className="bg-green-500/10 text-green-500 border-green-500/20">Đã duyệt</Badge>;
+      case "rejected":
+        return <Badge className="bg-red-500/10 text-red-500 border-red-500/20">Đã từ chối</Badge>;
+      case "hidden":
+        return <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20">Đã ẩn</Badge>;
+      default:
+        return <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">Chờ duyệt</Badge>;
+    }
+  };
+
+  const topicLabel = (topic: string | null) =>
+    SOCIAL_POST_TOPICS.find((t) => t.key === topic)?.vi ?? null;
+
+  const renderPostActions = (post: ModerationPost) => (
+    <div className="flex items-center gap-2 flex-shrink-0">
+      {post.status !== "approved" && (
+        <Button
+          size="sm"
+          onClick={() => handlePostStatus(post.id, "approved")}
+          disabled={updatePostStatus.isPending}
+        >
+          <Check className="w-4 h-4 mr-2" />
+          Duyệt
+        </Button>
+      )}
+      {post.status === "pending" && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handlePostStatus(post.id, "rejected")}
+          disabled={updatePostStatus.isPending}
+          className="text-destructive hover:text-destructive"
+        >
+          <X className="w-4 h-4 mr-2" />
+          Từ chối
+        </Button>
+      )}
+      {post.status !== "hidden" && post.status !== "rejected" && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handlePostStatus(post.id, "hidden")}
+          disabled={updatePostStatus.isPending}
+        >
+          <EyeOff className="w-4 h-4 mr-2" />
+          Ẩn
+        </Button>
+      )}
+    </div>
+  );
+
+  const renderPostCard = (post: ModerationPost) => (
+    <Card key={post.id} className="bg-card border-border">
+      <CardContent className="p-4">
+        <div className="flex items-start gap-4">
+          <div className="w-28 h-28 rounded-lg bg-muted overflow-hidden flex-shrink-0">
+            <img
+              src={post.image_url}
+              alt=""
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-medium">{post.author_name}</h3>
+              {getPostStatusBadge(post.status)}
+              {topicLabel(post.topic) && (
+                <Badge variant="secondary">{topicLabel(post.topic)}</Badge>
+              )}
+              {post.report_count > 0 && (
+                <Badge className="bg-red-500/10 text-red-500 border-red-500/20">
+                  <Flag className="w-3 h-3 mr-1" />
+                  {post.report_count} báo cáo
+                </Badge>
+              )}
+            </div>
+            {post.body && (
+              <p className="text-sm mt-1 whitespace-pre-wrap">{post.body}</p>
+            )}
+            <p className="text-sm text-foreground-muted mt-1">
+              {format(new Date(post.created_at), "dd/MM/yyyy HH:mm")}
+            </p>
+          </div>
+          {renderPostActions(post)}
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   const handleToggleVideoStatus = async (videoId: string, currentStatus: string) => {
     const newStatus = currentStatus === "published" ? "hidden" : "published";
@@ -132,7 +267,7 @@ export default function AdminModeration() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-semibold">{t.admin.moderation.title}</h1>
-          <p className="text-foreground-muted mt-1">Kiểm duyệt video và livestream</p>
+          <p className="text-foreground-muted mt-1">Kiểm duyệt video, livestream và bài người dùng</p>
         </div>
 
         {/* Filters */}
@@ -179,6 +314,10 @@ export default function AdminModeration() {
             <TabsTrigger value="livestreams" className="gap-2">
               <Radio className="w-4 h-4" />
               Livestream ({livestreams?.length || 0})
+            </TabsTrigger>
+            <TabsTrigger value="posts" className="gap-2">
+              <Images className="w-4 h-4" />
+              Bài người dùng ({pendingPosts?.length || 0})
             </TabsTrigger>
           </TabsList>
 
@@ -336,6 +475,102 @@ export default function AdminModeration() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          {/* Community posts Tab (UGC PR-B) */}
+          <TabsContent value="posts" className="space-y-8">
+            <div className="space-y-4">
+              <h3 className="text-base font-semibold">Chờ duyệt</h3>
+              {pendingPostsLoading ? (
+                <div className="space-y-4">
+                  {[1, 2].map((i) => (
+                    <Skeleton key={i} className="h-32 w-full" />
+                  ))}
+                </div>
+              ) : pendingPosts && pendingPosts.length > 0 ? (
+                <div className="space-y-4">
+                  {pendingPosts.map((post) => renderPostCard(post))}
+                </div>
+              ) : (
+                <Card className="bg-card border-border">
+                  <CardContent className="p-8 text-center">
+                    <Images className="w-12 h-12 text-foreground-muted mx-auto mb-3" />
+                    <p className="text-foreground-muted">Không có bài nào đang chờ duyệt</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-base font-semibold">Bị báo cáo</h3>
+              {reportedPostsLoading ? (
+                <div className="space-y-4">
+                  {[1].map((i) => (
+                    <Skeleton key={i} className="h-32 w-full" />
+                  ))}
+                </div>
+              ) : reportedPosts && reportedPosts.length > 0 ? (
+                <div className="space-y-4">
+                  {reportedPosts.map((report) => (
+                    <div key={report.id} className="space-y-2">
+                      {report.post ? (
+                        renderPostCard(report.post)
+                      ) : (
+                        <Card className="bg-card border-border">
+                          <CardContent className="p-4">
+                            <p className="text-sm text-foreground-muted">Bài không còn tồn tại</p>
+                          </CardContent>
+                        </Card>
+                      )}
+                      <div className="flex items-center gap-2 flex-wrap px-1">
+                        <span className="text-sm text-foreground-muted inline-flex items-center gap-1.5">
+                          <Flag className="w-3.5 h-3.5" />
+                          Lý do: {report.reason} • {format(new Date(report.created_at), "dd/MM/yyyy HH:mm")}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleResolveReport(report.id)}
+                          disabled={resolvePostReport.isPending}
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Đã xử lý báo cáo
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <Card className="bg-card border-border">
+                  <CardContent className="p-8 text-center">
+                    <Flag className="w-12 h-12 text-foreground-muted mx-auto mb-3" />
+                    <p className="text-foreground-muted">Không có bài nào bị báo cáo</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-base font-semibold">Lịch sử duyệt</h3>
+              {historyPostsLoading ? (
+                <div className="space-y-4">
+                  {[1, 2].map((i) => (
+                    <Skeleton key={i} className="h-32 w-full" />
+                  ))}
+                </div>
+              ) : historyPosts && historyPosts.length > 0 ? (
+                <div className="space-y-4">
+                  {historyPosts.map((post) => renderPostCard(post))}
+                </div>
+              ) : (
+                <Card className="bg-card border-border">
+                  <CardContent className="p-8 text-center">
+                    <CheckCircle className="w-12 h-12 text-foreground-muted mx-auto mb-3" />
+                    <p className="text-foreground-muted">Chưa có bài nào được xử lý</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
