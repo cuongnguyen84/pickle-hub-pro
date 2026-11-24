@@ -33,6 +33,8 @@ import { FeedHappeningCard } from "@/components/social/feed/FeedHappeningCard";
 import { FeedHighlightCard } from "@/components/social/feed/FeedHighlightCard";
 import { FeedResultCard } from "@/components/social/feed/FeedResultCard";
 import { FeedPostCard } from "@/components/social/feed/FeedPostCard";
+import { FeedEngagementBar } from "@/components/social/feed/FeedEngagementBar";
+import { blogTargetId } from "@/lib/social/engagement";
 import {
   dedupeFeedItems,
   FEED_RESULT_WIDE_WINDOW_MS,
@@ -537,58 +539,82 @@ function TimelineRow({
 }) {
   if (item.type === "social_post") {
     return (
-      <FeedPostCard
-        item={item}
-        language={language}
-        staggerIndex={staggerIndex}
-      />
+      <>
+        <FeedPostCard
+          item={item}
+          language={language}
+          staggerIndex={staggerIndex}
+        />
+        <FeedEngagementBar targetType="post" targetId={item.id} />
+      </>
     );
   }
   if (item.type === "highlight") {
     return (
-      <FeedHighlightCard
-        item={item}
-        language={language}
-        staggerIndex={staggerIndex}
-      />
+      <>
+        <FeedHighlightCard
+          item={item}
+          language={language}
+          staggerIndex={staggerIndex}
+        />
+        <FeedEngagementBar targetType="highlight" targetId={item.id} />
+      </>
     );
   }
   if (item.type === "happening") {
     return (
-      <FeedHappeningCard
-        item={item}
-        language={language}
-        staggerIndex={staggerIndex}
-      />
+      <>
+        <FeedHappeningCard
+          item={item}
+          language={language}
+          staggerIndex={staggerIndex}
+        />
+        <FeedEngagementBar
+          targetType={
+            item.kind === "live"
+              ? "livestream"
+              : item.kind === "tournament"
+                ? "tournament"
+                : "event"
+          }
+          targetId={item.id}
+        />
+      </>
     );
   }
   if (item.type === "embed") {
     return (
-      <FeedEmbedCard
-        url={item.url}
-        caption={item.caption}
-        author_name={item.author_name}
-        thumbnail_url={item.thumbnail_url}
-        language={language}
-        published_at={item.published_at}
-        staggerIndex={staggerIndex}
-      />
+      <>
+        <FeedEmbedCard
+          url={item.url}
+          caption={item.caption}
+          author_name={item.author_name}
+          thumbnail_url={item.thumbnail_url}
+          language={language}
+          published_at={item.published_at}
+          staggerIndex={staggerIndex}
+        />
+        <FeedEngagementBar targetType="embed" targetId={item.id} />
+      </>
     );
   }
   if (item.type === "news") {
     return (
-      <FeedNewsCard
-        slug={item.slug}
-        title={item.title}
-        summary={item.summary}
-        image_url={item.image_url}
-        source={item.source}
-        lang={item.language}
-        language={language}
-        published_at={item.published_at}
-        aiTranslated={item.ai_translated}
-        staggerIndex={staggerIndex}
-      />
+      <>
+        <FeedNewsCard
+          slug={item.slug}
+          title={item.title}
+          summary={item.summary}
+          image_url={item.image_url}
+          source={item.source}
+          lang={item.language}
+          language={language}
+          published_at={item.published_at}
+          aiTranslated={item.ai_translated}
+          staggerIndex={staggerIndex}
+        />
+        <FeedEngagementBar targetType="news" targetId={item.id} />
+      </>
     );
   }
   if (item.type === "result") {
@@ -623,31 +649,37 @@ function TimelineRow({
   }
   if (item.type === "blog") {
     return (
-      <FeedBlogCard
-        slug={item.slug}
-        title={item.title}
-        excerpt={item.excerpt}
-        cover_image_url={item.cover_image_url}
-        category={item.category}
-        published_at={item.published_at}
-        lang={item.lang}
-        language={language}
-        staggerIndex={staggerIndex}
-      />
+      <>
+        <FeedBlogCard
+          slug={item.slug}
+          title={item.title}
+          excerpt={item.excerpt}
+          cover_image_url={item.cover_image_url}
+          category={item.category}
+          published_at={item.published_at}
+          lang={item.lang}
+          language={language}
+          staggerIndex={staggerIndex}
+        />
+        <FeedEngagementBar targetType="blog" targetId={blogTargetId(item.slug)} />
+      </>
     );
   }
   return (
-    <FeedVideoCard
-      id={item.id}
-      title={item.title}
-      description={item.description}
-      thumbnail_url={item.thumbnail_url}
-      duration_seconds={item.duration_seconds}
-      video_type={item.video_type}
-      published_at={item.published_at}
-      language={language}
-      staggerIndex={staggerIndex}
-    />
+    <>
+      <FeedVideoCard
+        id={item.id}
+        title={item.title}
+        description={item.description}
+        thumbnail_url={item.thumbnail_url}
+        duration_seconds={item.duration_seconds}
+        video_type={item.video_type}
+        published_at={item.published_at}
+        language={language}
+        staggerIndex={staggerIndex}
+      />
+      <FeedEngagementBar targetType="video" targetId={item.id} />
+    </>
   );
 }
 

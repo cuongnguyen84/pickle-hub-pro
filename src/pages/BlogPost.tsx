@@ -30,6 +30,8 @@ import { ResultsHub, ResultsSummary } from "@/components/blog/ResultsBoard";
 import { TournamentClusterLinks } from "@/components/blog/TournamentClusterLinks";
 import { buildTournamentClusterLinks } from "@/content/blog/tournament-cluster";
 import { useAssistantContext } from "@/lib/assistant-context";
+import { TargetCommentThread } from "@/components/social/comments/TargetCommentThread";
+import { blogTargetId } from "@/lib/social/engagement";
 
 /**
  * /blog/:slug — English long-form article page.
@@ -696,6 +698,36 @@ const BlogPost = () => {
             </ul>
           </nav>
         </article>
+
+        {/* Comments (2026-11-24): same social_comments thread the feed
+            card opens - keyed by a deterministic UUID from the slug. */}
+        {post && (
+          <section
+            aria-label="Comments"
+            style={{
+              marginTop: 40,
+              paddingTop: 24,
+              borderTop: "1px solid var(--tl-border)",
+            }}
+          >
+            <h2
+              style={{
+                fontFamily: "'Geist Mono', monospace",
+                fontSize: 11,
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "var(--tl-fg-2)",
+                margin: "0 0 16px",
+              }}
+            >
+              Comments
+            </h2>
+            <TargetCommentThread
+              targetType="blog"
+              targetId={blogTargetId(post.slug)}
+            />
+          </section>
+        )}
       </div>
     </TheLineLayout>
   );

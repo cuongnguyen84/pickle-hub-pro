@@ -18,6 +18,7 @@ import { formatRelative } from "@/lib/format-datetime";
 import { useNoindex } from "@/hooks/useNoindex";
 import DOMPurify from "isomorphic-dompurify";
 import { useAssistantContext } from "@/lib/assistant-context";
+import { TargetCommentThread } from "@/components/social/comments/TargetCommentThread";
 
 /**
  * /news/:slug + /vi/news/:slug — News article detail page.
@@ -279,6 +280,31 @@ const NewsArticle = ({ language }: Props) => {
             </div>
           )}
         </article>
+
+        {/* Comments (2026-11-24): same social_comments thread the feed
+            card opens - keyed by this item's id. */}
+        <section
+          aria-label={language === "vi" ? "Bình luận" : "Comments"}
+          style={{
+            marginTop: 40,
+            paddingTop: 24,
+            borderTop: "1px solid var(--tl-border)",
+          }}
+        >
+          <h2
+            style={{
+              fontFamily: "'Geist Mono', monospace",
+              fontSize: 11,
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              color: "var(--tl-fg-2)",
+              margin: "0 0 16px",
+            }}
+          >
+            {language === "vi" ? "Bình luận" : "Comments"}
+          </h2>
+          <TargetCommentThread targetType="news" targetId={article.id} />
+        </section>
       </div>
     </TheLineLayout>
   );
