@@ -45,6 +45,10 @@ import { gzipSync } from "node:zlib";
 import { join, dirname, resolve } from "node:path";
 
 const BUDGETS = {
+  // 1940 -> 1950 (2026-11-24, owner-approved 2026-11-23): PR-A UGC
+  // photo posts (create-post composer + post cards merged into /feed)
+  // ships new client code; the raise was approved together with the
+  // social_posts schema package so the feature lands inside one PR.
   // 1935 -> 1940 (2026-11-21, owner-approved): main itself sat at
   // 1935.1/1935 KB, so every open PR tripped the gate (PR #1101 VI
   // results block + PR #1102 OWL blog both measured CODE 1935.1 KB in
@@ -70,7 +74,7 @@ const BUDGETS = {
   // batch (2 posts) needed +1.3 KB of metadata headroom.
   // 1800 -> 1900 (2026-10-01, DEBT-09, owner-approved): the blog metadata chunk grows
   // with every post and held CODE at 1799.7/1800. Paid back when /blog stops shipping it whole.
-  code: Number(process.env.BUNDLE_CODE_BUDGET_KB || 1940),
+  code: Number(process.env.BUNDLE_CODE_BUDGET_KB || 1950),
   initial: Number(process.env.BUNDLE_INITIAL_BUDGET_KB || 280),
   contentChunk: Number(process.env.BUNDLE_CONTENT_CHUNK_KB || 20),
 };
