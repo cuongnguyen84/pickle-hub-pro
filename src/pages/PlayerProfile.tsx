@@ -13,8 +13,7 @@ import { useDuprRatingHistory } from "@/hooks/social/useDuprRatingHistory";
 import { PlayerHeroCard } from "@/components/social/player/PlayerHeroCard";
 import { PlayerStats } from "@/components/social/player/PlayerStats";
 import { DuprRatingChart } from "@/components/social/player/DuprRatingChart";
-import { MatchHistoryTabs } from "@/components/social/player/MatchHistoryTabs";
-import { ProfilePosts } from "@/components/social/player/ProfilePosts";
+import { ProfileTabs } from "@/components/social/player/ProfileTabs";
 import { PlayersNearRating } from "@/components/social/PlayersNearRating";
 import { useAssistantContext } from "@/lib/assistant-context";
 
@@ -162,25 +161,43 @@ const PlayerProfile = () => {
           <span className="sep">/</span>
           <span className="current">@{profile.username}</span>
         </nav>
-        <PlayerHeroCard player={profile} stats={statsQuery.data} />
-        <div style={{ marginTop: 16 }}>
-          <RatingCard
-            username={profile.username}
-            displayName={profile.display_name ?? profile.username}
-            avatarUrl={profile.avatar_url}
-            duprSingles={profile.dupr_singles}
-            duprDoubles={profile.dupr_doubles}
-            history={historyQuery.data}
-            isOwn={user?.id === profile.id}
-          />
-        </div>
-        <PlayerStats stats={statsQuery.data} loading={statsQuery.isLoading} />
-        <DuprRatingChart
-          history={historyQuery.data ?? []}
-          loading={historyQuery.isLoading}
+        <PlayerHeroCard player={profile} stats={statsQuery.data} isOwn={user?.id === profile.id} />
+        {/* 2026-11-24 redesign PR-2: pill tabs - Posts / Matches /
+            Achievements / Tournaments. All athlete blocks from the old
+            stacked layout live in the Achievements tab, unchanged. */}
+        <ProfileTabs
+          playerId={profile.id}
+          language={language}
+          isOwn={user?.id === profile.id}
+          hasAthlete={
+            (statsQuery.data?.total_matches ?? 0) > 0 ||
+            profile.dupr_doubles != null ||
+            profile.dupr_singles != null
+          }
+          matchesQuery={matchesQuery}
+          achievements={
+            <>
+              <div style={{ marginTop: 4 }}>
+                <RatingCard
+                  username={profile.username}
+                  displayName={profile.display_name ?? profile.username}
+                  avatarUrl={profile.avatar_url}
+                  duprSingles={profile.dupr_singles}
+                  duprDoubles={profile.dupr_doubles}
+                  history={historyQuery.data}
+                  isOwn={user?.id === profile.id}
+                />
+              </div>
+              <PlayerStats stats={statsQuery.data} loading={statsQuery.isLoading} />
+              <DuprRatingChart
+                history={historyQuery.data ?? []}
+                loading={historyQuery.isLoading}
+              />
+            </>
+          }
         />
-        {/* Sprint A12 — "Players near my rating" appears between chart and
-            match history. Hidden automatically when profile has no DUPR. */}
+        {/* "Players near my rating" discovery block below the tabs.
+            Hidden automatically when profile has no DUPR. */}
         <div style={{ marginTop: 24 }}>
           <PlayersNearRating
             targetRating={profile.dupr_doubles}
@@ -189,15 +206,6 @@ const PlayerProfile = () => {
             limit={8}
           />
         </div>
-        <MatchHistoryTabs
-          playerId={profile.id}
-          followersCount={statsQuery.data?.followers_count ?? 0}
-          followingCount={statsQuery.data?.following_count ?? 0}
-          matchesQuery={matchesQuery}
-        />
-        {/* Community posts (Job C, 2026-11-24): the user's approved
-            social_posts. Self-hiding when there are none. */}
-        <ProfilePosts userId={profile.id} language={language} />
       </div>
     </TheLineLayout>
   );

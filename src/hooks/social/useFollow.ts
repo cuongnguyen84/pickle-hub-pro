@@ -156,3 +156,57 @@ export function useFollowMutation() {
     },
   });
 }
+
+export interface FollowListEntry {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+  is_verified: boolean | null;
+}
+
+/**
+ * Followers / following list for the profile stat row (2026-11-24
+ * redesign PR-2). social_follows is public-read, so this is a plain
+ * two-step query: the follow rows for the user, then their profiles,
+ * re-ordered newest-follow first. Ghost profiles are filtered out.
+ */
+export function useFollowList(
+  userId: string | undefined,
+  kind: "followers" | "following",
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: ["follow-list", userId ?? null, kind],
+    enabled: !!userId && enabled,
+    staleTime: 60_000,
+    queryFn: async (): Promise<FollowListEntry[]> => {
+      if (!userId) return [];
+      const selfCol = kind === "followers" ? "followed_id" : "follower_id";
+      const otherCol = kind === "followers" ? "follower_id" : "followed_id";
+      const { data: rows, error } = await supabase
+        .from("social_follows")
+        .select(otherCol)
+        .eq(selfCol, userId)
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      const ids = ((rows ?? []) as unknown as Array<Record<string, string>>)
+        .map((r) => r[otherCol])
+        .filter(Boolean);
+      if (ids.length === 0) return [];
+      const { data: profs, error: profErr } = await supabase
+        .from("profiles")
+        .select("id, username, display_name, avatar_url, is_verified")
+        .in("id", ids)
+        .eq("is_ghost", false);
+      if (profErr) throw profErr;
+      const byId = new Map(
+        ((profs ?? []) as FollowListEntry[]).map((p) => [p.id, p]),
+      );
+      return ids
+        .map((id) => byId.get(id))
+        .filter((p): p is FollowListEntry => !!p);
+    },
+  });
+}
