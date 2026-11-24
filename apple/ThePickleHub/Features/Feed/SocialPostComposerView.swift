@@ -64,6 +64,12 @@ struct SocialPostComposerView: View {
     private var form: some View {
         VStack(alignment: .leading, spacing: 18) {
             field("Ảnh bài đăng") {
+                // Hoisted out of the PhotosPicker label closure: that
+                // builder is a nonisolated context and cannot touch the
+                // main-actor-isolated model directly.
+                let pickerTitle = model.image == nil
+                    ? String(localized: "Chọn ảnh từ thư viện")
+                    : String(localized: "Đổi ảnh khác")
                 VStack(alignment: .leading, spacing: 8) {
                     if let image = model.image,
                        let uiImage = UIImage(data: image.data) {
@@ -76,7 +82,7 @@ struct SocialPostComposerView: View {
                     PhotosPicker(selection: $picked, matching: .images) {
                         HStack(spacing: 6) {
                             Image(systemName: "photo.on.rectangle")
-                            Text(model.image == nil ? "Chọn ảnh từ thư viện" : "Đổi ảnh khác")
+                            Text(pickerTitle)
                         }
                         .font(TLFont.sans(13, .semibold))
                         .foregroundStyle(TLColor.accentText)
@@ -130,6 +136,8 @@ struct SocialPostComposerView: View {
             }
 
             field("Chủ đề bài đăng") {
+                let topicTitle = model.topic?.label
+                    ?? String(localized: "Không đặt chủ đề")
                 Menu {
                     Button("Không đặt chủ đề") { model.topic = nil }
                     ForEach(SocialPostTopic.allCases, id: \.rawValue) { topic in
@@ -137,7 +145,7 @@ struct SocialPostComposerView: View {
                     }
                 } label: {
                     HStack {
-                        Text(model.topic?.label ?? String(localized: "Không đặt chủ đề"))
+                        Text(topicTitle)
                             .font(TLFont.sans(14))
                             .foregroundStyle(model.topic == nil ? TLColor.fg3 : TLColor.fg)
                         Spacer()
