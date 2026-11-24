@@ -43,7 +43,10 @@ export function useUserProfile() {
         .single();
 
       if (error) throw error;
-      return { ...data, email: user.email ?? "" } as UserProfile;
+      // cover_url is not in the generated types yet (see PROFILE_COLS
+      // note) - cast the row through unknown before shaping.
+      const row = (data ?? {}) as unknown as Record<string, unknown>;
+      return { ...row, email: user.email ?? "" } as unknown as UserProfile;
     },
     enabled: !!user?.id,
   });

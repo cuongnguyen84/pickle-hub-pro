@@ -72,7 +72,10 @@ export function usePlayerProfile(usernameOrSlug: string | undefined) {
         .limit(1)
         .maybeSingle();
       if (exact.error) throw exact.error;
-      let data = exact.data;
+      // cover_url is not in the generated types yet, so the typed
+      // select parser resolves the row to a SelectQueryError shape;
+      // cast through unknown (runtime returns the real row).
+      let data = exact.data as unknown as PlayerProfile | null;
 
       if (!data && isHexSlug) {
         const fallback = await supabase
@@ -83,7 +86,7 @@ export function usePlayerProfile(usernameOrSlug: string | undefined) {
           .limit(1)
           .maybeSingle();
         if (fallback.error) throw fallback.error;
-        data = fallback.data;
+        data = fallback.data as unknown as PlayerProfile | null;
       }
       // Ghost rows (placeholder profiles created via PlayerSelector for
       // non-app teammates) are not user-facing.
@@ -100,7 +103,7 @@ export function usePlayerProfile(usernameOrSlug: string | undefined) {
         );
         if (hasPost !== true) return null;
       }
-      return data as PlayerProfile;
+      return data;
     },
     enabled: !!usernameOrSlug,
     staleTime: 5 * 60_000,
