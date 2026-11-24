@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Flag, Loader2 } from "lucide-react";
 
 interface ReportDialogProps {
-  contentType: "livestream" | "tournament" | "profile" | "forum_post";
+  contentType: "livestream" | "tournament" | "profile" | "forum_post" | "post";
   contentId: string;
   contentTitle?: string;
   trigger?: React.ReactNode;
