@@ -28,6 +28,7 @@ export interface TeamMatchTournament {
   status: string;
   created_by: string | null;
   created_at: string;
+  created_via?: string | null;
   updated_at: string;
   group_count: number | null;
   top_per_group: number | null;

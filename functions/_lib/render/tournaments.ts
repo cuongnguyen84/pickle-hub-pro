@@ -418,15 +418,20 @@ export async function renderQuickTable(
   }));
 }
 
-export async function renderTeamMatch(supabase: SupabaseClient, id: string, siteUrl: string): Promise<Response> {
-  const { data: tm } = await supabase.from("team_match_tournaments").select("id, name, status").eq("id", id).single();
+export async function renderTeamMatch(supabase: SupabaseClient, id: string, siteUrl: string, opts?: { lang?: "vi" | "en" }): Promise<Response> {
+  const { data: tm } = await supabase.from("team_match_tournaments").select("id, name, status, created_via").eq("id", id).single();
   if (!tm) return render404(`/tools/team-match/${id}`, siteUrl);
+  const lang = opts?.lang ?? "vi";
 
   const title = buildTitle(tm.name, " | Team Match Pickleball");
   const desc = `Giải đấu đội ${tm.name}. Xem lineup, kết quả và bảng xếp hạng trực tiếp trên ThePickleHub.`.slice(0, 160);
   const bc = breadcrumb([{ label: "Trang chủ", href: siteUrl }, { label: "Công cụ", href: `${siteUrl}/tools` }, { label: "Team Match", href: `${siteUrl}/tools/team-match` }, { label: tm.name }]);
 
-  return htmlResponse(buildHtml({ title, description: desc, url: `${siteUrl}/tools/team-match/${id}`, siteUrl, extraMeta: `<meta name="robots" content="noindex, follow"/>`, bodyContent: `${bc}${relatedToolLinks("team-match", siteUrl)}` }));
+  return htmlResponse(buildHtml({ title, description: desc, url: `${siteUrl}/tools/team-match/${id}`, siteUrl, extraMeta: `<meta name="robots" content="noindex, follow"/>`, bodyContent: `${bc}${relatedToolLinks("team-match", siteUrl)}${(tm as { created_via?: string | null }).created_via === "chat"
+    ? `<p style="color:var(--tl-fg-2);font-size:13px;text-align:center;margin-top:32px"><a href="${siteUrl}${lang === "vi" ? "/vi/tools/tao-giai-bang-chat" : "/tools/create-by-chat"}">${lang === "vi"
+      ? "Bảng đấu này được tạo bằng chat AI của ThePickleHub - dán danh sách của bạn để tạo giải trong 60 giây"
+      : "This draw was created with ThePickleHub AI chat - paste your list to build a tournament in 60 seconds"}</a></p>`
+    : ""}` }));
 }
 
 export async function renderDoublesElimination(supabase: SupabaseClient, shareId: string, siteUrl: string): Promise<Response> {
