@@ -63,10 +63,16 @@ export function ProfilePosts({
                 loading="lazy"
                 decoding="async"
                 style={{
+                  // Natural aspect, never cropped (2026-11-24 fix): the
+                  // first version forced a 16/10 cover crop, which
+                  // amputated portrait uploads (Cuong's 4:5 poster lost
+                  // the players' heads). Contain + a height cap keeps
+                  // the whole photo visible at any orientation.
                   width: "100%",
-                  aspectRatio: "16 / 10",
-                  objectFit: "cover",
-                  objectPosition: "center 30%",
+                  height: "auto",
+                  maxHeight: 720,
+                  objectFit: "contain",
+                  background: "var(--tl-bg-elev, transparent)",
                   display: "block",
                 }}
               />
