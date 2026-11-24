@@ -59,12 +59,15 @@ function fetchCountsBatched(
       b.timer = setTimeout(() => {
         countBatches.delete(key);
         const ids = [...b.ids];
-        supabase
-          .rpc("get_engagement_counts" as never, {
-            p_target_type: targetType,
-            p_target_ids: ids,
-          } as never)
-          .then(({ data, error }) => {
+        void (async () => {
+          try {
+            const { data, error } = await supabase.rpc(
+              "get_engagement_counts" as never,
+              {
+                p_target_type: targetType,
+                p_target_ids: ids,
+              } as never,
+            );
             if (error) throw error;
             const rows = (data as unknown as CountRow[] | null) ?? [];
             const byId = new Map(rows.map((r) => [r.target_id, r]));
@@ -79,12 +82,12 @@ function fetchCountsBatched(
                 : ZERO;
               b.waiters.get(id)?.forEach((w) => w.resolve(value));
             }
-          })
-          .catch((err) => {
+          } catch (err) {
             for (const id of ids) {
               b.waiters.get(id)?.forEach((w) => w.reject(err));
             }
-          });
+          }
+        })();
       }, 0);
     }
   });
