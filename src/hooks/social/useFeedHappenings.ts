@@ -66,7 +66,7 @@ export function useFeedHappenings() {
           .limit(TOURNAMENT_LIMIT),
         supabase
           .from("social_events")
-          .select("id, slug, title_vi, title_en, start_at, location_text, max_players")
+          .select("id, slug, title_vi, title_en, start_at, created_at, location_text, max_players")
           .eq("status", "published")
           .eq("visibility", "public")
           .gt("start_at", new Date().toISOString())
@@ -130,9 +130,11 @@ export function useFeedHappenings() {
           title: row.title_vi || row.title_en || "",
           meta_vi: `${whenVi}${where}${row.max_players ? ` · ${row.max_players} chỗ` : ""}`,
           meta_en: `${whenEn}${where}${row.max_players ? ` · ${row.max_players} spots` : ""}`,
-          // start_at is in the future → age 0 in the page's decay until it
-          // starts, then it ages out like everything else.
-          published_at: row.start_at,
+          // Sort key is the announcement time (created_at), not the
+          // future start_at: since the 2026-11-24 recency ordering, a
+          // future-dated item would sit above fresh news until it starts.
+          // start_at still drives the meta line above.
+          published_at: row.created_at ?? row.start_at,
           score: decayScore(new Date().toISOString(), HAPPENING_BONUS),
         });
       }

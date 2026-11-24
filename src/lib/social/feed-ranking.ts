@@ -268,3 +268,60 @@ export function hideQuickTableMatchCopies<T extends QuickTableCopyRef>(items: re
     return key == null || !shownTables.has(key);
   });
 }
+
+/**
+ * Recency-first ordering for the /feed Trending stream (directive from
+ * Cuong, 2026-11-24: "the newest content must be at the top of the feed").
+ *
+ * Research basis: every major feed pairs engagement prediction with a
+ * steep recency decay - X's open-source ranker multiplies its score by a
+ * decay with a roughly 6-hour half-life, and its Following timeline is
+ * pure reverse chronological; Instagram's Feed ranking lists "when a post
+ * was shared" among its top signals and also offers a chronological
+ * Latest view. ThePickleHub's Trending stream is a catch-up surface, not
+ * an engagement-optimised one, so the ordering here drops the type
+ * bonuses, the engagement multiplier, the viewed demotion and the random
+ * jitter entirely: one shared timestamp per item, newest first.
+ *
+ * The shared timestamp is `ranked_at` when the item carries one (for RPC
+ * rows that is when the result/post surfaced - verified_at/updated_at for
+ * pro matches, played_at for community matches), otherwise
+ * `published_at`. A livestream that is live right now sorts as "now"
+ * while it is live. Future timestamps are clamped to now so an upcoming
+ * event can never sit above fresher content until it starts, and items
+ * with no parseable timestamp sink to the bottom. Ties break toward live
+ * happenings, then by cursor_id DESC, so the order is deterministic
+ * across renders.
+ */
+export interface FeedRecencyRef {
+  type?: string;
+  kind?: string;
+  ranked_at?: string | null;
+  published_at?: string | null;
+  cursor_id?: string;
+}
+
+export function feedRecencyMs(item: FeedRecencyRef, nowMs: number): number {
+  if (item.type === "happening" && item.kind === "live") return nowMs;
+  const iso = item.ranked_at ?? item.published_at;
+  const ms = iso ? Date.parse(iso) : Number.NaN;
+  if (!Number.isFinite(ms)) return 0;
+  return Math.min(ms, nowMs);
+}
+
+export function sortFeedByRecency<T extends FeedRecencyRef>(
+  items: readonly T[],
+  nowMs: number,
+): T[] {
+  return items.slice().sort((a, b) => {
+    const diff = feedRecencyMs(b, nowMs) - feedRecencyMs(a, nowMs);
+    if (diff !== 0) return diff;
+    const aLive = a.type === "happening" && a.kind === "live" ? 1 : 0;
+    const bLive = b.type === "happening" && b.kind === "live" ? 1 : 0;
+    if (aLive !== bLive) return bLive - aLive;
+    const ac = a.cursor_id ?? "";
+    const bc = b.cursor_id ?? "";
+    if (ac === bc) return 0;
+    return ac < bc ? 1 : -1;
+  });
+}

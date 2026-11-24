@@ -5,12 +5,14 @@ import {
   FEED_STANDARD_WINDOW_MS,
   FEED_WIDE_RESULT_CAP,
   dedupeFeedItems,
+  feedRecencyMs,
   feedResultHref,
   feedResultLabels,
   hideQuickTableMatchCopies,
   interleaveFeedResults,
   isMatchResult,
   selectFeedResults,
+  sortFeedByRecency,
 } from "../feed-ranking";
 
 interface Row {
@@ -257,5 +259,75 @@ describe("hideQuickTableMatchCopies", () => {
       { type: "match", slug: "qt-abcdef12-11111111", tournament_name: "" },
     ]);
     expect(kept).toHaveLength(2);
+  });
+});
+
+describe("feed recency ordering", () => {
+  interface RecencyRow {
+    type: string;
+    kind?: string;
+    ranked_at?: string | null;
+    published_at?: string | null;
+    cursor_id: string;
+  }
+  // 2026-11-24 11:05 in Ho Chi Minh City - when Cuong checked his feed.
+  const NOW = Date.parse("2026-11-24T04:05:00Z");
+
+  it("puts this morning's news above yesterday's pro results and blogs", () => {
+    const rows: RecencyRow[] = [
+      { type: "result", ranked_at: "2026-11-23T13:00:00Z", cursor_id: "result:daytona-final" },
+      { type: "blog", ranked_at: "2026-11-23T02:00:00Z", published_at: "2026-11-23T02:00:00Z", cursor_id: "blog:vi" },
+      { type: "news", published_at: "2026-11-24T01:30:00Z", cursor_id: "news:manila-showcase" },
+      { type: "match", ranked_at: "2026-11-24T00:30:00Z", cursor_id: "match:community" },
+    ];
+    expect(sortFeedByRecency(rows, NOW).map((r) => r.cursor_id)).toEqual([
+      "news:manila-showcase",
+      "match:community",
+      "result:daytona-final",
+      "blog:vi",
+    ]);
+  });
+
+  it("sorts a live happening as happening now, ahead of older items", () => {
+    const rows: RecencyRow[] = [
+      { type: "news", published_at: "2026-11-24T03:00:00Z", cursor_id: "news:a" },
+      { type: "happening", kind: "live", published_at: "2026-11-24T01:00:00Z", cursor_id: "live:1" },
+    ];
+    expect(sortFeedByRecency(rows, NOW)[0].cursor_id).toBe("live:1");
+  });
+
+  it("prefers ranked_at over published_at and clamps future timestamps to now", () => {
+    const row: RecencyRow = {
+      type: "match",
+      ranked_at: "2026-11-24T02:00:00Z",
+      published_at: "2026-11-20T02:00:00Z",
+      cursor_id: "match:x",
+    };
+    expect(feedRecencyMs(row, NOW)).toBe(Date.parse("2026-11-24T02:00:00Z"));
+    expect(
+      feedRecencyMs({ type: "happening", kind: "event", published_at: "2026-12-01T00:00:00Z", cursor_id: "event:f" }, NOW),
+    ).toBe(NOW);
+  });
+
+  it("sinks items with no parseable timestamp and breaks ties by cursor_id DESC", () => {
+    const rows: RecencyRow[] = [
+      { type: "news", published_at: "not-a-date", cursor_id: "news:broken" },
+      { type: "news", published_at: "2026-11-24T01:00:00Z", cursor_id: "news:a" },
+      { type: "news", published_at: "2026-11-24T01:00:00Z", cursor_id: "news:b" },
+    ];
+    expect(sortFeedByRecency(rows, NOW).map((r) => r.cursor_id)).toEqual([
+      "news:b",
+      "news:a",
+      "news:broken",
+    ]);
+  });
+
+  it("does not mutate the input array", () => {
+    const rows: RecencyRow[] = [
+      { type: "news", published_at: "2026-11-24T01:00:00Z", cursor_id: "news:a" },
+      { type: "news", published_at: "2026-11-24T02:00:00Z", cursor_id: "news:b" },
+    ];
+    sortFeedByRecency(rows, NOW);
+    expect(rows.map((r) => r.cursor_id)).toEqual(["news:a", "news:b"]);
   });
 });
