@@ -10,6 +10,34 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "daytona-beach-open-five-sweeps-best-of-three",
+    "publishedDate": "2026-11-24",
+    "updatedDate": "2026-11-24",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball",
+      "ppa tour",
+      "daytona beach open",
+      "results",
+      "best of three"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "See live results on ThePickleHub",
+      "vi": "Xem kết quả trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/daytona-beach-open-five-sweeps-best-of-three-hero.webp",
+      "alt": "Two pickleball doubles teams contesting a final point in a large indoor arena, with the Proton Daytona Beach Open badge"
+    },
+    "titleEn": "Five Sweeps in Daytona: Is Best-of-Three Too Short for PPA Finals?",
+    "titleVi": "Năm trận thắng trắng ở Daytona: chung kết best-of-three có quá ngắn?",
+    "metaTitleEn": "Daytona Five Sweeps: Is Best-of-Three Too Short?",
+    "metaTitleVi": "Chung kết Daytona: best-of-three có quá ngắn?",
+    "metaDescriptionEn": "All five Daytona Beach Open 2026 finals ended 2-0 and the champions went 44-1 in games. Is best-of-three too short for PPA finals?",
+    "metaDescriptionVi": "Cả 5 chung kết Daytona Beach Open 2026 đều kết thúc 2-0, các nhà vô địch thắng 44 game và chỉ thua 1 game cả giải."
+  },
+  {
     "slug": "7-beginner-pickleball-drills",
     "publishedDate": "2026-11-23",
     "updatedDate": "2026-11-23",
