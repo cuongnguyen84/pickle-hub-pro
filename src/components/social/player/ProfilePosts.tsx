@@ -12,15 +12,19 @@ import type { Language } from "@/lib/social/feed-formatters";
 export function ProfilePosts({
   userId,
   language,
+  bare,
 }: {
   userId: string;
   language: Language;
+  /** Inside the profile tab system: no own heading / top margin. */
+  bare?: boolean;
 }) {
   const { data } = useProfilePosts(userId);
   if (!data || data.total === 0) return null;
 
   return (
-    <section style={{ marginTop: 32 }} aria-label={language === "vi" ? "Bài viết cộng đồng" : "Community posts"}>
+    <section style={{ marginTop: bare ? 0 : 32 }} aria-label={language === "vi" ? "Bài viết cộng đồng" : "Community posts"}>
+      {!bare && (
       <h2
         style={{
           fontFamily: "'Geist Mono', monospace",
@@ -33,6 +37,7 @@ export function ProfilePosts({
       >
         {language === "vi" ? "Bài viết cộng đồng" : "Community posts"} ({data.total})
       </h2>
+      )}
       <div
         style={{
           display: "grid",
