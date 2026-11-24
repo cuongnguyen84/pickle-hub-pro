@@ -10,6 +10,34 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "7-beginner-pickleball-drills",
+    "publishedDate": "2026-11-23",
+    "updatedDate": "2026-11-23",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball",
+      "ky thuat",
+      "nguoi moi",
+      "bai tap",
+      "drills"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "See live results on ThePickleHub",
+      "vi": "Xem kết quả trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/7-beginner-pickleball-drills-hero.webp",
+      "alt": "Two beginner pickleball players practicing dinks at the kitchen line on an outdoor court"
+    },
+    "titleEn": "7 Pickleball Drills for Beginners, From Easiest to Hardest",
+    "titleVi": "7 bài tập pickleball cho người mới bắt đầu, xếp từ dễ tới khó",
+    "metaTitleEn": "7 Beginner Pickleball Drills | ThePickleHub",
+    "metaTitleVi": "7 bài tập pickleball cho người mới | ThePickleHub",
+    "metaDescriptionEn": "Seven beginner pickleball drills, easiest to hardest: wall volleys, deep serves and returns, cross-court dinks, third shot drops, resets and Dinkles.",
+    "metaDescriptionVi": "7 bài tập pickleball cho người mới xếp từ dễ tới khó, kèm cách tập từng bước và lỗi thường gặp."
+  },
+  {
     "slug": "pickleball-vietnam-national-games-2026-medal-debut",
     "publishedDate": "2026-11-23",
     "updatedDate": "2026-11-23",
