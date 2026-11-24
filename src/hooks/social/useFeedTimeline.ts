@@ -41,6 +41,11 @@ export type FeedTimelineItem =
       cursor_id: string; // RPC item_id for VI, slug-prefixed sentinel for EN
       id: string;
       slug: string;
+      // Canonical (EN) slug for the blog pairs whose VI slug differs;
+      // engagement keys derive from it so the feed card and the
+      // article pages share one kudos/comment thread. Null when the
+      // pair shares a slug (the common case).
+      canonical_slug?: string | null;
       title: string;
       excerpt: string | null;
       cover_image_url: string | null;

@@ -23,6 +23,37 @@ import { buildEnBlogItems, type FeedTimelineItem } from "./useFeedTimeline";
 const WINDOW_DAYS = 30;
 const LIMIT = 30;
 
+/**
+ * The RPC timeline copy of a VI blog wins the dedupe over the overlay
+ * copy (same cursor_id) but the RPC row carries no canonical slug.
+ * Stamp the overlay's canonical slug onto any blog item that lacks
+ * one, matched by cursor_id, so the engagement key is identical
+ * whichever copy renders (Cuong, 2026-11-24: one shared comment
+ * thread per blog pair).
+ */
+export function stampCanonicalBlogSlugs<
+  T extends { type: string; cursor_id: string },
+>(
+  items: T[],
+  overlay: FeedTimelineItem[],
+): T[] {
+  const byId = new Map<string, string>();
+  for (const item of overlay) {
+    if (item.type === "blog" && item.canonical_slug) {
+      byId.set(item.cursor_id, item.canonical_slug);
+    }
+  }
+  if (byId.size === 0) return items;
+  return items.map((item) => {
+    const blog = item as T & { canonical_slug?: string | null };
+    if (item.type === "blog" && !blog.canonical_slug) {
+      const canonical = byId.get(item.cursor_id);
+      if (canonical) return { ...item, canonical_slug: canonical } as T;
+    }
+    return item;
+  });
+}
+
 export function useFeedBlogs(language: "en" | "vi") {
   return useQuery({
     queryKey: ["feed", "blogs", language] as const,
@@ -42,7 +73,7 @@ export function useFeedBlogs(language: "en" | "vi") {
       const { data, error } = await supabase
         .from("vi_blog_posts")
         .select(
-          "id, slug, title, excerpt, cover_image_url, category, published_at",
+          "id, slug, alternate_en_slug, title, excerpt, cover_image_url, category, published_at",
         )
         .eq("status", "published")
         .gte("published_at", since)
@@ -59,6 +90,7 @@ export function useFeedBlogs(language: "en" | "vi") {
             cursor_id: row.id,
             id: row.id,
             slug: row.slug,
+            canonical_slug: row.alternate_en_slug ?? null,
             title: row.title,
             excerpt: row.excerpt,
             cover_image_url: row.cover_image_url,
