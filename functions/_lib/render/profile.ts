@@ -80,10 +80,12 @@ export async function renderProfile(
     )
     .or(orFilter)
     .eq("is_ghost", false)
-    // Sprint A2 — bots only see public-opt-in profiles. Authed users
-    // viewing their own profile bypass via client-side hook
-    // (usePlayerProfile) instead.
-    .eq("is_public_profile", true)
+    // Sprint A2 - bots only see public-opt-in profiles, PLUS the
+    // 2026-11-24 rule (Cuong): authors with an approved community
+    // post are publicly viewable without the opt-in. The opt-in
+    // filter therefore moves out of the query into the check below
+    // (the approved-post existence runs in a SECURITY DEFINER RPC,
+    // same as the client gate in usePlayerProfile).
     .not("onboarding_completed_at", "is", null)
     .limit(1)
     .maybeSingle();
@@ -96,6 +98,18 @@ export async function renderProfile(
   }
 
   if (!profileRow) return render404(`/nguoi-choi/${username}`, siteUrl);
+
+  // 2026-11-24 rule (Cuong): a non-opted-in profile still renders
+  // when its owner is a published community author.
+  if (!profileRow.is_public_profile) {
+    const { data: hasPost } = await supabase.rpc(
+      "profile_has_approved_post",
+      { p_author_id: profileRow.id },
+    );
+    if (hasPost !== true) {
+      return render404(`/nguoi-choi/${username}`, siteUrl);
+    }
+  }
 
   const p = profileRow as {
     id: string;

@@ -85,8 +85,18 @@ export function usePlayerProfile(usernameOrSlug: string | undefined) {
       // Ghost rows (placeholder profiles created via PlayerSelector for
       // non-app teammates) are not user-facing.
       if (!data || data.is_ghost) return null;
-      // Sprint A2 — gate non-owners on the opt-in flag.
-      if (!data.is_public_profile && data.id !== ownUserId) return null;
+      // Sprint A2 - gate non-owners on the opt-in flag, PLUS the
+      // 2026-11-24 rule (Cuong): an author with at least one approved
+      // community post is publicly viewable even without opting in.
+      // The existence check runs in a SECURITY DEFINER RPC because
+      // social_posts has no anonymous read policy to count with.
+      if (!data.is_public_profile && data.id !== ownUserId) {
+        const { data: hasPost } = await supabase.rpc(
+          "profile_has_approved_post" as never,
+          { p_author_id: data.id } as never,
+        );
+        if (hasPost !== true) return null;
+      }
       return data as PlayerProfile;
     },
     enabled: !!usernameOrSlug,
