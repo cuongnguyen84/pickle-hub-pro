@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuthOptional } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ViewerProfile {
   username: string | null;
@@ -25,7 +25,7 @@ const EMPTY: ViewerProfile = {
  * server-side rendering.
  */
 export function useViewerProfile(): ViewerProfile {
-  const user = useAuthOptional()?.user ?? null;
+  const { user } = useAuth();
   const { data } = useQuery({
     queryKey: ["viewer-profile", user?.id ?? null] as const,
     enabled: !!user,
