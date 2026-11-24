@@ -605,6 +605,8 @@ function ChatScreen({ userId, lang }: { userId: string; lang: Lang }) {
         // Bộ game mặc định của wizard theo số người/đội.
         game_templates: getDefaultTemplates(d.roster).map(({ order_index, game_type, display_name, scoring_type }) => ({ order_index, game_type, display_name, scoring_type })),
       });
+      // Ghi riêng: cột mới, lỡ chưa có trên DB thì luồng tạo vẫn chạy.
+      await supabase.from("team_match_tournaments").update({ created_via: "chat" } as never).eq("id", t.id);
       toast({ title: c.tmCreated(t.name) });
       // Nháp chia bảng (nếu có) giữ nguyên; hội thoại MLP xong thì dọn.
       setTm(null);
