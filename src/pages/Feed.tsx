@@ -19,6 +19,7 @@ import { useFeedEmbeds, type FeedEmbedItem } from "@/hooks/social/useFeedEmbeds"
 import { useFeedHappenings, type FeedHappeningItem } from "@/hooks/social/useFeedHappenings";
 import { useFeedHighlights, type FeedHighlightItem } from "@/hooks/social/useFeedHighlights";
 import { useSocialPosts, type FeedSocialPostItem } from "@/hooks/social/useSocialPosts";
+import { useFeedBlogs } from "@/hooks/social/useFeedBlogs";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useFeedTab } from "@/hooks/social/useFeedTab";
 import { useFeedViewedTracking } from "@/hooks/social/useFeedViewedTracking";
@@ -131,6 +132,7 @@ const Feed = () => {
   const embedsFeed = useFeedEmbeds();
   const happeningsFeed = useFeedHappenings();
   const highlightsFeed = useFeedHighlights();
+  const blogsFeed = useFeedBlogs(language === "vi" ? "vi" : "en");
   const activeQuery = tab === "following" ? followingFeed : timelineFeed;
   // Trợ lý AI nổi: tab đang xem + đăng nhập hay chưa (nội dung bài của người khác không gửi).
   useAssistantContext({
@@ -173,14 +175,25 @@ const Feed = () => {
       wideWindowMs: FEED_RESULT_WIDE_WINDOW_MS,
     }));
 
-    const merged: StreamItem[] = [
-      ...selected,
-      ...(newsFeed.data ?? []),
-      ...(embedsFeed.data ?? []),
-      ...(happeningsFeed.data ?? []),
-      ...(highlightsFeed.data ?? []),
-      ...(postsFeed.data ?? []),
-    ];
+    // Blogs merge as a client overlay too (Cuong directive,
+    // 2026-11-24): the RPC timeline paginates by score, so a fresh
+    // blog starved behind high-scoring results until several Load
+    // more rounds. The overlay loads the 30 newest posts directly;
+    // dedupeFeedItems keeps the timeline copy when both exist (same
+    // cursor_id), and the shared recency sort + seen partition below
+    // treat blogs exactly like every other type.
+    const merged: StreamItem[] = dedupeFeedItems(
+      [
+        selected,
+        newsFeed.data ?? [],
+        embedsFeed.data ?? [],
+        happeningsFeed.data ?? [],
+        highlightsFeed.data ?? [],
+        postsFeed.data ?? [],
+        blogsFeed.data ?? [],
+      ],
+      (item) => item.cursor_id,
+    );
 
     // Ordering (Cuong directive, 2026-11-24): newest first across every
     // content type. The previous pipeline ranked by the RPC score, then
@@ -228,6 +241,7 @@ const Feed = () => {
     happeningsFeed.data,
     highlightsFeed.data,
     postsFeed.data,
+    blogsFeed.data,
     viewed.viewedEntriesAtLoad,
   ]);
 
