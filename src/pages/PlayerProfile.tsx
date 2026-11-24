@@ -162,7 +162,7 @@ const PlayerProfile = () => {
           <span className="sep">/</span>
           <span className="current">@{profile.username}</span>
         </nav>
-        <PlayerHeroCard player={profile} stats={statsQuery.data} />
+        <PlayerHeroCard player={profile} stats={statsQuery.data} isOwn={user?.id === profile.id} />
         <div style={{ marginTop: 16 }}>
           <RatingCard
             username={profile.username}
