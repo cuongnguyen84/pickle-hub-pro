@@ -97,6 +97,8 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/loi-thuong-gap-khi-choi-pickleball-hero.webp": [1729, 910],
   "/images/blog/luat-pickleball-co-ban-hero-768.webp": [768, 429],
   "/images/blog/luat-pickleball-co-ban-hero.webp": [1600, 893],
+  "/images/blog/ly-hoang-nam-line-call-rules-fair-play-hero-768.webp": [768, 591],
+  "/images/blog/ly-hoang-nam-line-call-rules-fair-play-hero.webp": [1536, 1182],
   "/images/blog/ly-hoang-nam-pickleball-national-games-2026-hero-768.webp": [768, 461],
   "/images/blog/ly-hoang-nam-pickleball-national-games-2026-hero.webp": [680, 408],
   "/images/blog/mlp-2026-semifinals-new-york-preview-hero-768.webp": [768, 512],
