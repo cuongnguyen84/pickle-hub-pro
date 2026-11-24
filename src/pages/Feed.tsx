@@ -19,7 +19,7 @@ import { useFeedEmbeds, type FeedEmbedItem } from "@/hooks/social/useFeedEmbeds"
 import { useFeedHappenings, type FeedHappeningItem } from "@/hooks/social/useFeedHappenings";
 import { useFeedHighlights, type FeedHighlightItem } from "@/hooks/social/useFeedHighlights";
 import { useSocialPosts, type FeedSocialPostItem } from "@/hooks/social/useSocialPosts";
-import { useFeedBlogs } from "@/hooks/social/useFeedBlogs";
+import { useFeedBlogs, stampCanonicalBlogSlugs } from "@/hooks/social/useFeedBlogs";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useFeedTab } from "@/hooks/social/useFeedTab";
 import { useFeedViewedTracking } from "@/hooks/social/useFeedViewedTracking";
@@ -187,7 +187,7 @@ const Feed = () => {
     // dedupeFeedItems keeps the timeline copy when both exist (same
     // cursor_id), and the shared recency sort + seen partition below
     // treat blogs exactly like every other type.
-    const merged: StreamItem[] = dedupeFeedItems(
+    const mergedRaw: StreamItem[] = dedupeFeedItems(
       [
         selected,
         newsFeed.data ?? [],
@@ -198,6 +198,14 @@ const Feed = () => {
         blogsFeed.data ?? [],
       ],
       (item) => item.cursor_id,
+    );
+    // The timeline copy of a VI blog wins the dedupe but has no
+    // canonical slug; stamp it from the overlay copy so the card's
+    // engagement bar keys comments/kudos by the shared canonical
+    // slug, exactly like the article pages (Cuong, 2026-11-24).
+    const merged: StreamItem[] = stampCanonicalBlogSlugs(
+      mergedRaw,
+      blogsFeed.data ?? [],
     );
 
     // Ordering (Cuong directive, 2026-11-24): newest first across every
@@ -661,7 +669,7 @@ function TimelineRow({
           language={language}
           staggerIndex={staggerIndex}
         />
-        <FeedEngagementBar targetType="blog" targetId={blogTargetId(item.slug)} />
+        <FeedEngagementBar targetType="blog" targetId={blogTargetId(item.canonical_slug ?? item.slug)} />
       </>
     );
   }
