@@ -15,8 +15,16 @@ const { authState, hooksState } = vi.hoisted(() => ({
     deleteMutateSync: vi.fn(),
     fetchNextPage: vi.fn(),
     hasNextPage: false,
+    isLoading: false,
+    isFetchingNextPage: false,
+    navigateSpy: vi.fn(),
   },
 }));
+
+vi.mock("react-router-dom", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-router-dom")>();
+  return { ...actual, useNavigate: () => hooksState.navigateSpy };
+});
 
 vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => authState,
@@ -42,10 +50,10 @@ vi.mock("@/components/social/comments/viewer-profile", () => ({
 vi.mock("@/hooks/social/useTargetComments", () => ({
   useTargetComments: () => ({
     data: { pages: [hooksState.comments] },
-    isLoading: false,
+    isLoading: hooksState.isLoading,
     fetchNextPage: hooksState.fetchNextPage,
     hasNextPage: hooksState.hasNextPage,
-    isFetchingNextPage: false,
+    isFetchingNextPage: hooksState.isFetchingNextPage,
   }),
   useAddTargetCommentMutation: () => ({
     mutateAsync: hooksState.addMutate,
@@ -106,6 +114,9 @@ afterEach(() => {
   authState.user = null;
   hooksState.comments = [];
   hooksState.hasNextPage = false;
+  hooksState.isLoading = false;
+  hooksState.isFetchingNextPage = false;
+  hooksState.navigateSpy.mockClear();
   hooksState.addMutate.mockClear();
   hooksState.editMutate.mockClear();
   hooksState.deleteMutate.mockClear();
@@ -272,5 +283,28 @@ describe("TargetCommentThread interactions", () => {
     hooksState.comments = [comment({ is_deleted: true })];
     renderThread();
     expect(screen.getByText("This comment was deleted.")).toBeTruthy();
+  });
+
+  it("guest sign-in button navigates to login with a redirect", () => {
+    hooksState.comments = [];
+    renderThread();
+    fireEvent.click(screen.getByText("Sign in to comment"));
+    expect(hooksState.navigateSpy).toHaveBeenCalledWith(
+      expect.stringContaining("/login?redirect="),
+    );
+  });
+
+  it("shows a loading spinner while comments load", () => {
+    hooksState.isLoading = true;
+    const { container } = renderThread();
+    expect(container.querySelector(".animate-spin")).toBeTruthy();
+  });
+
+  it("load-more button shows a loading label while fetching", () => {
+    hooksState.comments = [comment()];
+    hooksState.hasNextPage = true;
+    hooksState.isFetchingNextPage = true;
+    renderThread();
+    expect(screen.getByText("Loading…")).toBeTruthy();
   });
 });

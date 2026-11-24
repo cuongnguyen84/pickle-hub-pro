@@ -108,4 +108,20 @@ describe("FeedEngagementBar", () => {
     renderBar();
     expect(screen.queryByText("0")).toBeNull();
   });
+
+  it("renders the kudoed state with aria-pressed and the Unlike label", () => {
+    countsState.data = { kudos_count: 4, comment_count: 1, viewer_kudoed: true };
+    renderBar();
+    const btn = screen.getByLabelText("Unlike");
+    expect(btn.getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByText("4")).toBeTruthy();
+  });
+
+  it("collapses the thread when the comment chip is tapped again", () => {
+    renderBar();
+    fireEvent.click(screen.getByText("Comments"));
+    expect(screen.getByTestId("thread-stub")).toBeTruthy();
+    fireEvent.click(screen.getByText("Comments"));
+    expect(screen.queryByTestId("thread-stub")).toBeNull();
+  });
 });

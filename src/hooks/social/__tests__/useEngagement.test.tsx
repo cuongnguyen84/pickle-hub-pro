@@ -149,4 +149,70 @@ describe("useToggleTargetKudos", () => {
       expect.anything(),
     );
   });
+
+  it("reverts the optimistic toggle when the RPC fails", async () => {
+    authState.user = { id: "user-1" };
+    rpc.mockImplementation(async (name: string) => {
+      if (name === "get_engagement_counts") {
+        return {
+          data: [
+            {
+              target_id: "id-a",
+              kudos_count: 3,
+              comment_count: 2,
+              viewer_kudoed: false,
+            },
+          ],
+          error: null,
+        };
+      }
+      return { data: null, error: new Error("db down") };
+    });
+    const { wrapper, qc } = makeWrapper();
+    const counts = renderHook(() => useEngagementCounts("news", "id-a"), {
+      wrapper,
+    });
+    await waitFor(() => expect(counts.result.current.data?.kudos_count).toBe(3));
+
+    const toggle = renderHook(() => useToggleTargetKudos("news"), { wrapper });
+    await act(async () => {
+      await expect(
+        toggle.result.current.mutateAsync("id-a"),
+      ).rejects.toThrow("db down");
+    });
+
+    const cached = qc.getQueryData<{
+      kudos_count: number;
+      comment_count: number;
+      viewer_kudoed: boolean;
+    }>(["engagement-counts", "news", "id-a", "user-1"]);
+    expect(cached).toEqual({
+      kudos_count: 3,
+      comment_count: 2,
+      viewer_kudoed: false,
+    });
+    expect(toast).toHaveBeenCalled();
+  });
+
+  it("treats a malformed toggle response as an error", async () => {
+    authState.user = { id: "user-1" };
+    rpc.mockResolvedValue({ data: { nope: true }, error: null });
+    const { wrapper } = makeWrapper();
+    const toggle = renderHook(() => useToggleTargetKudos("news"), { wrapper });
+    await act(async () => {
+      await expect(
+        toggle.result.current.mutateAsync("id-a"),
+      ).rejects.toThrow("Malformed RPC response");
+    });
+    expect(toast).toHaveBeenCalled();
+  });
+
+  it("does not query counts without a target id", async () => {
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useEngagementCounts("news", undefined), {
+      wrapper,
+    });
+    expect(result.current.data).toBeUndefined();
+    expect(rpc).not.toHaveBeenCalled();
+  });
 });
