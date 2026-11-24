@@ -322,6 +322,63 @@ struct FeedHighlightRow: Decodable {
     }
 }
 
+/// Closed topic list for community photo posts — mirrors the web
+/// `SOCIAL_POST_TOPICS` in `src/hooks/social/useSocialPosts.ts`. The raw
+/// value is what `social_posts.topic` stores; the label is the VI register
+/// the native feed uses everywhere (see FeedFormat).
+enum SocialPostTopic: String, CaseIterable, Equatable {
+    case findPartners = "tim-ban-danh"
+    case technique = "hoi-ky-thuat"
+    case paddleShowcase = "khoe-vot"
+    case results = "ket-qua"
+    case openPlay = "open-play"
+
+    var label: String {
+        switch self {
+        case .findPartners: return "Tìm bạn đánh"
+        case .technique: return "Hỏi kỹ thuật"
+        case .paddleShowcase: return "Khoe vợt"
+        case .results: return "Kết quả"
+        case .openPlay: return "Open play"
+        }
+    }
+}
+
+/// A community photo post (`social_posts`, kind = 'post') as merged into
+/// the native feed — the twin of the web `FeedSocialPostItem`.
+struct FeedSocialPost: Equatable {
+    let authorID: UUID
+    let authorName: String
+    let body: String?
+    let imageURL: URL
+    let topic: String?
+    let status: String
+
+    var isPending: Bool { status == "pending" }
+    var topicLabel: String? { topic.flatMap(SocialPostTopic.init(rawValue:))?.label }
+}
+
+/// A `social_posts` row. Community posts are not part of
+/// `get_feed_timeline`; the repository queries the table directly and the
+/// view model merges the rows as an overlay, mirroring the web
+/// `useSocialPosts` hook (kind = 'post', last 30 days, newest first).
+struct FeedSocialPostRow: Decodable {
+    let id: UUID
+    let authorID: UUID
+    let body: String?
+    let imageURL: String
+    let topic: String?
+    let status: String
+    let createdAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, body, topic, status
+        case authorID = "author_id"
+        case imageURL = "image_url"
+        case createdAt = "created_at"
+    }
+}
+
 /// Keyset pagination cursor `(score DESC, item_id DESC)`.
 struct FeedCursor: Equatable {
     let score: Double
@@ -344,6 +401,7 @@ struct FeedItem: Identifiable, Equatable {
         case embed(FeedEmbed)
         case happening(FeedHappening)
         case highlight(FeedHighlight)
+        case socialPost(FeedSocialPost)
     }
 
     var cursor: FeedCursor { FeedCursor(score: score, itemID: id) }
@@ -455,6 +513,23 @@ struct FeedItem: Identifiable, Equatable {
         let bonus: Double = happening.kind == .live ? 10 : 1.5
         let ageHours = max(0, now.timeIntervalSince(publishedAt ?? now) / 3600)
         self.init(id: id, publishedAt: publishedAt, rankedAt: publishedAt, score: exp(-ageHours / 48.0) + bonus, kind: .happening(happening))
+    }
+
+    /// Community photo post overlay. Ordering is pure recency
+    /// (`FeedRecency`), so no score is computed — the score field only
+    /// drives the RPC keyset cursor, which overlay items never advance.
+    init?(socialPost row: FeedSocialPostRow, authorName: String) {
+        guard let url = URL(string: row.imageURL) else { return nil }
+        let date = FeedDate.parse(row.createdAt)
+        let post = FeedSocialPost(
+            authorID: row.authorID,
+            authorName: authorName,
+            body: row.body,
+            imageURL: url,
+            topic: row.topic,
+            status: row.status
+        )
+        self.init(id: row.id, publishedAt: date, rankedAt: date, score: 0, kind: .socialPost(post))
     }
 
     private init(id: UUID, publishedAt: Date?, rankedAt: Date?, score: Double, kind: Kind) {

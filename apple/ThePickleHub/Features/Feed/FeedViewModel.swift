@@ -2,8 +2,10 @@ import Foundation
 import Observation
 
 /// Drives the `/feed`-equivalent Trending timeline: first load, keyset
-/// pagination of the RPC stream, a one-time news overlay merged by score, and
-/// pull-to-refresh. Dedupes by item id so overlapping pages never double-render.
+/// pagination of the RPC stream, one-time overlays (news, embeds,
+/// highlights, happenings, and — for admins in this phase — community
+/// photo posts) merged by pure recency, and pull-to-refresh. Dedupes by
+/// item id so overlapping pages never double-render.
 @Observable
 @MainActor
 final class FeedViewModel {
@@ -17,17 +19,16 @@ final class FeedViewModel {
     private(set) var items: [FeedItem] = []
     private(set) var isLoadingMore = false
     private(set) var reachedEnd = false
+    /// Site-admin flag, loaded on each reset. In this phase community
+    /// photo posts join the feed for admins only — the same gate the web
+    /// applies (PR-A) — and the composer button keys off it too.
+    private(set) var isAdmin = false
 
     private let repo = FeedRepository()
     private var cursor: FeedCursor?
     private var rpcItems: [FeedItem] = []
     private var overlayItems: [FeedItem] = []
     private var seen = Set<UUID>()
-    // Pull-to-refresh phải cho nội dung MỚI thay vì lặp lại đúng thứ tự cũ
-    // (web làm bằng session shuffle + viewed tracking): item đã hiện ở các
-    // lần trước bị giáng điểm, cộng jitter theo salt đổi mỗi lần refresh.
-    private var shownIDs = Set<UUID>()
-    private var refreshSalt: UInt64 = .random(in: .min ... .max)
 
     @MainActor
     func loadInitial() async {
@@ -38,10 +39,9 @@ final class FeedViewModel {
 
     @MainActor
     func refresh() async {
-        // Những gì đang trên màn hình coi như đã xem → lần này tụt xuống dưới.
-        shownIDs.formUnion(items.prefix(12).map(\.id))
-        if shownIDs.count > 400 { shownIDs.removeAll() } // ponytail: reset thô khi phình
-        refreshSalt = .random(in: .min ... .max)
+        // Pure recency (PR #1111 parity): a refresh simply re-reads the
+        // sources, so genuinely new content lands on top — no viewed
+        // demotion or jitter like the old score model had.
         await fetch(reset: true)
     }
 
@@ -61,14 +61,17 @@ final class FeedViewModel {
         if reset {
             cursor = nil
             reachedEnd = false
+            isAdmin = await TournamentService.shared.isCurrentUserAdmin()
             // Overlays (like the web): fetched once per refresh, never
             // advancing the RPC cursor — news, IG reels, happenings
-            // (live/tournament/event), and system highlights.
+            // (live/tournament/event), system highlights, and community
+            // photo posts (admins only in this phase, as on the web).
             async let news = (try? repo.news()) ?? []
             async let embeds = (try? repo.embeds()) ?? []
             async let highlights = (try? repo.highlights()) ?? []
             async let happenings = repo.happenings()
-            overlayItems = await news + embeds + highlights + happenings
+            async let posts = isAdmin ? (try? repo.socialPosts()) ?? [] : []
+            overlayItems = await news + embeds + highlights + happenings + posts
         }
         do {
             let page = try await repo.page(cursor: cursor)
@@ -88,33 +91,16 @@ final class FeedViewModel {
         }
     }
 
-    /// Merge the paginated RPC items with the overlays, sorted by score
-    /// (recency tiebreak) — the same ordering the web Trending feed produces,
-    /// điều chỉnh bởi shown-penalty + refresh jitter để mỗi lần refresh nổi
-    /// nội dung khác lên đầu. Salt cố định giữa các trang load-more nên thứ
-    /// tự không nhảy trong lúc cuộn.
+    /// Merge the paginated RPC items with the overlays, ordered by pure
+    /// recency (`FeedRecency`) — the ordering the web feed adopted in
+    /// PR #1111: newest first on one shared timestamp, no type bonuses,
+    /// no engagement or viewed adjustments. The RPC stream keeps its
+    /// server-side keyset pagination; only the final merged order is
+    /// recency.
     private func rebuild() {
         let rpcIDs = Set(rpcItems.map(\.id))
         var merged = rpcItems
         merged.append(contentsOf: overlayItems.filter { !rpcIDs.contains($0.id) })
-        merged.sort { lhs, rhs in
-            let l = effectiveScore(lhs)
-            let r = effectiveScore(rhs)
-            if l != r { return l > r }
-            return (lhs.rankedAt ?? lhs.publishedAt ?? .distantPast)
-                > (rhs.rankedAt ?? rhs.publishedAt ?? .distantPast)
-        }
-        items = merged
-    }
-
-    private func effectiveScore(_ item: FeedItem) -> Double {
-        var score = item.score
-        if shownIDs.contains(item.id) { score *= 0.55 } // đã xem → nhường chỗ
-        var hasher = Hasher()
-        hasher.combine(item.id)
-        hasher.combine(refreshSalt)
-        // hash → jitter 0.85–1.15, ổn định trong 1 lần refresh.
-        let unit = Double(UInt64(bitPattern: Int64(hasher.finalize()))) / Double(UInt64.max)
-        return score * (0.85 + unit * 0.3)
+        items = FeedRecency.sorted(merged, now: Date())
     }
 }
