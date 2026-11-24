@@ -82,7 +82,7 @@ export function useSocialPosts(options?: { enabled?: boolean }) {
       const authorIds = [...new Set(rows.map((row) => row.author_id))];
       const names = new Map<
         string,
-        { display_name: string; username: string | null }
+        { display_name: string | null; username: string | null }
       >();
       if (authorIds.length > 0) {
         const { data: profiles } = await supabase
