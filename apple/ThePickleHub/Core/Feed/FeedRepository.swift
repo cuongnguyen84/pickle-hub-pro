@@ -89,7 +89,7 @@ struct FeedRepository {
         let profiles: [ProfileRow] = try await client
             .from("profiles")
             .select("id, display_name, username")
-            .in("id", value: authorIDs)
+            .in("id", values: authorIDs)
             .execute()
             .value
         var names: [UUID: String] = [:]
