@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAssistantContext } from "@/lib/assistant-context";
 import { Loader2 } from "lucide-react";
@@ -38,6 +38,8 @@ import {
   FEED_STANDARD_WINDOW_MS,
   hideQuickTableMatchCopies,
   isMatchResult,
+  computeEffectiveSeenIds,
+  partitionFeedBySeen,
   selectFeedResults,
   sortFeedByRecency,
 } from "@/lib/social/feed-ranking";
@@ -49,6 +51,17 @@ import { editorialHomeHref } from "@/lib/home-feed-redirect";
 // get_feed_timeline RPC — surfacing it through the same client merge that
 // already handles EN blog overlays keeps the SQL function untouched.
 type StreamItem = FeedTimelineItem | FeedNewsItem | FeedEmbedItem | FeedHappeningItem | FeedHighlightItem | FeedSocialPostItem;
+
+/**
+ * Engagement signal for the seen-revival check: kudos + comments. Only
+ * match items carry these counts in the feed payload today - every
+ * other type returns null and its seen state never revives (v1 scope,
+ * stated in the seen-sink report).
+ */
+function feedItemEngagement(item: StreamItem): number | null {
+  if (item.type !== "match") return null;
+  return (item.kudos_count ?? 0) + (item.comment_count ?? 0);
+}
 
 import { FeedTabs } from "@/components/social/feed/FeedTabs";
 import { FeedEmptyState } from "@/components/social/feed/FeedEmptyState";
@@ -181,7 +194,31 @@ const Feed = () => {
     // (14-day freshness window; results may reach back 90 days when
     // nothing fresher exists) - those older results now sink to the
     // bottom by time instead of being pulled up.
-    return sortFeedByRecency(merged, Date.now());
+    //
+    // Seen-sink (Cuong directive, 2026-11-24): items already seen on a
+    // previous visit move below every unseen item, so a returning reader
+    // is not greeted by the same top card all day. The partition uses the
+    // at-load snapshot: marks made during THIS visit take effect on the
+    // next load, never mid-scroll. Revival exception (Facebook pattern):
+    // a seen match whose kudos + comments grew since the last mark has
+    // something new and rejoins the unseen group at its own recency
+    // position (the payload carries counts, not interaction timestamps).
+    const engagementById = new Map<string, number>();
+    for (const item of merged) {
+      const engagement = feedItemEngagement(item);
+      if (engagement !== null) {
+        engagementById.set(item.cursor_id, engagement);
+      }
+    }
+    const effectiveSeen = computeEffectiveSeenIds(
+      viewed.viewedEntriesAtLoad,
+      engagementById,
+    );
+    return partitionFeedBySeen(
+      sortFeedByRecency(merged, Date.now()),
+      effectiveSeen,
+      (item) => item.cursor_id,
+    );
   }, [
     timelineFeed.data,
     language,
@@ -191,7 +228,38 @@ const Feed = () => {
     happeningsFeed.data,
     highlightsFeed.data,
     postsFeed.data,
+    viewed.viewedEntriesAtLoad,
   ]);
+
+  // Seen marking: a trending row counts as seen once a good part of it
+  // has actually been in the viewport, not merely rendered below the
+  // fold. Marks persist via useFeedViewedTracking and sink the item on
+  // the NEXT load (see the partition in timelineItems above).
+  const streamRef = useRef<HTMLDivElement>(null);
+  const markViewed = viewed.markViewed;
+  useEffect(() => {
+    const root = streamRef.current;
+    if (!root || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const el = entry.target as HTMLElement;
+          const id = el.dataset.feedCursor;
+          if (id) {
+            const eng = el.dataset.feedEng;
+            markViewed(id, eng !== undefined ? Number(eng) : undefined);
+          }
+          io.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.4 },
+    );
+    root
+      .querySelectorAll<HTMLElement>("[data-feed-cursor]")
+      .forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [timelineItems, tab, markViewed]);
 
   const itemCount =
     tab === "following" ? followingMatches.length : timelineItems.length;
@@ -294,7 +362,7 @@ const Feed = () => {
         />
 
         {/* Stream */}
-        <div style={{ maxWidth: 720, margin: "0 auto" }}>
+        <div ref={streamRef} style={{ maxWidth: 720, margin: "0 auto" }}>
           {isLoadingFirstPage ? (
             // Skeleton rows mirror the trending feed's dominant card shape —
             // eyebrow + title + a 4:3 media block + meta — so the column
@@ -376,6 +444,8 @@ const Feed = () => {
                 : timelineItems.map((item, i) => (
                     <div
                       key={`${item.type}:${item.cursor_id}`}
+                      data-feed-cursor={item.cursor_id}
+                      data-feed-eng={feedItemEngagement(item) ?? undefined}
                       onClickCapture={(event) => {
                         const target = event.target;
                         if (
@@ -384,7 +454,10 @@ const Feed = () => {
                         ) {
                           return;
                         }
-                        viewed.markViewed(item.cursor_id);
+                        viewed.markViewed(
+                          item.cursor_id,
+                          feedItemEngagement(item) ?? undefined,
+                        );
                       }}
                     >
                       <TimelineRow

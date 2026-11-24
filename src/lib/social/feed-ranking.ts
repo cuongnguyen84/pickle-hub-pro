@@ -325,3 +325,49 @@ export function sortFeedByRecency<T extends FeedRecencyRef>(
     return ac < bc ? 1 : -1;
   });
 }
+
+/**
+ * Seen-sink partition (Cuong directive, 2026-11-24): items the viewer has
+ * already seen on a PREVIOUS visit move below every unseen item, keeping
+ * their relative order inside each group. Nothing is removed - a seen item
+ * is still reachable by scrolling. `seenIds` must be the snapshot taken
+ * when the page loaded (see useFeedViewedTracking's viewedAtLoad), never
+ * the live set: items marked during this visit must not jump around
+ * mid-scroll. Applies to every content type, embeds included.
+ */
+export function partitionFeedBySeen<T>(
+  items: readonly T[],
+  seenIds: ReadonlySet<string>,
+  cursorIdOf: (item: T) => string,
+): T[] {
+  if (seenIds.size === 0) return items.slice();
+  const unseen: T[] = [];
+  const seen: T[] = [];
+  for (const item of items) {
+    (seenIds.has(cursorIdOf(item)) ? seen : unseen).push(item);
+  }
+  return [...unseen, ...seen];
+}
+
+/**
+ * Revival check (Facebook pattern): a seen item whose engagement has
+ * grown since it was last marked has something new and leaves the seen
+ * group. `entriesAtLoad` carries the engagement baseline stored at mark
+ * time; `currentEngagement` carries the payload's current kudos +
+ * comments for the items that have any. An item revives only when BOTH
+ * numbers exist and the current one is strictly greater - with no
+ * baseline or no payload signal, seen stays seen.
+ */
+export function computeEffectiveSeenIds(
+  entriesAtLoad: ReadonlyMap<string, { e?: number }>,
+  currentEngagement: ReadonlyMap<string, number>,
+): Set<string> {
+  const seen = new Set<string>();
+  for (const [id, entry] of entriesAtLoad) {
+    const current = currentEngagement.get(id);
+    const revived =
+      current !== undefined && entry.e !== undefined && current > entry.e;
+    if (!revived) seen.add(id);
+  }
+  return seen;
+}
