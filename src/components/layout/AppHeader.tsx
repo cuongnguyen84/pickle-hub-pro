@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { UnifiedNotificationBell } from "@/components/social/notifications";
 import { getLoginUrl } from "@/lib/auth-config";
+import { editorialHomeHref } from "@/lib/home-feed-redirect";
 
 const AppHeader = () => {
   const { t } = useI18n();
@@ -37,6 +38,13 @@ const AppHeader = () => {
 
   // Language prefix for navigation links
   const langPrefix = location.pathname === "/vi" || location.pathname.startsWith("/vi/") ? "/vi" : "";
+
+  // Signed-in visitors land on the feed when they open / (PR #1107), so
+  // their Home affordances carry the ?home=1 escape, like the feed page's
+  // own Home link. Anonymous visitors keep the plain paths below.
+  const signedInHomeHref = user
+    ? editorialHomeHref(langPrefix === "/vi" ? "vi" : "en")
+    : null;
 
   const handleSignOut = async () => {
     await signOut();
@@ -67,7 +75,7 @@ const AppHeader = () => {
       <div className="container-wide">
         <div className="flex items-center justify-between h-14 md:h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 text-foreground font-semibold text-lg">
+          <Link to={signedInHomeHref ?? "/"} className="flex items-center gap-2 text-foreground font-semibold text-lg">
             <div className="w-8 h-8 rounded-lg bg-gradient-brand flex items-center justify-center">
               <span className="text-white font-bold text-sm">TPH</span>
             </div>
@@ -109,7 +117,7 @@ const AppHeader = () => {
               return (
                 <Link
                   key={link.path}
-                  to={link.path}
+                  to={signedInHomeHref && link.path === `${langPrefix}/` ? signedInHomeHref : link.path}
                   className={cn(
                     "px-3.5 py-1.5 rounded-full text-sm font-medium transition-all duration-200",
                     isActive
@@ -227,7 +235,7 @@ const AppHeader = () => {
               return (
                 <Link
                   key={link.path}
-                  to={link.path}
+                  to={signedInHomeHref && link.path === `${langPrefix}/` ? signedInHomeHref : link.path}
                   className={cn(
                     "block px-4 py-3 rounded-lg text-sm font-medium transition-colors duration-200",
                     isActive
