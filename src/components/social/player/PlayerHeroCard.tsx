@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { BadgeCheck, MessageCircle, Pencil, Share2 } from "lucide-react";
+import { MessageCircle, Pencil, Share2 } from "lucide-react";
+import { VerifiedBadge } from "@/components/social/VerifiedBadge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/i18n";
@@ -301,11 +302,12 @@ export function PlayerHeroCard({ player, stats, isOwn }: PlayerHeroCardProps) {
         >
           <span style={{ display: "inline" }}>{displayName}</span>
           {player.is_verified && (
-            <BadgeCheck
-              className="ml-2 inline h-6 w-6"
-              style={{ color: "var(--tl-green)", verticalAlign: "middle" }}
-              aria-label={language === "vi" ? "Đã xác thực" : "Verified"}
-            />
+            <span className="ml-2 inline-block" style={{ verticalAlign: "middle" }}>
+              <VerifiedBadge
+                size={24}
+                label={language === "vi" ? "Đã xác thực" : "Verified"}
+              />
+            </span>
           )}
           {player.is_pro && (
             <span

@@ -41,8 +41,8 @@ export function ProfilePosts({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-          gap: 16,
+          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+          gap: 20,
         }}
       >
         {data.posts.map((post) => {
@@ -64,8 +64,9 @@ export function ProfilePosts({
                 decoding="async"
                 style={{
                   width: "100%",
-                  aspectRatio: "4 / 3",
+                  aspectRatio: "16 / 10",
                   objectFit: "cover",
+                  objectPosition: "center 30%",
                   display: "block",
                 }}
               />
