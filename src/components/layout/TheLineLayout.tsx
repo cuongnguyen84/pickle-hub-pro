@@ -684,9 +684,10 @@ export const TheLineLayout = ({ title, exactTitle, description, noindex = false,
                       <div className="name">{userName || "Signed in"}</div>
                       <div className="email">{userEmail}</div>
                     </div>
-                    {/* View my profile shortcut — disabled while the
-                        profile is still loading or for users whose
-                        onboarding hasn't assigned a username yet. */}
+                    {/* View my profile shortcut — a plain item in the
+                        same styling while the profile is still loading
+                        or for users whose onboarding hasn't assigned a
+                        username yet (never rendered dimmed/disabled). */}
                     {profileUsername ? (
                       <Link
                         to={`/nguoi-choi/${profileUsername}`}
@@ -695,7 +696,17 @@ export const TheLineLayout = ({ title, exactTitle, description, noindex = false,
                         {language === "vi" ? "Xem hồ sơ" : "View my profile"}
                       </Link>
                     ) : (
-                      <span style={{ opacity: 0.5, cursor: "default", padding: "8px 12px", display: "block" }}>
+                      <span
+                        style={{
+                          display: "flex",
+                          width: "100%",
+                          alignItems: "center",
+                          padding: "8px 12px",
+                          fontSize: 13.5,
+                          color: "var(--tl-fg-2)",
+                          cursor: "default",
+                        }}
+                      >
                         {language === "vi" ? "Xem hồ sơ" : "View my profile"}
                       </span>
                     )}
