@@ -10,6 +10,33 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "dupr-rating-protection-2027-tournaments",
+    "publishedDate": "2026-11-24",
+    "updatedDate": "2026-11-24",
+    "author": "The PickleHub Team",
+    "tags": [
+      "dupr",
+      "rating",
+      "nguoi choi phong trao",
+      "giai dau 2027"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "See live results on ThePickleHub",
+      "vi": "Xem kết quả trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/dupr-rating-protection-2027-tournaments-hero.webp",
+      "alt": "Amateur doubles players of mixed levels playing an evening open-play match at a Vietnamese pickleball club"
+    },
+    "titleEn": "DUPR's new rating protection rule, and the biggest tournaments to watch in 2027",
+    "titleVi": "DUPR đổi thuật toán bảo vệ rating: thắng đội yếu hơn 0,5 điểm không còn lo tụt điểm",
+    "metaTitleEn": "DUPR Rating Protection: What Changed for 2027",
+    "metaTitleVi": "Thuật toán bảo vệ rating DUPR mới từ 4/11/2026",
+    "metaDescriptionEn": "DUPR's new rule keeps all four ratings unchanged when a team rated 0.5 or more higher wins. Plus the biggest tournaments to watch in 2027.",
+    "metaDescriptionVi": "Từ 4/11/2026, thắng đội yếu hơn từ 0,5 điểm thì rating DUPR của cả 4 người đều giữ nguyên. Kèm lịch các giải lớn 2027."
+  },
+  {
     "slug": "daytona-beach-open-five-sweeps-best-of-three",
     "publishedDate": "2026-11-24",
     "updatedDate": "2026-11-24",

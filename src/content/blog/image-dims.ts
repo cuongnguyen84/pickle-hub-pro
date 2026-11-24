@@ -50,6 +50,8 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/dupr-pickleball-rating-hero.webp": [1024, 1536],
   "/images/blog/dupr-rating-improvement-30-day-plan-hero-768.webp": [768, 432],
   "/images/blog/dupr-rating-improvement-30-day-plan-hero.webp": [1200, 675],
+  "/images/blog/dupr-rating-protection-2027-tournaments-hero-768.webp": [768, 512],
+  "/images/blog/dupr-rating-protection-2027-tournaments-hero.webp": [1536, 1024],
   "/images/blog/dupr-ta-picklehub-partnership-hero-768.webp": [768, 512],
   "/images/blog/dupr-ta-picklehub-partnership-hero.webp": [1536, 1024],
   "/images/blog/dupr-thepicklehub-user-guide-hero-768.webp": [768, 432],
