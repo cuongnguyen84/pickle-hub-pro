@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { lazy, Suspense, useEffect, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAssistantContext } from "@/lib/assistant-context";
 import { Loader2 } from "lucide-react";
@@ -18,6 +18,8 @@ import { useFeedNews, type FeedNewsItem } from "@/hooks/social/useFeedNews";
 import { useFeedEmbeds, type FeedEmbedItem } from "@/hooks/social/useFeedEmbeds";
 import { useFeedHappenings, type FeedHappeningItem } from "@/hooks/social/useFeedHappenings";
 import { useFeedHighlights, type FeedHighlightItem } from "@/hooks/social/useFeedHighlights";
+import { useSocialPosts, type FeedSocialPostItem } from "@/hooks/social/useSocialPosts";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useFeedTab } from "@/hooks/social/useFeedTab";
 import { useFeedViewedTracking } from "@/hooks/social/useFeedViewedTracking";
 import { FeedMatchCard } from "@/components/social/feed/FeedMatchCard";
@@ -29,6 +31,7 @@ import { FeedEmbedCard } from "@/components/social/feed/FeedEmbedCard";
 import { FeedHappeningCard } from "@/components/social/feed/FeedHappeningCard";
 import { FeedHighlightCard } from "@/components/social/feed/FeedHighlightCard";
 import { FeedResultCard } from "@/components/social/feed/FeedResultCard";
+import { FeedPostCard } from "@/components/social/feed/FeedPostCard";
 import {
   dedupeFeedItems,
   FEED_RESULT_WIDE_WINDOW_MS,
@@ -45,11 +48,16 @@ import { editorialHomeHref } from "@/lib/home-feed-redirect";
 // merged client-side (see useFeedNews). News is intentionally NOT in the
 // get_feed_timeline RPC — surfacing it through the same client merge that
 // already handles EN blog overlays keeps the SQL function untouched.
-type StreamItem = FeedTimelineItem | FeedNewsItem | FeedEmbedItem | FeedHappeningItem | FeedHighlightItem;
+type StreamItem = FeedTimelineItem | FeedNewsItem | FeedEmbedItem | FeedHappeningItem | FeedHighlightItem | FeedSocialPostItem;
 
 import { FeedTabs } from "@/components/social/feed/FeedTabs";
 import { FeedEmptyState } from "@/components/social/feed/FeedEmptyState";
 import { FeedSignInNudge } from "@/components/social/feed/FeedSignInNudge";
+
+// The UGC composer ships as a lazy chunk: it is only rendered for the
+// gated audience (site admins in PR-A) and must not weigh down the
+// feed bundle for readers.
+const FeedComposer = lazy(() => import("@/components/social/feed/FeedComposer"));
 
 /**
  * /feed — social discovery surface. Two tabs:
@@ -99,6 +107,11 @@ const Feed = () => {
   const followingFeed = useFollowingFeed(
     tab === "following" ? user?.id : undefined,
   );
+  // UGC photo posts (PR-A): composer + stream merge are gated to site
+  // admins until the moderation queue (PR-B) and the legal sign-off
+  // land; the hook itself stays ungated so lifting this is one flag.
+  const { isAdmin } = useAdminAuth();
+  const postsFeed = useSocialPosts({ enabled: isAdmin });
   const timelineFeed = useFeedTimeline();
   const resultsFeed = useFeedResults();
   const newsFeed = useFeedNews(language === "vi" ? "vi" : "en");
@@ -153,6 +166,7 @@ const Feed = () => {
       ...(embedsFeed.data ?? []),
       ...(happeningsFeed.data ?? []),
       ...(highlightsFeed.data ?? []),
+      ...(postsFeed.data ?? []),
     ];
 
     // Ordering (Cuong directive, 2026-11-24): newest first across every
@@ -176,6 +190,7 @@ const Feed = () => {
     embedsFeed.data,
     happeningsFeed.data,
     highlightsFeed.data,
+    postsFeed.data,
   ]);
 
   const itemCount =
@@ -280,6 +295,11 @@ const Feed = () => {
 
         {/* Stream */}
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
+          {isAdmin && tab === "trending" && (
+            <Suspense fallback={null}>
+              <FeedComposer language={language} />
+            </Suspense>
+          )}
           {isLoadingFirstPage ? (
             // Skeleton rows mirror the trending feed's dominant card shape —
             // eyebrow + title + a 4:3 media block + meta — so the column
@@ -425,6 +445,15 @@ function TimelineRow({
   language: import("@/lib/social/feed-formatters").Language;
   staggerIndex: number;
 }) {
+  if (item.type === "social_post") {
+    return (
+      <FeedPostCard
+        item={item}
+        language={language}
+        staggerIndex={staggerIndex}
+      />
+    );
+  }
   if (item.type === "highlight") {
     return (
       <FeedHighlightCard

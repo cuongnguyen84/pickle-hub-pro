@@ -21,6 +21,9 @@ verify_jwt = false
 [functions.delete-account]
 verify_jwt = false
 
+[functions.create-post]
+verify_jwt = false
+
 [functions.batch-view-events]
 verify_jwt = false
 
