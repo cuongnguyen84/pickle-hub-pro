@@ -45,6 +45,12 @@ import { gzipSync } from "node:zlib";
 import { join, dirname, resolve } from "node:path";
 
 const BUDGETS = {
+  // 1950 -> 1955 (2026-11-24): Job B author identity on community
+  // surfaces (avatar + verified badge on feed cards and the
+  // moderation queue, the AdminUsers verified toggle) plus the
+  // approved-author profile-link rule pushed CI CODE to
+  // 1950.2/1950 KB with every other quality step green. +5 KB is
+  // the smallest historical step and restores ~4.8 KB of headroom.
   // 1940 -> 1950 (2026-11-24, owner-approved 2026-11-23): PR-A UGC
   // photo posts (create-post composer + post cards merged into /feed)
   // ships new client code; the raise was approved together with the
@@ -74,7 +80,7 @@ const BUDGETS = {
   // batch (2 posts) needed +1.3 KB of metadata headroom.
   // 1800 -> 1900 (2026-10-01, DEBT-09, owner-approved): the blog metadata chunk grows
   // with every post and held CODE at 1799.7/1800. Paid back when /blog stops shipping it whole.
-  code: Number(process.env.BUNDLE_CODE_BUDGET_KB || 1950),
+  code: Number(process.env.BUNDLE_CODE_BUDGET_KB || 1955),
   initial: Number(process.env.BUNDLE_INITIAL_BUDGET_KB || 280),
   contentChunk: Number(process.env.BUNDLE_CONTENT_CHUNK_KB || 20),
 };
