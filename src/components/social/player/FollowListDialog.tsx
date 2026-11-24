@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { BadgeCheck, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { VerifiedBadge } from "@/components/social/VerifiedBadge";
 import {
   Dialog,
   DialogContent,
@@ -117,12 +118,7 @@ export function FollowListDialog({
                         }}
                       >
                         {name}
-                        {p.is_verified && (
-                          <BadgeCheck
-                            className="h-4 w-4"
-                            style={{ color: "var(--tl-green)", flex: "0 0 auto" }}
-                          />
-                        )}
+                        {p.is_verified && <VerifiedBadge size={16} />}
                       </span>
                       {p.username && (
                         <span

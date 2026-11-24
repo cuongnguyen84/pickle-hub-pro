@@ -12,6 +12,7 @@ import {
   useAdminTournaments,
 } from "@/hooks/useAdminData";
 import { useI18n } from "@/i18n";
+import { VerifiedBadge } from "@/components/social/VerifiedBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,7 +46,7 @@ import {
   type SocialPostStatus,
 } from "@/hooks/usePostModeration";
 import { SOCIAL_POST_TOPICS } from "@/hooks/social/useSocialPosts";
-import { Video, Radio, Eye, EyeOff, StopCircle, Pencil, Trash2, Images, Check, X, Flag, CheckCircle, BadgeCheck } from "lucide-react";
+import { Video, Radio, Eye, EyeOff, StopCircle, Pencil, Trash2, Images, Check, X, Flag, CheckCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
@@ -192,14 +193,14 @@ export default function AdminModeration() {
                   >
                     {post.author_name}
                     {post.author_is_verified && (
-                      <BadgeCheck className="h-4 w-4 text-green-500" aria-label="Đã xác thực" />
+                      <VerifiedBadge size={16} label="Đã xác thực" />
                     )}
                   </Link>
                 ) : (
                   <h3 className="font-medium inline-flex items-center gap-1.5">
                     {post.author_name}
                     {post.author_is_verified && (
-                      <BadgeCheck className="h-4 w-4 text-green-500" aria-label="Đã xác thực" />
+                      <VerifiedBadge size={16} label="Đã xác thực" />
                     )}
                   </h3>
                 )}
