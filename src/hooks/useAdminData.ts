@@ -237,6 +237,25 @@ export function useAssignUserOrganization() {
   });
 }
 
+export function useUpdateUserVerified() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, isVerified }: { userId: string; isVerified: boolean }) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ is_verified: isVerified })
+        .eq("id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      // The badge also renders on feed cards and profile pages.
+      queryClient.invalidateQueries({ queryKey: ["feed", "social-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["player-profile"] });
+    },
+  });
+}
+
 // Tournaments hooks
 export function useAdminTournaments() {
   return useQuery({

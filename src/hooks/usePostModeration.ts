@@ -19,6 +19,15 @@ export interface ModerationPost {
   id: string;
   author_id: string;
   author_name: string;
+  author_username: string | null;
+  author_avatar_url: string | null;
+  author_is_verified: boolean;
+  /**
+   * Whether the author's /nguoi-choi page opens for viewers:
+   * profiles.is_public_profile OR the author has at least one
+   * approved community post (Cuong rule, 2026-11-24).
+   */
+  author_profile_linkable: boolean;
   body: string | null;
   image_url: string;
   topic: string | null;
@@ -45,15 +54,35 @@ async function withAuthorNames(rows: SocialPostRow[]): Promise<ModerationPost[]>
   const authorIds = [...new Set(rows.map((r) => r.author_id))];
   const { data: profiles } = await supabase
     .from("profiles")
-    .select("id, display_name, username")
+    .select(
+      "id, display_name, username, avatar_url, is_verified, is_public_profile",
+    )
     .in("id", authorIds);
-  const names = new Map<string, string>();
+  const authors = new Map<
+    string,
+    {
+      name: string;
+      username: string | null;
+      avatar_url: string | null;
+      is_verified: boolean;
+      is_public: boolean;
+    }
+  >();
   for (const p of (profiles ?? []) as {
     id: string;
     display_name: string | null;
     username: string | null;
+    avatar_url: string | null;
+    is_verified: boolean | null;
+    is_public_profile: boolean | null;
   }[]) {
-    names.set(p.id, p.display_name || p.username || "ThePickleHub");
+    authors.set(p.id, {
+      name: p.display_name || p.username || "ThePickleHub",
+      username: p.username,
+      avatar_url: p.avatar_url,
+      is_verified: p.is_verified ?? false,
+      is_public: p.is_public_profile ?? false,
+    });
   }
 
   const { data: reports } = await supabase
@@ -67,9 +96,32 @@ async function withAuthorNames(rows: SocialPostRow[]): Promise<ModerationPost[]>
     reportCounts.set(r.content_id, (reportCounts.get(r.content_id) ?? 0) + 1);
   }
 
+  // Authors with at least one approved post have a publicly
+  // viewable profile even without the opt-in (Cuong rule,
+  // 2026-11-24) - one tally query over the batch's authors.
+  const approvedAuthors = new Set<string>();
+  if (authorIds.length > 0) {
+    const { data: approvedRows } = await supabase
+      .from("social_posts" as never)
+      .select("author_id")
+      .in("author_id", authorIds)
+      .eq("kind", "post")
+      .eq("status", "approved")
+      .limit(500);
+    for (const r of (approvedRows as { author_id: string }[] | null) ?? []) {
+      approvedAuthors.add(r.author_id);
+    }
+  }
+
   return rows.map((row) => ({
     ...row,
-    author_name: names.get(row.author_id) ?? "ThePickleHub",
+    author_name: authors.get(row.author_id)?.name ?? "ThePickleHub",
+    author_username: authors.get(row.author_id)?.username ?? null,
+    author_avatar_url: authors.get(row.author_id)?.avatar_url ?? null,
+    author_is_verified: authors.get(row.author_id)?.is_verified ?? false,
+    author_profile_linkable:
+      (authors.get(row.author_id)?.is_public ?? false) ||
+      approvedAuthors.has(row.author_id),
     report_count: reportCounts.get(row.id) ?? 0,
   }));
 }
