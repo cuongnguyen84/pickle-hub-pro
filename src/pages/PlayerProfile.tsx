@@ -14,6 +14,7 @@ import { PlayerHeroCard } from "@/components/social/player/PlayerHeroCard";
 import { PlayerStats } from "@/components/social/player/PlayerStats";
 import { DuprRatingChart } from "@/components/social/player/DuprRatingChart";
 import { MatchHistoryTabs } from "@/components/social/player/MatchHistoryTabs";
+import { ProfilePosts } from "@/components/social/player/ProfilePosts";
 import { PlayersNearRating } from "@/components/social/PlayersNearRating";
 import { useAssistantContext } from "@/lib/assistant-context";
 
@@ -194,6 +195,9 @@ const PlayerProfile = () => {
           followingCount={statsQuery.data?.following_count ?? 0}
           matchesQuery={matchesQuery}
         />
+        {/* Community posts (Job C, 2026-11-24): the user's approved
+            social_posts. Self-hiding when there are none. */}
+        <ProfilePosts userId={profile.id} language={language} />
       </div>
     </TheLineLayout>
   );
