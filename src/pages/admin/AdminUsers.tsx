@@ -10,6 +10,7 @@ import {
 import { useUpdateUserQuota } from "@/hooks/useAdminQuota";
 import { useDebounce } from "@/hooks/useSearch";
 import { useI18n } from "@/i18n";
+import { VerifiedBadge } from "@/components/social/VerifiedBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,7 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Users, Save, Search, BadgeCheck } from "lucide-react";
+import { Users, Save, Search } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
 export default function AdminUsers() {
@@ -231,9 +232,7 @@ export default function AdminUsers() {
                               disabled={updateVerified.isPending}
                               aria-label={`Tick xanh của ${user.email}`}
                             />
-                            {user.is_verified && (
-                              <BadgeCheck className="w-4 h-4 text-green-500" />
-                            )}
+                            {user.is_verified && <VerifiedBadge size={16} />}
                           </span>
                         </TableCell>
                       </TableRow>

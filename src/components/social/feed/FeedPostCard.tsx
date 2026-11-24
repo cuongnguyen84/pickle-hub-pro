@@ -6,7 +6,7 @@ import { type Language } from "@/lib/social/feed-formatters";
 import { formatMatchWhen } from "@/lib/social/feed-formatters";
 import { ReportDialog } from "@/components/report/ReportDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BadgeCheck } from "lucide-react";
+import { VerifiedBadge } from "@/components/social/VerifiedBadge";
 import { Link } from "react-router-dom";
 
 const initials = (name: string) =>
@@ -68,10 +68,9 @@ export function FeedPostCard({
       >
         {item.author_name}
         {item.author_is_verified && (
-          <BadgeCheck
-            className="h-4 w-4"
-            style={{ color: "var(--tl-green)" }}
-            aria-label={language === "vi" ? "Đã xác thực" : "Verified"}
+          <VerifiedBadge
+            size={16}
+            label={language === "vi" ? "Đã xác thực" : "Verified"}
           />
         )}
       </span>
