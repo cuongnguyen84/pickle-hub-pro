@@ -19,6 +19,11 @@ export interface ModerationPost {
   id: string;
   author_id: string;
   author_name: string;
+  author_username: string | null;
+  author_avatar_url: string | null;
+  author_is_verified: boolean;
+  /** profiles.is_public_profile - the /nguoi-choi page is opt-in. */
+  author_is_public: boolean;
   body: string | null;
   image_url: string;
   topic: string | null;
@@ -45,15 +50,35 @@ async function withAuthorNames(rows: SocialPostRow[]): Promise<ModerationPost[]>
   const authorIds = [...new Set(rows.map((r) => r.author_id))];
   const { data: profiles } = await supabase
     .from("profiles")
-    .select("id, display_name, username")
+    .select(
+      "id, display_name, username, avatar_url, is_verified, is_public_profile",
+    )
     .in("id", authorIds);
-  const names = new Map<string, string>();
+  const authors = new Map<
+    string,
+    {
+      name: string;
+      username: string | null;
+      avatar_url: string | null;
+      is_verified: boolean;
+      is_public: boolean;
+    }
+  >();
   for (const p of (profiles ?? []) as {
     id: string;
     display_name: string | null;
     username: string | null;
+    avatar_url: string | null;
+    is_verified: boolean | null;
+    is_public_profile: boolean | null;
   }[]) {
-    names.set(p.id, p.display_name || p.username || "ThePickleHub");
+    authors.set(p.id, {
+      name: p.display_name || p.username || "ThePickleHub",
+      username: p.username,
+      avatar_url: p.avatar_url,
+      is_verified: p.is_verified ?? false,
+      is_public: p.is_public_profile ?? false,
+    });
   }
 
   const { data: reports } = await supabase
@@ -69,7 +94,11 @@ async function withAuthorNames(rows: SocialPostRow[]): Promise<ModerationPost[]>
 
   return rows.map((row) => ({
     ...row,
-    author_name: names.get(row.author_id) ?? "ThePickleHub",
+    author_name: authors.get(row.author_id)?.name ?? "ThePickleHub",
+    author_username: authors.get(row.author_id)?.username ?? null,
+    author_avatar_url: authors.get(row.author_id)?.avatar_url ?? null,
+    author_is_verified: authors.get(row.author_id)?.is_verified ?? false,
+    author_is_public: authors.get(row.author_id)?.is_public ?? false,
     report_count: reportCounts.get(row.id) ?? 0,
   }));
 }
