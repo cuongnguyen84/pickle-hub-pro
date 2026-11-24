@@ -10,6 +10,35 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "line-call-rules-ly-hoang-nam-fair-play",
+    "publishedDate": "2026-11-24",
+    "updatedDate": "2026-11-24",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball",
+      "rules",
+      "line calls",
+      "ly hoang nam",
+      "fair play",
+      "vtv9 open"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "See live results on ThePickleHub",
+      "vi": "Xem kết quả trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/ly-hoang-nam-line-call-rules-fair-play-hero.webp",
+      "alt": "Ly Hoang Nam volleying at the net during a professional pickleball match"
+    },
+    "titleEn": "The Closest Player Owns the OUT Call - and \"Clearly Seen\" Is Where Fair Play Begins",
+    "titleVi": "Quyền gọi bóng OUT thuộc về người đứng gần nhất - và ranh giới fair play nằm ở hai chữ \"thấy rõ\"",
+    "metaTitleEn": "Line Calls and Fair Play: Who Owns the OUT Call?",
+    "metaTitleVi": "Quyền gọi bóng OUT và ranh giới fair play",
+    "metaDescriptionEn": "Under the 2026 USA Pickleball rulebook the closest player owns the OUT call, but may use it only when they clearly see the ball out.",
+    "metaDescriptionVi": "Quyền gọi OUT thuộc về người đứng gần nhất, nhưng chỉ khi thấy rõ bóng ra ngoài. Qua vụ Lý Hoàng Nam ở VTV9 Open 2026."
+  },
+  {
     "slug": "dupr-rating-protection-2027-tournaments",
     "publishedDate": "2026-11-24",
     "updatedDate": "2026-11-24",
