@@ -13,6 +13,8 @@ interface UserProfile {
   // Onboarding progress (profiles table); used by the wizard resume logic.
   onboarding_step?: number | null;
   onboarding_completed_at?: string | null;
+  // Public handle for /nguoi-choi/:username (header "View my profile").
+  username?: string | null;
 }
 
 export function useUserProfile() {
@@ -31,7 +33,7 @@ export function useUserProfile() {
       // email is available from the auth session instead.
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, display_name, avatar_url, organization_id, created_at, onboarding_step, onboarding_completed_at")
+        .select("id, display_name, avatar_url, organization_id, created_at, onboarding_step, onboarding_completed_at, username")
         .eq("id", user.id)
         .single();
 
