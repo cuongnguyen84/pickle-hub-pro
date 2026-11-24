@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Loader2, MessageCircle, Pencil, Trash2 } from "lucide-react";
 import { useI18n } from "@/i18n";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthOptional } from "@/hooks/useAuth";
 import {
   buildCommentTree,
   type ThreadedComment,
@@ -36,7 +36,7 @@ export function TargetCommentThread({
   targetId: string;
 }) {
   const { language } = useI18n();
-  const { user } = useAuth();
+  const user = useAuthOptional()?.user ?? null;
   const navigate = useNavigate();
   const location = useLocation();
   const moderationContext = useTargetModerationContext();

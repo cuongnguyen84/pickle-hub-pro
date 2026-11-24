@@ -1,7 +1,7 @@
 import type { Page, Request } from '@playwright/test';
 
 const networkAudit = new WeakMap<Page, { blockedTelemetry: number; forbidden: string[]; readRpc: string[] }>();
-export const VISUAL_READ_RPCS = ['get_homepage_stats', 'get_top_blog_posts', 'get_blog_post_view_counts_batch', 'get_feed_timeline', 'get_feed_recent_results', 'dupr_leaderboard_vietnam', 'shop_public_categories', 'shop_public_search'];
+export const VISUAL_READ_RPCS = ['get_homepage_stats', 'get_top_blog_posts', 'get_blog_post_view_counts_batch', 'get_feed_timeline', 'get_feed_recent_results', 'get_engagement_counts', 'dupr_leaderboard_vietnam', 'shop_public_categories', 'shop_public_search'];
 export function visualNetworkPolicy(rawUrl: string, method: string): 'read' | 'telemetry' | 'forbidden' {
   const url = new URL(rawUrl);
   const telemetryHost = /(^|\.)(google-analytics\.com|googletagmanager\.com|cloudflareinsights\.com|ahrefs\.com|doubleclick\.net|googlesyndication\.com)$/.test(url.hostname);

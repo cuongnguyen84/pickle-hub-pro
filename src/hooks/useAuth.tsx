@@ -77,8 +77,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (ageMs < 120000) {
               signupTrackedRef.current = true;
               const method = session.user.app_metadata?.provider || "email";
+              console.log("[GA4] sign_up event fired!", { method, ageMs });
               trackEvent("sign_up", { method });
-
+              // Fallback: push to dataLayer directly
+              if (window.dataLayer) {
+                window.dataLayer.push({ event: "sign_up", method });
+              }
             }
           }
         }
@@ -163,4 +167,13 @@ export function useAuth() {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
+}
+
+/**
+ * Non-throwing variant for components that also render in bare test /
+ * embed trees without an AuthProvider (2026-11-24, feed engagement):
+ * a missing provider reads as a signed-out guest.
+ */
+export function useAuthOptional() {
+  return useContext(AuthContext);
 }

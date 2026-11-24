@@ -5,7 +5,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthOptional } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/i18n";
 import type { MatchComment } from "@/hooks/social/useComments";
@@ -108,7 +108,7 @@ export function useAddTargetCommentMutation(
   targetType: EngagementTargetType,
   targetId: string,
 ) {
-  const { user } = useAuth();
+  const user = useAuthOptional()?.user ?? null;
   const { toast } = useToast();
   const { language } = useI18n();
   const invalidate = useInvalidateTarget(targetType, targetId);
@@ -148,7 +148,7 @@ export function useEditTargetCommentMutation(
   targetType: EngagementTargetType,
   targetId: string,
 ) {
-  const { user } = useAuth();
+  const user = useAuthOptional()?.user ?? null;
   const { toast } = useToast();
   const { language } = useI18n();
   const invalidate = useInvalidateTarget(targetType, targetId);
@@ -182,7 +182,7 @@ export function useDeleteTargetCommentMutation(
   targetType: EngagementTargetType,
   targetId: string,
 ) {
-  const { user } = useAuth();
+  const user = useAuthOptional()?.user ?? null;
   const { toast } = useToast();
   const { language } = useI18n();
   const invalidate = useInvalidateTarget(targetType, targetId);
@@ -216,7 +216,7 @@ export function useDeleteTargetCommentMutation(
  * server RPC re-checks it when the target is a match).
  */
 export function useTargetModerationContext(): ModerationContext {
-  const { user } = useAuth();
+  const user = useAuthOptional()?.user ?? null;
   const viewerId = user?.id ?? null;
 
   const { data } = useQuery({

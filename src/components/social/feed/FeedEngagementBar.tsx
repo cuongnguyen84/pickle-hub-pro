@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Heart, Loader2, MessageCircle } from "lucide-react";
 import { useI18n } from "@/i18n";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthOptional } from "@/hooks/useAuth";
 import type { EngagementTargetType } from "@/lib/social/engagement";
 import {
   useEngagementCounts,
@@ -24,7 +24,7 @@ export function FeedEngagementBar({
   targetId: string;
 }) {
   const { language } = useI18n();
-  const { user } = useAuth();
+  const user = useAuthOptional()?.user ?? null;
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
