@@ -338,7 +338,7 @@ function normalizeRow(row: RpcRow): FeedTimelineItem | null {
  * bonus, no engagement signals) so the merged sort lines up with what
  * the SQL function would have produced if the row lived in vi_blog_posts.
  */
-function buildEnBlogItems(): FeedTimelineItem[] {
+export function buildEnBlogItems(): FeedTimelineItem[] {
   const now = Date.now();
   const windowStartMs = now - WINDOW_DAYS * 24 * 60 * 60 * 1000;
   return blogTeasers
