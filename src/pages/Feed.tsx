@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAssistantContext } from "@/lib/assistant-context";
 import { Loader2 } from "lucide-react";
@@ -31,14 +31,12 @@ import { FeedHighlightCard } from "@/components/social/feed/FeedHighlightCard";
 import { FeedResultCard } from "@/components/social/feed/FeedResultCard";
 import {
   dedupeFeedItems,
-  FEED_PAGE_SIZE,
-  FEED_RESULT_EVERY,
   FEED_RESULT_WIDE_WINDOW_MS,
   FEED_STANDARD_WINDOW_MS,
   hideQuickTableMatchCopies,
-  interleaveFeedResults,
   isMatchResult,
   selectFeedResults,
+  sortFeedByRecency,
 } from "@/lib/social/feed-ranking";
 import { feedFooterCopy, feedRouteLanguage } from "@/lib/social/feed-locale";
 import { editorialHomeHref } from "@/lib/home-feed-redirect";
@@ -48,18 +46,6 @@ import { editorialHomeHref } from "@/lib/home-feed-redirect";
 // get_feed_timeline RPC — surfacing it through the same client merge that
 // already handles EN blog overlays keeps the SQL function untouched.
 type StreamItem = FeedTimelineItem | FeedNewsItem | FeedEmbedItem | FeedHappeningItem | FeedHighlightItem;
-
-// Tiny FNV-1a 32-bit hash for the per-mount jitter. Deterministic so two
-// renders inside the same mount produce the same ordering — React Query
-// reconciliation depends on stable keys.
-function hashStr(input: string): number {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < input.length; i += 1) {
-    h ^= input.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return h >>> 0;
-}
 
 import { FeedTabs } from "@/components/social/feed/FeedTabs";
 import { FeedEmptyState } from "@/components/social/feed/FeedEmptyState";
@@ -84,22 +70,6 @@ import { FeedSignInNudge } from "@/components/social/feed/FeedSignInNudge";
  * intentionally no longer wired up here.
  */
 
-// UX-08 — see sessionSeedRef comment inside Feed for the rationale.
-const FEED_SHUFFLE_SEED_KEY = "feed_shuffle_seed";
-const getSessionShuffleSeed = (): number => {
-  const fresh = (Math.random() * 0x7fffffff) | 0;
-  try {
-    const stored = sessionStorage.getItem(FEED_SHUFFLE_SEED_KEY);
-    if (stored !== null && Number.isFinite(Number(stored))) {
-      return Number(stored) | 0;
-    }
-    sessionStorage.setItem(FEED_SHUFFLE_SEED_KEY, String(fresh));
-  } catch {
-    // sessionStorage unavailable (private mode / storage quota) —
-    // fall back to the old per-mount seed.
-  }
-  return fresh;
-};
 const Feed = () => {
   const { setLanguageFromUrl } = useI18n();
   const location = useLocation();
@@ -116,14 +86,6 @@ const Feed = () => {
     };
   }, [language, setLanguageFromUrl]);
   const { user, loading: authLoading } = useAuth();
-  // UX-08 — jitter seed for tie-breaking in the score sort, stable per tab
-  // session. This used to be per-mount random, which re-seeded on every
-  // navigation TO /feed, so backing out of a post reordered the feed under
-  // the user. sessionStorage keeps the order stable within one tab session
-  // (back = same order); a new tab/session gets a fresh seed, preserving
-  // the "session shuffle" intent. Trade-off: revisits within one tab no
-  // longer reshuffle — new content arriving still changes the stream.
-  const sessionSeedRef = useRef(getSessionShuffleSeed());
   const isAuthenticated = !!user;
 
   const followingCountQuery = useFollowingCount(user?.id);
@@ -161,23 +123,12 @@ const Feed = () => {
       (item) => item.type !== "blog" || item.lang === language,
     );
 
-    // Window news into the loaded RPC cursor (codex P2 #135).
-    const news = newsFeed.data ?? [];
-    const isLastPage = !timelineFeed.hasNextPage;
-    const loadedFloor = filtered.length > 0
-      ? Math.min(...filtered.map((i) => i.score))
-      : -Infinity;
-    const windowedNews = isLastPage
-      ? news
-      : news.filter((n) => n.score >= loadedFloor);
-
-    // IG embeds merge the same way news does (client-side, not in the RPC).
-    const embeds = embedsFeed.data ?? [];
-    const windowedEmbeds = isLastPage
-      ? embeds
-      : embeds.filter((e) => e.score >= loadedFloor);
-
-    // Happenings (live/tournament/event) are never windowed — they're
+    // News and IG embeds merge client-side like before, but they are no
+    // longer windowed into the loaded RPC pages by score: ordering is
+    // recency-based now (below), so every loaded item competes on its
+    // timestamp alone.
+    //
+    // Happenings (live/tournament/event) are never windowed - they're
     // few, actionable, and lose all value if pushed past the fold.
     const overlay = (resultsFeed.data ?? []).filter(
       (item) => item.type !== "blog" || item.lang === language,
@@ -198,124 +149,33 @@ const Feed = () => {
 
     const merged: StreamItem[] = [
       ...selected,
-      ...windowedNews,
-      ...windowedEmbeds,
+      ...(newsFeed.data ?? []),
+      ...(embedsFeed.data ?? []),
       ...(happeningsFeed.data ?? []),
       ...(highlightsFeed.data ?? []),
     ];
 
-    // Effective score = RPC score × age_mult × viewed_mult × jitter.
-    //
-    // 2026-05-19 v2 (Anh feedback: "refresh không thấy data thay đổi"):
-    //   - Tightened age curve to start at 12h, not 24h. Pro-tour matches
-    //     get a large pro_tour_boost from the RPC; without faster decay,
-    //     yesterday's PPA Asia finals were still dominating today's view.
-    //   - Per-mount session jitter inside a ±15% band so the order
-    //     reshuffles between visits without the SQL/data changing. Seed
-    //     is stable for the lifetime of the Feed component instance
-    //     (set in a ref), so React re-renders don't reshuffle mid-scroll.
-    //   - Stale-content hide: posts older than 14 days are dropped.
-    //     Finished results use that same window unless it would leave
-    //     the page with no result, in which case selectFeedResults has
-    //     already kept the newest ones out to 90 days.
-    const sessionSeed = sessionSeedRef.current;
-    const now = Date.now();
-    const wideResultHours = FEED_RESULT_WIDE_WINDOW_MS / 3_600_000;
-    const effectiveScore = (item: StreamItem): number => {
-      const ageHours = Math.max(
-        0,
-        (now - Date.parse("ranked_at" in item ? item.ranked_at : item.published_at)) / 3_600_000,
-      );
-      let mult = 1;
-      if (ageHours > 12 && ageHours <= 24) mult *= 0.85;
-      else if (ageHours > 24 && ageHours <= 72) mult *= 0.55;
-      else if (ageHours > 72 && ageHours <= 168) mult *= 0.25;
-      else if (ageHours > 168 && ageHours <= 336) mult *= 0.08;
-      else if (ageHours > 336) {
-        if (isMatchResult(item) && ageHours <= wideResultHours) mult *= 0.08;
-        else return -Infinity;
-      }
-      if (viewed.viewedSet.has(item.cursor_id)) mult *= 0.4;
-      // Jitter: deterministic per (sessionSeed, cursor_id) so the same
-      // mount produces a stable order. fnv1a-style hash → fraction in
-      // [0.85, 1.15].
-      const seed = sessionSeed ^ hashStr(item.cursor_id);
-      const jitter = 0.85 + ((seed >>> 0) % 1000) / 1000 * 0.3;
-      return item.score * mult * jitter;
-    };
-
-    const scored = merged
-      .map((item) => ({ item, eff: effectiveScore(item) }))
-      .filter((row) => Number.isFinite(row.eff))
-      .sort((a, b) => {
-        if (a.eff === b.eff) {
-          return a.item.cursor_id < b.item.cursor_id ? 1 : -1;
-        }
-        return b.eff - a.eff;
-      });
-
-    // Pin news into the top 20. Pro-tour boost on matches can starve news
-    // from the first screenful; reserve every 4th slot for the highest
-    // remaining news item until we've placed at least 5 (or run out).
-    const TOP_WINDOW = 20;
-    const MIN_NEWS_IN_TOP = 5;
-    const head = scored.slice(0, TOP_WINDOW);
-    const tail = scored.slice(TOP_WINDOW);
-    const headNewsCount = head.filter((r) => r.item.type === "news").length;
-    let pinned: StreamItem[];
-    if (headNewsCount >= MIN_NEWS_IN_TOP) {
-      pinned = [...head, ...tail].map((r) => r.item);
-    } else {
-      const headNonNews = head.filter((r) => r.item.type !== "news");
-      const headNews = head.filter((r) => r.item.type === "news");
-      const reserveNews = scored
-        .filter((r) => r.item.type === "news")
-        .slice(0, MIN_NEWS_IN_TOP);
-      const reserveIds = new Set(reserveNews.map((r) => r.item.cursor_id));
-      const remainingHeadNonNews = headNonNews.filter(
-        (r) => !reserveIds.has(r.item.cursor_id),
-      );
-      const remainingHeadNews = headNews.filter(
-        (r) => !reserveIds.has(r.item.cursor_id),
-      );
-      const merged2: typeof scored = [];
-      let nonNewsCursor = 0;
-      let newsCursor = 0;
-      const otherNewsQueue = remainingHeadNews;
-      for (let i = 0; i < TOP_WINDOW; i += 1) {
-        const slotIsNews = i % 4 === 3 && newsCursor < reserveNews.length;
-        if (slotIsNews) {
-          merged2.push(reserveNews[newsCursor]);
-          newsCursor += 1;
-          continue;
-        }
-        if (nonNewsCursor < remainingHeadNonNews.length) {
-          merged2.push(remainingHeadNonNews[nonNewsCursor]);
-          nonNewsCursor += 1;
-        } else if (newsCursor < reserveNews.length) {
-          merged2.push(reserveNews[newsCursor]);
-          newsCursor += 1;
-        } else if (otherNewsQueue.length > 0) {
-          const next = otherNewsQueue.shift();
-          if (next) merged2.push(next);
-        }
-      }
-      pinned = [...merged2, ...tail].map((r) => r.item);
-    }
-    return interleaveFeedResults(pinned, isMatchResult, {
-      windowSize: FEED_PAGE_SIZE,
-      every: FEED_RESULT_EVERY,
-    });
+    // Ordering (Cuong directive, 2026-11-24): newest first across every
+    // content type. The previous pipeline ranked by the RPC score, then
+    // multiplied by age bands, a viewed demotion (x0.4) and a per-session
+    // random jitter, pinned news into slots 4/8/12/16/20 of the first
+    // page and force-interleaved a result into every block of three - a
+    // news item published this morning could never reach the top of the
+    // feed. sortFeedByRecency compares one shared timestamp per item
+    // instead (see feed-ranking.ts for the research basis).
+    // selectFeedResults above still decides which items are eligible
+    // (14-day freshness window; results may reach back 90 days when
+    // nothing fresher exists) - those older results now sink to the
+    // bottom by time instead of being pulled up.
+    return sortFeedByRecency(merged, Date.now());
   }, [
     timelineFeed.data,
-    timelineFeed.hasNextPage,
     language,
     newsFeed.data,
     resultsFeed.data,
     embedsFeed.data,
     happeningsFeed.data,
     highlightsFeed.data,
-    viewed.viewedSet,
   ]);
 
   const itemCount =
