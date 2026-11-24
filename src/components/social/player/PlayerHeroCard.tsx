@@ -11,6 +11,7 @@ import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
 import { supabase } from "@/integrations/supabase/client";
 import { FollowButton } from "@/components/social/FollowButton";
 import { ProfileCover } from "./ProfileCover";
+import { FollowListDialog } from "./FollowListDialog";
 import type { PlayerProfile } from "@/hooks/social/usePlayerProfile";
 import type { PlayerStatsRow } from "@/hooks/social/usePlayerStats";
 
@@ -56,6 +57,9 @@ export function PlayerHeroCard({ player, stats, isOwn }: PlayerHeroCardProps) {
     slug: string;
   } | null>(null);
   const [dmBusy, setDmBusy] = useState(false);
+  const [followListKind, setFollowListKind] = useState<
+    "followers" | "following" | null
+  >(null);
 
   useEffect(() => {
     const venueId = player.favorite_venue_id;
@@ -384,7 +388,7 @@ export function PlayerHeroCard({ player, stats, isOwn }: PlayerHeroCardProps) {
         )}
 
         {/* Stat row - followers / following / posts / matches. The two
-            follow counts become list openers in the tab PR. */}
+            follow counts open their user lists (FollowListDialog). */}
         <div
           style={{
             display: "flex",
@@ -402,11 +406,13 @@ export function PlayerHeroCard({ player, stats, isOwn }: PlayerHeroCardProps) {
           <StatPill
             n={followers}
             label={language === "vi" ? "người theo dõi" : "followers"}
+            onClick={() => setFollowListKind("followers")}
           />
           <StatSep />
           <StatPill
             n={following}
             label={language === "vi" ? "đang theo dõi" : "following"}
+            onClick={() => setFollowListKind("following")}
           />
           <StatSep />
           <StatPill
@@ -426,14 +432,33 @@ export function PlayerHeroCard({ player, stats, isOwn }: PlayerHeroCardProps) {
           </div>
         )}
       </div>
+
+      <FollowListDialog
+        userId={player.id}
+        kind={followListKind ?? "followers"}
+        open={followListKind !== null}
+        onOpenChange={(o) => {
+          if (!o) setFollowListKind(null);
+        }}
+      />
     </header>
   );
 }
 
-/** Inline IG-style stat: italic green number + lowercase serif label. */
-function StatPill({ n, label }: { n: number; label: string }) {
-  return (
-    <span style={{ display: "inline-flex", alignItems: "baseline", gap: 6 }}>
+/** Inline IG-style stat: italic green number + lowercase serif label.
+ *  With onClick it renders as a button in the same typography (the
+ *  follow counts open their lists). */
+function StatPill({
+  n,
+  label,
+  onClick,
+}: {
+  n: number;
+  label: string;
+  onClick?: () => void;
+}) {
+  const inner = (
+    <>
       <span
         style={{
           fontFamily: "'Instrument Serif', serif",
@@ -448,6 +473,31 @@ function StatPill({ n, label }: { n: number; label: string }) {
         {n}
       </span>
       <span style={{ color: "var(--tl-fg-3)", fontSize: 15 }}>{label}</span>
+    </>
+  );
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        style={{
+          display: "inline-flex",
+          alignItems: "baseline",
+          gap: 6,
+          background: "transparent",
+          border: "none",
+          padding: 0,
+          cursor: "pointer",
+          font: "inherit",
+        }}
+      >
+        {inner}
+      </button>
+    );
+  }
+  return (
+    <span style={{ display: "inline-flex", alignItems: "baseline", gap: 6 }}>
+      {inner}
     </span>
   );
 }
