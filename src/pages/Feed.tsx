@@ -54,10 +54,10 @@ import { FeedTabs } from "@/components/social/feed/FeedTabs";
 import { FeedEmptyState } from "@/components/social/feed/FeedEmptyState";
 import { FeedSignInNudge } from "@/components/social/feed/FeedSignInNudge";
 
-// The UGC composer ships as a lazy chunk: it is only rendered for the
-// gated audience (site admins in PR-A) and must not weigh down the
-// feed bundle for readers.
-const FeedComposer = lazy(() => import("@/components/social/feed/FeedComposer"));
+// The UGC post button + composer sheet ship as a lazy chunk: they are
+// only rendered for the gated audience (site admins in PR-A) and must
+// not weigh down the feed bundle for readers.
+const FeedPostFab = lazy(() => import("@/components/social/feed/FeedPostFab"));
 
 /**
  * /feed — social discovery surface. Two tabs:
@@ -295,11 +295,6 @@ const Feed = () => {
 
         {/* Stream */}
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          {isAdmin && tab === "trending" && (
-            <Suspense fallback={null}>
-              <FeedComposer language={language} />
-            </Suspense>
-          )}
           {isLoadingFirstPage ? (
             // Skeleton rows mirror the trending feed's dominant card shape —
             // eyebrow + title + a 4:3 media block + meta — so the column
@@ -427,6 +422,11 @@ const Feed = () => {
           )}
         </div>
       </div>
+      {isAdmin && (
+        <Suspense fallback={null}>
+          <FeedPostFab language={language} />
+        </Suspense>
+      )}
     </TheLineLayout>
   );
 };

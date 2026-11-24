@@ -22,7 +22,18 @@ import { type Language } from "@/lib/social/feed-formatters";
 
 const MAX_BODY_CHARS = 2000;
 
-export default function FeedComposer({ language }: { language: Language }) {
+export default function FeedComposer({
+  language,
+  variant = "inline",
+  onPosted,
+}: {
+  language: Language;
+  /** "sheet" drops the in-feed section chrome (the sheet header carries
+   * the title) when the composer is hosted inside the post sheet. */
+  variant?: "inline" | "sheet";
+  /** Called after a successful post (the sheet host closes itself). */
+  onPosted?: () => void;
+}) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -86,6 +97,7 @@ export default function FeedComposer({ language }: { language: Language }) {
       await queryClient.invalidateQueries({
         queryKey: ["feed", "social-posts"],
       });
+      onPosted?.();
     } catch {
       toast({
         title: vi
@@ -98,24 +110,32 @@ export default function FeedComposer({ language }: { language: Language }) {
     }
   };
 
+  const inSheet = variant === "sheet";
+
   return (
     <section
       aria-label={vi ? "Đăng bài bằng ảnh" : "Post with a photo"}
-      style={{
-        padding: "24px 0",
-        borderBottom: "1px solid var(--tl-border)",
-      }}
+      style={
+        inSheet
+          ? { padding: 0 }
+          : {
+              padding: "24px 0",
+              borderBottom: "1px solid var(--tl-border)",
+            }
+      }
     >
-      <h2
-        style={{
-          fontSize: 15,
-          fontWeight: 600,
-          color: "var(--tl-fg)",
-          margin: "0 0 12px",
-        }}
-      >
-        {vi ? "Đăng bài bằng ảnh" : "Post with a photo"}
-      </h2>
+      {!inSheet && (
+        <h2
+          style={{
+            fontSize: 15,
+            fontWeight: 600,
+            color: "var(--tl-fg)",
+            margin: "0 0 12px",
+          }}
+        >
+          {vi ? "Đăng bài bằng ảnh" : "Post with a photo"}
+        </h2>
+      )}
 
       <input
         ref={fileInputRef}
