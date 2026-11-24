@@ -74,6 +74,14 @@ export async function renderFeed(
       console.error("renderFeed: get_feed_timeline error:", error);
     } else {
       rows = (data ?? []) as TimelineRowForSeo[];
+      // The client has ordered the feed by pure recency since 2026-11-24
+      // (PR #1111); the RPC still returns its score order. Mirror the
+      // client here - same 20 rows, newest first - so the prerendered
+      // list matches what a human sees. Order only; content unchanged.
+      rows.sort((a, b) => {
+        const diff = Date.parse(b.published_at) - Date.parse(a.published_at);
+        return Number.isNaN(diff) ? 0 : diff;
+      });
     }
   } catch (err) {
     // Don't fail the whole prerender on RPC error — emit the SEO shell

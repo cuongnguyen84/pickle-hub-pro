@@ -480,7 +480,12 @@ export const TheLineLayout = ({ title, exactTitle, description, noindex = false,
             </Link>
           );
         })()}
-        <Link to={language === "vi" ? "/vi" : "/"} className="tl-brand" aria-label="ThePickleHub home">
+        {/* Brand = the desktop Home affordance. Signed-in visitors get the
+            ?home=1 escape (editorialHomeHref): a plain / would bounce them
+            straight back to the feed via the login -> feed redirect
+            (PR #1107). Same target the mobile drawer's Home link already
+            uses. Anonymous visitors keep the plain root, SEO unchanged. */}
+        <Link to={user ? editorialHomeHref(language) : language === "vi" ? "/vi" : "/"} className="tl-brand" aria-label="ThePickleHub home">
           <span className="tl-brand-mark" aria-hidden="true" />
           <span className="tl-brand-text">
             The<em>Pickle</em>Hub

@@ -11,6 +11,8 @@ import {
   hideQuickTableMatchCopies,
   interleaveFeedResults,
   isMatchResult,
+  computeEffectiveSeenIds,
+  partitionFeedBySeen,
   selectFeedResults,
   sortFeedByRecency,
 } from "../feed-ranking";
@@ -329,5 +331,72 @@ describe("feed recency ordering", () => {
     ];
     sortFeedByRecency(rows, NOW);
     expect(rows.map((r) => r.cursor_id)).toEqual(["news:a", "news:b"]);
+  });
+});
+
+describe("partitionFeedBySeen", () => {
+  const keyOf = (row: { cursor_id: string }) => row.cursor_id;
+  const rows = [
+    { cursor_id: "embed:reel" },
+    { cursor_id: "news:a" },
+    { cursor_id: "news:b" },
+    { cursor_id: "match:c" },
+  ];
+
+  it("moves seen items below every unseen item, preserving order in each group", () => {
+    const out = partitionFeedBySeen(rows, new Set(["embed:reel", "news:b"]), keyOf);
+    expect(out.map((r) => r.cursor_id)).toEqual([
+      "news:a",
+      "match:c",
+      "embed:reel",
+      "news:b",
+    ]);
+  });
+
+  it("removes nothing - seen items stay reachable by scrolling", () => {
+    const out = partitionFeedBySeen(rows, new Set(rows.map((r) => r.cursor_id)), keyOf);
+    expect(out.map((r) => r.cursor_id)).toEqual(rows.map((r) => r.cursor_id));
+  });
+
+  it("is a no-op copy when nothing has been seen", () => {
+    const out = partitionFeedBySeen(rows, new Set<string>(), keyOf);
+    expect(out.map((r) => r.cursor_id)).toEqual(rows.map((r) => r.cursor_id));
+    expect(out).not.toBe(rows);
+  });
+});
+
+describe("computeEffectiveSeenIds", () => {
+  it("revives a seen item whose engagement grew since the mark", () => {
+    const entries = new Map([
+      ["match:a", { t: 100, e: 3 }],
+      ["match:b", { t: 100, e: 5 }],
+    ]);
+    const current = new Map([
+      ["match:a", 4],
+      ["match:b", 5],
+    ]);
+    const seen = computeEffectiveSeenIds(entries, current);
+    expect(seen.has("match:a")).toBe(false);
+    expect(seen.has("match:b")).toBe(true);
+  });
+
+  it("keeps seen when the baseline or the current signal is missing", () => {
+    const entries = new Map([
+      ["news:x", { t: 100 }],
+      ["match:y", { t: 100, e: 2 }],
+    ]);
+    const seen = computeEffectiveSeenIds(entries, new Map());
+    expect(seen.has("news:x")).toBe(true);
+    expect(seen.has("match:y")).toBe(true);
+  });
+
+  it("keeps seen when engagement shrank or is unchanged", () => {
+    const entries = new Map([["match:a", { t: 100, e: 9 }]]);
+    expect(
+      computeEffectiveSeenIds(entries, new Map([["match:a", 9]])).has("match:a"),
+    ).toBe(true);
+    expect(
+      computeEffectiveSeenIds(entries, new Map([["match:a", 1]])).has("match:a"),
+    ).toBe(true);
   });
 });
