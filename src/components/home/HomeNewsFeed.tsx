@@ -1,5 +1,8 @@
+import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import type { NewsItem } from "@/hooks/useNewsItems";
+import { useFeedViewedTracking } from "@/hooks/social/useFeedViewedTracking";
+import { partitionFeedBySeen } from "@/lib/social/feed-ranking";
 import { homepageThumbnailUrl } from "@/lib/image-utils";
 
 interface HomeNewsFeedProps {
@@ -37,7 +40,41 @@ const relativeTime = (iso: string, language: "en" | "vi"): string => {
 };
 
 export function HomeNewsFeed({ language, limit = 4, news, isLoading = false }: HomeNewsFeedProps) {
-  const items = news.filter((item) => item.slug).slice(0, limit);
+  // Seen-sink, same store and key format as /feed ("news:<id>"): news the
+  // viewer already saw on a previous visit sinks below unseen news before
+  // the block is capped at `limit`, so the homepage block leads with fresh
+  // items instead of repeating the same story. The partition uses the
+  // at-load snapshot - marks made during this visit apply next load.
+  const viewed = useFeedViewedTracking();
+  const listRef = useRef<HTMLDivElement>(null);
+  const markViewed = viewed.markViewed;
+  const ordered = partitionFeedBySeen(
+    news.filter((item) => item.slug),
+    viewed.viewedAtLoad,
+    (item) => `news:${item.id}`,
+  );
+  const items = ordered.slice(0, limit);
+
+  useEffect(() => {
+    const root = listRef.current;
+    if (!root || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const id = (entry.target as HTMLElement).dataset.feedCursor;
+          if (id) markViewed(id);
+          io.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.4 },
+    );
+    root
+      .querySelectorAll<HTMLElement>("[data-feed-cursor]")
+      .forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [items, markViewed]);
+
   if (items.length === 0 && !isLoading) return null;
 
   const allHref = language === "vi" ? "/vi/news" : "/news";
@@ -64,7 +101,7 @@ export function HomeNewsFeed({ language, limit = 4, news, isLoading = false }: H
           </Link>
         </div>
 
-        <div className="tl-news-list" aria-busy={isLoading || undefined}>
+        <div className="tl-news-list" ref={listRef} aria-busy={isLoading || undefined}>
           {isLoading
             ? Array.from({ length: limit }, (_, index) => (
                 <div className="tl-news-item tl-news-item--skeleton" key={index} aria-hidden="true">
@@ -87,6 +124,7 @@ export function HomeNewsFeed({ language, limit = 4, news, isLoading = false }: H
                 key={item.id}
                 to={detailHref(item.slug as string)}
                 className="tl-news-item"
+                data-feed-cursor={`news:${item.id}`}
               >
                 <div className="tl-news-body">
                   {item.source && (
