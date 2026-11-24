@@ -419,7 +419,12 @@ export async function renderQuickTable(
 }
 
 export async function renderTeamMatch(supabase: SupabaseClient, id: string, siteUrl: string, opts?: { lang?: "vi" | "en" }): Promise<Response> {
-  const { data: tm } = await supabase.from("team_match_tournaments").select("id, name, status, created_via").eq("id", id).single();
+  // Public shared links carry the share_id (/tools/team-match/<share_id>,
+  // the same identifier the React page resolves), so look that up first;
+  // fall back to the row UUID for older links that used it.
+  const byShareId = await supabase.from("team_match_tournaments").select("id, name, status, created_via").eq("share_id", id).maybeSingle();
+  const tm = byShareId.data
+    ?? (await supabase.from("team_match_tournaments").select("id, name, status, created_via").eq("id", id).maybeSingle()).data;
   if (!tm) return render404(`/tools/team-match/${id}`, siteUrl);
   const lang = opts?.lang ?? "vi";
 
