@@ -125,7 +125,10 @@ const Feed = () => {
   // admins until the moderation queue (PR-B) and the legal sign-off
   // land; the hook itself stays ungated so lifting this is one flag.
   const { isAdmin } = useAdminAuth();
-  const postsFeed = useSocialPosts({ enabled: isAdmin });
+  // Approved community posts are public reading (Cuong, 2026-11-24):
+  // the overlay runs for every visitor, signed in or not. POSTING
+  // stays admin-gated below (the composer and its FAB), unchanged.
+  const postsFeed = useSocialPosts();
   const timelineFeed = useFeedTimeline();
   const resultsFeed = useFeedResults();
   const newsFeed = useFeedNews(language === "vi" ? "vi" : "en");
