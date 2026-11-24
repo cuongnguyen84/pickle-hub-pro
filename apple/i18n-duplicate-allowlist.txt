@@ -316,3 +316,7 @@ Giá gốc \(ShopMoney.vnd(originalPrice))
 # Thẻ "Tạo giải bằng chat AI" dùng chung: CreateQuickTableView + HomeView (PR entry chat ở Home)
 Tạo giải bằng chat AI
 Kể về giải hoặc dán danh sách — trợ lý chia bảng giúp bạn
+# Nhãn chủ đề bài cộng đồng (SocialPostTopic): "Tìm bạn đánh" cũng là nhãn ở HomeView;
+# "Kết quả" là nhãn chủ đề ket-qua dùng ở thẻ feed + composer - cùng một nghĩa Results.
+Tìm bạn đánh
+Kết quả

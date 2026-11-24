@@ -53,6 +53,52 @@ struct FeedRepository {
         return rows.compactMap { FeedItem(news: $0, now: now) }
     }
 
+    /// Community photo posts (social_posts) for the feed merge, mirroring
+    /// the web `useSocialPosts` hook: kind = 'post', last 30 days, newest
+    /// first, capped at 30. RLS is the real boundary (approved posts are
+    /// readable by any signed-in user, authors also read their own in any
+    /// status, admins read all); the query still asks only for rows the
+    /// stream can show (approved + the viewer's own) so someone else's
+    /// pending post never reaches the merge. Author display names resolve
+    /// in ONE batched profiles query. Anonymous viewers get no posts.
+    func socialPosts() async throws -> [FeedItem] {
+        guard let viewerID = try? await client.auth.session.user.id else { return [] }
+        let windowStart = ISO8601DateFormatter().string(from: Date().addingTimeInterval(-30 * 24 * 60 * 60))
+        let rows: [FeedSocialPostRow] = try await client
+            .from("social_posts")
+            .select("id, author_id, body, image_url, topic, status, created_at")
+            .eq("kind", value: "post")
+            .or("status.eq.approved,author_id.eq.\(viewerID.uuidString)")
+            .gte("created_at", value: windowStart)
+            .order("created_at", ascending: false)
+            .limit(30)
+            .execute()
+            .value
+        guard !rows.isEmpty else { return [] }
+
+        struct ProfileRow: Decodable {
+            let id: UUID
+            let displayName: String?
+            let username: String?
+            enum CodingKeys: String, CodingKey {
+                case id, username
+                case displayName = "display_name"
+            }
+        }
+        let authorIDs = Array(Set(rows.map(\.authorID))).map(\.uuidString)
+        let profiles: [ProfileRow] = try await client
+            .from("profiles")
+            .select("id, display_name, username")
+            .in("id", value: authorIDs)
+            .execute()
+            .value
+        var names: [UUID: String] = [:]
+        for profile in profiles {
+            names[profile.id] = profile.displayName?.nonEmpty ?? profile.username?.nonEmpty ?? "ThePickleHub"
+        }
+        return rows.compactMap { FeedItem(socialPost: $0, authorName: names[$0.authorID] ?? "ThePickleHub") }
+    }
+
     /// Loads editorial content for the native news reader without requesting
     /// or navigating to the public website.
     func newsArticle(slug: String, language: String) async throws -> NewsArticleDetail? {

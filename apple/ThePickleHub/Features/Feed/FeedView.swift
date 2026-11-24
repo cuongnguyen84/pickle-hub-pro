@@ -140,6 +140,8 @@ private struct FeedTimelineRow: View {
             } else {
                 FeedHighlightCard(highlight: highlight, publishedAt: item.publishedAt)
             }
+        case .socialPost(let post):
+            FeedSocialPostCard(post: post, publishedAt: item.publishedAt)
         }
     }
 }
