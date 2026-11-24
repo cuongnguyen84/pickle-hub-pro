@@ -10,6 +10,35 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "pickleball-vietnam-national-games-2026-medal-debut",
+    "publishedDate": "2026-11-23",
+    "updatedDate": "2026-11-23",
+    "author": "The PickleHub Team",
+    "tags": [
+      "pickleball",
+      "vietnam",
+      "national sports games",
+      "dai hoi the thao toan quoc",
+      "ly hoang nam",
+      "phuc huynh"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "See live results on ThePickleHub",
+      "vi": "Xem kết quả trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/pickleball-vietnam-national-games-2026-medal-debut-hero.webp",
+      "alt": "Illustration of a pickleball doubles match in a large indoor arena"
+    },
+    "titleEn": "Pickleball at Vietnam's National Sports Games 2026: a first-ever medal sport",
+    "titleVi": "Pickleball lần đầu tranh huy chương tại Đại hội Thể thao toàn quốc: ai là ứng viên, xem ở đâu?",
+    "metaTitleEn": "Pickleball at Vietnam's National Games 2026 | ThePickleHub",
+    "metaTitleVi": "Pickleball ở Đại hội Thể thao toàn quốc 2026",
+    "metaDescriptionEn": "Pickleball debuts as an official medal sport at Vietnam's National Sports Games, Dec 3-9, 2026 in Ho Chi Minh City: 100+ athletes, 11 delegations, 5 events.",
+    "metaDescriptionVi": "Pickleball lần đầu tranh huy chương tại Đại hội Thể thao toàn quốc, 3-9/12/2026 tại TP.HCM: hơn 100 VĐV, 11 đoàn, 5 nội dung."
+  },
+  {
     "slug": "djoy-vietnam-pickleball-ecosystem-academy-tour",
     "publishedDate": "2026-11-21",
     "updatedDate": "2026-11-21",
