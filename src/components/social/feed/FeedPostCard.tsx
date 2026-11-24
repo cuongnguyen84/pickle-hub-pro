@@ -5,6 +5,12 @@ import {
 import { type Language } from "@/lib/social/feed-formatters";
 import { formatMatchWhen } from "@/lib/social/feed-formatters";
 import { ReportDialog } from "@/components/report/ReportDialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { VerifiedBadge } from "@/components/social/VerifiedBadge";
+import { Link } from "react-router-dom";
+
+const initials = (name: string) =>
+  name.split(/\s+/).map((p) => p[0] ?? "").join("").slice(0, 2).toUpperCase();
 
 /**
  * One community photo post (social_posts) in the /feed Trending stream.
@@ -30,6 +36,46 @@ export function FeedPostCard({
       : "0ms";
   const topic = SOCIAL_POST_TOPICS.find((t) => t.key === item.topic);
   const pending = item.status === "pending";
+  // Profile link rule (Cuong, 2026-11-24): the /nguoi-choi page opens
+  // for opted-in public profiles AND for authors with at least one
+  // approved community post. An approved item on this card proves
+  // the second case by itself; the author's own pending card links
+  // only when their profile is public (the owner bypass on the
+  // profile page covers their other surfaces).
+  const profileHref =
+    item.author_username && (item.author_is_public || item.status === "approved")
+      ? `/nguoi-choi/${item.author_username}`
+      : null;
+  const authorIdentity = (
+    <>
+      <Avatar className="h-8 w-8">
+        <AvatarImage
+          src={item.author_avatar_url ?? undefined}
+          alt={item.author_name}
+        />
+        <AvatarFallback className="text-xs">
+          {initials(item.author_name)}
+        </AvatarFallback>
+      </Avatar>
+      <span
+        style={{
+          fontWeight: 600,
+          color: "var(--tl-fg)",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 5,
+        }}
+      >
+        {item.author_name}
+        {item.author_is_verified && (
+          <VerifiedBadge
+            size={16}
+            label={language === "vi" ? "Đã xác thực" : "Verified"}
+          />
+        )}
+      </span>
+    </>
+  );
 
   return (
     <article
@@ -102,13 +148,42 @@ export function FeedPostCard({
       </div>
 
       {/* Author + time */}
-      <p style={{ fontSize: 13, color: "var(--tl-fg-2)", margin: 0 }}>
-        <span style={{ fontWeight: 600, color: "var(--tl-fg)" }}>
-          {item.author_name}
-        </span>
-        <span aria-hidden="true"> · </span>
-        {formatMatchWhen(item.published_at, language, "desktop")}
-      </p>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          fontSize: 13,
+          color: "var(--tl-fg-2)",
+        }}
+      >
+        {profileHref ? (
+          <Link
+            to={profileHref}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 10,
+              color: "inherit",
+              textDecoration: "none",
+            }}
+          >
+            {authorIdentity}
+          </Link>
+        ) : (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
+            {authorIdentity}
+          </span>
+        )}
+        <span aria-hidden="true">·</span>
+        <span>{formatMatchWhen(item.published_at, language, "desktop")}</span>
+      </div>
 
       {/* Photo */}
       <img

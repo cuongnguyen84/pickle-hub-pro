@@ -13,6 +13,10 @@ interface UserProfile {
   // Onboarding progress (profiles table); used by the wizard resume logic.
   onboarding_step?: number | null;
   onboarding_completed_at?: string | null;
+  // Public handle for /nguoi-choi/:username (header "View my profile").
+  username?: string | null;
+  // Profile cover photo (migration 20261124230000).
+  cover_url?: string | null;
 }
 
 export function useUserProfile() {
@@ -28,15 +32,21 @@ export function useUserProfile() {
       // NOTE: `email` is intentionally NOT selected from profiles — the PII
       // column lockdown (migration 20260706100000-ish) revokes the email column
       // from the authenticated role, so `select("*")` would fail. The user's own
-      // email is available from the auth session instead.
+      // email is available from the auth session instead. Kept in a variable
+      // so the string is not parsed against the generated column types
+      // (cover_url predates them).
+      const PROFILE_COLS = "id, display_name, avatar_url, organization_id, created_at, onboarding_step, onboarding_completed_at, username, cover_url";
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, display_name, avatar_url, organization_id, created_at, onboarding_step, onboarding_completed_at")
+        .select(PROFILE_COLS)
         .eq("id", user.id)
         .single();
 
       if (error) throw error;
-      return { ...data, email: user.email ?? "" } as UserProfile;
+      // cover_url is not in the generated types yet (see PROFILE_COLS
+      // note) - cast the row through unknown before shaping.
+      const row = (data ?? {}) as unknown as Record<string, unknown>;
+      return { ...row, email: user.email ?? "" } as unknown as UserProfile;
     },
     enabled: !!user?.id,
   });
@@ -113,11 +123,54 @@ export function useUserProfile() {
     },
   });
 
+  // Cover photo upload - mirrors uploadAvatar (same "avatars" bucket),
+  // stored under a cover- prefixed name and saved to profiles.cover_url.
+  const uploadCover = useMutation({
+    mutationFn: async (file: File) => {
+      if (!user?.id) throw new Error("Not authenticated");
+
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${user.id}/cover-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(fileName);
+
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ cover_url: publicUrl } as never)
+        .eq("id", user.id);
+
+      if (updateError) throw updateError;
+
+      return publicUrl;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-profile", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["player-profile"] });
+      toast({ title: "Đã cập nhật ảnh bìa" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Lỗi tải ảnh bìa",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     profile,
     isLoading,
     updateProfile,
     uploadAvatar,
+    uploadCover,
   };
 }
 

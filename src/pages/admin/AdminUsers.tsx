@@ -5,10 +5,12 @@ import {
   useUpdateUserRole,
   useAssignUserOrganization,
   useAdminOrganizations,
+  useUpdateUserVerified,
 } from "@/hooks/useAdminData";
 import { useUpdateUserQuota } from "@/hooks/useAdminQuota";
 import { useDebounce } from "@/hooks/useSearch";
 import { useI18n } from "@/i18n";
+import { VerifiedBadge } from "@/components/social/VerifiedBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,6 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Users, Save, Search } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 export default function AdminUsers() {
   const { t } = useI18n();
@@ -45,6 +48,16 @@ export default function AdminUsers() {
   const updateRole = useUpdateUserRole();
   const assignOrg = useAssignUserOrganization();
   const updateQuota = useUpdateUserQuota();
+  const updateVerified = useUpdateUserVerified();
+
+  const handleVerifiedChange = async (userId: string, isVerified: boolean) => {
+    try {
+      await updateVerified.mutateAsync({ userId, isVerified });
+      toast.success(isVerified ? "Đã cấp tick xanh" : "Đã gỡ tick xanh");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra");
+    }
+  };
 
   // Track quota edits locally
   const [quotaEdits, setQuotaEdits] = useState<Record<string, number>>({});
@@ -134,6 +147,7 @@ export default function AdminUsers() {
                     <TableHead>{t.admin.user.role}</TableHead>
                     <TableHead>{t.admin.user.organization}</TableHead>
                     <TableHead className="w-32">Quota giải</TableHead>
+                    <TableHead className="w-24">Tick xanh</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -207,6 +221,19 @@ export default function AdminUsers() {
                               </Button>
                             )}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="inline-flex items-center gap-2">
+                            <Switch
+                              checked={user.is_verified ?? false}
+                              onCheckedChange={(checked) =>
+                                handleVerifiedChange(user.id, checked)
+                              }
+                              disabled={updateVerified.isPending}
+                              aria-label={`Tick xanh của ${user.email}`}
+                            />
+                            {user.is_verified && <VerifiedBadge size={16} />}
+                          </span>
                         </TableCell>
                       </TableRow>
                     );

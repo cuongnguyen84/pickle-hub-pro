@@ -164,3 +164,12 @@ export function useAuth() {
   }
   return context;
 }
+
+/**
+ * Non-throwing variant for components that also render in bare test /
+ * embed trees without an AuthProvider (2026-11-24, feed engagement):
+ * a missing provider reads as a signed-out guest.
+ */
+export function useAuthOptional() {
+  return useContext(AuthContext);
+}

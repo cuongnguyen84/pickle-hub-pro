@@ -10,11 +10,13 @@ import { useAuth } from "@/hooks/useAuth";
  * 20261123100000, applied 2026-11-23), so the read goes through an
  * `as never` table cast - the same pattern this codebase uses for
  * new-schema access - with the row shape declared locally. RLS is the
- * real boundary: approved posts are readable by any signed-in user,
- * authors also read their own posts in any status, admins read all.
- * The query still asks only for the rows the stream can show (own +
- * approved) so a pending post from someone else never reaches the
- * client merge even before RLS trims it.
+ * real boundary: approved posts are readable by anyone (signed-in
+ * users since 20261123100000, anonymous visitors since
+ * 20261124220000 - Cuong decision 2026-11-24), authors also read
+ * their own posts in any status, admins read all. The query still
+ * asks only for the rows the stream can show (own + approved, or
+ * approved-only when signed out) so a pending post from someone
+ * else never reaches the client merge even before RLS trims it.
  */
 
 export const SOCIAL_POST_TOPICS = [
@@ -35,6 +37,10 @@ export interface FeedSocialPostItem {
   author_id: string;
   author_name: string;
   author_username: string | null;
+  author_avatar_url: string | null;
+  author_is_verified: boolean;
+  /** profiles.is_public_profile - the /nguoi-choi page is opt-in. */
+  author_is_public: boolean;
   body: string | null;
   image_url: string;
   topic: string | null;
@@ -58,7 +64,7 @@ export function useSocialPosts(options?: { enabled?: boolean }) {
   const { user } = useAuth();
   return useQuery({
     queryKey: ["feed", "social-posts", user?.id ?? "anon"],
-    enabled: (options?.enabled ?? true) && !!user,
+    enabled: options?.enabled ?? true,
     staleTime: 60_000,
     queryFn: async (): Promise<FeedSocialPostItem[]> => {
       const windowStart = new Date(
@@ -69,7 +75,11 @@ export function useSocialPosts(options?: { enabled?: boolean }) {
         .from("social_posts" as never)
         .select("id, author_id, body, image_url, topic, status, created_at")
         .eq("kind", "post")
-        .or(`status.eq.approved,author_id.eq.${user!.id}`)
+        .or(
+          user
+            ? `status.eq.approved,author_id.eq.${user.id}`
+            : "status.eq.approved",
+        )
         .gte("created_at", windowStart)
         .order("created_at", { ascending: false })
         .limit(30);
@@ -77,22 +87,34 @@ export function useSocialPosts(options?: { enabled?: boolean }) {
 
       const rows = (data as SocialPostRow[] | null) ?? [];
 
-      // Author display names in one batch (id/display_name/username
-      // only - never contact fields).
+      // Author display data in one batch (public profile fields only -
+      // never contact fields). avatar/is_verified/is_public_profile
+      // drive the card's avatar, verified badge and profile link.
       const authorIds = [...new Set(rows.map((row) => row.author_id))];
       const names = new Map<
         string,
-        { display_name: string | null; username: string | null }
+        {
+          display_name: string | null;
+          username: string | null;
+          avatar_url: string | null;
+          is_verified: boolean | null;
+          is_public_profile: boolean | null;
+        }
       >();
       if (authorIds.length > 0) {
         const { data: profiles } = await supabase
           .from("profiles")
-          .select("id, display_name, username")
+          .select(
+            "id, display_name, username, avatar_url, is_verified, is_public_profile",
+          )
           .in("id", authorIds);
         for (const profile of profiles ?? []) {
           names.set(profile.id, {
             display_name: profile.display_name,
             username: profile.username,
+            avatar_url: profile.avatar_url,
+            is_verified: profile.is_verified,
+            is_public_profile: profile.is_public_profile,
           });
         }
       }
@@ -104,6 +126,9 @@ export function useSocialPosts(options?: { enabled?: boolean }) {
         author_id: row.author_id,
         author_name: names.get(row.author_id)?.display_name ?? "ThePickleHub",
         author_username: names.get(row.author_id)?.username ?? null,
+        author_avatar_url: names.get(row.author_id)?.avatar_url ?? null,
+        author_is_verified: names.get(row.author_id)?.is_verified ?? false,
+        author_is_public: names.get(row.author_id)?.is_public_profile ?? false,
         body: row.body,
         image_url: row.image_url,
         topic: row.topic,

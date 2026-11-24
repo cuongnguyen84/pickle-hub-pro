@@ -73,17 +73,19 @@ export async function renderProfile(
   const { data: profileRow, error: profileErr } = await supabase
     .from("profiles")
     .select(
-      `id, username, display_name, avatar_url, bio,
+      `id, username, display_name, avatar_url, cover_url, bio,
        city, country, skill_level,
        dupr_singles, dupr_doubles,
        is_ghost, is_public_profile, onboarding_completed_at, created_at`,
     )
     .or(orFilter)
     .eq("is_ghost", false)
-    // Sprint A2 — bots only see public-opt-in profiles. Authed users
-    // viewing their own profile bypass via client-side hook
-    // (usePlayerProfile) instead.
-    .eq("is_public_profile", true)
+    // Sprint A2 - bots only see public-opt-in profiles, PLUS the
+    // 2026-11-24 rule (Cuong): authors with an approved community
+    // post are publicly viewable without the opt-in. The opt-in
+    // filter therefore moves out of the query into the check below
+    // (the approved-post existence runs in a SECURITY DEFINER RPC,
+    // same as the client gate in usePlayerProfile).
     .not("onboarding_completed_at", "is", null)
     .limit(1)
     .maybeSingle();
@@ -97,11 +99,24 @@ export async function renderProfile(
 
   if (!profileRow) return render404(`/nguoi-choi/${username}`, siteUrl);
 
+  // 2026-11-24 rule (Cuong): a non-opted-in profile still renders
+  // when its owner is a published community author.
+  if (!profileRow.is_public_profile) {
+    const { data: hasPost } = await supabase.rpc(
+      "profile_has_approved_post",
+      { p_author_id: profileRow.id },
+    );
+    if (hasPost !== true) {
+      return render404(`/nguoi-choi/${username}`, siteUrl);
+    }
+  }
+
   const p = profileRow as {
     id: string;
     username: string;
     display_name: string | null;
     avatar_url: string | null;
+    cover_url: string | null;
     bio: string | null;
     city: string | null;
     country: string | null;
@@ -187,8 +202,13 @@ export async function renderProfile(
       ? `<p>${escapeHtml(duprBits.join(" · "))}</p>`
       : "";
   const bioLine = p.bio ? `<p>${escapeHtml(p.bio)}</p>` : "";
+  // 2026-11-24 redesign parity: the SPA hero opens with the cover band.
+  const coverLine = p.cover_url
+    ? `<p><img src="${escapeHtml(absImage(p.cover_url, siteUrl))}" alt="" width="1200" height="400"/></p>`
+    : "";
 
   const bodyContent = `${bc}
+${coverLine}
 <h1>${escapeHtml(displayName)} <span>@${escapeHtml(p.username)}</span></h1>
 ${cityLine}
 ${skillLine}

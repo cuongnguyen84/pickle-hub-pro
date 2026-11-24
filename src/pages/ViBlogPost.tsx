@@ -19,6 +19,8 @@ import { WorldCupResultsBoard } from "@/components/live/WorldCupResultsBoard";
 import { TournamentClusterLinks } from "@/components/blog/TournamentClusterLinks";
 import { buildTournamentClusterLinks, clusterCandidates } from "@/content/blog/tournament-cluster";
 import { useAssistantContext } from "@/lib/assistant-context";
+import { TargetCommentThread } from "@/components/social/comments/TargetCommentThread";
+import { blogTargetId } from "@/lib/social/engagement";
 
 /** Marker a VI post puts in content_html where a live block belongs. Mirrors
  *  WC_RESULTS_MARKER in functions/_lib/render/blog.ts. */
@@ -302,6 +304,35 @@ const ViBlogPost = () => {
             </div>
           )}
         </article>
+
+        {/* Bình luận (2026-11-24): cùng luồng social_comments mà thẻ
+            feed mở - khóa bằng UUID xác định từ slug chuẩn (bản EN
+            khi có alternate_en_slug, để EN/VI dùng chung một luồng). */}
+        <section
+          aria-label="Bình luận"
+          style={{
+            marginTop: 40,
+            paddingTop: 24,
+            borderTop: "1px solid var(--tl-border)",
+          }}
+        >
+          <h2
+            style={{
+              fontFamily: "'Geist Mono', monospace",
+              fontSize: 11,
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              color: "var(--tl-fg-2)",
+              margin: "0 0 16px",
+            }}
+          >
+            Bình luận
+          </h2>
+          <TargetCommentThread
+            targetType="blog"
+            targetId={blogTargetId(post.alternate_en_slug ?? post.slug)}
+          />
+        </section>
       </div>
     </TheLineLayout>
   );
