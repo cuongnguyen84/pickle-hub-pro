@@ -320,3 +320,12 @@ Kể về giải hoặc dán danh sách — trợ lý chia bảng giúp bạn
 # "Kết quả" là nhãn chủ đề ket-qua dùng ở thẻ feed + composer - cùng một nghĩa Results.
 Tìm bạn đánh
 Kết quả
+# PR-N3 (feed engagement): các nhãn tương tác dùng chung cùng một nghĩa -
+# "Thành viên" = Member (ClubModels + tên tác giả bình luận dự phòng);
+# "Huỷ" = Cancel (QuickTableDetailView + huỷ trả lời bình luận);
+# "Bình luận" = Comments (ChatPanel + thanh tương tác feed);
+# "Trả lời" = Reply (ForumDetailView + trả lời bình luận feed).
+Thành viên
+Huỷ
+Bình luận
+Trả lời

@@ -106,16 +106,61 @@ struct ScoreCells: View {
     }
 }
 
+/// Set by containers that provide their own card surface (the feed
+/// timeline row wraps card + engagement bar in one shell). Cards then
+/// render content-only - padding, no surface of their own - so the bar
+/// sits inside the same surface, like the web cards. Standalone uses
+/// (news list, detail screens) leave it false and keep the full shell.
+private struct FeedCardEmbeddedKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+extension EnvironmentValues {
+    var feedCardEmbedded: Bool {
+        get { self[FeedCardEmbeddedKey.self] }
+        set { self[FeedCardEmbeddedKey.self] = newValue }
+    }
+}
+
+private struct FeedCardModifier: ViewModifier {
+    @Environment(\.feedCardEmbedded) private var embedded
+
+    func body(content: Content) -> some View {
+        if embedded {
+            content
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(16)
+        } else {
+            content
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(16)
+                .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous)
+                        .strokeBorder(TLColor.border, lineWidth: 1)
+                )
+        }
+    }
+}
+
 extension View {
     /// The dark surface + hairline border every feed card sits on.
+    /// Inside a feed timeline row the row supplies the surface instead
+    /// (see `feedCardEmbedded`), so the engagement bar can share it.
     func feedCard() -> some View {
+        modifier(FeedCardModifier())
+    }
+
+    /// The shared shell a feed timeline row wraps around card +
+    /// engagement bar: one surface, one hairline border.
+    func feedRowShell() -> some View {
         self
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(16)
             .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous)
                     .strokeBorder(TLColor.border, lineWidth: 1)
             )
+            .environment(\.feedCardEmbedded, true)
     }
 }

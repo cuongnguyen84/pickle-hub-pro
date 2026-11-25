@@ -5,6 +5,7 @@ import SwiftUI
 /// in-app Safari sheet until native detail screens land. News joins in Phase 3.
 struct FeedView: View {
     @State private var model = FeedViewModel()
+    @State private var engagement = EngagementStore()
     @State private var openURL: IdentifiedURL?
     @State private var showComposer = false
 
@@ -20,6 +21,11 @@ struct FeedView: View {
         .navigationBarTitleDisplayMode(.large)
         .refreshable { await model.refresh() }
         .task { await model.loadInitial() }
+        .task(id: model.items.map(\.id)) {
+            // Batched engagement counts for whatever is on screen;
+            // the store dedupes across pages and refreshes.
+            await engagement.ensureCounts(for: model.items.map(\.engagementTarget))
+        }
         .sheet(item: $openURL) { item in
             SafariView(url: item.url).ignoresSafeArea()
         }
@@ -60,7 +66,12 @@ struct FeedView: View {
         default:
             LazyVStack(spacing: 14) {
                 ForEach(model.items) { item in
-                    FeedTimelineRow(item: item) { openURL = IdentifiedURL(url: $0) }
+                    FeedTimelineRow(
+                        item: item,
+                        engagement: engagement,
+                        isSignedIn: model.isSignedIn,
+                        currentUserID: model.currentUserID
+                    ) { openURL = IdentifiedURL(url: $0) }
                         .task { await model.loadMoreIfNeeded(currentItem: item) }
                 }
                 if model.isLoadingMore {
@@ -113,12 +124,30 @@ struct FeedView: View {
 
 /// Dispatches a `FeedItem` to its card. Match / blog / news push a native
 /// detail screen; video still opens the web player in Safari (native player is
-/// Phase 6).
+/// Phase 6). Every row wraps its card and the shared engagement bar in
+/// one surface (the row shell), mirroring the web cards.
 private struct FeedTimelineRow: View {
     let item: FeedItem
+    let engagement: EngagementStore
+    let isSignedIn: Bool
+    let currentUserID: UUID?
     let onOpenWeb: (URL) -> Void
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            card
+            EngagementBarView(
+                target: item.engagementTarget,
+                store: engagement,
+                isSignedIn: isSignedIn,
+                currentUserID: currentUserID
+            )
+        }
+        .feedRowShell()
+    }
+
+    @ViewBuilder
+    private var card: some View {
         switch item.kind {
         case .match(let match):
             // Match details expand inline via the card's own dropdown.

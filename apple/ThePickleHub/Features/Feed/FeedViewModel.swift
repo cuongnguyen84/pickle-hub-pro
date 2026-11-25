@@ -27,6 +27,10 @@ final class FeedViewModel {
     /// without the posts overlay. The moderation queue stays the
     /// safety net for new authors.
     private(set) var isSignedIn = false
+    /// The signed-in user's id, loaded with `isSignedIn` on each reset.
+    /// The engagement thread uses it to mark the viewer's own comments
+    /// (delete action) without another session lookup per card.
+    private(set) var currentUserID: UUID?
 
     private let repo = FeedRepository()
     private var cursor: FeedCursor?
@@ -66,6 +70,7 @@ final class FeedViewModel {
             cursor = nil
             reachedEnd = false
             isSignedIn = (try? await SupabaseManager.shared.client.auth.session) != nil
+            currentUserID = try? await SupabaseManager.shared.client.auth.session.user.id
             // Overlays (like the web): fetched once per refresh, never
             // advancing the RPC cursor — news, IG reels, happenings
             // (live/tournament/event), system highlights, and community
