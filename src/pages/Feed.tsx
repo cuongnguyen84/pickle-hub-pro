@@ -20,7 +20,6 @@ import { useFeedHappenings, type FeedHappeningItem } from "@/hooks/social/useFee
 import { useFeedHighlights, type FeedHighlightItem } from "@/hooks/social/useFeedHighlights";
 import { useSocialPosts, type FeedSocialPostItem } from "@/hooks/social/useSocialPosts";
 import { useFeedBlogs, stampCanonicalBlogSlugs } from "@/hooks/social/useFeedBlogs";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useFeedTab } from "@/hooks/social/useFeedTab";
 import { useFeedViewedTracking } from "@/hooks/social/useFeedViewedTracking";
 import { FeedMatchCard } from "@/components/social/feed/FeedMatchCard";
@@ -71,8 +70,8 @@ import { FeedEmptyState } from "@/components/social/feed/FeedEmptyState";
 import { FeedSignInNudge } from "@/components/social/feed/FeedSignInNudge";
 
 // The UGC post button + composer sheet ship as a lazy chunk: they are
-// only rendered for the gated audience (site admins in PR-A) and must
-// not weigh down the feed bundle for readers.
+// only rendered for signed-in users and must not weigh down the feed
+// bundle for readers.
 const FeedPostFab = lazy(() => import("@/components/social/feed/FeedPostFab"));
 
 /**
@@ -123,13 +122,13 @@ const Feed = () => {
   const followingFeed = useFollowingFeed(
     tab === "following" ? user?.id : undefined,
   );
-  // UGC photo posts (PR-A): composer + stream merge are gated to site
-  // admins until the moderation queue (PR-B) and the legal sign-off
-  // land; the hook itself stays ungated so lifting this is one flag.
-  const { isAdmin } = useAdminAuth();
+  // UGC photo posts: posting opened to every signed-in user on
+  // 2026-11-25 (Cuong's call, replacing the PR-A admin-only gate).
+  // Guests never see the composer; the moderation queue stays the
+  // safety net - authors with fewer than 3 approved posts land in
+  // pending for an admin to review at /admin/moderation.
   // Approved community posts are public reading (Cuong, 2026-11-24):
-  // the overlay runs for every visitor, signed in or not. POSTING
-  // stays admin-gated below (the composer and its FAB), unchanged.
+  // the overlay runs for every visitor, signed in or not.
   const postsFeed = useSocialPosts();
   const timelineFeed = useFeedTimeline();
   const resultsFeed = useFeedResults();
@@ -522,7 +521,7 @@ const Feed = () => {
           )}
         </div>
       </div>
-      {isAdmin && (
+      {isAuthenticated && (
         <Suspense fallback={null}>
           <FeedPostFab language={language} />
         </Suspense>

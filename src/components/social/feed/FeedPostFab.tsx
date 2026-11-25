@@ -13,8 +13,9 @@ import { type Language } from "@/lib/social/feed-formatters";
 import FeedComposer from "./FeedComposer";
 
 /**
- * Floating "new post" button for the feed (UGC v1, admin-gated by the
- * caller in Feed.tsx). Replaces the fixed composer block that used to
+ * Floating "new post" button for the feed (UGC v1, shown to signed-in
+ * users by the caller in Feed.tsx; guests never mount it). Replaces
+ * the fixed composer block that used to
  * sit at the top of the stream: the button stays reachable at any
  * scroll depth and opens the same FeedComposer inside a bottom sheet.
  *
