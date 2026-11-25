@@ -8,10 +8,12 @@ import Foundation
 enum FeedRecency {
 
     /// The timestamp an item competes with: a live happening counts as
-    /// happening right now; everything else uses `rankedAt ?? publishedAt`
-    /// (falling back to the distant past when unparseable). Future
-    /// timestamps (upcoming events) clamp to `now`, so nothing unstarted
-    /// can outrank breaking items by more than arriving first.
+    /// happening right now; everything else uses `rankedAt ?? publishedAt`.
+    /// Match RPCs set rankedAt to played_at, so a backfill cannot outrank
+    /// a match that was played later. Unparseable timestamps fall back to
+    /// the distant past. Future timestamps (upcoming events) clamp to
+    /// `now`, so nothing unstarted can outrank breaking items by more
+    /// than arriving first.
     static func timestamp(for item: FeedItem, now: Date) -> Date {
         if case .happening(let happening) = item.kind, happening.kind == .live {
             return now

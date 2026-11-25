@@ -283,9 +283,10 @@ export function hideQuickTableMatchCopies<T extends QuickTableCopyRef>(items: re
  * bonuses, the engagement multiplier, the viewed demotion and the random
  * jitter entirely: one shared timestamp per item, newest first.
  *
- * The shared timestamp is `ranked_at` when the item carries one (for RPC
- * rows that is when the result/post surfaced - verified_at/updated_at for
- * pro matches, played_at for community matches), otherwise
+ * The shared timestamp is `ranked_at` when the item carries one. Match
+ * rows from the feed RPCs set that to played_at (pro and community), so
+ * a backfill cannot outrank a match that was actually played later.
+ * Other rows use the time they were published. Falls back to
  * `published_at`. A livestream that is live right now sorts as "now"
  * while it is live. Future timestamps are clamped to now so an upcoming
  * event can never sit above fresher content until it starts, and items
