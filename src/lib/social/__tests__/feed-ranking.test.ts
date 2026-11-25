@@ -275,6 +275,29 @@ describe("feed recency ordering", () => {
   // 2026-11-24 11:05 in Ho Chi Minh City - when Cuong checked his feed.
   const NOW = Date.parse("2026-11-24T04:05:00Z");
 
+  it("ranks a later played match above an earlier one when ranked_at is played_at", () => {
+    // The RPC sets ranked_at to played_at. A backfill must not jump the
+    // queue by carrying a newer insert timestamp in some other field.
+    const rows: RecencyRow[] = [
+      {
+        type: "match",
+        ranked_at: "2026-11-18T12:00:00Z",
+        published_at: "2026-11-18T12:00:00Z",
+        cursor_id: "match:nations-cup",
+      },
+      {
+        type: "match",
+        ranked_at: "2026-11-23T18:00:00Z",
+        published_at: "2026-11-23T18:00:00Z",
+        cursor_id: "match:ppa",
+      },
+    ];
+    expect(sortFeedByRecency(rows, NOW).map((r) => r.cursor_id)).toEqual([
+      "match:ppa",
+      "match:nations-cup",
+    ]);
+  });
+
   it("puts this morning's news above yesterday's pro results and blogs", () => {
     const rows: RecencyRow[] = [
       { type: "result", ranked_at: "2026-11-23T13:00:00Z", cursor_id: "result:daytona-final" },
