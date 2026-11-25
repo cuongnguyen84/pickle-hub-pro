@@ -24,9 +24,9 @@ struct FeedView: View {
             SafariView(url: item.url).ignoresSafeArea()
         }
         .overlay(alignment: .bottomTrailing) {
-            // Admin-only in this phase, mirroring the web gate: the
+            // Signed-in users only, mirroring the web gate: the
             // composer button floats above the assistant launcher.
-            if model.isAdmin {
+            if model.isSignedIn {
                 Button {
                     showComposer = true
                 } label: {
