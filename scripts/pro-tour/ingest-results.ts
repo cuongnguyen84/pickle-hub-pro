@@ -5,7 +5,11 @@
  *   node scripts/pro-tour/run-ingest.mjs
  *       Rolling window (last 21 days through 2 days ahead). POSTs only when
  *       SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set. Otherwise exits 0
- *       without fetching. This is what the GitHub Actions cron runs.
+ *       without fetching. The key is trimmed first: pro-tour-ingest compares
+ *       the bearer with ===, so a trailing newline is a 401. This is what
+ *       the GitHub Actions cron runs. The workflow fills that env var from
+ *       SUPABASE_SECRET_KEY, or SUPABASE_SERVICE_ROLE_KEY when the new
+ *       secret is empty.
  *
  *   node scripts/pro-tour/run-ingest.mjs --backfill
  *       Oct–Nov 2026 plan (Chicago through Daytona, MLP Nations Cup).
@@ -140,9 +144,12 @@ async function postChunk(
   scrape: TournamentScrapeResult,
   triggeredBy: "manual" | "scheduled",
 ): Promise<{ matches_imported?: number }> {
+  // pro-tour-ingest compares this bearer to its env key with ===. A pasted
+  // secret often carries a trailing newline; trim so that byte does not 401.
+  const bearer = serviceKey.trim();
   const res = await fetch(`${supabaseUrl.replace(/\/$/, "")}/functions/v1/pro-tour-ingest`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${bearer}` },
     body: JSON.stringify({
       scrape_result: scrape,
       triggered_by: triggeredBy,
@@ -222,7 +229,7 @@ async function main(): Promise<number> {
   const write = !args.dryRun && (!args.backfill || args.execute);
   const env = {
     SUPABASE_URL: process.env.SUPABASE_URL,
-    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY?.trim(),
   };
   if (write && !secretsReady(env)) {
     console.log("pro-results-ingest: no-op (SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set)");

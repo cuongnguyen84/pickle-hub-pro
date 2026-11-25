@@ -6,7 +6,7 @@
   "live_refresh_minutes": 10,
   "live_window_start": "07:00",
   "live_window_end": "19:00",
-  "verified_at": "2026-11-17",
+  "verified_at": "2026-11-25",
   "events": [
     {
       "key": "veolia-chicago-cup-2026",
@@ -336,7 +336,7 @@
         "https://www.theapp.global/tour-schedule/2026-pickleball-d-joy4",
         "https://djoy.vn/tournament/vietnammasters2026"
       ],
-      "notes": "Thêm 28/10 từ theapp.global/tour (Last Published 26/10). Card \"2026 Pickleball D-Joy Event Powered By The APP\", 24–29/11/2026. APP không có feed điểm số PPA — chỉ nháp, không auto_publish. 17/11 nằm trong cửa sổ 14 ngày; theapp.global/tour Last Published Mon Nov 16 2026 vẫn có card 24–29/11. APP không có feed — giữ nháp, không auto_publish."
+      "notes": "Thêm 28/10 từ theapp.global/tour (Last Published 26/10). Card \"2026 Pickleball D-Joy Event Powered By The APP\", 24–29/11/2026. APP không có feed điểm số PPA — chỉ nháp, không auto_publish. 17/11 nằm trong cửa sổ 14 ngày; theapp.global/tour Last Published Mon Nov 16 2026 vẫn có card 24–29/11. APP không có feed — giữ nháp, không auto_publish. 25/11 đã bắt đầu 24/11 (ngoài cửa sổ bắt đầu), còn đến 29/11. theapp.global/tour Last Published Tue Nov 24 2026 card In Progress 24–29/11. APP không có feed — giữ nháp."
     },
     {
       "key": "ppa-canada-toronto-125-2026",
@@ -350,7 +350,7 @@
         "https://www.ppatour.com/events/",
         "https://pickleballtournaments.com/tournaments/ppa-canada-toronto-125"
       ],
-      "notes": "P2, thêm 21/10 (một trong ba PPA Canada 125 còn thiếu từ 13/10). Venue: Pickleplex Social Club Downsview, 40 Carl Hall Rd #49, North York, ON. Trang Canada: registration chưa mở. Ngoài 14 ngày, chưa bật auto_publish. 17/11 trong cửa sổ: tourneyId 79d96d9b-e9b4-4030-8a14-0499456650c8 (ppatour.com/events tournamentUuid + pickleballtournaments.com/tournaments/ppa-canada-toronto-125, Nov 26–29 2026, Pickleplex Social Club - Downsview) và 20 uuid trên trang đăng ký đều trả /api/scores/?event= 0 divisions. Không bật auto_publish."
+      "notes": "P2, thêm 21/10 (một trong ba PPA Canada 125 còn thiếu từ 13/10). Venue: Pickleplex Social Club Downsview, 40 Carl Hall Rd #49, North York, ON. Trang Canada: registration chưa mở. Ngoài 14 ngày, chưa bật auto_publish. 17/11 trong cửa sổ: tourneyId 79d96d9b-e9b4-4030-8a14-0499456650c8 (ppatour.com/events tournamentUuid + pickleballtournaments.com/tournaments/ppa-canada-toronto-125, Nov 26–29 2026, Pickleplex Social Club - Downsview) và 20 uuid trên trang đăng ký đều trả /api/scores/?event= 0 divisions. Không bật auto_publish. 25/11 vẫn trong cửa sổ: cùng tourneyId và 20 uuid trên trang đều 0 divisions. ppatour.com/events + ppatourcanada.ca cùng Nov 26–29, Pickleplex Social Club Downsview. Không bật auto_publish."
     },
     {
       "key": "app-tour-championships-2026",
@@ -362,7 +362,7 @@
       "sources": [
         "https://www.theapp.global/tour-schedule/2026-app-tour-championships"
       ],
-      "notes": "P2. The Fort, Fort Lauderdale. APP không có feed điểm số công khai — chỉ nháp. Lịch xác minh 13/10 từ theapp.global."
+      "notes": "P2. The Fort, Fort Lauderdale. APP không có feed điểm số công khai — chỉ nháp. Lịch xác minh 13/10 từ theapp.global. 25/11 trong cửa sổ: theapp.global/tour Last Published Tue Nov 24 2026 vẫn Dec 3–6, The Fort. APP không có feed — giữ nháp, không auto_publish."
     },
     {
       "key": "ppa-canada-vancouver-125-2026",
@@ -374,7 +374,7 @@
       "sources": [
         "https://ppatourcanada.ca/tournament/2026/vancouver-125/"
       ],
-      "notes": "P2, thêm 21/10 (PPA Canada 125 thứ ba). Venue: 4920 Canoe Pass Wy, Delta, BC. Trang Canada: registration chưa mở. Ngoài 14 ngày, chưa bật auto_publish."
+      "notes": "P2, thêm 21/10 (PPA Canada 125 thứ ba). Venue: 4920 Canoe Pass Wy, Delta, BC. Trang Canada: registration chưa mở. Ngoài 14 ngày, chưa bật auto_publish. 25/11 trong cửa sổ (3–6/12). tourneyId ef8ddffc-5971-421b-bc2c-b4066a89d89a (ppatour.com/events, card ghi venue The Nest, Delta BC) và 21 uuid trên pickleballtournaments.com/tournaments/ppa-canada-vancouver-125 đều 0 divisions. ppatourcanada.ca cùng Dec 3–6, địa chỉ 4920 Canoe Pass Wy. Không bật auto_publish."
     },
     {
       "key": "pj-tokyo-challenger-2026",
@@ -386,7 +386,7 @@
       "sources": [
         "https://www.ppatour-asia.com/tournament/2026/pj-tokyo-challenger-2026/"
       ],
-      "notes": "P2 watchlist. Ariake Tennis Park. Local-2h=VN. https://pickleballtournaments.com/tournaments/ppa-asia-125-pj-tokyo-challenger-2026 fetch timeout ngày4/10; chưa xác nhận draw. 28/10 lịch Asia ghi venue \"Ariake Tennis Club, Tokyo, Japan\" (trước đó ghi Ariake Tennis Park)."
+      "notes": "P2 watchlist. Ariake Tennis Park. Local-2h=VN. https://pickleballtournaments.com/tournaments/ppa-asia-125-pj-tokyo-challenger-2026 fetch timeout ngày4/10; chưa xác nhận draw. 28/10 lịch Asia ghi venue \"Ariake Tennis Club, Tokyo, Japan\" (trước đó ghi Ariake Tennis Park). 25/11 trong cửa sổ (7–9/12). tourneyId d712948b-5b51-4978-9ce6-a331ea791c8b và 19 uuid trên trang đăng ký đều 0 divisions. Ngày Dec 7–9 khớp ppatour.com/events, trang đăng ký, trang ppatour-asia.com và lịch AJAX. Tên sân lệch (events: Ariake Tennis Forest Park; trang giải: Ariake Tennis Park; lịch Asia: Ariake Tennis Club) — không đổi venue. Không bật auto_publish."
     },
     {
       "key": "app-indian-grand-slam-2026",
@@ -424,7 +424,7 @@
         "https://ppatour.com.au/tournaments/ppa-125-adelaide-sa/",
         "https://www.ppatour.com/events/"
       ],
-      "notes": "P2, thêm 21/10. Card ppatour.com/events ghi Dec 10–13, 2026 (bản mốc 13/10 ghi 10–13/12, khớp). Ngoài 14 ngày, chưa tra eventId, chưa bật auto_publish."
+      "notes": "P2, thêm 21/10. Card ppatour.com/events ghi Dec 10–13, 2026 (bản mốc 13/10 ghi 10–13/12, khớp). Ngoài 14 ngày, chưa tra eventId, chưa bật auto_publish. 25/11 vẫn ngoài cửa sổ (bắt đầu 10/12, 25/11+14=9/12). ppatour.com/events tournamentUuid 52db97aa-e2cd-4fc9-80ac-22ec0058cccb, Elizabeth East SA, venue Voyager Playford. Feed /api/scores trả đúng tournamentId, 5 nội dung Pro, 0 trận. ppatour.com.au trang giải ghi venue VOYAGER PLAYFORD, không in ngày. Chưa bật auto_publish vì chưa tới 14 ngày."
     },
     {
       "key": "ppa-melbourne-125-2027",

@@ -5,8 +5,11 @@
 # stops at the last watchlist event. This cron reads the public scores
 # feeds and POSTs them to the existing pro-tour-ingest function.
 #
-# No-op when SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is unset: the gate
+# No-op when SUPABASE_URL or the ingest token is unset: the gate
 # exits 0 before checkout, and the script exits 0 before any request.
+# The token is secrets.SUPABASE_SECRET_KEY when that secret is non-empty,
+# otherwise secrets.SUPABASE_SERVICE_ROLE_KEY. Both the gate and the ingest
+# step map it to SUPABASE_SERVICE_ROLE_KEY, the env var the script reads.
 # It does not apply migrations and it does not run the Oct–Nov backfill.
 # Backfill is local only — see the header of scripts/pro-tour/ingest-results.ts
 # and docs/ops/team-v2-runbook.md. Run from the repo root.
@@ -38,11 +41,11 @@ jobs:
         id: gate
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SECRET_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::pro-results-ingest is a no-op: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set. The cron stays green and writes no matches until both repository secrets exist."
+            echo "::warning::pro-results-ingest is a no-op: SUPABASE_URL or the ingest token is not set. The cron stays green and writes no matches until SUPABASE_URL and SUPABASE_SECRET_KEY (or SUPABASE_SERVICE_ROLE_KEY) exist."
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
@@ -64,5 +67,5 @@ jobs:
         if: steps.gate.outputs.ready == 'true'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SECRET_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node scripts/pro-tour/run-ingest.mjs
