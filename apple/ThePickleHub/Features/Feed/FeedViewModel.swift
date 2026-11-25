@@ -1,9 +1,10 @@
 import Foundation
 import Observation
+import Supabase
 
 /// Drives the `/feed`-equivalent Trending timeline: first load, keyset
 /// pagination of the RPC stream, one-time overlays (news, embeds,
-/// highlights, happenings, and — for admins in this phase — community
+/// highlights, happenings, and — for signed-in users — community
 /// photo posts) merged by pure recency, and pull-to-refresh. Dedupes by
 /// item id so overlapping pages never double-render.
 @Observable
@@ -19,10 +20,13 @@ final class FeedViewModel {
     private(set) var items: [FeedItem] = []
     private(set) var isLoadingMore = false
     private(set) var reachedEnd = false
-    /// Site-admin flag, loaded on each reset. In this phase community
-    /// photo posts join the feed for admins only — the same gate the web
-    /// applies (PR-A) — and the composer button keys off it too.
-    private(set) var isAdmin = false
+    /// Signed-in flag, loaded on each reset. Community photo posts
+    /// join the feed for signed-in users and the composer button keys
+    /// off it too - posting opened to every signed-in user on
+    /// 2026-11-25 (mirroring the web); guests keep the public timeline
+    /// without the posts overlay. The moderation queue stays the
+    /// safety net for new authors.
+    private(set) var isSignedIn = false
 
     private let repo = FeedRepository()
     private var cursor: FeedCursor?
@@ -61,16 +65,16 @@ final class FeedViewModel {
         if reset {
             cursor = nil
             reachedEnd = false
-            isAdmin = await TournamentService.shared.isCurrentUserAdmin()
+            isSignedIn = (try? await SupabaseManager.shared.client.auth.session) != nil
             // Overlays (like the web): fetched once per refresh, never
             // advancing the RPC cursor — news, IG reels, happenings
             // (live/tournament/event), system highlights, and community
-            // photo posts (admins only in this phase, as on the web).
+            // photo posts (signed-in users, as on the web).
             async let news = (try? repo.news()) ?? []
             async let embeds = (try? repo.embeds()) ?? []
             async let highlights = (try? repo.highlights()) ?? []
             async let happenings = repo.happenings()
-            async let posts = isAdmin ? (try? repo.socialPosts()) ?? [] : []
+            async let posts = isSignedIn ? (try? repo.socialPosts()) ?? [] : []
             overlayItems = await news + embeds + highlights + happenings + posts
         }
         do {
