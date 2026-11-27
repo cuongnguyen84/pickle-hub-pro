@@ -31,7 +31,7 @@ const post: BlogPost = {
         {
           heading: "A first for the National Games",
           content:
-            "Pickleball will be contested at Vietnam's National Games for the first time at the 10th edition in 2026, with five events scheduled for December 3-9 at the NSC The Global City courts in Ho Chi Minh City. Inclusion in the National Games programme is the strongest official recognition a sport can receive in Vietnam — it unlocks provincial team structures, budgets and athlete pathways that club competition cannot.",
+            "Pickleball will be contested at Vietnam's National Games for the first time at the 10th edition in 2026, with five events scheduled for December 5-9 at the NSC The Global City courts in Ho Chi Minh City. Inclusion in the National Games programme is the strongest official recognition a sport can receive in Vietnam — it unlocks provincial team structures, budgets and athlete pathways that club competition cannot.",
         },
         {
           heading: "The crossover everyone will watch",
@@ -43,7 +43,7 @@ const post: BlogPost = {
         {
           question: "When and where is pickleball played at Vietnam's 2026 National Games?",
           answer:
-            "December 3-9, 2026 at the NSC The Global City courts in Ho Chi Minh City, with five events on the programme.",
+            "December 5-9, 2026 at the NSC The Global City courts in Ho Chi Minh City, with five events on the programme.",
         },
         {
           question: "Which team will Ly Hoang Nam represent?",
@@ -56,12 +56,12 @@ const post: BlogPost = {
       title: "Lý Hoàng Nam chơi pickleball tại Đại hội Thể thao toàn quốc 2026: cột mốc cho cả hai môn thể thao",
       metaTitle: "Hoàng Nam đấu pickleball ở Đại hội toàn quốc",
       metaDescription:
-        "Pickleball lần đầu vào Đại hội toàn quốc (3-9/12/2026): Lý Hoàng Nam khoác áo Công an nhân dân. Ý nghĩa cột mốc này.",
+        "Pickleball lần đầu vào Đại hội toàn quốc (5-9/12/2026): Lý Hoàng Nam khoác áo Công an nhân dân. Ý nghĩa cột mốc này.",
       sections: [
         {
           heading: "Lần đầu tiên pickleball có mặt ở Đại hội Thể thao toàn quốc",
           content:
-            "Đại hội Thể thao toàn quốc lần thứ X năm 2026 sẽ là kỳ Đại hội đầu tiên có pickleball trong chương trình thi đấu. Môn này dự kiến tranh tài từ ngày 3 đến 9/12/2026 tại cụm sân NSC The Global City (TP.HCM) với 5 nội dung. Với thể thao Việt Nam, được vào chương trình Đại hội là dấu mốc công nhận chính thức ở cấp cao nhất: từ đây, các tỉnh thành và ngành mới có cơ sở để thành lập đội tuyển, bố trí ngân sách và xây dựng lực lượng vận động viên ăn lương tập luyện — những thứ mà sân chơi phong trào, dù sôi động đến đâu, cũng không tự tạo ra được.",
+            "Đại hội Thể thao toàn quốc lần thứ X năm 2026 sẽ là kỳ Đại hội đầu tiên có pickleball trong chương trình thi đấu. Môn này dự kiến tranh tài từ ngày 5 đến 9/12/2026 tại cụm sân NSC The Global City (TP.HCM) với 5 nội dung. Với thể thao Việt Nam, được vào chương trình Đại hội là dấu mốc công nhận chính thức ở cấp cao nhất: từ đây, các tỉnh thành và ngành mới có cơ sở để thành lập đội tuyển, bố trí ngân sách và xây dựng lực lượng vận động viên ăn lương tập luyện — những thứ mà sân chơi phong trào, dù sôi động đến đâu, cũng không tự tạo ra được.",
         },
         {
           heading: "Lý Hoàng Nam: cú chuyển hướng đáng chú ý nhất",
@@ -89,7 +89,7 @@ const post: BlogPost = {
         {
           question: "Pickleball thi đấu ở Đại hội Thể thao toàn quốc 2026 khi nào, ở đâu?",
           answer:
-            "Từ ngày 3 đến 9/12/2026 tại cụm sân NSC The Global City (TP.HCM), với 5 nội dung thi đấu. Đây là lần đầu pickleball có mặt trong chương trình Đại hội.",
+            "Từ ngày 5 đến 9/12/2026 tại cụm sân NSC The Global City (TP.HCM), với 5 nội dung thi đấu. Đây là lần đầu pickleball có mặt trong chương trình Đại hội.",
         },
         {
           question: "Lý Hoàng Nam khoác áo đội nào ở môn pickleball?",
