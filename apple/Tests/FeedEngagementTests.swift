@@ -173,7 +173,7 @@ struct FeedEngagementTests {
 
     // MARK: - Store grouping
 
-    @Test func countsRequestsGroupByType() {
+    @Test @MainActor func countsRequestsGroupByType() {
         let a = UUID(), b = UUID(), c = UUID()
         let grouped = EngagementStore.groupedByType([
             EngagementTarget(type: "news", id: a),
