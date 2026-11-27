@@ -22,6 +22,9 @@ final class PostModerationViewModel {
     @MainActor
     func load() async {
         do {
+            // Bind the (Sendable, stateless) repository locally so the
+            // async-let children capture it, not the MainActor self.
+            let repo = self.repo
             async let pendingTask = repo.pendingPosts()
             async let historyTask = repo.historyPosts()
             pending = try await pendingTask
