@@ -26,7 +26,7 @@ const post: BlogPost = {
         {
           heading: "Quick answer",
           content:
-            "Sophia Phuong Anh, born in 2008, is an 18-year-old Vietnamese pickleball player ranked inside the world Top 60 and named Female Athlete of the Year 2025 at the Vietnam Pickleball Awards. She plays for Team Pickleball Jogarbola. At the 10th National Sports Games, where pickleball runs from December 3 to December 9, 2026 at the NSC The Global City courts in Ho Chi Minh City, Sophia Phuong Anh competes for the People's Public Security delegation alongside Ly Hoang Nam, Trinh Linh Giang, Truong Vinh Hien and Do Minh Quan.",
+            "Sophia Phuong Anh, born in 2008, is an 18-year-old Vietnamese pickleball player ranked inside the world Top 60 and named Female Athlete of the Year 2025 at the Vietnam Pickleball Awards. She plays for Team Pickleball Jogarbola. At the 10th National Sports Games, where pickleball runs from December 5 to December 9, 2026 at the NSC The Global City courts in Ho Chi Minh City, Sophia Phuong Anh competes for the People's Public Security delegation alongside Ly Hoang Nam, Trinh Linh Giang, Truong Vinh Hien and Do Minh Quan.",
         },
         {
           heading: "How did Sophia Phuong Anh start playing pickleball?",
@@ -46,7 +46,7 @@ const post: BlogPost = {
         {
           heading: "What is next for Sophia Phuong Anh?",
           content:
-            "Pickleball appears in the official programme of Vietnam's National Sports Games for the first time in 2026, with more than 100 athletes from 11 delegations contesting five events from December 3 to December 9, 2026 in Ho Chi Minh City. The People's Public Security delegation is rated among the strongest at the Games, and Sophia Phuong Anh enters as one of its medal candidates in the women's and mixed events.",
+            "Pickleball appears in the official programme of Vietnam's National Sports Games for the first time in 2026, with more than 100 athletes from 11 delegations contesting five events from December 5 to December 9, 2026 in Ho Chi Minh City. The People's Public Security delegation is rated among the strongest at the Games, and Sophia Phuong Anh enters as one of its medal candidates in the women's and mixed events.",
         },
         {
           heading: "",
@@ -68,7 +68,7 @@ const post: BlogPost = {
         {
           heading: "Tóm tắt nhanh",
           content:
-            "Sophia Phương Anh, tên thật Trần Phương Anh, sinh năm 2008, là vận động viên pickleball 18 tuổi của Việt Nam, hiện nằm trong Top 60 thế giới và được vinh danh Nữ vận động viên xuất sắc nhất năm 2025 tại Vietnam Pickleball Awards. Sophia Phương Anh là thành viên Team Pickleball Jogarbola. Tại Đại hội Thể thao toàn quốc lần thứ X, môn pickleball thi đấu từ ngày 3 đến ngày 9/12/2026 tại cụm sân NSC The Global City, TP.HCM, Sophia Phương Anh khoác áo đoàn Công an nhân dân, đội hình còn có Lý Hoàng Nam, Trịnh Linh Giang, Trương Vinh Hiển và Đỗ Minh Quân.",
+            "Sophia Phương Anh, tên thật Trần Phương Anh, sinh năm 2008, là vận động viên pickleball 18 tuổi của Việt Nam, hiện nằm trong Top 60 thế giới và được vinh danh Nữ vận động viên xuất sắc nhất năm 2025 tại Vietnam Pickleball Awards. Sophia Phương Anh là thành viên Team Pickleball Jogarbola. Tại Đại hội Thể thao toàn quốc lần thứ X, môn pickleball thi đấu từ ngày 5 đến ngày 9/12/2026 tại cụm sân NSC The Global City, TP.HCM, Sophia Phương Anh khoác áo đoàn Công an nhân dân, đội hình còn có Lý Hoàng Nam, Trịnh Linh Giang, Trương Vinh Hiển và Đỗ Minh Quân.",
         },
         {
           heading: "Sophia Phương Anh sinh năm bao nhiêu và bắt đầu chơi pickleball thế nào?",
@@ -93,7 +93,7 @@ const post: BlogPost = {
         {
           heading: "Sophia Phương Anh thi đấu cho đoàn nào tại Đại hội Thể thao toàn quốc 2026?",
           content:
-            "Tại Đại hội Thể thao toàn quốc lần thứ X năm 2026, Sophia Phương Anh khoác áo đoàn Công an nhân dân ở môn pickleball. Môn pickleball lần đầu tiên xuất hiện trong chương trình thi đấu chính thức của Đại hội, diễn ra từ ngày 3 đến ngày 9/12/2026 tại cụm sân NSC The Global City, TP.HCM, quy tụ hơn 100 vận động viên thuộc 11 đơn vị, tranh tài ở 5 nội dung: đơn nam, đơn nữ, đôi nam, đôi nữ và đôi nam nữ phối hợp.\n\nĐoàn Công an nhân dân được đánh giá sở hữu đội hình mạnh bậc nhất giải, với cựu tay vợt số 1 quần vợt Việt Nam Lý Hoàng Nam cùng Trịnh Linh Giang, Trương Vinh Hiển, Đỗ Minh Quân và Sophia Huỳnh Trần Ngọc Nhi. Sự hiện diện của Sophia Phương Anh trong đội hình này đặt cô vào nhóm ứng viên huy chương ở các nội dung nữ và đôi nam nữ, đồng thời biến kỳ Đại hội đầu tiên của pickleball thành sân khấu lớn nhất trong nước mà tay vợt 18 tuổi từng bước lên. Sau canh bạc chuyển môn năm nào, đây là lúc Sophia Phương Anh kiểm chứng bản lĩnh của mình trước khán giả nhà.",
+            "Tại Đại hội Thể thao toàn quốc lần thứ X năm 2026, Sophia Phương Anh khoác áo đoàn Công an nhân dân ở môn pickleball. Môn pickleball lần đầu tiên xuất hiện trong chương trình thi đấu chính thức của Đại hội, diễn ra từ ngày 5 đến ngày 9/12/2026 tại cụm sân NSC The Global City, TP.HCM, quy tụ hơn 100 vận động viên thuộc 11 đơn vị, tranh tài ở 5 nội dung: đơn nam, đơn nữ, đôi nam, đôi nữ và đôi nam nữ phối hợp.\n\nĐoàn Công an nhân dân được đánh giá sở hữu đội hình mạnh bậc nhất giải, với cựu tay vợt số 1 quần vợt Việt Nam Lý Hoàng Nam cùng Trịnh Linh Giang, Trương Vinh Hiển, Đỗ Minh Quân và Sophia Huỳnh Trần Ngọc Nhi. Sự hiện diện của Sophia Phương Anh trong đội hình này đặt cô vào nhóm ứng viên huy chương ở các nội dung nữ và đôi nam nữ, đồng thời biến kỳ Đại hội đầu tiên của pickleball thành sân khấu lớn nhất trong nước mà tay vợt 18 tuổi từng bước lên. Sau canh bạc chuyển môn năm nào, đây là lúc Sophia Phương Anh kiểm chứng bản lĩnh của mình trước khán giả nhà.",
         }
       ],
       faqItems: [

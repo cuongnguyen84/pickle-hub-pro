@@ -147,8 +147,8 @@ export const blogMetadata: BlogPostMetadata[] = [
     "titleVi": "Pickleball lần đầu tranh huy chương tại Đại hội Thể thao toàn quốc: ai là ứng viên, xem ở đâu?",
     "metaTitleEn": "Pickleball at Vietnam's National Games 2026 | ThePickleHub",
     "metaTitleVi": "Pickleball ở Đại hội Thể thao toàn quốc 2026",
-    "metaDescriptionEn": "Pickleball debuts as an official medal sport at Vietnam's National Sports Games, Dec 3-9, 2026 in Ho Chi Minh City: 100+ athletes, 11 delegations, 5 events.",
-    "metaDescriptionVi": "Pickleball lần đầu tranh huy chương tại Đại hội Thể thao toàn quốc, 3-9/12/2026 tại TP.HCM: hơn 100 VĐV, 11 đoàn, 5 nội dung."
+    "metaDescriptionEn": "Pickleball debuts as an official medal sport at Vietnam's National Sports Games, Dec 5-9, 2026 in Ho Chi Minh City: 100+ athletes, 11 delegations, 5 events.",
+    "metaDescriptionVi": "Pickleball lần đầu tranh huy chương tại Đại hội Thể thao toàn quốc, 5-9/12/2026 tại TP.HCM: hơn 100 VĐV, 11 đoàn, 5 nội dung."
   },
   {
     "slug": "djoy-vietnam-pickleball-ecosystem-academy-tour",
@@ -936,7 +936,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     "metaTitleEn": "Ly Hoang Nam Plays Pickleball at National Games",
     "metaTitleVi": "Hoàng Nam đấu pickleball ở Đại hội toàn quốc",
     "metaDescriptionEn": "Pickleball debuts at Vietnam's National Games in Dec 2026, and tennis star Ly Hoang Nam will play it for the People's Public Security team. Analysis.",
-    "metaDescriptionVi": "Pickleball lần đầu vào Đại hội toàn quốc (3-9/12/2026): Lý Hoàng Nam khoác áo Công an nhân dân. Ý nghĩa cột mốc này."
+    "metaDescriptionVi": "Pickleball lần đầu vào Đại hội toàn quốc (5-9/12/2026): Lý Hoàng Nam khoác áo Công an nhân dân. Ý nghĩa cột mốc này."
   },
   {
     "slug": "create-tournament-by-chat",
