@@ -178,7 +178,7 @@ struct PlayerProfileView: View {
         .task(id: username) { await model.load(username: username) }
         .sheet(item: followListBinding) { kind in
             if case .loaded(let profile, _) = model.phase {
-                FollowListView(userID: profile.id, kind: kind)
+                FollowListView(userID: profile.id, kind: kind.kind)
             }
         }
     }
