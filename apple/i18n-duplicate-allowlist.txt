@@ -340,3 +340,12 @@ Trận đấu
 Người theo dõi
 Đang theo dõi
 Theo dõi
+# PR-N6 (duyệt bài cộng đồng): các nhãn trạng thái/quản trị dùng chung cùng một nghĩa -
+# "Đã duyệt" = Approved (nhãn trạng thái duyệt bài + trạng thái đăng ký đội);
+# "Chờ duyệt" = Pending approval (nhãn trạng thái duyệt bài + trạng thái đăng ký đội);
+# "Lịch sử" = History (mục lịch sử trận + phân đoạn lịch sử duyệt bài);
+# "Duyệt bài cộng đồng" = Community post moderation (tiêu đề màn hình + hàng vào ở tab hồ sơ).
+Đã duyệt
+Chờ duyệt
+Lịch sử
+Duyệt bài cộng đồng

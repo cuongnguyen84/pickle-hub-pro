@@ -9,6 +9,8 @@ final class ProfileViewModel {
     }
 
     var phase: Phase = .loading
+    var isAdmin = false
+    var pendingModerationCount = 0
     private let repo = ProfileRepository()
 
     @MainActor
@@ -20,6 +22,10 @@ final class ProfileViewModel {
         } catch {
             phase = .failed(error.localizedDescription)
         }
+        // Admin moderation entry (web /admin/moderation, #1125): only
+        // admins see the row; the queue itself is RLS-guarded too.
+        isAdmin = await TournamentService.shared.isCurrentUserAdmin()
+        pendingModerationCount = isAdmin ? await ModerationRepository().pendingCount() : 0
     }
 }
 
@@ -104,7 +110,33 @@ struct ProfileView: View {
             communityRow(icon: "bubble.left.and.bubble.right.fill", title: "Tin nhắn") {
                 AuthenticationRequiredView { MessagesView() }
             }
+            if model.isAdmin { moderationRow }
         }
+    }
+
+    private var moderationRow: some View {
+        NavigationLink {
+            PostModerationView()
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "checkmark.shield.fill").font(.system(size: 15)).foregroundStyle(TLColor.accentText).frame(width: 22)
+                Text("Duyệt bài cộng đồng").font(TLFont.sans(15, .medium)).foregroundStyle(TLColor.fg)
+                if model.pendingModerationCount > 0 {
+                    Text("\(model.pendingModerationCount)")
+                        .font(TLFont.sans(12, .bold))
+                        .foregroundStyle(TLColor.accentInk)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 2)
+                        .background(TLColor.accent, in: Capsule())
+                }
+                Spacer()
+                Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(TLColor.fg3)
+            }
+            .padding(14)
+            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
     }
 
     private func communityRow<D: View>(icon: String, title: String, @ViewBuilder destination: @escaping () -> D) -> some View {
