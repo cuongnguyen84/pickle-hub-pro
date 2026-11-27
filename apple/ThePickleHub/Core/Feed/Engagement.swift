@@ -72,9 +72,11 @@ extension FeedItem {
         case .match:
             return EngagementTarget(type: "match", id: id)
         case .blog(let blog):
+            // The stamped canonical slug (VI overlay) wins; otherwise
+            // the slug map resolves the known split pairs.
             return EngagementTarget(
                 type: "blog",
-                id: BlogTargetId.uuid(forSlug: BlogTargetId.canonicalSlug(for: blog.slug))
+                id: BlogTargetId.uuid(forSlug: blog.canonicalSlug ?? BlogTargetId.canonicalSlug(for: blog.slug))
             )
         case .video(let video):
             return EngagementTarget(type: "video", id: video.videoID)

@@ -4,9 +4,11 @@ import Supabase
 
 /// Drives the `/feed`-equivalent Trending timeline: first load, keyset
 /// pagination of the RPC stream, one-time overlays (news, embeds,
-/// highlights, happenings, and — for signed-in users — community
-/// photo posts) merged by pure recency, and pull-to-refresh. Dedupes by
-/// item id so overlapping pages never double-render.
+/// highlights, happenings, blogs, and community photo posts) merged by
+/// pure recency, and pull-to-refresh. Dedupes by item id so
+/// overlapping pages never double-render. Ordering finishes with the
+/// seen partition (web PR #1124): items already seen at load sink
+/// below the unseen, using the frozen at-load snapshot.
 @Observable
 @MainActor
 final class FeedViewModel {
@@ -20,11 +22,11 @@ final class FeedViewModel {
     private(set) var items: [FeedItem] = []
     private(set) var isLoadingMore = false
     private(set) var reachedEnd = false
-    /// Signed-in flag, loaded on each reset. Community photo posts
-    /// join the feed for signed-in users and the composer button keys
-    /// off it too - posting opened to every signed-in user on
-    /// 2026-11-25 (mirroring the web); guests keep the public timeline
-    /// without the posts overlay. The moderation queue stays the
+    /// Signed-in flag, loaded on each reset. The composer button keys
+    /// off it - posting opened to every signed-in user on 2026-11-25
+    /// (mirroring the web). Community posts themselves are public:
+    /// guests read approved posts too (web #1131), so the posts
+    /// overlay loads for everyone. The moderation queue stays the
     /// safety net for new authors.
     private(set) var isSignedIn = false
     /// The signed-in user's id, loaded with `isSignedIn` on each reset.
@@ -33,6 +35,7 @@ final class FeedViewModel {
     private(set) var currentUserID: UUID?
 
     private let repo = FeedRepository()
+    private let viewedTracker = FeedViewedTracker()
     private var cursor: FeedCursor?
     private var rpcItems: [FeedItem] = []
     private var overlayItems: [FeedItem] = []
@@ -47,10 +50,16 @@ final class FeedViewModel {
 
     @MainActor
     func refresh() async {
-        // Pure recency (PR #1111 parity): a refresh simply re-reads the
-        // sources, so genuinely new content lands on top — no viewed
-        // demotion or jitter like the old score model had.
         await fetch(reset: true)
+    }
+
+    /// Marks a card as seen when it actually appears on screen (the
+    /// web marks on viewport entry). The mark persists for the NEXT
+    /// load; the current list never re-orders mid-visit because the
+    /// partition reads the frozen at-load snapshot.
+    @MainActor
+    func markViewed(_ item: FeedItem) {
+        viewedTracker.markViewed(item)
     }
 
     /// Called as the last few rows appear; fetches the next RPC page once.
@@ -73,14 +82,16 @@ final class FeedViewModel {
             currentUserID = try? await SupabaseManager.shared.client.auth.session.user.id
             // Overlays (like the web): fetched once per refresh, never
             // advancing the RPC cursor — news, IG reels, happenings
-            // (live/tournament/event), system highlights, and community
-            // photo posts (signed-in users, as on the web).
+            // (live/tournament/event), system highlights, the 30 newest
+            // blog posts (PR #1126) and community photo posts (public:
+            // approved posts read for guests too, PR #1131).
             async let news = (try? repo.news()) ?? []
             async let embeds = (try? repo.embeds()) ?? []
             async let highlights = (try? repo.highlights()) ?? []
             async let happenings = repo.happenings()
-            async let posts = isSignedIn ? (try? repo.socialPosts()) ?? [] : []
-            overlayItems = await news + embeds + highlights + happenings + posts
+            async let blogs = (try? repo.blogs()) ?? []
+            async let posts = (try? repo.socialPosts()) ?? []
+            overlayItems = await news + embeds + highlights + happenings + blogs + posts
         }
         do {
             let page = try await repo.page(cursor: cursor)
@@ -100,16 +111,20 @@ final class FeedViewModel {
         }
     }
 
-    /// Merge the paginated RPC items with the overlays, ordered by pure
-    /// recency (`FeedRecency`) — the ordering the web feed adopted in
-    /// PR #1111: newest first on one shared timestamp, no type bonuses,
-    /// no engagement or viewed adjustments. The RPC stream keeps its
-    /// server-side keyset pagination; only the final merged order is
-    /// recency.
+    /// Merge the paginated RPC items with the overlays, ordered by
+    /// pure recency (`FeedRecency`) — the ordering the web feed
+    /// adopted in PR #1111: newest first on one shared timestamp, no
+    /// type bonuses. The seen partition (PR #1124) then sinks items
+    /// that were already seen when this visit loaded below the
+    /// unseen, each group keeping its recency order; a seen match
+    /// whose engagement grew since its mark revives into the unseen
+    /// group. The RPC stream keeps its server-side keyset pagination;
+    /// only the final merged order is computed here.
     private func rebuild() {
         let rpcIDs = Set(rpcItems.map(\.id))
         var merged = rpcItems
         merged.append(contentsOf: overlayItems.filter { !rpcIDs.contains($0.id) })
-        items = FeedRecency.sorted(merged, now: Date())
+        let sorted = FeedRecency.sorted(merged, now: Date())
+        items = FeedSeenPartition.applied(to: sorted, entriesAtLoad: viewedTracker.entriesAtLoad)
     }
 }
