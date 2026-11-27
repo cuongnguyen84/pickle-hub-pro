@@ -24,10 +24,37 @@ struct FeedSocialPostCard: View {
                 }
             }
 
-            Text(post.authorName)
-                .font(TLFont.sans(15, .semibold))
-                .foregroundStyle(TLColor.fg)
-                .lineLimit(1)
+            // Author row (web #1128): avatar + name + verified seal.
+            HStack(spacing: 8) {
+                Group {
+                    if let avatarURL = post.authorAvatarURL {
+                        AsyncImage(url: avatarURL) { phase in
+                            if let image = phase.image {
+                                image.resizable().scaledToFill()
+                            } else {
+                                Circle().fill(TLColor.surface2)
+                            }
+                        }
+                    } else {
+                        Circle().fill(TLColor.surface2)
+                            .overlay(
+                                Text(String(post.authorName.prefix(1)).uppercased())
+                                    .font(TLFont.serif(13))
+                                    .foregroundStyle(TLColor.fg3)
+                            )
+                    }
+                }
+                .frame(width: 28, height: 28)
+                .clipShape(Circle())
+
+                Text(post.authorName)
+                    .font(TLFont.sans(15, .semibold))
+                    .foregroundStyle(TLColor.fg)
+                    .lineLimit(1)
+                if post.authorVerified {
+                    VerifiedBadge(size: 15)
+                }
+            }
 
             // Community photos arrive in any aspect (the create-post
             // pipeline caps the long edge at 1600px); 4:3 crops far less

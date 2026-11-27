@@ -16,6 +16,11 @@ struct Profile: Decodable, Identifiable, Equatable {
     let isPublicProfile: Bool?
     let isPro: Bool?
     let isVerified: Bool?
+    // Social hero fields (web redesign 2026-11-24, PR #1134) — present
+    // only on the public-profile fetch, nil on the own-profile fetch.
+    let coverURL: String?
+    let skillLevel: String?
+    let createdAt: String?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -30,6 +35,9 @@ struct Profile: Decodable, Identifiable, Equatable {
         case isPublicProfile = "is_public_profile"
         case isPro = "is_pro"
         case isVerified = "is_verified"
+        case coverURL = "cover_url"
+        case skillLevel = "skill_level"
+        case createdAt = "created_at"
     }
 
     var resolvedDisplayName: String {

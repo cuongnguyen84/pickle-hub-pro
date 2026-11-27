@@ -349,6 +349,10 @@ enum SocialPostTopic: String, CaseIterable, Equatable {
 struct FeedSocialPost: Equatable {
     let authorID: UUID
     let authorName: String
+    /// Author avatar + verified flag (web #1128): resolved in the same
+    /// batched profiles query as the display name.
+    let authorAvatarURL: URL?
+    let authorVerified: Bool
     let body: String?
     let imageURL: URL
     let topic: String?
@@ -518,12 +522,14 @@ struct FeedItem: Identifiable, Equatable {
     /// Community photo post overlay. Ordering is pure recency
     /// (`FeedRecency`), so no score is computed — the score field only
     /// drives the RPC keyset cursor, which overlay items never advance.
-    init?(socialPost row: FeedSocialPostRow, authorName: String) {
+    init?(socialPost row: FeedSocialPostRow, authorName: String, authorAvatarURL: URL? = nil, authorVerified: Bool = false) {
         guard let url = URL(string: row.imageURL) else { return nil }
         let date = FeedDate.parse(row.createdAt)
         let post = FeedSocialPost(
             authorID: row.authorID,
             authorName: authorName,
+            authorAvatarURL: authorAvatarURL,
+            authorVerified: authorVerified,
             body: row.body,
             imageURL: url,
             topic: row.topic,
