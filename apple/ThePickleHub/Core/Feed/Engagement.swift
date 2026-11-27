@@ -76,7 +76,6 @@ extension FeedItem {
                 type: "blog",
                 id: BlogTargetId.uuid(forSlug: BlogTargetId.canonicalSlug(for: blog.slug))
             )
-            )
         case .video(let video):
             return EngagementTarget(type: "video", id: video.videoID)
         case .news:
