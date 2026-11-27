@@ -123,7 +123,7 @@ enum ModerationMapping {
     }
 }
 
-final class ModerationRepository {
+struct ModerationRepository {
     private var client: SupabaseClient { SupabaseManager.shared.client }
 
     private static let postColumns = "id, author_id, body, image_url, topic, status, created_at"
