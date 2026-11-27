@@ -329,3 +329,14 @@ Thành viên
 Huỷ
 Bình luận
 Trả lời
+# PR-N4 (trang cá nhân): các nhãn xã hội dùng chung cùng một nghĩa -
+# "Đã xác minh" = Verified (ShopComponents + nhãn trợ năng của VerifiedBadge);
+# "Trận đấu" = Matches (TeamMatchDetailView + tab hồ sơ);
+# "Người theo dõi" = Followers (tiêu đề danh sách + hàng số liệu hero);
+# "Đang theo dõi" = Following (tiêu đề danh sách + hàng số liệu + trạng thái nút theo dõi);
+# "Theo dõi" = Follow (TournamentsView + nút theo dõi hồ sơ).
+Đã xác minh
+Trận đấu
+Người theo dõi
+Đang theo dõi
+Theo dõi

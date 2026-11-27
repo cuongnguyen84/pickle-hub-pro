@@ -80,23 +80,38 @@ struct FeedRepository {
             let id: UUID
             let displayName: String?
             let username: String?
+            let avatarURL: String?
+            let isVerified: Bool?
             enum CodingKeys: String, CodingKey {
                 case id, username
                 case displayName = "display_name"
+                case avatarURL = "avatar_url"
+                case isVerified = "is_verified"
             }
         }
         let authorIDs = Array(Set(rows.map(\.authorID))).map(\.uuidString)
         let profiles: [ProfileRow] = try await client
             .from("profiles")
-            .select("id, display_name, username")
+            .select("id, display_name, username, avatar_url, is_verified")
             .in("id", values: authorIDs)
             .execute()
             .value
         var names: [UUID: String] = [:]
+        var avatars: [UUID: URL] = [:]
+        var verified: [UUID: Bool] = [:]
         for profile in profiles {
             names[profile.id] = profile.displayName?.nonEmpty ?? profile.username?.nonEmpty ?? "ThePickleHub"
+            if let avatar = profile.avatarURL?.nonEmpty { avatars[profile.id] = URL(string: avatar) }
+            verified[profile.id] = profile.isVerified ?? false
         }
-        return rows.compactMap { FeedItem(socialPost: $0, authorName: names[$0.authorID] ?? "ThePickleHub") }
+        return rows.compactMap {
+            FeedItem(
+                socialPost: $0,
+                authorName: names[$0.authorID] ?? "ThePickleHub",
+                authorAvatarURL: avatars[$0.authorID],
+                authorVerified: verified[$0.authorID] ?? false
+            )
+        }
     }
 
     /// Loads editorial content for the native news reader without requesting
