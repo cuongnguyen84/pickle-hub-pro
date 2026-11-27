@@ -340,17 +340,9 @@ struct FeedMatchCard: View {
                     .lineLimit(1)
             }
             Spacer(minLength: 8)
-            engagement(icon: "heart", count: match.kudosCount)
-            engagement(icon: "bubble.left", count: match.commentCount)
+            // Kudos + comment counts used to render here as a static
+            // strip; the shared engagement bar under the card (PR-N3)
+            // owns engagement display and interaction for every kind.
         }
-    }
-
-    private func engagement(icon: String, count: Int) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: icon).font(.system(size: 11))
-            Text("\(count)").font(TLFont.mono(10, .medium))
-        }
-        .foregroundStyle(TLColor.fg3)
-        .opacity(count > 0 ? 1 : 0.5)
     }
 }
