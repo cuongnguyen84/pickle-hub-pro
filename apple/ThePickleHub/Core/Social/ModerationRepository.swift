@@ -1,4 +1,5 @@
 import Foundation
+import Supabase
 
 /// One community photo post in the admin moderation queue - the twin of
 /// the web `ModerationPost` (usePostModeration). Reads and writes run
