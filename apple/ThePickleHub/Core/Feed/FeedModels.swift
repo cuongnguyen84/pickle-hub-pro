@@ -179,6 +179,32 @@ struct FeedBlog: Equatable {
     let excerpt: String?
     let coverImageURL: String?
     let category: String?
+    /// Canonical EN slug for the engagement key (web #1140): the VI
+    /// overlay stamps `alternate_en_slug` here so a VI card and its EN
+    /// twin share ONE comment thread. Nil for RPC rows (the timeline
+    /// carries no canonical), where the slug map in `BlogTargetId`
+    /// applies instead.
+    let canonicalSlug: String?
+}
+
+/// A `vi_blog_posts` row for the feed blog overlay (web
+/// `useFeedBlogs`, PR #1126).
+struct ViBlogRow: Decodable {
+    let id: UUID
+    let slug: String
+    let alternateEnSlug: String?
+    let title: String
+    let excerpt: String?
+    let coverImageURL: String?
+    let category: String?
+    let publishedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, slug, title, excerpt, category
+        case alternateEnSlug = "alternate_en_slug"
+        case coverImageURL = "cover_image_url"
+        case publishedAt = "published_at"
+    }
 }
 
 struct FeedVideo: Equatable {
@@ -442,7 +468,8 @@ struct FeedItem: Identifiable, Equatable {
                 title: title,
                 excerpt: row.excerpt,
                 coverImageURL: row.coverImageURL,
-                category: row.category
+                category: row.category,
+                canonicalSlug: nil
             )
             self.init(id: row.itemID, publishedAt: date, rankedAt: rankedDate, score: row.score, kind: .blog(blog))
 
@@ -461,6 +488,23 @@ struct FeedItem: Identifiable, Equatable {
         default:
             return nil
         }
+    }
+
+    /// Builds a blog item from the VI overlay row (web `useFeedBlogs`):
+    /// ranked purely by publish time, score 0 - overlays never advance
+    /// the RPC cursor. A published row without `published_at` cannot be
+    /// ranked, so it is skipped, exactly as on the web.
+    init?(viBlog row: ViBlogRow) {
+        guard let published = row.publishedAt, let date = FeedDate.parse(published) else { return nil }
+        let blog = FeedBlog(
+            slug: row.slug,
+            title: row.title,
+            excerpt: row.excerpt,
+            coverImageURL: row.coverImageURL,
+            category: row.category,
+            canonicalSlug: row.alternateEnSlug?.nonEmpty
+        )
+        self.init(id: row.id, publishedAt: date, rankedAt: date, score: 0, kind: .blog(blog))
     }
 
     /// Builds a news entry, computing the client-side score

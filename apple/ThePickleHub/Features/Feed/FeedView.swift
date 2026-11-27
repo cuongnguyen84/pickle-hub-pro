@@ -73,6 +73,7 @@ struct FeedView: View {
                         currentUserID: model.currentUserID
                     ) { openURL = IdentifiedURL(url: $0) }
                         .task { await model.loadMoreIfNeeded(currentItem: item) }
+                        .onAppear { model.markViewed(item) }
                 }
                 if model.isLoadingMore {
                     ProgressView().tint(TLColor.accentText).padding(.vertical, 16)

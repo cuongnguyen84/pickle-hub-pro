@@ -53,22 +53,47 @@ struct FeedRepository {
         return rows.compactMap { FeedItem(news: $0, now: now) }
     }
 
+    /// Blog overlay for the feed (web `useFeedBlogs`, PR #1126): the
+    /// 30 newest published VI blog posts of the last 30 days, merged
+    /// by recency like every other overlay. (The web EN overlay reads
+    /// the site's static blog metadata, which has no database source;
+    /// the native overlay covers vi_blog_posts - the same rows the
+    /// web VI feed merges.)
+    func blogs() async throws -> [FeedItem] {
+        let windowStart = ISO8601DateFormatter().string(from: Date().addingTimeInterval(-30 * 24 * 60 * 60))
+        let rows: [ViBlogRow] = try await client
+            .from("vi_blog_posts")
+            .select("id, slug, alternate_en_slug, title, excerpt, cover_image_url, category, published_at")
+            .eq("status", value: "published")
+            .gte("published_at", value: windowStart)
+            .order("published_at", ascending: false)
+            .limit(30)
+            .execute()
+            .value
+        return rows.compactMap { FeedItem(viBlog: $0) }
+    }
+
     /// Community photo posts (social_posts) for the feed merge, mirroring
     /// the web `useSocialPosts` hook: kind = 'post', last 30 days, newest
-    /// first, capped at 30. RLS is the real boundary (approved posts are
-    /// readable by any signed-in user, authors also read their own in any
-    /// status, admins read all); the query still asks only for rows the
-    /// stream can show (approved + the viewer's own) so someone else's
-    /// pending post never reaches the merge. Author display names resolve
-    /// in ONE batched profiles query. Anonymous viewers get no posts.
+    /// first, capped at 30. RLS is the real boundary; the query still
+    /// asks only for rows the stream can show (approved for everyone,
+    /// plus the viewer's own in any status when signed in) so someone
+    /// else's pending post never reaches the merge. Author display
+    /// names resolve in ONE batched profiles query. Guests read
+    /// approved posts too (web #1131, anon RLS policy).
     func socialPosts() async throws -> [FeedItem] {
-        guard let viewerID = try? await client.auth.session.user.id else { return [] }
+        let viewerID = try? await client.auth.session.user.id
         let windowStart = ISO8601DateFormatter().string(from: Date().addingTimeInterval(-30 * 24 * 60 * 60))
-        let rows: [FeedSocialPostRow] = try await client
+        var query = client
             .from("social_posts")
             .select("id, author_id, body, image_url, topic, status, created_at")
             .eq("kind", value: "post")
-            .or("status.eq.approved,author_id.eq.\(viewerID.uuidString)")
+        if let viewerID {
+            query = query.or("status.eq.approved,author_id.eq.\(viewerID.uuidString)")
+        } else {
+            query = query.eq("status", value: "approved")
+        }
+        let rows: [FeedSocialPostRow] = try await query
             .gte("created_at", value: windowStart)
             .order("created_at", ascending: false)
             .limit(30)
