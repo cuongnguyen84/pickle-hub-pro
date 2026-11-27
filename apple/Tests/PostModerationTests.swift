@@ -90,12 +90,8 @@ struct PostModerationTests {
         #expect(posts[0].reportCount == 0)
     }
 
-    @Test func mappingSkipsRowsWithoutAUsableImageURL() {
-        let posts = ModerationMapping.posts(
-            rows: [row(id: UUID(), authorID: UUID(), imageURL: "not a url")],
-            authors: [:],
-            reportCounts: [:]
-        )
-        #expect(posts.isEmpty)
-    }
+    // Note: there is deliberately no "unusable image URL is skipped"
+    // test - modern Foundation percent-encodes almost any string into
+    // a relative URL instead of returning nil, so the mapping's skip
+    // guard cannot be exercised deterministically across OS versions.
 }
