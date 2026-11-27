@@ -184,7 +184,7 @@ struct FeedBlog: Equatable {
     /// twin share ONE comment thread. Nil for RPC rows (the timeline
     /// carries no canonical), where the slug map in `BlogTargetId`
     /// applies instead.
-    let canonicalSlug: String? = nil
+    let canonicalSlug: String?
 }
 
 /// A `vi_blog_posts` row for the feed blog overlay (web

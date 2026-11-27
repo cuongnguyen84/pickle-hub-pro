@@ -92,6 +92,6 @@ struct HomeSeeMore: View {
 
 extension BlogPostSummary {
     var asFeedBlog: FeedBlog {
-        FeedBlog(slug: slug, title: title, excerpt: excerpt, coverImageURL: coverImageURL, category: tag)
+        FeedBlog(slug: slug, title: title, excerpt: excerpt, coverImageURL: coverImageURL, category: tag, canonicalSlug: nil)
     }
 }
