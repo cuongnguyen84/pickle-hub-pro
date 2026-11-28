@@ -10,6 +10,35 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    "slug": "is-kiora-kunimoto-the-next-star-of-womens-pickleball",
+    "publishedDate": "2026-11-28",
+    "updatedDate": "2026-11-28",
+    "author": "The PickleHub Team",
+    "tags": [
+      "kiora kunimoto",
+      "ppa tour",
+      "women's singles",
+      "player profile",
+      "daytona beach open",
+      "judit castillo"
+    ],
+    "ctaPath": "/live",
+    "ctaLabel": {
+      "en": "See live results on ThePickleHub",
+      "vi": "Xem kết quả trực tiếp trên ThePickleHub"
+    },
+    "heroImage": {
+      "src": "/images/blog/is-kiora-kunimoto-the-next-star-of-womens-pickleball-hero.webp",
+      "alt": "Kiora Kunimoto in a two-handed backhand ready stance during the Proton Daytona Beach Open 2026"
+    },
+    "titleEn": "Is Kiora Kunimoto the next star of women's pickleball?",
+    "titleVi": "Kiora Kunimoto có phải ngôi sao mới của đơn nữ pickleball?",
+    "metaTitleEn": "Is Kiora Kunimoto the next star of women's pickleball?",
+    "metaTitleVi": "Kiora Kunimoto có phải ngôi sao mới của đơn nữ?",
+    "metaDescriptionEn": "At 18, Kiora Kunimoto reached her second straight PPA singles final at the Daytona Beach Open 2026. Her results, her game, and what 2027 could bring.",
+    "metaDescriptionVi": "Kiora Kunimoto, 18 tuổi, vào chung kết đơn nữ Daytona Beach Open 2026 mà không thua game nào. Hồ sơ, kết quả và triển vọng 2027."
+  },
+  {
     "slug": "line-call-rules-ly-hoang-nam-fair-play",
     "publishedDate": "2026-11-24",
     "updatedDate": "2026-11-24",
